@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.30 $
-* $Date: 2004/07/15 12:45:26 $
+* $Revision: 1.31 $
+* $Date: 2004/07/29 09:13:14 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -216,7 +216,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		forces[stresses+5] -= neigh->dist.z * tmp_force.x;
 #endif /* STRESS */
 	      }
-#ifdef /* EAM */
+#ifdef EAM 
 	      /* calculate atomic densities */
 	      col2 = paircol+typ2;
 	      if (typ2==typ1) { /* then transfer(a->b)==transfer(b->a) */
@@ -242,6 +242,13 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	    } /*  neighbours with bigger atom nr */
 	  } /* loop over neighbours */
 #ifndef EAM /*then we can calculate contribution of forces right away*/
+
+#ifdef FWEIGHT 		   
+	  /* Weigh by absolute value of force */
+	  forces[k]    /= FORCE_EPS + atom->absforce;
+	  forces[k+1]  /= FORCE_EPS + atom->absforce;
+	  forces[k+2]  /= FORCE_EPS + atom->absforce;
+#endif /* FWEIGHT */
 
 	  /* Returned force is difference between calculated and input force */
 	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
@@ -347,6 +354,14 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	      }	/* within reach */
 	    } /* higher neigbours */
 	  } /* loop over neighbours */
+
+#ifdef FWEIGHT
+	  /* Weigh by absolute value of force */
+	  forces[k]    /= FORCE_EPS + atom->absforce;
+	  forces[k+1]  /= FORCE_EPS + atom->absforce;
+	  forces[k+2]  /= FORCE_EPS + atom->absforce;
+#endif /* FWEIGHT */
+
 	  /* sum up forces  */
 	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
 	}	/* third loop over atoms */

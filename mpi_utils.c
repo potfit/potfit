@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2004/06/23 11:57:40 $
+* $Revision: 1.5 $
+* $Date: 2004/07/29 09:13:14 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -68,9 +68,9 @@ void dbb(int i) {
  **************************************************************************/
 
 void broadcast_params() {
-  int ierr,blklens[7];   /* 7: number of entries in struct atom_t  */
-  MPI_Aint displs[7]; 
-  MPI_Datatype typen[7];
+  int ierr,blklens[8];   /* 8: number of entries in struct atom_t  */
+  MPI_Aint displs[8]; 
+  MPI_Datatype typen[8];
   neigh_t testneigh;
   atom_t testatom;
   int size,i,each,odd,nodeatoms=0;
@@ -110,21 +110,23 @@ void broadcast_params() {
   blklens[1]=1;         typen[1]=MPI_INT; /* n_neigh */
   blklens[2]=1;         typen[2]=MPI_VEKTOR;    /* pos */
   blklens[3]=1;         typen[3]=MPI_VEKTOR;    /* force */
-  blklens[4]=MAXNEIGH;  typen[4]=MPI_NEIGH; /* neigh */
-  blklens[5]=1;         typen[5]=MPI_INT; /* conf */
-  size=6;
+  blklens[4]=1;         typen[4]=REAL; /* absforce */
+  blklens[5]=MAXNEIGH;  typen[5]=MPI_NEIGH; /* neigh */
+  blklens[6]=1;         typen[6]=MPI_INT; /* conf */
+  size=7;
 #ifdef EAM
-  blklens[6]=1;         typen[6]=REAL; /* rho */
+  blklens[7]=1;         typen[7]=REAL; /* rho */
   size+=1;
 #endif
     MPI_Address(&testatom.typ,&displs[0]);
     MPI_Address(&testatom.n_neigh,&displs[1]);
     MPI_Address(&testatom.pos,&displs[2]);
     MPI_Address(&testatom.force,&displs[3]);
-    MPI_Address(testatom.neigh,&displs[4]);
-    MPI_Address(&testatom.conf,&displs[5]);
+    MPI_Address(&testatom.absforce,&displs[4]);
+    MPI_Address(testatom.neigh,&displs[5]);
+    MPI_Address(&testatom.conf,&displs[6]);
 #ifdef EAM
-    MPI_Address(&testatom.rho,&displs[6]);
+    MPI_Address(&testatom.rho,&displs[7]);
 #endif
     for(i=1;i<size;i++) {
       displs[i]-=displs[0];

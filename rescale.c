@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2004/04/13 14:10:10 $
+* $Revision: 1.2 $
+* $Date: 2004/07/29 09:13:15 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -241,7 +241,7 @@ void embed_shift(pot_table_t *pt){
       shift=splint_ed(pt,xi,i,0.);
 #ifdef DEBUG
       printf("shifting by %f\n",shift);
-#endif DEBUG
+#endif /* DEBUG */
     } else
       shift=xi[first];
     for (j=first;j<=pt->last[i];j++)

@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.34 $
-* $Date: 2004/07/15 12:45:28 $
+* $Revision: 1.35 $
+* $Date: 2004/07/29 09:13:15 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -23,11 +23,11 @@
 #ifdef LIMIT 			/* if LIMIT is defined */
 #ifndef EAM			/* but not EAM */
 #define EAM			/* then imply EAM */
-#endif EAM
-#endif LIMIT
+#endif /* EAM */
+#endif /* LIMIT */
 #ifdef MPI
 #define REAL MPI_DOUBLE
-#endif MPI
+#endif /* MPI */
 #define NRANSI
 #define MAXNEIGH 170
 #ifdef EAM
@@ -51,6 +51,7 @@
 #endif
 #define ENG_WEIGHT 10.
 #define STRESS_WEIGHT 10.
+#define FORCE_EPS .1
 
 /******************************************************************************
 *
@@ -76,6 +77,7 @@ typedef struct {
   int    n_neigh;
   vektor pos;
   vektor force;
+  real   absforce;
   neigh_t neigh[MAXNEIGH];
   int    conf; 			/* Which configurarion... */
 #ifdef EAM

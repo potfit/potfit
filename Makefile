@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.28 $
-# $Date: 2004/07/14 14:40:39 $
+# $Revision: 1.29 $
+# $Date: 2004/07/29 09:13:13 $
 # 
 ############################################################################
 #
@@ -546,6 +546,10 @@ endif
 
 ifneq (,$(findstring dist,${MAKETARGET}))
 CFLAGS += -DPDIST
+endif
+
+ifneq (,$(findstring fweight,${MAKETARGET}))
+CFLAGS += -DFWEIGHT
 endif
 
 ifneq (,$(findstring noresc,${MAKETARGET}))

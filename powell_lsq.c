@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2004/07/14 12:55:42 $
+* $Revision: 1.23 $
+* $Date: 2004/07/29 09:13:15 $
 *****************************************************************/
 
 /******************************************************************************
@@ -103,9 +103,9 @@ void powell_lsq(real *xi)
 #ifdef MPI
       /* wake other threads and sync potentials*/
       F=calc_forces(xi,fxi1,2);
-#endif MPI
+#endif /* MPI */
       i=gamma_init(gamma, d, xi, fxi1);
-#endif EAM
+#endif /* EAM */
       /* try again */
       if (i) { 
 	/* ok, now this is serious, better exit cleanly */
@@ -215,11 +215,11 @@ void powell_lsq(real *xi)
 #ifdef MPI
       /* wake other threads and sync potentials*/
       F=calc_forces(xi,fxi1,2);
-#endif MPI
+#endif /* MPI */
       }
     }
-#endif NORESCALE
-#endif EAM
+#endif /* NORESCALE */
+#endif /* EAM */
     /* write temp file  */
     if (tempfile != "\0" ) write_pot_table( &pair_pot, tempfile );
 

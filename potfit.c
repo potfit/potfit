@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2004/07/15 12:45:27 $
+* $Revision: 1.28 $
+* $Date: 2004/07/29 09:13:15 $
 *****************************************************************/
 
 
@@ -85,8 +85,8 @@ int main(int argc, char **argv)
 #ifndef NORESCALE
     rescale(&pair_pot,1.,1); 	/* rescale now... */
     embed_shift(&pair_pot);	/* and shift */
-#endif NORESCALE
-#endif EAM
+#endif /* NORESCALE */
+#endif /* EAM */
   }
 #ifdef MPI
   broadcast_params(); 	     /* let the others know what's going on */
@@ -129,11 +129,13 @@ int main(int argc, char **argv)
     write_pairdist(&pair_pot,distfile);
 #endif
 #endif
-#ifdef EAM
+#ifdef EAM 
+#ifndef MPI /* Not much sense in printing rho when not communicated... */
     printf("Local electron density rho\n");
     for (i=0; i<natoms;i++) printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);
-#endif
-    
+#endif /* MPI */
+#endif /* EAM */
+
     max = 0.0;
     min = 100000.0;
     
@@ -141,8 +143,16 @@ int main(int argc, char **argv)
       sqr = SQR(force[i]);
       max = MAX( max, sqr );
       min = MIN( min, sqr );
+#ifdef FWEIGHT
+      printf("%d %f %f %f %f %f\n",i/3,sqr,
+	     force[i]*(FORCE_EPS+atoms[i/3].absforce)+force_0[i],
+	     force_0[i],
+	     (force[i]*(FORCE_EPS+atoms[i/3].absforce))/force_0[i],
+	     atoms[i/3].absforce);
+#else  /* FWEIGHT */
       printf("%d %f %f %f %f\n",i/3,sqr,
-	     force[i]+force_0[i],force_0[i],force[i]/force_0[i]);
+      force[i]+force_0[i],force_0[i],force[i]/force_0[i]);
+#endif /* FWEIGHT */
     }
     printf("Cohesive Energies\n");
     for (i=0; i<nconf; i++){

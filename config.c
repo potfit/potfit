@@ -4,11 +4,12 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2004/06/23 11:56:31 $
+* $Revision: 1.23 $
+* $Date: 2004/07/29 09:13:14 $
 *****************************************************************/
 
 #include "potfit.h"
+#include "nrutil_r.h"
 
 /*****************************************************************************
 *
@@ -206,6 +207,11 @@ void read_config(char *filename)
                     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), 
                     &(atom->force.x), &(atom->force.y), &(atom->force.z)))
         error("Corrupt configuration file");
+      atom->absforce = sqrt(DSQR(atom->force.x)+
+			    DSQR(atom->force.y)+
+			    DSQR(atom->force.z));
+      /* ++++++++++++++ */
+//      printf("Atom %d, x %f, y %f, z %f, abs %f\n", natoms+i, atom->force.x, atom->force.y, atom->force.z, atom->absforce);
       atom->conf = nconf;
     }
 
@@ -315,8 +321,8 @@ void read_config(char *filename)
   mdim+=1+2*ntypes;          /* 1+2*ntypes dummy constraints */
 #ifdef LIMIT
   mdim+=nconf;		/* nconf limiting constraints */
-#endif LIMIT
-#endif EAM
+#endif /* LIMIT */
+#endif /* EAM */
   /* copy forces into single vector */
   if (NULL==(force_0 = (real *) malloc( mdim * sizeof(real) ) ) )
     error("Cannot allocate forces");
@@ -340,7 +346,7 @@ void read_config(char *filename)
 #else                           
   for (i=0; i<6*nconf; i++)
     force_0[k++] = 0.;
-#endif STRESS
+#endif /* STRESS */
 #ifdef EAM
 #ifdef LIMIT 
   for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
