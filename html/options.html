@@ -58,7 +58,7 @@ points have a sensible density and/or distribution.</p>
 <dt><a id="eam" name="eam"><b>fweight</b></a></dt>
 <dd>
 <p>Use modified weights for the forces. Each force
-component F_j is weighted by the factor (|F|+ FORCE_EPS)^(-1). This
+component F_j is weighted by the factor ( || F || + FORCE_EPS )^(-1). This
 increases the importance of numerically small forces. The compile time
 parameter FORCE_EPS prevents the overweighting of very tiny forces.</p>
 </dd>
