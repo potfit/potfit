@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2004/02/20 12:10:05 $
+* $Revision: 1.3 $
+* $Date: 2004/02/25 16:39:09 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -34,6 +34,7 @@ typedef struct {
   int  len;         /* total length of the table */
   int  idxlen;      /* number of changeable potential values */
   int  ncols;       /* number of columns */
+  int paircol;      /* number of columns in pair potential*/
   real *table;      /* the actual data */
   real *d2tab;      /* second derivatives of table data for spline int */
   int  *idx;        /* indirect indexing */

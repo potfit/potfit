@@ -6,8 +6,8 @@
  *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2004/02/20 12:10:03 $
+* $Revision: 1.10 $
+* $Date: 2004/02/25 16:39:10 $
 *****************************************************************/
 
 
@@ -68,16 +68,17 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 #undef NRANSI
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
-/*******************************************************************************
+/******************************************************************************
  *
  * splint_ed: interpolates the function with splines 
  *            (equidistant x[i]) 
  *
- *******************************************************************************/
+ *****************************************************************************/
 
 /**** rewritten for real variables (ITAP standard) and zero-offset vectors ****
  **** adapted to equidistant x[i]                                          ****
- **** Peter Brommer, ITAP, 2002-11-27                                      ****/
+ **** Peter Brommer, ITAP, 2002-11-27                                      ***/
+
 real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 {
   real a, b, istep, rr, p1, p2, d21, d22;
@@ -118,7 +119,7 @@ real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0) error("short distance!");
+  if (rr < 0) error("short distance! in splint_comb_ed");
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -151,7 +152,7 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0) error("short distance!");
+  if (rr < 0) error("short distance! in splint_grad_ed");
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -173,12 +174,97 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
 }
 
-/********************************************************************************
+/******************************************************************************
+ *
+ * splint_dir_ed: interpolates the function with splines 
+ *            (equidistant x[i]) 
+ *            with known index position
+ *
+ *****************************************************************************/
+
+/**** rewritten for real variables (ITAP standard) and zero-offset vectors ****
+ **** adapted to equidistant x[i]                                          ****
+ **** Peter Brommer, ITAP, 2002-11-27                                      ***/
+real splint_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b)
+{
+  real a, istep, p1, p2, d21, d22;
+
+
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  a     = 1.0 - b;
+  p1    = xi[k];
+  d21   = pt->d2tab[k++];
+  p2    = xi[k];
+  d22   = pt->d2tab[k];
+  
+
+  return a * p1 + b * p2 +
+      ((a*a*a - a) * d21 + (b*b*b - b) * d22) / (6.0 * istep * istep);
+}
+/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
+
+/****************************************************************************
+ *
+ * splint_comb_dir_ed: calculates spline interpolation of a function 
+ *            (return value)
+ *            and its gradiend (grad), equidistant x[i]
+ *            with known index position
+ *
+ *****************************************************************************/
+
+real splint_comb_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b, real *grad)
+{
+  real a, istep, p1, p2, d21, d22;
+
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+
+  a     = 1.0 - b;
+  p1    = xi[k];
+  d21   = pt->d2tab[k++];
+  p2    = xi[k];
+  d22   = pt->d2tab[k];
+  *grad = (p2-p1)*istep + 
+      ((3*(b*b) - 1) * d22 - (3*(a*a) - 1) * d21) / (6.0 * istep);
+  return a * p1 + b * p2 +
+      ((a*a*a - a) * d21 + (b*b*b - b) * d22) / (6.0 * istep * istep);
+}
+
+/******************************************************************************
+ *
+ * splint_grad_dir_ed: calculates the first derivative 
+ *            from spline interpolation (equidistant x[i])
+ *            with known index position
+ *
+ *****************************************************************************/
+
+
+real splint_grad_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b)
+{
+  real a, istep, p1, p2, d21, d22;
+  
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  a     = 1.0 - b;
+  p1    = xi[k];
+  d21   = pt->d2tab[k++];
+  p2    = xi[k];
+  d22   = pt->d2tab[k];
+
+  return (p2-p1)*istep + 
+      ((3*(b*b) - 1) * d22 - (3*(a*a) - 1) * d21) / (6.0 * istep);
+
+}
+
+/******************************************************************************
  *
  * spline   : initializes second derivatives used for spline interpolation
  *            (not used right now, nonequidistant x[i])
  *
- ********************************************************************************/
+ *****************************************************************************/
 
 
 /*** rewritten for real variables (ITAP standard) and zero-offset vectors ****
@@ -226,16 +312,16 @@ void spline(real x[], real y[], int n, real yp1, real ypn, real y2[])
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
 
-/*******************************************************************************
+/******************************************************************************
  *
  * splint_ed: interpolates the function with splines 
  *            (nonequidistant x[i]) - unused right now
  *
- *******************************************************************************/
+ *****************************************************************************/
 
 /**** rewritten for real variables (ITAP standard)                         ****
  **** still one-offset-vectors                                             ****
- **** Peter Brommer, ITAP, 2002-11-27                                      ****/
+ **** Peter Brommer, ITAP, 2002-11-27                                      ***/
 
 void splint(real xa[], real ya[], real y2a[], int n, real x, real *y)
 {
@@ -254,6 +340,7 @@ void splint(real xa[], real ya[], real y2a[], int n, real x, real *y)
 	if (h == 0.0) nrerror("Bad xa input to routine splint");
 	a=(xa[khi]-x)/h;
 	b=(x-xa[klo])/h;
-	*y=a*ya[klo]+b*ya[khi]+((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
+	*y=a*ya[klo]+b*ya[khi]+
+	  ((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
 }
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */

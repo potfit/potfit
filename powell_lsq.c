@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.17 $
-* $Date: 2004/02/20 11:53:24 $
+* $Revision: 1.18 $
+* $Date: 2004/02/25 16:39:09 $
 *****************************************************************/
 
 /******************************************************************************
@@ -129,7 +129,7 @@ void powell_lsq(real *xi)
       F=linmin_r(xi,delta,F,ndim,mdim,&xi1,&xi2,fxi1,fxi2);
 
 #ifdef DEBUG
-      printf("%f %f %6g %f %f %d \n",F,anorm,cond,ferror,berror,i);
+      printf("%f %6g %f %f %d \n",F,cond,ferror,berror,i);
 #endif
 
       /* (d) if error estimate is too high after minimization

@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2004/02/20 12:17:07 $
+* $Revision: 1.21 $
+* $Date: 2004/02/25 16:39:07 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -62,17 +62,25 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
         sprintf(msg,"Corrupt format header line in file %s",filename);
         error(msg);
       }
+
       /* right number of columns? */
+#ifdef EAM 
+      if (size==ncols+2*ntypes) {
+	printf("Using EAM potential from file %s\n", filename);
+	eam=1;
+      }
+#else
       if (size==ncols) {
 	printf("Using pair potential from file %s\n", filename);
 	eam=0;
-#ifdef EAM 
-      } else if (size==ncols+2*ntypes) {
-	printf("Using EAM potential from file %s\n", filename);
-	eam=1;
+      }
 #endif
-      } else {
-        sprintf(msg,"Wrong number of data columns in file %s",filename);
+      else {
+#ifdef EAM
+        sprintf(msg,"Wrong number of data columns in file %s,\n should be %d (pair potentials), but are %d",filename,ncols+2*ntypes,size);
+#else
+        sprintf(msg,"Wrong number of data columns in file %s,\n should be %d for EAM, but are %d",filename,ncols,size);
+#endif
         error(msg);
       }
       /* recognized format? */
@@ -140,7 +148,6 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
     }
   }
 #ifdef EAM
-  if (eam) {
     for (i=ncols; i<ncols+ntypes; i++) {	/* read in rho */
       for (j=0; j<nvals[i]; j++) {
 	if (1>fscanf(infile, "%lf\n", val)) {
@@ -160,7 +167,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 	pt->idx[k++] = l++;
       }
     }
-  }
+  
 #endif
   pt->idxlen = k;
 
@@ -179,7 +186,6 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
       rmin[i * ntypes + j] = pt->begin[k];
     }
 #ifdef EAM
-  if (eam) {
     for (i=0; i<ntypes; i++) {
       for(j=0;j<ntypes; j++) {
 	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],
@@ -192,8 +198,8 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 			     pt->begin[(ntypes*(ntypes+1))/2+j]);
       }
     }
-  }
 #endif
+  paircol=(ntypes*(ntypes+1))/2;
   return;
 }
 
@@ -589,87 +595,85 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fclose(outfile);
   printf("IMD pair potential data written to %s\n", filename);
 #ifdef EAM
-  if (eam) {
-    /* write rho_r2 */
-    sprintf(filename,"%s_rho.imd.pot",prefix);
-    outfile = fopen(filename,"w");
-    if (NULL == outfile) {
-      sprintf(msg,"Could not open file %s\n",filename);
-      error(msg);
-    }
-
-    /* write header */
-    fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes ); 
-
-    /* write info block */
-    for (i=0; i<ntypes; i++){ 
-      for (j=0; j<ntypes; j++) {
-	col1 = (ntypes*(ntypes+1))/2+j;
-	col2 = i * ntypes + j;
-	r2begin[col2] = SQR(pt->begin[col1]);
-	r2end  [col2] = SQR(pt->end[col1]);
-	r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-	fprintf(outfile, "%.16e %.16e %.16e\n", 
-		r2begin[col2], r2end[col2], r2step[col2]);
-      }
-    }
-    fprintf(outfile, "\n");
-
-    /* write data */
-    for (i=0; i<ntypes; i++) {
-      for (j=0; j<ntypes; j++) {
-	col1 = (ntypes*(ntypes+1))/2+j;
-	col2 = i * ntypes + j;
-	r2 = r2begin[col2];
-	for (k=0; k<imdpotsteps; k++) { 
-	  fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
-	  r2 += r2step[col2];
-	}
-	fprintf(outfile,"%.16e\n",0.0);
-	fprintf(outfile, "\n");
-      }
-    }
-    fclose(outfile);
-    printf("IMD electron transfer date written to %s\n", filename);
-    /* write F_rho */
-    sprintf(filename,"%s_F.imd.pot",prefix);
-    outfile = fopen(filename,"w");
-    if (NULL == outfile) {
-      sprintf(msg,"Could not open file %s\n",filename);
-      error(msg);
-    }
-
-    /* write header */
-    fprintf(outfile, "#F 2 %d\n#E\n", ntypes); 
-
-    /* write info block */
-    for (i=0; i<ntypes; i++){ 
-      col1=(ntypes*(ntypes+3))/2+i;
-      r2begin[i] = pt->begin[col1];
-      r2end  [i] = pt->end[col1];
-      r2step [i] = (r2end[i] - r2begin[i]) / imdpotsteps;
+  /* write rho_r2 */
+  sprintf(filename,"%s_rho.imd.pot",prefix);
+  outfile = fopen(filename,"w");
+  if (NULL == outfile) {
+    sprintf(msg,"Could not open file %s\n",filename);
+    error(msg);
+  }
+  
+  /* write header */
+  fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes ); 
+    
+  /* write info block */
+  for (i=0; i<ntypes; i++){ 
+    for (j=0; j<ntypes; j++) {
+      col1 = (ntypes*(ntypes+1))/2+j;
+      col2 = i * ntypes + j;
+      r2begin[col2] = SQR(pt->begin[col1]);
+      r2end  [col2] = SQR(pt->end[col1]);
+      r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", 
-	      r2begin[i], r2end[i], r2step[i]);
-    }
-    fprintf(outfile, "\n");
-
-    /* write data */
-    for (i=0; i<ntypes; i++) {
-      r2 = r2begin[i];
-      col1=(ntypes*(ntypes+3))/2+i;
-      for (k=0; k<=imdpotsteps; k++) { 
-#ifdef PARABEL
-	fprintf(outfile, "%.16e\n", parab_ed(pt, pt->table, col1, r2 ));
-#else
-	fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, r2 ));
-#endif
-	r2 += r2step[i];
+	      r2begin[col2], r2end[col2], r2step[col2]);
       }
+  }
+  fprintf(outfile, "\n");
+  
+  /* write data */
+  for (i=0; i<ntypes; i++) {
+    for (j=0; j<ntypes; j++) {
+      col1 = (ntypes*(ntypes+1))/2+j;
+      col2 = i * ntypes + j;
+      r2 = r2begin[col2];
+      for (k=0; k<imdpotsteps; k++) { 
+	fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
+	r2 += r2step[col2];
+      }
+      fprintf(outfile,"%.16e\n",0.0);
       fprintf(outfile, "\n");
     }
-    fclose(outfile);
-  printf("IMD embedding data written to %s\n", filename);
   }
+  fclose(outfile);
+  printf("IMD electron transfer date written to %s\n", filename);
+  /* write F_rho */
+  sprintf(filename,"%s_F.imd.pot",prefix);
+  outfile = fopen(filename,"w");
+  if (NULL == outfile) {
+    sprintf(msg,"Could not open file %s\n",filename);
+    error(msg);
+  }
+  
+  /* write header */
+  fprintf(outfile, "#F 2 %d\n#E\n", ntypes); 
+  
+  /* write info block */
+  for (i=0; i<ntypes; i++){ 
+    col1=(ntypes*(ntypes+3))/2+i;
+    r2begin[i] = pt->begin[col1];
+    r2end  [i] = pt->end[col1];
+    r2step [i] = (r2end[i] - r2begin[i]) / imdpotsteps;
+    fprintf(outfile, "%.16e %.16e %.16e\n", 
+	    r2begin[i], r2end[i], r2step[i]);
+  }
+  fprintf(outfile, "\n");
+  
+  /* write data */
+  for (i=0; i<ntypes; i++) {
+    r2 = r2begin[i];
+    col1=(ntypes*(ntypes+3))/2+i;
+    for (k=0; k<=imdpotsteps; k++) { 
+#ifdef PARABEL
+      fprintf(outfile, "%.16e\n", parab_ed(pt, pt->table, col1, r2 ));
+#else
+      fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, r2 ));
+#endif
+      r2 += r2step[i];
+      }
+    fprintf(outfile, "\n");
+  }
+  fclose(outfile);
+  printf("IMD embedding data written to %s\n", filename);
 #endif
 
 }
@@ -709,31 +713,28 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       k++;
     }
 #ifdef EAM
-  if (eam) {
-    j=k;
-    for (i=j;i<j+ntypes;i++){
-      r=pt->begin[i];
-      r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
-      for (l=0;l<NPLOT;l++) {
-        fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
-        r += r_step;
-      }
-      fprintf(outfile,"%e %e\n\n\n", r, 0.0);
+  j=k;
+  for (i=j;i<j+ntypes;i++){
+    r=pt->begin[i];
+    r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
+    for (l=0;l<NPLOT;l++) {
+      fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
+      r += r_step;
     }
-    for (i=j+ntypes;i<j+2*ntypes;i++){
-      r=pt->begin[i];
-      r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
-      for (l=0;l<=NPLOT;l++) {
+    fprintf(outfile,"%e %e\n\n\n", r, 0.0);
+  }
+  for (i=j+ntypes;i<j+2*ntypes;i++){
+    r=pt->begin[i];
+    r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
+    for (l=0;l<=NPLOT;l++) {
 #ifdef PARABEL
-        fprintf( outfile, "%e %e\n", r, parab_ed(pt, pt->table,i, r) );
+      fprintf( outfile, "%e %e\n", r, parab_ed(pt, pt->table,i, r) );
 #else
-        fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
+      fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
 #endif
-        r += r_step;
-      }
-      fprintf(outfile,"\n\n\n");
+      r += r_step;
     }
-  
+    fprintf(outfile,"\n\n\n");
   }
 #endif
   fclose(outfile);

@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.23 $
-# $Date: 2004/02/20 11:50:56 $
+# $Revision: 1.24 $
+# $Date: 2004/02/25 16:39:06 $
 # 
 ############################################################################
 #
@@ -500,8 +500,8 @@ endif
 ###########################################################################
 
 POTFITHDR   	= potfit.h powell_lsq.h nrutil_r.h 
-POTFITSRC 	= f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c \
-		  ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c \
+POTFITSRC 	= f1dim_r.c powell_lsq.c brent_r.c \
+		  linmin_r.c mnbrak_r.c nrutil_r.c force.c \
 		  config.c param.c potential.c potfit.c splines.c simann.c 
 MPISRC          = mpi_utils.c
 

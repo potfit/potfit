@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2004/02/20 12:06:57 $
+* $Revision: 1.11 $
+* $Date: 2004/02/25 16:39:10 $
 *****************************************************************/
 
 
@@ -46,8 +46,5 @@ void matdotvec(real **a, real *x, real *y, int n, int m);
 
 void mnbrak(real *ax, real *bx, real *cx, real *fa, real *fb, 
 	real *fc, real (*func)(real));
-
-void mprove_r(real **a, real **alud, int n, int indx[], real b[], 
-		real x[]);
 
 real normalize_vector(real *v, int n);

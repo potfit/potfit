@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2004/02/20 12:16:55 $
+* $Revision: 1.21 $
+* $Date: 2004/02/25 16:39:08 $
 *****************************************************************/
 
 
@@ -65,20 +65,18 @@ int main(int argc, char **argv)
     read_parameters(argc, argv);
 #ifdef EAM
     /* check whether dummy_phi was specified... */
-    if ((eam) && (NULL==dummy_phi)) 
+    if (NULL==dummy_phi) 
       error("dummy_phi not specified in parameter file, aborting...");
 #endif
     read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
     read_config(config);
 #ifdef EAM
-    if (eam) {
-      printf("Dummy constraints are:\n");
-      printf("rho[%f]\t = %f \t for atom type %d\n", 
+    printf("Dummy constraints are:\n");
+    printf("rho[%f]\t = %f \t for atom type %d\n", 
 	     dummy_r,dummy_rho,DUMMY_COL_RHO);
-      for (i=0;i<ntypes;i++) {
-	printf("phi[%f]\t = %f \t between atoms of type %d\n",
-	       dummy_r,dummy_phi[i],i);
-      }
+    for (i=0;i<ntypes;i++) {
+      printf("phi[%f]\t = %f \t between atoms of type %d\n",
+	     dummy_r,dummy_phi[i],i);
     }
 #endif EAM
   }
@@ -88,6 +86,7 @@ int main(int argc, char **argv)
  /*   mdim=3*natoms+nconf; */
   ndim=pair_pot.idxlen;
   ndimtot=pair_pot.len;
+  paircol=(ntypes*(ntypes+1))/2;
   idx=pair_pot.idx;
   calc_forces = calc_forces_pair;
   force = (real *) malloc( (mdim) * sizeof(real) );
@@ -105,6 +104,7 @@ int main(int argc, char **argv)
       1e30,0,pair_pot.d2tab+pair_pot.first[i]);*/
     
     tot = calc_forces(pair_pot.table,force,0);
+//    rescale(&pair_pot,1.);
     write_pot_table( &pair_pot, endpot );
     printf("Potential written to file %s\n",endpot);
     printf("Plotpoint file written to file %s\n", plotpointfile);
@@ -113,10 +113,8 @@ int main(int argc, char **argv)
     if (plot) write_plotpot_pair(&pair_pot, plotfile);
 
 #ifdef EAM
-    if (eam) {
-      printf("Local electron density rho\n");
-      for (i=0; i<natoms;i++) printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);
-    }
+    printf("Local electron density rho\n");
+    for (i=0; i<natoms;i++) printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);
 #endif
     
     max = 0.0;
@@ -148,40 +146,38 @@ int main(int argc, char **argv)
     }    
 #endif 
 #ifdef EAM
-    if (eam) {
 #ifdef LIMIT
-      printf("Punishment Constraints\n");
+    printf("Punishment Constraints\n");
 #ifdef STRESS
-      diff = 6*nconf;
+    diff = 6*nconf;
 #else
-      diff = 0;
+    diff = 0;
 #endif
-      for (i=3*natoms+nconf+diff; i<3*natoms+2*nconf+diff; i++){
-	sqr = SQR(force[i]);
-	max = MAX( max, sqr );
-	min = MIN( min, sqr );
-	printf("%d %f %f %f %f\n", i-(3*natoms+nconf+diff), sqr, 
-	       force[i]+force_0[i],
-	       force_0[i], 
-	       force[i]/force_0[i]);
-      }
-#endif    
-      printf("Dummy Constraints\n");
-      sqr = SQR(force[mdim-(2*ntypes+1)]);
+    for (i=3*natoms+nconf+diff; i<3*natoms+2*nconf+diff; i++){
+      sqr = SQR(force[i]);
       max = MAX( max, sqr );
       min = MIN( min, sqr );
-      printf("%d %f %f %f %f\n", 0, sqr, 
-	     force[mdim-(2*ntypes+1)]+force_0[mdim-(2*ntypes+1)],
-	     force_0[mdim-(2*ntypes+1)],
+      printf("%d %f %f %f %f\n", i-(3*natoms+nconf+diff), sqr, 
+	     force[i]+force_0[i],
+	     force_0[i], 
+	     force[i]/force_0[i]);
+    }
+#endif    
+    printf("Dummy Constraints\n");
+    sqr = SQR(force[mdim-(2*ntypes+1)]);
+    max = MAX( max, sqr );
+    min = MIN( min, sqr );
+    printf("%d %f %f %f %f\n", 0, sqr, 
+	   force[mdim-(2*ntypes+1)]+force_0[mdim-(2*ntypes+1)],
+	   force_0[mdim-(2*ntypes+1)],
 	   force[mdim-(2*ntypes+1)]/force_0[mdim-(2*ntypes+1)]);
-      for (i=2*ntypes; i>0; i--){
-	sqr = SQR(force[mdim-i]);
-	max = MAX( max, sqr );
-	min = MIN( min, sqr );
-	printf("%d %f %f %f %f\n", 2*ntypes+1-i, sqr, 
-	       force[mdim-i]+force_0[mdim-i],
-	       force_0[mdim-i],force[mdim-i]/force_0[mdim-i]);
-      }
+    for (i=2*ntypes; i>0; i--){
+      sqr = SQR(force[mdim-i]);
+      max = MAX( max, sqr );
+      min = MIN( min, sqr );
+      printf("%d %f %f %f %f\n", 2*ntypes+1-i, sqr, 
+	     force[mdim-i]+force_0[mdim-i],
+	     force_0[mdim-i],force[mdim-i]/force_0[mdim-i]);
     }
 #endif
     printf("av %e, min %e, max %e\n", tot/mdim, min, max);

@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.29 $
-* $Date: 2004/02/20 12:16:55 $
+* $Revision: 1.30 $
+* $Date: 2004/02/25 16:39:08 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -67,6 +67,8 @@ typedef struct {
   int    nr;
   real   r;
   vektor dist;
+  int    slot[2];
+  real   shift[2];
 } neigh_t;
 
 typedef struct {
@@ -147,6 +149,7 @@ EXTERN int    ntypes   INIT(1);          /* number of atom types */
 EXTERN int    natoms   INIT(0);          /* number of atoms */
 EXTERN int    nconf    INIT(0);	         /* number of configurations */
 EXTERN int    eam      INIT(0);	         /* EAM usage flag */
+EXTERN int    paircol  INIT(0);          /* How manc columns for pair pot.*/
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
 EXTERN real   *force_0 INIT(NULL);       /* the forces we aim at */
 EXTERN real   *coheng  INIT(NULL);       /* Cohesive energy for each config */
@@ -205,12 +208,18 @@ void powell_lsq(real *xi);
 void anneal(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real splint_ed(pot_table_t *pt, real *xi,int col, real r);
+real splint_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b);
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
+real splint_grad_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b);
 real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
+real splint_comb_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b, real *grad);
 #ifdef PARABEL
 real parab_comb_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad);
 real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r);
 real parab_ed(pot_table_t *pt,  real *xi, int col, real r);
+#endif
+#ifdef EAM
+real rescale(pot_table_t *pt, real upper);
 #endif
 #ifdef MPI
 void init_mpi(int *argc_pointer, char **argv);

@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2004/02/20 12:02:16 $
+* $Revision: 1.19 $
+* $Date: 2004/02/25 16:39:06 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -134,14 +134,14 @@ real make_box( void )
 void read_config(char *filename)
 {
   int     maxneigh=0, count;
-  int     i, j, k, ix, iy, iz;
+  int     i, j, k, ix, iy, iz,typ1,typ2,col,slot;
   FILE    *infile;
   char    msg[255];
   atom_t  *atom;
   neigh_t *neigh;
   stens   *stresses;
   vektor  d, dd;
-  real    r;
+  real    r,rr,istep,shift;
 #ifdef DEBUG
   real    *mindist;
   mindist = (real *) malloc(ntypes*ntypes*sizeof(real));
@@ -225,8 +225,10 @@ void read_config(char *filename)
               dd.y = d.y + ix * box_x.y + iy * box_y.y + iz * box_z.y;
               dd.z = d.z + ix * box_x.z + iy * box_y.z + iz * box_z.z;
               r = sqrt(SPROD(dd,dd));
-              if (r <= rcut[ atoms[i].typ * ntypes + atoms[j].typ ]) {
-		if (r <= rmin[atoms[i].typ * ntypes + atoms[j].typ ]){
+	      typ1=atoms[i].typ;
+	      typ2=atoms[j].typ;
+              if (r <= rcut[ typ1 * ntypes + typ2 ]) {
+		if (r <= rmin[typ1 * ntypes + typ2 ]){
 		  sprintf(msg,"Distance too short between atom %d and %d in conf %d",
 			  i,j,nconf);
 		  error(msg);
@@ -237,16 +239,58 @@ void read_config(char *filename)
                 dd.y /= r;
                 dd.z /= r;
                 k = atoms[i].n_neigh;
-                atoms[i].neigh[k].typ  = atoms[j].typ;
+                atoms[i].neigh[k].typ  = typ2;
 		atoms[i].neigh[k].nr   = j;
                 atoms[i].neigh[k].r    = r;
                 atoms[i].neigh[k].dist = dd;
                 atoms[i].n_neigh++;
 #ifdef DEBUG
 		/* Minimal distance check */
-		mindist[ntypes*atoms[i].typ +atoms[j].typ]=
-		  MIN(mindist[ntypes*atoms[i].typ +atoms[j].typ],r);
+		mindist[ntypes*typ1 +typ2]=
+		  MIN(mindist[ntypes*typ1 +typ2],r);
 #endif
+		
+		/* pre-compute index and shift into potential table */
+		/* pair potential */
+		col = (typ1 <= typ2) ? 
+		   typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1))/2)
+		   : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
+		rr    = r - pair_pot.begin[col];
+		if (rr < 0) {
+		  printf("%f %f %d\n",r,pair_pot.begin[col],col);
+		  fflush(stdout);
+		  error("short distance in config.c!");
+		}		
+		istep = pair_pot.invstep[col];
+		slot  = (int)( rr * istep);
+		shift = (rr - slot * pair_pot.step[col]) * istep;
+		slot  += pair_pot.first[col];
+		/* Check if we are at the last index */
+		if (slot>=pair_pot.last[col]) {
+		  slot--;shift+=1.0;
+		}
+		atoms[i].neigh[k].shift[0]  = shift;
+		atoms[i].neigh[k].slot[0]   = slot;
+#ifdef EAM
+		/* EAM part */
+		col=paircol+typ2;
+		rr    = r - pair_pot.begin[col];
+		if (rr < 0) {
+		  printf("%f %f %d\n",r,pair_pot.begin[col],col);
+		  fflush(stdout);
+		  error("short distance in config.c!");
+		}		
+		istep = pair_pot.invstep[col];
+		slot  = (int)( rr * istep);
+		shift = (rr - slot * pair_pot.step[col]) * istep;
+		slot  += pair_pot.first[col];
+		/* Check if we are at the last index */
+		if (slot>=pair_pot.last[col]) {
+		  slot--;shift+=1.0;
+		}
+		atoms[i].neigh[k].shift[1]  = shift;
+		atoms[i].neigh[k].slot[1]   = slot;
+#endif		
 	      }
 	    }
       }
@@ -265,9 +309,9 @@ void read_config(char *filename)
 				nconf cohesive energies,
 			        6*nconf stress tensor components*/ 
 #ifdef EAM  
-  if (eam) mdim+=1+2*ntypes;          /* 1+2*ntypes dummy constraints */
+  mdim+=1+2*ntypes;          /* 1+2*ntypes dummy constraints */
 #ifdef LIMIT
-  if (eam) mdim+=nconf;		/* nconf limiting constraints */
+  mdim+=nconf;		/* nconf limiting constraints */
 #endif LIMIT
 #endif EAM
   /* copy forces into single vector */
@@ -295,19 +339,17 @@ void read_config(char *filename)
     force_0[k++] = 0.;
 #endif STRESS
 #ifdef EAM
-  if (eam) {
 #ifdef LIMIT 
-   for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
+  for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
 #endif
-    force_0[k++]=DUMMY_WEIGHT * dummy_rho;		/* dummy constraints */
+  force_0[k++]=DUMMY_WEIGHT * dummy_rho;		/* dummy constraints */
 #ifdef LIMIT
-    force_0[k-1]=0.; 		/* ignore dummy_rho if LIMIT is used */
+  force_0[k-1]=0.; 		/* ignore dummy_rho if LIMIT is used */
 #endif
-    for (i=0; i<ntypes; i++) { 	/* constraints on phi */
-      force_0[k++]=DUMMY_WEIGHT * dummy_phi[i];}
-    for (i=0; i<ntypes;i++) {  /* constraint on U(n=0):=0 */
-      force_0[k++]=0.;}
-  }
+  for (i=0; i<ntypes; i++) { 	/* constraints on phi */
+    force_0[k++]=DUMMY_WEIGHT * dummy_phi[i];}
+  for (i=0; i<ntypes;i++) {  /* constraint on U(n=0):=0 */
+    force_0[k++]=0.;}
 #endif
 
 #ifdef DEBUG

@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2004/02/20 12:10:03 $
+* $Revision: 1.4 $
+* $Date: 2004/02/25 16:39:09 $
 *****************************************************************/
 
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 void print_scaling(pot_table_t *pt)
 {
   int i,col1;
-  int paircol=(ntypes*(ntypes+1))/2;
+  paircol=(ntypes*(ntypes+1))/2;
   printf("Constraint on rho:\n");
   printf("rho[%f]\t = %f \t for atom type %d\n", 
 	 dummy_r,

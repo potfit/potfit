@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2004/02/20 12:16:55 $
+* $Revision: 1.27 $
+* $Date: 2004/02/25 16:39:07 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -67,7 +67,6 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 {
   real tmpsum,sum=0.;
   int first,col1,g;
-  int paircol=(ntypes*(ntypes+1))/2;
   real grad0,y0,y1,x0,x1;
   /* Define variables globally if not OMP */
 #ifndef _OPENMP
@@ -77,6 +76,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
   real gradF,gradF2,grad2,r,eamforce;
   atom_t *atom2;
 #endif
+  real temp; 			/* dbg */
   vektor tmp_force;
   int h,k,i,l,j,typ1,typ2,col,config,stresses;
   real fnval, grad;
@@ -109,22 +109,20 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		grad0, 0.0, pair_pot.d2tab+first);
     }
 #ifdef EAM
-    if (eam) {
-      for (col1=paircol; col1<paircol+ntypes; col1++) { /* rho */
-	first=pair_pot.first[col1];
-	spline_ed(pair_pot.step[col1], xi+first, 
-		  pair_pot.last[col1]-first+1,
-		  1e30,0.0,pair_pot.d2tab+first);
-      }
-#ifndef PARABEL
-      for  (col1=paircol+ntypes; col1<paircol+2*ntypes; col1++) { /* F */
-	first=pair_pot.first[col1];
-	spline_ed(pair_pot.step[col1], xi+first, 
-		  pair_pot.last[col1]-first+1,
-		  1e30,1e30,pair_pot.d2tab+first);
-      }
-#endif
+    for (col1=paircol; col1<paircol+ntypes; col1++) { /* rho */
+      first=pair_pot.first[col1];
+      spline_ed(pair_pot.step[col1], xi+first, 
+		pair_pot.last[col1]-first+1,
+		1e30,0.0,pair_pot.d2tab+first);
     }
+#ifndef PARABEL
+    for  (col1=paircol+ntypes; col1<paircol+2*ntypes; col1++) { /* F */
+      first=pair_pot.first[col1];
+      spline_ed(pair_pot.step[col1], xi+first, 
+		pair_pot.last[col1]-first+1,
+		  1e30,1e30,pair_pot.d2tab+first);
+    }
+#endif
 #endif
 #ifndef MPI
     myconf=nconf;
@@ -184,7 +182,8 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	    neigh = atom->neigh+j;
 	    if (neigh->nr > i+cnfstart[h]) {
 	      typ2  = neigh->typ;
-	      col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1))/2)
+	      col = (typ1 <= typ2) ? 
+		typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1))/2)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
 #ifdef EAM
 
@@ -192,7 +191,9 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	      if (neigh->r < pair_pot.end[col]) {
 		/* not a real force: cohesive energy */
 		/* grad is calculated in the same step */
-		fnval = splint_comb_ed(&pair_pot,xi,col,neigh->r,&grad);
+		fnval = splint_comb_dir_ed(&pair_pot,xi,col,
+					   neigh->slot[0],neigh->shift[0],
+					   &grad);
 		forces[config] += fnval;
 		tmp_force.x  = neigh->dist.x * grad;
 		tmp_force.y  = neigh->dist.y * grad;
@@ -217,32 +218,34 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 #endif STRESS
 	      }
 #ifdef EAM
-	      if (eam) {
-		col2 = paircol+typ2;
-		if (typ2==typ1) {
-		  if (neigh->r < pair_pot.end[col2]) {
-		    fnval = splint_ed(&pair_pot,xi,col2,neigh->r);
-		    atom->rho += fnval;
+	      col2 = paircol+typ2;
+	      if (typ2==typ1) {
+		if (neigh->r < pair_pot.end[col2]) {
+		  fnval = splint_dir_ed(&pair_pot,xi,col2,
+					neigh->slot[1],neigh->shift[1]);
+		  atom->rho += fnval;
 #ifdef MPI
-		    conf_atoms[neigh->nr - firstatom ].rho += fnval;
+		  conf_atoms[neigh->nr - firstatom ].rho += fnval;
 #else MPI
-		    atoms[neigh->nr].rho += fnval;
+		  atoms[neigh->nr].rho += fnval;
 #endif MPI
-		  }
-		} else {
-		  col = paircol+typ1;
-		  if (neigh->r < pair_pot.end[col2])
-		    atom->rho += splint_ed(&pair_pot,xi,col2,neigh->r);
-		  if (neigh->r < pair_pot.end[col])
+		}
+	      } else {
+		col = paircol+typ1;
+		if (neigh->r < pair_pot.end[col2]) {
+		  atom->rho += splint_dir_ed(&pair_pot,xi,col2,
+					     neigh->slot[1],neigh->shift[1]);
+		}
+		if (neigh->r < pair_pot.end[col])
 #ifdef MPI
-		    conf_atoms[neigh->nr - firstatom].rho += 
-		      splint_ed(&pair_pot,xi,col,neigh->r);
+		  conf_atoms[neigh->nr - firstatom].rho += 
+		    splint_ed(&pair_pot,xi,col,neigh->r);
 #else MPI
-		  atoms[neigh->nr].rho += splint_ed(&pair_pot,xi,col,neigh->r);
+		atoms[neigh->nr].rho += 
+		  splint_ed(&pair_pot,xi,col,neigh->r);
 #endif MPI
-		}	
-	      }
-	    
+	      }	
+	      
 #endif
 	    }
 	  }
@@ -250,110 +253,106 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	  /* Returned force is difference between calculated and input force */
 	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
 #else
-	  if (!eam) {
-	    tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
-	  } else {
-	    col2=paircol+ntypes+typ1;
-	    if (atom->rho > pair_pot.end[col2]) {
+	  col2=paircol+ntypes+typ1;
+	  if (atom->rho > pair_pot.end[col2]) {
 #ifdef LIMIT
-	      forces[config+7*nconf]+=1000*SQR(atom->rho - pair_pot.end[col2]);
+	    forces[config+7*nconf]+=1000*SQR(atom->rho - pair_pot.end[col2]);
 #endif
 #ifndef PARABEL
-	      atom->rho = pair_pot.end[col2];
+	    atom->rho = pair_pot.end[col2];
 #endif
-	    }
+	  }
 /* rho too big... bad thing */
-	    if (atom->rho < pair_pot.begin[col2]) {
-	      /*  forces[config] += 1e10;  rho too small... really bad thing*/
+	  if (atom->rho < pair_pot.begin[col2]) {
+	    /*  forces[config] += 1e10;  rho too small... really bad thing*/
 #ifdef LIMIT
-	      forces[config+7*nconf]+=1000*SQR(pair_pot.begin[col2]-atom->rho);
+	    forces[config+7*nconf]+=1000*SQR(pair_pot.begin[col2]-atom->rho);
 #endif
 #ifndef PARABEL
-	      atom->rho = pair_pot.begin[col2];
+	    atom->rho = pair_pot.begin[col2];
 #endif
-	    }
-	  } 
+	  }
 #endif
 	}	/* first loop over atoms */
-
 #ifdef EAM
-	if (eam) {
-	  for (i=0; i<inconf[h]; i++) {
+	for (i=0; i<inconf[h]; i++) {
 #ifdef MPI
-	    atom = conf_atoms + i + cnfstart[h] - firstatom;
+	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 #else MPI
-	    atom = atoms + i + cnfstart[h];
+	  atom = atoms + i + cnfstart[h];
 #endif MPI
-	    typ1 = atom->typ;
-	    k    = 3*(cnfstart[h]+i);
-	    col  = paircol+ntypes+typ1; /* column of F */
+	  typ1 = atom->typ;
+	  k    = 3*(cnfstart[h]+i);
+	  col  = paircol+ntypes+typ1; /* column of F */
 #ifdef PARABEL
-	    fnval=parab_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
-	      - parab_ed(&pair_pot,xi,col,0.);
+	  fnval=parab_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
+	    - parab_ed(&pair_pot,xi,col,0.);
 #else
-	    fnval=splint_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
-	      - splint_ed(&pair_pot,xi,col,0.);
+	  fnval=splint_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
+	    - splint_ed(&pair_pot,xi,col,0.);
 #endif
-	    forces[config]+= fnval;
-	    for (j=0; j<atom->n_neigh; j++) {
-	      neigh = atom->neigh+j;
-	      if (neigh->nr > i+cnfstart[h]) {
-		typ2  = neigh->typ;
-		col2  = paircol+typ2;
-		r = neigh->r;
-		if ((r < pair_pot.end[col2]) || (r < pair_pot.end[col-ntypes])) {
-		  grad = (r<pair_pot.end[col2]) ? 
-		    splint_grad_ed(&pair_pot,xi,col2,r) : 0.;
+	  forces[config]+= fnval;
+	  for (j=0; j<atom->n_neigh; j++) {
+	    neigh = atom->neigh+j;
+	    if (neigh->nr > i+cnfstart[h]) {
+	      typ2  = neigh->typ;
+	      col2  = paircol+typ2;
+	      r = neigh->r;
+	      if ((r < pair_pot.end[col2]) || (r < pair_pot.end[col-ntypes])) {
+		grad = (r<pair_pot.end[col2]) ? 
+		  splint_grad_dir_ed(&pair_pot,xi,col2,neigh->slot[1],
+				     neigh->shift[1]) 
+		  : 0.;
+
 #ifdef PARABEL
 #ifdef MPI
-		  gradF2=parab_grad_ed(&pair_pot,xi,col2+ntypes,
-				       conf_atoms[neigh->nr-firstatom].rho);
+		gradF2=parab_grad_ed(&pair_pot,xi,col2+ntypes,
+				     conf_atoms[neigh->nr-firstatom].rho);
 #else
-		  gradF2=parab_grad_ed(&pair_pot,xi,col2+ntypes,
-				       atoms[neigh->nr].rho);
+		gradF2=parab_grad_ed(&pair_pot,xi,col2+ntypes,
+				     atoms[neigh->nr].rho);
 #endif MPI
 #else
 #ifdef MPI
-		  gradF2=splint_grad_ed(&pair_pot,xi,col2+ntypes,
-					conf_atoms[neigh->nr-firstatom].rho);
+		gradF2=splint_grad_ed(&pair_pot,xi,col2+ntypes,
+				      conf_atoms[neigh->nr-firstatom].rho);
 #else
-		  gradF2=splint_grad_ed(&pair_pot,xi,col2+ntypes,
-					atoms[neigh->nr].rho);
+		gradF2=splint_grad_ed(&pair_pot,xi,col2+ntypes,
+				      atoms[neigh->nr].rho);
 #endif MPI
 #endif PARABEL
-		  if (typ2 == typ1) 
-		    grad2=grad;
-		  else
-		    grad2 = (r < pair_pot.end[col-ntypes]) ? 
-		      splint_grad_ed(&pair_pot,xi,col-ntypes,r) : 0.;
-		  eamforce =  (grad * gradF + grad2 * gradF2) ;
-		  tmp_force.x  = neigh->dist.x * eamforce;
-		  tmp_force.y  = neigh->dist.y * eamforce;
-		  tmp_force.z  = neigh->dist.z * eamforce;
-		  forces[k  ] += tmp_force.x;
-		  forces[k+1] += tmp_force.y;
-		  forces[k+2] += tmp_force.z;
-		  l    = 3*neigh->nr;
-		  forces[l  ] -= tmp_force.x;
-		  forces[l+1] -= tmp_force.y;
-		  forces[l+2] -= tmp_force.z;
+		if (typ2 == typ1) 
+		  grad2=grad;
+		else
+		  grad2 = (r < pair_pot.end[col-ntypes]) ? 
+		    splint_grad_ed(&pair_pot,xi,col-ntypes,r) : 0.;
+		eamforce =  (grad * gradF + grad2 * gradF2) ;
+		tmp_force.x  = neigh->dist.x * eamforce;
+		tmp_force.y  = neigh->dist.y * eamforce;
+		tmp_force.z  = neigh->dist.z * eamforce;
+		forces[k  ] += tmp_force.x;
+		forces[k+1] += tmp_force.y;
+		forces[k+2] += tmp_force.z;
+		l    = 3*neigh->nr;
+		forces[l  ] -= tmp_force.x;
+		forces[l+1] -= tmp_force.y;
+		forces[l+2] -= tmp_force.z;
 #ifdef STRESS
-		  tmp_force.x        *=neigh->r;
-		  tmp_force.y        *=neigh->r;
-		  tmp_force.z        *=neigh->r;
-		  forces[stresses]   -= neigh->dist.x * tmp_force.x;
-		  forces[stresses+1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses+2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses+3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses+4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses+5] -= neigh->dist.z * tmp_force.x;
+		tmp_force.x        *=neigh->r;
+		tmp_force.y        *=neigh->r;
+		tmp_force.z        *=neigh->r;
+		forces[stresses]   -= neigh->dist.x * tmp_force.x;
+		forces[stresses+1] -= neigh->dist.y * tmp_force.y;
+		forces[stresses+2] -= neigh->dist.z * tmp_force.z;
+		forces[stresses+3] -= neigh->dist.x * tmp_force.y;
+		forces[stresses+4] -= neigh->dist.y * tmp_force.z;
+		forces[stresses+5] -= neigh->dist.z * tmp_force.x;
 #endif STRESS
-		}
 	      }
-	    } /* loop over neighbours */
-	    tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
-	  }	/* loop over atoms */
-	}	/* if eam is used */
+	    }
+	  } /* loop over neighbours */
+	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
+	}	/* loop over atoms */
 #endif
 	forces[config]*=(real) ENG_WEIGHT / (real) inconf[h]; 
 	forces[config]-=force_0[config];
@@ -375,7 +374,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       } /* loop over configurations */
     } /* parallel region */
 #ifdef EAM
-    if (eam && myid==0) {
+    if (myid==0) {
       forces[mdim-(2*ntypes+1)]= DUMMY_WEIGHT * 
 	splint_ed(&pair_pot,xi,paircol+DUMMY_COL_RHO,dummy_r)
 	- force_0[mdim-(2*ntypes+1)];
@@ -416,14 +415,13 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		forces+natoms*3+nconf,conf_len,conf_dist,MPI_STENS,
 		0,MPI_COMM_WORLD);
 #ifdef EAM
-    if (eam) {			/* punishment constraints */
+    /* punishment constraints */
 #ifdef LIMIT
       MPI_Gatherv(forces+natoms*3+7*nconf+firstconf,myconf,REAL, 
 		  forces+natoms*3+7*nconf,conf_len,conf_dist,REAL,
 		  0,MPI_COMM_WORLD);
       /* no need to pick up dummy constraints - are already @ root */
 #endif LIMIT
-    }
 #endif EAM
 #endif MPI
     if (myid==0) {
