@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.17 $
-* $Date: 2003/12/11 12:44:45 $
+* $Revision: 1.18 $
+* $Date: 2004/02/20 12:02:16 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -142,6 +142,11 @@ void read_config(char *filename)
   stens   *stresses;
   vektor  d, dd;
   real    r;
+#ifdef DEBUG
+  real    *mindist;
+  mindist = (real *) malloc(ntypes*ntypes*sizeof(real));
+  for (i=0;i<ntypes*ntypes;i++) mindist[i]=rcut[i];
+#endif
   
   nconf = 0;
 
@@ -237,6 +242,11 @@ void read_config(char *filename)
                 atoms[i].neigh[k].r    = r;
                 atoms[i].neigh[k].dist = dd;
                 atoms[i].n_neigh++;
+#ifdef DEBUG
+		/* Minimal distance check */
+		mindist[ntypes*atoms[i].typ +atoms[j].typ]=
+		  MIN(mindist[ntypes*atoms[i].typ +atoms[j].typ],r);
+#endif
 	      }
 	    }
       }
@@ -264,15 +274,15 @@ void read_config(char *filename)
   if (NULL==(force_0 = (real *) malloc( mdim * sizeof(real) ) ) )
     error("Cannot allocate forces");
   k = 0;
-  for (i=0; i<natoms; i++) {
+  for (i=0; i<natoms; i++) {	/* first forces */
     force_0[k++] = atoms[i].force.x;
     force_0[k++] = atoms[i].force.y;
     force_0[k++] = atoms[i].force.z;
   }
-  for (i=0; i<nconf; i++) {
+  for (i=0; i<nconf; i++) {	/* then cohesive energies */
     force_0[k++] = coheng[i] * (real) ENG_WEIGHT; }
 #ifdef STRESS
-  for (i=0; i<nconf; i++) {
+  for (i=0; i<nconf; i++) {	/* then stresses */
     force_0[k++] = stress[i].xx * (real) STRESS_WEIGHT;
     force_0[k++] = stress[i].yy * (real) STRESS_WEIGHT;
     force_0[k++] = stress[i].zz * (real) STRESS_WEIGHT;
@@ -280,7 +290,7 @@ void read_config(char *filename)
     force_0[k++] = stress[i].yz * (real) STRESS_WEIGHT;
     force_0[k++] = stress[i].zx * (real) STRESS_WEIGHT;
   }
-#else 
+#else                           
   for (i=0; i<6*nconf; i++)
     force_0[k++] = 0.;
 #endif STRESS
@@ -298,8 +308,21 @@ void read_config(char *filename)
     for (i=0; i<ntypes;i++) {  /* constraint on U(n=0):=0 */
       force_0[k++]=0.;}
   }
- 
 #endif
+
+#ifdef DEBUG
+  printf("Minimal Distances Matrix \n");
+  printf("Atom\t"); 
+  for (i=0;i<ntypes;i++) printf("%8d\t",i);
+  printf("with\n"); 
+  for (i=0;i<ntypes;i++) { 
+    printf("%d\t",i);
+    for (j=0;j<ntypes;j++)
+      printf("%f\t",mindist[ntypes*i+j]);
+    printf("\n");
+  }
+#endif
+
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
          maxneigh, MAXNEIGH );
