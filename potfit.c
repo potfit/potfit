@@ -52,11 +52,17 @@ int main(int argc, char **argv)
   calc_forces = calc_forces_pair;
 
   if (opt) powell_lsq(pair_pot.table);
+/*  for (i=0; i<pair_pot.ncols; i++) 
+      spline_ed(pair_pot.step[i],pair_pot.table+pair_pot.first[i],
+		pair_pot.last[i]-pair_pot.first[i]+1,
+		1e30,0,pair_pot.d2tab+pair_pot.first[i]);*/
+
+  force = (real *) malloc( 3 * natoms * sizeof(real) );
+  tot = calc_forces(pair_pot.table,force);
   write_pot_table( &pair_pot, endpot );
   write_pot_table_imd( &pair_pot, imdpot );
   if (plot) write_plotpot_pair(&pair_pot, plotfile);
-  force = (real *) malloc( 3 * natoms * sizeof(real) );
-  tot = calc_forces(pair_pot.table,force);
+
 
   max = 0.0;
   min = 100000.0;

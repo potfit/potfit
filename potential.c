@@ -98,8 +98,9 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 
   /* allocate the function table */
   pt->table = (real *) malloc(pt->len * sizeof(real));
+  pt->d2tab = (real *) malloc(pt->len * sizeof(real));
   pt->idx   = (int  *) malloc(pt->len * sizeof(int ));
-  if ((NULL==pt->table) || (NULL==pt->idx)) {
+  if ((NULL==pt->table) || (NULL==pt->idx) || (NULL==pt->d2tab)) {
     error("Cannot allocate memory for potential table");
   }
 
@@ -398,7 +399,7 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
 	  col2 = i * ntypes + j;
 	  r2 = r2begin[col2];
 	  for (k=0; k<imdpotsteps+5; k++) { 
-	      fprintf(outfile, "%.16e\n", pot3(pt, col1, sqrt(r2) ));
+	      fprintf(outfile, "%.16e\n", splint_ed(pt, col1, sqrt(r2) ));
 	      r2 += r2step[col2];
 	  }
 	  fprintf(outfile, "\n");
@@ -435,7 +436,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       r      = pt->begin[k];
       r_step = (pt->end[k] - pt->begin[k]) / (NPLOT-1);
       for (l=0; l<NPLOT; l++) {
-        fprintf( outfile, "%e %e\n", r, pot3(pt, k, r) );
+        fprintf( outfile, "%e %e\n", r, splint_ed(pt, k, r) );
         r += r_step;
       }
       fprintf( outfile, "%e %e\n\n\n", r, 0.0);

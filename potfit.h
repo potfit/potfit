@@ -40,6 +40,7 @@ typedef struct {
   int  idxlen;      /* number of changeable potential values */
   int  ncols;       /* number of columns */
   real *table;      /* the actual data */
+  real *d2tab;      /* second derivatives of table data for spline int */
   int  *idx;        /* indirect indexing */
 } pot_table_t;
 
@@ -106,7 +107,9 @@ void read_config(char*);
 void read_config2(char*);
 real calc_forces_pair(real*,real*);
 void powell_lsq(real *xi);
-
+void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
+real splint_ed(pot_table_t *pt, int col, real r);
+real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 
 
 
