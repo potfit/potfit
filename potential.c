@@ -398,7 +398,7 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
 	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
 	  col2 = i * ntypes + j;
 	  r2 = r2begin[col2];
-	  for (k=0; k<imdpotsteps+5; k++) { 
+	  for (k=0; k<=imdpotsteps; k++) { 
 	      fprintf(outfile, "%.16e\n", splint_ed(pt, col1, sqrt(r2) ));
 	      r2 += r2step[col2];
 	  }

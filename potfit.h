@@ -5,7 +5,7 @@
 #include <string.h>
 
 #define NRANSI
-#define MAXNEIGH 100
+#define MAXNEIGH 160
 
 /******************************************************************************
 *
