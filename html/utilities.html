@@ -31,13 +31,14 @@ by <em>potfit</em> to <a
 href="http://cms.mpi.univie.ac.at/vasp/">vasp</a> input file
 POSCAR.</p>
 <pre>
-Compilation: make force2poscar
+Compilation: make force2poscar [-DSTRESS]
 
 Usage: force2poscar input.force
 </pre>
 <p>
 The information is always written to a file called POSCAR residing in
-the local directory.</p>
+the local directory. Use compile option <tt>-DSTRESS</tt> if your
+force file includes stress tensor information.</p>
 
 <h2><a id="vasp2force" name="vasp2force">vasp2force.sh</a></h2>
 <p>Converts <a href="http://cms.mpi.univie.ac.at/vasp/">vasp</a>
