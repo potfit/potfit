@@ -6,13 +6,13 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.28 $
-* $Date: 2004/09/15 08:09:50 $
+* $Revision: 1.29 $
+* $Date: 2004/09/16 09:32:30 $
 *****************************************************************/
 
 /* should imd potentials be extrapolated? Set EXTEND >0 to extrapolate
    by EXTEND*(mean distance between points) units*/
-#define EXTEND 0. 		
+#define EXTEND 2. 		
 #define NPLOT 1000
 #ifndef POTSCALE
 #include "potfit.h"
@@ -854,7 +854,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   real *r2begin, *r2end, *r2step, r2,temp;
   int  i, j, k, m, m2, col1, col2;
 
-  sprintf(filename,"%s_phi.imd.pot",prefix);
+  sprintf(filename,"%s_phi.imd.pt",prefix);
   /* allocate memory */
   r2begin = (real *) malloc( ntypes * ntypes *sizeof(real) );
   r2end   = (real *) malloc( ntypes * ntypes *sizeof(real) );
@@ -922,7 +922,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   printf("IMD pair potential data written to %s\n", filename);
 #ifdef EAM
   /* write rho_r2 */
-  sprintf(filename,"%s_rho.imd.pot",prefix);
+  sprintf(filename,"%s_rho.imd.pt",prefix);
   outfile = fopen(filename,"w");
   if (NULL == outfile) {
     sprintf(msg,"Could not open file %s\n",filename);
@@ -964,7 +964,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fclose(outfile);
   printf("IMD electron transfer date written to %s\n", filename);
   /* write F_rho */
-  sprintf(filename,"%s_F.imd.pot",prefix);
+  sprintf(filename,"%s_F.imd.pt",prefix);
   outfile = fopen(filename,"w");
   if (NULL == outfile) {
     sprintf(msg,"Could not open file %s\n",filename);
@@ -1005,7 +1005,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	temp=splint_ne(pt, pt->table, col1, r2 );
 #endif
 #ifdef NEWSCALE
-        temp-=lambda[i]-r2;
+        temp-=lambda[i]*r2;
 #endif /* NEWSCALE */
 	fprintf(outfile, "%.16e\n", temp);
       }
