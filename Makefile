@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.25 $
-# $Date: 2004/03/17 13:41:13 $
+# $Revision: 1.26 $
+# $Date: 2004/03/23 09:12:33 $
 # 
 ############################################################################
 #
@@ -542,6 +542,10 @@ endif
 
 ifneq (,$(findstring parab,${MAKETARGET}))
 CFLAGS += -DPARABEL
+endif
+
+ifneq (,$(findstring dist,${MAKETARGET}))
+CFLAGS += -DPDIST
 endif
 
 # Substitute .o for .c to get the names of the object files

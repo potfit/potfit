@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2004/02/25 16:39:07 $
+* $Revision: 1.22 $
+* $Date: 2004/03/23 09:12:32 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -740,3 +740,84 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   fclose(outfile);
   printf("Potential plotting data written to %s\n", filename);
 }
+
+#ifdef PDIST
+/********************************************************************
+ *
+ * write_pairdist(pot_table_t *pt, char *filename) 
+ *    - write distribution function of function access 
+ * 
+ *
+ *******************************************************************/
+
+void write_pairdist(pot_table_t *pt, char *filename) {
+  int *freq;			/* frequency... */
+  int h,i,j,typ1,typ2,col;
+  real rr;
+  atom_t *atom;
+  neigh_t *neigh;
+  FILE *outfile;
+  char msg[255];
+
+  /* open file */
+  outfile = fopen(filename,"w");
+  if (NULL == outfile) {
+    sprintf(msg,"Could not open file %s\n",filename);
+    error(msg);
+  }
+
+
+  /* Verteilungsfeld initialisieren */
+  freq=(int*) malloc(ndimtot*sizeof(int));
+  for (i=0;i<ndimtot;i++) freq[i]=0;
+  
+  for (h=firstconf; h<firstconf+myconf; h++) {
+    for (i=0; i<inconf[h]; i++) {
+      atom = atoms + i + cnfstart[h];
+      typ1 = atom->typ;
+
+      /* Paarpotenzialfunktion */
+      for (j=0; j<atom->n_neigh; j++) {
+	neigh = atom->neigh+j;
+	typ2  = neigh->typ;
+	col = (typ1 <= typ2) ? 
+	  typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1))/2)
+	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
+	/* Die Arbeit wurde bereits gemacht */
+	if (neigh->r < pt->end[col]) 
+	  freq[neigh->slot[0]]++;
+#ifdef EAM
+	/* Transferfunktion */
+	col = paircol+typ2;
+	if (neigh->r < pair_pot.end[col])
+	  freq[neigh->slot[1]]++;
+      }
+
+      /* Finally: Einbettungsfunktion - hier muss Index festgestellt werden */
+      col  = paircol+ntypes+typ1; 
+      rr=atom->rho - pt->begin[col];
+      if (rr < 0) {printf("%f %f %d\n",atom->rho,pt->begin[col],col);error("short distance");}
+      j     = (int) (rr *  pt->invstep[col]) + pt->first[col];
+      freq[j]++;
+#endif EAM
+    }
+  }
+  /* OK, jetzt haben wir die Daten - schreiben wir sie raus */
+  j=0;
+  rr=pt->begin[0]+0.5*pt->step[0];
+  col=0;
+  for (i=0;i<ndimtot;i++) {
+    fprintf(outfile,"%f %d\n", rr, freq[i]);
+    if (i<pt->last[col]) {
+      rr+=pt->step[col];
+    } else {
+      col++;
+      i++;
+      rr=pt->begin[col]+0.5*pt->step[col];
+      fprintf(outfile, "\n\n");
+    }
+  }
+  fclose(outfile);
+  printf("Distribution data written to %s\n", filename);
+}      
+#endif

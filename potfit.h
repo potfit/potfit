@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.32 $
-* $Date: 2004/03/19 16:06:34 $
+* $Revision: 1.33 $
+* $Date: 2004/03/23 09:12:31 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -166,6 +166,7 @@ EXTERN char endpot[255];                 /* file for end potential */
 EXTERN char imdpot[255];                 /* file for IMD potential */
 EXTERN char config[255];                 /* file with atom configuration */
 EXTERN char plotfile[255];               /* file for plotting */
+EXTERN char distfile[255];	         /* file for distributions*/
 EXTERN char flagfile[255] INIT("potfit.break");
 				         /* break if file exists */
 EXTERN  char tempfile[255] INIT("\0");   /* backup potential file */
@@ -232,4 +233,7 @@ void shutdown_mpi(void);
 void broadcast_params(void);
 void dbb(int i);
 void potsync();
+#endif
+#ifdef PDIST
+void write_pairdist(pot_table_t *pt, char *filename);
 #endif

@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2004/03/19 16:07:26 $
+* $Revision: 1.24 $
+* $Date: 2004/03/23 09:12:31 $
 *****************************************************************/
 
 
@@ -113,7 +113,9 @@ int main(int argc, char **argv)
     
     write_pot_table_imd( &pair_pot, imdpot );
     if (plot) write_plotpot_pair(&pair_pot, plotfile);
-
+#ifdef PDIST
+    write_pairdist(&pair_pot,distfile);
+#endif
 #ifdef EAM
     printf("Local electron density rho\n");
     for (i=0; i<natoms;i++) printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);

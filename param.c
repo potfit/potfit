@@ -3,8 +3,8 @@
 *
 *  param.c: Read in parameter files (tag based)
 * 
-*  $Revision: 1.13 $
-*  $Date: 2004/03/19 16:06:03 $
+*  $Revision: 1.14 $
+*  $Date: 2004/03/23 09:12:32 $
 *
 ******************************************************************************/
 #ifndef POTSCALE
@@ -179,6 +179,10 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token,"plotfile")==0) {
 	getparam("plotfile",plotfile,PARAM_STR,1,255);
 	plot=1;
+    }
+    /* file for pair distribution */
+    else if (strcasecmp(token,"distfile")==0) {
+	getparam("distfile",distfile,PARAM_STR,1,255);
     }
     /* number of steps in IMD potential */
     else if (strcasecmp(token,"imdpotsteps")==0) {
