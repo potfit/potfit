@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2004/08/16 13:02:48 $
+* $Revision: 1.25 $
+* $Date: 2004/09/14 15:20:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -236,8 +236,9 @@ void read_config(char *filename)
 		if (r <= rmin[typ1 * ntypes + typ2 ]){
 		  printf("%d: %f %f %f\n", i-natoms, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
 		  printf("%d: %f %f %f\n", j-natoms, dd.x, dd.y, dd.z);
-		  sprintf(msg,"Distance %f too short between atom %d and %d in conf %d",
-			  r,i-natoms,j-natoms,nconf);
+		  sprintf(msg,
+ "Distance %f too short between atom %d (type %d) and %d (type %d) in conf %d",
+			  r,i-natoms, typ1, j-natoms, typ2,nconf);
 		  error(msg);
 		}
                 if (atoms[i].n_neigh==MAXNEIGH) 
