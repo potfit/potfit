@@ -45,7 +45,7 @@ int main(int argc, char **argv)
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
   read_config(config);
 
-  mdim=3*natoms;
+  mdim=3*natoms+nconf;
   ndim=pair_pot.idxlen;
   ndimtot=pair_pot.len;
   idx=pair_pot.idx;

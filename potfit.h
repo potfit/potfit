@@ -27,6 +27,7 @@ typedef struct {
   vektor pos;
   vektor force;
   neigh_t neigh[MAXNEIGH];
+  int    conf; 			/* Which configurarion... */
 } atom_t;
 
 typedef struct {
@@ -72,8 +73,11 @@ EXTERN int    ndimtot  INIT(0);
 EXTERN int    mdim     INIT(0);
 EXTERN int    ntypes   INIT(1);          /* number of atom types */
 EXTERN int    natoms   INIT(0);          /* number of atoms */
+EXTERN int    nconf    INIT(0);	         /* number of configurations */
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
 EXTERN real   *force_0 INIT(NULL);       /* the forces we aim at */
+EXTERN real   *coheng  INIT(NULL);       /* Cohesive energy for each config */
+EXTERN int    *inconf  INIT(NULL);       /* Nr. of atoms in each config */
 EXTERN char startpot[255];               /* file with start potential */
 EXTERN char endpot[255];                 /* file for end potential */
 EXTERN char imdpot[255];                 /* file for IMD potential */
@@ -118,6 +122,6 @@ real calc_forces_pair(real*,real*);
 void powell_lsq(real *xi);
 void anneal(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
-real splint_ed(pot_table_t *pt, int col, real r);
+real splint_ed(pot_table_t *pt, real *xi,int col, real r);
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 

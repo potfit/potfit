@@ -61,7 +61,7 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
  **** adapted to equidistant x[i]                                          ****
  **** Peter Brommer, ITAP, 2002-11-27                                      ****/
 
-real splint_ed(pot_table_t *pt, int col, real r)
+real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 {
   real a, b, istep, rr, p1, p2, d21, d22;
   int k;
@@ -76,9 +76,9 @@ real splint_ed(pot_table_t *pt, int col, real r)
   b     = (rr - k * pt->step[col]) * istep;
   k    += pt->first[col];
   a     = 1.0 - b;
-  p1    = pt->table[k];
+  p1    = xi[k];
   d21   = pt->d2tab[k++];
-  p2    = pt->table[k];
+  p2    = xi[k];
   d22   = pt->d2tab[k];
   
 

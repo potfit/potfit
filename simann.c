@@ -74,14 +74,15 @@ void anneal(real *xi)
     real width, height;		/* gaussian bump size */
     FILE *ff;			/* exit flagfile */
     int *naccept;		/* number of accepted changes in dir */
+    /* init starting temperature for annealing process */
+    T=anneal_temp;
+    if (T==0.) return; 		/* don't anneal if starttemp equal zero */
     Fvar=dvector(-NEPS+1,KMAX+5);
     v=dvector(0,ndim-1);
     xopt=dvector(0,ndimtot-1);
     xi2=dvector(0,ndimtot-1);
     fxi1=dvector(0,mdim-1);
     naccept=ivector(0,ndim-1);
-    /* init starting temperature for annealing process */
-    T=anneal_temp;
     /* init step vector and optimum vector */
     for (n=0;n<ndim;n++) {
 	v[n]=1.;
@@ -150,11 +151,14 @@ void anneal(real *xi)
 	for (n=1;n<=NEPS;n++) { 
 	  /* printf("%d %f %f",n,fabs(F-Fvar[k-n]),EPS); */
 	  if (fabs(F-Fvar[k-n])>EPS) loopagain=1; }
-	if ((F-Fopt)>EPS) loopagain=1;
+	/* if ((F-Fopt)>EPS) loopagain=1; */
 	if (loopagain) {
 	    i++;
+	}
+	else if ((F-Fopt)>EPS){
 	    for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
 	    F=Fopt;
+	    loopagain=1;
 	}
     } while (k<KMAX && loopagain);
     free_dvector(Fvar,-NEPS+1,KMAX+5);

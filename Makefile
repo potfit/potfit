@@ -16,6 +16,8 @@ POTFITOBJ = $(POTFITSRC:.c=.o)
 potfit: ${POTFITOBJ} ${POTFITHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTFITOBJ} -lm
 
+
+
 clean:
 	rm -f *.o *~ 
 

@@ -414,7 +414,7 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
 	  col2 = i * ntypes + j;
 	  r2 = r2begin[col2];
 	  for (k=0; k<=imdpotsteps; k++) { 
-	      fprintf(outfile, "%.16e\n", splint_ed(pt, col1, sqrt(r2) ));
+	      fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
 	      r2 += r2step[col2];
 	  }
 	  fprintf(outfile, "\n");
@@ -451,7 +451,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       r      = pt->begin[k];
       r_step = (pt->end[k] - pt->begin[k]) / (NPLOT-1);
       for (l=0; l<NPLOT; l++) {
-        fprintf( outfile, "%e %e\n", r, splint_ed(pt, k, r) );
+        fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,k, r) );
         r += r_step;
       }
       fprintf( outfile, "%e %e\n\n\n", r, 0.0);

@@ -11,9 +11,11 @@ void read_config_old(char *filename)
 {
   FILE    *infile;
   char    msg[255];
-  int     nconf=0, count, i, j, k, maxneigh=0;
+  int     count, i, j, k, maxneigh=0;
   atom_t  *atom;
   neigh_t *neigh;
+  
+  nconf=0;
 
   /* open file */
   infile = fopen(filename,"r");
@@ -121,7 +123,7 @@ void make_box( void )
 
 void read_config(char *filename)
 {
-  int     nconf=0, maxneigh=0, count;
+  int     maxneigh=0, count;
   int     i, j, k, ix, iy, iz;
   FILE    *infile;
   char    msg[255];
@@ -129,6 +131,8 @@ void read_config(char *filename)
   neigh_t *neigh;
   vektor  d, dd;
   real    r;
+  
+  nconf = 0;
 
   /* open file */
   infile = fopen(filename,"r");
@@ -146,6 +150,15 @@ void read_config(char *filename)
     /* increase memory for this many additional atoms */
     atoms = (atom_t *) realloc(atoms, (natoms+count) * sizeof(atom_t));
     if (NULL==atoms)   error("Cannot allocate memory for atoms");
+    coheng = (real *) realloc(coheng, (nconf+1) * sizeof (real));
+    if (NULL==coheng)  error("Cannot allocate memory for cohesive energy");
+    inconf = (int *) realloc(inconf, (nconf+1) * sizeof (int));
+    if (NULL==inconf)  error("Cannot allocate memory for atoms in conf");
+
+    inconf[nconf]=count;
+    /* read cohesive energy */
+    if (1!=fscanf(infile, "%lf\n", &(coheng[nconf])))
+	error("Configuration file without cohesive energy -- old format!");
 
     /* read the box vectors */
     fscanf( infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z );
@@ -161,6 +174,7 @@ void read_config(char *filename)
                     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), 
                     &(atom->force.x), &(atom->force.y), &(atom->force.z)))
         error("Corrupt configuration file");
+      atom->conf = nconf;
     }
 
     /* compute the neighbor table */
@@ -202,7 +216,7 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
-  mdim=3*natoms;  /* mdim is dimension of force vector */
+  mdim=3*natoms+nconf;  /* mdim is dimension of force vector */
   /* copy forces into single vector */
   if (NULL==(force_0 = (real *) malloc( mdim * sizeof(real) ) ) )
     error("Cannot allocate forces");
@@ -212,9 +226,13 @@ void read_config(char *filename)
     force_0[k++] = atoms[i].force.y;
     force_0[k++] = atoms[i].force.z;
   }
+  for (i=0; i<nconf; i++) {
+    force_0[k++] = coheng[i]; }
+
 
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
          maxneigh, MAXNEIGH );
   printf("Read %d configurations with a total of %d atoms\n", nconf, natoms);
+  return;
 }
