@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2004/11/17 17:28:48 $
+* $Revision: 1.28 $
+* $Date: 2004/12/03 17:33:25 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -365,7 +365,7 @@ void read_config(char *filename)
 				nconf cohesive energies,
 			        6*nconf stress tensor components*/ 
 #ifdef EAM  
-  mdim+=ntypes;          /* ntypes dummy constraints */
+  mdim+=2*ntypes;          /* ntypes dummy constraints */
   mdim+=nconf;		/* nconf limiting constraints */
 #endif /* EAM */
   /* copy forces into single vector */
@@ -394,7 +394,8 @@ void read_config(char *filename)
 #endif /* STRESS */
 #ifdef EAM
   for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
-  for (i=0; i<ntypes;i++) {  /* constraint on U(n=0):=0 */
+  for (i=0; i<2*ntypes;i++) {  /* constraint on U(n=0):=0 */
+                               /* XXX and U'(n_mean)=0  */
     force_0[k++]=0.;}
 #endif
 
