@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.1 $
-*  $Date: 2002/11/04 09:28:19 $
+*  $Revision: 1.2 $
+*  $Date: 2002/11/05 12:28:26 $
 *
 ******************************************************************************/
 
@@ -670,15 +670,15 @@ real pot3(pot_table_t *pt, int col, int inc, real r2)
   /* check for distances shorter than minimal distance in table */
   /* we need one extra value at the lower end for interpolation */
   r2a = MIN(r2,pt->end[col]);
-  r2a = r2a - pt->begin[col] + pt->step[col];
+  r2a = r2a - pt->begin[col];
   if (r2a < 0) {
     r2a = 0;
   }
 
   /* indices into potential table */
   istep = pt->invstep[col];
-  k     = (int) (r2a * istep);
-  chi   = (r2a - k * pt->step[col]) * istep;
+  k     = (int) (r2a * istep);  
+  chi   = (r2a - k * pt->step[col]) * istep; 
 
   /* factors for the interpolation */
   fac0 = -(1.0/6.0) * chi * (chi-1.0) * (chi-2.0);
@@ -691,15 +691,15 @@ real pot3(pot_table_t *pt, int col, int inc, real r2)
   dfac1 =        0.5 * ((3.0*chi-4.0)*chi-1.0);
   dfac2 =       -0.5 * ((3.0*chi-2.0)*chi-2.0);
   dfac3 =    1.0/6.0 * (3.0*chi*chi-1.0);
-
-  /* intermediate values */
+  
+  /* intermediate values */ 
   ptr = PTR_2D(pt->table, k, col, pt->maxsteps, inc);
-  p0  = *ptr; ptr += inc;
-  p1  = *ptr; ptr += inc;
-  p2  = *ptr; ptr += inc;
-  p3  = *ptr;
+  p1  = *ptr; ptr += inc;   /* value to left*/
+  p2  = *ptr; ptr += inc;   /* value to right */
+  p3  = *ptr; ptr -= 3* inc;   /*next right */
+  p0  = (k>0) ? *ptr : 2*p1-p2 ; /* next left*/
 
-  /* return the potential value */ 
+/* return the potential value */ 
   return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
 }
 
@@ -728,7 +728,9 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
 
   /* write info block */
   for (i=0; i<ncols; i++) {
-    fprintf(outfile, "%.16e %.16e %d\n", r_start[i], r_end[i], nsteps[i] );
+      r_step = (r_end[i] - r_start[i])/nsteps[i];
+    fprintf(outfile, "%.16e %.16e %d\n", 
+	    r_start[i], r_end[i]-r_step, nsteps[i] );
   }
   fprintf(outfile, "\n");
 
