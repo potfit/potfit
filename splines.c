@@ -6,8 +6,8 @@
  *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2004/02/25 16:39:10 $
+* $Revision: 1.11 $
+* $Date: 2004/06/23 11:58:30 $
 *****************************************************************/
 
 
@@ -323,7 +323,7 @@ void spline(real x[], real y[], int n, real yp1, real ypn, real y2[])
  **** still one-offset-vectors                                             ****
  **** Peter Brommer, ITAP, 2002-11-27                                      ***/
 
-void splint(real xa[], real ya[], real y2a[], int n, real x, real *y)
+real splint(real xa[], real ya[], real y2a[], int n, real x)
 {
 	void nrerror(char error_text[]);
 	int klo,khi,k;
@@ -340,7 +340,7 @@ void splint(real xa[], real ya[], real y2a[], int n, real x, real *y)
 	if (h == 0.0) nrerror("Bad xa input to routine splint");
 	a=(xa[khi]-x)/h;
 	b=(x-xa[klo])/h;
-	*y=a*ya[klo]+b*ya[khi]+
+	return a*ya[klo]+b*ya[khi]+
 	  ((a*a*a-a)*y2a[klo]+(b*b*b-b)*y2a[khi])*(h*h)/6.0;
 }
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
