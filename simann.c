@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2004/06/25 13:18:45 $
+* $Revision: 1.15 $
+* $Date: 2004/06/25 14:32:23 $
 *****************************************************************/
 
 
@@ -80,7 +80,7 @@ void makebump(real *x,real width,real height,int center)
 	}
     }
     for (i=1;i<=4.*width;i++){
-	if (idx[center-i>]=pair_pot.first[j]){
+	if (idx[center-i]>=pair_pot.first[j]){
 	    x[idx[center-i]]+=GAUSS((double) i / width) * height;
 	}
     }
