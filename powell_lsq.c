@@ -13,7 +13,6 @@
 *
 ******************************************************************************/
 
-#define POWELL
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -28,7 +27,7 @@
 #define TOOBIG 10000
 
 
-void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
+void powell_lsq(real *xi)
 {
    int i,j,k,m,n=0;                    /* Simple counting variables */
     real *force_xi;                /* calculated force, alt */
@@ -51,17 +50,20 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
     lineqsys=dmatrix(0,ndim-1,0,ndim-1);
     les_inverse=dmatrix(0,ndim-1,0,ndim-1);
     perm_indx=ivector(0,ndim-1);
-    delta=dvector(0,ndim-1);
-    delta_norm=dvector(0,ndim-1);
+    delta=dvector(0,ndimtot-1); /* ==0*/
+    delta_norm=dvector(0,ndimtot-1); /*==0*/
     fxi1=dvector(0,mdim-1);
     fxi2=dvector(0,mdim-1);
     force_xi=dvector(0,mdim-1);
     p=dvector(0,ndim-1);
     q=dvector(0,ndim-1);
-    force_calc=fcalc;
     
+
+    /* Clear vector delta */
+    for(k=0;k<ndimtot;k++) delta[k]=0;
+
     /* calculate the first vector */
-    F=(*force_calc)(xi,fxi1);
+    F=(*calc_forces)(xi,fxi1);
     
     printf("%d %f %f %f %f %f %f %d \n",
 	       m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
@@ -94,19 +96,19 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 	    /* get delta by multiplying q with the direction vectors */
             (void) matdotvec(d,q,delta,ndim,ndim);
             /* store delta */
-            (void) copy_vector(delta, delta_norm, ndim);
+            (void) copy_vector(delta, delta_norm, ndimtot);
 	    /* normalize it */
-	    (void) normalize_vector(delta_norm,ndim);
+	    (void) normalize_vector(delta_norm,ndimtot);
             
 	    F2=F;   /*shift F*/
 	    /* minimize F(xi) along vector delta, return new F */
-	    F=linmin_r(xi,delta,F,ndim,mdim,&xi1,&xi2,fxi1,fxi2,force_calc);
+	    F=linmin_r(xi,delta,F,ndim,mdim,&xi1,&xi2,fxi1,fxi2);
     
             j=0;temp2=0.;
             for (i=0;i<ndim;i++) 
                 if ((temp=fabs(p[i]*q[i]))>temp2) {j=i;temp2=temp;};
             /*set new d[j]*/
-            for (i=0;i<ndim;i++) d[i][j]=delta_norm[i];
+            for (i=0;i<ndim;i++) d[i][j]=delta_norm[idx[i]];
 	    
 	    /* Check for degeneracy in directions */
 	    for (i=0;i<ndim;i++) {
@@ -118,7 +120,7 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 	    }
 	    /*update gamma, but if fn returns 1, matrix will be sigular, 
 	    break inner loop and restart with new matrix*/
-            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,ndim,mdim)){
+            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,mdim)){
 		sprintf(errmsg,"Matrix gamma singular after step %d,\nrestarting inner loop\n",m);
 		warning(errmsg);
 		break;
@@ -182,10 +184,10 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
 /* Initialize gamma by calculating numerical derivatives    */
     force=dvector(0,m-1);
     for (i=0;i<n;i++) {           /*initialize gamma*/
-	xi[i]+=EPS;                /*increase xi[i]...*/
-	(void) (*force_calc)(xi,force);
+	xi[idx[i]]+=EPS;                /*increase xi[idx[i]]...*/
+	(void) (*calc_forces)(xi,force);
        	for (j=0;j<m;j++) gamma[j][i]=(force[j]-force_xi[j])/EPS;
-	xi[i]-=EPS;                /*...and decrease xi[i] again*/
+	xi[idx[i]]-=EPS;                /*...and decrease xi[idx[i]] again*/
     }
     free_dvector(force,0,m-1);
 /* scale gamma so that sum_j(gamma^2)=1                      */
@@ -211,7 +213,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
 *******************************************************************/
 
 int  gamma_update(real **gamma, real a, real b, real *fa, real *fb,
-		int j, int n, int m) {
+		int j, int m) {
     int i;
     real temp;
     real sum=0.;
@@ -274,7 +276,7 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
     	for (j=0;j<m;j++) p[k]-=gamma[j][k]*force_xi[j];
     }
     /* divide calculation of new line i and column i in 3 parts*/ 
-    for (k=0;k<i;k++) {            /*Part 1: All elements ki and ik with k<i*/
+    for (k=0;k<i;k++) {           /*Part 1: All elements ki and ik with k<i*/
         lineqsys[i][k]=0.;
 	lineqsys[k][i]=0.;
 	for (j=0;j<m;j++) {
@@ -283,11 +285,11 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
 	    lineqsys[k][i]+=temp;
         }
     }
-    lineqsys[i][i]=0.;              /*Part 2: Element ii */
+    lineqsys[i][i]=0.;             /*Part 2: Element ii */
     for (j=0;j<m;j++) {
 	lineqsys[i][i]+=SQR(gamma[j][i]);
     }
-    for (k=i+1;k<n;k++){	    /* Part 3: All elements ki and ik with k>i*/
+    for (k=i+1;k<n;k++){	   /* Part 3: All elements ki and ik with k>i*/
         lineqsys[i][k]=0;
 	lineqsys[k][i]=0;
 	for (j=0;j<m;j++) {
@@ -344,8 +346,8 @@ void copy_vector(real *a, real *b, int n) {
 void matdotvec(real **a, real *x, real *y, int n, int m){
     int i, j;
     for (i=0; i<n; i++) {
-	y[i]=0.;
-	for (j=0; j<m; j++) y[i]+=a[i][j]*x[j];
+	y[idx[i]]=0.;
+	for (j=0; j<m; j++) y[idx[i]]+=a[i][j]*x[j];
     }
     return;
 }

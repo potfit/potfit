@@ -5,9 +5,8 @@
 #define EXPOW extern      /* declare them extern otherwise */
 #define INPOW(data)         /* skip initialization otherwise */
 #endif
-EXPOW real (*force_calc)(real [],real[]);
 
-real brent_d(real ax, real bx, real cx, real fbx, real tol, 
+real brent_r(real ax, real bx, real cx, real fbx, real tol, 
 	real *xmin, real *xmin2, real *fxmin, real *fxmin2);
 
 void copy_matrix(real **a, real **b, int n, int m);
@@ -19,7 +18,7 @@ real f1dim_r(real x);
 int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n, int m);
 
 int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
-		int j, int n, int m);
+		int j, int m);
 		
 void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, 
 		real *p, int n, int m);
@@ -28,8 +27,7 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
 		real *p, int i, int n, int m);
 		
 real linmin_r(real p[], real xi[], real fxi1, int n, int m,
-	real *x1, real *x2, real *fret1, real *fret2, 
-	real (*func)(real [], real []));
+	real *x1, real *x2, real *fret1, real *fret2);
 
 void lubksb_r(real **a, int n, int *indx, real b[]);
 

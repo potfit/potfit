@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.3 $
-*  $Date: 2002/11/15 16:17:50 $
+*  $Revision: 1.4 $
+*  $Date: 2002/11/27 13:08:35 $
 *
 ******************************************************************************/
 
@@ -725,9 +725,8 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
 
   /* write info block */
   for (i=0; i<ncols; i++) {
-      r_step = (r_end[i] - r_start[i])/nsteps[i];
-    fprintf(outfile, "%.16e %.16e %d\n", 
-	    r_start[i], r_end[i]-r_step, nsteps[i] );
+    r_step = (r_end[i] - r_start[i]) / (nsteps[i] - 1);
+    fprintf( outfile, "%.16e %.16e %d\n", r_start[i], r_end[i], nsteps[i] );
   }
   fprintf(outfile, "\n");
 
@@ -737,7 +736,7 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
     for (j=i; j<ntypes; j++) {
       col    = i * ntypes + j; 
       r      = r_start[k];
-      r_step = (r_end[k] - r_start[k]) / nsteps[k];
+      r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
       for (l=0; l<nsteps[k]; l++) {
         fprintf(outfile, "%.16e\n", POTVAL(pt, col, ntypes*ntypes, r*r) );
         r += r_step;
@@ -774,10 +773,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     for (j=i; j<ntypes; j++) {
       col    = i * ntypes + j; 
       r      = r_start[k];
-      r_step = (r_end[k] - r_start[k]) / NPLOT;
+      r_step = (r_end[k] - r_start[k]) / (NPLOT - 1);
       for (l=0; l<NPLOT; l++) {
-        fprintf(outfile, "%e %e\n", 
-                r, POTVAL(pt, col, ntypes*ntypes, r*r) );
+        fprintf( outfile, "%e %e\n", r, POTVAL(pt, col, ntypes*ntypes, r*r) );
         r += r_step;
       }
       fprintf(outfile, "%e %e\n\n\n", r, 0.0);

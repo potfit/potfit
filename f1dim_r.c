@@ -3,29 +3,21 @@
 ***** adapted to Powell requirements (return vector ...) 2002-10-11       ***/
 /**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
 
-
-#define NRANSI
 #include "potfit.h"
 #include "nrutil_r.h"
 
-extern int ncom, mcom;
-extern real *pcom,*xicom;
-extern real (*nrfunc)(real [], real []);
+extern real *xicom, *delcom;
 
 real f1dim_r(real x)
 {
 	int j;
-	real f,*xt;
-	real *res;
+	static real *res = NULL, *xt = NULL;
 
-	xt=dvector(0,ncom-1);
-	res=dvector(0,mcom-1);
+	if (xt  == NULL) xt  = dvector(0,ndimtot-1);
+	if (res == NULL) res = dvector(0,mdim-1);
 
-	for (j=0;j<ncom;j++) xt[j]=pcom[j]+x*xicom[j];
-	f=(*nrfunc)(xt,res);
-	free_dvector(xt,0,ncom-1);
-	free_dvector(res,0,mcom-1);
-	return f;
+	for (j=0; j<ndimtot; j++) xt[j]=xicom[j]+x*delcom[j];
+	return (*calc_forces)(xt,res);
+
 }
-#undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
+

@@ -12,10 +12,7 @@
 #define ZEPS 1.0e-10
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
-extern int ncom,mcom;
-extern real *pcom,*xicom;
-extern real (*nrfunc)(real [], real []);
-
+extern real *xicom,*delcom;
 
 real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 		real *xmin2, real *fxmin, real *fxmin2)
@@ -24,9 +21,10 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 	int iter,j;
 	real a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
 	real e=0.0;   /*Distance moved on step before last */
-	real *vecu,*fxu;   /* Vector of location u */
-	fxu=dvector(0,mcom-1);
-	vecu=dvector(0,ncom-1);
+	static real *vecu = NULL, *fxu = NULL;   /* Vector of location u */
+
+	if (fxu  == NULL) fxu  = dvector(0,mdim-1);
+	if (vecu == NULL) vecu = dvector(0,ndimtot-1);
 	a=(ax < cx ? ax : cx);
 	b=(ax > cx ? ax : cx);
 	x=w=v=bx;
@@ -35,8 +33,6 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 		xm=0.5*(a+b);
 		tol2=2.0*(tol1=tol*fabs(x)+ZEPS);
 		if (fabs(x-xm) <= (tol2-0.5*(b-a))) {
-			free_dvector(vecu,0,ncom-1);
-			free_dvector(fxu,0,mcom-1);
 			*xmin=x;
 			*xmin2=w;
 			return fx;
@@ -62,12 +58,12 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 			d=CGOLD*(e=(x >= xm ? a-x : b-x));
 		}
 		u=(fabs(d) >= tol1 ? x+d : x+SIGN(tol1,d));
-		for (j=0;j<ncom;j++) vecu[j]=pcom[j]+u*xicom[j]; /*set vecu*/
-		fu=(*nrfunc)(vecu,fxu);
+		for (j=0;j<ndimtot;j++) vecu[j]=xicom[j]+u*delcom[j];/*set vecu*/
+		fu=(*calc_forces)(vecu,fxu);
 		if (fu <= fx) {
 			if (u >= x) a=x; else b=x;
 			SHFT(v,w,x,u)
-			for (j=0;j<mcom;j++) {      /* shifting fxmin2, */
+			for (j=0;j<mdim;j++) {      /* shifting fxmin2, */
 						    /* fxmin, fxu */
 				fxmin2[j]=fxmin[j];
 				fxmin[j]=fxu[j];
@@ -78,7 +74,7 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 			if (fu <= fw || w == x) {
 				v=w;
 				w=u;
-				for (j=0;j<mcom;j++) fxmin2[j]=fxu[j]; 
+				for (j=0;j<mdim;j++) fxmin2[j]=fxu[j]; 
 				fv=fw;
 				fw=fu;
 			} else if (fu <= fv || v == x || v == w) {
@@ -87,8 +83,6 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 			}
 		}
 	}
-	free_dvector(vecu,0,ncom-1);
-	free_dvector(fxu,0,mcom-1);
 	nrerror("Too many iterations in brent");
 	*xmin=x;
 	*xmin2=w;

@@ -4,7 +4,7 @@
 #include <math.h>
 #include <string.h>
 
-
+#define MAXNEIGH 100
 
 /******************************************************************************
 *
@@ -25,7 +25,8 @@ typedef struct {
   int    typ;
   int    n_neigh;
   vektor pos;
-  neigh_t *neigh;
+  vektor force;
+  neigh_t neigh[MAXNEIGH];
 } atom_t;
 
 typedef struct {
@@ -36,16 +37,16 @@ typedef struct {
   int  *first;      /* index of first entry */
   int  *last;       /* index of last entry */
   int  len;         /* total length of the table */
+  int  idxlen;      /* number of changeable potential values */
   int  ncols;       /* number of columns */
   real *table;      /* the actual data */
+  int  *idx;        /* indirect indexing */
 } pot_table_t;
 
-
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-static real sqrarg;
-#define SQR(a) ((sqrarg=(a)) == 0.0 ? 0.0 : sqrarg*sqrarg)
-
+#define MAX(a,b)   ((a) > (b) ? (a) : (b))
+#define MIN(a,b)   ((a) < (b) ? (a) : (b))
+#define SQR(a)     ((a)*(a))
+#define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
 
 /******************************************************************************
 *
@@ -62,8 +63,9 @@ static real sqrarg;
 #define INIT(data)         /* skip initialization otherwise */
 #endif
 EXTERN int    fcalls   INIT(0);
-EXTERN int    ndim;
-EXTERN int    mdim;
+EXTERN int    ndim     INIT(0);
+EXTERN int    ndimtot  INIT(0);
+EXTERN int    mdim     INIT(0);
 EXTERN int    ntypes   INIT(1);          /* number of atom types */
 EXTERN int    natoms   INIT(0);          /* number of atoms */
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
@@ -77,6 +79,11 @@ EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
 EXTERN int  opt INIT(0);                 /* optimization flag */
 EXTERN int plot INIT(0);                 /* plot output flag */
+EXTERN vektor box_x,  box_y,  box_z;
+EXTERN vektor tbox_x, tbox_y, tbox_z;
+EXTERN real *rcut INIT(NULL);
+EXTERN real (*calc_forces)(real*,real*);
+EXTERN int  *idx INIT(NULL);
 
 /******************************************************************************
 *
@@ -96,8 +103,9 @@ real grad3(pot_table_t*, real*, int, real);
 real pot2 (pot_table_t*, int, real);
 real pot3 (pot_table_t*, int, real);
 void read_config(char*);
-real calc_forces_pair(real[],real[]);
-void powell_lsq(real *xi, real (*fcalc)(real[],real[]));
+void read_config2(char*);
+real calc_forces_pair(real*,real*);
+void powell_lsq(real *xi);
 
 
 

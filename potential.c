@@ -12,7 +12,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   FILE *infile;
   char buffer[1024], msg[255], *res;
   int  have_format=0, end_header=0;
-  int  format, size, i, j, *nvals;
+  int  format, size, i, j, k, l, *nvals;
   real *val;
 
   /* open file */
@@ -98,22 +98,38 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 
   /* allocate the function table */
   pt->table = (real *) malloc(pt->len * sizeof(real));
-  if (NULL==pt->table) {
+  pt->idx   = (int  *) malloc(pt->len * sizeof(int ));
+  if ((NULL==pt->table) || (NULL==pt->idx)) {
     error("Cannot allocate memory for potential table");
   }
 
   /* input loop */
   val = pt->table;
+  k=0; l=0;
   for (i=0; i<ncols; i++) {
     for (j=0; j<nvals[i]; j++) {
       if (1>fscanf(infile, "%lf\n", val)) {
         sprintf(msg, "Premature end of potential file %s", filename);
         error(msg);
       } else val++;
+      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      else l++;
     }
   }
+  pt->idxlen = k;
 
   fclose(infile);
+
+  /* compute rcut */
+  rcut = (real *) malloc( ntypes * ntypes * sizeof(real) );
+  if (NULL==rcut) error("Cannot allocate rcut");
+  for (i=0; i<ntypes; i++)
+    for (j=0; j<ntypes; j++) {
+      k = (i <= j) ? i * ntypes + j - ((i * (i + 1))/2) 
+	           : j * ntypes + i - ((j * (j + 1))/2);
+      rcut[i * ntypes + j] = pt->end[k];
+    }
+
 }
 
 
@@ -178,14 +194,14 @@ real grad3(pot_table_t *pt, real *xi, int col, real r)
   /* intermediate values */
   if (k<=pt->last[col]) p0 = xi[k++]; else return 0.0;
   if (k<=pt->last[col]) p1 = xi[k++]; else return 0.0;
-  if (k<=pt->last[col]) p2 = xi[k++]; else { /* p2 = 0.0;  dp2 = 0.0; */
+  if (k<=pt->last[col]) p2 = xi[k++]; else return 0.0;
+  if (k<=pt->last[col]) p3 = xi[k  ]; else { /* p2 = 0.0;  dp2 = 0.0; */
       dfac0 = -0.25 * (3.0 * chi - 1.0) * (chi - 1.0);
       dfac1 =         (3.0 * chi + 1.0) * (chi - 1.0);
       /* dfac2 = -0.25 * (9.0 * chi + 5.0) * (chi - 1.0);*/
       /* dfac3 =  0.5  * (3.0 * (chi*chi - 1));*/
       return istep * (dfac0 * p0 + dfac1 * p1);
   }
-  p3  = (k<=pt->last[col])    ? xi[k  ] : 0.0; 
 
   /* factors for the interpolation of the 1. derivative */
   dfac0 = -(1.0/6.0) * ((3.0*chi-6.0)*chi+2.0);
@@ -260,14 +276,14 @@ real pot3(pot_table_t *pt, int col, real r)
   /* intermediate values */
   if (k<=pt->last[col]) p0 = pt->table[k++]; else return 0.0;
   if (k<=pt->last[col]) p1 = pt->table[k++]; else return 0.0;
-  if (k<=pt->last[col]) p2 = pt->table[k++]; else {/* p2 = 0.0; dp2 = 0.0 */
+  if (k<=pt->last[col]) p2 = pt->table[k++]; else return 0.0;
+  if (k<=pt->last[col]) p3 = pt->table[k  ]; else {/* p2 = 0.0; dp2 = 0.0 */
       fac0 = -0.25 * chi * SQR(chi-1.0);
       fac1 =         (chi*chi - 1) * (chi - 1);
       /* fac2 = -0.25 * chi * (chi + 1) * (3.0*chi - 5.0); */
       /* fac3 = -0.5  * (chi*chi - 1) * chi;           */ 
       return fac0 * p0 + fac1 * p1;
   }  /* go smoothly: interpolate with f=f'=0 at chi=1. */ 
-  p3  = (k<=pt->last[col])    ? pt->table[k  ] : 0.0; 
 
   /* factors for the interpolation */
   fac0 = -(1.0/6.0) * chi * (chi-1.0) * (chi-2.0);
@@ -363,7 +379,7 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
 	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
 	  col2 = i * ntypes + j;
 	  r2begin[col2] = SQR(pt->begin[col1]);
-	  r2end  [col2] = SQR(pt->end[col1] + pt->step[col1]);
+	  r2end  [col2] = SQR(pt->end[col1]);
 	  r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
 	  fprintf(outfile, "%.16e %.16e %.16e\n", 
 		  r2begin[col2], r2end[col2], r2step[col2]);
@@ -381,14 +397,13 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
 	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
 	  col2 = i * ntypes + j;
 	  r2 = r2begin[col2];
-	  for (k=0; k<imdpotsteps+1; k++) { /* +5 ??? */
+	  for (k=0; k<imdpotsteps+5; k++) { 
 	      fprintf(outfile, "%.16e\n", pot3(pt, col1, sqrt(r2) ));
 	      r2 += r2step[col2];
 	  }
-	  /* fprintf(outfile, "\n");*/
+	  fprintf(outfile, "\n");
       }
     }
-  fprintf(outfile, "\n");
   fclose(outfile);
 }
 
@@ -418,13 +433,12 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     for (j=i; j<ntypes; j++) {
       col    = i * ntypes + j; 
       r      = pt->begin[k];
-      r_step = (pt->end[k] + pt->step[k] - pt->begin[k]) / NPLOT;
+      r_step = (pt->end[k] - pt->begin[k]) / (NPLOT-1);
       for (l=0; l<NPLOT; l++) {
-        fprintf(outfile, "%e %e\n", 
-                r, pot3(pt, k, r) );
+        fprintf( outfile, "%e %e\n", r, pot3(pt, k, r) );
         r += r_step;
       }
-      fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+      fprintf( outfile, "%e %e\n\n\n", r, 0.0);
       k++;
     }
   fclose(outfile);

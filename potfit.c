@@ -41,15 +41,22 @@ int main(int argc, char **argv)
   int  i;
   read_parameters(argc, argv);
 
-  read_config(config);
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
-  ndim=pair_pot.len;  
-  if (opt) powell_lsq(pair_pot.table,calc_forces_pair);
+  read_config(config);
+
+  mdim=3*natoms;
+  ndim=pair_pot.idxlen;
+  ndimtot=pair_pot.len;
+  idx=pair_pot.idx;
+
+  calc_forces = calc_forces_pair;
+
+  if (opt) powell_lsq(pair_pot.table);
   write_pot_table( &pair_pot, endpot );
   write_pot_table_imd( &pair_pot, imdpot );
-  if (plot) write_plotpot_pair(&pair_pot, plotfile); 
+  if (plot) write_plotpot_pair(&pair_pot, plotfile);
   force = (real *) malloc( 3 * natoms * sizeof(real) );
-  tot = calc_forces_pair(pair_pot.table,force);
+  tot = calc_forces(pair_pot.table,force);
 
   max = 0.0;
   min = 100000.0;
@@ -57,7 +64,9 @@ int main(int argc, char **argv)
     sqr = SQR(force[i]);
     max = MAX( max, sqr );
     min = MIN( min, sqr );
+    
     printf("%d %f %f %f\n",i/3,sqr,force[i]+force_0[i],force_0[i]);
+    
   }
   printf("av %e, min %e, max %e\n", tot/(3*natoms), min, max);
   return 0;
