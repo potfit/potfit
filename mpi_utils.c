@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2004/03/17 13:40:26 $
+* $Revision: 1.3 $
+* $Date: 2004/03/19 16:05:48 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -219,14 +219,14 @@ void broadcast_params() {
 
 void potsync() {
   int firstcol,firstval,nvals;
-  firstcol=paircol+ntypes
+  firstcol=paircol+ntypes;
   /* Memory is allocated - just bcast that changed potential... */
   /* bcast begin/end/step/invstep of embedding energy  */
   MPI_Bcast(pair_pot.begin+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
   MPI_Bcast(pair_pot.end+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
   MPI_Bcast(pair_pot.step+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
   MPI_Bcast(pair_pot.invstep+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.first+firstcol,n,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(pair_pot.first+firstcol,ntypes,MPI_INT,0,MPI_COMM_WORLD);
   /* bcast table values of transfer fn. and embedding energy */
   firstval=pair_pot.first[paircol];
   nvals=ndimtot-firstval;
