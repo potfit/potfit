@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.2 $
-*  $Date: 2002/11/05 12:28:26 $
+*  $Revision: 1.3 $
+*  $Date: 2002/11/15 16:17:50 $
 *
 ******************************************************************************/
 
@@ -678,26 +678,23 @@ real pot3(pot_table_t *pt, int col, int inc, real r2)
   /* indices into potential table */
   istep = pt->invstep[col];
   k     = (int) (r2a * istep);  
+  if (k==0) return pot2(pt,col,inc,r2); /* parabolic fit if on left border */
   chi   = (r2a - k * pt->step[col]) * istep; 
+  k--;  
+
+
+  /* intermediate values */ 
+  ptr = PTR_2D(pt->table, k, col, pt->maxsteps, inc);
+  p0  = *ptr; ptr += inc;   /* leftmost value*/
+  p1  = *ptr; ptr += inc;   /* next left */
+  p2  = *ptr; ptr += inc;   /* first right */
+  p3  = *ptr;               /* rightmost value*/
 
   /* factors for the interpolation */
   fac0 = -(1.0/6.0) * chi * (chi-1.0) * (chi-2.0);
   fac1 =        0.5 * (chi*chi-1.0) * (chi-2.0);
   fac2 =       -0.5 * chi * (chi+1.0) * (chi-2.0);
   fac3 =  (1.0/6.0) * chi * (chi*chi-1.0);
-
-  /* factors for the interpolation of the derivative */
-  dfac0 = -(1.0/6.0) * ((3.0*chi-6.0)*chi+2.0);
-  dfac1 =        0.5 * ((3.0*chi-4.0)*chi-1.0);
-  dfac2 =       -0.5 * ((3.0*chi-2.0)*chi-2.0);
-  dfac3 =    1.0/6.0 * (3.0*chi*chi-1.0);
-  
-  /* intermediate values */ 
-  ptr = PTR_2D(pt->table, k, col, pt->maxsteps, inc);
-  p1  = *ptr; ptr += inc;   /* value to left*/
-  p2  = *ptr; ptr += inc;   /* value to right */
-  p3  = *ptr; ptr -= 3* inc;   /*next right */
-  p0  = (k>0) ? *ptr : 2*p1-p2 ; /* next left*/
 
 /* return the potential value */ 
   return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;

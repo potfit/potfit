@@ -170,20 +170,28 @@ real grad3(pot_table_t *pt, real *xi, int col, real r)
   /* indices into potential table */
   istep = pt->invstep[col];
   k     = (int) (rr * istep);
+  if (k==0) return grad2(pt,xi,col,r); /* parabolic fit if on left border */
   chi   = (rr - k * pt->step[col]) * istep;
   k    += pt->first[col];
+  k--;  
+
+  /* intermediate values */
+  if (k<=pt->last[col]) p0 = xi[k++]; else return 0.0;
+  if (k<=pt->last[col]) p1 = xi[k++]; else return 0.0;
+  if (k<=pt->last[col]) p2 = xi[k++]; else { /* p2 = 0.0;  dp2 = 0.0; */
+      dfac0 = -0.25 * (3.0 * chi - 1.0) * (chi - 1.0);
+      dfac1 =         (3.0 * chi + 1.0) * (chi - 1.0);
+      /* dfac2 = -0.25 * (9.0 * chi + 5.0) * (chi - 1.0);*/
+      /* dfac3 =  0.5  * (3.0 * (chi*chi - 1));*/
+      return istep * (dfac0 * p0 + dfac1 * p1);
+  }
+  p3  = (k<=pt->last[col])    ? xi[k  ] : 0.0; 
 
   /* factors for the interpolation of the 1. derivative */
   dfac0 = -(1.0/6.0) * ((3.0*chi-6.0)*chi+2.0);
   dfac1 =        0.5 * ((3.0*chi-4.0)*chi-1.0);
   dfac2 =       -0.5 * ((3.0*chi-2.0)*chi-2.0);
   dfac3 =    1.0/6.0 * (3.0*chi*chi-1.0);
-
-  /* intermediate values */
-  p1  = (k<=pt->last[col])    ? xi[k++] : 0.0;
-  p2  = (k<=pt->last[col])    ? xi[k++] : 0.0;
-  p3  = (k<=pt->last[col])    ? xi[k  ] : 0.0;
-  p0  = (k>=pt->first[col]+3) ? xi[k-3] : 2*p1-p2; 
 
   /* return the derivative */
   return istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
@@ -244,20 +252,28 @@ real pot3(pot_table_t *pt, int col, real r)
   /* indices into potential table */
   istep = pt->invstep[col];
   k     = (int) (rr * istep);
+  if (k==0) return pot2(pt,col,r); /* parabolic fit if on left border */
   chi   = (rr - k * pt->step[col]) * istep;
   k    += pt->first[col];
+  k--;
+
+  /* intermediate values */
+  if (k<=pt->last[col]) p0 = pt->table[k++]; else return 0.0;
+  if (k<=pt->last[col]) p1 = pt->table[k++]; else return 0.0;
+  if (k<=pt->last[col]) p2 = pt->table[k++]; else {/* p2 = 0.0; dp2 = 0.0 */
+      fac0 = -0.25 * chi * SQR(chi-1.0);
+      fac1 =         (chi*chi - 1) * (chi - 1);
+      /* fac2 = -0.25 * chi * (chi + 1) * (3.0*chi - 5.0); */
+      /* fac3 = -0.5  * (chi*chi - 1) * chi;           */ 
+      return fac0 * p0 + fac1 * p1;
+  }  /* go smoothly: interpolate with f=f'=0 at chi=1. */ 
+  p3  = (k<=pt->last[col])    ? pt->table[k  ] : 0.0; 
 
   /* factors for the interpolation */
   fac0 = -(1.0/6.0) * chi * (chi-1.0) * (chi-2.0);
   fac1 =        0.5 * (chi*chi-1.0) * (chi-2.0);
   fac2 =       -0.5 * chi * (chi+1.0) * (chi-2.0);
   fac3 =  (1.0/6.0) * chi * (chi*chi-1.0);
-
-  /* intermediate values */
-  p1  = (k<=pt->last[col])    ? pt->table[k++] : 0.0;
-  p2  = (k<=pt->last[col])    ? pt->table[k++] : 0.0;
-  p3  = (k<=pt->last[col])    ? pt->table[k  ] : 0.0;
-  p0  = (k>=pt->first[col]+3) ? pt->table[k-3] : 2*p1-p2; 
 
   /* return the potential value */
   return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
