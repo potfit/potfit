@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2004/04/13 14:10:10 $
+* $Revision: 1.13 $
+* $Date: 2004/06/23 11:51:40 $
 *****************************************************************/
 
 
@@ -72,15 +72,16 @@ void makebump(real *x,real width,real height,int center)
 {
     int i,j=0;
     /* find pot to which center belongs */
-    while (pair_pot.last[j]<center) j++;
+    while (pair_pot.last[j]<idx[center]) j++;
     for (i=0;i<=4.*width;i++){
-	if (center+i<pair_pot.last[j]){
-	    x[center+i]+=GAUSS((double) i / width)*height;
+/* using idx avoids moving fixed points */
+	if (idx[center+i]<=pair_pot.last[j]){ 
+	    x[idx[center+i]]+=GAUSS((double) i / width)*height;
 	}
     }
     for (i=1;i<=4.*width;i++){
 	if (center-i>=pair_pot.first[j]){
-	    x[center-i]+=GAUSS((double) i / width) * height;
+	    x[idx[center-i]]+=GAUSS((double) i / width) * height;
 	}
     }
     return;
@@ -141,7 +142,7 @@ void anneal(real *xi)
 	       width & hight distributed normally */
 	    width=fabs(normdist()); height=normdist()*v[h];
 	    for (n=0;n<ndimtot;n++) xi2[n]=xi[n];
-	    makebump(xi2,width,height,idx[h]);
+	    makebump(xi2,width,height,h);
 	    F2=(*calc_forces)(xi2,fxi1,0);
 	    if (F2<=F) {		/* accept new point */
 	      for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
