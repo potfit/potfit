@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2004/12/15 14:12:36 $
+* $Revision: 1.7 $
+* $Date: 2004/12/22 13:59:53 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -126,12 +126,12 @@ real rescale(pot_table_t *pt, real upper, int flag)
   /* dominante Seite bestimmen */
   sign = ( max>=-min ) ? 1 : -1;
   
-  /* Neue linke und rechte Grenze ermitteln, 60 Prozent zugeben... */
+  /* Neue linke und rechte Grenze ermitteln, 40 Prozent zugeben... */
   
   for (i=0;i<ntypes;i++) {
     j=paircol+ntypes+i;
-    left[i]=minrho[i]-0.6*pt->step[j];
-    right[i]=maxrho[i]+0.6*pt->step[j];
+    left[i]=minrho[i]-0.4*pt->step[j];
+    right[i]=maxrho[i]+0.4*pt->step[j];
     /* Ist Erweiterung nötig? */
     if ( flag ||
 	 minrho[i]-pt->begin[j] < 0. ||

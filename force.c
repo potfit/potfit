@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.37 $
-* $Date: 2004/12/15 14:12:35 $
+* $Revision: 1.38 $
+* $Date: 2004/12/22 13:59:53 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -443,7 +443,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 #else  /* WZERO: Dummy constraint not enforced */
 	forces[mdim-ntypes+g]=0. ;/* Free end... */
 #endif /* WZERO */
-	forces[mdim-2*ntypes+g]=100.*DUMMY_WEIGHT * /* constraints on U`(n) */
+	forces[mdim-2*ntypes+g]=DUMMY_WEIGHT * /* constraints on U`(n) */
 	  splint_grad(&pair_pot,xi,paircol+ntypes+g,
 		      .5*(pair_pot.begin[paircol+ntypes+g]+
 			  pair_pot.end[paircol+ntypes+g]))
