@@ -77,6 +77,10 @@ If none of these is specified, a serial executable is compiled.
 embedding function</td></tr>
 <tr><td>limit        </td><td>use limitation constraint for embedding density</td></tr>
 <tr><td>debug        </td><td>compile with debug support</td></tr>
+<tr><td>noresc       </td><td>do NOT rescale the potential if
+necessary</td></tr>
+<tr><td>fweight      </td><td>weigh the contribution of the forces
+according to their magnitude</td></tr>
 </table>
 
 <a id="imdsys" name="imdsys">
@@ -85,7 +89,7 @@ embedding function</td></tr>
 
 <p>
 Currently, the following values of the IMDSYS variable are supported
-(though only AthlonMP-icc has been thoroughly tested, most have not
+(though only the AthlonMP has been thoroughly tested, most have not
 been tested at all):</p>
 
 <table>
