@@ -3,8 +3,8 @@
 *
 *  param.c: Read in parameter files (tag based)
 * 
-*  $Revision: 1.14 $
-*  $Date: 2004/03/23 09:12:32 $
+*  $Revision: 1.15 $
+*  $Date: 2004/06/23 11:56:31 $
 *
 ******************************************************************************/
 #ifndef POTSCALE
@@ -272,4 +272,6 @@ void read_parameters(int argc, char **argv)
     exit(2);
   }
   read_paramfile(pf);
+  printf("Read parameters from file %s\n",argv[1]);
+
 }

@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2004/04/13 14:10:11 $
+* $Revision: 1.22 $
+* $Date: 2004/06/23 11:56:31 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -193,9 +193,9 @@ void read_config(char *filename)
     /* read stress tensor */
     stresses=stress+nconf;
     if (6!=fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
-		&(stresses->yy), &(stresses->zz), &(stresses->xy), 
-		&(stresses->yz), &(stresses->zx)))
-	error("No stresses given -- old format");
+		  &(stresses->yy), &(stresses->zz), &(stresses->xy), 
+		  &(stresses->yz), &(stresses->zx))) 
+      error("No stresses given -- old format");
 
 
     /* read the atoms */
@@ -228,8 +228,10 @@ void read_config(char *filename)
 	      typ2=atoms[j].typ;
               if (r <= rcut[ typ1 * ntypes + typ2 ]) {
 		if (r <= rmin[typ1 * ntypes + typ2 ]){
-		  sprintf(msg,"Distance too short between atom %d and %d in conf %d",
-			  i,j,nconf);
+		  printf("%d: %f %f %f\n", i-natoms, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
+		  printf("%d: %f %f %f\n", j-natoms, dd.x, dd.y, dd.z);
+		  sprintf(msg,"Distance %f too short between atom %d and %d in conf %d",
+			  r,i-natoms,j-natoms,nconf);
 		  error(msg);
 		}
                 if (atoms[i].n_neigh==MAXNEIGH) 
@@ -256,7 +258,9 @@ void read_config(char *filename)
 		   : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
 		rr    = r - pair_pot.begin[col];
 		if (rr < 0) {
-		  printf("%f %f %d\n",r,pair_pot.begin[col],col);
+		  printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,nconf,i-natoms);
+//		  printf("%f %f %f %f %f %f\n", d.x,d.y,d.z,coheng[nconf],stresses->xx,stresses->yz);
+			 
 		  fflush(stdout);
 		  error("short distance in config.c!");
 		}		
@@ -275,7 +279,7 @@ void read_config(char *filename)
 		col=paircol+typ2;
 		rr    = r - pair_pot.begin[col];
 		if (rr < 0) {
-		  printf("%f %f %d\n",r,pair_pot.begin[col],col);
+		  printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,typ1,typ2);
 		  fflush(stdout);
 		  error("short distance in config.c!");
 		}		
@@ -367,6 +371,6 @@ void read_config(char *filename)
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
          maxneigh, MAXNEIGH );
-  printf("Read %d configurations with a total of %d atoms\n", nconf, natoms);
+  printf("Read %d configurations with a total of %d atoms\nfrom file %s\n", nconf, natoms,filename);
   return;
 }
