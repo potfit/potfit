@@ -6,13 +6,10 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.31 $
-* $Date: 2004/11/24 13:27:41 $
+* $Revision: 1.32 $
+* $Date: 2004/12/03 17:41:26 $
 *****************************************************************/
 
-/* should imd potentials be extrapolated? Set EXTEND >0 to extrapolate
-   by EXTEND*(mean distance between points) units*/
-/* #define EXTEND 2. 		 */
 #define NPLOT 1000
 #ifndef POTSCALE
 #include "potfit.h"
@@ -69,12 +66,10 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 #ifdef EAM 
       if (size==ncols+2*ntypes) {
 	printf("Using EAM potential from file %s\n", filename);
-	eam=1;
       }
 #else
       if (size==ncols) {
 	printf("Using pair potential from file %s\n", filename);
-	eam=0;
       }
 #endif
       else {
@@ -121,7 +116,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   fclose(infile);
 
 
-
+#ifndef POTSCALE 		/* not needed in potscale program */
   /* compute rcut and rmin */
   rcut = (real *) malloc( ntypes * ntypes * sizeof(real) );
   rmin = (real *) malloc( ntypes * ntypes * sizeof(real) );
@@ -148,6 +143,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
       }
     }
 #endif
+#endif /* POTSCALE */
   paircol=(ntypes*(ntypes+1))/2;
   return;
 }
@@ -349,6 +345,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 
 }
 
+#ifndef POTSCALE 
+#ifdef OLDCODE
 /*****************************************************************************
 *
 *  Evaluate derivative of potential with quadratic interpolation. 
@@ -510,6 +508,7 @@ real pot3(pot_table_t *pt, int col, real r)
   /* return the potential value */
   return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
 }
+#endif /* OLDCODE */
 
 #ifdef PARABEL
 /*****************************************************************************
@@ -839,6 +838,7 @@ void write_pot_table4(pot_table_t *pt, char *filename)
   if (flag) fclose(outfile2);
 }
 
+#endif /* POTSCALE */
 
 /*****************************************************************************
 *
@@ -851,7 +851,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   FILE *outfile;
   char msg[255];
   char filename[255];
-  real *r2begin, *r2end, *r2step, r2,temp;
+  real *r2begin, *r2end, *r2step, r2,temp,root;
   int  i, j, k, m, m2, col1, col2;
 
   sprintf(filename,"%s_phi.imd.pt",prefix);
@@ -993,26 +993,38 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   for (i=0; i<ntypes; i++) {
     r2 = r2begin[i];
     col1=(ntypes*(ntypes+3))/2+i;
+    root=(pt->begin[col1]>0)?
+      pt->table[pt->first[col1]]/sqrt(pt->begin[col1]): 0.;
+    root+=(pt->end[col1]<0)?
+      pt->table[pt->last[col1]]/sqrt(-pt->end[col1]):0;
     for (k=0; k<=imdpotsteps; k++) { 
-      if (r2 < pt->begin[col1] )
-#ifdef NEWSCALE 
-	fprintf(outfile, "%.16e\n", -lambda[i]*r2); /* pad with zeroes */
-#else /* NEWSCALE */
-	fprintf(outfile, "%.16e\n", 0.); /* pad with zeroes */
-#endif  /* NEWSCALE */
+#ifdef WZERO
+      if (r2 < pt->begin[col1] && pt->begin[col1]>0 ) 
+	if (r2<=0)
+	  temp= 100*(root/fabs(root))*r2; /* steep decline */
+	else 
+	  temp=root*sqrt(r2); 	/* sqrt-like shape */
+      else if (r2 > pt->end[col1] && pt->end[col1]<0 )
+	if (r2>=0)
+	  temp= -100.*(root/fabs(root))*r2; /* steep decline */
+	else 
+	  temp=root*sqrt(-r2); 	/* sqrt-like shape */
       else {
 #ifdef PARABEL
 	temp= parab(pt, pt->table, col1, r2 );
 #else
 	temp=splint_ne(pt, pt->table, col1, r2 );
 #endif
+      }
+#else  /* WZERO */
+      temp=splint_ne(pt, pt->table, col1, r2 );
+#endif /* WZERO */
 #ifdef NEWSCALE
-        temp-=lambda[i]*r2;
+      temp-=lambda[i]*r2;
 #endif /* NEWSCALE */
-	fprintf(outfile, "%.16e\n", temp);
-      }
+      fprintf(outfile, "%.16e\n", temp);
       r2 += r2step[i];
-      }
+    }
     fprintf(outfile, "\n");
   }
   fclose(outfile);
