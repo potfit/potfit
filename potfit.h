@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 
+#define NRANSI
 #define MAXNEIGH 100
 
 /******************************************************************************
@@ -101,6 +102,7 @@ void read_paramfile(FILE*);
 void read_pot_table(pot_table_t*, char*, int);
 void write_pot_table(pot_table_t*, char*);
 void write_pot_table_imd(pot_table_t*, char*);
+void write_plotpot_pair(pot_table_t*, char*);
 real grad2(pot_table_t*, real*, int, real);
 real grad3(pot_table_t*, real*, int, real);
 real pot2 (pot_table_t*, int, real);
@@ -112,3 +114,4 @@ void powell_lsq(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real splint_ed(pot_table_t *pt, int col, real r);
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
+

@@ -29,7 +29,7 @@
 
 void powell_lsq(real *xi)
 {
-   int i,j,k,m,n=0;                    /* Simple counting variables */
+   int i,j,k,m=0,n=0;                    /* Simple counting variables */
     real *force_xi;                /* calculated force, alt */
     real **d;                      /* Direction vectors */
     real **gamma;                  /* Matrix of derivatives */

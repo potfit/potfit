@@ -1,6 +1,6 @@
 /***** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
 
-
+#define ANSI
 #if defined(__STDC__) || defined(ANSI) || defined(NRANSI) /* ANSI */
 
 #include <stdio.h>
