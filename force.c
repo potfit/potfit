@@ -36,8 +36,12 @@ real calc_forces_pair(real *xi, real *forces)
         forces[k+2] += neigh->dist.z * grad;
       }
     }
+    /* Returned force is difference between calculated and input force */
+    forces[k  ]  -= force_0[k  ];
+    forces[k+1]  -= force_0[k+1];
+    forces[k+2]  -= force_0[k+2];
+    sum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
   }
   fcalls++;			/* Increase function call counter */
-  for (i=0; i<3*natoms; i++) sum += SQR(forces[i]-force_0[i]);
   return sum;
 }
