@@ -21,3 +21,6 @@ neightab: neightab.c
 
 pottrans: pottrans.c
 	${CC} ${CFLAGS} -o ${BINDIR}/pottrans pottrans.c -lm
+
+force2poscar: force2poscar.c
+	${CC} ${CFLAGS} -o ${BINDIR}/force2poscar force2poscar.c
