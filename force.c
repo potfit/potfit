@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.35 $
-* $Date: 2004/11/18 16:38:58 $
+* $Revision: 1.36 $
+* $Date: 2004/12/03 17:42:35 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -122,15 +122,32 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 /* if we have parabolic interpolation, we don't need that */
     for  (col1=paircol+ntypes; col1<paircol+2*ntypes; col1++) { /* F */
       first=pair_pot.first[col1];
-      /* Steigung am linken Rand ist 0 */
+      /* Steigung  am linken Rand passt an Wurzelfunktion 
+       falls 0 nicht in domain(F), sonst natürlicher Spline */
       if (format==3)
 	spline_ed(pair_pot.step[col1], xi+first, 
 		  pair_pot.last[col1]-first+1,
-		  0.,1e30,pair_pot.d2tab+first);
+#ifdef WZERO
+		  ((pair_pot.begin[col1]<=0.) ? 1.e30
+		   : .5/xi[first]),
+		  ((pair_pot.end[col1]>=0.) ? 1e30
+		   : -.5/xi[pair_pot.last[col1]]),
+#else  /* WZERO: F is natural spline in any case */ 
+		  1.e30,1.e30,
+#endif /* WZERO */
+		   pair_pot.d2tab+first); /* XXX */
       else                   /* format == 4 ! */
 	spline_ne(pair_pot.xcoord+first,xi+first,
 		  pair_pot.last[col1]-first+1,
-		  0.,1e30,pair_pot.d2tab+first);
+#ifdef WZERO
+		  (pair_pot.begin[col1]<=0.?1.e30
+		   : .5/xi[first]),
+		  (pair_pot.end[col1]>=0.?1e30
+		   : -.5/xi[pair_pot.last[col1]]),
+#else  /* WZERO */
+		  1.e30,1.e30,
+#endif /* WZERO */
+		  pair_pot.d2tab+first);
     }
 #endif /* PARABEL */
 #endif /* EAM */
@@ -293,19 +310,14 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	  }
 	  
 	  /* embedding energy, embedding gradient */
-	  /* contribution to cohesive energy is difference between 
-	     F(n) and F(0) */
+	  /* contribution to cohesive energy is F(n) */
 #ifdef PARABEL
-	  fnval=parab_comb(&pair_pot,xi,col2,atom->rho,&atom->gradF)
-	    - parab(&pair_pot,xi,col2,0.);
+	  forces[config]+=parab_comb(&pair_pot,xi,col2,atom->rho,&atom->gradF);
 #else
-	  fnval=splint_comb(&pair_pot,xi,col2,atom->rho,&atom->gradF)
-	    - (pair_pot.begin[col2]<=0 ? 
-	       splint(&pair_pot,xi,col2,0.) :
-	       xi[pair_pot.first[col2]]);
+	  forces[config]+=
+	    splint_comb(&pair_pot,xi,col2,atom->rho,&atom->gradF);
 #endif
 	  
-	  forces[config]+= fnval;
 	  
 #endif /* EAM */
 	}	/* second loop over atoms */
@@ -406,7 +418,6 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     /* dummy constraints (global) */
 #ifdef EAM
     if (myid==0) {
-      col1=0;
 
       for (g=0;g<ntypes;g++) {
 
@@ -414,7 +425,13 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	forces[mdim-ntypes+g]= DUMMY_WEIGHT * /* constraints on U(n) */
 	  parab(&pair_pot,xi,paircol+ntypes+g,0.) 
 	  - force_0[mdim-ntypes+g];
+	forces[mdim-2*ntypes+g]=DUMMY_WEIGHT * /* constraints on U`(n) */
+	  parab_grad(&pair_pot,xi,paircol+ntypes+g,
+		     .5*(pair_pot.begin[paircol+ntypes+g]+
+			 pair_pot.end[paircol+ntypes+g]))
+	  -force_0[mdim-2*ntypes+g];
 #else
+#ifdef WZERO
 	if (pair_pot.begin[paircol+ntypes+g]<=0.)
 	  /* 0 in domain of U(n) */
 	  forces[mdim-ntypes+g]= DUMMY_WEIGHT * /* constraints on U(n) */
@@ -422,13 +439,19 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	    - force_0[mdim-ntypes+g];
 	else
 	  /* 0 not in domain of U(n) */
-	  forces[mdim-ntypes+g]=DUMMY_WEIGHT * 
-	    xi[pair_pot.first[paircol+ntypes+g]] 
-	    - force_0[mdim-ntypes+g];
+	  forces[mdim-ntypes+g]=0. ;/* Free end... */
+#else  /* WZERO: Dummy constraint not enforced */
+	forces[mdim-ntypes+g]=0. ;/* Free end... */
+#endif /* WZERO */
+	forces[mdim-2*ntypes+g]=100.*DUMMY_WEIGHT * /* constraints on U`(n) */
+	  splint_grad(&pair_pot,xi,paircol+ntypes+g,
+		      .5*(pair_pot.begin[paircol+ntypes+g]+
+			  pair_pot.end[paircol+ntypes+g]))
+	  -force_0[mdim-2*ntypes+g];
+
 #endif
 	tmpsum+= SQR(forces[mdim-ntypes+g]);
-
-	col1+=ntypes-g;
+	tmpsum+= SQR(forces[mdim-2*ntypes+g]);
       }	/* loop over types */
     } /* only root process */
 #endif
