@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2004/02/25 16:39:06 $
+* $Revision: 1.20 $
+* $Date: 2004/03/19 16:03:37 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -324,15 +324,15 @@ void read_config(char *filename)
     force_0[k++] = atoms[i].force.z;
   }
   for (i=0; i<nconf; i++) {	/* then cohesive energies */
-    force_0[k++] = coheng[i] * (real) ENG_WEIGHT; }
+    force_0[k++] = coheng[i] * eweight; }
 #ifdef STRESS
   for (i=0; i<nconf; i++) {	/* then stresses */
-    force_0[k++] = stress[i].xx * (real) STRESS_WEIGHT;
-    force_0[k++] = stress[i].yy * (real) STRESS_WEIGHT;
-    force_0[k++] = stress[i].zz * (real) STRESS_WEIGHT;
-    force_0[k++] = stress[i].xy * (real) STRESS_WEIGHT;
-    force_0[k++] = stress[i].yz * (real) STRESS_WEIGHT;
-    force_0[k++] = stress[i].zx * (real) STRESS_WEIGHT;
+    force_0[k++] = stress[i].xx * sweight;
+    force_0[k++] = stress[i].yy * sweight;
+    force_0[k++] = stress[i].zz * sweight;
+    force_0[k++] = stress[i].xy * sweight;
+    force_0[k++] = stress[i].yz * sweight;
+    force_0[k++] = stress[i].zx * sweight;
   }
 #else                           
   for (i=0; i<6*nconf; i++)

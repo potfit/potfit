@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.31 $
-* $Date: 2004/03/17 13:40:28 $
+* $Revision: 1.32 $
+* $Date: 2004/03/19 16:06:34 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -49,8 +49,8 @@
 
 #define DUMMY_WEIGHT 100.
 #endif
-#define ENG_WEIGHT 1.
-#define STRESS_WEIGHT 1.
+#define ENG_WEIGHT 10.
+#define STRESS_WEIGHT 10.
 
 /******************************************************************************
 *
@@ -134,6 +134,10 @@ EXTERN int *atom_dist;
 EXTERN int *conf_len;
 EXTERN int *conf_dist;
 #endif
+#ifdef STRESS
+EXTERN real sweight INIT(STRESS_WEIGHT);
+#endif
+EXTERN real eweight INIT(ENG_WEIGHT);
 EXTERN int myconf INIT(0.);
 EXTERN int myatoms INIT(0.);
 EXTERN int firstconf INIT(0.);
@@ -219,7 +223,8 @@ real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r);
 real parab_ed(pot_table_t *pt,  real *xi, int col, real r);
 #endif
 #ifdef EAM
-real rescale(pot_table_t *pt, real upper);
+real rescale(pot_table_t *pt, real upper,int flag);
+void embed_shift(pot_table_t *pt);
 #endif
 #ifdef MPI
 void init_mpi(int *argc_pointer, char **argv);

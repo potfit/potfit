@@ -3,8 +3,8 @@
 *
 *  param.c: Read in parameter files (tag based)
 * 
-*  $Revision: 1.12 $
-*  $Date: 2004/02/20 12:10:04 $
+*  $Revision: 1.13 $
+*  $Date: 2004/03/19 16:06:03 $
 *
 ******************************************************************************/
 #ifndef POTSCALE
@@ -225,6 +225,16 @@ void read_paramfile(FILE *pf)
       dummy_phi = (real *) malloc(ntypes * sizeof(real));
       getparam("dummy_phi",dummy_phi,PARAM_DOUBLE,ntypes,ntypes);
     }
+    /* Energy Weight */
+    else if (strcasecmp(token,"eng_weight")==0) {
+      getparam("eng_weight",&eweight,PARAM_DOUBLE,1,1);
+    }
+#ifdef STRESS
+    /* Energy Weight */
+    else if (strcasecmp(token,"stress_weight")==0) {
+      getparam("stress_weight",&sweight,PARAM_DOUBLE,1,1);
+    }
+#endif
     /* unknown tag */
     else {
       fprintf(stderr,"Unknown tag <%s> ignored!\n",token);
