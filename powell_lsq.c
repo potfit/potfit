@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2004/03/17 13:40:29 $
+* $Revision: 1.20 $
+* $Date: 2004/03/19 16:07:27 $
 *****************************************************************/
 
 /******************************************************************************
@@ -95,14 +95,16 @@ void powell_lsq(real *xi)
     if (i=gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
     /* perhaps rescaling helps? */
-      rescale(&pair_pot,1.);
+      rescale(&pair_pot,1.,1);
+      embed_shift(&pair_pot);
 #ifdef MPI
       /* wake other threads and sync potentials*/
-      calc_forces(pair_pot.table,force,2);
+      F=calc_forces(xi,fxi1,2);
 #endif MPI
+      i=gamma_init(gamma, d, xi, fxi1);
 #endif EAM
       /* try again */
-      if (i=gamma_init(gamma, d, xi, fxi1)) { 
+      if (i) { 
 	/* ok, now this is serious, better exit cleanly */
 	write_pot_table( &pair_pot, tempfile ); /*emergency writeout*/    
 	sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
@@ -127,9 +129,14 @@ void powell_lsq(real *xi)
 	     &worksize,iwork,&i);
       
 #ifdef DEBUG
-       printf("q0: %d %f %f %f %f %f %f %f %f\n",i, q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
+      printf("q0: %d %f %f %f %f %f %f %f %f\n",i, q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
 #endif
-
+      if (i>0 && i <= ndim) {
+	sprintf(errmsg,
+		"Linear equation system singular after step %d",m);
+	warning(errmsg);
+	break;
+      }	
       /* (b) get delta by multiplying q with the direction vectors */
       matdotvec(d,q,delta,ndim,ndim);
       /*     and store delta */
@@ -192,21 +199,27 @@ void powell_lsq(real *xi)
       break;
     }
 #ifdef EAM
-    /* Check for rescaling... */
-    if ( !(n % 3) ) {
-      rescale(&pair_pot,1.);
+    /* Check for rescaling... every fourth step */
+    if ( (n % 4)==0 ) {
+      temp=rescale(&pair_pot,1.,0);
+      /* Was rescaling necessary ?*/
+      if (temp!=0.) {
+	embed_shift(&pair_pot);
 #ifdef MPI
       /* wake other threads and sync potentials*/
-      calc_forces(pair_pot.table,force,2);
+      F=calc_forces(xi,fxi1,2);
 #endif MPI
+      }
     }
 #endif EAM
     /* write temp file  */
     if (tempfile != "\0" ) write_pot_table( &pair_pot, tempfile );
 
     /*End fit if whole series didn't improve F */
-  } while (F3-F>PRECISION/10.); /* outer loop */
-
+  } while ((F3-F>PRECISION/10.) || (F3-F<=0)); /* outer loop */
+#ifdef DEBUG
+  printf("Precision reached: %10g\n", F3-F);
+#endif 
   /* Free memory */
   free_dvector(delta,0,ndim-1);
   free_dvector(fxi1,0,mdim-1);

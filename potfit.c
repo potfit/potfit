@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2004/03/17 13:40:27 $
+* $Revision: 1.23 $
+* $Date: 2004/03/19 16:07:26 $
 *****************************************************************/
 
 
@@ -78,6 +78,8 @@ int main(int argc, char **argv)
       printf("phi[%f]\t = %f \t between atoms of type %d\n",
 	     dummy_r,dummy_phi[i],i);
     }
+    rescale(&pair_pot,1.,1); 	/* rescale now... */
+    embed_shift(&pair_pot);	/* and shift */
 #endif EAM
   }
 #ifdef MPI
@@ -103,7 +105,7 @@ int main(int argc, char **argv)
       pair_pot.last[i]-pair_pot.first[i]+1,
       1e30,0,pair_pot.d2tab+pair_pot.first[i]);*/
 
-    rescale(&pair_pot,1.);
+//    rescale(&pair_pot,1.);
     tot = calc_forces(pair_pot.table,force,0);
     write_pot_table( &pair_pot, endpot );
     printf("Potential written to file %s\n",endpot);
