@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.13 $
-* $Date: 2003/04/17 13:59:27 $
+* $Revision: 1.14 $
+* $Date: 2003/04/28 13:39:44 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -172,8 +172,17 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1))/2) 
 	           : j * ntypes + i - ((j * (j + 1))/2);
       rcut[i * ntypes + j] = pt->end[k];
-    } 
-
+    }
+#ifdef EAM
+  if (eam) {
+    for (i=0; i<ntypes; i++) {
+      for(j=0;j<ntypes; j++) {
+	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],pt->end[ntypes*(ntypes+1)+i]);
+	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],pt->end[ntypes*(ntypes+1)+j]);
+      }
+    }
+  }
+#endif
 }
 
 
@@ -458,10 +467,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
 	  col2 = i * ntypes + j;
 	  r2 = r2begin[col2];
-	  for (k=0; k<=imdpotsteps; k++) { 
+	  for (k=0; k<imdpotsteps; k++) { 
 	      fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
 	      r2 += r2step[col2];
 	  }
+	  fprintf(outfile,"%.16e\n",0.0);
 	  fprintf(outfile, "\n");
       }
     }
@@ -499,10 +509,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	col1 = (ntypes*(ntypes+1))/2+j;
 	col2 = i * ntypes + j;
 	r2 = r2begin[col2];
-	for (k=0; k<=imdpotsteps; k++) { 
+	for (k=0; k<imdpotsteps; k++) { 
 	  fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
 	  r2 += r2step[col2];
 	}
+	fprintf(outfile,"%.16e\n",0.0);
 	fprintf(outfile, "\n");
       }
     }

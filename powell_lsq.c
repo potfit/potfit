@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.13 $
-* $Date: 2003/04/17 13:59:28 $
+* $Revision: 1.14 $
+* $Date: 2003/04/28 13:39:45 $
 *****************************************************************/
 
 /******************************************************************************
@@ -159,8 +159,8 @@ void powell_lsq(real *xi)
 	    printf("Fit terminated prematurely in presence of break flagfile %s!\n",
 		   flagfile);
 	    break;
-	if (tempfile != "\0" ) write_pot_table( &pair_pot, tempfile );
 	}
+	if (tempfile != "\0" ) write_pot_table( &pair_pot, tempfile );
     /*End fit if whole series didn't improve F */
     } while (F3-F>PRECISION/10.);
 	/* Free memory */

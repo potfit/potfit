@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.6 $
-*  $Date: 2003/01/22 09:37:40 $
+*  $Revision: 1.7 $
+*  $Date: 2003/04/28 13:39:45 $
 *
 ******************************************************************************/
 
@@ -56,7 +56,7 @@
 
 /* type of potential */
 #define PAIR   1
-#define EAM    2
+#define EAM2    2
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -92,10 +92,10 @@ typedef struct {
 
 /* global variables */
 str255 infilename="\0", outfilename="\0", plotfilename="\0", 
-    plotpointfile="\0";
-int    ncols=0, ntypes=0, mode=1, *nsteps=NULL;
+  plotpointfile="\0", rho_r2_file="\0", f_rho_file="\0", phi_r2_file="\0";
+int    ncols=0, ntypes=0, mode=1, *nsteps=NULL, eam;
 real   *r_start=NULL, *r_end=NULL;
-pot_table_t pt;
+pot_table_t pt,embed_pt,rho_tab;
 
 /******************************************************************************
 *
@@ -299,7 +299,19 @@ void getparamfile(char *paramfname)
       /* file name for input potential */
       getparam(n,"infile",infilename,PARAM_STR,1,255);
     }
-    else if (strcasecmp(token,"outfile")==0) {
+    else if (strcasecmp(token,"atomic_e-density_file")==0) {
+      /* file name for input potential */
+      getparam(n,"atomic_e-density_file",rho_r2_file,PARAM_STR,1,255);
+    }
+    else if (strcasecmp(token,"embedding_energy_file")==0) {
+      /* file name for input potential */
+      getparam(n,"embedding_energy_file",f_rho_file,PARAM_STR,1,255);
+    }
+    else if (strcasecmp(token,"core_potential_file")==0) {
+      /* file name for input potential */
+      getparam(n,"core_potential_file",phi_r2_file,PARAM_STR,1,255);
+    }
+   else if (strcasecmp(token,"outfile")==0) {
       /* file name for output potential */
       getparam(n,"outfile",outfilename,PARAM_STR,1,255);
     }
@@ -764,6 +776,95 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
       fprintf(outfile, "%.16e\n\n",0.0);
       if (flag) fprintf(outfile2, "%.6e %.6e\n\n\n",r,0.0);
     }
+  
+  fclose(outfile);
+  if (flag) fclose(outfile2);
+}
+
+/*****************************************************************************
+*
+*  write eam potential table (format 3)
+*
+******************************************************************************/
+
+void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rho_tab, char *filename)
+{
+  FILE *outfile, *outfile2;
+  char msg[255];
+  int  i, j, k, l, col, flag=0;
+  real r, r_step;
+  if (plotpointfile != "\0") flag=1;
+  /* open file */
+  outfile = fopen(filename,"w");
+  if (NULL == outfile) {
+    sprintf(msg,"Could not open file %s\n",filename);
+    error(msg);
+  }
+  /* if needed: open file for plotpoints */
+  if (flag) {
+      outfile2 = fopen(plotpointfile,"w");
+      if (NULL == outfile) {
+	  sprintf(msg,"Could not open file %s\n",filename);
+	  error(msg);
+      }
+  }
+
+  /* write header */
+  fprintf(outfile, "#F 3 %d\n#E\n", ncols ); 
+
+  /* write info block */
+  for (i=0; i<ncols; i++) {
+    r_step = (r_end[i] - r_start[i]) / (nsteps[i] - 1);
+    fprintf( outfile, "%.16e %.16e %d\n", r_start[i], r_end[i], 
+	     nsteps[i] );
+  }
+  fprintf(outfile, "\n");
+
+  /* write data */
+  k = 0;
+  for (i=0; i<ntypes; i++) 
+    for (j=i; j<ntypes; j++) {
+      col    = i * ntypes + j; 
+      r      = r_start[k];
+      r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
+      for (l=0; l<nsteps[k]-1; l++) {
+        fprintf(outfile, "%.16e\n", POTVAL(pt, col, ntypes*ntypes, r*r) );
+	if (flag) 
+	  fprintf(outfile2, "%.6e %.6e\n",r,POTVAL(pt, col, ntypes*ntypes, r*r) );
+        r += r_step;
+      }
+      k++;
+      fprintf(outfile, "%.16e\n\n",0.0);
+      if (flag) fprintf(outfile2, "%.6e %.6e\n\n\n",r,0.0);
+    }
+  for (i=0; i<ntypes; i++) {
+    r      =  r_start[k];
+    r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
+    for (l=0; l<nsteps[k]-1; l++) {
+      fprintf(outfile, "%.16e\n", POTVAL(rho_tab, i, ntypes*ntypes, r*r) );
+      if (flag) 
+	fprintf(outfile2, "%.6e %.6e\n",r,POTVAL(rho_tab, i, ntypes*ntypes, r*r) );
+      r += r_step;
+    }
+    k++;
+    fprintf(outfile, "%.16e\n\n",0.0);
+    if (flag) fprintf(outfile2, "%.6e %.6e\n\n\n",r,0.0);
+  }
+
+  for (i=0; i<ntypes; i++) {
+    r      =  r_start[k];
+    r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
+    for (l=0; l<nsteps[k]; l++) {
+      fprintf(outfile, "%.16e\n", POTVAL(embed_pt, i, ntypes, r) );
+      if (flag) 
+	fprintf(outfile2, "%.6e %.6e\n",r,POTVAL(embed_pt, i, ntypes, r) );
+      r += r_step;
+    }
+    k++;
+    fprintf(outfile, "\n");
+    if (flag) fprintf(outfile2, "\n\n");
+  }
+
   fclose(outfile);
   if (flag) fclose(outfile2);
 }
@@ -802,6 +903,29 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       fprintf(outfile, "%e %e\n\n\n", r, 0.0);
       k++;
     }
+  if (eam) {
+    for (i=0; i<ntypes; i++) {
+      r=r_start[k];
+      r_step=(r_end[k] - r_start[k]) / (NPLOT - 1);
+      for (l=0;l<NPLOT;l++) {
+	fprintf(outfile, "%e %e\n", r, POTVAL(&rho_tab, i, ntypes*ntypes, r*r) );
+        r += r_step;
+      }
+      fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+      k++;
+    }
+    for (i=0; i<ntypes; i++) {
+      r=r_start[k];
+      r_step=(r_end[k] - r_start[k]) / (NPLOT - 1);
+      for (l=0;l<NPLOT;l++) {
+	fprintf(outfile, "%e %e\n", r, POTVAL(&embed_pt, i, ntypes, r) );
+        r += r_step;
+      }
+      fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+      k++;
+    }
+  }
+
   fclose(outfile);
 }
 
@@ -821,10 +945,24 @@ int main(int argc, char **argv)
   if (mode==PAIR) {
 
     /* read potential table */
-    if (2*ncols!=(ntypes+1)*ntypes) 
+    if (2*ncols==(ntypes+1)*ntypes) {
+      printf("Reading Pair Potential\n");
+      eam=0;
+    } else if (2*ncols==(ntypes+5)*ntypes){
+      printf("Reading EAM Potentials\n");
+      eam=1;
+    } else {
       error("ntypes and ncols are incompatible");
-    read_pot_table(&pt,infilename,ntypes*ntypes);
+    }
 
+
+    if (eam) {
+      read_pot_table(&pt,phi_r2_file,ntypes*ntypes);
+      read_pot_table(&embed_pt,f_rho_file,ntypes);
+      read_pot_table(&rho_tab,rho_r2_file,ntypes*ntypes);
+    } else {
+      read_pot_table(&pt,infilename,ntypes*ntypes);
+    }
     /* always set r_end from potential table */
     if (r_end==NULL) {
       r_end = (real *) malloc( ncols * sizeof(real) );
@@ -834,7 +972,12 @@ int main(int argc, char **argv)
     for (i=0; i<ntypes; i++)
       for (j=i; j<ntypes; j++)
         r_end[k++] = sqrt(pt.end[i*ntypes+j]);
-
+    if (eam) {
+      for (i=0; i<ntypes; i++)
+	r_end[k++] = sqrt(rho_tab.end[i]);
+      for (i=0; i<ntypes; i++)
+	r_end[k++] = embed_pt.end[i];
+    }
     /* set r_start, if not read in */
     if (r_start==NULL) {
       r_start = (real *) malloc( ncols * sizeof(real) );
@@ -850,9 +993,18 @@ int main(int argc, char **argv)
 	      r_start[k-1]+=(r_end[k-1]-r_start[k-1])/1000.;
 	  }
       }
+    if (eam) {
+      for (i=0; i<ntypes; i++)
+	r_start[k++] = sqrt(rho_tab.begin[i]);
+      for (i=0; i<ntypes; i++)
+	r_start[k++] = embed_pt.begin[i];
+    }
     
     /* write potential table */
-    write_pot_table_pair(&pt,outfilename);
+    if (eam)
+      write_pot_table_eam(&pt,&embed_pt,&rho_tab,outfilename);
+    else
+      write_pot_table_pair(&pt,outfilename);
     write_plotpot_pair(&pt,plotfilename);
   }
 

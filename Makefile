@@ -1,7 +1,7 @@
 
 CC     = icc
-CFLAGS = -O  -axK -ip -g -openmp #(icc)
-#CFLAGS = -O -g3  #gcc
+CFLAGS = -O  -axK -openmp -ip -g -DEAM#(icc)
+#CFLAGS = -g  -DEAM #gcc -O -g3
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
 POTFITSRC = f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c config.c param.c potential.c potfit.c splines.c simann.c
@@ -14,10 +14,11 @@ POTFITOBJ = $(POTFITSRC:.c=.o)
 #${POTFITOBJ}: $($@:.o=.c) ${POTFITHDR}
 #	${CC} ${CFLAGS} -c $($@:.o=.c)
 
+#potfit2: ${POTFITOBJ} ${POTFITHDR}
+#	${CC} ${CFLAGS} -o ${BINDIR}/potfit_i ${POTFITOBJ} -lm
+
 potfit: ${POTFITOBJ} ${POTFITHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTFITOBJ} -lm
-
-
 
 clean:
 	rm -f *.o *~ 

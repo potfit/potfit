@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2003/04/17 13:59:28 $
+* $Revision: 1.22 $
+* $Date: 2003/04/28 13:39:44 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -39,6 +39,7 @@ typedef struct { real x; real y; real z; } vektor;
 
 typedef struct {
   int    typ;
+  int    nr;
   real   r;
   vektor dist;
 } neigh_t;

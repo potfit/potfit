@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2003/04/17 13:59:26 $
+* $Revision: 1.11 $
+* $Date: 2003/04/28 13:39:43 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -213,6 +213,7 @@ void read_config(char *filename)
                 dd.z /= r;
                 k = atoms[i].n_neigh;
                 atoms[i].neigh[k].typ  = atoms[j].typ;
+		atoms[i].neigh[k].nr   = j;
                 atoms[i].neigh[k].r    = r;
                 atoms[i].neigh[k].dist = dd;
                 atoms[i].n_neigh++;
