@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2003/07/29 08:45:56 $
+* $Revision: 1.19 $
+* $Date: 2003/11/20 08:38:45 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -164,14 +164,17 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 
   fclose(infile);
 
-  /* compute rcut */
+  /* compute rcut and rmin */
   rcut = (real *) malloc( ntypes * ntypes * sizeof(real) );
+  rmin = (real *) malloc( ntypes * ntypes * sizeof(real) );
   if (NULL==rcut) error("Cannot allocate rcut");
+  if (NULL==rmin) error("Cannot allocate rmin");
   for (i=0; i<ntypes; i++)
     for (j=0; j<ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1))/2) 
 	           : j * ntypes + i - ((j * (j + 1))/2);
       rcut[i * ntypes + j] = pt->end[k];
+      rmin[i * ntypes + j] = pt->begin[k];
     }
 #ifdef EAM
   if (eam) {
@@ -181,6 +184,10 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 			     pt->end[(ntypes*(ntypes+1))/2+i]);
 	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],
 			     pt->end[(ntypes*(ntypes+1))/2+j]);
+	rmin[i*ntypes+j]=MAX(rmin[i*ntypes+j],
+			     pt->begin[(ntypes*(ntypes+1))/2+i]);
+	rmin[i*ntypes+j]=MAX(rmin[i*ntypes+j],
+			     pt->begin[(ntypes*(ntypes+1))/2+j]);
       }
     }
   }

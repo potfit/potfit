@@ -6,8 +6,8 @@
  *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2003/04/08 09:03:37 $
+* $Revision: 1.8 $
+* $Date: 2003/11/20 08:38:47 $
 *****************************************************************/
 
 
@@ -81,7 +81,7 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0) error("short distance!");
+  if (rr < 0) {printf("%f %f %d\n",r,pt->begin[col],col);error("short distance");}
 
   /* indices into potential table */
   istep = pt->invstep[col];

@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2003/07/29 08:47:50 $
+* $Revision: 1.16 $
+* $Date: 2003/11/20 08:38:44 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -206,6 +206,11 @@ void read_config(char *filename)
               dd.z = d.z + ix * box_x.z + iy * box_y.z + iz * box_z.z;
               r = sqrt(SPROD(dd,dd));
               if (r <= rcut[ atoms[i].typ * ntypes + atoms[j].typ ]) {
+		if (r <= rmin[atoms[i].typ * ntypes + atoms[j].typ ]){
+		  sprintf(msg,"Distance too short between atom %d and %d in conf %d",
+			  i,j,nconf);
+		  error(msg);
+		}
                 if (atoms[i].n_neigh==MAXNEIGH) 
                   error("Neighbor table is too small");
                 dd.x /= r;

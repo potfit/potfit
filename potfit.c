@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.17 $
-* $Date: 2003/07/29 08:45:55 $
+* $Revision: 1.18 $
+* $Date: 2003/11/20 08:38:46 $
 *****************************************************************/
 
 
@@ -56,14 +56,17 @@ int main(int argc, char **argv)
   srandom(seed);random();random();random();random();
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
   read_config(config);
-  printf("Dummy constraints are:\n");
-  printf("rho[%f]\t = %f \t for atom type %d\n", 
-	 dummy_r,dummy_rho,DUMMY_COL_RHO);
-  for (i=0;i<ntypes;i++) {
-    printf("phi[%f]\t = %f \t between atoms of type %d\n",
-	   dummy_r,dummy_phi[i],i);
+#ifdef EAM
+  if (eam) {
+    printf("Dummy constraints are:\n");
+    printf("rho[%f]\t = %f \t for atom type %d\n", 
+	   dummy_r,dummy_rho,DUMMY_COL_RHO);
+    for (i=0;i<ntypes;i++) {
+      printf("phi[%f]\t = %f \t between atoms of type %d\n",
+	     dummy_r,dummy_phi[i],i);
+    }
   }
-
+#endif
  /*   mdim=3*natoms+nconf; */
   ndim=pair_pot.idxlen;
   ndimtot=pair_pot.len;
@@ -89,8 +92,12 @@ int main(int argc, char **argv)
   write_pot_table_imd( &pair_pot, imdpot );
   if (plot) write_plotpot_pair(&pair_pot, plotfile);
 
-  printf("Local electron density rho\n");
-  for (i=0; i<natoms;i++) printf("%d %f\n",i,atoms[i].rho);
+#ifdef EAM
+  if (eam) {
+    printf("Local electron density rho\n");
+    for (i=0; i<natoms;i++) printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);
+  }
+#endif
 
   max = 0.0;
   min = 100000.0;
@@ -111,33 +118,35 @@ int main(int argc, char **argv)
 	   force_0[3*natoms+i],force[3*natoms+i]/force_0[3*natoms+i]);
   }
 #ifdef EAM
+  if (eam) {
 #ifdef LIMIT
-  printf("Punishment Constraints\n");
-  for (i=0; i<nconf; i++){
-   sqr = SQR(force[3*natoms+nconf+i]);
-    max = MAX( max, sqr );
-    min = MIN( min, sqr );
-    printf("%d %f %f %f %f\n", i, sqr, 
-	   force[3*natoms+nconf+i]+force_0[3*natoms+nconf+i],
-	   force_0[3*natoms+nconf+i], 
-	   force[3*natoms+nconf+i]/force_0[3*natoms+nconf+i]);
-  }
+    printf("Punishment Constraints\n");
+    for (i=0; i<nconf; i++){
+      sqr = SQR(force[3*natoms+nconf+i]);
+      max = MAX( max, sqr );
+      min = MIN( min, sqr );
+      printf("%d %f %f %f %f\n", i, sqr, 
+	     force[3*natoms+nconf+i]+force_0[3*natoms+nconf+i],
+	     force_0[3*natoms+nconf+i], 
+	     force[3*natoms+nconf+i]/force_0[3*natoms+nconf+i]);
+    }
 #endif    
-  printf("Dummy Constraints\n");
-  sqr = SQR(force[mdim-(ntypes+1)]);
-  max = MAX( max, sqr );
-  min = MIN( min, sqr );
-  printf("%d %f %f %f %f\n", 0, sqr, 
-	 force[mdim-(ntypes+1)]+force_0[mdim-(ntypes+1)],
-	 force_0[mdim-(ntypes+1)],
-	 force[mdim-(ntypes+1)]/force_0[mdim-(ntypes+1)]);
-  for (i=2*ntypes; i>0; i--){
-    sqr = SQR(force[mdim-i]);
+    printf("Dummy Constraints\n");
+    sqr = SQR(force[mdim-(2*ntypes+1)]);
     max = MAX( max, sqr );
     min = MIN( min, sqr );
-    printf("%d %f %f %f %f\n", 2*ntypes+1-i, sqr, 
-	   force[mdim-i]+force_0[mdim-i],
-	   force_0[mdim-i],force[mdim-i]/force_0[mdim-i]);
+    printf("%d %f %f %f %f\n", 0, sqr, 
+	   force[mdim-(2*ntypes+1)]+force_0[mdim-(2*ntypes+1)],
+	   force_0[mdim-(2*ntypes+1)],
+	   force[mdim-(2*ntypes+1)]/force_0[mdim-(2*ntypes+1)]);
+    for (i=2*ntypes; i>0; i--){
+      sqr = SQR(force[mdim-i]);
+      max = MAX( max, sqr );
+      min = MIN( min, sqr );
+      printf("%d %f %f %f %f\n", 2*ntypes+1-i, sqr, 
+	     force[mdim-i]+force_0[mdim-i],
+	     force_0[mdim-i],force[mdim-i]/force_0[mdim-i]);
+    }
   }
 #endif
   printf("av %e, min %e, max %e\n", tot/mdim, min, max);

@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2003/07/29 08:45:55 $
+* $Revision: 1.27 $
+* $Date: 2003/11/20 08:38:46 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -42,8 +42,9 @@
 /* #define DUMMY_R_PHI 2.7 */
 
 #define DUMMY_WEIGHT 100.
-#define ENG_WEIGHT 1.
 #endif
+#define ENG_WEIGHT 1.
+
 
 /******************************************************************************
 *
@@ -140,6 +141,7 @@ EXTERN int plot INIT(0);                 /* plot output flag */
 EXTERN vektor box_x,  box_y,  box_z;
 EXTERN vektor tbox_x, tbox_y, tbox_z;
 EXTERN real *rcut INIT(NULL);
+EXTERN real *rmin INIT(NULL);
 EXTERN real (*calc_forces)(real*,real*);
 EXTERN int  *idx INIT(NULL);
 EXTERN real   *dummy_phi INIT(NULL);     /* Dummy Constraints for PairPot */

@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2003/07/29 08:47:50 $
+* $Revision: 1.24 $
+* $Date: 2003/11/20 08:38:45 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -111,11 +111,11 @@ real calc_forces_pair(real *xi, real *forces)
   {
 #ifdef EAM
     vektor d;
-    int col2,l;
+    int col2;
     real gradF,gradF2,grad2,r,eamforce;
     atom_t *atom2;
 #endif
-    int h,k,i,j,typ1,typ2,col,config;
+    int h,k,i,l,j,typ1,typ2,col,config;
     real fnval, grad;
     atom_t *atom;
     neigh_t *neigh;
@@ -133,7 +133,9 @@ real calc_forces_pair(real *xi, real *forces)
 	forces[k  ] = -force_0[k  ];
 	forces[k+1] = -force_0[k+1];
 	forces[k+2] = -force_0[k+2];
+#ifdef EAM
         atoms[cnfstart[h]+i].rho=0.0;
+#endif
       }
       for (i=0; i<inconf[h]; i++) {
 	atom = atoms + i + cnfstart[h];
