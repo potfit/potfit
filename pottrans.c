@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.5 $
-*  $Date: 2003/01/02 13:48:08 $
+*  $Revision: 1.6 $
+*  $Date: 2003/01/22 09:37:40 $
 *
 ******************************************************************************/
 
@@ -765,6 +765,7 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
       if (flag) fprintf(outfile2, "%.6e %.6e\n\n\n",r,0.0);
     }
   fclose(outfile);
+  if (flag) fclose(outfile2);
 }
 
 /*****************************************************************************

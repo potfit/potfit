@@ -305,16 +305,27 @@ real pot3(pot_table_t *pt, int col, real r)
 
 void write_pot_table(pot_table_t *pt, char *filename)
 {
-  FILE *outfile;
+  FILE *outfile, *outfile2;
   char msg[255];
-  int  i, j;
+  int  i, j, flag=0;
   real r;
+
+  if (plotpointfile != "\0") flag=1;
 
   /* open file */
   outfile = fopen(filename,"w");
   if (NULL == outfile) {
     sprintf(msg,"Could not open file %s\n",filename);
     error(msg);
+  }
+
+  /* if needed: open file for plotpoints */
+  if (flag) {
+      outfile2 = fopen(plotpointfile,"w");
+      if (NULL == outfile) {
+	  sprintf(msg,"Could not open file %s\n",filename);
+	  error(msg);
+      }
   }
 
   /* write header */
@@ -332,11 +343,15 @@ void write_pot_table(pot_table_t *pt, char *filename)
     r = pt->begin[i];
     for (j=pt->first[i]; j<=pt->last[i]; j++) {
       fprintf(outfile, "%.16e\n", pt->table[j] );
+      if (flag) 
+	fprintf(outfile2, "%.6e %.6e\n",r,pt->table[j] );
       r += pt->step[i];
     }
     fprintf(outfile, "\n");
+    if (flag) fprintf(outfile2,"\n\n");
   }
   fclose(outfile);
+  if (flag) fclose(outfile2);
 }
 
 

@@ -79,6 +79,8 @@ EXTERN char config[255];                 /* file with atom configuration */
 EXTERN char plotfile[255];               /* file for plotting */
 EXTERN char flagfile[255] INIT("potfit.break");
 				         /* break if file exists */
+EXTERN char plotpointfile[255] INIT("\0");
+                                         /* write points for plotting */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
 EXTERN int  opt INIT(0);                 /* optimization flag */
