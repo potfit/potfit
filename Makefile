@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.27 $
-# $Date: 2004/04/13 14:10:12 $
+# $Revision: 1.28 $
+# $Date: 2004/07/14 14:40:39 $
 # 
 ############################################################################
 #
@@ -166,7 +166,7 @@ ifeq (AthlonMP-gcc3,${IMDSYS})
   OPT_FLAGS	+= -O -march=athlon-mp # -static
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
-  export        MPICH_CC MPICH_CLINKER
+  export        MPICH_CC #MPICH_CLINKER
 endif
 
 # Pentium 4 or Xeon, icc
@@ -199,7 +199,7 @@ ifeq (P4-gcc3,${IMDSYS})
   OPT_FLAGS	+= -O -march=pentium4 # -static
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
-  export        MPICH_CC MPICH_CLINKER
+  export        MPICH_CC # MPICH_CLINKER
 endif
 
 # Pentium III, icc
@@ -232,7 +232,7 @@ ifeq (P3-gcc3,${IMDSYS})
   OPT_FLAGS	+= -O -march=pentium3 # -static
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
-  export        MPICH_CC MPICH_CLINKER
+  export        MPICH_CC # MPICH_CLINKER
 endif
 
 # generic ia32 CPU, gcc 2.95 - slow!
@@ -576,7 +576,7 @@ powell_lsq.o: powell_lsq.c
 
 # How to link
 ${MAKETARGET}: ${OBJECTS} 
-	${CC} ${CFLAGS} ${CINCLUDE} -o $@ ${OBJECTS} ${LIBS}
+	${CC} -o $@ ${OBJECTS} ${LIBS}
 	${MV} $@ ${BIN_DIR}; rm -f $@
 
 # First recursion only set the MAKETARGET Variable
