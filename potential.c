@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2003/03/19 09:05:40 $
+* $Revision: 1.13 $
+* $Date: 2003/04/17 13:59:27 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -59,7 +59,15 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
         error(msg);
       }
       /* right number of columns? */
-      if (size!=ncols) {
+      if (size==ncols) {
+	printf("Using pair potential from file %s\n", filename);
+	eam=0;
+#ifdef EAM 
+      } else if (size==ncols+2*ntypes) {
+	printf("Using EAM potential from file %s\n", filename);
+	eam=1;
+#endif
+      } else {
         sprintf(msg,"Wrong number of data columns in file %s",filename);
         error(msg);
       }
@@ -96,7 +104,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   }
 
   /* read the info block of the function table */
-  for(i=0; i<ncols; i++) {
+  for(i=0; i<size; i++) {
     if (3>fscanf(infile,"%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i])) {
         sprintf(msg, "Premature end of potential file %s", filename);
         error(msg);
@@ -119,7 +127,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   /* input loop */
   val = pt->table;
   k=0; l=0;
-  for (i=0; i<ncols; i++) {
+  for (i=0; i<ncols; i++) {	/* read in pair pot */
     for (j=0; j<nvals[i]; j++) {
       if (1>fscanf(infile, "%lf\n", val)) {
         sprintf(msg, "Premature end of potential file %s", filename);
@@ -129,6 +137,29 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
       else l++;
     }
   }
+#ifdef EAM
+  if (eam) {
+    for (i=ncols; i<ncols+ntypes; i++) {	/* read in rho */
+      for (j=0; j<nvals[i]; j++) {
+	if (1>fscanf(infile, "%lf\n", val)) {
+	  sprintf(msg, "Premature end of potential file %s", filename);
+	  error(msg);
+	} else val++;
+	if (j<nvals[i]-1) pt->idx[k++] = l++;
+	else l++;
+      }
+    }
+    for (i=ncols+ntypes; i<ncols+2*ntypes; i++) {	/* read in F */
+      for (j=0; j<nvals[i]; j++) {
+	if (1>fscanf(infile, "%lf\n", val)) {
+	  sprintf(msg, "Premature end of potential file %s", filename);
+	  error(msg);
+	} else val++;
+	pt->idx[k++] = l++;
+      }
+    }
+  }
+#endif
   pt->idxlen = k;
 
   fclose(infile);
@@ -141,7 +172,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1))/2) 
 	           : j * ntypes + i - ((j * (j + 1))/2);
       rcut[i * ntypes + j] = pt->end[k];
-    }
+    } 
 
 }
 
@@ -373,13 +404,15 @@ void write_pot_table(pot_table_t *pt, char *filename)
 *
 ******************************************************************************/
 
-void write_pot_table_imd(pot_table_t *pt, char *filename)
+void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
   FILE *outfile;
   char msg[255];
+  char filename[255];
   real *r2begin, *r2end, *r2step, r2;
   int  i, j, k, m, m2, col1, col2;
 
+  sprintf(filename,"%s_phi.imd.pot",prefix);
   /* allocate memory */
   r2begin = (real *) malloc( ntypes * ntypes *sizeof(real) );
   r2end   = (real *) malloc( ntypes * ntypes *sizeof(real) );
@@ -433,6 +466,84 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
       }
     }
   fclose(outfile);
+#ifdef EAM
+  if (eam) {
+    /* write rho_r2 */
+    sprintf(filename,"%s_rho.imd.pot",prefix);
+    outfile = fopen(filename,"w");
+    if (NULL == outfile) {
+      sprintf(msg,"Could not open file %s\n",filename);
+      error(msg);
+    }
+
+    /* write header */
+    fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes ); 
+
+    /* write info block */
+    for (i=0; i<ntypes; i++){ 
+      for (j=0; j<ntypes; j++) {
+	col1 = (ntypes*(ntypes+1))/2+j;
+	col2 = i * ntypes + j;
+	r2begin[col2] = SQR(pt->begin[col1]);
+	r2end  [col2] = SQR(pt->end[col1]);
+	r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
+	fprintf(outfile, "%.16e %.16e %.16e\n", 
+		r2begin[col2], r2end[col2], r2step[col2]);
+      }
+    }
+    fprintf(outfile, "\n");
+
+    /* write data */
+    for (i=0; i<ntypes; i++) {
+      for (j=0; j<ntypes; j++) {
+	col1 = (ntypes*(ntypes+1))/2+j;
+	col2 = i * ntypes + j;
+	r2 = r2begin[col2];
+	for (k=0; k<=imdpotsteps; k++) { 
+	  fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
+	  r2 += r2step[col2];
+	}
+	fprintf(outfile, "\n");
+      }
+    }
+    fclose(outfile);
+    /* write F_rho */
+    sprintf(filename,"%s_F.imd.pot",prefix);
+    outfile = fopen(filename,"w");
+    if (NULL == outfile) {
+      sprintf(msg,"Could not open file %s\n",filename);
+      error(msg);
+    }
+
+    /* write header */
+    fprintf(outfile, "#F 2 %d\n#E\n", ntypes); 
+
+    /* write info block */
+    for (i=0; i<ntypes; i++){ 
+      col1=(ntypes*(ntypes+3))/2+i;
+      r2begin[i] = pt->begin[col1];
+      r2end  [i] = pt->end[col1];
+      r2step [i] = (r2end[i] - r2begin[i]) / imdpotsteps;
+      fprintf(outfile, "%.16e %.16e %.16e\n", 
+	      r2begin[i], r2end[i], r2step[i]);
+    }
+    fprintf(outfile, "\n");
+
+    /* write data */
+    for (i=0; i<ntypes; i++) {
+      r2 = r2begin[i];
+      col1=(ntypes*(ntypes+3))/2+i;
+      for (k=0; k<=imdpotsteps; k++) { 
+	fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, r2 ));
+	r2 += r2step[i];
+      }
+      fprintf(outfile, "\n");
+    }
+    fclose(outfile);
+
+  }
+#endif
+
 }
 
 /*****************************************************************************
@@ -469,5 +580,19 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       fprintf( outfile, "%e %e\n\n\n", r, 0.0);
       k++;
     }
+#ifdef EAM
+  if (eam) {
+    j=k;
+    for (i=j;i<j+2*ntypes;i++){
+      r=pt->begin[i];
+      r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
+      for (l=0;l<NPLOT;l++) {
+        fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
+        r += r_step;
+      }
+      fprintf(outfile,"%e %e\n\n\n", r, 0.0);
+    }
+  }
   fclose(outfile);
+#endif
 }

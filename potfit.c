@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2003/04/04 09:29:14 $
+* $Revision: 1.13 $
+* $Date: 2003/04/17 13:59:27 $
 *****************************************************************/
 
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
   read_config(config);
 
-  mdim=3*natoms+nconf;
+ /*   mdim=3*natoms+nconf; */
   ndim=pair_pot.idxlen;
   ndimtot=pair_pot.len;
   idx=pair_pot.idx;
@@ -97,6 +97,15 @@ int main(int argc, char **argv)
     printf("%d %f %f %f\n", i, sqr, force[3*natoms+i]+force_0[3*natoms+i],
 	   force_0[3*natoms+i]);
   }
-  printf("av %e, min %e, max %e\n", tot/(3*natoms), min, max);
+  printf("Dummy Constraints\n");
+  for (i=2; i>=1; i--){
+    sqr = SQR(force[mdim-i]);
+    max = MAX( max, sqr );
+    min = MIN( min, sqr );
+    printf("%d %f %f %f\n", 2-i, sqr, force[mdim-i]+force_0[mdim-i],
+	   force_0[mdim-i]);
+  }
+
+  printf("av %e, min %e, max %e\n", tot/mdim, min, max);
   return 0;
 }

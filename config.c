@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2003/04/10 12:43:35 $
+* $Revision: 1.10 $
+* $Date: 2003/04/17 13:59:26 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -229,7 +229,12 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
-  mdim=3*natoms+nconf;  /* mdim is dimension of force vector */
+  mdim=3*natoms+nconf;       /* mdim is dimension of force vector 
+				3*natoms are real forces, 
+				nconf cohesive energies, */ 
+#ifdef EAM  
+  if (eam) mdim+=2;          /* 2 dummy constraints */
+#endif EAM
   /* copy forces into single vector */
   if (NULL==(force_0 = (real *) malloc( mdim * sizeof(real) ) ) )
     error("Cannot allocate forces");
@@ -241,8 +246,12 @@ void read_config(char *filename)
   }
   for (i=0; i<nconf; i++) {
     force_0[k++] = coheng[i]; }
-
-
+#ifdef EAM
+  if (eam) {
+    force_0[k++]=DUMMY_RHO;		/* dummy constraints */
+    force_0[k++]=DUMMY_PHI;
+  }
+#endif
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
          maxneigh, MAXNEIGH );

@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2003/04/10 12:43:36 $
+* $Revision: 1.13 $
+* $Date: 2003/04/17 13:59:28 $
 *****************************************************************/
 
 /******************************************************************************
@@ -83,7 +83,8 @@ void powell_lsq(real *xi)
 	m=0;
 	/* Init gamma */
     	if (i=gamma_init(gamma, d, xi, fxi1, ndim, mdim)) {
-	    sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
+	  write_pot_table( &pair_pot, tempfile ); /*emergency writeout*/    
+	  sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
 		    i-1);
 	    error(errmsg);
 	}

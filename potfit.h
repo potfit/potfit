@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2003/04/10 12:43:36 $
+* $Revision: 1.21 $
+* $Date: 2003/04/17 13:59:28 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -17,9 +17,16 @@
 #ifdef OMP
 #include <omp.h>
 #endif
-
 #define NRANSI
 #define MAXNEIGH 160
+#ifdef EAM
+#define DUMMY_RHO 1.0
+#define DUMMY_PHI 0.0
+#define DUMMY_COL_RHO 0
+#define DUMMY_COL_PHI 0
+#define DUMMY_R_RHO 2.5
+#define DUMMY_R_PHI 2.5
+#endif
 
 /******************************************************************************
 *
@@ -43,6 +50,9 @@ typedef struct {
   vektor force;
   neigh_t neigh[MAXNEIGH];
   int    conf; 			/* Which configurarion... */
+#ifdef EAM
+  real   rho;			/* embedding electron density */
+#endif
 } atom_t;
 
 typedef struct {
@@ -89,6 +99,7 @@ EXTERN int    mdim     INIT(0);
 EXTERN int    ntypes   INIT(1);          /* number of atom types */
 EXTERN int    natoms   INIT(0);          /* number of atoms */
 EXTERN int    nconf    INIT(0);	         /* number of configurations */
+EXTERN int    eam      INIT(0);	         /* EAM usage flag */
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
 EXTERN real   *force_0 INIT(NULL);       /* the forces we aim at */
 EXTERN real   *coheng  INIT(NULL);       /* Cohesive energy for each config */
