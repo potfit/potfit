@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.17 $
-* $Date: 2004/07/29 09:13:16 $
+* $Revision: 1.18 $
+* $Date: 2004/12/03 17:45:21 $
 *****************************************************************/
 
 
@@ -190,7 +190,9 @@ void anneal(real *xi)
 	  temp=rescale(&pair_pot,1.,0);
 	  /* Was rescaling necessary ?*/
 	  if (temp!=0.) {
-	    embed_shift(&pair_pot);
+#ifdef WZERO
+//	    embed_shift(&pair_pot);
+#endif /* WZERO */
 #ifdef MPI
 	    /* wake other threads and sync potentials*/
 	    F=(*calc_forces)(xi,fxi1,2);

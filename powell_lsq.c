@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2004/07/29 09:13:15 $
+* $Revision: 1.24 $
+* $Date: 2004/12/03 17:45:22 $
 *****************************************************************/
 
 /******************************************************************************
@@ -99,7 +99,9 @@ void powell_lsq(real *xi)
 #ifdef EAM
     /* perhaps rescaling helps? - Last resort...*/
       rescale(&pair_pot,1.,1);
-      embed_shift(&pair_pot);
+#ifdef WZERO
+//      embed_shift(&pair_pot); ist des Teufels
+#endif /* WZERO */
 #ifdef MPI
       /* wake other threads and sync potentials*/
       F=calc_forces(xi,fxi1,2);
@@ -211,10 +213,12 @@ void powell_lsq(real *xi)
       temp=rescale(&pair_pot,1.,0);
       /* Was rescaling necessary ?*/
       if (temp!=0.) {
-	embed_shift(&pair_pot);
+#ifdef WZERO
+	// embed_shift(&pair_pot); Ist des Teufels!
+#endif /* WZERO */
 #ifdef MPI
       /* wake other threads and sync potentials*/
-      F=calc_forces(xi,fxi1,2);
+	F=calc_forces(xi,fxi1,2);
 #endif /* MPI */
       }
     }
