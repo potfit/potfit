@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2004/02/20 12:16:54 $
+* $Revision: 1.11 $
+* $Date: 2004/03/23 09:14:20 $
 *****************************************************************/
 
 
@@ -99,6 +99,7 @@ void anneal(real *xi)
     int nstep=NSTEP,ntemp=NTEMP;
     int loopagain;		/* loop flag */
     real c=STEPVAR;
+    real temp;			/* temporary variable */
     real p;			/* Probability */
     real T;	   	        /* Temperature */
     real F, Fopt, F2;		/* Fn value */
@@ -146,19 +147,18 @@ void anneal(real *xi)
 	      for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
 	      F=F2;
 	      i++;naccept[h]++;
-	      if(F<Fopt) {
+	      if(F2<Fopt) {
 		for (n=0;n<ndimtot;n++) xopt[n]=xi2[n];
 		Fopt=F2;
 		if (tempfile != "\0") 
 		  write_pot_table( &pair_pot, tempfile );
-		
 	      }
+	    }
 	      
-	      else if (random()/(RAND_MAX+1.0)<exp((F-F2)/T)) {
-		for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
-		F=F2;
-		i++;naccept[h]++;
-	      }
+	    else if (random()/(RAND_MAX+1.0)<exp((F-F2)/T)) {
+	      for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
+	      F=F2;
+	      i++;naccept[h]++;
 	    }
 	  }
 	}
@@ -182,6 +182,21 @@ void anneal(real *xi)
 	  k=KMAX+1;
 	  break;
 	}
+#ifdef EAM
+	/* Check for rescaling... every tenth step */
+	if ( (m % 10)==0 ) {
+	  temp=rescale(&pair_pot,1.,0);
+	  /* Was rescaling necessary ?*/
+	  if (temp!=0.) {
+	    embed_shift(&pair_pot);
+#ifdef MPI
+	    /* wake other threads and sync potentials*/
+	    F=(*calc_forces)(xi,fxi1,2);
+#endif MPI
+	  }
+	}
+#endif EAM
+
       } 
       /*Temp adjustment */
       T*=TEMPVAR;
