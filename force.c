@@ -20,7 +20,7 @@ real calc_forces_pair(real *xi, real *forces)
     typ1 = atom->typ;
     k    = 3*i;
     forces[k  ] = -force_0[k  ];
-    forces[k+1] = -force_0[k+2];
+    forces[k+1] = -force_0[k+1];
     forces[k+2] = -force_0[k+2];
 
     for (j=0; j<atom->n_neigh; j++) {
