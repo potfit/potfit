@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2003/03/19 09:05:42 $
+* $Revision: 1.5 $
+* $Date: 2003/04/04 09:29:15 $
 *****************************************************************/
 
 
@@ -179,6 +179,7 @@ void anneal(real *xi)
 	
 	} 
 	/*Temp adjustment */
+	if (tempfile != "\0") write_pot_table( &pair_pot, tempfile );
 	T*=TEMPVAR;
 	k++;
 	Fvar[k]=F;
@@ -193,9 +194,12 @@ void anneal(real *xi)
 	else if ((F-Fopt)>EPS){
 	    for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
 	    F=Fopt;
-	    loopagain=1;
+	    loopagain=1; i++;
 	}
     } while (k<KMAX && loopagain);
+    for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
+    F=Fopt;
+    if (tempfile != "\0") write_pot_table( &pair_pot, tempfile );
     free_dvector(Fvar,-NEPS+1,KMAX+5);
     free_dvector(v,0,ndim-1);
     free_dvector(xopt,0,ndimtot-1);

@@ -3,8 +3,8 @@
 *
 *  param.c: Read in parameter files (tag based)
 * 
-*  $Revision: 1.9 $
-*  $Date: 2003/03/19 09:05:39 $
+*  $Revision: 1.10 $
+*  $Date: 2003/04/04 09:29:13 $
 *
 ******************************************************************************/
 
@@ -195,6 +195,10 @@ void read_paramfile(FILE *pf)
     /* plotpoint file */
     else if (strcasecmp(token,"plotpointfile")==0) {
 	getparam("plotpointfile",plotpointfile,PARAM_STR,1,255);
+    }
+    /* temporary potential file */
+    else if (strcasecmp(token,"tempfile")==0) {
+	getparam("tempfile",tempfile,PARAM_STR,1,255);
     }
     /* seed for RNG */
     else if (strcasecmp(token,"seed")==0){

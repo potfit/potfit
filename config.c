@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2003/03/19 09:05:33 $
+* $Revision: 1.8 $
+* $Date: 2003/04/04 09:29:13 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -165,15 +165,16 @@ void read_config(char *filename)
     if (NULL==inconf)  error("Cannot allocate memory for atoms in conf");
 
     inconf[nconf]=count;
-    /* read cohesive energy */
-    if (1!=fscanf(infile, "%lf\n", &(coheng[nconf])))
-	error("Configuration file without cohesive energy -- old format!");
 
     /* read the box vectors */
     fscanf( infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z );
     fscanf( infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z );
     fscanf( infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z );
     make_box();
+
+    /* read cohesive energy */
+    if (1!=fscanf(infile, "%lf\n", &(coheng[nconf])))
+	error("Configuration file without cohesive energy -- old format!");
 
     /* read the atoms */
     for (i=0; i<count; i++) {
