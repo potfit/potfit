@@ -1,28 +1,29 @@
 /**** rewritten for double precision                                      ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
 /**** Adapted to Powell requirements 2002-10-11 			  ***/
+/**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
 
 #include <math.h>
 #define NRANSI
-#include "nrutil.h"
+#include "nrutil_r.h"
 #define ITMAX 100
 #define CGOLD 0.3819660
 #define ZEPS 1.0e-10
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
 extern int ncom,mcom;
-extern double *pcom,*xicom;
-extern double (*nrfunc)(double [], double [], int, int);
+extern real *pcom,*xicom;
+extern real (*nrfunc)(real [], real [], int, int);
 
 
-double brent_d(double ax, double bx, double cx, double fbx, double tol, double *xmin,
-		double *xmin2, double *fxmin, double *fxmin2)
+real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
+		real *xmin2, real *fxmin, real *fxmin2)
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin, fxmin2 */
 {
 	int iter,j;
-	double a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
-	double e=0.0;   /*Distance moved on step before last */
-	double *vecu,*fxu;   /* Vector of location u */
+	real a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
+	real e=0.0;   /*Distance moved on step before last */
+	real *vecu,*fxu;   /* Vector of location u */
 	fxu=dvector(0,mcom-1);
 	vecu=dvector(0,ncom-1);
 	a=(ax < cx ? ax : cx);

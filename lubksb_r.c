@@ -1,10 +1,11 @@
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
+/**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
 
-void lubksb_d(double **a, int n, int *indx, double b[])
+void lubksb_r(real **a, int n, int *indx, real b[])
 {
 	int i,ii=-1,ip,j; /* zo */
-	double sum;
+	real sum;
 
 	for (i=0;i<n;i++) { /* zo */
 		ip=indx[i];

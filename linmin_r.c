@@ -1,36 +1,37 @@
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
-***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
+***** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
+/**** by Peter Brommer, ITAP, 2002-10-10                                  ***/
 
 
 #define NRANSI
 #include <math.h>
-#include "nrutil.h"
+#include "nrutil_r.h"
 #define TOL 2.0e-4
 
 int ncom,mcom;
-double *pcom,*xicom;
-double (*nrfunc)(double [], double [], int, int);
+real *pcom,*xicom;
+real (*nrfunc)(real [], real [], int, int);
 
-void mnbrak_d(double *ax, double *bx, double *cx, double *fa, double *fb, 
-	double *fc, double (*func)(double));
-double brent_d(double ax, double bx, double cx, double fbx, double tol, 
-	double *xmin, double *xmin2, double *fxmin, double *fxmin2);
-double f1dim_d(double x);
+void mnbrak_r(real *ax, real *bx, real *cx, real *fa, real *fb, 
+	real *fc, real (*func)(real));
+real brent_r(real ax, real bx, real cx, real fbx, real tol, 
+	real *xmin, real *xmin2, real *fxmin, real *fxmin2);
+real f1dim_r(real x);
 
-double linmin_d(double p[], double xi[], double fxi1, int n, int m, double *x1, 
-		double *x2, double *fret1, double *fret2, 
-		double (*func)(double [], double [], int ,int))
+real linmin_r(real p[], real xi[], real fxi1, int n, int m, real *x1, 
+		real *x2, real *fret1, real *fret2, 
+		real (*func)(real [], real [], int ,int))
 /* takes vector xi (direction of search), p (originating point), n,m (dimensions),
    x, x2 (two best locations),
    fret1, fret2 (return vectors) and the function to minimize with input and result
    vectors as arguments */
 	{
 	int j;
-	double xx,fx,fb,bx,ax;
-	double fa=fxi1;
-	double xmin;
-	double xmin2;
+	real xx,fx,fb,bx,ax;
+	real fa=fxi1;
+	real xmin;
+	real xmin2;
 	ncom=n;
 	mcom=m;
 	pcom=dvector(0,n-1);
@@ -42,10 +43,10 @@ double linmin_d(double p[], double xi[], double fxi1, int n, int m, double *x1,
 	}
 	ax=0.0;                 /*do not change without correcting fa*/
 	xx=1.0;
-	mnbrak_d(&ax,&xx,&bx,&fa,&fx,&fb,f1dim_d);
+	mnbrak_r(&ax,&xx,&bx,&fa,&fx,&fb,f1dim_r);
 	/*only do brent if there's something to improve*/
 /*	if ((fabs((fa-fx)/fx)>TOL/100.)||(fabs((fb-fx)/fx))>TOL/100.) */
-		fx=brent_d(ax,xx,bx,fx,TOL,&xmin,&xmin2,fret1,fret2);
+		fx=brent_r(ax,xx,bx,fx,TOL,&xmin,&xmin2,fret1,fret2);
 	for (j=0;j<n;j++) {
 		xi[j] *= xmin;
 		p[j] += xi[j];

@@ -31,34 +31,34 @@
 #define INNERLOOPS 61
 #define TOOBIG 10000
 
-double fsoll[MDIM] = FSOLL;  /*Value of forces from experiment*/
+real fsoll[MDIM] = FSOLL;  /*Value of forces from experiment*/
 int fcalls=0;
-double (*force_calc)(double []);
+real (*force_calc)(real []);
 
-void powell_lsq(double *xi, double *fcalc(double[]))
+void powell_lsq(real *xi, real *fcalc(real[]))
 {
    int i,j,k,m;                    /*Simple counting variables*/
    /* int n = NDIM; */                 /*Dimension of parameter space*/
    /* int m = MDIM; */                /*Dimension of force space*/
-   /* double epsilon = EPS;*/            /*small increment for differentiation*/
-   /* static double xi[NDIM]=XISTART; */  /*starting value of xi*/
-   /* static double force[MDIM]; */
-    double force_xi[MDIM];              /*calculated force, alt*/
-    double **d;                          /*Direction vectors*/
-    double **gamma;                      /*Matrix of derivatives*/
-    double **lineqsys;                   /*Lin.Eq.Sys. Matrix*/
-    double **les_inverse;		 /*Inverse of the lineqsys */
-    double *delta;			 /*Vector pointing into correct dir'n*/
-    double *delta_norm;			 /*Normalized vector delta */
-    double *fxi1,*fxi2;			 /*last two function values */
+   /* real epsilon = EPS;*/            /*small increment for differentiation*/
+   /* static real xi[NDIM]=XISTART; */  /*starting value of xi*/
+   /* static real force[MDIM]; */
+    real force_xi[MDIM];              /*calculated force, alt*/
+    real **d;                          /*Direction vectors*/
+    real **gamma;                      /*Matrix of derivatives*/
+    real **lineqsys;                   /*Lin.Eq.Sys. Matrix*/
+    real **les_inverse;		 /*Inverse of the lineqsys */
+    real *delta;			 /*Vector pointing into correct dir'n*/
+    real *delta_norm;			 /*Normalized vector delta */
+    real *fxi1,*fxi2;			 /*last two function values */
     int *perm_indx;			 /*Keeps track of LU pivoting */
-    double p[NDIM];                  /*Vectors needed in Powell's algorithm*/
-    double q[NDIM];
-   /* double deltaforce[MDIM];         Difference between calc &  set force */
-    double perm_sig;
-    double F,F2,F3,df,xi1,xi2;
-    double temp,temp2;
-    double norm_delta,norm_delta2=0.;
+    real p[NDIM];                  /*Vectors needed in Powell's algorithm*/
+    real q[NDIM];
+   /* real deltaforce[MDIM];         Difference between calc &  set force */
+    real perm_sig;
+    real F,F2,F3,df,xi1,xi2;
+    real temp,temp2;
+    real norm_delta,norm_delta2=0.;
     
     d=dmatrix(0,NDIM-1,0,NDIM-1);
     gamma=dmatrix(0,MDIM-1,0,NDIM-1);
@@ -149,8 +149,8 @@ void powell_lsq(double *xi, double *fcalc(double[]))
 *
 ******************************************************************/
 
-/* double fxi_init(double *xi, double *fsoll, double *force_xi, int n, int m){
-    static double force[MDIM];
+/* real fxi_init(real *xi, real *fsoll, real *force_xi, int n, int m){
+    static real force[MDIM];
     int j;
     (void) force_calc(xi,force,n,m);
     for (j=0;j<MDIM;j++) force_xi[j]=force[j];
@@ -164,9 +164,9 @@ void powell_lsq(double *xi, double *fcalc(double[]))
  *
  ******************************************************************/
 
-double force_calc(double *xi, double *force, int n, int m) {
+real force_calc(real *xi, real *force, int n, int m) {
     int j;
-    double temp=0., f=0.0;
+    real temp=0., f=0.0;
     fcalls++;
     /* Chemistry problem */
     force[0]=xi[0]+xi[1]*exp(xi[3]*0.0)+xi[2]*exp(xi[4]*0.);
@@ -220,11 +220,11 @@ double force_calc(double *xi, double *force, int n, int m) {
 *
 ******************************************************************/
 
-void gamma_init(double **gamma, double **d, double *xi, double *force_xi, int n,
+void gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
          	int m){
-    double *force;
+    real *force;
     int i,j;			/* Auxiliary vars: Counters */
-    double sum,temp;			/* Auxiliary var: Sum */
+    real sum,temp;			/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
     /*Initialize direction vectors*/
     for (i=0;i<n;i++) {
@@ -258,11 +258,11 @@ void gamma_init(double **gamma, double **d, double *xi, double *force_xi, int n,
 *
 *******************************************************************/
 
-int  gamma_update(double **gamma, double a, double b, double *fa, double *fb,
+int  gamma_update(real **gamma, real a, real b, real *fa, real *fb,
 		int j, int n, int m) {
     int i;
-    double temp;
-    double sum=0.;
+    real temp;
+    real sum=0.;
     for (i=0;i<m;i++) {
 	    temp=gamma[i][j]=((fa[i]-fb[i])/(a-b));
 	    sum+=temp*temp;
@@ -282,8 +282,8 @@ int  gamma_update(double **gamma, double a, double b, double *fa, double *fb,
 *
 *******************************************************************/
 
-void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce, 
-	double *p, int n, int m){
+void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, 
+	real *p, int n, int m){
     int i,j,k;			/* Auxiliary vars: Counters */
 
     /* calculating vector p (lineqsys . q == P in LinEqSys) */
@@ -315,10 +315,10 @@ void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce,
 *
 *******************************************************************/
 
-void lineqsys_update(double **gamma, double **lineqsys, double *force_xi,
-		double *p, int i, int n, int m){
+void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
+		real *p, int i, int n, int m){
     int j,k;
-    double temp;
+    real temp;
     for (k=0;k<n;k++){
     	p[k]=0.;
     	for (j=0;j<m;j++) p[k]-=gamma[j][k]*force_xi[j];
@@ -361,7 +361,7 @@ void lineqsys_update(double **gamma, double **lineqsys, double *force_xi,
 
 /*>>>>>>>>>>>>>>>  INLINING? <<<<<<<<<<<<<<*/
 
-void copy_matrix(double **a, double **b, int n, int m) {
+void copy_matrix(real **a, real **b, int n, int m) {
     int i,j;
     for (i=0; i<m; i++) {
         for (j=0; j<n; j++) {
@@ -379,7 +379,7 @@ void copy_matrix(double **a, double **b, int n, int m) {
 
 /*>>>>>>>>>>>>>>>  INLINING? <<<<<<<<<<<<<<*/
 
-void copy_vector(double *a, double *b, int n) {
+void copy_vector(real *a, real *b, int n) {
     int i;
     for (i=0; i<n; i++) b[i]=a[i];
     return;
@@ -392,7 +392,7 @@ void copy_vector(double *a, double *b, int n) {
 *
 ******************************************************************/
 
-void matdotvec(double **a, double *x, double *y, int n, int m){
+void matdotvec(real **a, real *x, real *y, int n, int m){
     int i, j;
     for (i=0; i<n; i++) {
 	y[i]=0.;
@@ -407,9 +407,9 @@ void matdotvec(double **a, double *x, double *y, int n, int m){
 *
 *******************************************************************/
 
-double normalize_vector(double *v, int n){
+real normalize_vector(real *v, int n){
     int j;
-    double temp,sum=0.0;
+    real temp,sum=0.0;
     for (j=0;j<n;j++) sum+=v[j]*v[j];
     temp=sqrt(sum);
     for (j=0;j<n;j++) v[j]/=temp;

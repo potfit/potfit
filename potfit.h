@@ -70,7 +70,6 @@ EXTERN char config[255];                 /* file with atom configuration */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
 
-
 /******************************************************************************
 *
 *  function prototypes
@@ -87,4 +86,10 @@ real grad2(pot_table_t*, int, real);
 real pot2 (pot_table_t*, int, real);
 void read_config(char*);
 real calc_forces_pair(real*);
+void powell_lsq(real *xi, real *fcalc(real[]))
+
+
+
+
+
 

@@ -34,7 +34,7 @@ void read_config(char *filename)
     force_0 = (real *) realloc(force_0, 3 * (natoms+count) * sizeof(real));
     if (NULL==force_0) error("Cannot allocate memory for forces");
 
-    /* read the neighbors */
+    /* read the atoms */
     for (i=0; i<count; i++) {
 
       k    = 3 * (natoms + i);
@@ -68,4 +68,5 @@ void read_config(char *filename)
   printf("Read %d configurations with a total of %d atoms\n", nconf, natoms);
   fclose(infile);
 }
+
 

@@ -1,20 +1,21 @@
-/**** rewritten for double precision and zero-offset vectors and matrices ****
+/**** rewritten for rdouble precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ****
 ***** adapted to Powell requirements (return vector ...) 2002-10-11       ***/
+/**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
 
 
 #define NRANSI
-#include "nrutil.h"
+#include "nrutil_r.h"
 
 extern int ncom, mcom;
-extern double *pcom,*xicom;
-extern double (*nrfunc)(double [], double [], int, int);
+extern real *pcom,*xicom;
+extern real (*nrfunc)(real [], real [], int, int);
 
-double f1dim_d(double x)
+real f1dim_r(real x)
 {
 	int j;
-	double f,*xt;
-	double *res;
+	real f,*xt;
+	real *res;
 
 	xt=dvector(0,ncom-1);
 	res=dvector(0,mcom-1);

@@ -1,16 +1,17 @@
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
+/**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
 
 #include <math.h>
 #define NRANSI
-#include "nrutil.h"
+#include "nrutil_r.h"
 #define TINY 1.0e-20;
 
-void ludcmp_d(double **a, int n, int *indx, double *d)
+void ludcmp_r(real **a, int n, int *indx, real *d)
 {
 	int i,imax,j,k;
-	double big,dum,sum,temp;
-	double *vv;
+	real big,dum,sum,temp;
+	real *vv;
 
 	vv=dvector(0,n-1);  /* zo */
 	*d=1.0;

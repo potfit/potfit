@@ -1,15 +1,17 @@
 /**** rewritten for double precision and zero-offset vectors and matrices ****
-***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
+***** by Peter Brommer, ITAP, 2002-10-10                                  ****
+***** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
+
 
 #define NRANSI
-#include "nrutil.h"
-void lubksb_d(double **a, int n, int *indx, double b[]);
+#include "nrutil_r.h"
+void lubksb_d(real **a, int n, int *indx, real b[]);
 
-void mprove_d(double **a, double **alud, int n, int indx[], double b[], double x[])
+void mprove_d(real **a, real **alud, int n, int indx[], real b[], real x[])
 {
 	int j,i;
-	double sdp;
-	double *r;
+	real sdp;
+	real *r;
 
 	r=dvector(0,n-1); /* zo */
 	for (i=0;i<n;i++) { /* zo */

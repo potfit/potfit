@@ -1,18 +1,19 @@
 /**** rewritten for double precision                                      ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
+/**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
 
 #include <math.h>
 #define NRANSI
-#include "nrutil.h"
+#include "nrutil_r.h"
 #define GOLD 1.618034
 #define GLIMIT 100.0
 #define TINY 1.0e-20
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
-void mnbrak_d(double *ax, double *bx, double *cx, double *fa, double *fb, double *fc,
-	double (*func)(double))
+void mnbrak_r(real *ax, real *bx, real *cx, real *fa, real *fb, real *fc,
+	real (*func)(real))
 {
-	double ulim,u,r,q,fu,dum;
+	real ulim,u,r,q,fu,dum;
 
 	/* *fa=(*func)(*ax); +++++++++++++++ fa was passed correctly*/
 	*fb=(*func)(*bx);
