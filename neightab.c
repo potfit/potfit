@@ -1,3 +1,15 @@
+/****************************************************************
+* 
+* neightab.c (obsolete): Used to create static neighbour tables.
+*      As those are generated on the fly in current versions, this
+*      file is no longer used.
+* 
+*****************************************************************/
+
+/****************************************************************
+* $Revision: 1.3 $
+* $Date: 2003/03/19 09:05:37 $
+*****************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>

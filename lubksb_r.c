@@ -1,3 +1,12 @@
+/****************************************************************
+*
+* lubksb_r.c: Backsubstitution into a LU decomposed matrix.
+* 
+*****************************************************************/
+/****************************************************************
+* $Revision: 1.3 $
+* $Date: 2003/03/19 09:05:35 $
+*****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
 /**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/

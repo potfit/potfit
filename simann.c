@@ -1,3 +1,16 @@
+/****************************************************************
+ *
+ *  simann.c: Contains all routines used for simulated annealing.
+ *
+*****************************************************************/
+
+/****************************************************************
+* $Revision: 1.4 $
+* $Date: 2003/03/19 09:05:42 $
+*****************************************************************/
+
+
+
 #include <math.h>
 #include "potfit.h"
 #include "nrutil_r.h"
@@ -13,6 +26,13 @@
 #define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(DSQR(a))/2.)))
 
 /*int RAND_MAX=(1<<31)-1;*/
+
+/****************************************************************
+ *
+ *  real normdist(): Returns a normally distributed random variable
+ *          Uses random() to generate a random number.
+ * 
+ *****************************************************************/
 
 
 real normdist(void)
@@ -39,6 +59,15 @@ real normdist(void)
     }
 }
 
+/****************************************************************
+ *
+ *  makebump(*x, width, height, center): Displaces equidistant 
+ *        sampling points of a function. Displacement is given by
+ *        gaussian of given width and height.
+ * 
+ *****************************************************************/
+
+
 void makebump(real *x,real width,real height,int center)
 {
     int i,j=0;
@@ -57,6 +86,12 @@ void makebump(real *x,real width,real height,int center)
     return;
 }
 
+/****************************************************************
+ *
+ *  anneal(*xi): Anneals x a vector xi to minimize a function F(xi).
+ *      Algorithm according to Cordona et al.
+ * 
+ *****************************************************************/
 
 void anneal(real *xi)
 {
@@ -169,21 +204,3 @@ void anneal(real *xi)
     free_ivector(naccept,0,ndim-1);
     return;
 }
-/*int main(void)
-{
-    double sum = 0;
-    int hist[BINS+2];
-    int i,j;
-    for (i=0;i<BINS+2;i++) hist[i]=0;
-    srandom(12345);
-    drand48();drand48();drand48();
-    random();random();random();
-    for (i=0;i<1e8;i++) {
-	j=(int) (normdist()*BINS/(2*5.0) + BINS*0.5);
-	if (j<0) j=0;
-	if (j>=BINS) j=BINS-1;
-	hist[j]++;
-    }
-    for (i=0;i<BINS+2;i++) printf("%f %f %f\n", (2*5.0)/(double)BINS*((i+.5)-BINS*.5),(double)hist[i]/1.e8, sum+=(double) hist[i]/1.e8);
-    return 1;
-}*/

@@ -1,3 +1,15 @@
+/****************************************************************
+* 
+*  mprove.c: Iterative improvement of the solution of a
+*      linear equation system.
+* 
+*****************************************************************/
+/****************************************************************
+* $Revision: 1.3 $
+* $Date: 2003/03/19 09:05:37 $
+*****************************************************************/
+
+
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ****
 ***** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/

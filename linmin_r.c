@@ -1,3 +1,13 @@
+/****************************************************************
+* 
+* linmin_r.c: Finds the minimum of a multivariable function along 
+*     a certain direction
+* 
+*****************************************************************/
+/****************************************************************
+* $Revision: 1.6 $
+* $Date: 2003/03/19 09:05:34 $
+*****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
 ***** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/

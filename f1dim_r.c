@@ -1,3 +1,12 @@
+/****************************************************************
+* 
+*  f1dim_r.c: One-dimensional replacement function. 
+*
+*****************************************************************/
+/****************************************************************
+* $Revision: 1.5 $
+* $Date: 2003/03/19 09:05:34 $
+*****************************************************************/
 /**** rewritten for rdouble precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ****
 ***** adapted to Powell requirements (return vector ...) 2002-10-11       ***/
