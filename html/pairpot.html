@@ -18,12 +18,12 @@ For use in <em>potfit</em>, any potential needs to be specified at a
 limited number of sampling points. Position and value of these
 sampling points are given in the file specified with the parameter
 <tt>potfile</tt>. The format used in this file is described <a
-href="potformat.html">above</a>.
-It is essential 
-that the potential is tabulated equidistant in the the atom distance,
-not in the sqare (as it is done in <a
-href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a>). 
-Note that if the potential does not extend down to
-r=0, the program will exit with an short distance error. </p>
+href="potformat.html">above</a>.  It is essential that the potential
+is tabulated equidistant in the the atom distance, not in the sqare
+(as it is done in <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a>).  Note
+that if the potential does not extend to radii small enough to cover
+all pair distances appearing in the configurations, the program will
+exit with an short distance error. </p>
 
 <!--#include virtual="potfitfoot.html" -->

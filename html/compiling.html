@@ -71,17 +71,25 @@ If none of these is specified, a serial executable is compiled.
 <h3>Other options</h3>
 
 <table>
-<tr><td>eam          </td><td>use Embedded Atom Potentials</td></tr>
-<tr><td>stress       </td><td>include stress in fit</td></tr>
-<tr><td>parab        </td><td>use parabolic interpolation for
-embedding function</td></tr>
-<tr><td>limit        </td><td>use limitation constraint for embedding density</td></tr>
-<tr><td>debug        </td><td>compile with debug support</td></tr>
-<tr><td>noresc       </td><td>do NOT rescale the potential if
-necessary</td></tr>
-<tr><td>fweight      </td><td>weigh the contribution of the forces
-according to their magnitude</td></tr>
+<tr><td>eam          </td><td>Use Embedded Atom Potentials.</td></tr>
+<tr><td>stress       </td><td>Include stress in fit.</td></tr>
+<tr><td>parab        </td><td>Use parabolic interpolation for
+embedding function.</td></tr>
+<tr><td>debug        </td><td>Compile with debug support.</td></tr>
+<tr><td>noresc       </td><td>Do NOT rescale the potential if
+necessary.</td></tr>
+<tr><td>fweight      </td><td>Weigh the contribution of the forces.
+according to their magnitude.</td></tr>
+<tr><td>dist         </td><td>Create distribution file, incompatible
+with mpi parallelization.</td></tr>
+<tr><td>newscale     </td><td>Create rescaled IMD and plotfiles, incompatible
+with mpi parallelization.</td></tr>
 </table>
+
+<p> Note: The limit compiling options available in earlier versions
+has been removed. Using the limitation constraint for the embedding
+density is now mandatory and not optional any more. </p>
+
 
 <a id="imdsys" name="imdsys">
 <h2>Supported values of the IMDSYS variable</h2>
@@ -89,7 +97,7 @@ according to their magnitude</td></tr>
 
 <p>
 Currently, the following values of the IMDSYS variable are supported
-(though only the AthlonMP has been thoroughly tested, most have not
+(though only the AthlonMP and P4 has been thoroughly tested, most have not
 been tested at all):</p>
 
 <table>
