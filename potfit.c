@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.16 $
-* $Date: 2003/06/18 16:47:04 $
+* $Revision: 1.17 $
+* $Date: 2003/07/29 08:45:55 $
 *****************************************************************/
 
 
@@ -56,6 +56,13 @@ int main(int argc, char **argv)
   srandom(seed);random();random();random();random();
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
   read_config(config);
+  printf("Dummy constraints are:\n");
+  printf("rho[%f]\t = %f \t for atom type %d\n", 
+	 dummy_r,dummy_rho,DUMMY_COL_RHO);
+  for (i=0;i<ntypes;i++) {
+    printf("phi[%f]\t = %f \t between atoms of type %d\n",
+	   dummy_r,dummy_phi[i],i);
+  }
 
  /*   mdim=3*natoms+nconf; */
   ndim=pair_pot.idxlen;
@@ -73,9 +80,12 @@ int main(int argc, char **argv)
 		pair_pot.last[i]-pair_pot.first[i]+1,
 		1e30,0,pair_pot.d2tab+pair_pot.first[i]);*/
 
-  force = (real *) malloc( (3 * natoms + 2 * nconf) * sizeof(real) );
+  force = (real *) malloc( (mdim) * sizeof(real) );
   tot = calc_forces(pair_pot.table,force);
   write_pot_table( &pair_pot, endpot );
+  printf("Potential written to file %s\n",endpot);
+  printf("Plotpoint file written to file %s\n", plotpointfile);
+
   write_pot_table_imd( &pair_pot, imdpot );
   if (plot) write_plotpot_pair(&pair_pot, plotfile);
 
@@ -121,11 +131,12 @@ int main(int argc, char **argv)
 	 force[mdim-(ntypes+1)]+force_0[mdim-(ntypes+1)],
 	 force_0[mdim-(ntypes+1)],
 	 force[mdim-(ntypes+1)]/force_0[mdim-(ntypes+1)]);
-  for (i=ntypes; i>0; i--){
+  for (i=2*ntypes; i>0; i--){
     sqr = SQR(force[mdim-i]);
     max = MAX( max, sqr );
     min = MIN( min, sqr );
-    printf("%d %f %f %f %f\n", ntypes+1-i, sqr, force[mdim-i]+force_0[mdim-i],
+    printf("%d %f %f %f %f\n", 2*ntypes+1-i, sqr, 
+	   force[mdim-i]+force_0[mdim-i],
 	   force_0[mdim-i],force[mdim-i]/force_0[mdim-i]);
   }
 #endif

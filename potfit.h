@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.25 $
-* $Date: 2003/06/18 16:47:04 $
+* $Revision: 1.26 $
+* $Date: 2003/07/29 08:45:55 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -17,9 +17,11 @@
 #ifdef OMP
 #include <omp.h>
 #endif
-#ifdef LIMIT
-#define EAM
-#endif
+#ifdef LIMIT 			/* if LIMIT is defined */
+#ifndef EAM			/* but not EAM */
+#define EAM			/* then imply EAM */
+#endif EAM
+#endif LIMIT
 #define NRANSI
 #define MAXNEIGH 170
 #ifdef EAM

@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.17 $
-* $Date: 2003/06/18 16:44:30 $
+* $Revision: 1.18 $
+* $Date: 2003/07/29 08:45:56 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -577,6 +577,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       }
     }
   fclose(outfile);
+  printf("IMD pair potential data written to %s\n", filename);
 #ifdef EAM
   if (eam) {
     /* write rho_r2 */
@@ -619,6 +620,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       }
     }
     fclose(outfile);
+    printf("IMD electron transfer date written to %s\n", filename);
     /* write F_rho */
     sprintf(filename,"%s_F.imd.pot",prefix);
     outfile = fopen(filename,"w");
@@ -656,7 +658,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       fprintf(outfile, "\n");
     }
     fclose(outfile);
-
+  printf("IMD embedding data written to %s\n", filename);
   }
 #endif
 
@@ -723,6 +725,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
   
   }
-  fclose(outfile);
 #endif
+  fclose(outfile);
+  printf("Potential plotting data written to %s\n", filename);
 }
