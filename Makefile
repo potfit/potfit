@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.24 $
-# $Date: 2004/02/25 16:39:06 $
+# $Revision: 1.25 $
+# $Date: 2004/03/17 13:41:13 $
 # 
 ############################################################################
 #
@@ -124,7 +124,7 @@ LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 OMP_FLAGS	+= -DOMP
 OMPI_FLAGS	+= -DMPI -DOMP
-DEBUG_FLAGS	+= -DDEBUG
+DEBUG_FLAGS	+= -DDEBUG 
 MKLPATH         =  /common/linux/paket/intel/mkl61/lib/32/
 CINCLUDE        =  -I/common/linux/paket/intel/mkl61/include/
 LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
@@ -502,7 +502,8 @@ endif
 POTFITHDR   	= potfit.h powell_lsq.h nrutil_r.h 
 POTFITSRC 	= f1dim_r.c powell_lsq.c brent_r.c \
 		  linmin_r.c mnbrak_r.c nrutil_r.c force.c \
-		  config.c param.c potential.c potfit.c splines.c simann.c 
+		  config.c param.c potential.c potfit.c \
+		  splines.c simann.c rescale.c
 MPISRC          = mpi_utils.c
 
 #########################################################
@@ -560,12 +561,6 @@ ${OBJECTS}: ${HEADERS}
 # special rules for force computation
 powell_lsq.o: powell_lsq.c
 	${CC} ${CFLAGS} ${CINCLUDE} -c powell_lsq.c
-
-imd_forces_eam2.o: imd_forces_eam2.c
-	${CC} ${CFLAGS} ${RCD_FLAGS} -c imd_forces_eam2.c
-
-imd_forces_covalent.o: imd_forces_covalent.c
-	${CC} ${CFLAGS} ${RCD_FLAGS} -c imd_forces_covalent.c
 
 # generic compilation rule
 .c.o:
