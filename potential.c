@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2004/03/23 09:12:32 $
+* $Revision: 1.23 $
+* $Date: 2004/04/13 14:10:31 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -789,7 +789,7 @@ void write_pairdist(pot_table_t *pt, char *filename) {
 #ifdef EAM
 	/* Transferfunktion */
 	col = paircol+typ2;
-	if (neigh->r < pair_pot.end[col])
+	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[1]]++;
       }
 
@@ -808,7 +808,7 @@ void write_pairdist(pot_table_t *pt, char *filename) {
   col=0;
   for (i=0;i<ndimtot;i++) {
     fprintf(outfile,"%f %d\n", rr, freq[i]);
-    if (i<pt->last[col]) {
+    if (i<pt->last[col]-1) {
       rr+=pt->step[col];
     } else {
       col++;

@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2004/03/19 16:07:27 $
+* $Revision: 1.21 $
+* $Date: 2004/04/13 14:10:11 $
 *****************************************************************/
 
 /******************************************************************************
@@ -94,7 +94,7 @@ void powell_lsq(real *xi)
     /* Init gamma */
     if (i=gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
-    /* perhaps rescaling helps? */
+    /* perhaps rescaling helps? - Last resort...*/
       rescale(&pair_pot,1.,1);
       embed_shift(&pair_pot);
 #ifdef MPI
@@ -199,6 +199,7 @@ void powell_lsq(real *xi)
       break;
     }
 #ifdef EAM
+#ifndef NORESCALE
     /* Check for rescaling... every fourth step */
     if ( (n % 4)==0 ) {
       temp=rescale(&pair_pot,1.,0);
@@ -211,15 +212,16 @@ void powell_lsq(real *xi)
 #endif MPI
       }
     }
+#endif NORESCALE
 #endif EAM
     /* write temp file  */
     if (tempfile != "\0" ) write_pot_table( &pair_pot, tempfile );
 
     /*End fit if whole series didn't improve F */
-  } while ((F3-F>PRECISION/10.) || (F3-F<=0)); /* outer loop */
-#ifdef DEBUG
+  } while ((F3-F>PRECISION/10.) || (F3-F<0)); /* outer loop */
+//#ifdef DEBUG
   printf("Precision reached: %10g\n", F3-F);
-#endif 
+//#endif 
   /* Free memory */
   free_dvector(delta,0,ndim-1);
   free_dvector(fxi1,0,mdim-1);

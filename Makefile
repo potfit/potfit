@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.26 $
-# $Date: 2004/03/23 09:12:33 $
+# $Revision: 1.27 $
+# $Date: 2004/04/13 14:10:12 $
 # 
 ############################################################################
 #
@@ -546,6 +546,10 @@ endif
 
 ifneq (,$(findstring dist,${MAKETARGET}))
 CFLAGS += -DPDIST
+endif
+
+ifneq (,$(findstring noresc,${MAKETARGET}))
+CFLAGS += -DNORESCALE
 endif
 
 # Substitute .o for .c to get the names of the object files

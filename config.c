@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2004/03/19 16:03:37 $
+* $Revision: 1.21 $
+* $Date: 2004/04/13 14:10:11 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -190,14 +190,13 @@ void read_config(char *filename)
     if (1!=fscanf(infile, "%lf\n", &(coheng[nconf])))
 	error("Configuration file without cohesive energy -- old format!");
 
-#ifdef STRESS
     /* read stress tensor */
     stresses=stress+nconf;
     if (6!=fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
 		&(stresses->yy), &(stresses->zz), &(stresses->xy), 
 		&(stresses->yz), &(stresses->zx)))
-	error("No stresses given -- recompile without STRESS!");
-#endif STRESS
+	error("No stresses given -- old format");
+
 
     /* read the atoms */
     for (i=0; i<count; i++) {

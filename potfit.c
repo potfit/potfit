@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2004/03/23 09:12:31 $
+* $Revision: 1.25 $
+* $Date: 2004/04/13 14:10:11 $
 *****************************************************************/
 
 
@@ -78,8 +78,10 @@ int main(int argc, char **argv)
       printf("phi[%f]\t = %f \t between atoms of type %d\n",
 	     dummy_r,dummy_phi[i],i);
     }
+#ifndef NORESCALE
     rescale(&pair_pot,1.,1); 	/* rescale now... */
     embed_shift(&pair_pot);	/* and shift */
+#endif NORESCALE
 #endif EAM
   }
 #ifdef MPI
@@ -114,7 +116,9 @@ int main(int argc, char **argv)
     write_pot_table_imd( &pair_pot, imdpot );
     if (plot) write_plotpot_pair(&pair_pot, plotfile);
 #ifdef PDIST
+#ifndef MPI 			/* will not work with MPI */
     write_pairdist(&pair_pot,distfile);
+#endif
 #endif
 #ifdef EAM
     printf("Local electron density rho\n");

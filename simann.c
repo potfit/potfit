@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.11 $
-* $Date: 2004/03/23 09:14:20 $
+* $Revision: 1.12 $
+* $Date: 2004/04/13 14:10:10 $
 *****************************************************************/
 
 
@@ -182,7 +182,8 @@ void anneal(real *xi)
 	  k=KMAX+1;
 	  break;
 	}
-#ifdef EAM
+#ifdef EAM 
+#ifndef NORESCALE
 	/* Check for rescaling... every tenth step */
 	if ( (m % 10)==0 ) {
 	  temp=rescale(&pair_pot,1.,0);
@@ -195,6 +196,7 @@ void anneal(real *xi)
 #endif MPI
 	  }
 	}
+#endif NORESCALE
 #endif EAM
 
       } 
