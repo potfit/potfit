@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2004/11/18 16:38:05 $
+* $Revision: 1.9 $
+* $Date: 2004/12/03 17:34:12 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -148,7 +148,6 @@ void broadcast_params() {
   MPI_Bcast( &ntypes, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast( &natoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast( &nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast( &eam, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast( &anneal_temp, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast( &opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (myid>0) {

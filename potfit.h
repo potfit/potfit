@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.40 $
-* $Date: 2004/11/24 13:27:42 $
+* $Revision: 1.41 $
+* $Date: 2004/12/03 17:34:11 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -136,7 +136,6 @@ EXTERN int    mdim     INIT(0);
 EXTERN int    ntypes   INIT(1);          /* number of atom types */
 EXTERN int    natoms   INIT(0);          /* number of atoms */
 EXTERN int    nconf    INIT(0);	         /* number of configurations */
-EXTERN int    eam      INIT(0);	         /* EAM usage flag */
 EXTERN int    paircol  INIT(0);          /* How manc columns for pair pot.*/
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
 EXTERN real   *force_0 INIT(NULL);       /* the forces we aim at */
