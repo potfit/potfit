@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.34 $
-* $Date: 2004/11/17 17:28:48 $
+* $Revision: 1.35 $
+* $Date: 2004/11/18 16:38:58 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -65,6 +65,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
   real tmpsum,sum=0.;
   int first,col1,g;
   real grad0,y0,y1,x0,x1;
+
   
   /* This is the start of an infinite loop */
   while (1) {
@@ -74,6 +75,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     /* exchange potential and flag value */
     MPI_Bcast(xi,ndimtot,REAL,0,MPI_COMM_WORLD);
     MPI_Bcast(&flag,1,MPI_INT,0,MPI_COMM_WORLD);
+
 #ifdef EAM
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag==2) potsync();	
@@ -156,6 +158,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       real fnval, grad;
       atom_t *atom;
       neigh_t *neigh;
+
       
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum)
@@ -339,7 +342,8 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 
 		/* now we know everything - calculate forces */
 		eamforce =  (grad * atom->gradF + 
-			     grad2 * atoms[neigh->nr].gradF) ;
+			     grad2 * conf_atoms[(neigh->nr)-firstatom].gradF) ;
+
 		tmp_force.x  = neigh->dist.x * eamforce;
 		tmp_force.y  = neigh->dist.y * eamforce;
 		tmp_force.z  = neigh->dist.z * eamforce;
