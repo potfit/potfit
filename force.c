@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.36 $
-* $Date: 2004/12/03 17:42:35 $
+* $Revision: 1.37 $
+* $Date: 2004/12/15 14:12:35 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -85,25 +85,25 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     /* init second derivatives for splines */
     for (col1=0; col1<paircol; col1++){  /* just pair potentials */
       first=pair_pot.first[col1];
-      x0=pair_pot.begin[col1];
-      x1=pair_pot.xcoord[pair_pot.first[col1]+1];
-      y0=xi[first];
-      y1=xi[first+1];
-      /* use power law for inclination at left border */
-      if (y0*y1>0)
-	grad0=(y0*log(y0/y1)) /  (x0*log(x0/x1));
-      else
-	grad0=1e30; 		/* natural spline: curvature 0 */
-      if (!((grad0>-1e10) && (grad0<1e10))) grad0=1e30;
-      if (  (grad0>-1e-20)&& (grad0<1e-20)) grad0=0.;
+/*       x0=pair_pot.begin[col1]; */
+/*       x1=pair_pot.xcoord[pair_pot.first[col1]+1]; */
+/*       y0=xi[first]; */
+/*       y1=xi[first+1]; */
+/*       /\* use power law for inclination at left border *\/ */
+/*       if (y0*y1>0) */
+/* 	grad0=(y0*log(y0/y1)) /  (x0*log(x0/x1)); */
+/*       else */
+/* 	grad0=1e30; 		/\* natural spline: curvature 0 *\/ */
+/*       if (!((grad0>-1e10) && (grad0<1e10))) grad0=1e30; */
+/*       if (  (grad0>-1e-20)&& (grad0<1e-20)) grad0=0.; */
       if (format==3) 
 	spline_ed(pair_pot.step[col1], xi+first,
 		  pair_pot.last[col1]-first+1,
-		  grad0, 0.0, pair_pot.d2tab+first);
+		  *(xi+first-2), 0.0, pair_pot.d2tab+first);
       else 			/* format == 4 ! */
 	spline_ne(pair_pot.xcoord+first,xi+first,
 		  pair_pot.last[col1]-first+1,
-		  grad0, 0.0, pair_pot.d2tab+first);
+		  *(xi+first-2), 0.0, pair_pot.d2tab+first);
     }
     
 #ifdef EAM
@@ -112,11 +112,11 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       if (format==3)
 	spline_ed(pair_pot.step[col1], xi+first, 
 		  pair_pot.last[col1]-first+1,
-		  1e30,0.0,pair_pot.d2tab+first);
+		  *(xi+first-2),0.0,pair_pot.d2tab+first);
       else                   /* format == 4 ! */
 	spline_ne(pair_pot.xcoord+first,xi+first,
 		  pair_pot.last[col1]-first+1,
-		  1e30,0.0,pair_pot.d2tab+first);		  
+		  *(xi+first-2),0.0,pair_pot.d2tab+first);		  
     }
 #ifndef PARABEL 		
 /* if we have parabolic interpolation, we don't need that */
@@ -128,24 +128,24 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	spline_ed(pair_pot.step[col1], xi+first, 
 		  pair_pot.last[col1]-first+1,
 #ifdef WZERO
-		  ((pair_pot.begin[col1]<=0.) ? 1.e30
+		  ((pair_pot.begin[col1]<=0.) ? *(xi+first-2)
 		   : .5/xi[first]),
-		  ((pair_pot.end[col1]>=0.) ? 1e30
+		  ((pair_pot.end[col1]>=0.) ? *(xi+first-1)
 		   : -.5/xi[pair_pot.last[col1]]),
 #else  /* WZERO: F is natural spline in any case */ 
-		  1.e30,1.e30,
+		  *(xi+first-2),*(xi+first-1),
 #endif /* WZERO */
 		   pair_pot.d2tab+first); /* XXX */
       else                   /* format == 4 ! */
 	spline_ne(pair_pot.xcoord+first,xi+first,
 		  pair_pot.last[col1]-first+1,
 #ifdef WZERO
-		  (pair_pot.begin[col1]<=0.?1.e30
+		  (pair_pot.begin[col1]<=0.? *(xi+first-2)
 		   : .5/xi[first]),
-		  (pair_pot.end[col1]>=0.?1e30
+		  (pair_pot.end[col1]>=0.? *(xi+first-1)
 		   : -.5/xi[pair_pot.last[col1]]),
 #else  /* WZERO */
-		  1.e30,1.e30,
+		   *(xi+first-2), *(xi+first-1),
 #endif /* WZERO */
 		  pair_pot.d2tab+first);
     }

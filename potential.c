@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.32 $
-* $Date: 2004/12/03 17:41:26 $
+* $Revision: 1.33 $
+* $Date: 2004/12/15 14:12:35 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -26,9 +26,10 @@
 void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 {
   FILE *infile;
-  char buffer[1024], msg[255], *res;
+  char buffer[1024], msg[255], *res, *str;
   int  have_format=0, end_header=0;
   int  size, i, j, k, l, *nvals;
+
 
   /* open file */
   infile = fopen(filename,"r");
@@ -54,8 +55,26 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
     if (buffer[1]=='E') {
       end_header = 1;
     }
+    else if (buffer[1]=='G') {      
+      if (have_format) {
+	/* gradient complete */
+	for(i=0;i<size;i++) {
+	  str =strtok(((i==0)?buffer+2:NULL)," \t\r\n");
+	  if (str == NULL) {
+	    sprintf(msg,"Not enough items in #G header line.");
+	    error(msg);
+	  }
+	  else ((int*)gradient)[i] = atoi(str);
+	} 
+	have_grad=1;
+      }
+      else {
+	sprintf(msg,"#G needs to be specified after #F in file %s",filename);
+        error(msg);
+      }
+    }
     /* see if it is the format line */
-    else if (buffer[1]=='F') {
+    else if (buffer[1]=='F') { 
       /* format complete? */
       if (2!=sscanf( (const char*)(buffer+2), "%d %d", &format, &size )) {
         sprintf(msg,"Corrupt format header line in file %s",filename);
@@ -85,6 +104,8 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
         sprintf(msg,"Unrecognized format specified for file %s",filename);
         error(msg);
       }
+      gradient=(int*) malloc(size*sizeof(int));
+      for (i=0;i<size;i++) gradient[i]=0;
       have_format = 1;
     }
   } while (!end_header);
@@ -177,7 +198,9 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
     }
     pt->step[i] = (pt->end[i] - pt->begin[i]) / (nvals[i]-1);
     pt->invstep[i] = 1.0 / pt->step[i];
-    if (i==0) pt->first[i] = 0; else pt->first[i] = pt->last[i-1] + 1;
+    /* in the two slots between last[i-1] and first[i] the gradients
+     of the respective functions are stored */
+    if (i==0) pt->first[i] = 2; else pt->first[i] = pt->last[i-1] + 3;
     pt->last[i] = pt->first[i] + nvals[i] - 1;
     pt->len = pt->first[i] + nvals[i];
   }
@@ -194,7 +217,18 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   val = pt->table;
   k=0; l=0;
   for (i=0; i<ncols; i++) {	/* read in pair pot */
-    for (j=0; j<nvals[i]; j++) {
+    if (have_grad) { 		/* read gradient */
+      if (2>fscanf(infile, "%lf %lf\n", val, val+1)){
+        sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } 
+    } else {
+      *val=1e30; *(val+1)=0.;
+    } 
+    val+=2;
+    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
+    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf\n", val)) {
         sprintf(msg, "Premature end of potential file %s", filename);
         error(msg);
@@ -202,12 +236,22 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
       if (j<nvals[i]-1) pt->idx[k++] = l++;
       else l++;
-      
     }
   }
 #ifdef EAM
   for (i=ncols; i<ncols+ntypes; i++) {	/* read in rho */
-    for (j=0; j<nvals[i]; j++) {
+    if (have_grad) { 		/* read gradient */
+      if (2>fscanf(infile, "%lf %lf\n", val, val+1)){
+        sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } 
+    } else {
+      *val=1e30; *(val+1)=0.;
+    } 
+    val+=2;
+    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
+    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf\n", val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -218,7 +262,18 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
     }
   }
   for (i=ncols+ntypes; i<ncols+2*ntypes; i++) {	/* read in F */
-    for (j=0; j<nvals[i]; j++) {
+    if (have_grad) { 		/* read gradient */
+      if (2>fscanf(infile, "%lf %lf\n", val, val+1)){
+        sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } 
+    } else {
+      *val=1.e30; *(val+1)=1.e30;
+    } 
+    val+=2;
+    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
+    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf\n", val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -280,7 +335,18 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   ord = pt->xcoord;
   k=0; l=0;
   for (i=0; i<ncols; i++) {	/* read in pair pot */
-    for (j=0; j<nvals[i]; j++) {
+    if (have_grad) { 		/* read gradient */
+      if (2>fscanf(infile, "%lf %lf\n", val, val+1)){
+        sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } 
+    } else {
+      *val=1e30; *(val+1)=0.;
+    } 
+    val+=2; ord+=2;
+    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
+    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    for (j=0; j<nvals[i]; j++) { /* read values */
       if (2>fscanf(infile, "%lf %lf\n", ord, val)) {
         sprintf(msg, "Premature end of potential file %s", filename);
         error(msg);
@@ -302,7 +368,18 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   }
 #ifdef EAM
   for (i=ncols; i<ncols+ntypes; i++) {	/* read in rho */
-    for (j=0; j<nvals[i]; j++) {
+    if (have_grad) { 		/* read gradient */
+      if (2>fscanf(infile, "%lf %lf\n", val, val+1)){
+        sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } 
+    } else {
+      *val=1e30; *(val+1)=0.;
+    } 
+    val+=2; ord+=2;
+    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
+    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    for (j=0; j<nvals[i]; j++) { /* read values */
       if (2>fscanf(infile, "%lf %lf\n", ord,val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -322,7 +399,18 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 
   }
   for (i=ncols+ntypes; i<ncols+2*ntypes; i++) {	/* read in F */
-    for (j=0; j<nvals[i]; j++) {
+    if (have_grad) { 		/* read gradient */
+      if (2>fscanf(infile, "%lf %lf\n", val, val+1)){
+        sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } 
+    } else {
+      *val=1e30; *(val+1)=1.e30;
+    } 
+    val+=2; ord+=2;
+    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
+    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf %lf\n", ord, val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -760,7 +848,10 @@ void write_pot_table3(pot_table_t *pt, char *filename)
   }
 
   /* write header */
-  fprintf(outfile, "#F 3 %d\n#E\n", pt->ncols ); 
+  fprintf(outfile, "#F 3 %d\n", pt->ncols ); 
+  fprintf(outfile, "#G");
+  for (i=0;i<pt->ncols;i++) fprintf(outfile," %d",gradient[i]);
+  fprintf(outfile,"\n#E\n");
 
   /* write info block */
   for (i=0; i<pt->ncols; i++) {
@@ -772,6 +863,9 @@ void write_pot_table3(pot_table_t *pt, char *filename)
   /* write data */
   for (i=0; i<pt->ncols; i++) {
     r = pt->begin[i];
+    /* write gradient */
+    fprintf(outfile,"%.16e %.16e\n", pt->table[pt->first[i]-2], 
+	    pt->table[pt->first[i]-1]);
     for (j=pt->first[i]; j<=pt->last[i]; j++) {
       fprintf(outfile, "%.16e\n", pt->table[j] );
       if (flag) 
@@ -816,7 +910,10 @@ void write_pot_table4(pot_table_t *pt, char *filename)
   }
 
   /* write header */
-  fprintf(outfile, "#F 4 %d\n#E\n", pt->ncols ); 
+  fprintf(outfile, "#F 4 %d\n", pt->ncols ); 
+  fprintf(outfile, "#G");
+  for (i=0;i<pt->ncols;i++) fprintf(outfile," %d",gradient[i]);
+  fprintf(outfile,"\n#E\n");
 
   /* write info block */
   for (i=0; i<pt->ncols; i++) {
@@ -826,6 +923,8 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 
   /* write data */
   for (i=0; i<pt->ncols; i++) {
+    fprintf(outfile,"%.16e %.16e\n", pt->table[pt->first[i]-2], 
+	    pt->table[pt->first[i]-1]);
     for (j=pt->first[i]; j<=pt->last[i]; j++) {
       fprintf(outfile, "%.16e %.16e\n", pt->xcoord[j], pt->table[j] );
       if (flag) 
@@ -1060,16 +1159,16 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       col    = i * ntypes + j; 
       r      = pt->begin[k];
       r_step = (pt->end[k] - pt->begin[k]) / (NPLOT-1);
-      for (l=0; l<NPLOT; l++) {
+      for (l=0; l<NPLOT-1; l++) {
 #ifdef NEWSCALE
         fprintf( outfile, "%e %e\n", r, 
-		 splint(pt, pt->table,k, r)
+		 splint_ne(pt, pt->table,k, r)
 		 +(r<=pt->end[paircol+i]?
-		   splint(pt, pt->table,paircol+i,r)*lambda[j]:0.)
+		   splint_ne(pt, pt->table,paircol+i,r)*lambda[j]:0.)
 		 +(r<=pt->end[paircol+j]?
-		  splint(pt, pt->table,paircol+j,r)*lambda[i]:0.));
+		  splint_ne(pt, pt->table,paircol+j,r)*lambda[i]:0.));
 #else
-        fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,k, r) );
+        fprintf( outfile, "%e %e\n", r, splint_ne(pt, pt->table,k, r) );
 #endif  /* NEWSCALE */
         r += r_step;
       }
@@ -1080,8 +1179,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   for (i=paircol;i<paircol+ntypes;i++){
     r=pt->begin[i];
     r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
-    for (l=0;l<NPLOT;l++) {
-      fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,i, r) );
+    for (l=0;l<NPLOT-1;l++) {
+      fprintf( outfile, "%e %e\n", r, splint_ne(pt, pt->table,i, r) );
       r += r_step;
     }
     fprintf(outfile,"%e %e\n\n\n", r, 0.0);
@@ -1093,7 +1192,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifdef PARABEL
       temp = parab(pt, pt->table,i, r) ;
 #else
-      temp = splint(pt, pt->table,i, r);
+      temp = splint_ne(pt, pt->table,i, r);
 #endif
 #ifdef NEWSCALE
       temp -= lambda[i-(paircol+ntypes)]*r;
@@ -1146,7 +1245,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
     for (j=i; j<ntypes; j++) {
       col    = i * ntypes + j; 
       r      = rmin;
-      for (l=0; l<NPLOT; l++) {
+      for (l=0; l<NPLOT-1; l++) {
 #ifdef NEWSCALE
         fprintf( outfile, "%e %e\n", r, 
 		 (r<=pt->end[k]?splint_ne(pt, pt->table,k, r):0.)
@@ -1155,7 +1254,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
 		 + (r<=pt->end[paircol+j]?
 		    splint_ne(pt, pt->table,paircol+j,r)*lambda[i]:0.));
 #else
-        fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,k, r) );
+        fprintf( outfile, "%e %e\n", r, splint_ne(pt, pt->table,k, r) );
 #endif  /* NEWSCALE */
         r += r_step;
       }
@@ -1166,7 +1265,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
   j=k;
   for (i=j;i<j+ntypes;i++){
     r=rmin;
-    for (l=0;l<NPLOT;l++) {
+    for (l=0;l<NPLOT-1;l++) {
       fprintf( outfile, "%e %e\n", r, 
 	       r<=pt->end[i]?splint_ne(pt, pt->table,i, r):0 );
       r += r_step;
@@ -1180,7 +1279,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
 #ifdef PARABEL
       temp = parab(pt, pt->table,i, r) ;
 #else
-      temp = splint(pt, pt->table,i, r);
+      temp = splint_ne(pt, pt->table,i, r);
 #endif
 #ifdef NEWSCALE
       temp -= lambda[i-(j+ntypes)]*r;

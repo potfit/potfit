@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.41 $
-* $Date: 2004/12/03 17:34:11 $
+* $Revision: 1.42 $
+* $Date: 2004/12/15 14:12:36 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -111,6 +111,8 @@ EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
 #endif
+EXTERN int *gradient INIT(NULL);       /* Gradient of potential fns.  */
+EXTERN int have_grad INIT(0);	       /* Is gradient specified?  */
 EXTERN atom_t *conf_atoms INIT(NULL); /* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
