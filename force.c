@@ -27,7 +27,8 @@ real calc_forces_pair(real *xi, real *forces)
 
       neigh = atom->neigh+j;
       typ2  = neigh->typ;
-      col   = (typ1 <= typ2) ? typ1 * ntypes + typ2 : typ2 * ntypes + typ1;
+      col   = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1))/2) 
+			     : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
 
       if (neigh->r < pair_pot.end[col] + pair_pot.step[col]) {
         grad = grad3( &pair_pot, xi, col, neigh->r);
