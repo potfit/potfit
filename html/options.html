@@ -17,15 +17,16 @@ their purpose is and how they are used.</p>
 <td width="120"><a href="#debug">debug</a></td>
 <td width="120"><a href="#dist">dist</a></td>
 <td width="120"><a href="#eam">eam</a></td>
-<td width="120"><a href="#limit">limit</a></td>
+<td width="120"><a href="#fweight">fweight</a></td>
 </tr>
 
 <tr align="left">
+<td width="120"><a href="#limit">limit</a></td>
 <td width="120"><a href="#noresc">noresc</a></td>
 <td width="120"><a href="#parab">parab</a></td>
 <td width="120"><a href="#stress_tens">stress</a></td>
 </tr>
-
+</table>
 
 
 <dl>
@@ -52,6 +53,14 @@ points have a sensible density and/or distribution.</p>
 <dd>
 <p>
 <a href="eam2.html">Use Embedded Atom Method potentials.</a> </p>
+</dd>
+
+<dt><a id="eam" name="eam"><b>fweight</b></a></dt>
+<dd>
+<p>Use modified weights for the forces. Each force
+component F_j is weighted by the factor (|F|+ FORCE_EPS)^(-1). This
+increases the importance of numerically small forces. The compile time
+parameter FORCE_EPS prevents the overweighting of very tiny forces.</p>
 </dd>
 
 <dt><a id="limit" name="limit"><b>limit</b></a></dt>

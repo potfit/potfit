@@ -49,7 +49,9 @@ lines start with two '#' characters. </p>
 
 <p>
 In a potential file in format 3, each data column has its own range
-and spacing. If we have n data columns, the file starts with n lines
+and spacing. Sampling points are equidistant in the atomic distance r
+or (when using EAM-type interactions) electron density n.
+If we have n data columns, the file starts with n lines
 of the form
 <pre>
 x_begin x_end steps
@@ -64,9 +66,9 @@ different for the different data columns.</p>
 
 <p>The data sets for N atom types have to be arranged as follows:
 <pre>
-V_00 V_01 ... V_0N V_11 ... V_1N ... V_NN
-rho_0 rho_1 ... rho_N
-U_0 U_1 ... U_N
+V_00 V_01 ... V_0N V_11 ... V_1N ... V_NN  (pair interaction)
+rho_0 rho_1 ... rho_N  (EAM electron transfer)
+U_0 U_1 ... U_N        (EAM embedding energy)
 </pre>
 <p><b>Please note:</b></p>
 <ul>
@@ -78,8 +80,24 @@ atom only. </li>
 (embedded) atom only.</li>
 </ul>
 
+<h2>Format 4</h2>
+<p>As with potential files in format 3 each data column has its own
+spacing. But with potential format 4 the requirement that the sampling
+points be equidistant is dropped. Arbitrarily spaced sampling points
+are possible, but the sampling points have to be given in order.</p>
 
-
+<p>Preceding the data columns is a header with one line per column,
+containing the number of sampling points in the corresponding
+column. Seperated by blank lines then the data columns follow. Each of
+the columns has the form
+<pre>
+r_0     f(r_0)
+r_1     f(r_1)
+...
+r_steps f(r_steps)
+</pre>
+Please note that r_0 < r_1 < ... < r_steps is required.
+The order of the columns is the same as with format 3. </p>
 
 <!--#include virtual="potfitfoot.html" -->
 
