@@ -131,9 +131,7 @@ real grad2(pot_table_t *pt, real *xi, int col, real r)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0) {
-    rr   = 0;
-  }
+  if (rr < 0) error("short distance!");
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -152,6 +150,45 @@ real grad2(pot_table_t *pt, real *xi, int col, real r)
   return istep * (dv + (chi - 0.5) * d2v);
 }
 
+/*****************************************************************************
+*
+*  Evaluate derivative of potential with cubic interpolation. 
+*  col is typ1 * ntypes + typ2.
+*
+******************************************************************************/
+
+real grad3(pot_table_t *pt, real *xi, int col, real r)
+{
+  real rr, istep, chi, p0, p1, p2, p3;
+  real dfac0, dfac1, dfac2, dfac3;
+  int  k;
+
+  /* check for distances shorter than minimal distance in table */
+  rr = r - pt->begin[col];
+  if (rr < 0) error("short distance!");
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = (int) (rr * istep);
+  chi   = (rr - k * pt->step[col]) * istep;
+  k    += pt->first[col];
+
+  /* factors for the interpolation of the 1. derivative */
+  dfac0 = -(1.0/6.0) * ((3.0*chi-6.0)*chi+2.0);
+  dfac1 =        0.5 * ((3.0*chi-4.0)*chi-1.0);
+  dfac2 =       -0.5 * ((3.0*chi-2.0)*chi-2.0);
+  dfac3 =    1.0/6.0 * (3.0*chi*chi-1.0);
+
+  /* intermediate values */
+  p1  = (k<=pt->last[col])    ? xi[k++] : 0.0;
+  p2  = (k<=pt->last[col])    ? xi[k++] : 0.0;
+  p3  = (k<=pt->last[col])    ? xi[k  ] : 0.0;
+  p0  = (k>=pt->first[col]+3) ? xi[k-3] : 2*p1-p2; 
+
+  /* return the derivative */
+  return istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
+}
+
 
 /*****************************************************************************
 *
@@ -167,9 +204,7 @@ real pot2(pot_table_t *pt, int col, real r)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0) {
-    rr   = 0;
-  }
+  if (rr < 0) error("short distance!");
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -200,6 +235,7 @@ void write_pot_table(pot_table_t *pt, char *filename)
   FILE *outfile;
   char msg[255];
   int  i, j;
+  real r;
 
   /* open file */
   outfile = fopen(filename,"w");
@@ -213,15 +249,18 @@ void write_pot_table(pot_table_t *pt, char *filename)
 
   /* write info block */
   for (i=0; i<pt->ncols; i++) {
-    fprintf(outfile, "%f %f %d\n", 
+    fprintf(outfile, "%.16e %.16e %d\n", 
             pt->begin[i], pt->end[i], pt->last[i] - pt->first[i] + 1);
   }
   fprintf(outfile, "\n");
 
   /* write data */
   for (i=0; i<pt->ncols; i++) {
-    for (j=pt->first[i]; j<=pt->last[i]; j++)
-      fprintf(outfile, "%f\n", pt->table[j] );
+    r = pt->begin[i];
+    for (j=pt->first[i]; j<=pt->last[i]; j++) {
+      fprintf(outfile, "%.16e\n", pt->table[j] );
+      r += pt->step[i];
+    }
     fprintf(outfile, "\n");
   }
   fclose(outfile);
@@ -266,7 +305,8 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
       r2begin[col2] = SQR(pt->begin[col1]);
       r2end  [col2] = SQR(pt->end[col1] + pt->step[col1]);
       r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-      fprintf(outfile, "%f %f %f\n", r2begin[col2], r2end[col2], r2step[col2]);
+      fprintf(outfile, "%.16e %.16e %.16e\n", 
+              r2begin[col2], r2end[col2], r2step[col2]);
     }
   fprintf(outfile, "\n");
 
@@ -277,7 +317,7 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k=0; k<imdpotsteps+5; k++) {
-        fprintf(outfile, "%f\n", pot2(pt, col1, sqrt(r2) ));
+        fprintf(outfile, "%.16e\n", pot2(pt, col1, sqrt(r2) ));
 	r2 += r2step[col2];
       }
     }

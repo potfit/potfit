@@ -30,7 +30,7 @@ real calc_forces_pair(real *xi, real *forces)
       col   = (typ1 <= typ2) ? typ1 * ntypes + typ2 : typ2 * ntypes + typ1;
 
       if (neigh->r < pair_pot.end[col] + pair_pot.step[col]) {
-        grad = grad2( &pair_pot, xi, col, neigh->r);
+        grad = grad3( &pair_pot, xi, col, neigh->r);
         forces[k  ] += neigh->dist.x * grad;
         forces[k+1] += neigh->dist.y * grad;
         forces[k+2] += neigh->dist.z * grad;
