@@ -6,8 +6,8 @@
  *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2004/08/16 13:02:51 $
+* $Revision: 1.13 $
+* $Date: 2004/08/26 12:37:55 $
 *****************************************************************/
 
 
@@ -325,9 +325,10 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 /* 	void nrerror(char error_text[]); */
   int klo,khi,k;
   real h,b,a,rr,d22,d21,p1,p2,x1,x2;
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0) {printf("%f %f %d\n",r,pt->begin[col],col);error("short distance");}
+/*    check for distances shorter than minimal distance in table  */
+  /* not necessary with this routine... */
+/*   rr = r - pt->begin[col]; */
+/*   if (rr < 0) {printf("%f %f %d\n",r,pt->begin[col],col);error("short distance");} */
   
   klo=pt->first[col];
   khi=pt->last[col];
@@ -354,6 +355,7 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 
 }
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
+
 
 /******************************************************************************
  *

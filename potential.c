@@ -6,10 +6,13 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2004/08/26 08:26:17 $
+* $Revision: 1.27 $
+* $Date: 2004/08/26 12:37:54 $
 *****************************************************************/
 
+/* should imd potentials be extrapolated? Set EXTEND >0 to extrapolate
+   by EXTEND*(mean distance between points) units*/
+#define EXTEND 0. 		
 #define NPLOT 1000
 #ifndef POTSCALE
 #include "potfit.h"
@@ -878,7 +881,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	  m2+=j;
 	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
 	  col2 = i * ntypes + j;
-	  r2begin[col2] = SQR(pt->begin[col1]);
+	  /* Extrapolation possible  */
+	  r2begin[col2] = SQR(MAX(pt->begin[col1]-EXTEND*pt->step[col1],0));
 	  r2end  [col2] = SQR(pt->end[col1]);
 	  r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
 	  fprintf(outfile, "%.16e %.16e %.16e\n", 
@@ -890,21 +894,22 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write data */
   m=0;
   for (i=0; i<ntypes; i++) {
-      m+=i;
-      m2=0;
-      for (j=0; j<ntypes; j++) {
-	  m2+=j;
-	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
-	  col2 = i * ntypes + j;
-	  r2 = r2begin[col2];
-	  for (k=0; k<imdpotsteps; k++) { 
-	      fprintf(outfile, "%.16e\n", splint(pt, pt->table, col1, sqrt(r2) ));
-	      r2 += r2step[col2];
-	  }
-	  fprintf(outfile,"%.16e\n",0.0);
-	  fprintf(outfile, "\n");
+    m+=i;
+    m2=0;
+    for (j=0; j<ntypes; j++) {
+      m2+=j;
+      col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col2 = i * ntypes + j;
+      r2 = r2begin[col2];
+      for (k=0; k<imdpotsteps; k++) { 
+	fprintf(outfile, "%.16e\n", 
+		splint_ne(pt, pt->table, col1, sqrt(r2) ));
+	r2 += r2step[col2];
       }
+      fprintf(outfile,"%.16e\n",0.0);
+      fprintf(outfile, "\n");
     }
+  }
   fclose(outfile);
   printf("IMD pair potential data written to %s\n", filename);
 #ifdef EAM
@@ -924,7 +929,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     for (j=0; j<ntypes; j++) {
       col1 = (ntypes*(ntypes+1))/2+j;
       col2 = i * ntypes + j;
-      r2begin[col2] = SQR(pt->begin[col1]);
+      /* Extrapolation possible  */
+      r2begin[col2] = SQR(MAX(pt->begin[col1]-EXTEND*pt->step[col1],0));
       r2end  [col2] = SQR(pt->end[col1]);
       r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", 
@@ -940,7 +946,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k=0; k<imdpotsteps; k++) { 
-	fprintf(outfile, "%.16e\n", splint(pt, pt->table, col1, sqrt(r2) ));
+	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2) ));
 	r2 += r2step[col2];
       }
       fprintf(outfile,"%.16e\n",0.0);
@@ -963,8 +969,10 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write info block */
   for (i=0; i<ntypes; i++){ 
     col1=(ntypes*(ntypes+3))/2+i;
-    r2begin[i] = pt->begin[col1];
-    r2end  [i] = pt->end[col1];
+    /* pad with zeroes */
+    r2begin[i] = pt->begin[col1]-EXTEND*pt->step[col1];
+    /* extrapolation */
+    r2end  [i] = pt->end[col1]+EXTEND*pt->step[col1];
     r2step [i] = (r2end[i] - r2begin[i]) / imdpotsteps;
     fprintf(outfile, "%.16e %.16e %.16e\n", 
 	    r2begin[i], r2end[i], r2step[i]);
@@ -976,11 +984,15 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     r2 = r2begin[i];
     col1=(ntypes*(ntypes+3))/2+i;
     for (k=0; k<=imdpotsteps; k++) { 
+      if (r2 < pt->begin[col1] )
+	fprintf(outfile, "%.16e\n", 0.); /* pad with zeroes */
+      else {
 #ifdef PARABEL
-      fprintf(outfile, "%.16e\n", parab(pt, pt->table, col1, r2 ));
+	fprintf(outfile, "%.16e\n", parab(pt, pt->table, col1, r2 ));
 #else
-      fprintf(outfile, "%.16e\n", splint(pt, pt->table, col1, r2 ));
+	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, r2 ));
 #endif
+      }
       r2 += r2step[i];
       }
     fprintf(outfile, "\n");

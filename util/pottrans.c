@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.1 $
-*  $Date: 2004/04/13 14:13:51 $
+*  $Revision: 1.2 $
+*  $Date: 2004/08/26 12:37:55 $
 *
 ******************************************************************************/
 
@@ -732,7 +732,7 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
   char msg[255];
   int  i, j, k, l, col, flag=0;
   real r, r_step;
-  if (plotpointfile != "\0") flag=1;
+//  if (plotfilename != "\0") flag=1;
   /* open file */
   outfile = fopen(filename,"w");
   if (NULL == outfile) {
@@ -740,13 +740,13 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
     error(msg);
   }
   /* if needed: open file for plotpoints */
-  if (flag) {
-      outfile2 = fopen(plotpointfile,"w");
-      if (NULL == outfile) {
-	  sprintf(msg,"Could not open file %s\n",filename);
-	  error(msg);
-      }
-  }
+/*   if (flag) { */
+/*       outfile2 = fopen(plotfilename,"w"); */
+/*       if (NULL == outfile2) { */
+/* 	  sprintf(msg,"Could not open file %s\n",filename); */
+/* 	  error(msg); */
+/*       } */
+/*   } */
 
   /* write header */
   fprintf(outfile, "#F 3 %d\n#E\n", ncols ); 
@@ -793,7 +793,7 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
   char msg[255];
   int  i, j, k, l, col, flag=0;
   real r, r_step;
-  if (plotpointfile != "\0") flag=1;
+//  if (plotfilename != "\0") flag=1;
   /* open file */
   outfile = fopen(filename,"w");
   if (NULL == outfile) {
@@ -801,13 +801,13 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
     error(msg);
   }
   /* if needed: open file for plotpoints */
-  if (flag) {
-      outfile2 = fopen(plotpointfile,"w");
-      if (NULL == outfile) {
-	  sprintf(msg,"Could not open file %s\n",filename);
-	  error(msg);
-      }
-  }
+/*   if (flag) { */
+/*       outfile2 = fopen(plotfilename,"w"); */
+/*       if (NULL == outfile2) { */
+/* 	  sprintf(msg,"Could not open file %s\n",filename); */
+/* 	  error(msg); */
+/*       } */
+/*   } */
 
   /* write header */
   fprintf(outfile, "#F 3 %d\n#E\n", ncols ); 
@@ -875,59 +875,59 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
 *
 ******************************************************************************/
 
-void write_plotpot_pair(pot_table_t *pt, char *filename)
-{
-  FILE *outfile;
-  char msg[255];
-  int  i, j, k, l, col;
-  real r, r_step;
+/* void write_plotpot_pair(pot_table_t *pt, char *filename) */
+/* { */
+/*   FILE *outfile; */
+/*   char msg[255]; */
+/*   int  i, j, k, l, col; */
+/*   real r, r_step; */
 
-  /* open file */
-  outfile = fopen(filename,"w");
-  if (NULL == outfile) {
-    sprintf(msg,"Could not open file %s\n",filename);
-    error(msg);
-  }
+/*   /\* open file *\/ */
+/*   outfile = fopen(filename,"w"); */
+/*   if (NULL == outfile) { */
+/*     sprintf(msg,"Could not open file %s\n",filename); */
+/*     error(msg); */
+/*   } */
 
-  /* write data */
-  k = 0;
-  for (i=0; i<ntypes; i++) 
-    for (j=i; j<ntypes; j++) {
-      col    = i * ntypes + j; 
-      r      = r_start[k];
-      r_step = (r_end[k] - r_start[k]) / (NPLOT - 1);
-      for (l=0; l<NPLOT; l++) {
-        fprintf( outfile, "%e %e\n", r, POTVAL(pt, col, ntypes*ntypes, r*r) );
-        r += r_step;
-      }
-      fprintf(outfile, "%e %e\n\n\n", r, 0.0);
-      k++;
-    }
-  if (eam) {
-    for (i=0; i<ntypes; i++) {
-      r=r_start[k];
-      r_step=(r_end[k] - r_start[k]) / (NPLOT - 1);
-      for (l=0;l<NPLOT;l++) {
-	fprintf(outfile, "%e %e\n", r, POTVAL(&rho_tab, i, ntypes*ntypes, r*r) );
-        r += r_step;
-      }
-      fprintf(outfile, "%e %e\n\n\n", r, 0.0);
-      k++;
-    }
-    for (i=0; i<ntypes; i++) {
-      r=r_start[k];
-      r_step=(r_end[k] - r_start[k]) / (NPLOT - 1);
-      for (l=0;l<NPLOT;l++) {
-	fprintf(outfile, "%e %e\n", r, POTVAL(&embed_pt, i, ntypes, r) );
-        r += r_step;
-      }
-      fprintf(outfile, "%e %e\n\n\n", r, 0.0);
-      k++;
-    }
-  }
+/*   /\* write data *\/ */
+/*   k = 0; */
+/*   for (i=0; i<ntypes; i++)  */
+/*     for (j=i; j<ntypes; j++) { */
+/*       col    = i * ntypes + j;  */
+/*       r      = r_start[k]; */
+/*       r_step = (r_end[k] - r_start[k]) / (NPLOT - 1); */
+/*       for (l=0; l<NPLOT; l++) { */
+/*         fprintf( outfile, "%e %e\n", r, POTVAL(pt, col, ntypes*ntypes, r*r) ); */
+/*         r += r_step; */
+/*       } */
+/*       fprintf(outfile, "%e %e\n\n\n", r, 0.0); */
+/*       k++; */
+/*     } */
+/*   if (eam) { */
+/*     for (i=0; i<ntypes; i++) { */
+/*       r=r_start[k]; */
+/*       r_step=(r_end[k] - r_start[k]) / (NPLOT - 1); */
+/*       for (l=0;l<NPLOT;l++) { */
+/* 	fprintf(outfile, "%e %e\n", r, POTVAL(&rho_tab, i, ntypes*ntypes, r*r) ); */
+/*         r += r_step; */
+/*       } */
+/*       fprintf(outfile, "%e %e\n\n\n", r, 0.0); */
+/*       k++; */
+/*     } */
+/*     for (i=0; i<ntypes; i++) { */
+/*       r=r_start[k]; */
+/*       r_step=(r_end[k] - r_start[k]) / (NPLOT - 1); */
+/*       for (l=0;l<NPLOT;l++) { */
+/* 	fprintf(outfile, "%e %e\n", r, POTVAL(&embed_pt, i, ntypes, r) ); */
+/*         r += r_step; */
+/*       } */
+/*       fprintf(outfile, "%e %e\n\n\n", r, 0.0); */
+/*       k++; */
+/*     } */
+/*   } */
 
-  fclose(outfile);
-}
+/*   fclose(outfile); */
+/* } */
 
 /*****************************************************************************
 *
@@ -1005,7 +1005,7 @@ int main(int argc, char **argv)
       write_pot_table_eam(&pt,&embed_pt,&rho_tab,outfilename);
     else
       write_pot_table_pair(&pt,outfilename);
-    write_plotpot_pair(&pt,plotfilename);
+//    write_plotpot_pair(&pt,plotfilename);
   }
 
   return 0;

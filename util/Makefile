@@ -1,5 +1,5 @@
-CC     = icc
-CFLAGS = -g -O -axK  -ip -DSTRESS -DEAM #(icc) -DPOTSCALE -DPARABEL 
+CC     = gcc
+CFLAGS = -g -O -march=athlon-mp -DSTRESS -DEAM #(icc) -DPOTSCALE -DPARABEL 
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
 #POTFITSRC = f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c config.c param.c potential.c potfit.c splines.c simann.c mpi_utils.c
