@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.30 $
-* $Date: 2004/08/26 08:26:18 $
+* $Revision: 1.31 $
+* $Date: 2004/09/15 08:09:50 $
 *****************************************************************/
 
 
@@ -54,7 +54,7 @@ void warning(char *msg)
 int main(int argc, char **argv)
 {
   real *force;
-  real tot, min, max, sqr;
+  real tot, min, max, sqr,totdens=0;
   int  i, diff;
   pi = 4.0 * atan(1.);
 #ifdef MPI
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 #ifdef STRESS
     printf("Stress weight: %f\n",sweight);
 #endif 
-
+#endif /* EAM */
   /* Select correct spline interpolation and other functions */
     if (format==3) {
       splint = splint_ed;
@@ -106,6 +106,11 @@ int main(int argc, char **argv)
 #endif /* PARABEL */
       
     }
+    /* set spline density corrections to 0 */
+    lambda = (real *) malloc(ntypes * sizeof(real));
+    for (i=0;i<ntypes;i++) lambda[i]=0.;
+
+#ifdef EAM
 #ifndef NORESCALE
     rescale(&pair_pot,1.,1); 	/* rescale now... */
     embed_shift(&pair_pot);	/* and shift */
@@ -168,11 +173,12 @@ int main(int argc, char **argv)
 //    rescale(&pair_pot,1.);
     tot = calc_forces(pair_pot.table,force,0);
     write_pot_table( &pair_pot, endpot );
-    printf("Potential in format %d writte to file %s\n",format,endpot);
+    printf("Potential in format %d written to file %s\n",format,endpot);
     printf("Plotpoint file written to file %s\n", plotpointfile);
-    
     write_pot_table_imd( &pair_pot, imdpot );
     if (plot) write_plotpot_pair(&pair_pot, plotfile);
+
+
 #ifdef PDIST
 #ifndef MPI 			/* will not work with MPI */
     write_pairdist(&pair_pot,distfile);
@@ -181,12 +187,31 @@ int main(int argc, char **argv)
     if (format == 3) {		/* then we can also write format 4 */
       sprintf(endpot,"%s_4",endpot);
       write_pot_table4(&pair_pot,endpot);
-      printf("Potential in format 4 writte to file %s\n",endpot);
+      printf("Potential in format 4 written to file %s\n",endpot);
     }
 #ifdef EAM 
 #ifndef MPI /* Not much sense in printing rho when not communicated... */
     printf("Local electron density rho\n");
-    for (i=0; i<natoms;i++) printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);
+    for (i=0; i<natoms;i++) {
+      printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);
+      totdens+=atoms[i].rho;
+    }
+    totdens /= (real) natoms;
+    printf("Average local electron density at atom sites: %f\n", totdens);
+#ifdef NEWSCALE
+    for (i=0;i<ntypes;i++) {
+      lambda[i]=splint_grad(&pair_pot,pair_pot.table,paircol+ntypes+i,totdens);
+      printf("lambda[%d] = %f \n", i, lambda[i]) ;
+	}
+    sprintf(plotfile,"%s_new",plotfile);
+    sprintf(imdpot,"%s_new",imdpot);
+    /* write new potential plotting table */
+    if (plot) write_plotpot_pair(&pair_pot, plotfile);
+    /* write NEW imd potentials */
+    write_pot_table_imd( &pair_pot, imdpot );
+#endif /* NEWSCALE */
+
+
 #endif /* MPI */
 #endif /* EAM */
 

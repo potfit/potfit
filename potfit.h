@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.36 $
-* $Date: 2004/08/16 13:02:50 $
+* $Revision: 1.37 $
+* $Date: 2004/09/15 08:09:50 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -183,6 +183,7 @@ EXTERN vektor box_x,  box_y,  box_z;
 EXTERN vektor tbox_x, tbox_y, tbox_z;
 EXTERN real *rcut INIT(NULL);
 EXTERN real *rmin INIT(NULL);
+EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real (*calc_forces)(real*,real*,int);
 EXTERN real (*splint)(pot_table_t*,real*,int,real);
 EXTERN real (*splint_grad)(pot_table_t*,real*,int,real);

@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.29 $
-# $Date: 2004/07/29 09:13:13 $
+# $Revision: 1.30 $
+# $Date: 2004/09/15 08:09:51 $
 # 
 ############################################################################
 #
@@ -545,7 +545,20 @@ CFLAGS += -DPARABEL
 endif
 
 ifneq (,$(findstring dist,${MAKETARGET}))
+ifeq (,$(findstring MPI,${PARALLEL}))
 CFLAGS += -DPDIST
+else
+ERROR += "dist is not mpi parallelized -- " 
+endif
+endif
+
+
+ifneq (,$(findstring newscale,${MAKETARGET}))
+ifeq (,$(findstring MPI,${PARALLEL}))
+CFLAGS += -DNEWSCALE
+else
+ERROR += "newscale is not mpi parallelized -- " 
+endif
 endif
 
 ifneq (,$(findstring fweight,${MAKETARGET}))
@@ -598,12 +611,15 @@ endif
 # Second recursion sets MAKETARGET variable and compiles
 # An empty MAKETARGET variable would create an infinite recursion, so we check
 STAGE2:
+ifneq (,${ERROR})
+	@echo "${ERROR}"
+else
 ifneq (,${MAKETARGET})
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
 else
 	@echo 'No TARGET specified.'
 endif
-
+endif
 ###########################################################################
 #
 #	 Misc. TARGETs

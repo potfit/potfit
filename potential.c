@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2004/08/26 12:37:54 $
+* $Revision: 1.28 $
+* $Date: 2004/09/15 08:09:50 $
 *****************************************************************/
 
 /* should imd potentials be extrapolated? Set EXTEND >0 to extrapolate
@@ -851,7 +851,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   FILE *outfile;
   char msg[255];
   char filename[255];
-  real *r2begin, *r2end, *r2step, r2;
+  real *r2begin, *r2end, *r2step, r2,temp;
   int  i, j, k, m, m2, col1, col2;
 
   sprintf(filename,"%s_phi.imd.pot",prefix);
@@ -902,8 +902,16 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k=0; k<imdpotsteps; k++) { 
+#ifdef NEWSCALE
+	/* Pair potentials corrected so that U'(n_av)=0 */
+	fprintf(outfile, "%.16e\n", 
+		splint_ne(pt, pt->table, col1, sqrt(r2) )
+		+ lambda[i] * splint_ne(pt, pt->table, paircol+j, sqrt(r2))
+		+ lambda[j] * splint_ne(pt, pt->table, paircol+i, sqrt(r2)) );
+#else  /* NEWSCALE */
 	fprintf(outfile, "%.16e\n", 
 		splint_ne(pt, pt->table, col1, sqrt(r2) ));
+#endif /* NEWSCALE */
 	r2 += r2step[col2];
       }
       fprintf(outfile,"%.16e\n",0.0);
@@ -985,13 +993,21 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     col1=(ntypes*(ntypes+3))/2+i;
     for (k=0; k<=imdpotsteps; k++) { 
       if (r2 < pt->begin[col1] )
+#ifdef NEWSCALE 
+	fprintf(outfile, "%.16e\n", -lambda[i]*r2); /* pad with zeroes */
+#else /* NEWSCALE */
 	fprintf(outfile, "%.16e\n", 0.); /* pad with zeroes */
+#endif  /* NEWSCALE */
       else {
 #ifdef PARABEL
-	fprintf(outfile, "%.16e\n", parab(pt, pt->table, col1, r2 ));
+	temp= parab(pt, pt->table, col1, r2 );
 #else
-	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, r2 ));
+	temp=splint_ne(pt, pt->table, col1, r2 );
 #endif
+#ifdef NEWSCALE
+        temp-=lambda[i]-r2;
+#endif /* NEWSCALE */
+	fprintf(outfile, "%.16e\n", temp);
       }
       r2 += r2step[i];
       }
@@ -1014,7 +1030,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   FILE *outfile;
   char msg[255];
   int  i, j, k, l, col;
-  real r, r_step;
+  real r, r_step,temp;
 
   /* open file */
   outfile = fopen(filename,"w");
@@ -1031,7 +1047,14 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       r      = pt->begin[k];
       r_step = (pt->end[k] - pt->begin[k]) / (NPLOT-1);
       for (l=0; l<NPLOT; l++) {
+#ifdef NEWSCALE
+        fprintf( outfile, "%e %e\n", r, 
+		 splint(pt, pt->table,k, r)
+		 + splint(pt, pt->table,paircol+i,r)*lambda[j]
+	         + splint(pt, pt->table,paircol+j,r)*lambda[i]);
+#else
         fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,k, r) );
+#endif  /* NEWSCALE */
         r += r_step;
       }
       fprintf( outfile, "%e %e\n\n\n", r, 0.0);
@@ -1053,10 +1076,14 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
     for (l=0;l<=NPLOT;l++) {
 #ifdef PARABEL
-      fprintf( outfile, "%e %e\n", r, parab(pt, pt->table,i, r) );
+      temp = parab(pt, pt->table,i, r) ;
 #else
-      fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,i, r) );
+      temp = splint(pt, pt->table,i, r);
 #endif
+#ifdef NEWSCALE
+      temp -= lambda[i-(j+ntypes)]*r;
+#endif /* NEWSCALE */
+      fprintf( outfile, "%e %e\n", r, temp );
       r += r_step;
     }
     fprintf(outfile,"\n\n\n");
@@ -1116,8 +1143,9 @@ void write_pairdist(pot_table_t *pt, char *filename) {
 	col = paircol+typ2;
 	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[1]]++;
+#endif /* EAM */
       }
-
+#ifdef EAM
       /* Finally: Einbettungsfunktion - hier muss Index festgestellt werden */
       col  = paircol+ntypes+typ1; 
       if (format == 3) { 
