@@ -1,5 +1,5 @@
 CC     = icc
-CFLAGS = -g -O -axK  -ip  -DEAM #(icc) -DPOTSCALE -DPARABEL 
+CFLAGS = -g -O -axK  -ip -DSTRESS -DEAM #(icc) -DPOTSCALE -DPARABEL 
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
 #POTFITSRC = f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c config.c param.c potential.c potfit.c splines.c simann.c mpi_utils.c
@@ -29,4 +29,4 @@ potscale: ${POTSCALEOBJ} ${POTSCALEHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTSCALEOBJ} -lm
 
 vasp2force:
-	cp util/vasp2force.sh ${HOME}/bin/share
+	cp vasp2force.sh ${HOME}/bin/share
