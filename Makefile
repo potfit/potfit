@@ -1,7 +1,7 @@
 
 CC     = icc
-CFLAGS = -O  -axK -openmp -DPARABEL -ip -g -DEAM#(icc)
-#CFLAGS = -g  -DEAM -DPARABEL #gcc -O -g3
+CFLAGS = -O  -axK -openmp -ip -g #(icc)  -DSTRESS -DEAM -DPARABEL -DLIMIT
+#CFLAGS = -g -DEAM -DSTRESS -DPARABEL  # -DEAM  -DLIMIT#gcc -O -g3
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
 POTFITSRC = f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c config.c param.c potential.c potfit.c splines.c simann.c
@@ -17,11 +17,11 @@ POTSCALEOBJ = $(POTSCALESRC:.c=.o)
 
 #${POTFITOBJ}: $($@:.o=.c) ${POTFITHDR}
 #	${CC} ${CFLAGS} -c $($@:.o=.c)
-potfit3: ${POTFITOBJ} ${POTFITHDR}
-	${CC} ${CFLAGS} -o ${BINDIR}/potfit1.2 ${POTFITOBJ} -lm
+potfit_par: ${POTFITOBJ} ${POTFITHDR}
+	${CC} ${CFLAGS} -o ${BINDIR}/potfit_par ${POTFITOBJ} -lm
 
 potfit2: ${POTFITOBJ} ${POTFITHDR}
-	${CC} ${CFLAGS} -o ${BINDIR}/potfit_i ${POTFITOBJ} -lm
+	${CC} ${CFLAGS} -o ${BINDIR}/potfit_e ${POTFITOBJ} -lm
 
 potfit: ${POTFITOBJ} ${POTFITHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTFITOBJ} -lm

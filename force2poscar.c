@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.2 $
-*  $Date: 2003/01/27 14:08:29 $
+*  $Revision: 1.3 $
+*  $Date: 2003/12/11 12:44:46 $
 *
 *  Convert an IMD force file to a VASP POSCAR file
 *
@@ -52,6 +52,9 @@ int main(int argc, char **argv)
 {
   FILE *infile, *outfile;
   vector *pos, box_x, box_y, box_z, tmp;
+#ifdef STRESS
+  vector tmp2;
+#endif
   int *typ, num[MAXTYP], max=0, n, i, j;
   real triple_prod;
 
@@ -69,6 +72,13 @@ int main(int argc, char **argv)
   fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z ); 
   fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z ); 
   fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z ); 
+  
+  /* read energy and stress -> discard */
+  fscanf(infile, "%lf\n", &tmp.x);
+#ifdef STRESS
+  fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &tmp.x, &tmp.y, &tmp.z, 
+	 &tmp2.x, &tmp2.y, &tmp2.z);
+#endif
 
   /* read atoms */
   for (i=0; i<MAXTYP; i++) num[i]=0;

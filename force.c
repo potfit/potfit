@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2003/11/20 08:38:45 $
+* $Revision: 1.25 $
+* $Date: 2003/12/11 12:44:46 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -115,7 +115,8 @@ real calc_forces_pair(real *xi, real *forces)
     real gradF,gradF2,grad2,r,eamforce;
     atom_t *atom2;
 #endif
-    int h,k,i,l,j,typ1,typ2,col,config;
+    vektor tmp_force;
+    int h,k,i,l,j,typ1,typ2,col,config,stresses;
     real fnval, grad;
     atom_t *atom;
     neigh_t *neigh;
@@ -124,9 +125,12 @@ real calc_forces_pair(real *xi, real *forces)
 #endif 
     for (h=0; h<nconf; h++) {
       config = 3*natoms + h;
+      stresses = 3*natoms + nconf + 6*h;
       forces[config]=0.;
+      for (i=stresses; i<stresses+6; i++) 
+	forces[i]=0.;
 #ifdef LIMIT
-      forces[config+nconf]=-force_0[config+nconf];
+      forces[config+7*nconf]=-force_0[config+7*nconf];
 #endif
       for (i=0; i<inconf[h]; i++) {
 	k    = 3*(cnfstart[h]+i);
@@ -159,13 +163,27 @@ real calc_forces_pair(real *xi, real *forces)
 	      /* grad is calculated in the same step */
 	      fnval = splint_comb_ed(&pair_pot,xi,col,neigh->r,&grad);
 	      forces[config] += fnval;
-	      forces[k  ] += neigh->dist.x * grad;
-	      forces[k+1] += neigh->dist.y * grad;
-	      forces[k+2] += neigh->dist.z * grad;
+	      tmp_force.x  = neigh->dist.x * grad;
+	      tmp_force.y  = neigh->dist.y * grad;
+	      tmp_force.z  = neigh->dist.z * grad;
+	      forces[k  ] += tmp_force.x;
+	      forces[k+1] += tmp_force.y;
+	      forces[k+2] += tmp_force.z;
 	      l    = 3*neigh->nr;
-	      forces[l  ] -= neigh->dist.x * grad; 
-	      forces[l+1] -= neigh->dist.y * grad; 
-	      forces[l+2] -= neigh->dist.z * grad; 
+	      forces[l  ] -= tmp_force.x;
+	      forces[l+1] -= tmp_force.y;
+	      forces[l+2] -= tmp_force.z;
+#ifdef STRESS
+	      tmp_force.x        *=neigh->r;
+ 	      tmp_force.y        *=neigh->r;
+ 	      tmp_force.z        *=neigh->r;
+	      forces[stresses]   -= neigh->dist.x * tmp_force.x;
+	      forces[stresses+1] -= neigh->dist.y * tmp_force.y;
+	      forces[stresses+2] -= neigh->dist.z * tmp_force.z;
+	      forces[stresses+3] -= neigh->dist.x * tmp_force.y;
+	      forces[stresses+4] -= neigh->dist.y * tmp_force.z;
+	      forces[stresses+5] -= neigh->dist.z * tmp_force.x;
+#endif STRESS
 	    }
 	  
 #ifdef EAM
@@ -199,7 +217,7 @@ real calc_forces_pair(real *xi, real *forces)
 	  col2=paircol+ntypes+typ1;
 	  if (atom->rho > pair_pot.end[col2]) {
 #ifdef LIMIT
-	    forces[config+nconf]+=1000*SQR(atom->rho - pair_pot.end[col2]);
+	    forces[config+7*nconf]+=1000*SQR(atom->rho - pair_pot.end[col2]);
 #endif
 #ifndef PARABEL
 	    atom->rho = pair_pot.end[col2];
@@ -209,7 +227,7 @@ real calc_forces_pair(real *xi, real *forces)
 	  if (atom->rho < pair_pot.begin[col2]) {
 	    /*  forces[config] += 1e10;  rho too small... really bad thing*/
 #ifdef LIMIT
-	    forces[config+nconf]+=1000*SQR(pair_pot.begin[col2]-atom->rho);
+	    forces[config+7*nconf]+=1000*SQR(pair_pot.begin[col2]-atom->rho);
 #endif
 #ifndef PARABEL
 	    atom->rho = pair_pot.begin[col2];
@@ -254,14 +272,28 @@ real calc_forces_pair(real *xi, real *forces)
 		else
 		  grad2 = (r < pair_pot.end[col-ntypes]) ? 
 		    splint_grad_ed(&pair_pot,xi,col-ntypes,r) : 0.;
-		eamforce =  (grad * gradF + grad2 * gradF2) ;
-		forces[k  ] += neigh->dist.x * eamforce; 
-		forces[k+1] += neigh->dist.y * eamforce; 
-		forces[k+2] += neigh->dist.z * eamforce; 
+  		eamforce =  (grad * gradF + grad2 * gradF2) ;
+    	        tmp_force.x  = neigh->dist.x * eamforce;
+	        tmp_force.y  = neigh->dist.y * eamforce;
+	        tmp_force.z  = neigh->dist.z * eamforce;
+	        forces[k  ] += tmp_force.x;
+		forces[k+1] += tmp_force.y;
+		forces[k+2] += tmp_force.z;
 		l    = 3*neigh->nr;
-		forces[l  ] -= neigh->dist.x * eamforce; 
-		forces[l+1] -= neigh->dist.y * eamforce; 
-		forces[l+2] -= neigh->dist.z * eamforce;
+		forces[l  ] -= tmp_force.x;
+		forces[l+1] -= tmp_force.y;
+		forces[l+2] -= tmp_force.z;
+#ifdef STRESS
+ 	        tmp_force.x        *=neigh->r;
+ 	        tmp_force.y        *=neigh->r;
+ 	        tmp_force.z        *=neigh->r;
+		forces[stresses]   -= neigh->dist.x * tmp_force.x;
+		forces[stresses+1] -= neigh->dist.y * tmp_force.y;
+		forces[stresses+2] -= neigh->dist.z * tmp_force.z;
+		forces[stresses+3] -= neigh->dist.x * tmp_force.y;
+		forces[stresses+4] -= neigh->dist.y * tmp_force.z;
+		forces[stresses+5] -= neigh->dist.z * tmp_force.x;
+#endif STRESS
 	      }
 	    }
 	  } /* loop over neighbours */
@@ -272,8 +304,15 @@ real calc_forces_pair(real *xi, real *forces)
       forces[config]*=(real) ENG_WEIGHT / (real) inconf[h]; 
       forces[config]-=force_0[config];
       sum += SQR(forces[config]);
+#ifdef STRESS
+      for (i=stresses;i<stresses+6;i++) {
+	forces[i]*=((real) STRESS_WEIGHT)/volumen[h];
+	forces[i]-=force_0[i];
+	sum += SQR(forces[i]);
+      }
+#endif
 #ifdef LIMIT
-      sum += SQR(forces[config+nconf]);
+      sum += SQR(forces[config+7*nconf]);
 #endif
     } /* loop over configurations */
   } /* parallel region */

@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.16 $
-* $Date: 2003/11/20 08:38:44 $
+* $Revision: 1.17 $
+* $Date: 2003/12/11 12:44:45 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -104,7 +104,7 @@ vektor vec_prod(vektor u, vektor v)
 *
 ******************************************************************************/
 
-void make_box( void )
+real make_box( void )
 {
   real volume;
 
@@ -122,6 +122,7 @@ void make_box( void )
   tbox_x.x /= volume;  tbox_x.y /= volume;  tbox_x.z /= volume;
   tbox_y.x /= volume;  tbox_y.y /= volume;  tbox_y.z /= volume;
   tbox_z.x /= volume;  tbox_z.y /= volume;  tbox_z.z /= volume;
+  return volume;
 }
 
 /*****************************************************************************
@@ -138,6 +139,7 @@ void read_config(char *filename)
   char    msg[255];
   atom_t  *atom;
   neigh_t *neigh;
+  stens   *stresses;
   vektor  d, dd;
   real    r;
   
@@ -161,6 +163,10 @@ void read_config(char *filename)
     if (NULL==atoms)   error("Cannot allocate memory for atoms");
     coheng = (real *) realloc(coheng, (nconf+1) * sizeof (real));
     if (NULL==coheng)  error("Cannot allocate memory for cohesive energy");
+    volumen = (real *) realloc(volumen, (nconf+1) * sizeof (real));
+    if (NULL==volumen)  error("Cannot allocate memory for volume");
+    stress = (stens *) realloc(stress, (nconf+1) * sizeof (stens));
+    if (NULL==stress)  error("Cannot allocate memory for stress");
     inconf = (int *) realloc(inconf, (nconf+1) * sizeof (int));
     if (NULL==inconf)  error("Cannot allocate memory for atoms in conf");
     cnfstart = (int *) realloc(cnfstart, (nconf+1) * sizeof (int));
@@ -173,11 +179,20 @@ void read_config(char *filename)
     fscanf( infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z );
     fscanf( infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z );
     fscanf( infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z );
-    make_box();
+    volumen[nconf]=make_box();
 
     /* read cohesive energy */
     if (1!=fscanf(infile, "%lf\n", &(coheng[nconf])))
 	error("Configuration file without cohesive energy -- old format!");
+
+#ifdef STRESS
+    /* read stress tensor */
+    stresses=stress+nconf;
+    if (6!=fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
+		&(stresses->yy), &(stresses->zz), &(stresses->xy), 
+		&(stresses->yz), &(stresses->zx)))
+	error("No stresses given -- recompile without STRESS!");
+#endif STRESS
 
     /* read the atoms */
     for (i=0; i<count; i++) {
@@ -235,9 +250,10 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
-  mdim=3*natoms+nconf;       /* mdim is dimension of force vector 
+  mdim=3*natoms+7*nconf;       /* mdim is dimension of force vector 
 				3*natoms are real forces, 
-				nconf cohesive energies, */ 
+				nconf cohesive energies,
+			        6*nconf stress tensor components*/ 
 #ifdef EAM  
   if (eam) mdim+=1+2*ntypes;          /* 1+2*ntypes dummy constraints */
 #ifdef LIMIT
@@ -255,6 +271,19 @@ void read_config(char *filename)
   }
   for (i=0; i<nconf; i++) {
     force_0[k++] = coheng[i] * (real) ENG_WEIGHT; }
+#ifdef STRESS
+  for (i=0; i<nconf; i++) {
+    force_0[k++] = stress[i].xx * (real) STRESS_WEIGHT;
+    force_0[k++] = stress[i].yy * (real) STRESS_WEIGHT;
+    force_0[k++] = stress[i].zz * (real) STRESS_WEIGHT;
+    force_0[k++] = stress[i].xy * (real) STRESS_WEIGHT;
+    force_0[k++] = stress[i].yz * (real) STRESS_WEIGHT;
+    force_0[k++] = stress[i].zx * (real) STRESS_WEIGHT;
+  }
+#else 
+  for (i=0; i<6*nconf; i++)
+    force_0[k++] = 0.;
+#endif STRESS
 #ifdef EAM
   if (eam) {
 #ifdef LIMIT 
@@ -269,7 +298,7 @@ void read_config(char *filename)
     for (i=0; i<ntypes;i++) {  /* constraint on U(n=0):=0 */
       force_0[k++]=0.;}
   }
-
+ 
 #endif
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",

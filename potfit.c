@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2003/11/20 08:38:46 $
+* $Revision: 1.19 $
+* $Date: 2003/12/11 12:44:47 $
 *****************************************************************/
 
 
@@ -117,6 +117,16 @@ int main(int argc, char **argv)
     printf("%d %f %f %f %f\n", i, sqr, force[3*natoms+i]+force_0[3*natoms+i],
 	   force_0[3*natoms+i],force[3*natoms+i]/force_0[3*natoms+i]);
   }
+#ifdef STRESS
+  printf("Stresses on unit cell\n");
+  for (i=3*natoms+nconf; i<3*natoms+7*nconf; i++) {
+    sqr = SQR(force[i]);
+    max = MAX( max, sqr );
+    min = MIN( min, sqr );
+    printf("%d %f %f %f %f\n", i-(3*natoms+nconf), sqr, force[i]+force_0[i],
+	   force_0[i],force[i]/force_0[i]);
+  }    
+#endif 
 #ifdef EAM
   if (eam) {
 #ifdef LIMIT

@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2003/11/20 08:38:46 $
+* $Revision: 1.28 $
+* $Date: 2003/12/11 12:44:47 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -44,7 +44,7 @@
 #define DUMMY_WEIGHT 100.
 #endif
 #define ENG_WEIGHT 1.
-
+#define STRESS_WEIGHT 1.
 
 /******************************************************************************
 *
@@ -54,6 +54,7 @@
 
 typedef double real;
 typedef struct { real x; real y; real z; } vektor;
+typedef struct { real xx; real yy; real zz; real xy; real yz; real zx; } stens;
 
 typedef struct {
   int    typ;
@@ -122,6 +123,8 @@ EXTERN int    eam      INIT(0);	         /* EAM usage flag */
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
 EXTERN real   *force_0 INIT(NULL);       /* the forces we aim at */
 EXTERN real   *coheng  INIT(NULL);       /* Cohesive energy for each config */
+EXTERN real   *volumen INIT(NULL);       /* Volume of cell*/
+EXTERN stens  *stress  INIT(NULL);       /* Stresses in each config */
 EXTERN int    *inconf  INIT(NULL);       /* Nr. of atoms in each config */
 EXTERN int    *cnfstart INIT(NULL);       /* Nr. of first atom in config */
 EXTERN char startpot[255];               /* file with start potential */
