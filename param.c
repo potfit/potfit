@@ -3,8 +3,8 @@
 *
 *  Read in parameter files (tag based)
 * 
-*  $Revision: 1.2 $
-*  $Date: 2002/10/28 14:18:17 $
+*  $Revision: 1.3 $
+*  $Date: 2002/10/31 11:59:18 $
 *
 ******************************************************************************/
 
@@ -179,6 +179,10 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token,"config")==0) {
       getparam("config",config,PARAM_STR,1,255);
     }
+    /* Optimization flag */
+    else if (strcasecmp(token,"opt")==0) {
+	getparam("opt",&opt,PARAM_INT,1,1);
+    }
     /* unknown tag */
     else {
       fprintf(stderr,"Unknown tag <%s> ignored!\n",token);
@@ -213,4 +217,3 @@ void read_parameters(int argc, char **argv)
   }
   read_paramfile(pf);
 }
-
