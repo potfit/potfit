@@ -18,8 +18,12 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 	int i,k;
       	real p,qn,un;
 	static real *u=NULL;
+        static int  nmax=0;
 
-	u = (real *) realloc(u, (n-1)*sizeof(real));
+	if (n>nmax) {
+	    u = (real *) realloc(u, (n-1)*sizeof(real));
+	    nmax=n;
+	}
 	if (yp1 > 0.99e30)
 		y2[0]=u[0]=0.0;
 	else {
@@ -134,9 +138,12 @@ void spline(real x[], real y[], int n, real yp1, real ypn, real y2[])
 	int i,k;
 	real p,qn,sig,un;
 	static real *u=NULL;
+	static int  nmax=0;
 
-	u = (real *) realloc(u, (n-1)*sizeof(real));
-
+	if (n>nmax) {
+	    u = (real *) realloc(u, (n-1)*sizeof(real));
+	    nmax=n;
+	}
 	if (yp1 > 0.99e30)
 		y2[0]=u[0]=0.0;
 	else {
