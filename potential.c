@@ -6,12 +6,16 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2003/11/20 08:38:45 $
+* $Revision: 1.20 $
+* $Date: 2004/02/20 12:17:07 $
 *****************************************************************/
 
 #define NPLOT 1000
+#ifndef POTSCALE
 #include "potfit.h"
+#else
+#include "potscale.h"
+#endif
 
 /******************************************************************************
 *
@@ -102,7 +106,6 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
     sprintf(msg,"Cannot allocate info block for potential table %s",filename);
     error(msg);
   }
-
   /* read the info block of the function table */
   for(i=0; i<size; i++) {
     if (3>fscanf(infile,"%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i])) {
@@ -115,7 +118,6 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
     pt->last[i] = pt->first[i] + nvals[i] - 1;
     pt->len = pt->first[i] + nvals[i];
   }
-
   /* allocate the function table */
   pt->table = (real *) malloc(pt->len * sizeof(real));
   pt->d2tab = (real *) malloc(pt->len * sizeof(real));
@@ -192,6 +194,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
     }
   }
 #endif
+  return;
 }
 
 
