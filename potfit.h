@@ -64,6 +64,7 @@ typedef struct {
 #define INIT(data)         /* skip initialization otherwise */
 #endif
 EXTERN real   pi       INIT(0.);
+EXTERN real   anneal_temp INIT(1.);
 EXTERN int    seed     INIT(123456);     /* seed for RNG */
 EXTERN int    fcalls   INIT(0);
 EXTERN int    ndim     INIT(0);

@@ -3,8 +3,8 @@
 *
 *  Read in parameter files (tag based)
 * 
-*  $Revision: 1.7 $
-*  $Date: 2003/03/07 15:23:43 $
+*  $Revision: 1.8 $
+*  $Date: 2003/03/11 14:37:00 $
 *
 ******************************************************************************/
 
@@ -199,6 +199,10 @@ void read_paramfile(FILE *pf)
     /* seed for RNG */
     else if (strcasecmp(token,"seed")==0){
 	getparam("seed",&seed,PARAM_INT,1,1);
+    }
+    /* starting temperature for annealing */
+    else if (strcasecmp(token,"anneal_temp")==0) {
+      getparam("anneal_temp",&anneal_temp,PARAM_DOUBLE,1,1);
     }
     /* unknown tag */
     else {

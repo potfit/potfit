@@ -1,13 +1,14 @@
+#include <math.h>
 #include "potfit.h"
 #include "nrutil_r.h"
 #define RAND_MAX 2147483647
-#define EPS 0.01
+#define EPS 0.1
 #define NEPS 4
 #define NSTEP 20
 #define STEPVAR 2.0
-#define NTEMP (3*ndim)
+#define NTEMP (5*ndim)
 #define TEMPVAR 0.85
-#define TSTART 1000
+/* #define TSTART 6 */
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(DSQR(a))/2.)))
 
@@ -64,7 +65,7 @@ void anneal(real *xi)
     int loopagain;		/* loop flag */
     real c=STEPVAR;
     real p;			/* Probability */
-    real T=TSTART;		/* Temperature */
+    real T;	   	        /* Temperature */
     real F, Fopt, F2;		/* Fn value */
     real *Fvar;			/* backlog of Fn vals */
     real *v; 			/* step vector */
@@ -79,6 +80,8 @@ void anneal(real *xi)
     xi2=dvector(0,ndimtot-1);
     fxi1=dvector(0,mdim-1);
     naccept=ivector(0,ndim-1);
+    /* init starting temperature for annealing process */
+    T=anneal_temp;
     /* init step vector and optimum vector */
     for (n=0;n<ndim;n++) {
 	v[n]=1.;
@@ -86,7 +89,6 @@ void anneal(real *xi)
     }
     for (n=0;n<ndimtot;n++) {xi2[n]=xi[n];xopt[n]=xi[n];}
     F=(*calc_forces)(xi,fxi1);
-    T=1000;
     Fopt=F;
     printf("k\tT        \tm\tF          \tFopt\n");   
     printf("%d\t%f\t%d\t%f\t%f\n", 0, T,0, F, Fopt);
@@ -142,12 +144,13 @@ void anneal(real *xi)
 	} 
 	/*Temp adjustment */
 	T*=TEMPVAR;
-	Fvar[k]=F;
 	k++;
+	Fvar[k]=F;
 	loopagain = 0; 
-	for (n=1;n<=NEPS;n++) 
-	    if (fabs(Fvar[k]-Fvar[k-n])>EPS) loopagain=1;
-	if ((Fvar[k]-Fopt)>EPS) loopagain=1;
+	for (n=1;n<=NEPS;n++) { 
+	  /* printf("%d %f %f",n,fabs(F-Fvar[k-n]),EPS); */
+	  if (fabs(F-Fvar[k-n])>EPS) loopagain=1; }
+	if ((F-Fopt)>EPS) loopagain=1;
 	if (loopagain) {
 	    i++;
 	    for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
