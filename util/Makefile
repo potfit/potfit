@@ -1,16 +1,17 @@
 CC     = gcc
-CFLAGS = -g -O -march=athlon-mp -DSTRESS -DEAM #(icc) -DPOTSCALE -DPARABEL 
+CFLAGS = -g -O -march=athlon-mp -DSTRESS -DEAM -DNEWSCALE -DPOTSCALE
+#(icc) -DPOTSCALE -DPARABEL 
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
 #POTFITSRC = f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c config.c param.c potential.c potfit.c splines.c simann.c mpi_utils.c
 #POTFITHDR = potfit.h powell_lsq.h nrutil_r.h 
 #POTFITOBJ = $(POTFITSRC:.c=.o)
 
-POTSCALESRC = param.c potential.c splines.c potscale.c nrutil_r.c 
-POTSCALEHDR = potscale.h nrutil_r.h
+POTSCALESRC = param.c potential.c splines.c potscale.c #nrutil_r.c 
+POTSCALEHDR = potscale.h #nrutil_r.h
 POTSCALEOBJ = $(POTSCALESRC:.c=.o)
 
-.c.o: ${POTFITHDR}
+.c.o: ${POTSCALEHDR}
 	$(CC) $(CFLAGS) $(CINCLUDE) -c $<
 
 clean:
