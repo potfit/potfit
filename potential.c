@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.16 $
-* $Date: 2003/06/04 07:38:50 $
+* $Revision: 1.17 $
+* $Date: 2003/06/18 16:44:30 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -177,8 +177,10 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   if (eam) {
     for (i=0; i<ntypes; i++) {
       for(j=0;j<ntypes; j++) {
-	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],pt->end[ntypes*(ntypes+1)+i]);
-	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],pt->end[ntypes*(ntypes+1)+j]);
+	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],
+			     pt->end[(ntypes*(ntypes+1))/2+i]);
+	rcut[i*ntypes+j]=MAX(rcut[i*ntypes+j],
+			     pt->end[(ntypes*(ntypes+1))/2+j]);
       }
     }
   }
