@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.32 $
-* $Date: 2004/08/16 13:02:49 $
+* $Revision: 1.33 $
+* $Date: 2004/11/17 16:00:53 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -272,7 +272,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 
 #else  /* EAM */
 
-	  col2=paircol+ntypes+typ1;
+	  col2=paircol+ntypes+typ1; /* column of F */
 
 	  if (atom->rho > pair_pot.end[col2]) {
 #ifdef LIMIT   /* then punish target function -> bad potential */
@@ -291,30 +291,38 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	    atom->rho = pair_pot.begin[col2];
 #endif /* PARABEL */
 	  }
+
+	/* embedding energy, embedding gradient */
+	  /* contribution to cohesive energy is difference between 
+	     F(n) and F(0) */
+#ifdef PARABEL
+	  fnval=parab_comb(&pair_pot,xi,col2,atom->rho,atom->gradF)
+	    - parab(&pair_pot,xi,col2,0.);
+#else
+	  fnval=splint_comb(&pair_pot,xi,col2,atom->rho,atom->gradF)
+	    - (pair_pot.begin[col2]<=0 ? 
+	       splint(&pair_pot,xi,col2,0.) :
+	       xi[pair_pot.first[col2]]);
+#endif
+
+	  forces[config]+= fnval;
+
+	}
+
+
+
+
 #endif /* EAM */
 	}	/* second loop over atoms */
 
 #ifdef EAM /* if we don't have EAM, we're done */
-	/* 3rd loop over atom: EAM contributions */
+	/* 3rd loop over atom: EAM force */
 	for (i=0; i<inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
 	  k    = 3*(cnfstart[h]+i);
 	  col  = paircol+ntypes+typ1; /* column of F */
 
-	  /* contribution to cohesive energy is difference between 
-	     F(n) and F(0) */
-#ifdef PARABEL
-	  fnval=parab_comb(&pair_pot,xi,col,atom->rho,&gradF)
-	    - parab(&pair_pot,xi,col,0.);
-#else
-	  fnval=splint_comb(&pair_pot,xi,col,atom->rho,&gradF)
-	    - (pair_pot.begin[col]<=0 ? 
-	       splint(&pair_pot,xi,col,0.) :
-	       xi[pair_pot.first[col]]);
-#endif
-
-	  forces[config]+= fnval;
 
 	  for (j=0; j<atom->n_neigh; j++) { /* loop over neighbours */
 	    neigh = atom->neigh+j;
@@ -331,13 +339,6 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 				     neigh->shift[1],neigh->step[1]) 
 		  : 0.;
 
-#ifdef PARABEL
-		gradF2=parab_grad(&pair_pot,xi,col2+ntypes,
-				     conf_atoms[neigh->nr-firstatom].rho);
-#else
-		gradF2=splint_grad(&pair_pot,xi,col2+ntypes,
-				      conf_atoms[neigh->nr-firstatom].rho);
-#endif /* PARABEL */
 		if (typ2 == typ1) /* use actio = reactio */
 		  grad2=grad;
 		else
@@ -345,7 +346,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		    splint_grad(&pair_pot,xi,col-ntypes,r) : 0.;
 
 		/* now we know everything - calculate forces */
-		eamforce =  (grad * gradF + grad2 * gradF2) ;
+		eamforce =  (grad * atom->gradF + grad2 * neigh->gradF) ;
 		tmp_force.x  = neigh->dist.x * eamforce;
 		tmp_force.y  = neigh->dist.y * eamforce;
 		tmp_force.z  = neigh->dist.z * eamforce;
@@ -381,6 +382,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 
 	  /* sum up forces  */
 	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
+
 	}	/* third loop over atoms */
 #endif /* EAM */
 
@@ -388,17 +390,20 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	forces[config]*=eweight / (real) inconf[h]; 
 	forces[config]-=force_0[config];
 	tmpsum += SQR(forces[config]);
+
 #ifdef STRESS
 	/* stress contributions */
 	for (i=stresses;i<stresses+6;i++) {
 	  forces[i]*=sweight/conf_vol[h-firstconf];
 	  forces[i]-=force_0[i];
 	  tmpsum += SQR(forces[i]);
+
 	}
 #endif /* STRESS */
 #ifdef LIMIT
 	/* dummy constraints per configuration */
 	tmpsum += SQR(forces[config+7*nconf]);
+
 #endif
       } /* loop over configurations */
     } /* parallel region */
@@ -413,6 +418,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       forces[mdim-(2*ntypes+1)]=0.;
 #endif
       tmpsum+= SQR(forces[mdim-(2*ntypes+1)]);
+
       col1=0;
 
       for (g=0;g<ntypes;g++) {
@@ -437,6 +443,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 #endif
 	tmpsum+= SQR(forces[mdim-2*ntypes+g]);
 	tmpsum+= SQR(forces[mdim-ntypes+g]);
+
 	col1+=ntypes-g;
       }	/* loop over types */
     } /* only root process */
