@@ -1,7 +1,7 @@
 #!/bin/sh
 #/****************************************************************
-#* $Revision: 1.1 $
-#* $Date: 2003/12/11 12:49:34 $
+#* $Revision: 1.2 $
+#* $Date: 2004/03/23 10:07:00 $
 #*****************************************************************/
 
 [ -f ../single_atom_energies ] || { echo file ../single_atom_energies not found; exit;}
@@ -25,7 +25,7 @@ cat OUTCAR | awk '
   }
   ($2=="ENERGIE") {getline; getline; getline; getline;
      print ($4-single_energy)/a[ntypes] }
-  ($2=="kB") {print $3/16.6, $4/16.6, $5/16.6, $6/16.6, $7/16.6, $8/16.6}
+  ($2=="kB") {print $3/1602., $4/1602., $5/1602., $6/1602., $7/1602., $8/1602.}
   ($2=="TOTAL-FORCE") { getline; getline;
      for (i=1; i<=a[ntypes]; i++) { print b[i],$1,$2,$3,$4,$5,$6; getline; } 
   }'
