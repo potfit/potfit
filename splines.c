@@ -6,8 +6,8 @@
  *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2004/12/03 17:46:12 $
+* $Revision: 1.15 $
+* $Date: 2004/12/15 14:11:27 $
 *****************************************************************/
 
 
@@ -369,8 +369,9 @@ real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
   int klo,khi,k;
   real h,b,a,rr,d22,d21,p1,p2,x1,x2;
   /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0) error("short distance");
+  /* not necessary */
+/*   rr = r - pt->begin[col]; */
+/*   if (rr < 0) error("short distance"); */
   
   klo=pt->first[col];
   khi=pt->last[col];
@@ -412,8 +413,9 @@ real splint_grad_ne(pot_table_t *pt, real *xi, int col, real r)
   int klo,khi,k;
   real h,b,a,rr,d22,d21,p1,p2,x1,x2;
   /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0) error("short distance");
+  /* not necessary */
+/*   rr = r - pt->begin[col]; */
+/*   if (rr < 0) error("short distance"); */
   
   klo=pt->first[col];
   khi=pt->last[col];
