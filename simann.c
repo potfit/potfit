@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2003/04/04 09:29:15 $
+* $Revision: 1.6 $
+* $Date: 2003/04/10 12:43:36 $
 *****************************************************************/
 
 
@@ -128,6 +128,7 @@ void anneal(real *xi)
     Fopt=F;
     printf("k\tT        \tm\tF          \tFopt\n");   
     printf("%d\t%f\t%d\t%f\t%f\n", 0, T,0, F, Fopt);
+    fflush(stdout);
     for (n=0;n<NEPS;n++) Fvar[-n]=F;
     do {
 	for (m=0;m<ntemp;m++){
@@ -166,6 +167,7 @@ void anneal(real *xi)
 		naccept[n]=0;
 	    }
 	    printf("%d\t%f\t%d\t%f\t%f\n", k, T,m+1, F, Fopt);
+	    fflush(stdout);
 	    /* End fit if break flagfile exists */
 	    ff = fopen(flagfile,"r");
 	    if (NULL != ff) {

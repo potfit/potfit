@@ -6,14 +6,17 @@
 
 
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2003/04/08 09:03:37 $
+* $Revision: 1.20 $
+* $Date: 2003/04/10 12:43:36 $
 *****************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#ifdef OMP
+#include <omp.h>
+#endif
 
 #define NRANSI
 #define MAXNEIGH 160
@@ -90,6 +93,7 @@ EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
 EXTERN real   *force_0 INIT(NULL);       /* the forces we aim at */
 EXTERN real   *coheng  INIT(NULL);       /* Cohesive energy for each config */
 EXTERN int    *inconf  INIT(NULL);       /* Nr. of atoms in each config */
+EXTERN int    *cnfstart INIT(NULL);       /* Nr. of first atom in config */
 EXTERN char startpot[255];               /* file with start potential */
 EXTERN char endpot[255];                 /* file for end potential */
 EXTERN char imdpot[255];                 /* file for IMD potential */

@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2003/04/04 09:29:13 $
+* $Revision: 1.9 $
+* $Date: 2003/04/10 12:43:35 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -163,8 +163,11 @@ void read_config(char *filename)
     if (NULL==coheng)  error("Cannot allocate memory for cohesive energy");
     inconf = (int *) realloc(inconf, (nconf+1) * sizeof (int));
     if (NULL==inconf)  error("Cannot allocate memory for atoms in conf");
-
+    cnfstart = (int *) realloc(cnfstart, (nconf+1) * sizeof (int));
+    if (NULL==cnfstart)  error("Cannot allocate memory for start of conf");
+ 
     inconf[nconf]=count;
+    cnfstart[nconf]=natoms;
 
     /* read the box vectors */
     fscanf( infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z );

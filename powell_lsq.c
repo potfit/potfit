@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.11 $
-* $Date: 2003/04/04 09:29:14 $
+* $Revision: 1.12 $
+* $Date: 2003/04/10 12:43:36 $
 *****************************************************************/
 
 /******************************************************************************
@@ -75,6 +75,7 @@ void powell_lsq(real *xi)
     
     printf("%d %f %f %f %f %f %f %d \n",
 	       m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
+    fflush(stdout);
     if (F<NOTHING) return;	/* If F is less than nothing, */
 				/* what is there to do?*/
     (void) copy_vector(fxi1,force_xi,mdim);
@@ -119,13 +120,13 @@ void powell_lsq(real *xi)
             for (i=0;i<ndim;i++) d[i][j]=delta_norm[idx[i]];
 	    
 	    /* Check for degeneracy in directions */
-	    for (i=0;i<ndim;i++) {
-		if (i!=j) {
-		    temp=0;
-	            for (k=0;k<ndim;k++) temp+=d[k][i]*d[k][j];
-		    if (1-temp<=.0001) break;  /*Emergency exit*/
-	        }
-	    }
+/* 	    for (i=0;i<ndim;i++) { */
+/* 		if (i!=j) { */
+/* 		    temp=0; */
+/* 	            for (k=0;k<ndim;k++) temp+=d[k][i]*d[k][j]; */
+/* 		    if (1-temp<=.0001) break;  /\*Emergency exit*\/ */
+/* 	        } */
+/* 	    } */
 	    /*update gamma, but if fn returns 1, matrix will be sigular, 
 	    break inner loop and restart with new matrix*/
             if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,mdim)){
@@ -143,7 +144,8 @@ void powell_lsq(real *xi)
 	    /* Print the steps in current loop, F, a few values of xi, and
 	       total number of fn calls */
         printf("%d %f %f %f %f %f %f %d \n",
-	  m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls); 
+	  m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
+	fflush(stdout);
         n++;			/* increment outer loop counter */
         /* Output of potential at intermediate steps */
 	/* printf("# %d\n",n);
@@ -284,36 +286,75 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
 *******************************************************************/
 
 void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
-		real *p, int i, int n, int m){
+		     real *p, int i, int n, int m){
+#ifdef _OPENMP
+#pragma omp parallel
+#endif 
+  {
     int j,k;
     real temp;
-    for (k=0;k<n;k++){
-    	p[k]=0.;
-    	for (j=0;j<m;j++) p[k]-=gamma[j][k]*force_xi[j];
+/* #ifdef _OPENMP3 */
+/* #pragma omp sections */
+/* #endif */
+/*  { */
+/* #ifdef _OPENMP3 */
+/* #pragma omp section */
+/* #endif  */
+/*     for (k=0;k<n;k++){ */
+/*     	p[k]=0.; */
+/*     	for (j=0;j<m;j++) p[k]-=gamma[j][k]*force_xi[j]; */
+/*     } */
+/* #ifdef _OPENMP3 */
+/* #pragma omp section */
+/* #endif  */
+/*     /\* divide calculation of new line i and column i in 3 parts*\/  */
+/*     for (k=0;k<i;k++) {           /\*Part 1: All elements ki and ik with k<i*\/ */
+/*         lineqsys[i][k]=0.; */
+/* 	lineqsys[k][i]=0.; */
+/* 	for (j=0;j<m;j++) { */
+/* 	    temp=gamma[j][i]*gamma[j][k]; */
+/* 	    lineqsys[i][k]+=temp; */
+/* 	    lineqsys[k][i]+=temp; */
+/*         } */
+/*     } */
+/*     /\* divide calculation of new line i and column i in 3 parts*\/  */
+#ifdef _OPENMP
+#pragma omp for
+#endif
+    for (k=0;k<n;k++) {           /*Part 1: All elements ki and ik with k<i*/
+      p[k]=0.;  
+      lineqsys[i][k]=0.;
+      lineqsys[k][i]=0.;
+      for (j=0;j<m;j++) {
+	p[k]-=gamma[j][k]*force_xi[j];
+	temp=gamma[j][i]*gamma[j][k];
+	lineqsys[i][k]+=temp;
+	lineqsys[k][i]+=temp;
+      }
     }
-    /* divide calculation of new line i and column i in 3 parts*/ 
-    for (k=0;k<i;k++) {           /*Part 1: All elements ki and ik with k<i*/
-        lineqsys[i][k]=0.;
-	lineqsys[k][i]=0.;
-	for (j=0;j<m;j++) {
-	    temp=gamma[j][i]*gamma[j][k];
-	    lineqsys[i][k]+=temp;
-	    lineqsys[k][i]+=temp;
-        }
-    }
-    lineqsys[i][i]=0.;             /*Part 2: Element ii */
-    for (j=0;j<m;j++) {
-	lineqsys[i][i]+=SQR(gamma[j][i]);
-    }
-    for (k=i+1;k<n;k++){	   /* Part 3: All elements ki and ik with k>i*/
-        lineqsys[i][k]=0;
-	lineqsys[k][i]=0;
-	for (j=0;j<m;j++) {
-	    temp=gamma[j][i]*gamma[j][k];
-	    lineqsys[i][k]+=temp;
-	    lineqsys[k][i]+=temp;
-        }
-    }
+/* #ifdef _OPENMP3 */
+/* #pragma omp section */
+/* #endif  */
+/*  { */
+/*     lineqsys[i][i]=0.;             /\*Part 2: Element ii *\/ */
+/*     for (j=0;j<m;j++) { */
+/* 	lineqsys[i][i]+=SQR(gamma[j][i]); */
+/*     } */
+/*  } */
+/* #ifdef _OPENMP3 */
+/* #pragma omp section */
+/* #endif  */
+/*     for (k=i+1;k<n;k++){	   /\* Part 3: All elements ki and ik with k>i*\/ */
+/*         lineqsys[i][k]=0; */
+/* 	lineqsys[k][i]=0; */
+/* 	for (j=0;j<m;j++) { */
+/* 	    temp=gamma[j][i]*gamma[j][k]; */
+/* 	    lineqsys[i][k]+=temp; */
+/* 	    lineqsys[k][i]+=temp; */
+/*         } */
+/*     } */
+/*  } */
+  } 
     return;
 }
 	
