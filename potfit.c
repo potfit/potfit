@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2004/11/17 17:28:49 $
+* $Revision: 1.34 $
+* $Date: 2004/12/03 17:44:21 $
 *****************************************************************/
 
 
@@ -54,8 +54,8 @@ void warning(char *msg)
 int main(int argc, char **argv)
 {
   real *force;
-  real tot, min, max, sqr,totdens=0;
-  int  i, diff;
+  real tot, min, max, sqr,*totdens;
+  int  i, diff,*ntyp;
   pi = 4.0 * atan(1.);
 #ifdef MPI
   init_mpi(&argc,argv);
@@ -94,12 +94,16 @@ int main(int argc, char **argv)
     }
     /* set spline density corrections to 0 */
     lambda = (real *) malloc(ntypes * sizeof(real));
+    totdens = (real *) malloc(ntypes *sizeof(real));
+    ntyp=(int*) malloc(ntypes*sizeof(int));
     for (i=0;i<ntypes;i++) lambda[i]=0.;
 
 #ifdef EAM
 #ifndef NORESCALE
     rescale(&pair_pot,1.,1); 	/* rescale now... */
-    embed_shift(&pair_pot);	/* and shift */
+#ifdef WZERO
+//    embed_shift(&pair_pot);	/* and shift  - diabolical */
+#endif /* WZERO */
 #endif /* NORESCALE */
 #endif /* EAM */
   }
@@ -178,15 +182,21 @@ int main(int argc, char **argv)
 #ifdef EAM 
 #ifndef MPI /* Not much sense in printing rho when not communicated... */
     printf("Local electron density rho\n");
+    for (i=0;i<ntypes;i++) {totdens[i]=0.; ntyp[i]=0;}
     for (i=0; i<natoms;i++) {
       printf("%d %d %f\n",i,atoms[i].typ,atoms[i].rho);
-      totdens+=atoms[i].rho;
+      totdens[atoms[i].typ]+=atoms[i].rho;
+      ntyp[atoms[i].typ]++;
     }
-    totdens /= (real) natoms;
-    printf("Average local electron density at atom sites: %f\n", totdens);
+    for(i=0;i<ntypes;i++) {
+      totdens[i] /= (real) ntyp[i];
+      printf("Average local electron density at atom sites type %d: %f\n",
+	     i,totdens[i]);
+    }
 #ifdef NEWSCALE
     for (i=0;i<ntypes;i++) {
-      lambda[i]=splint_grad(&pair_pot,pair_pot.table,paircol+ntypes+i,totdens);
+      lambda[i]=splint_grad(&pair_pot,pair_pot.table,
+			    paircol+ntypes+i,totdens[i]);
       printf("lambda[%d] = %f \n", i, lambda[i]) ;
 	}
     sprintf(plotfile,"%s_new",plotfile);
@@ -254,7 +264,7 @@ int main(int argc, char **argv)
 	     force[i]/force_0[i]);
     }
     printf("Dummy Constraints\n");
-    for (i=ntypes; i>0; i--){
+    for (i=2*ntypes; i>0; i--){
       sqr = SQR(force[mdim-i]);
       max = MAX( max, sqr );
       min = MIN( min, sqr );
