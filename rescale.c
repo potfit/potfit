@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2004/11/17 16:05:32 $
+* $Revision: 1.5 $
+* $Date: 2004/12/03 17:46:40 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -64,11 +64,23 @@ real rescale(pot_table_t *pt, real upper, int flag)
     if (format == 3) 
       spline_ed(pt->step[col], xi+first, 
 		pt->last[col]-first+1,
-		0,1e30,pt->d2tab+first);
+#ifdef WZERO
+		((pt->begin[col]<=0.) ? 1.e30 : .5/xi[first]),
+		((pt->end[col]>=0.) ? 1.e30 : -.5/xi[pt->last[col]]),
+#else  /* WZERO : natural spline*/
+		1.e30, 1.e30,
+#endif /* WZERO */
+		pt->d2tab+first);
     else 			/* format == 4 */
       spline_ne(pt->xcoord+first, xi+first, 
 		pt->last[col]-first+1,
-		0,1e30,pt->d2tab+first);
+#ifdef WZERO
+		((pt->begin[col]<=0.) ? 1.e30 : .5/xi[first]),
+		((pt->end[col]>=0.) ? 1.e30 : -.5/xi[pt->last[col]]),
+#else  /* WZERO */
+		1.e30, 1.e30,
+#endif /* WZERO */
+		pt->d2tab+first);
   }
   
   /* atom_rho berechnen (eigentlich Verschwendung...) */
@@ -231,6 +243,63 @@ real rescale(pot_table_t *pt, real upper, int flag)
       xi[i+col]=neuxi[i];
     }
   }
+  /* Splines neuinitialisieren */
+  for  (col=paircol+ntypes; col<paircol+2*ntypes; col++) { /* F */
+    first=pt->first[col];
+    /* Steigung 0 am rechten Rand */
+    if (format == 3) 
+      spline_ed(pt->step[col], xi+first, 
+		pt->last[col]-first+1,
+#ifdef WZERO
+		((pt->begin[col]<=0.) ? 1.e30 : .5/xi[first]),
+		((pt->end[col]>=0.) ? 1.e30 : -.5/xi[pt->last[col]]),
+#else  /* WZERO : natural spline*/
+		1.e30, 1.e30,
+#endif /* WZERO */
+		pt->d2tab+first);
+    else 			/* format == 4 */
+      spline_ne(pt->xcoord+first, xi+first, 
+		pt->last[col]-first+1,
+#ifdef WZERO
+		((pt->begin[col]<=0.) ? 1.e30 : .5/xi[first]),
+		((pt->end[col]>=0.) ? 1.e30 : -.5/xi[pt->last[col]]),
+#else  /* WZERO : natural spline*/
+		1.e30, 1.e30,
+#endif /* WZERO */
+		pt->d2tab+first);
+  }
+
+
+  /* Eichung korrigieren U'(n_mean)=0 */
+  for (i=0;i<ntypes;i++) {
+    lambda[i]=splint_grad(&pair_pot,pt->table,paircol+ntypes+i,
+			  0.5*(pt->begin[paircol+ntypes+i]+
+			       pt->end[paircol+ntypes+i]));
+  }
+  for(i=0;i<ntypes;i++) printf("lambda[%d] = %f\n", i,lambda[i]);
+  i=0;
+  
+  for (col=0;col<ntypes;col++) 
+    for (col2=col;col2<ntypes;col2++) {
+      for (j=pt->first[i];j<=pt->last[i];j++)
+	pt->table[j]+= 
+	  (pt->xcoord[j]<pt->end[paircol+col2]
+	   ? lambda[col]*
+	     splint_ne(pt, pt->table, paircol+col2,pt->xcoord[j])
+	   : 0.)
+	+ (pt->xcoord[j]<pt->end[paircol+col]
+	   ? lambda[col2]*
+	   splint_ne(pt, pt->table, paircol+col,pt->xcoord[j])
+	   : 0.);
+      i++;
+    }
+  for (i=0;i<ntypes;i++) {
+    for (j=pt->first[paircol+ntypes+i];
+	 j<=pt->last[paircol+ntypes+i];j++) 
+      pt->table[j] -= pt->xcoord[j]*lambda[i];
+    lambda[i]=0.;
+  }
+
   free(neuxi);
   free(neustep);
   free(maxrho);
