@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2004/04/13 14:10:11 $
+* $Revision: 1.22 $
+* $Date: 2004/07/14 12:55:42 $
 *****************************************************************/
 
 /******************************************************************************
@@ -76,6 +76,9 @@ void powell_lsq(real *xi)
   work=(real *) malloc(worksize*sizeof(real));
   iwork=(int *) malloc(ndim*sizeof(int));
 
+  /* clear delta */
+  for (i=0;i<ndimtot;i++) delta[i] = 0. ;
+
   /* calculate the first force */
   F=(*calc_forces)(xi,fxi1,0);
 
@@ -138,7 +141,10 @@ void powell_lsq(real *xi)
 	break;
       }	
       /* (b) get delta by multiplying q with the direction vectors */
-      matdotvec(d,q,delta,ndim,ndim);
+      for (i=0; i<ndim; i++) {
+	delta[idx[i]]=0.;
+	for (j=0; j<ndim; j++) delta[idx[i]]+=d[i][j]*q[j];
+      }
       /*     and store delta */
       copy_vector(delta, delta_norm, ndimtot);
 
