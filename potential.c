@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2004/04/13 14:10:31 $
+* $Revision: 1.24 $
+* $Date: 2004/08/12 07:57:59 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -799,7 +799,7 @@ void write_pairdist(pot_table_t *pt, char *filename) {
       if (rr < 0) {printf("%f %f %d\n",atom->rho,pt->begin[col],col);error("short distance");}
       j     = (int) (rr *  pt->invstep[col]) + pt->first[col];
       freq[j]++;
-#endif EAM
+#endif /* EAM */
     }
   }
   /* OK, jetzt haben wir die Daten - schreiben wir sie raus */
