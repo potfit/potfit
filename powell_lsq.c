@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2003/05/16 12:17:02 $
+* $Revision: 1.16 $
+* $Date: 2003/07/29 08:42:53 $
 *****************************************************************/
 
 /******************************************************************************
@@ -108,7 +108,7 @@ void powell_lsq(real *xi)
             /* store delta */
             (void) copy_vector(delta, delta_norm, ndimtot);
 	    /* normalize it */
-	    (void) normalize_vector(delta_norm,ndimtot);
+/*	    (void) normalize_vector(delta_norm,ndimtot); */
             
 	    F2=F;   /*shift F*/
 	    /* minimize F(xi) along vector delta, return new F */
@@ -117,8 +117,6 @@ void powell_lsq(real *xi)
             j=0;temp2=0.;
             for (i=0;i<ndim;i++) 
                 if ((temp=fabs(p[i]*q[i]))>temp2) {j=i;temp2=temp;};
-            /*set new d[j]*/
-            for (i=0;i<ndim;i++) d[i][j]=delta_norm[idx[i]];
 	    
 	    /* Check for degeneracy in directions */
 /* 	    for (i=0;i<ndim;i++) { */
@@ -130,11 +128,14 @@ void powell_lsq(real *xi)
 /* 	    } */
 	    /*update gamma, but if fn returns 1, matrix will be sigular, 
 	    break inner loop and restart with new matrix*/
-            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,mdim)){
+            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,delta_norm,j,mdim,ndimtot,F)){
 		sprintf(errmsg,"Matrix gamma singular after step %d,\nrestarting inner loop\n",m);
 		warning(errmsg);
 		break;
 	    }
+            /*set new d[j]*/
+            for (i=0;i<ndim;i++) d[i][j]=delta_norm[idx[i]]; 
+
             (void) lineqsys_update(gamma,lineqsys,fxi1,p,j,ndim,mdim);
 	    m++;           /*increment loop counter*/
 	/* loop at least 7*ndim times, but at most INNERLOOPS or until no
@@ -214,8 +215,10 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
 	xi[idx[i]]-=EPS;                /*...and decrease xi[idx[i]] again*/
 /* scale gamma so that sum_j(gamma^2)=1                      */
 	temp = sqrt(sum);
-	if (temp>NOTHING) 
+	if (temp>NOTHING) { 
 	    for (j=0;j<m;j++) gamma[j][i] /= temp; /*normalize gamma*/
+	    d[i][i]/=temp;	/* rescale d */
+	}
 	else
 	    return i+1;		/* singular matrix, abort */
 
@@ -242,18 +245,26 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
 *
 *******************************************************************/
 
-int  gamma_update(real **gamma, real a, real b, real *fa, real *fb,
-		int j, int m) {
+int  gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
+		int j, int m, int n, real fmin) {
     int i;
     real temp;
     real sum=0.;
+    real mu=0.;
     for (i=0;i<m;i++) {
 	    temp=gamma[i][j]=((fa[i]-fb[i])/(a-b));
-	    sum+=temp*temp;
+	    mu+=temp*fa[i];
+    }
+    mu/=fmin;
+    for (i=0;i<m;i++) {
+      temp=gamma[i][j]-=mu*fa[i];
+      sum+=temp*temp;
     }
     temp=sqrt(sum);               /* normalization factor */
-    if (temp>NOTHING)
+    if (temp>NOTHING) {
     	for (i=0;i<m;i++) gamma[i][j]/=temp; 
+	for (i=0;i<n;i++) delta[i]/=temp;
+    }
     else
 	return 1;  /*Matrix will be singular: Restart!*/
     return 0;

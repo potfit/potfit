@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2003/05/16 12:17:03 $
+* $Revision: 1.8 $
+* $Date: 2003/07/29 08:42:53 $
 *****************************************************************/
 
 
@@ -30,8 +30,8 @@ real f1dim_r(real x);
 
 int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n, int m);
 
-int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
-		int j, int m);
+int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
+		int j, int m, int n, real fmin);
 		
 void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, 
 		real *p, int n, int m);
