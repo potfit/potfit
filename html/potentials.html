@@ -1,0 +1,55 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Interactions</h1>
+
+<p>
+<em>potfit</em> supports various short range
+effective potentials. These potentials are defined by tabulated
+functions read from a <a href="potformat.html">potential file</a>.
+The potentials supported are <a href="pairpot.html">central pair
+potentials</a>, and
+<a href="eam2.html">Embedded Atom Method (EAM)</a> potentials for 
+metals.
+
+<p>
+Since the computation of the forces is the most time-critical part
+of a molecular dynamics simulation, support for each type of
+interaction has to be enabled explicitly by a compilation option.
+If no interaction type is specified, central pair potentials
+are assumed by default. 
+
+<!-- Different interaction types can be -->
+<!-- combined with each other, by enabling more than one type -->
+<!-- of interaction. Their contributions are then just added. This is  -->
+<!-- still somewhat experimental, and there are some restrictions. -->
+<!-- Here are some guidelines: -->
+<!-- <ul> -->
+<!-- <li>At most <b>one</b> of the <a href="covalent.html">covalent   -->
+<!--     potentials</a> can be used at a time.</li> -->
+<!-- <li><a href="pairpot.html">Central pair potentials</a>,  -->
+<!--     <a href="eam2.html">EAM potentials</a>, and one of  -->
+<!--     <a href="covalent.html#tersoff">Tersoff</a> or -->
+<!--     <a href="covalent.html#ttbp">tabulated Stillinger-Weber -->
+<!--     potentials</a> <b>can be combined</b> with each other.  -->
+<!--     The central pair potential part contained in these interactions  -->
+<!--     (except in <a href="covalent.html#tersoff">Tersoff</a> potentials)  -->
+<!--     is <b>shared</b>.</li> -->
+<!-- <li>The option <b>pair</b> can be used to enable a (short range) -->
+<!--     <a href="pairpot.html">pair potential</a> part together with  -->
+<!--     <a href="ewald.html">Coulomb</a> or <a href="covalent.html#tersoff"> -->
+<!--     Tersoff</a> potentials. -->
+<!--     The same option is also used to enable the harmonic potential -->
+<!--     used for the <a href="ewald.html#shell">shell model</a> in  -->
+<!--     combination with <a href="ewald.html">Coulomb interactions</a>.</li>  -->
+<!-- <li><a href="ewald.html">Coulomb potentials</a> can be combined with  -->
+<!--     everything else, whether or not this makes sense.</li> -->
+<!-- <li><a href="covalent.html#keating">Keating</a>,  -->
+<!--     <a href="covalent.html#stiweb">analytic Stillinger-Weber</a>,  -->
+<!--     and <a href="uniax.html">Gay-Berne</a> potentials <b>cannot</b> be  -->
+<!--     combined with anything else, except with <a href="ewald.html">Coulomb  -->
+<!--     potentials</a>.</li> -->
+<!-- </ul> -->
+<!-- </p> -->
+
+<!--#include virtual="potfitfoot.html" -->

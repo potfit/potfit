@@ -45,57 +45,41 @@ second position. Header lines with a second character different from
 'F' or 'E' are treated as comments, but it is recommended that such 
 lines start with two '#' characters. </p>
 
-<h2>Format 1</h2>
+<h2>Format 3</h2>
 
 <p>
-In a potential file in format 1, each line contains first the function 
-argument, either the square of the distance (radius) or the host 
-electron density, and then all data columns, i.e., the function values 
-for this argument for the different atom type pairs or atom types. 
-If the atom types run from 0 to N, the lines in a format 1 file have
-either of the following formats:</p>
-
-<pre>
-r^2    V_00 V_01 ... V_0N V_10 V_11 ... V_NN 
-</pre>
-<pre>
-rho_h  E_0 ... E_N
-</pre>
-
-<p>
-Note that if a function of the square of the distance given in format
-1 does not vanish at the end of the tabulation, it is shifted so that
-it does vanish. This is for backwards compatibility; it would be
-better to change the potential file once and for all.</p>
-
-<p>
-The disadvantage of format 1 is that all data columns have to be tabulated
-for the same range and with the same spacing. </p>
- 
-<h2>Format 2</h2>
-
-<p>
-In a potential file in format 2, each data column has its own range
+In a potential file in format 3, each data column has its own range
 and spacing. If we have n data columns, the file starts with n lines
 of the form
 <pre>
-x_begin x_end dx
+x_begin x_end steps
 </pre>
-specifying the start, end, and spacing of the tabulation of the
-n data columns. The argument x is either the square of the atom 
-distance, or the host electron density. These n lines are then
-followed by n blocks with the function values, one for each atom 
-type pair or atom type. The number of function values is computed 
-from the begin, end, and spacing values of the corresponding table.
-They can be different for the different data columns. The order
-of the different data columns is as described for format 1.</p>
+specifying the start, end, and the number of function values in each
+data set.  n data columns. The argument x is either the atom distance,
+or the host electron density. These n lines are then followed by n
+blocks with the function values, one for each atom type pair or atom
+type. The spacing of function values is computed from the begin, end,
+and number of function values of the corresponding table and can be
+different for the different data columns.</p> 
 
-<h2>Backwards Compatibility</h2>
+<p>The data sets for N atom types have to be arranged as follows:
+<pre>
+V_00 V_01 ... V_0N V_11 ... V_1N ... V_NN
+rho_0 rho_1 ... rho_N
+U_0 U_1 ... U_N
+</pre>
+<p><b>Please note:</b></p>
+<ul>
+<li> The pair potential matrix V_ij is implicitly symmetric, and only the
+upper triangle of this matrix is given. </li>
+<li> The transfer function rho_i depends on the type of the donating
+atom only. </li>
+<li> The embedding function U_i depends on the type of the accepting
+(embedded) atom only.</li>
+</ul>
 
-<p>
-For backwards compatibility, potential files without header are also 
-accepted, but a warning is printed. A default format is then assumed,
-which is format 2 for EAM interactions, and format 1 for everything else.</p>
+
+
 
 <!--#include virtual="potfitfoot.html" -->
 

@@ -1,0 +1,117 @@
+<!--#include virtual="potfithead.html" -->
+
+<h1>Utility Programs</h1>
+
+<p>
+The <b>potfit/util</b> directory contains a number of utility programs 
+for the preparation of <em>potfit</em> input files and the postprocessing of 
+<em>potfit</em> output files. 
+</p>
+
+<table cellpadding="4">
+<tr><td><a href="#force2poscar">force2poscar</a></td>
+    <td>Converts force files (<a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> output)
+to vasp POSCAR files.</td></tr>
+<tr><td><a href="#vasp2force">vasp2force.sh</a></td>
+    <td>Converts vasp output (POSCAR, OUTCAR) to reference
+    configuration data.</td></tr>
+<tr><td><a href="#pottrans">pottrans</a></td>
+    <td>Converts various <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> and
+<em>potfit</em> potential formats.</td></tr>
+<tr><td><a href="#potscale">potscale</a></td>
+    <td>Performs gauge transformations of <em>potfit</em> EAM potentials.</td></tr>
+</table>
+
+<h2><a id="force2poscar" name="force2poscar">force2poscar</a></h2>
+<p>Converts force files produced by <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> and used
+by <em>potfit</em> to <a
+href="http://cms.mpi.univie.ac.at/vasp/">vasp</a> input file
+POSCAR.</p>
+<pre>
+Compilation: make force2poscar
+
+Usage: force2poscar input.force
+</pre>
+<p>
+The information is always written to a file called POSCAR residing in
+the local directory.</p>
+
+<h2><a id="vasp2force" name="vasp2force">vasp2force.sh</a></h2>
+<p>Converts <a href="http://cms.mpi.univie.ac.at/vasp/">vasp</a>
+output to force files.</p>
+<pre>
+Compilation: make vasp2force
+
+Usage: vasp2force
+</pre>
+<p> Reads information from the files POSCAR and OUTCAR in the current
+directory. Requires a file called single_atom_energies in the
+<b>parent</b> directory, containing the energy of a single free atom
+calculated by <a href="http://cms.mpi.univie.ac.at/vasp/">vasp</a> in
+a single line in the same order as in the POTCAR file, e.g.:
+<pre>
+-0.000219 -0.993872 -0.855835
+# Al      Co        Ni
+</pre>
+Writes a force file to be used as a <em>potfit</em> reference
+configuration to standard output.</p>
+
+<h2><a id="pottrans" name="pottrans">pottrans</a></h2>
+
+<p>Converts betweeen various potential models.</p>
+<pre>
+Compilation:  make pottrans
+
+Usage:        pottrans &lt;paramfile&gt;
+
+required parameters in paramfile (here with example values)
+
+ntypes     2           # number of atom types
+ncols      3           # number of output potentials
+infile     in.pot      # input potential file
+outfile    out.pot     # output potential file
+plotfile   plot.pot    # file name for plot version of output potentials
+nsteps     20 20 20    # number of steps for the output potentials
+</pre>
+<p>in.pot is converted to out.pot. in.pot can be of <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> potential
+format 1 or 2, out.pot is of <em>potfit</em> <a
+href="potformat.html">potential format</a>. To convert from
+<em>potfit</em> to IMD use <em>potfit</em> with <tt>opt 0</tt> in
+parameter file.
+</p>
+
+<h2><a id="potscale" name="potscale">potscale</a></h2>
+<p>potscale performs gauge transformations on EAM potentials. </p>
+<pre>
+Compilation: make potscale
+
+Usage:       potscale &lt;paramfile&gt;
+
+#required parameters in paramfile
+
+ntypes		# number of atom types (types vary in [0..ntypes-1]) 
+startpot	# file name for starting potential (*)
+endpot		# file name for final potential (*)
+imdpot		# file name prefix for imd potential (*)
+plotfile	# file name for plotting potential (*)
+plotpointfile	# file name for plotting the sampling points (*)
+
+imdpotsteps 	# number of points in each function in imd file
+dummy_r		# Distance, where dummy_rho and dummy_phi are used (ignored)
+
+#optional options
+dummy_rho 	# dummy value of rho at dummy_r
+dummy_phi	# vector (length ntypes) dummy values of phi_ii at dummy_r
+</pre>
+
+<p>Prints the values of rho_0(dummy_r) and phi_ii(dummy_r). If dummy_phi
+is given, the potential is transformed so that
+rho_0(dummy_r)=dummy_rho and phi_ii(dummy_r)=dummy_phi_ii. IMD
+potentials and potential plot files are also written.</p>
+
+
+<!--#include virtual="potfitfoot.html" -->

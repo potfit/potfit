@@ -1,0 +1,47 @@
+
+<!--#include virtual="potfithead.html" -->
+<h1>Standard Output</h1>
+<p><em>potfit</em> prints information on the minimization progress to
+stdout. Additionally all input and output files used are also written
+to standard output. After optimizing the potential, the local
+densities (eam only) are printed, followed by the terms in the sum of
+squares. The latter consist of a number identifying either atom or
+configuration, then the contribution to the sum of squares, the value
+calculated from the potential, the reference value and finally the
+relative deviation of calculated and reference value.</p>
+
+
+<h1>Output Files</h1>
+
+<h2><a id="endpot" name="endpot">Final potential</a></h2>
+
+<p>
+<em>potfit</em> naturally writes the potential achieved in
+minimization to a file using the same format as for the input
+potential. The name of this file is specified by the <a
+href="params.html"><tt>endpot</tt> parameter</a>.
+</p>
+
+<h2><a id="temp" name="temp">Temporary Potential File</a></h2>
+<p> Every now and then (after restart of Powell algorithm or step
+adjustment of simulated annealing) an intermediate potential is
+written to <a href="params.html"><tt>tempfile</tt></a>.
+</p>
+
+<h2><a id="imd" name="imd">IMD Potential File</a></h2>
+<p>Prefix of files to which the <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> potential
+data are written. The suffixes used are self-explanatory, the number
+of steps in each potential is given by the <a
+href="params.html"><tt>imdsteps</tt> parameter</a></p>
+
+<h2><a id="plot" name="plot"></a>Plotting files</h2>
+<p>Two files are printed to use with gnuplot: The <tt>plotpointfile</tt> 
+contains the sampling points in gnuplot-readable form, whereas the
+<tt>plotfile</tt> uses spline-interpolated points to draw continuous
+curves of the potential functions. As <em>potfit</em> uses spline
+interpolation internally, the plotted functions are an accurate
+representation of the potentials used.
+</p>
+
+<!--#include virtual="potfitfoot.html" -->

@@ -1,0 +1,29 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Central Pair Potentials</h1>
+
+<p>
+Short range pair potentials are active by default in <em>potfit</em>.
+
+<p>
+Pair potentials are given in <a href="pairpot.html#pottab">
+tabulated form</a>
+
+<h2><a id="pottab" name="pottab">
+Tabulated Pair Potentials</a></h2>
+
+<p>
+For use in <em>potfit</em>, any potential needs to be specified at a
+limited number of sampling points. Position and value of these
+sampling points are given in the file specified with the parameter
+<tt>potfile</tt>. The format used in this file is described <a
+href="potformat.html">above</a>.
+It is essential 
+that the potential is tabulated equidistant in the the atom distance,
+not in the sqare (as it is done in <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a>). 
+Note that if the potential does not extend down to
+r=0, the program will exit with an short distance error. </p>
+
+<!--#include virtual="potfitfoot.html" -->
