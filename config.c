@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2004/11/17 15:56:42 $
+* $Revision: 1.27 $
+* $Date: 2004/11/17 17:28:48 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -365,10 +365,8 @@ void read_config(char *filename)
 				nconf cohesive energies,
 			        6*nconf stress tensor components*/ 
 #ifdef EAM  
-  mdim+=1+2*ntypes;          /* 1+2*ntypes dummy constraints */
-#ifdef LIMIT
+  mdim+=ntypes;          /* ntypes dummy constraints */
   mdim+=nconf;		/* nconf limiting constraints */
-#endif /* LIMIT */
 #endif /* EAM */
   /* copy forces into single vector */
   if (NULL==(force_0 = (real *) malloc( mdim * sizeof(real) ) ) )
@@ -395,15 +393,7 @@ void read_config(char *filename)
     force_0[k++] = 0.;
 #endif /* STRESS */
 #ifdef EAM
-#ifdef LIMIT 
   for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
-#endif
-  force_0[k++]=DUMMY_WEIGHT * dummy_rho;		/* dummy constraints */
-#ifdef LIMIT
-  force_0[k-1]=0.; 		/* ignore dummy_rho if LIMIT is used */
-#endif
-  for (i=0; i<ntypes; i++) { 	/* constraints on phi */
-    force_0[k++]=DUMMY_WEIGHT * dummy_phi[i];}
   for (i=0; i<ntypes;i++) {  /* constraint on U(n=0):=0 */
     force_0[k++]=0.;}
 #endif

@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.32 $
-* $Date: 2004/11/17 16:03:26 $
+* $Revision: 1.33 $
+* $Date: 2004/11/17 17:28:49 $
 *****************************************************************/
 
 
@@ -63,26 +63,12 @@ int main(int argc, char **argv)
   srandom(seed+myid);random();random();random();random();
   if (myid==0) {
     read_parameters(argc, argv);
-#ifdef EAM
-    /* check whether dummy_phi was specified... */
-    if (NULL==dummy_phi) 
-      error("dummy_phi not specified in parameter file, aborting...");
-#endif
     read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
     read_config(config);
-#ifdef EAM
-    printf("Dummy constraints are:\n");
-    printf("rho[%f]\t = %f \t for atom type %d\n", 
-	     dummy_r,dummy_rho,DUMMY_COL_RHO);
-    for (i=0;i<ntypes;i++) {
-      printf("phi[%f]\t = %f \t between atoms of type %d\n",
-	     dummy_r,dummy_phi[i],i);
-    }
     printf("Energy weight: %f\n",eweight);
 #ifdef STRESS
     printf("Stress weight: %f\n",sweight);
-#endif 
-#endif /* EAM */
+#endif
   /* Select correct spline interpolation and other functions */
     if (format==3) {
       splint = splint_ed;
@@ -252,7 +238,6 @@ int main(int argc, char **argv)
     }    
 #endif 
 #ifdef EAM
-#ifdef LIMIT
     printf("Punishment Constraints\n");
 #ifdef STRESS
     diff = 6*nconf;
@@ -268,20 +253,12 @@ int main(int argc, char **argv)
 	     force_0[i], 
 	     force[i]/force_0[i]);
     }
-#endif    
     printf("Dummy Constraints\n");
-    sqr = SQR(force[mdim-(2*ntypes+1)]);
-    max = MAX( max, sqr );
-    min = MIN( min, sqr );
-    printf("%d %f %f %f %f\n", 0, sqr, 
-	   force[mdim-(2*ntypes+1)]+force_0[mdim-(2*ntypes+1)],
-	   force_0[mdim-(2*ntypes+1)],
-	   force[mdim-(2*ntypes+1)]/force_0[mdim-(2*ntypes+1)]);
-    for (i=2*ntypes; i>0; i--){
+    for (i=ntypes; i>0; i--){
       sqr = SQR(force[mdim-i]);
       max = MAX( max, sqr );
       min = MIN( min, sqr );
-      printf("%d %f %f %f %f\n", 2*ntypes+1-i, sqr, 
+      printf("%d %f %f %f %f\n", ntypes-i, sqr, 
 	     force[mdim-i]+force_0[mdim-i],
 	     force_0[mdim-i],force[mdim-i]/force_0[mdim-i]);
     }

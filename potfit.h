@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.38 $
-* $Date: 2004/11/17 16:11:38 $
+* $Revision: 1.39 $
+* $Date: 2004/11/17 17:28:49 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -20,34 +20,14 @@
 #ifdef MPI
 #include <mpi.h>
 #endif
-#ifdef LIMIT 			/* if LIMIT is defined */
-#ifndef EAM			/* but not EAM */
-#define EAM			/* then imply EAM */
-#endif /* EAM */
-#endif /* LIMIT */
 #ifdef MPI
 #define REAL MPI_DOUBLE
 #endif /* MPI */
 #define NRANSI
 #define MAXNEIGH 170
 #ifdef EAM
-/* NiAl reconstruction */
-/* #define DUMMY_RHO 0.064732 */
-/* #define DUMMY_PHI -8.696940 */
-#define DUMMY_COL_RHO 0
-/* #define DUMMY_COL_PHI 0 */
-/* #define DUMMY_R_RHO 2.5 */
-/* #define DUMMY_R_PHI 2.5 */
 
-/* AlNiCo EAM */
-/* #define DUMMY_RHO 0.08 */
-/* #define DUMMY_PHI -1.2 */
-/* #define DUMMY_COL_RHO 0 */
-/* #define DUMMY_COL_PHI 0 */
-/* #define DUMMY_R_RHO 2.7 */
-/* #define DUMMY_R_PHI 2.7 */
-
-#define DUMMY_WEIGHT 100.
+#define DUMMY_WEIGHT 100. 
 #endif
 #define ENG_WEIGHT 10.
 #define STRESS_WEIGHT 10.
@@ -196,9 +176,9 @@ EXTERN real (*parab_comb)(pot_table_t*,real*,int,real,real*);
 EXTERN real (*parab_grad)(pot_table_t*,real*,int,real);
 #endif /* PARABEL */
 EXTERN int  *idx INIT(NULL);
-EXTERN real   *dummy_phi INIT(NULL);     /* Dummy Constraints for PairPot */
-EXTERN real   dummy_rho INIT(1.);        /* Dummy Constraint for rho */
-EXTERN real   dummy_r  INIT(2.5);        /* Distance of Dummy Constraints */
+/* EXTERN real   *dummy_phi INIT(NULL);     /\* Dummy Constraints for PairPot *\/ */
+/* EXTERN real   dummy_rho INIT(1.);        /\* Dummy Constraint for rho *\/ */
+/* EXTERN real   dummy_r  INIT(2.5);        /\* Distance of Dummy Constraints *\/ */
 
 
 /******************************************************************************

@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.30 $
-# $Date: 2004/09/15 08:09:51 $
+# $Revision: 1.31 $
+# $Date: 2004/11/17 17:28:48 $
 # 
 ############################################################################
 #
@@ -537,7 +537,7 @@ CFLAGS += -DSTRESS
 endif
 
 ifneq (,$(findstring limit,${MAKETARGET}))
-CFLAGS += -DLIMIT
+WARNING += "limit is now mandatory -- "
 endif
 
 ifneq (,$(findstring parab,${MAKETARGET}))
@@ -615,6 +615,7 @@ ifneq (,${ERROR})
 	@echo "${ERROR}"
 else
 ifneq (,${MAKETARGET})
+	@echo "${WARNING}"
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
 else
 	@echo 'No TARGET specified.'

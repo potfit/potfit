@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2004/11/17 16:00:53 $
+* $Revision: 1.34 $
+* $Date: 2004/11/17 17:28:48 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -65,11 +65,11 @@ real calc_forces_pair(real *xi, real *forces, int flag)
   real tmpsum,sum=0.;
   int first,col1,g;
   real grad0,y0,y1,x0,x1;
-
+  
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum=0.; 			/* sum of squares of local process */
-
+    
 #ifdef MPI
     /* exchange potential and flag value */
     MPI_Bcast(xi,ndimtot,REAL,0,MPI_COMM_WORLD);
@@ -79,7 +79,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     if (flag==2) potsync();	
 #endif /* EAM */
 #endif /* MPI */
-
+    
     /* init second derivatives for splines */
     for (col1=0; col1<paircol; col1++){  /* just pair potentials */
       first=pair_pot.first[col1];
@@ -103,7 +103,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		  pair_pot.last[col1]-first+1,
 		  grad0, 0.0, pair_pot.d2tab+first);
     }
-
+    
 #ifdef EAM
     for (col1=paircol; col1<paircol+ntypes; col1++) { /* rho */
       first=pair_pot.first[col1];
@@ -132,19 +132,19 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     }
 #endif /* PARABEL */
 #endif /* EAM */
-
+    
 #ifndef MPI
     myconf=nconf;
 #endif
-
+    
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-
+    
     /* region containing loop over configurations, 
        also OMP-parallelized region */
     {
-
+      
 #ifdef EAM
       vektor d;
       int col2;
@@ -156,7 +156,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       real fnval, grad;
       atom_t *atom;
       neigh_t *neigh;
-
+      
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum)
 #endif
@@ -164,16 +164,15 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       for (h=firstconf; h<firstconf+myconf; h++) {
 	config = 3*natoms + h; 	/* slot for energies */
 	stresses = 3*natoms + nconf + 6*h; /* slot for stresses */
-
+	
 	/* reset forces */
 	forces[config]=0.;
 	for (i=stresses; i<stresses+6; i++) 
 	  forces[i]=0.;
-
-#ifdef LIMIT
+	
 	/* set dummy constraints */
 	forces[config+7*nconf]=-force_0[config+7*nconf];
-#endif
+
 	/* first loop over atoms: reset forces, densities */
 	for (i=0; i<inconf[h]; i++) {
 	  k    = 3*(cnfstart[h]+i);
@@ -184,13 +183,13 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	  conf_atoms[cnfstart[h]-firstatom+i].rho=0.0;
 #endif
 	} /* end first loop */
-
+	
         /* 2nd loop: calculate pair forces and energies, atomic densities. */
 	for (i=0; i<inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h]-firstatom;
 	  typ1 = atom->typ;
 	  k    = 3*(cnfstart[h]+i);
-
+	  
 	  /* loop over neighbours */
 	  for (j=0; j<atom->n_neigh; j++) {
 	    neigh = atom->neigh+j;
@@ -259,62 +258,55 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	    } /*  neighbours with bigger atom nr */
 	  } /* loop over neighbours */
 #ifndef EAM /*then we can calculate contribution of forces right away*/
-
+	  
 #ifdef FWEIGHT 		   
 	  /* Weigh by absolute value of force */
 	  forces[k]    /= FORCE_EPS + atom->absforce;
 	  forces[k+1]  /= FORCE_EPS + atom->absforce;
 	  forces[k+2]  /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
-
+	  
 	  /* Returned force is difference between calculated and input force */
 	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
-
+	  
 #else  /* EAM */
-
+	  
 	  col2=paircol+ntypes+typ1; /* column of F */
-
+	  
 	  if (atom->rho > pair_pot.end[col2]) {
-#ifdef LIMIT   /* then punish target function -> bad potential */
+          /* then punish target function -> bad potential */
 	    forces[config+7*nconf]+=1000*SQR(atom->rho - pair_pot.end[col2]);
-#endif /* LIMIT */
 #ifndef PARABEL /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = pair_pot.end[col2];
 #endif /* PARABEL */
 	  }
-
+	  
 	  if (atom->rho < pair_pot.begin[col2]) {
-#ifdef LIMIT  /* then punish target function -> bad potential */
+          /* then punish target function -> bad potential */
 	    forces[config+7*nconf]+=1000*SQR(pair_pot.begin[col2]-atom->rho);
-#endif /* LIMIT */
 #ifndef PARABEL /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = pair_pot.begin[col2];
 #endif /* PARABEL */
 	  }
-
-	/* embedding energy, embedding gradient */
+	  
+	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is difference between 
 	     F(n) and F(0) */
 #ifdef PARABEL
-	  fnval=parab_comb(&pair_pot,xi,col2,atom->rho,atom->gradF)
+	  fnval=parab_comb(&pair_pot,xi,col2,atom->rho,&atom->gradF)
 	    - parab(&pair_pot,xi,col2,0.);
 #else
-	  fnval=splint_comb(&pair_pot,xi,col2,atom->rho,atom->gradF)
+	  fnval=splint_comb(&pair_pot,xi,col2,atom->rho,&atom->gradF)
 	    - (pair_pot.begin[col2]<=0 ? 
 	       splint(&pair_pot,xi,col2,0.) :
 	       xi[pair_pot.first[col2]]);
 #endif
-
+	  
 	  forces[config]+= fnval;
-
-	}
-
-
-
-
+	  
 #endif /* EAM */
 	}	/* second loop over atoms */
-
+	
 #ifdef EAM /* if we don't have EAM, we're done */
 	/* 3rd loop over atom: EAM force */
 	for (i=0; i<inconf[h]; i++) {
@@ -346,7 +338,8 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		    splint_grad(&pair_pot,xi,col-ntypes,r) : 0.;
 
 		/* now we know everything - calculate forces */
-		eamforce =  (grad * atom->gradF + grad2 * neigh->gradF) ;
+		eamforce =  (grad * atom->gradF + 
+			     grad2 * atoms[neigh->nr].gradF) ;
 		tmp_force.x  = neigh->dist.x * eamforce;
 		tmp_force.y  = neigh->dist.y * eamforce;
 		tmp_force.z  = neigh->dist.z * eamforce;
@@ -400,30 +393,18 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 
 	}
 #endif /* STRESS */
-#ifdef LIMIT
 	/* dummy constraints per configuration */
 	tmpsum += SQR(forces[config+7*nconf]);
 
-#endif
       } /* loop over configurations */
     } /* parallel region */
 
     /* dummy constraints (global) */
 #ifdef EAM
     if (myid==0) {
-      forces[mdim-(2*ntypes+1)]= DUMMY_WEIGHT * 
-	splint(&pair_pot,xi,paircol+DUMMY_COL_RHO,dummy_r)
-	- force_0[mdim-(2*ntypes+1)];
-#ifdef LIMIT 			/* then we don't need that constraint */
-      forces[mdim-(2*ntypes+1)]=0.;
-#endif
-      tmpsum+= SQR(forces[mdim-(2*ntypes+1)]);
-
       col1=0;
 
       for (g=0;g<ntypes;g++) {
-	/* this dummy constraint is not used any more... */
-	forces[mdim-2*ntypes+g]= 0.;
 
 #ifdef PARABEL
 	forces[mdim-ntypes+g]= DUMMY_WEIGHT * /* constraints on U(n) */
@@ -441,7 +422,6 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	    xi[pair_pot.first[paircol+ntypes+g]] 
 	    - force_0[mdim-ntypes+g];
 #endif
-	tmpsum+= SQR(forces[mdim-2*ntypes+g]);
 	tmpsum+= SQR(forces[mdim-ntypes+g]);
 
 	col1+=ntypes-g;
@@ -453,7 +433,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     /* reduce global sum */
     sum=0.; 
     MPI_Reduce(&tmpsum,&sum,1,REAL,MPI_SUM,0,MPI_COMM_WORLD);
-    /* gather forces, energies, stresses */
+   /* gather forces, energies, stresses */
     MPI_Gatherv(forces+firstatom*3,myatoms,MPI_VEKTOR, /* forces */
 		forces,atom_len,atom_dist,MPI_VEKTOR,0,MPI_COMM_WORLD);
     MPI_Gatherv(forces+natoms*3+firstconf,myconf,REAL, /* energies */
@@ -464,12 +444,10 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		0,MPI_COMM_WORLD);
 #ifdef EAM
     /* punishment constraints */
-#ifdef LIMIT
     MPI_Gatherv(forces+natoms*3+7*nconf+firstconf,myconf,REAL, 
 		forces+natoms*3+7*nconf,conf_len,conf_dist,REAL,
 		0,MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
-#endif /* LIMIT */ 
 #endif /* EAM */
 #endif /* MPI */
 

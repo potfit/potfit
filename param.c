@@ -3,8 +3,8 @@
 *
 *  param.c: Read in parameter files (tag based)
 * 
-*  $Revision: 1.15 $
-*  $Date: 2004/06/23 11:56:31 $
+*  $Revision: 1.16 $
+*  $Date: 2004/11/17 17:28:49 $
 *
 ******************************************************************************/
 #ifndef POTSCALE
@@ -215,19 +215,6 @@ void read_paramfile(FILE *pf)
     /* starting temperature for annealing */
     else if (strcasecmp(token,"anneal_temp")==0) {
       getparam("anneal_temp",&anneal_temp,PARAM_DOUBLE,1,1);
-    }
-    /* Dummy value of rho */
-    else if (strcasecmp(token,"dummy_rho")==0) {
-      getparam("dummy_rho",&dummy_rho,PARAM_DOUBLE,1,1);
-    }
-    /* Distance where dummy constraints are given */
-    else if (strcasecmp(token,"dummy_r")==0) {
-      getparam("dummy_r",&dummy_r,PARAM_DOUBLE,1,1);
-    }
-    /* Dummy value of phi */
-    else if (strcasecmp(token,"dummy_phi")==0) {
-      dummy_phi = (real *) malloc(ntypes * sizeof(real));
-      getparam("dummy_phi",dummy_phi,PARAM_DOUBLE,ntypes,ntypes);
     }
     /* Energy Weight */
     else if (strcasecmp(token,"eng_weight")==0) {
