@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2004/11/17 16:11:38 $
+* $Revision: 1.8 $
+* $Date: 2004/11/18 16:38:05 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -77,6 +77,7 @@ void broadcast_params() {
   atom_t testatom;
   int size,i,each,odd,nodeatoms=0;
 
+
   /* Define Structures */
   /* first the easy ones: */
   /* MPI_VEKTOR */
@@ -123,21 +124,21 @@ void broadcast_params() {
   blklens[8]=1;         typen[8]=REAL; /* gradF */
   size+=2;
 #endif
-    MPI_Address(&testatom.typ,&displs[0]);
-    MPI_Address(&testatom.n_neigh,&displs[1]);
-    MPI_Address(&testatom.pos,&displs[2]);
-    MPI_Address(&testatom.force,&displs[3]);
-    MPI_Address(&testatom.absforce,&displs[4]);
-    MPI_Address(testatom.neigh,&displs[5]);
-    MPI_Address(&testatom.conf,&displs[6]);
+  MPI_Address(&testatom.typ,&displs[0]);
+  MPI_Address(&testatom.n_neigh,&displs[1]);
+  MPI_Address(&testatom.pos,&displs[2]);
+  MPI_Address(&testatom.force,&displs[3]);
+  MPI_Address(&testatom.absforce,&displs[4]);
+  MPI_Address(testatom.neigh,&displs[5]);
+  MPI_Address(&testatom.conf,&displs[6]);
 #ifdef EAM
-    MPI_Address(&testatom.rho,&displs[7]);
-    MPI_Address(&testatom.gradF,&displs[8]);
+  MPI_Address(&testatom.rho,&displs[7]);
+  MPI_Address(&testatom.gradF,&displs[8]);
 #endif
-    for(i=1;i<size;i++) {
-      displs[i]-=displs[0];
-   }
-    displs[0]=0; /* set displacements */
+  for(i=1;i<size;i++) {
+    displs[i]-=displs[0];
+  }
+  displs[0]=0; /* set displacements */
 
   MPI_Type_struct(size,blklens,displs,typen,&MPI_ATOM);
   MPI_Type_commit(&MPI_ATOM);
@@ -158,6 +159,7 @@ void broadcast_params() {
   MPI_Bcast( inconf, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast( cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast( force_0, mdim, REAL, 0, MPI_COMM_WORLD);
+
   /* Broadcast weights... */
   MPI_Bcast ( &eweight, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast ( &sweight, 1, REAL, 0, MPI_COMM_WORLD);
