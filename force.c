@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2003/04/28 13:39:43 $
+* $Revision: 1.20 $
+* $Date: 2003/05/16 12:16:59 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -94,12 +94,14 @@ real calc_forces_pair(real *xi, real *forces)
 		pair_pot.last[col1]-first+1,
 		1e30,0.0,pair_pot.d2tab+first);
     }
+#ifndef PARABEL
     for  (col1=paircol+ntypes; col1<paircol+2*ntypes; col1++) { /* F */
       first=pair_pot.first[col1];
       spline_ed(pair_pot.step[col1], xi+first, 
 		pair_pot.last[col1]-first+1,
 		0.,0.,pair_pot.d2tab+first);
     }
+#endif
   }
 
 #endif
@@ -123,13 +125,14 @@ real calc_forces_pair(real *xi, real *forces)
     for (h=0; h<nconf; h++) {
       config = 3*natoms + h;
       forces[config]=0.;
+      forces[config+nconf]=force_0[config+nconf];
 
       for (i=0; i<inconf[h]; i++) {
 	k    = 3*(cnfstart[h]+i);
 	forces[k  ] = -force_0[k  ];
 	forces[k+1] = -force_0[k+1];
 	forces[k+2] = -force_0[k+2];
-        atoms[cnfstart[h]+1].rho=0.0;
+        atoms[cnfstart[h]+i].rho=0.0;
       }
       for (i=0; i<inconf[h]; i++) {
 	atom = atoms + i + cnfstart[h];
@@ -191,10 +194,18 @@ real calc_forces_pair(real *xi, real *forces)
 	  sum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
 	} else {
 	  col2=paircol+ntypes+typ1;
-	  if (atom->rho > pair_pot.end[col2])
-	    atom->rho = pair_pot.end[col2]; /* rho too big... bad thing */
+	  if (atom->rho > pair_pot.end[col2]) {
+#ifdef LIMIT
+	    forces[config+nconf]+=1000*SQR(atom->rho - pair_pot.end[col2]);
+#endif
+	    atom->rho = pair_pot.end[col2];
+	  }
+/* rho too big... bad thing */
 	  if (atom->rho < pair_pot.begin[col2]) {
 	    /*  forces[config] += 1e10;  rho too small... really bad thing*/
+#ifdef LIMIT
+	    forces[config+nconf]+=1000*SQR(pair_pot.begin[col2]-atom->rho);
+#endif
 	    atom->rho = pair_pot.begin[col2];
 	  }
 	} 
@@ -207,7 +218,11 @@ real calc_forces_pair(real *xi, real *forces)
 	  typ1 = atom->typ;
 	  k    = 3*(cnfstart[h]+i);
 	  col  = paircol+ntypes+typ1; /* column of F */
+#ifdef PARABEL
+	  fnval=parab_comb_ed(&pair_pot,xi,col,atom->rho,&gradF);
+#else
 	  fnval=splint_comb_ed(&pair_pot,xi,col,atom->rho,&gradF);
+#endif
 	  forces[config]+= fnval;
 	  for (j=0; j<atom->n_neigh; j++) {
 	    neigh = atom->neigh+j;
@@ -218,8 +233,13 @@ real calc_forces_pair(real *xi, real *forces)
 	      if ((r < pair_pot.end[col2]) || (r < pair_pot.end[col-ntypes])) {
 		grad = (r<pair_pot.end[col2]) ? 
 		  splint_grad_ed(&pair_pot,xi,col2,r) : 0.;
+#ifdef PARABEL
+		gradF2=parab_grad_ed(&pair_pot,xi,col2+ntypes,
+				      atoms[neigh->nr].rho);
+#else
 		gradF2=splint_grad_ed(&pair_pot,xi,col2+ntypes,
 				      atoms[neigh->nr].rho);
+#endif
 		if (typ2 == typ1) 
 		  grad2=grad;
 		else
@@ -242,15 +262,16 @@ real calc_forces_pair(real *xi, real *forces)
 #endif
       forces[config]/=(real) inconf[h]; /* double counting... */
       forces[config]-=force_0[config];
-      sum += SQR(forces[config]);
+      sum += SQR(forces[config]) + SQR(forces[config+nconf]);
     } /* loop over configurations */
   } /* parallel region */
 #ifdef EAM
   if (eam) {
-    forces[mdim-2]=
+    forces[mdim-2]= DUMMY_WEIGHT * 
       splint_ed(&pair_pot,xi,paircol+DUMMY_COL_RHO,DUMMY_R_RHO)
       - force_0[mdim-2];
-    forces[mdim-1]=splint_ed(&pair_pot,xi,DUMMY_COL_PHI,DUMMY_R_PHI)
+    forces[mdim-1]= DUMMY_WEIGHT *
+      splint_ed(&pair_pot,xi,DUMMY_COL_PHI,DUMMY_R_PHI)
       - force_0[mdim-1];
     sum+= SQR(forces[mdim-2]);
     sum+= SQR(forces[mdim-1]);

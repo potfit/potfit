@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2003/03/19 09:05:42 $
+* $Revision: 1.7 $
+* $Date: 2003/05/16 12:17:03 $
 *****************************************************************/
 
 
@@ -44,7 +44,7 @@ real linmin_r(real p[], real xi[], real fxi1, int n, int m,
 
 void lubksb_r(real **a, int n, int *indx, real b[]);
 
-void ludcmp_r(real **a, int n, int *indx, real *d);
+int ludcmp_r(real **a, int n, int *indx, real *d);
 
 void matdotvec(real **a, real *x, real *y, int n, int m);
 

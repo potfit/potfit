@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2003/04/28 13:39:45 $
+* $Revision: 1.15 $
+* $Date: 2003/05/16 12:17:02 $
 *****************************************************************/
 
 /******************************************************************************
@@ -85,7 +85,7 @@ void powell_lsq(real *xi)
     	if (i=gamma_init(gamma, d, xi, fxi1, ndim, mdim)) {
 	  write_pot_table( &pair_pot, tempfile ); /*emergency writeout*/    
 	  sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
-		    i-1);
+		    idx[i-1]);
 	    error(errmsg);
 	}
     	(void) lineqsys_init(gamma,lineqsys,fxi1,p,ndim,mdim); /*init LES */
@@ -95,7 +95,7 @@ void powell_lsq(real *xi)
 	    /* 1) Store original matrix (needed later) */
 	    (void) copy_matrix(lineqsys,les_inverse,ndim,ndim);
             /* 2) LU decompose */
-	    (void) ludcmp_r(les_inverse,ndim,perm_indx,&perm_sig);
+	    if (ludcmp_r(les_inverse,ndim,perm_indx,&perm_sig)) break;
             /* 3) Store original vector (needed later) */
 	    (void) copy_vector(p,q,ndim);
 	    /* 4) Backsubstitute vector in lu decomp. matrix */
@@ -204,22 +204,33 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
     force=dvector(0,m-1);
     for (i=0;i<n;i++) {           /*initialize gamma*/
 	xi[idx[i]]+=EPS;                /*increase xi[idx[i]]...*/
+	sum = 0.;
 	(void) (*calc_forces)(xi,force);
-       	for (j=0;j<m;j++) gamma[j][i]=(force[j]-force_xi[j])/EPS;
+       	for (j=0;j<m;j++) {
+	  temp =(force[j]-force_xi[j])/EPS;
+	  gamma[j][i]=temp;
+	  sum += SQR(temp);
+	}
 	xi[idx[i]]-=EPS;                /*...and decrease xi[idx[i]] again*/
-    }
-    free_dvector(force,0,m-1);
 /* scale gamma so that sum_j(gamma^2)=1                      */
-    
-    for (i=0;i<n;i++) {
-	sum =0.;
-	for (j=0;j<m;j++) sum += SQR(gamma[j][i]);
-	temp=sqrt(sum);
+	temp = sqrt(sum);
 	if (temp>NOTHING) 
 	    for (j=0;j<m;j++) gamma[j][i] /= temp; /*normalize gamma*/
 	else
 	    return i+1;		/* singular matrix, abort */
+
     }
+    free_dvector(force,0,m-1);
+
+/*     for (i=0;i<n;i++) { */
+/* 	sum =0.; */
+/* 	for (j=0;j<m;j++) sum += SQR(gamma[j][i]); */
+/* 	temp=sqrt(sum); */
+/* 	if (temp>NOTHING)  */
+/* 	    for (j=0;j<m;j++) gamma[j][i] /= temp; /\*normalize gamma*\/ */
+/* 	else */
+/* 	    return i+1;		/\* singular matrix, abort *\/ */
+/*     } */
     return 0;
 }
 

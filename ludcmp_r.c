@@ -4,8 +4,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2003/03/19 09:05:36 $
+* $Revision: 1.4 $
+* $Date: 2003/05/16 12:17:00 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
@@ -17,7 +17,7 @@
 #include "nrutil_r.h"
 #define TINY 1.0e-20;
 
-void ludcmp_r(real **a, int n, int *indx, real *d)
+int ludcmp_r(real **a, int n, int *indx, real *d)
 {
 	int i,imax,j,k;
 	real big,dum,sum,temp;
@@ -29,7 +29,10 @@ void ludcmp_r(real **a, int n, int *indx, real *d)
 		big=0.0;
 		for (j=0;j<n;j++) /* zo */
 			if ((temp=fabs(a[i][j])) > big) big=temp;
-		if (big == 0.0) nrerror("Singular matrix in routine ludcmp");
+		if (big == 0.0) {
+		  warning("Singular matrix in routine ludcmp"); 
+		  return 1;
+		}
 		vv[i]=1.0/big;
 	}
 	for (j=0;j<n;j++) { /* zo */
@@ -66,6 +69,7 @@ void ludcmp_r(real **a, int n, int *indx, real *d)
 		}
 	}
 	free_dvector(vv,0,n-1);
+	return 0;
 }
 #undef TINY
 #undef NRANSI

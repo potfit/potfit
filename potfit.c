@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.13 $
-* $Date: 2003/04/17 13:59:27 $
+* $Revision: 1.14 $
+* $Date: 2003/05/16 12:17:01 $
 *****************************************************************/
 
 
@@ -78,16 +78,17 @@ int main(int argc, char **argv)
   write_pot_table_imd( &pair_pot, imdpot );
   if (plot) write_plotpot_pair(&pair_pot, plotfile);
 
+  printf("Local electron density rho\n");
+  for (i=0; i<natoms;i++) printf("%d %f\n",i,atoms[i].rho);
 
   max = 0.0;
   min = 100000.0;
+  
   for (i=0; i<3*natoms; i++) {
     sqr = SQR(force[i]);
     max = MAX( max, sqr );
     min = MIN( min, sqr );
-    
     printf("%d %f %f %f\n",i/3,sqr,force[i]+force_0[i],force_0[i]);
-    
   }
   printf("Cohesive Energies\n");
   for (i=0; i<nconf; i++){
@@ -97,6 +98,17 @@ int main(int argc, char **argv)
     printf("%d %f %f %f\n", i, sqr, force[3*natoms+i]+force_0[3*natoms+i],
 	   force_0[3*natoms+i]);
   }
+#ifdef EAM
+  printf("Punishment Constraints\n");
+  for (i=0; i<nconf; i++){
+   sqr = SQR(force[3*natoms+nconf+i]);
+    max = MAX( max, sqr );
+    min = MIN( min, sqr );
+    printf("%d %f %f %f\n", i, sqr, 
+	   force[3*natoms+nconf+i]+force_0[3*natoms+nconf+i],
+	   force_0[3*natoms+nconf+i]);
+  }
+    
   printf("Dummy Constraints\n");
   for (i=2; i>=1; i--){
     sqr = SQR(force[mdim-i]);
@@ -105,7 +117,7 @@ int main(int argc, char **argv)
     printf("%d %f %f %f\n", 2-i, sqr, force[mdim-i]+force_0[mdim-i],
 	   force_0[mdim-i]);
   }
-
+#endif
   printf("av %e, min %e, max %e\n", tot/mdim, min, max);
   return 0;
 }

@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2003/04/28 13:39:44 $
+* $Revision: 1.15 $
+* $Date: 2003/05/16 12:17:01 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -348,6 +348,105 @@ real pot3(pot_table_t *pt, int col, real r)
   return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
 }
 
+#ifdef PARABEL
+/*****************************************************************************
+*
+*  Evaluate value from parabole through three points. 
+*  Extrapolates for all k.
+*
+******************************************************************************/
+
+real parab_ed(pot_table_t *pt,  real *xi, int col, real r)
+{
+  real rr, istep, chi, p0, p1, p2, dv, d2v;
+  int  k;
+
+  /* renorm to beginning of table */
+  rr = r - pt->begin[col];
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = 0;
+  chi   = rr * istep;
+  k     = pt->first[col];
+
+  /* intermediate values */
+  p0  = xi[k++]; 
+  p1  = xi[k++];
+  p2  = xi[k  ];
+  dv  = p1 - p0;
+  d2v = p2 - 2 * p1 + p0;
+
+  /* return the potential value */
+  return p0 + chi * dv + 0.5 * chi * (chi - 1) * d2v;
+}
+/*****************************************************************************
+*
+*  Evaluate deritvative from parabole through three points. 
+*  Extrapolates for all k.
+*
+******************************************************************************/
+
+real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad)
+{
+  real rr, istep, chi, p0, p1, p2, dv, d2v;
+  int  k;
+
+  /* renorm to beginning of table */
+  rr = r - pt->begin[col];
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = 0;
+  chi   = rr * istep;
+  k     = pt->first[col];
+
+  /* intermediate values */
+  p0  = xi[k++]; 
+  p1  = xi[k++];
+  p2  = xi[k  ];
+  dv  = p1 - p0;
+  d2v = p2 - 2 * p1 + p0;
+
+  /* return the derivative */
+  return istep * (dv + (chi - 0.5) * d2v);
+}
+
+/*****************************************************************************
+*
+*  Evaluate value and deritvative from parabole through three points. 
+*  Extrapolates for all k.
+*
+******************************************************************************/
+
+real parab_comb_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad)
+{
+  real rr, istep, chi, p0, p1, p2, dv, d2v;
+  int  k;
+
+  /* renorm to beginning of table */
+  rr = r - pt->begin[col];
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = 0;
+  chi   = rr * istep;
+  k     = pt->first[col];
+
+  /* intermediate values */
+  p0  = xi[k++]; 
+  p1  = xi[k++];
+  p2  = xi[k  ];
+  dv  = p1 - p0;
+  d2v = p2 - 2 * p1 + p0;
+
+  /* set the derivative */
+  *grad = istep * (dv + (chi - 0.5) * d2v);
+  /* return the potential value */
+  return p0 + chi * dv + 0.5 * chi * (chi - 1) * d2v;
+}
+
+#endif
 
 /*****************************************************************************
 *
@@ -396,7 +495,7 @@ void write_pot_table(pot_table_t *pt, char *filename)
     for (j=pt->first[i]; j<=pt->last[i]; j++) {
       fprintf(outfile, "%.16e\n", pt->table[j] );
       if (flag) 
-	fprintf(outfile2, "%.6e %.6e\n",r,pt->table[j] );
+	fprintf(outfile2, "%.6e %.6e %d\n",r,pt->table[j],j );
       r += pt->step[i];
     }
     fprintf(outfile, "\n");
@@ -545,7 +644,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       r2 = r2begin[i];
       col1=(ntypes*(ntypes+3))/2+i;
       for (k=0; k<=imdpotsteps; k++) { 
+#ifdef PARABEL
+	fprintf(outfile, "%.16e\n", parab_ed(pt, pt->table, col1, r2 ));
+#else
 	fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, r2 ));
+#endif
 	r2 += r2step[i];
       }
       fprintf(outfile, "\n");
@@ -594,7 +697,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifdef EAM
   if (eam) {
     j=k;
-    for (i=j;i<j+2*ntypes;i++){
+    for (i=j;i<j+ntypes;i++){
       r=pt->begin[i];
       r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
       for (l=0;l<NPLOT;l++) {
@@ -603,6 +706,20 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       }
       fprintf(outfile,"%e %e\n\n\n", r, 0.0);
     }
+    for (i=j+ntypes;i<j+2*ntypes;i++){
+      r=pt->begin[i];
+      r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
+      for (l=0;l<=NPLOT;l++) {
+#ifdef PARABEL
+        fprintf( outfile, "%e %e\n", r, parab_ed(pt, pt->table,i, r) );
+#else
+        fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
+#endif
+        r += r_step;
+      }
+      fprintf(outfile,"\n\n\n");
+    }
+  
   }
   fclose(outfile);
 #endif

@@ -1,6 +1,6 @@
 
 CC     = icc
-CFLAGS = -O  -axK -openmp -ip -g -DEAM#(icc)
+CFLAGS = -O  -axK -openmp -DPARABEL -ip -g -DEAM#(icc)
 #CFLAGS = -g  -DEAM #gcc -O -g3
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
@@ -14,11 +14,14 @@ POTFITOBJ = $(POTFITSRC:.c=.o)
 #${POTFITOBJ}: $($@:.o=.c) ${POTFITHDR}
 #	${CC} ${CFLAGS} -c $($@:.o=.c)
 
-#potfit2: ${POTFITOBJ} ${POTFITHDR}
-#	${CC} ${CFLAGS} -o ${BINDIR}/potfit_i ${POTFITOBJ} -lm
+potfit2: ${POTFITOBJ} ${POTFITHDR}
+	${CC} ${CFLAGS} -o ${BINDIR}/potfit_i ${POTFITOBJ} -lm
 
 potfit: ${POTFITOBJ} ${POTFITHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTFITOBJ} -lm
+
+#parab:  ${POTFITOBJ} ${POTFITHDR}
+#	${CC} ${CFLAGS} -DPARABEL -o ${BINDIR}/$@ ${POTFITOBJ} -lm
 
 clean:
 	rm -f *.o *~ 

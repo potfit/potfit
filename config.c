@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.11 $
-* $Date: 2003/04/28 13:39:43 $
+* $Revision: 1.12 $
+* $Date: 2003/05/16 12:16:59 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -234,7 +234,7 @@ void read_config(char *filename)
 				3*natoms are real forces, 
 				nconf cohesive energies, */ 
 #ifdef EAM  
-  if (eam) mdim+=2;          /* 2 dummy constraints */
+  if (eam) mdim+=2+nconf;          /* 2 dummy constraints */
 #endif EAM
   /* copy forces into single vector */
   if (NULL==(force_0 = (real *) malloc( mdim * sizeof(real) ) ) )
@@ -249,8 +249,9 @@ void read_config(char *filename)
     force_0[k++] = coheng[i]; }
 #ifdef EAM
   if (eam) {
-    force_0[k++]=DUMMY_RHO;		/* dummy constraints */
-    force_0[k++]=DUMMY_PHI;
+    for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
+    force_0[k++]=DUMMY_WEIGHT * DUMMY_RHO;		/* dummy constraints */
+    force_0[k++]=DUMMY_WEIGHT * DUMMY_PHI;
   }
 #endif
   /* print diagnostic message and close file */
