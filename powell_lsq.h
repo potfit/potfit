@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2003/07/29 08:42:53 $
+* $Revision: 1.9 $
+* $Date: 2004/02/20 12:06:19 $
 *****************************************************************/
 
 
@@ -28,7 +28,7 @@ void copy_vector(real *a, real *b, int n);
 
 real f1dim_r(real x);
 
-int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n, int m);
+int gamma_init(real **gamma, real **d, real *xi, real *force_xi);
 
 int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
 		int j, int m, int n, real fmin);
@@ -42,9 +42,9 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
 real linmin_r(real p[], real xi[], real fxi1, int n, int m,
 	real *x1, real *x2, real *fret1, real *fret2);
 
-void lubksb_r(real **a, int n, int *indx, real b[]);
+//void lubksb_r(real **a, int n, int *indx, real b[]);
 
-int ludcmp_r(real **a, int n, int *indx, real *d);
+//int ludcmp_r(real **a, int n, int *indx, real *d);
 
 void matdotvec(real **a, real *x, real *y, int n, int m);
 
