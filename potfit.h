@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.30 $
-* $Date: 2004/02/25 16:39:08 $
+* $Revision: 1.31 $
+* $Date: 2004/03/17 13:40:28 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -226,4 +226,5 @@ void init_mpi(int *argc_pointer, char **argv);
 void shutdown_mpi(void);
 void broadcast_params(void);
 void dbb(int i);
+void potsync();
 #endif

@@ -8,8 +8,8 @@
 ******************************************************************************/
 
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2004/02/25 16:39:09 $
+* $Revision: 1.19 $
+* $Date: 2004/03/17 13:40:29 $
 *****************************************************************/
 
 /******************************************************************************
@@ -93,11 +93,23 @@ void powell_lsq(real *xi)
 
     /* Init gamma */
     if (i=gamma_init(gamma, d, xi, fxi1)) {
-      write_pot_table( &pair_pot, tempfile ); /*emergency writeout*/    
-      sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
-	      idx[i-1]);
-      warning(errmsg);
-      break;
+#ifdef EAM
+    /* perhaps rescaling helps? */
+      rescale(&pair_pot,1.);
+#ifdef MPI
+      /* wake other threads and sync potentials*/
+      calc_forces(pair_pot.table,force,2);
+#endif MPI
+#endif EAM
+      /* try again */
+      if (i=gamma_init(gamma, d, xi, fxi1)) { 
+	/* ok, now this is serious, better exit cleanly */
+	write_pot_table( &pair_pot, tempfile ); /*emergency writeout*/    
+	sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
+		idx[i-1]);
+	warning(errmsg);
+	break;
+      }
     }
 
     (void) lineqsys_init(gamma,lineqsys,fxi1,p,ndim,mdim); /*init LES */
@@ -179,7 +191,16 @@ void powell_lsq(real *xi)
 	     flagfile);
       break;
     }
-
+#ifdef EAM
+    /* Check for rescaling... */
+    if ( !(n % 3) ) {
+      rescale(&pair_pot,1.);
+#ifdef MPI
+      /* wake other threads and sync potentials*/
+      calc_forces(pair_pot.table,force,2);
+#endif MPI
+    }
+#endif EAM
     /* write temp file  */
     if (tempfile != "\0" ) write_pot_table( &pair_pot, tempfile );
 

@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2004/02/25 16:35:49 $
+* $Revision: 1.2 $
+* $Date: 2004/03/17 13:40:26 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -130,9 +130,6 @@ void broadcast_params() {
       displs[i]-=displs[0];
    }
     displs[0]=0; /* set displacements */
-/*  printf("node %d: blklens: %d %d %d %d, displs: %d %d %d %d \n",
-	 myid, blklens[0], blklens[1], blklens[2], blklens[3],
-	 displs[0], displs[1], displs[2], displs[3]); */
 
   MPI_Type_struct(size,blklens,displs,typen,&MPI_ATOM);
   MPI_Type_commit(&MPI_ATOM);
@@ -208,33 +205,34 @@ void broadcast_params() {
   MPI_Scatterv(atoms,atom_len,atom_dist,MPI_ATOM,
 		 conf_atoms,myatoms,MPI_ATOM,
 		 0,MPI_COMM_WORLD);
-/*  if (myid==0) {
-    printf("Sent information... eg:\n");
-    printf("Atom 0: x %f y %f z %f typ %d n_neigh %d \n", atoms[0].pos.x, atoms[0].pos.y, atoms[0].pos.z,atoms[0].typ,atoms[0].n_neigh);
-    printf("Atom 0, Neigh 102: dist.x %f y %f z %f typ %d\n", atoms[0].neigh[102].dist.x, atoms[0].neigh[102].dist.y, atoms[0].neigh[102].dist.z, atoms[0].neigh[102].typ);
-    printf("Atom %d: x %f y %f z %f typ %d n_neigh %d\n",natoms-1, atoms[natoms-1].pos.x, atoms[natoms-1].pos.y, atoms[natoms-1].pos.z,atoms[natoms-1].typ,atoms[natoms-1].n_neigh);
-    printf("Atom %d, Neigh 102: dist.x %f y %f z %f typ %d\n", natoms-1, atoms[natoms-1].neigh[102].dist.x, atoms[natoms-1].neigh[102].dist.y, atoms[natoms-1].neigh[102].dist.z, atoms[natoms-1].neigh[102].typ);
-  }
-  printf("Received information... eg:\n");
-  printf("Node %d, Atom 0: x %f y %f z %f typ %d n_neigh %d \n", myid, conf_atoms[0].pos.x, conf_atoms[0].pos.y, conf_atoms[0].pos.z,conf_atoms[0].typ,conf_atoms[0].n_neigh);
-  printf("Node %d, Atom 0, Neigh 102: dist.x %f y %f z %f typ %d\n", myid, conf_atoms[0].neigh[102].dist.x, conf_atoms[0].neigh[102].dist.y, conf_atoms[0].neigh[102].dist.z, conf_atoms[0].neigh[102].typ);
-  printf("Node %d, Atom %d: x %f y %f z %f typ %d n_neigh %d\n", myid, myatoms-1, conf_atoms[myatoms-1].pos.x, conf_atoms[myatoms-1].pos.y, conf_atoms[myatoms-1].pos.z,conf_atoms[myatoms-1].typ,conf_atoms[myatoms-1].n_neigh);
-  printf("Node %d, Atom %d, Neigh 102: dist.x %f y %f z %f typ %d\n", myid, myatoms-1, conf_atoms[myatoms-1].neigh[102].dist.x, conf_atoms[myatoms-1].neigh[102].dist.y, conf_atoms[myatoms-1].neigh[102].dist.z, conf_atoms[myatoms-1].neigh[102].typ); */
-  /*distribute additional information: energy, volume, stress..*/
-/*  conf_eng = (real *) malloc(myconf*sizeof(real)); */
   conf_vol = (real *) malloc(myconf*sizeof(real));
-/*  conf_stress = (stens *) malloc(myconf*sizeof(stens));*/
-//  MPI_Scatterv(coheng,conf_len,conf_dist,REAL,
-//	       conf_eng,myconf,REAL,0,MPI_COMM_WORLD);
   MPI_Scatterv(volumen,conf_len,conf_dist,REAL,
 	       conf_vol,myconf,REAL,0,MPI_COMM_WORLD);
-#ifdef STRESS
-//  MPI_Scatterv(stress,conf_len,conf_dist,MPI_STENS,
-//	       conf_stress,myconf,MPI_STENS,0,MPI_COMM_WORLD);
-#endif STRESS
-/*   printf("I now have %d atoms in %d configurations. I am node %d.\n", */
-/* 	   myatoms,myconf,myid); */
 }
 
+/***************************************************************************
+ *
+ * potsync: Broadcast parameters etc to other nodes
+ *
+ **************************************************************************/
+#ifdef EAM
 
+void potsync() {
+  int firstcol,firstval,nvals;
+  firstcol=paircol+ntypes
+  /* Memory is allocated - just bcast that changed potential... */
+  /* bcast begin/end/step/invstep of embedding energy  */
+  MPI_Bcast(pair_pot.begin+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(pair_pot.end+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(pair_pot.step+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(pair_pot.invstep+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(pair_pot.first+firstcol,n,MPI_INT,0,MPI_COMM_WORLD);
+  /* bcast table values of transfer fn. and embedding energy */
+  firstval=pair_pot.first[paircol];
+  nvals=ndimtot-firstval;
+  MPI_Bcast(pair_pot.table+firstval,nvals,REAL,0,MPI_COMM_WORLD);
+  /* das war's auch schon... */
+}
 #endif
+#endif
+

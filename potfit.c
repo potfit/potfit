@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2004/02/25 16:39:08 $
+* $Revision: 1.22 $
+* $Date: 2004/03/17 13:40:27 $
 *****************************************************************/
 
 
@@ -102,9 +102,9 @@ int main(int argc, char **argv)
       spline_ed(pair_pot.step[i],pair_pot.table+pair_pot.first[i],
       pair_pot.last[i]-pair_pot.first[i]+1,
       1e30,0,pair_pot.d2tab+pair_pot.first[i]);*/
-    
+
+    rescale(&pair_pot,1.);
     tot = calc_forces(pair_pot.table,force,0);
-//    rescale(&pair_pot,1.);
     write_pot_table( &pair_pot, endpot );
     printf("Potential written to file %s\n",endpot);
     printf("Plotpoint file written to file %s\n", plotpointfile);
