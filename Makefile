@@ -15,5 +15,5 @@ potfit: ${POTFITOBJ} ${POTFITHDR}
 
 clean:
 	rm -f *.o *~ 
-neightab:
+neightab: neightab.c
 	${CC} ${CFLAGS} -o ${BINDIR}/neightab neightab.c -lm

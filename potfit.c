@@ -25,14 +25,14 @@ void error(char *msg)
 
 int main(int argc, char **argv)
 {
-  real *force, tot, max;
+  real *force, tot, min, max, sqr;
   int  i;
 
   read_parameters(argc, argv);
   read_config(config);
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
   ndim=pair_pot.len;  
-  powell_lsq(pair_pot.table,calc_forces_pair);
+  powell_lsq(pair_pot.table,calc_forces_pair);  
   write_pot_table( &pair_pot, endpot );
   write_pot_table_imd( &pair_pot, imdpot );
 
@@ -40,8 +40,14 @@ int main(int argc, char **argv)
   tot = calc_forces_pair(pair_pot.table,force);
 
   max = 0.0;
-  for (i=0; i<3*natoms; i++) max = MAX( max, SQR(force[i]-force_0[i]) );
-  printf("av %e, max %e\n", tot/(3*natoms), max);
+  min = 100000.0;
+  for (i=0; i<3*natoms; i++) {
+    sqr = SQR(force[i]-force_0[i]);
+    max = MAX( max, sqr );
+    min = MIN( min, sqr );
+    /* printf("%d %f %f %f\n",i/3,sqr,force[i],force_0[i]); */
+  }
+  printf("av %e, min %e, max %e\n", tot/(3*natoms), min, max);
   return 0;
 }
 

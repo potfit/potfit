@@ -236,13 +236,14 @@ void write_neightab(char *filename)
   fprintf(outfile, "%d\n", natoms );
   for (i=0; i<natoms; i++) {
     atom = atoms + i;
-    fprintf( outfile, "%d %e %e %e %e %e %e %d\n",
+    fprintf( outfile, "%d %.16e %.16e %.16e %.16e %.16e %.16e %d\n",
              atom->typ, atom->pos.x, atom->pos.y, atom->pos.z, 
              atom->force.x, atom->force.y, atom->force.z,
              atom->n_neigh );
     for (j=0; j<atom->n_neigh; j++) {
       neigh = atom->neigh + j;
-      fprintf( outfile, "  %d %e %e %e %e\n", neigh->typ, neigh->r, 
+      fprintf( outfile, "  %d %.16e %.16e %.16e %.16e\n", 
+               neigh->typ, neigh->r, 
                neigh->dist.x, neigh->dist.y, neigh->dist.z ); 
     }
   }

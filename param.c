@@ -3,8 +3,8 @@
 *
 *  Read in parameter files (tag based)
 * 
-*  $Revision: 1.1 $
-*  $Date: 2002/10/23 14:01:54 $
+*  $Revision: 1.2 $
+*  $Date: 2002/10/28 14:18:17 $
 *
 ******************************************************************************/
 
@@ -157,7 +157,7 @@ void read_paramfile(FILE *pf)
 
     /* number of atom types */
     if (strcasecmp(token,"ntypes")==0) {
-      getparam("nlayer",&ntypes,PARAM_INT,1,1);
+      getparam("ntypes",&ntypes,PARAM_INT,1,1);
     }
     /* file with start potential */
     else if (strcasecmp(token,"startpot")==0) {

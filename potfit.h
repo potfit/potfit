@@ -88,16 +88,12 @@ void read_pot_table(pot_table_t*, char*, int);
 void write_pot_table(pot_table_t*, char*);
 void write_pot_table_imd(pot_table_t*, char*);
 real grad2(pot_table_t*, real*, int, real);
+real grad3(pot_table_t*, real*, int, real);
 real pot2 (pot_table_t*, int, real);
+real pot3 (pot_table_t*, int, real);
 void read_config(char*);
 real calc_forces_pair(real[],real[]);
 void powell_lsq(real *xi, real (*fcalc)(real[],real[]));
-
-
-
-
-
-
 
 
 

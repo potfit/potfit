@@ -226,6 +226,46 @@ real pot2(pot_table_t *pt, int col, real r)
 
 /*****************************************************************************
 *
+*  Evaluate potential with cubic interpolation. 
+*  col is typ1 * ntypes + typ2.
+*
+******************************************************************************/
+
+real pot3(pot_table_t *pt, int col, real r)
+{
+  real rr, istep, chi, p0, p1, p2, p3;
+  real fac0, fac1, fac2, fac3;
+  int  k;
+
+  /* check for distances shorter than minimal distance in table */
+  rr = r - pt->begin[col];
+  if (rr < 0) error("short distance!");
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = (int) (rr * istep);
+  chi   = (rr - k * pt->step[col]) * istep;
+  k    += pt->first[col];
+
+  /* factors for the interpolation */
+  fac0 = -(1.0/6.0) * chi * (chi-1.0) * (chi-2.0);
+  fac1 =        0.5 * (chi*chi-1.0) * (chi-2.0);
+  fac2 =       -0.5 * chi * (chi+1.0) * (chi-2.0);
+  fac3 =  (1.0/6.0) * chi * (chi*chi-1.0);
+
+  /* intermediate values */
+  p1  = (k<=pt->last[col])    ? pt->table[k++] : 0.0;
+  p2  = (k<=pt->last[col])    ? pt->table[k++] : 0.0;
+  p3  = (k<=pt->last[col])    ? pt->table[k  ] : 0.0;
+  p0  = (k>=pt->first[col]+3) ? pt->table[k-3] : 2*p1-p2; 
+
+  /* return the potential value */
+  return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
+}
+
+
+/*****************************************************************************
+*
 *  write potential table (format 3)
 *
 ******************************************************************************/
@@ -317,7 +357,7 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k=0; k<imdpotsteps+5; k++) {
-        fprintf(outfile, "%.16e\n", pot2(pt, col1, sqrt(r2) ));
+        fprintf(outfile, "%.16e\n", pot3(pt, col1, sqrt(r2) ));
 	r2 += r2step[col2];
       }
     }
