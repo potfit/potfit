@@ -5,10 +5,13 @@ BINDIR = ${HOME}/bin/${HOSTTYPE}
 
 POTFITSRC = f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c config.c param.c potential.c potfit.c splines.c
 POTFITHDR = potfit.h powell_lsq.h nrutil_r.h
-POTFITOBJ = $(subst .c,.o,${POTFITSRC})
+POTFITOBJ = $(POTFITSRC:.c=.o)
 
-%.o: %.c ${POTFITHDR}
-	${CC} ${CFLAGS} -c $(subst .o,.c,$@)
+.c.o: ${POTFITHDR}
+	$(CC) $(CFLAGS) -c $<
+
+#${POTFITOBJ}: $($@:.o=.c) ${POTFITHDR}
+#	${CC} ${CFLAGS} -c $($@:.o=.c)
 
 potfit: ${POTFITOBJ} ${POTFITHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTFITOBJ} -lm
