@@ -64,7 +64,10 @@ real calc_forces_pair(real *xi, real *forces)
       x1=x0+pair_pot.step[col];
       y0=xi[first];
       y1=xi[first+1];
-      grad = y0*log(y0/y1) / (x0*log(x0/x1));
+      if (y0*y1>0)
+	  grad=(y0*log(y0/y1)) /  (x0*log(x0/x1));
+      else
+	  grad=1e30;
       if (!((grad>-1e10) && (grad<1e10))) grad=1e30;
       if (  (grad>-1e-20)&& (grad<1e-20)) grad=0.;
       spline_ed(pair_pot.step[col], xi+first,
