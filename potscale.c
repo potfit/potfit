@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2003/06/18 16:42:41 $
+* $Revision: 1.2 $
+* $Date: 2003/07/29 08:47:51 $
 *****************************************************************/
 
 
@@ -97,13 +97,26 @@ void print_scaling(pot_table_t *pt)
 	   dummy_r,splint_ed(pt,pt->table,col1,dummy_r),i);
     col1+=ntypes-i;
   }
-  printf("FYI: \n");
+  printf("Constraints on F:\n");
+  col1=paircol+ntypes;
   for (i=0;i<ntypes;i++) {
-    printf("rho[%f]\t = %f \t for atom type %d\n",
-	   dummy_r,
-	   splint_ed(pt,pt->table,paircol+i,dummy_r),
-	   i);
+#ifdef PARABEL
+    printf("F[%f]\t = %f \t for atoms of type %d\n",
+	   0.,parab_ed(pt,pt->table,col1,0.),i);
+#else
+    printf("F[%f]\t = %f \t for atoms of type %d\n",
+	   0.,splint_ed(pt,pt->table,col1,0.),i);
+#endif
+    col1++;
   }
+  
+/*   printf("FYI: \n"); */
+/*   for (i=0;i<ntypes;i++) { */
+/*     printf("rho[%f]\t = %f \t for atom type %d\n", */
+/* 	   dummy_r, */
+/* 	   splint_ed(pt,pt->table,paircol+i,dummy_r), */
+/* 	   i); */
+/*   } */
 
   printf("\n");
   return;
@@ -157,7 +170,7 @@ void init_splines(pot_table_t *pt)
 
 void rescale_pot(pot_table_t *pt,real dummy_r, real dummy_rho, real *dummy_phi)
 {
-  real a,r,step;
+  real a,r,step,temp;
   int i,j,k,first,col1;
   int paircol=(ntypes*(ntypes+1))/2;
   real *b;
@@ -209,6 +222,20 @@ void rescale_pot(pot_table_t *pt,real dummy_r, real dummy_rho, real *dummy_phi)
       pt->table[k]-=b[i-(paircol+ntypes)]*r;
       r+=step;
     }
+  }
+  init_splines(pt);
+  /* translate F(0) to 0 */
+  col1=paircol+ntypes;
+  for (i=0;i<ntypes;i++) {
+#ifdef PARABEL
+    temp= parab_ed(pt,pt->table,col1,0.);
+#else
+    temp= splint_ed(pt,pt->table,col1,0.);
+#endif
+    for (k=pt->first[col1];k<=pt->last[col1];k++){
+      pt->table[k]-=temp;
+    }
+    col1++;
   }
   init_splines(pt);
   return;

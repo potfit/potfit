@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2003/06/18 16:47:03 $
+* $Revision: 1.23 $
+* $Date: 2003/07/29 08:47:50 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -99,7 +99,7 @@ real calc_forces_pair(real *xi, real *forces)
       first=pair_pot.first[col1];
       spline_ed(pair_pot.step[col1], xi+first, 
 		pair_pot.last[col1]-first+1,
-		0.,0.,pair_pot.d2tab+first);
+		1e30,1e30,pair_pot.d2tab+first);
     }
 #endif
   }
@@ -224,9 +224,11 @@ real calc_forces_pair(real *xi, real *forces)
 	  k    = 3*(cnfstart[h]+i);
 	  col  = paircol+ntypes+typ1; /* column of F */
 #ifdef PARABEL
-	  fnval=parab_comb_ed(&pair_pot,xi,col,atom->rho,&gradF);
+	  fnval=parab_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
+	    - parab_ed(&pair_pot,xi,col,0.);
 #else
-	  fnval=splint_comb_ed(&pair_pot,xi,col,atom->rho,&gradF);
+	  fnval=splint_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
+	    - splint_ed(&pair_pot,xi,col,0.);
 #endif
 	  forces[config]+= fnval;
 	  for (j=0; j<atom->n_neigh; j++) {
@@ -275,15 +277,28 @@ real calc_forces_pair(real *xi, real *forces)
   } /* parallel region */
 #ifdef EAM
   if (eam) {
-    forces[mdim-(ntypes+1)]= DUMMY_WEIGHT * 
+    forces[mdim-(2*ntypes+1)]= DUMMY_WEIGHT * 
       splint_ed(&pair_pot,xi,paircol+DUMMY_COL_RHO,dummy_r)
-      - force_0[mdim-(ntypes+1)];
-    sum+= SQR(forces[mdim-(ntypes+1)]);
+      - force_0[mdim-(2*ntypes+1)];
+#ifdef LIMIT
+    forces[mdim-(2*ntypes+1)]=0.;
+#endif
+    sum+= SQR(forces[mdim-(2*ntypes+1)]);
     col1=0;
     for (g=0;g<ntypes;g++) {
-      forces[mdim-ntypes+g]= DUMMY_WEIGHT *
+      forces[mdim-2*ntypes+g]= DUMMY_WEIGHT * /* constraints on phi */
 	splint_ed(&pair_pot,xi,col1,dummy_r)
+	- force_0[mdim-2*ntypes+g];
+#ifdef PARABEL
+      forces[mdim-ntypes+g]= DUMMY_WEIGHT * /* constraints on U(n) */
+	parab_ed(&pair_pot,xi,paircol+ntypes+g,0.) 
 	- force_0[mdim-ntypes+g];
+#else
+      forces[mdim-ntypes+g]= DUMMY_WEIGHT * /* constraints on U(n) */
+	splint_ed(&pair_pot,xi,paircol+ntypes+g,0.) 
+	- force_0[mdim-ntypes+g];
+#endif
+      sum+= SQR(forces[mdim-2*ntypes+g]);
       sum+= SQR(forces[mdim-ntypes+g]);
       col1+=ntypes-g;
     }

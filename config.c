@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2003/06/18 16:47:02 $
+* $Revision: 1.15 $
+* $Date: 2003/07/29 08:47:50 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -234,7 +234,7 @@ void read_config(char *filename)
 				3*natoms are real forces, 
 				nconf cohesive energies, */ 
 #ifdef EAM  
-  if (eam) mdim+=1+ntypes;          /* 1+ntypes dummy constraints */
+  if (eam) mdim+=1+2*ntypes;          /* 1+2*ntypes dummy constraints */
 #ifdef LIMIT
   if (eam) mdim+=nconf;		/* nconf limiting constraints */
 #endif LIMIT
@@ -256,9 +256,15 @@ void read_config(char *filename)
    for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
 #endif
     force_0[k++]=DUMMY_WEIGHT * dummy_rho;		/* dummy constraints */
-    for (i=0; i<ntypes; i++) {
+#ifdef LIMIT
+    force_0[k-1]=0.; 		/* ignore dummy_rho if LIMIT is used */
+#endif
+    for (i=0; i<ntypes; i++) { 	/* constraints on phi */
       force_0[k++]=DUMMY_WEIGHT * dummy_phi[i];}
+    for (i=0; i<ntypes;i++) {  /* constraint on U(n=0):=0 */
+      force_0[k++]=0.;}
   }
+
 #endif
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
