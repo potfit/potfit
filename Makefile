@@ -5,8 +5,8 @@
 # Copyright 2002-2004 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.31 $
-# $Date: 2004/11/17 17:28:48 $
+# $Revision: 1.32 $
+# $Date: 2004/12/03 17:32:34 $
 # 
 ############################################################################
 #
@@ -542,6 +542,10 @@ endif
 
 ifneq (,$(findstring parab,${MAKETARGET}))
 CFLAGS += -DPARABEL
+endif
+
+ifneq (,$(findstring wzero,${MAKETARGET}))
+CFLAGS += -DWZERO
 endif
 
 ifneq (,$(findstring dist,${MAKETARGET}))
