@@ -30,7 +30,7 @@
 
 void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 {
-   int i,j,k,m;                    /* Simple counting variables */
+   int i,j,k,m,n=0;                    /* Simple counting variables */
     real *force_xi;                /* calculated force, alt */
     real **d;                      /* Direction vectors */
     real **gamma;                  /* Matrix of derivatives */
@@ -69,7 +69,7 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 				/* what is there to do?*/
     (void) copy_vector(fxi1,force_xi,mdim);
     do { /*outer loop, includes recalculating gamma*/
-    	m=0;
+	m=0;
 	/* Init gamma */
     	if (i=gamma_init(gamma, d, xi, fxi1, ndim, mdim)) {
 	    sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
@@ -133,8 +133,14 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 	    /* Print the steps in current loop, F, a few values of xi, and
 	       total number of fn calls */
         printf("%d %f %f %f %f %f %f %d \n",
-	       m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
-    /*End fit if whole series didn't improve F F*/
+	  m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls); 
+        n++;			/* increment outer loop counter */
+        /* Output of potential at intermediate steps */
+	/* printf("# %d\n",n);
+	for (k=0;k<ndim;k++)
+	    printf("%f %f\n",pair_pot.begin[0]+k*pair_pot.step[0],xi[k]);
+	    printf("\n\n");*/
+    /*End fit if whole series didn't improve F */
     } while (F3-F>PRECISION/10.);
 	/* Free memory */
     free_dmatrix(d,0,ndim-1,0,ndim-1);
