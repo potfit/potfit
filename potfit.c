@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2003/06/04 07:38:50 $
+* $Revision: 1.16 $
+* $Date: 2003/06/18 16:47:04 $
 *****************************************************************/
 
 
@@ -114,11 +114,18 @@ int main(int argc, char **argv)
   }
 #endif    
   printf("Dummy Constraints\n");
-  for (i=2; i>=1; i--){
+  sqr = SQR(force[mdim-(ntypes+1)]);
+  max = MAX( max, sqr );
+  min = MIN( min, sqr );
+  printf("%d %f %f %f %f\n", 0, sqr, 
+	 force[mdim-(ntypes+1)]+force_0[mdim-(ntypes+1)],
+	 force_0[mdim-(ntypes+1)],
+	 force[mdim-(ntypes+1)]/force_0[mdim-(ntypes+1)]);
+  for (i=ntypes; i>0; i--){
     sqr = SQR(force[mdim-i]);
     max = MAX( max, sqr );
     min = MIN( min, sqr );
-    printf("%d %f %f %f %f\n", 2-i, sqr, force[mdim-i]+force_0[mdim-i],
+    printf("%d %f %f %f %f\n", ntypes+1-i, sqr, force[mdim-i]+force_0[mdim-i],
 	   force_0[mdim-i],force[mdim-i]/force_0[mdim-i]);
   }
 #endif

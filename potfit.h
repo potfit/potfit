@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2003/06/04 07:38:50 $
+* $Revision: 1.25 $
+* $Date: 2003/06/18 16:47:04 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -23,12 +23,22 @@
 #define NRANSI
 #define MAXNEIGH 170
 #ifdef EAM
-#define DUMMY_RHO 0.064732
-#define DUMMY_PHI -8.696940
+/* NiAl reconstruction */
+/* #define DUMMY_RHO 0.064732 */
+/* #define DUMMY_PHI -8.696940 */
 #define DUMMY_COL_RHO 0
-#define DUMMY_COL_PHI 0
-#define DUMMY_R_RHO 2.5
-#define DUMMY_R_PHI 2.5
+/* #define DUMMY_COL_PHI 0 */
+/* #define DUMMY_R_RHO 2.5 */
+/* #define DUMMY_R_PHI 2.5 */
+
+/* AlNiCo EAM */
+/* #define DUMMY_RHO 0.08 */
+/* #define DUMMY_PHI -1.2 */
+/* #define DUMMY_COL_RHO 0 */
+/* #define DUMMY_COL_PHI 0 */
+/* #define DUMMY_R_RHO 2.7 */
+/* #define DUMMY_R_PHI 2.7 */
+
 #define DUMMY_WEIGHT 100.
 #define ENG_WEIGHT 1.
 #endif
@@ -130,6 +140,10 @@ EXTERN vektor tbox_x, tbox_y, tbox_z;
 EXTERN real *rcut INIT(NULL);
 EXTERN real (*calc_forces)(real*,real*);
 EXTERN int  *idx INIT(NULL);
+EXTERN real   *dummy_phi INIT(NULL);     /* Dummy Constraints for PairPot */
+EXTERN real   dummy_rho INIT(1.);        /* Dummy Constraint for rho */
+EXTERN real   dummy_r  INIT(2.5);        /* Distance of Dummy Constraints */
+
 
 /******************************************************************************
 *

@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2003/06/04 07:38:49 $
+* $Revision: 1.22 $
+* $Date: 2003/06/18 16:47:03 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -66,7 +66,7 @@ real calc_forces_pair_poly(real *xi, real *forces)
 real calc_forces_pair(real *xi, real *forces)
 {
   real sum=0.0;
-  int first,col1;
+  int first,col1,g;
   int paircol=(ntypes*(ntypes+1))/2;
   real grad0,y0,y1,x0,x1;
   /* init second derivatives for splines */
@@ -275,14 +275,18 @@ real calc_forces_pair(real *xi, real *forces)
   } /* parallel region */
 #ifdef EAM
   if (eam) {
-    forces[mdim-2]= DUMMY_WEIGHT * 
-      splint_ed(&pair_pot,xi,paircol+DUMMY_COL_RHO,DUMMY_R_RHO)
-      - force_0[mdim-2];
-    forces[mdim-1]= DUMMY_WEIGHT *
-      splint_ed(&pair_pot,xi,DUMMY_COL_PHI,DUMMY_R_PHI)
-      - force_0[mdim-1];
-    sum+= SQR(forces[mdim-2]);
-    sum+= SQR(forces[mdim-1]);
+    forces[mdim-(ntypes+1)]= DUMMY_WEIGHT * 
+      splint_ed(&pair_pot,xi,paircol+DUMMY_COL_RHO,dummy_r)
+      - force_0[mdim-(ntypes+1)];
+    sum+= SQR(forces[mdim-(ntypes+1)]);
+    col1=0;
+    for (g=0;g<ntypes;g++) {
+      forces[mdim-ntypes+g]= DUMMY_WEIGHT *
+	splint_ed(&pair_pot,xi,col1,dummy_r)
+	- force_0[mdim-ntypes+g];
+      sum+= SQR(forces[mdim-ntypes+g]);
+      col1+=ntypes-g;
+    }
   }
 #endif 
   fcalls++;			/* Increase function call counter */

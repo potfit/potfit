@@ -5,8 +5,12 @@ CFLAGS = -O  -axK -openmp -DPARABEL -ip -g -DEAM#(icc)
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
 POTFITSRC = f1dim_r.c powell_lsq.c lubksb_r.c  mprove_r.c brent_r.c ludcmp_r.c linmin_r.c mnbrak_r.c nrutil_r.c force.c config.c param.c potential.c potfit.c splines.c simann.c
-POTFITHDR = potfit.h powell_lsq.h nrutil_r.h
+POTFITHDR = potfit.h powell_lsq.h nrutil_r.h 
 POTFITOBJ = $(POTFITSRC:.c=.o)
+
+POTSCALESRC = param.c potential.c splines.c potscale.c nrutil_r.c 
+POTSCALEHDR = potscale.h nrutil_r.h
+POTSCALEOBJ = $(POTSCALESRC:.c=.o)
 
 .c.o: ${POTFITHDR}
 	$(CC) $(CFLAGS) -c $<
@@ -14,7 +18,7 @@ POTFITOBJ = $(POTFITSRC:.c=.o)
 #${POTFITOBJ}: $($@:.o=.c) ${POTFITHDR}
 #	${CC} ${CFLAGS} -c $($@:.o=.c)
 potfit3: ${POTFITOBJ} ${POTFITHDR}
-	${CC} ${CFLAGS} -o ${BINDIR}/potfit_3 ${POTFITOBJ} -lm
+	${CC} ${CFLAGS} -o ${BINDIR}/potfit1.2 ${POTFITOBJ} -lm
 
 potfit2: ${POTFITOBJ} ${POTFITHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/potfit_i ${POTFITOBJ} -lm
@@ -36,3 +40,6 @@ pottrans: pottrans.c
 
 force2poscar: force2poscar.c
 	${CC} ${CFLAGS} -o ${BINDIR}/force2poscar force2poscar.c
+
+potscale: ${POTSCALEOBJ} ${POTSCALEHDR}
+	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTSCALEOBJ} -lm
