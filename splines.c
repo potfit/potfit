@@ -6,8 +6,8 @@
  *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2003/03/19 09:05:42 $
+* $Revision: 1.7 $
+* $Date: 2003/04/08 09:03:37 $
 *****************************************************************/
 
 
@@ -74,7 +74,6 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 /**** rewritten for real variables (ITAP standard) and zero-offset vectors ****
  **** adapted to equidistant x[i]                                          ****
  **** Peter Brommer, ITAP, 2002-11-27                                      ****/
-
 real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 {
   real a, b, istep, rr, p1, p2, d21, d22;
@@ -101,12 +100,45 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 }
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
-/*******************************************************************************
+/******************************************************************************
+ *
+ * splint_comb_ed: calculates spline interpolation of a function (return value)
+ *            and its gradiend (grad), equidistant x[i]
+ *
+ *****************************************************************************/
+
+real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
+{
+  real a, b, istep, rr, p1, p2, d21, d22;
+ int k;
+
+  /* check for distances shorter than minimal distance in table */
+  rr = r - pt->begin[col];
+  if (rr < 0) error("short distance!");
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = (int) (rr * istep);
+  b     = (rr - k * pt->step[col]) * istep;
+  k    += pt->first[col];
+  a     = 1.0 - b;
+  p1    = xi[k];
+  d21   = pt->d2tab[k++];
+  p2    = xi[k];
+  d22   = pt->d2tab[k];
+  *grad = (p2-p1)*istep + 
+      ((3*(b*b) - 1) * d22 - (3*(a*a) - 1) * d21) / (6.0 * istep);
+  return a * p1 + b * p2 +
+      ((a*a*a - a) * d21 + (b*b*b - b) * d22) / (6.0 * istep * istep);
+}
+
+/******************************************************************************
  *
  * splint_grad_ed: calculates the first derivative from spline interpolation
  *            (equidistant x[i])
  *
- *******************************************************************************/
+ *****************************************************************************/
+
 
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 {

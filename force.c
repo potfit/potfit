@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2003/03/19 10:12:16 $
+* $Revision: 1.16 $
+* $Date: 2003/04/08 09:03:36 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -108,8 +108,8 @@ real calc_forces_pair(real *xi, real *forces)
 
       if (neigh->r < pair_pot.end[col] + pair_pot.step[col]) {
 	/* not a real force: cohesive energy */
-        forces[config] += splint_ed(&pair_pot,xi,col,neigh->r);
-	grad = splint_grad_ed(&pair_pot, xi, col, neigh->r);
+	/* grad is calculated in the same step */
+        forces[config] += splint_comb_ed(&pair_pot,xi,col,neigh->r,&grad);
         forces[k  ] += neigh->dist.x * grad;
         forces[k+1] += neigh->dist.y * grad;
         forces[k+2] += neigh->dist.z * grad;

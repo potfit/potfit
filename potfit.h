@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2003/04/04 09:29:14 $
+* $Revision: 1.19 $
+* $Date: 2003/04/08 09:03:37 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -137,4 +137,4 @@ void anneal(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real splint_ed(pot_table_t *pt, real *xi,int col, real r);
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
-
+real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
