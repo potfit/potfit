@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2004/08/16 13:02:50 $
+* $Revision: 1.4 $
+* $Date: 2004/11/17 16:05:32 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -152,8 +152,8 @@ real rescale(pot_table_t *pt, real upper, int flag)
   /* Potenzial erweitern */
   h=0;
   for(i=0;i<ntypes;i++) {
-    col=paircol+ntypes+i;
-    vals=pt->last[col]-pt->first[col];
+    col=paircol+ntypes+i;	/* 1. Einbettungsfunktion */
+    vals=pt->last[col]-pt->first[col]; 
     neustep[i]=(right[i]-left[i])/(double) vals;
     pos=left[i];
     for (j=0;j<=vals;j++) {
@@ -197,6 +197,11 @@ real rescale(pot_table_t *pt, real upper, int flag)
       pt->end[i]=a*right[j];
       pt->step[i]=a*neustep[j];
       pt->invstep[i]=1.0/pt->step[i];
+      pos=pt->begin[i];
+      for (h=pt->first[i];h<=pt->last[i];h++){
+	pt->xcoord[h]=pos;
+	pos+=pt->step[i];
+      }
       j++;
     }
   } else { 			/* wir drehen um - a negativ */
@@ -206,6 +211,11 @@ real rescale(pot_table_t *pt, real upper, int flag)
       pt->end[i]=a*left[j];
       pt->step[i]=-a*neustep[j];
       pt->invstep[i]=1.0/pt->step[i];
+      pos=pt->begin[i];
+      for (h=pt->first[i];h<=pt->last[i];h++){
+	pt->xcoord[h]=pos;
+	pos+=pt->step[i];
+      }
       j++;
     }
     h=0;
@@ -213,14 +223,12 @@ real rescale(pot_table_t *pt, real upper, int flag)
       col=paircol+ntypes+i;
       for (j=pt->last[col];j>=pt->first[col];j--){
 	neuxi[h]=xi[j];
-	neuord[h]=pt->xcoord[j];
 	h++;
       }
     }
     col=pt->first[paircol+ntypes];	/* und wieder zurückschreiben */
     for (i=0;i<dimneuxi;i++){
       xi[i+col]=neuxi[i];
-      pt->xcoord[i+col]=neuord[h];
     }
   }
   free(neuxi);
