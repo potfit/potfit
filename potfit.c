@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2004/06/23 11:57:40 $
+* $Revision: 1.27 $
+* $Date: 2004/07/15 12:45:27 $
 *****************************************************************/
 
 
@@ -90,7 +90,12 @@ int main(int argc, char **argv)
   }
 #ifdef MPI
   broadcast_params(); 	     /* let the others know what's going on */
-#endif MPI
+#else  /* MPI */
+  /* Identify subset of atoms/volumes belonging to individual process
+     with complete set of atoms/volumes */
+  conf_atoms = atoms;
+  conf_vol = volumen;
+#endif /* MPI */
  /*   mdim=3*natoms+nconf; */
   ndim=pair_pot.idxlen;
   ndimtot=pair_pot.len;

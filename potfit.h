@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2004/03/23 09:12:31 $
+* $Revision: 1.34 $
+* $Date: 2004/07/15 12:45:28 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -125,6 +125,7 @@ EXTERN MPI_Datatype MPI_STENS;
 //EXTERN MPI_Datatype MPI_POTTABLE;
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+#endif
 EXTERN atom_t *conf_atoms INIT(NULL); /* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
@@ -133,15 +134,14 @@ EXTERN int *atom_len;
 EXTERN int *atom_dist;
 EXTERN int *conf_len;
 EXTERN int *conf_dist;
-#endif
 #ifdef STRESS
 EXTERN real sweight INIT(STRESS_WEIGHT);
 #endif
 EXTERN real eweight INIT(ENG_WEIGHT);
 EXTERN int myconf INIT(0.);
 EXTERN int myatoms INIT(0.);
-EXTERN int firstconf INIT(0.);
-EXTERN int firstatom INIT(0.);
+EXTERN int firstconf INIT(0);
+EXTERN int firstatom INIT(0);
 EXTERN real   pi       INIT(0.);
 EXTERN real   anneal_temp INIT(1.);
 EXTERN int    seed     INIT(123456);     /* seed for RNG */
