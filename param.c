@@ -3,8 +3,8 @@
 *
 *  Read in parameter files (tag based)
 * 
-*  $Revision: 1.3 $
-*  $Date: 2002/10/31 11:59:18 $
+*  $Revision: 1.4 $
+*  $Date: 2002/11/05 12:29:11 $
 *
 ******************************************************************************/
 
@@ -170,6 +170,11 @@ void read_paramfile(FILE *pf)
     /* file for IMD potential */
     else if (strcasecmp(token,"imdpot")==0) {
       getparam("imdpot",imdpot,PARAM_STR,1,255);
+    }
+    /* file for plotting */
+    else if (strcasecmp(token,"plotfile")==0) {
+	getparam("plotfile",plotfile,PARAM_STR,1,255);
+	plot=1;
     }
     /* number of steps in IMD potential */
     else if (strcasecmp(token,"imdpotsteps")==0) {

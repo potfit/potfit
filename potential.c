@@ -1,4 +1,4 @@
-
+#define NPLOT 1000
 #include "potfit.h"
 
 /******************************************************************************
@@ -318,7 +318,7 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
   FILE *outfile;
   char msg[255];
   real *r2begin, *r2end, *r2step, r2;
-  int  i, j, k, col1, col2;
+  int  i, j, k, m, m2, col1, col2;
 
   /* allocate memory */
   r2begin = (real *) malloc( ntypes * ntypes *sizeof(real) );
@@ -338,30 +338,78 @@ void write_pot_table_imd(pot_table_t *pt, char *filename)
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes ); 
 
   /* write info block */
-  for (i=0; i<ntypes; i++) 
-    for (j=0; j<ntypes; j++) {
-      col1 = i<j ? i * ntypes + j : j * ntypes + i;
-      col2 = i * ntypes + j;
-      r2begin[col2] = SQR(pt->begin[col1]);
-      r2end  [col2] = SQR(pt->end[col1] + pt->step[col1]);
-      r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-      fprintf(outfile, "%.16e %.16e %.16e\n", 
-              r2begin[col2], r2end[col2], r2step[col2]);
+  m=0;
+  for (i=0; i<ntypes; i++){ 
+      m+=i;
+      m2=0;
+      for (j=0; j<ntypes; j++) {
+	  m2+=j;
+	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
+	  col2 = i * ntypes + j;
+	  r2begin[col2] = SQR(pt->begin[col1]);
+	  r2end  [col2] = SQR(pt->end[col1] + pt->step[col1]);
+	  r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
+	  fprintf(outfile, "%.16e %.16e %.16e\n", 
+		  r2begin[col2], r2end[col2], r2step[col2]);
+      }
     }
   fprintf(outfile, "\n");
 
   /* write data */
-  for (i=0; i<ntypes; i++) 
-    for (j=0; j<ntypes; j++) {
-      col1 = i<j ? i * ntypes + j : j * ntypes + i;
-      col2 = i * ntypes + j;
-      r2 = r2begin[col2];
-      for (k=0; k<imdpotsteps+5; k++) {
-        fprintf(outfile, "%.16e\n", pot3(pt, col1, sqrt(r2) ));
-	r2 += r2step[col2];
+  m=0;
+  for (i=0; i<ntypes; i++) {
+      m+=i;
+      m2=0;
+      for (j=0; j<ntypes; j++) {
+	  m2+=j;
+	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
+	  col2 = i * ntypes + j;
+	  r2 = r2begin[col2];
+	  for (k=0; k<imdpotsteps+1; k++) { /* +5 ??? */
+	      fprintf(outfile, "%.16e\n", pot3(pt, col1, sqrt(r2) ));
+	      r2 += r2step[col2];
+	  }
+	  /* fprintf(outfile, "\n");*/
       }
     }
   fprintf(outfile, "\n");
   fclose(outfile);
 }
 
+/*****************************************************************************
+*
+*  write plot version of potential table
+*
+******************************************************************************/
+
+void write_plotpot_pair(pot_table_t *pt, char *filename)
+{
+  FILE *outfile;
+  char msg[255];
+  int  i, j, k, l, col;
+  real r, r_step;
+
+  /* open file */
+  outfile = fopen(filename,"w");
+  if (NULL == outfile) {
+    sprintf(msg,"Could not open file %s\n",filename);
+    error(msg);
+  }
+
+  /* write data */
+  k = 0;
+  for (i=0; i<ntypes; i++) 
+    for (j=i; j<ntypes; j++) {
+      col    = i * ntypes + j; 
+      r      = pt->begin[k];
+      r_step = (pt->end[k] + pt->step[k] - pt->begin[k]) / NPLOT;
+      for (l=0; l<NPLOT; l++) {
+        fprintf(outfile, "%e %e\n", 
+                r, pot3(pt, k, r) );
+        r += r_step;
+      }
+      fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+      k++;
+    }
+  fclose(outfile);
+}

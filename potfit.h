@@ -72,9 +72,11 @@ EXTERN char startpot[255];               /* file with start potential */
 EXTERN char endpot[255];                 /* file for end potential */
 EXTERN char imdpot[255];                 /* file for IMD potential */
 EXTERN char config[255];                 /* file with atom configuration */
+EXTERN char plotfile[255];               /* file for plotting */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
 EXTERN int  opt INIT(0);                 /* optimization flag */
+EXTERN int plot INIT(0);                 /* plot output flag */
 
 /******************************************************************************
 *
