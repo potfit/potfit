@@ -8,7 +8,7 @@
 #include <math.h>
 #include "potfit.h"
 #include "nrutil_r.h"
-#define TOL 2.0e-4
+#define TOL 1.0e-1
 
 real *xicom,*delcom;
 
@@ -48,4 +48,5 @@ real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
 #undef TOL
 #undef NRANSI
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
+
 
