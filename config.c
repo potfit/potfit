@@ -57,7 +57,7 @@ void read_config(char *filename)
           error("Corrupt configuration file");
       }
     }
-    mdim=k+2;			/* mdim is dimension of force vector */
+    mdim=k+3;			/* mdim is dimension of force vector */
 
     /* increment natoms and configuration number */
     natoms += count;

@@ -20,23 +20,18 @@
 #include "potfit.h"
 #include "nrutil_r.h"
 #include "powell_lsq.h"
-#define EPS .001
+#define EPS .0001
 #define PRECISION 1.E-7
 /* Well, almost nothing */
-#define NOTHING 1.E-9
-#define INNERLOOPS 61
+#define NOTHING 1.E-12
+#define INNERLOOPS 143
 #define TOOBIG 10000
 
 
 void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 {
    int i,j,k,m;                    /*Simple counting variables*/
-   /* int n = ndim; */                 /*Dimension of parameter space*/
-   /* int m = mdim; */                /*Dimension of force space*/
-   /* real epsilon = EPS;*/            /*small increment for differentiation*/
-   /* static real xi[ndim]=XISTART; */  /*starting value of xi*/
-   /* static real force[mdim]; */
-    real force_xi[mdim];              /*calculated force, alt*/
+    real *force_xi;              /*calculated force, alt*/
     real **d;                          /*Direction vectors*/
     real **gamma;                      /*Matrix of derivatives*/
     real **lineqsys;                   /*Lin.Eq.Sys. Matrix*/
@@ -45,9 +40,7 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
     real *delta_norm;			 /*Normalized vector delta */
     real *fxi1,*fxi2;			 /*last two function values */
     int *perm_indx;			 /*Keeps track of LU pivoting */
-    real p[ndim];                  /*Vectors needed in Powell's algorithm*/
-    real q[ndim];
-   /* real deltaforce[mdim];         Difference between calc &  set force */
+    real *p,*q;                  /*Vectors needed in Powell's algorithm*/
     real perm_sig;
     real F,F2,F3,df,xi1,xi2;
     real temp,temp2;
@@ -62,14 +55,18 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
     delta_norm=dvector(0,ndim-1);
     fxi1=dvector(0,mdim-1);
     fxi2=dvector(0,mdim-1);
+    force_xi=dvector(0,mdim-1);
+    p=dvector(0,ndim-1);
+    q=dvector(0,ndim-1);
     force_calc=fcalc;
     
-    /*(void) fxi_init(xi,fsoll,force_xi,ndim, mdim); init force_xi*/
     F=(*force_calc)(xi,fxi1);
+    if (F<NOTHING) return;	/* If F is less than nothing, */
+				/* what is there to do?*/
     (void) copy_vector(fxi1,force_xi,mdim);
     do { /*outer loop, includes recalculating gamma*/
     	m=0;
-    	(void) gamma_init(gamma, d, xi, fxi1, ndim, mdim);     /*init gamma*/
+    	if (gamma_init(gamma, d, xi, fxi1, ndim, mdim)) break;   /*init gamma*/
     	(void) lineqsys_init(gamma,lineqsys,fxi1,p,ndim,mdim); /*init lineqsys*/
     	F3=F;
     	do {
@@ -81,19 +78,19 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
             (void) matdotvec(d,q,delta,ndim,ndim);
             (void) copy_vector(delta, delta_norm, ndim);
 	    norm_delta=normalize_vector(delta_norm,ndim);
-	    printf("%f ",norm_delta);
+	    /*  printf("%f ",norm_delta);*/
 	    /* Exit if norm of vector delta "explodes" - 
 	    Matrix probably became unstable */
-	    if ((norm_delta>100.*norm_delta2) && (m>1)) 
+	    /* if ((norm_delta>100.*norm_delta2) && (m>1)) 
 		    break;
 	    else 
-		    norm_delta2=norm_delta;
+	    norm_delta2=norm_delta; */
             
 	    F2=F;   /*shift F*/
 	    F=linmin_r(xi,delta,F,ndim,mdim,&xi1,&xi2,fxi1,fxi2,force_calc);
 	    /*printf("F(%d):=%1.10f; xi%d:=[%1.10f, %1.10f]; %1.10f;
 	    \n",m,F,m,xi[0],xi[1],d[0][0]*d[0][1]+d[1][0]*d[1][1]);*/
-	    printf("%d %f %f %f %f %f %f %d \n",
+	    if (!m) printf("%d %f %f %f %f %f %f %d \n",
 			    m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
     
         /* Find maximal p[i]*q[i]*/
@@ -108,7 +105,7 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 		if (i!=j) {
 		    temp=0;
 	            for (k=0;k<ndim;k++) temp+=d[k][i]*d[k][j];
-		    if (1-temp<=.0001) m=INNERLOOPS;  /*Emergency exit*/
+		    if (1-temp<=.0001) break;  /*Emergency exit*/
 	        }
 	    }
 	    /*update gamma, but if fn returns 1, matrix will be sigular, 
@@ -119,7 +116,7 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 	/* loop at least 2*ndim times, but at most INNERLOOPS or until no
 	further improvement */ 
 	    df=F2-F;  
-        } while ((m<ndim+1 || (m<=INNERLOOPS && df>PRECISION) ) &&
+        } while ((m<7*ndim+1 || (m<=INNERLOOPS && df>PRECISION) ) &&
 			df<TOOBIG); 
     /*End fit if whole series didn't improve F F*/
     } while (F3-F>PRECISION/1.);
@@ -132,6 +129,12 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
     free_ivector(perm_indx,0,ndim-1);
     free_dvector(delta,0,ndim-1);
     free_dvector(delta_norm,0,ndim-1);
+    free_dvector(force_xi,0,mdim-1);
+    free_dvector(fxi1,0,mdim-1);
+    free_dvector(fxi2,0,mdim-1);
+    free_dvector(p,0,ndim-1);
+    free_dvector(q,0,ndim-1);
+
     
     return ;
 }
@@ -213,7 +216,7 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 *
 ******************************************************************/
 
-void gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
+int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
          	int m){
     real *force;
     int i,j;			/* Auxiliary vars: Counters */
@@ -236,11 +239,14 @@ void gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
     
     for (i=0;i<n;i++) {
 	sum =0.;
-	for (j=0;j<m;j++) sum += gamma[j][i]*gamma[j][i];
+	for (j=0;j<m;j++) sum += SQR(gamma[j][i]);
 	temp=sqrt(sum);
-	for (j=0;j<m;j++) gamma[j][i] /= temp; /*normalize gamma*/
+	if (temp>NOTHING) 
+	    for (j=0;j<m;j++) gamma[j][i] /= temp; /*normalize gamma*/
+	else
+	    return 1;		/* singular matrix, abort */
     }
-    return;
+    return 0;
 }
 
 /*******************************************************************
@@ -328,8 +334,7 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
     }
     lineqsys[i][i]=0.;              /*Part 2: Element ii */
     for (j=0;j<m;j++) {
-	temp=gamma[j][i];
-	lineqsys[i][i]+=temp*temp;
+	lineqsys[i][i]+=SQR(gamma[j][i]);
     }
     for (k=i+1;k<n;k++){	    /* Part 3: All elements ki and ik with k>i*/
         lineqsys[i][k]=0;
@@ -403,7 +408,7 @@ void matdotvec(real **a, real *x, real *y, int n, int m){
 real normalize_vector(real *v, int n){
     int j;
     real temp,sum=0.0;
-    for (j=0;j<n;j++) sum+=v[j]*v[j];
+    for (j=0;j<n;j++) sum+=SQR(v[j]);
     temp=sqrt(sum);
     for (j=0;j<n;j++) v[j]/=temp;
     return temp;

@@ -16,7 +16,7 @@ void copy_vector(real *a, real *b, int n);
 
 real f1dim_r(real x);
 
-void gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n, int m);
+int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n, int m);
 
 int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
 		int j, int n, int m);
