@@ -31,19 +31,27 @@ following format:</p>
 <pre>
 ## this is just a comment line
 #F 3 n
+#G 2 3 .... n entries (this line is optional)
 ## this is another comment line
 #E this is the very last header line
 </pre>
 
-</p>
+<p>
 Header lines start with the character '#'. If the second character is
 'F', then the format specifier 3 (to distinguish from IMD potential
 files, format types 1 or 2) and the number n of 
 data columns of the tabulated functions are read from the rest of the 
 line. The very last header line must have a character 'E' at the 
 second position. Header lines with a second character different from 
-'F' or 'E' are treated as comments, but it is recommended that such 
+'F', 'E' or 'G' are treated as comments, but it is recommended that such 
 lines start with two '#' characters. </p>
+
+<p> The line G specifies whether the gradient of the interpolation
+splines should be treated as fixed or as an additional degree of
+freedom. Each digit corresponds to one function table, so there should
+be n digits in total. The information is bit-coded, '0' declares both
+lower and upper gradient fixed, '1' allows adjusting the gradient at
+the upper end, '2' at the lower end, and '3' at both ends. </p>
 
 <h2>Format 3</h2>
 
@@ -70,6 +78,19 @@ V_00 V_01 ... V_0N V_11 ... V_1N ... V_NN  (pair interaction)
 rho_0 rho_1 ... rho_N  (EAM electron transfer)
 U_0 U_1 ... U_N        (EAM embedding energy)
 </pre>
+
+<p> If the 'G' header line is specified, each data block must be
+preceded by two values specifying the gradient of the function at the
+lower and upper boundaries. A value of 10^30 or higher triggers the usage
+of natural splines (curvature 0 at boundaries). <em>You should not
+make the gradient variable at boundaries where natural splines are
+specified. This will lead to undesired results.</em></p>
+
+<p> A sample format 3 potential file for a binary system for an EAM
+potential is available <a href="sample_3g.pt.txt">with</a> or <a
+href="sample_3.pt.txt">without</a> the #G header line.
+
+
 <p><b>Please note:</b></p>
 <ul>
 <li> The pair potential matrix V_ij is implicitly symmetric, and only the
@@ -98,6 +119,11 @@ r_steps f(r_steps)
 </pre>
 Please note that r_0 < r_1 < ... < r_steps is required.
 The order of the columns is the same as with format 3. </p>
+
+<p> A sample format 4 potential file for a binary system (EAM
+potential) is available <a href="sample_4g.pt.txt">here</a> (with the
+#G header line).</p>
+
 
 <!--#include virtual="potfitfoot.html" -->
 
