@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2004/07/29 09:13:14 $
+* $Revision: 1.6 $
+* $Date: 2004/08/16 13:02:49 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -91,18 +91,20 @@ void broadcast_params() {
   blklens[3]=1;         typen[3]=MPI_VEKTOR; /* dist */
   blklens[4]=2;         typen[4]=MPI_INT; /* slot */
   blklens[5]=2;         typen[5]=REAL; /* shift */
+  blklens[6]=2;         typen[6]=REAL; /* step */
   MPI_Address(&testneigh.typ,displs);
   MPI_Address(&testneigh.nr,&displs[1]);
   MPI_Address(&testneigh.r,&displs[2]);
   MPI_Address(&testneigh.dist,&displs[3]);
   MPI_Address(testneigh.slot,&displs[4]);
   MPI_Address(testneigh.shift,&displs[5]);
+  MPI_Address(testneigh.step,&displs[6]);
   
-  for(i=1;i<6;i++) {
+  for(i=1;i<7;i++) {
       displs[i]-=displs[0];
   }
   displs[0]=0; /* set displacements */
-  MPI_Type_struct(6,blklens,displs,typen,&MPI_NEIGH );
+  MPI_Type_struct(7,blklens,displs,typen,&MPI_NEIGH );
   MPI_Type_commit(&MPI_NEIGH);
 
   /* MPI_ATOM */
@@ -156,6 +158,7 @@ void broadcast_params() {
   MPI_Bcast ( &eweight, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast ( &sweight, 1, REAL, 0, MPI_COMM_WORLD);
   /* Broadcast the potential... */
+  MPI_Bcast(&format,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&pair_pot.len,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&pair_pot.idxlen,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&pair_pot.ncols,1,MPI_INT,0,MPI_COMM_WORLD);
@@ -170,6 +173,7 @@ void broadcast_params() {
     pair_pot.first = (int *) malloc(size * sizeof(int));
     pair_pot.last = (int *) malloc(size * sizeof(int));
     pair_pot.table = (real *) malloc(ndimtot * sizeof(real)); 
+    pair_pot.xcoord = (real *) malloc(ndimtot * sizeof(real));
     pair_pot.d2tab = (real *) malloc(ndimtot * sizeof(real)); 
     pair_pot.idx = (int *) malloc(ndim * sizeof(int));
   }
@@ -181,6 +185,7 @@ void broadcast_params() {
   MPI_Bcast(pair_pot.last,size,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(pair_pot.table,ndimtot,REAL,0,MPI_COMM_WORLD);
   MPI_Bcast(pair_pot.d2tab,ndimtot,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(pair_pot.xcoord,ndimtot,REAL,0,MPI_COMM_WORLD);
   MPI_Bcast(pair_pot.idx,ndim,MPI_INT,0,MPI_COMM_WORLD);
 
   /* Distribute configurations */

@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2004/07/29 09:13:15 $
+* $Revision: 1.3 $
+* $Date: 2004/08/16 13:02:50 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -20,20 +20,23 @@
 * 
 * rescale: Routine used to automatically rescale 
 *     EAM potential. Flag indicates whether to force update...
+*     upper is upper limit of electron density.
 *
 *****************************************************************/
 
 real rescale(pot_table_t *pt, real upper, int flag)
 {
   int mincol,maxcol,col,col2,first,vals,h,i,j,typ1,typ2,sign,dimneuxi;
-  real *xi,*neuxi,*neustep,*maxrho,*minrho,*left,*right;
+  real *xi,*neuxi,*neuord,*neustep,*maxrho,*minrho,*left,*right;
   atom_t *atom;
   neigh_t *neigh;
   real fnval,pos,grad,a;
   real min=1e100,max=-1e100;
+
   xi=pt->table;
   dimneuxi=pt->last[paircol+2*ntypes-1]-pt->last[paircol+ntypes-1];
   neuxi=(real *) malloc(dimneuxi*sizeof(real));
+  neuord=(real *) malloc(dimneuxi*sizeof(real));
   neustep=(real *) malloc(ntypes*sizeof(real));
   maxrho=(real *) malloc(ntypes*sizeof(real));
   minrho=(real *) malloc(ntypes*sizeof(real));
@@ -43,20 +46,29 @@ real rescale(pot_table_t *pt, real upper, int flag)
     maxrho[i]=-1e100;
     minrho[i]=1e100;
   }
-    /* Max/Min rho finden */
+  /* Max/Min rho finden */
   /* Splines initialisieren - sicher ist sicher*/
   for (col=paircol; col<paircol+ntypes; col++) { /* rho */
-	first=pt->first[col];
-	spline_ed(pt->step[col], xi+first, 
-		  pt->last[col]-first+1,
-		  1e30,0.0,pt->d2tab+first);
+    first=pt->first[col];
+    if (format == 3)
+      spline_ed(pt->step[col], xi+first, 
+		pt->last[col]-first+1,
+		1e30,0.0,pt->d2tab+first);
+    else			/* format == 4 ! */
+      spline_ne(pt->xcoord+first, xi+first, pt->last[col]-first+1,
+		1e30,0.0,pt->d2tab+first);
   }
   for  (col=paircol+ntypes; col<paircol+2*ntypes; col++) { /* F */
     first=pt->first[col];
     /* Steigung 0 am rechten Rand */
-    spline_ed(pt->step[col], xi+first, 
-	      pt->last[col]-first+1,
-	      0,1e30,pt->d2tab+first);
+    if (format == 3) 
+      spline_ed(pt->step[col], xi+first, 
+		pt->last[col]-first+1,
+		0,1e30,pt->d2tab+first);
+    else 			/* format == 4 */
+      spline_ne(pt->xcoord+first, xi+first, 
+		pt->last[col]-first+1,
+		0,1e30,pt->d2tab+first);
   }
   
   /* atom_rho berechnen (eigentlich Verschwendung...) */
@@ -73,20 +85,20 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	  col2 = paircol+typ2;
 	  if (typ2==typ1) {
 	    if (neigh->r < pt->end[col2]) {
-	      fnval = splint_dir_ed(pt,xi,col2,
-				    neigh->slot[1],neigh->shift[1]);
+	      fnval = splint_dir(pt,xi,col2,neigh->slot[1],
+				 neigh->shift[1],neigh->step[1]);
 	      atom->rho += fnval;
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {
 	    col = paircol+typ1;
 	    if (neigh->r < pt->end[col2]) {
-	      atom->rho += splint_dir_ed(pt,xi,col2,
-					 neigh->slot[1],neigh->shift[1]);
+	      atom->rho += splint_dir(pt,xi,col2,neigh->slot[1],
+				      neigh->shift[1],neigh->step[1]);
 	    }
 	    if (neigh->r < pt->end[col])
 	      atoms[neigh->nr].rho += 
-		splint_ed(pt,xi,col,neigh->r);
+		splint(pt,xi,col,neigh->r);
 	  }
 	}
       }
@@ -101,9 +113,9 @@ real rescale(pot_table_t *pt, real upper, int flag)
   }
   /* dominante Seite bestimmen */
   sign = ( max>=-min ) ? 1 : -1;
-
+  
   /* Neue linke und rechte Grenze ermitteln, 60 Prozent zugeben... */
-
+  
   for (i=0;i<ntypes;i++) {
     j=paircol+ntypes+i;
     left[i]=minrho[i]-0.6*pt->step[j];
@@ -117,7 +129,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
       flag=1;
   }
   
-   /* Skalierungsfaktor bestimmen */
+  /* Skalierungsfaktor bestimmen */
   a= (sign==1) ? upper/right[maxcol] : upper/left[mincol];
   
   if (flag || fabs(a) > 1.05 || fabs(a) < 0.95) flag=1;
@@ -146,13 +158,15 @@ real rescale(pot_table_t *pt, real upper, int flag)
     pos=left[i];
     for (j=0;j<=vals;j++) {
       if (pt->begin[col]>pos) { /* extrapolating... */
-	grad=splint_grad_ed(pt,xi,col,pt->begin[col]); /* Steigung */
+	grad=splint_grad(pt,xi,col,pt->begin[col]); /* Steigung */
 	neuxi[h]=grad*(pt->begin[col]-pos)+xi[pt->first[col]];
       } else if (pt->end[col]<pos) { /* also extrapolating */
-	grad=splint_grad_ed(pt,xi,col,pt->end[col]); /* Steigung */
+	grad=splint_grad(pt,xi,col,pt->end[col]); /* Steigung */
 	neuxi[h]=grad*(pos-pt->end[col])+xi[pt->last[col]];
       } else 			/* direct calculation */
-	neuxi[h]=splint_ed(pt,xi,col,pos);
+	neuxi[h]=splint(pt,xi,col,pos);
+      
+      neuord[h]=pos;
       h++;
       pos+=neustep[i];
     }
@@ -160,10 +174,10 @@ real rescale(pot_table_t *pt, real upper, int flag)
   
   /* Werte zurückschreiben */
   col=pt->first[paircol+ntypes]; /* erster zu ändernder Wert */
-  for (i=0;i<dimneuxi;i++)
+  for (i=0;i<dimneuxi;i++){
     xi[i+col]=neuxi[i];
-
-
+    pt->xcoord[i+col]=neuord[i];
+  }
 //#ifndef DEBUG
   printf("Skalierungsfaktor %f\n",a);
 //#endif
@@ -174,7 +188,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
       pt->table[j]*=a;
     }
   }
-
+  
   /* rescale all embed. by a */
   if (sign==1){
     j=0;
@@ -199,12 +213,15 @@ real rescale(pot_table_t *pt, real upper, int flag)
       col=paircol+ntypes+i;
       for (j=pt->last[col];j>=pt->first[col];j--){
 	neuxi[h]=xi[j];
+	neuord[h]=pt->xcoord[j];
 	h++;
       }
     }
     col=pt->first[paircol+ntypes];	/* und wieder zurückschreiben */
-    for (i=0;i<dimneuxi;i++)
+    for (i=0;i<dimneuxi;i++){
       xi[i+col]=neuxi[i];
+      pt->xcoord[i+col]=neuord[h];
+    }
   }
   free(neuxi);
   free(neustep);
@@ -236,9 +253,13 @@ void embed_shift(pot_table_t *pt){
 /********* GEFAHR HIER ****************/
 /** NICHT IDIOTENSICHER ***************/
     if (pt->begin[i]<=0) {	/* 0 in domain of U(n) */
-      spline_ed(pt->step[i], xi+first,pt->last[i]-first+1,0.,
-		1e30,pt->d2tab+first);
-      shift=splint_ed(pt,xi,i,0.);
+      if (format == 3) 
+	spline_ed(pt->step[i], xi+first,pt->last[i]-first+1,0.,
+		  1e30,pt->d2tab+first);
+      else 			/* format == 4 ! */
+	spline_ne(pt->xcoord+first,xi+first,pt->last[i]-first+1,
+		  0.,1e30,pt->d2tab+first);
+      shift=splint(pt,xi,i,0.);
 #ifdef DEBUG
       printf("shifting by %f\n",shift);
 #endif /* DEBUG */

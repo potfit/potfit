@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.35 $
-* $Date: 2004/07/29 09:13:15 $
+* $Revision: 1.36 $
+* $Date: 2004/08/16 13:02:50 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -70,6 +70,7 @@ typedef struct {
   vektor dist;
   int    slot[2];
   real   shift[2];
+  real   step[2];
 } neigh_t;
 
 typedef struct {
@@ -95,6 +96,7 @@ typedef struct {
   real *invstep;    /* inverse of increment */
   int  *first;      /* index of first entry */
   int  *last;       /* index of last entry */
+  real *xcoord;     /* the x-coordinates of sampling points */
   real *table;      /* the actual data */
   real *d2tab;      /* second derivatives of table data for spline int */
   int  *idx;        /* indirect indexing */
@@ -136,9 +138,7 @@ EXTERN int *atom_len;
 EXTERN int *atom_dist;
 EXTERN int *conf_len;
 EXTERN int *conf_dist;
-#ifdef STRESS
 EXTERN real sweight INIT(STRESS_WEIGHT);
-#endif
 EXTERN real eweight INIT(ENG_WEIGHT);
 EXTERN int myconf INIT(0.);
 EXTERN int myatoms INIT(0.);
@@ -176,6 +176,7 @@ EXTERN char plotpointfile[255] INIT("\0");
                                          /* write points for plotting */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
+EXTERN int format;		         /* format of potential table */
 EXTERN int  opt INIT(0);                 /* optimization flag */
 EXTERN int plot INIT(0);                 /* plot output flag */
 EXTERN vektor box_x,  box_y,  box_z;
@@ -183,6 +184,15 @@ EXTERN vektor tbox_x, tbox_y, tbox_z;
 EXTERN real *rcut INIT(NULL);
 EXTERN real *rmin INIT(NULL);
 EXTERN real (*calc_forces)(real*,real*,int);
+EXTERN real (*splint)(pot_table_t*,real*,int,real);
+EXTERN real (*splint_grad)(pot_table_t*,real*,int,real);
+EXTERN real (*splint_comb)(pot_table_t*,real*,int,real,real*);
+EXTERN void (*write_pot_table)(pot_table_t*,char*);
+#ifdef PARABEL
+EXTERN real (*parab)(pot_table_t*,real*,int,real);
+EXTERN real (*parab_comb)(pot_table_t*,real*,int,real,real*);
+EXTERN real (*parab_grad)(pot_table_t*,real*,int,real);
+#endif /* PARABEL */
 EXTERN int  *idx INIT(NULL);
 EXTERN real   *dummy_phi INIT(NULL);     /* Dummy Constraints for PairPot */
 EXTERN real   dummy_rho INIT(1.);        /* Dummy Constraint for rho */
@@ -200,7 +210,12 @@ void warning(char*);
 void read_parameters(int, char**);
 void read_paramfile(FILE*);
 void read_pot_table(pot_table_t*, char*, int);
-void write_pot_table(pot_table_t*, char*);
+void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals, 
+		     char *filename, FILE *infile);
+void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals, 
+		     char *filename, FILE *infile);
+void write_pot_table3(pot_table_t*, char*);
+void write_pot_table4(pot_table_t*, char*);
 void write_pot_table_imd(pot_table_t*, char*);
 void write_plotpot_pair(pot_table_t*, char*);
 real normdist(void);
@@ -215,15 +230,29 @@ void powell_lsq(real *xi);
 void anneal(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real splint_ed(pot_table_t *pt, real *xi,int col, real r);
-real splint_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b);
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
-real splint_grad_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b);
 real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real splint_comb_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b, real *grad);
+real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step);
+real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b, 
+		     real step, real *grad);
+real splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b, 
+		     real step);
+/* real splint_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b); */
+/* real splint_grad_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b); */
+/* real splint_comb_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b, real *grad); */
+void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
+real splint_ne(pot_table_t *pt, real *xi, int col, real r);
+real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad);
+real splint_grad_ne(pot_table_t *pt, real *xi, int col, real r);
+
+
 #ifdef PARABEL
 real parab_comb_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad);
 real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r);
 real parab_ed(pot_table_t *pt,  real *xi, int col, real r);
+real parab_comb_ne(pot_table_t *pt,  real *xi, int col, real r, real *grad);
+real parab_grad_ne(pot_table_t *pt,  real *xi, int col, real r);
+real parab_ne(pot_table_t *pt,  real *xi, int col, real r);
 #endif
 #ifdef EAM
 real rescale(pot_table_t *pt, real upper,int flag);

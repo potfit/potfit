@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2004/07/29 09:13:14 $
+* $Revision: 1.24 $
+* $Date: 2004/08/16 13:02:48 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -135,14 +135,14 @@ real make_box( void )
 void read_config(char *filename)
 {
   int     maxneigh=0, count;
-  int     i, j, k, ix, iy, iz,typ1,typ2,col,slot;
+  int     i, j, k, ix, iy, iz,typ1,typ2,col,slot,klo,khi;
   FILE    *infile;
   char    msg[255];
   atom_t  *atom;
   neigh_t *neigh;
   stens   *stresses;
   vektor  d, dd;
-  real    r,rr,istep,shift;
+  real    r,rr,istep,shift,step;
 #ifdef DEBUG
   real    *mindist;
   mindist = (real *) malloc(ntypes*ntypes*sizeof(real));
@@ -262,43 +262,89 @@ void read_config(char *filename)
 		col = (typ1 <= typ2) ? 
 		   typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1))/2)
 		   : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
-		rr    = r - pair_pot.begin[col];
-		if (rr < 0) {
-		  printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,nconf,i-natoms);
+		if (format==3) {
+		  rr    = r - pair_pot.begin[col];
+		  if (rr < 0) {
+		    printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,nconf,i-natoms);
 //		  printf("%f %f %f %f %f %f\n", d.x,d.y,d.z,coheng[nconf],stresses->xx,stresses->yz);
 			 
-		  fflush(stdout);
-		  error("short distance in config.c!");
-		}		
-		istep = pair_pot.invstep[col];
-		slot  = (int)( rr * istep);
-		shift = (rr - slot * pair_pot.step[col]) * istep;
-		slot  += pair_pot.first[col];
-		/* Check if we are at the last index */
+		    fflush(stdout);
+		    error("short distance in config.c!");
+		  }		
+		  istep = pair_pot.invstep[col];
+		  slot  = (int)( rr * istep);
+		  shift = (rr - slot * pair_pot.step[col]) * istep;
+		  slot  += pair_pot.first[col];		
+		  step  = pair_pot.step[col];
+
+		} else {	/* format == 4 ! */
+
+		  klo=pair_pot.first[col];
+		  khi=pair_pot.last[col];
+		  /* bisection */
+		  while (khi-klo > 1) {
+		    slot=(khi+klo) >> 1;
+		    if ( pair_pot.xcoord[slot] > r ) khi=slot;
+		    else klo=slot;
+		  }
+		  slot=klo;
+		/* Check if we are at the last index - we should be lower */
+                /* should be impossible anyway */
+		/*  if (slot>=pair_pot.last[col]) {
+		    klo--;khi--;
+		    } */
+		  step=pair_pot.xcoord[khi]-pair_pot.xcoord[klo];
+		  shift=(r-pair_pot.xcoord[klo])/step;
+
+		}
+		/* independent of format - we should be left of last index */
 		if (slot>=pair_pot.last[col]) {
 		  slot--;shift+=1.0;
 		}
 		atoms[i].neigh[k].shift[0]  = shift;
 		atoms[i].neigh[k].slot[0]   = slot;
+		atoms[i].neigh[k].step[0]   = step;
 #ifdef EAM
 		/* EAM part */
 		col=paircol+typ2;
-		rr    = r - pair_pot.begin[col];
-		if (rr < 0) {
-		  printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,typ1,typ2);
-		  fflush(stdout);
-		  error("short distance in config.c!");
-		}		
-		istep = pair_pot.invstep[col];
-		slot  = (int)( rr * istep);
-		shift = (rr - slot * pair_pot.step[col]) * istep;
-		slot  += pair_pot.first[col];
-		/* Check if we are at the last index */
+		if (format==3) {
+		  rr    = r - pair_pot.begin[col];
+		  if (rr < 0) {
+		    printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,typ1,typ2);
+		    fflush(stdout);
+		    error("short distance in config.c!");
+		  }		
+		  istep = pair_pot.invstep[col];
+		  slot  = (int)( rr * istep);
+		  shift = (rr - slot * pair_pot.step[col]) * istep;
+		  slot  += pair_pot.first[col];
+		  step  = pair_pot.step[col];
+		} else {	/* format == 4 ! */
+		  klo=pair_pot.first[col];
+		  khi=pair_pot.last[col];
+		  /* bisection */
+		  while (khi-klo > 1) {
+		    slot=(khi+klo) >> 1;
+		    if ( pair_pot.xcoord[slot] > r ) khi=slot;
+		    else klo=slot;
+		  }
+		  slot=klo;
+		/* Check if we are at the last index - we should be lower */
+                /* should be impossible anyway */
+		/*   if (slot>=pair_pot.last[col]) {  */
+ 		/*    klo--;khi--; */
+ 		/*  } */
+		  step=pair_pot.xcoord[khi]-pair_pot.xcoord[klo];
+		  shift=(r-pair_pot.xcoord[klo])/step;
+		}
+		  
+                /* Check if we are at the last index */
 		if (slot>=pair_pot.last[col]) {
 		  slot--;shift+=1.0;
 		}
 		atoms[i].neigh[k].shift[1]  = shift;
 		atoms[i].neigh[k].slot[1]   = slot;
+		atoms[i].neigh[k].step[1]   = step;
 #endif		
 	      }
 	    }

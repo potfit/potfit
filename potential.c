@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2004/08/12 07:57:59 $
+* $Revision: 1.25 $
+* $Date: 2004/08/16 13:02:50 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -28,8 +28,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   FILE *infile;
   char buffer[1024], msg[255], *res;
   int  have_format=0, end_header=0;
-  int  format, size, i, j, k, l, *nvals;
-  real *val;
+  int  size, i, j, k, l, *nvals;
 
   /* open file */
   infile = fopen(filename,"r");
@@ -84,7 +83,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
         error(msg);
       }
       /* recognized format? */
-      if (format!=3) {
+      if ((format!=3) && (format != 4)) {
         sprintf(msg,"Unrecognized format specified for file %s",filename);
         error(msg);
       }
@@ -96,7 +95,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   if (!have_format) {
     sprintf(msg,"Format not specified in header of file %s",filename);
     error(msg);
-  }
+  } else printf("Potential file format %d.\n",format);
 
   /* allocate info block of function table */
   pt->len     = 0;
@@ -114,64 +113,11 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
     sprintf(msg,"Cannot allocate info block for potential table %s",filename);
     error(msg);
   }
-  /* read the info block of the function table */
-  for(i=0; i<size; i++) {
-    if (3>fscanf(infile,"%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i])) {
-        sprintf(msg, "Premature end of potential file %s", filename);
-        error(msg);
-    }
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / (nvals[i]-1);
-    pt->invstep[i] = 1.0 / pt->step[i];
-    if (i==0) pt->first[i] = 0; else pt->first[i] = pt->last[i-1] + 1;
-    pt->last[i] = pt->first[i] + nvals[i] - 1;
-    pt->len = pt->first[i] + nvals[i];
-  }
-  /* allocate the function table */
-  pt->table = (real *) malloc(pt->len * sizeof(real));
-  pt->d2tab = (real *) malloc(pt->len * sizeof(real));
-  pt->idx   = (int  *) malloc(pt->len * sizeof(int ));
-  if ((NULL==pt->table) || (NULL==pt->idx) || (NULL==pt->d2tab)) {
-    error("Cannot allocate memory for potential table");
-  }
-
-  /* input loop */
-  val = pt->table;
-  k=0; l=0;
-  for (i=0; i<ncols; i++) {	/* read in pair pot */
-    for (j=0; j<nvals[i]; j++) {
-      if (1>fscanf(infile, "%lf\n", val)) {
-        sprintf(msg, "Premature end of potential file %s", filename);
-        error(msg);
-      } else val++;
-      if (j<nvals[i]-1) pt->idx[k++] = l++;
-      else l++;
-    }
-  }
-#ifdef EAM
-    for (i=ncols; i<ncols+ntypes; i++) {	/* read in rho */
-      for (j=0; j<nvals[i]; j++) {
-	if (1>fscanf(infile, "%lf\n", val)) {
-	  sprintf(msg, "Premature end of potential file %s", filename);
-	  error(msg);
-	} else val++;
-	if (j<nvals[i]-1) pt->idx[k++] = l++;
-	else l++;
-      }
-    }
-    for (i=ncols+ntypes; i<ncols+2*ntypes; i++) {	/* read in F */
-      for (j=0; j<nvals[i]; j++) {
-	if (1>fscanf(infile, "%lf\n", val)) {
-	  sprintf(msg, "Premature end of potential file %s", filename);
-	  error(msg);
-	} else val++;
-	pt->idx[k++] = l++;
-      }
-    }
-  
-#endif
-  pt->idxlen = k;
-
+  if (format==3) read_pot_table3(pt, size, ncols, nvals, filename, infile);
+  if (format==4) read_pot_table4(pt, size, ncols, nvals, filename, infile);
   fclose(infile);
+
+
 
   /* compute rcut and rmin */
   rcut = (real *) malloc( ntypes * ntypes * sizeof(real) );
@@ -203,6 +149,202 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
   return;
 }
 
+/*****************************************************************************
+*
+*  read potential in third format: 
+*
+*  Sampling points are equidistant.
+* 
+*  Header:  one line for each function with
+*           rbegin rstart npoints
+*
+*  Table: Function values at sampling points, 
+*         functions separated by blank lines
+*
+******************************************************************************/
+
+void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals, 
+		     char *filename, FILE *infile)
+{
+  int i,j,k,l;
+  char msg[255];
+  real *val;
+
+  /* read the info block of the function table */
+  for(i=0; i<size; i++) {
+    if (3>fscanf(infile,"%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i])) {
+        sprintf(msg, "Premature end of potential file %s", filename);
+        error(msg);
+    }
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / (nvals[i]-1);
+    pt->invstep[i] = 1.0 / pt->step[i];
+    if (i==0) pt->first[i] = 0; else pt->first[i] = pt->last[i-1] + 1;
+    pt->last[i] = pt->first[i] + nvals[i] - 1;
+    pt->len = pt->first[i] + nvals[i];
+  }
+  /* allocate the function table */
+  pt->table = (real *) malloc(pt->len * sizeof(real));
+  pt->xcoord = (real *) malloc(pt->len * sizeof(real));
+  pt->d2tab = (real *) malloc(pt->len * sizeof(real));
+  pt->idx   = (int  *) malloc(pt->len * sizeof(int ));
+  if ((NULL==pt->table) || (NULL==pt->idx) || (NULL==pt->d2tab)) {
+    error("Cannot allocate memory for potential table");
+  }
+
+  /* input loop */
+  val = pt->table;
+  k=0; l=0;
+  for (i=0; i<ncols; i++) {	/* read in pair pot */
+    for (j=0; j<nvals[i]; j++) {
+      if (1>fscanf(infile, "%lf\n", val)) {
+        sprintf(msg, "Premature end of potential file %s", filename);
+        error(msg);
+      } else val++;
+      pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
+      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      else l++;
+      
+    }
+  }
+#ifdef EAM
+  for (i=ncols; i<ncols+ntypes; i++) {	/* read in rho */
+    for (j=0; j<nvals[i]; j++) {
+      if (1>fscanf(infile, "%lf\n", val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else val++;
+      pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
+      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      else l++;
+    }
+  }
+  for (i=ncols+ntypes; i<ncols+2*ntypes; i++) {	/* read in F */
+    for (j=0; j<nvals[i]; j++) {
+      if (1>fscanf(infile, "%lf\n", val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else val++;
+      pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
+      pt->idx[k++] = l++;
+    }
+  }
+  
+#endif
+  pt->idxlen = k;
+
+}
+
+/*****************************************************************************
+*
+*  read potential in fourth format: 
+*
+*  Sampling points are NON-equidistant.
+* 
+*  Header:  one line for each function with
+*           npoints
+*
+*  Table: Sampling points, function values
+*            r f(r) 
+*         functions separated by blank lines
+*
+******************************************************************************/
+
+void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals, 
+		     char *filename, FILE *infile)
+{
+  int i,k,l,j;
+  char msg[255];
+  real *val, *ord;
+  /* read the info block of the function table */
+  for(i=0; i<size; i++) {
+    if (1>fscanf(infile,"%d",  &nvals[i])) {
+        sprintf(msg, "Premature end of potential file %s", filename);
+        error(msg);
+    }
+    pt->step[i] = 0.;
+    pt->invstep[i] = 0.; 
+    if (i==0) pt->first[i] = 0; else pt->first[i] = pt->last[i-1] + 1;
+    pt->last[i] = pt->first[i] + nvals[i] - 1;
+    pt->len = pt->first[i] + nvals[i];
+  }
+  /* allocate the function table */
+  pt->table = (real *) malloc(pt->len * sizeof(real));
+  pt->xcoord = (real *) malloc(pt->len * sizeof(real));
+  pt->d2tab = (real *) malloc(pt->len * sizeof(real));
+  pt->idx   = (int  *) malloc(pt->len * sizeof(int ));
+  if ((NULL==pt->table) || (NULL==pt->idx) || (NULL==pt->d2tab)) {
+    error("Cannot allocate memory for potential table");
+  }
+
+  /* input loop */
+  val = pt->table;
+  ord = pt->xcoord;
+  k=0; l=0;
+  for (i=0; i<ncols; i++) {	/* read in pair pot */
+    for (j=0; j<nvals[i]; j++) {
+      if (2>fscanf(infile, "%lf %lf\n", ord, val)) {
+        sprintf(msg, "Premature end of potential file %s", filename);
+        error(msg);
+      } else {val++; ord++; }
+      if ((j>0) && (*(ord-1) <= *(ord-2))) {
+	sprintf(msg, "Ordinate not monotonous in potential %d.",i);
+	error(msg);
+      }
+      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      else l++;
+      
+    }
+    pt->begin[i]=pt->xcoord[pt->first[i]];
+    pt->end[i]  =pt->xcoord[pt->last[i]];
+    /* pt->step is average step length.. */
+    pt->step[i] = (pt->end[i]-pt->begin[i])/((double) nvals[i]-1);
+    pt->invstep[i] = 1./pt->step[i]; 
+
+  }
+#ifdef EAM
+  for (i=ncols; i<ncols+ntypes; i++) {	/* read in rho */
+    for (j=0; j<nvals[i]; j++) {
+      if (2>fscanf(infile, "%lf %lf\n", ord,val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else {ord++; val++;}
+      if ((j>0) && (*(ord-1) <= *(ord-2))) {
+	sprintf(msg, "Ordinate not monotonous in potential %d.",i);
+	error(msg);
+      }
+      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      else l++;
+    }
+    pt->begin[i]=pt->xcoord[pt->first[i]];
+    pt->end[i]  =pt->xcoord[pt->last[i]];
+    /* pt->step is average step length.. */
+    pt->step[i] = (pt->end[i]-pt->begin[i])/((double) nvals[i]-1);
+    pt->invstep[i] = 1./pt->step[i]; 
+
+  }
+  for (i=ncols+ntypes; i<ncols+2*ntypes; i++) {	/* read in F */
+    for (j=0; j<nvals[i]; j++) {
+      if (1>fscanf(infile, "%lf %lf\n", ord, val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else {ord++;val++;}
+      if ((j>0) && (*(ord-1) <= *(ord-2))) {
+	sprintf(msg, "Ordinate not monotonous in potential %d.",i);
+	error(msg);
+      }
+      pt->idx[k++] = l++;
+    }
+    pt->begin[i]=pt->xcoord[pt->first[i]];
+    pt->end[i]  =pt->xcoord[pt->last[i]];
+    /* pt->step is average step length.. */
+    pt->step[i] = (pt->end[i]-pt->begin[i])/((double) nvals[i]-1);
+    pt->invstep[i] = 1./pt->step[i]; 
+  }
+  
+#endif
+  pt->idxlen = k;
+
+}
 
 /*****************************************************************************
 *
@@ -400,6 +542,41 @@ real parab_ed(pot_table_t *pt,  real *xi, int col, real r)
 }
 /*****************************************************************************
 *
+*  Evaluate value from parabole through three points. 
+*  Extrapolates for all k. Nonequidistant points.
+*
+******************************************************************************/
+
+real parab_ne(pot_table_t *pt,  real *xi, int col, real r)
+{
+  real x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
+  int  k;
+
+  /* renorm to beginning of table */
+//  rr = r - pt->begin[col];
+  k     = pt->first[col];
+  x0    = pt->xcoord[k];
+  p0    = xi[k++]; 
+  x1    = pt->xcoord[k];
+  p1    = xi[k++];
+  x2    = pt->xcoord[k];
+  p2    = xi[k  ];
+
+  /* indices into potential table */
+  chi0  = (r-x0)/(x2-x1);
+  chi1  = (r-x1)/(x2-x0);
+  chi2  = (r-x2)/(x1-x0);
+
+  /* intermediate values */
+//  dv  = p1 - p0;
+//  d2v = p2 - 2 * p1 + p0;
+
+  /* return the potential value */
+  return chi1 * chi2 * p0 - chi0 * chi2 * p1 + chi0 * chi1 * p2;
+
+}
+/*****************************************************************************
+*
 *  Evaluate deritvative from parabole through three points. 
 *  Extrapolates for all k.
 *
@@ -428,6 +605,47 @@ real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r)
 
   /* return the derivative */
   return istep * (dv + (chi - 0.5) * d2v);
+}
+
+/*****************************************************************************
+*
+*  Evaluate deritvative from parabole through three points. 
+*  Extrapolates for all k.
+*
+******************************************************************************/
+
+real parab_grad_ne(pot_table_t *pt,  real *xi, int col, real r)
+{
+  real h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2, dv, d2v;
+  int  k;
+
+  /* renorm to beginning of table */
+//  rr = r - pt->begin[col];
+  k     = pt->first[col];
+  x0    = pt->xcoord[k];
+  p0    = xi[k++]; 
+  x1    = pt->xcoord[k];
+  p1    = xi[k++];
+  x2    = pt->xcoord[k];
+  p2    = xi[k  ];
+
+  h0    = x2-x1;
+  h1    = x2-x0;
+  h2    = x1-x0;
+
+  chi0  = (r-x0)/h0;
+  chi1  = (r-x1)/h1;
+  chi2  = (r-x2)/h2;
+
+  /* intermediate values */
+//  dv  = p1 - p0;
+//  d2v = p2 - 2 * p1 + p0;
+
+  /* return the potential value */
+  return (chi2/h1 + chi1/h2) * p0 
+    - (chi0/h2 + chi2/h0) * p1 
+    + (chi0/h1 + chi1/h0) * p2;
+
 }
 
 /*****************************************************************************
@@ -464,6 +682,48 @@ real parab_comb_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad)
   return p0 + chi * dv + 0.5 * chi * (chi - 1) * d2v;
 }
 
+/*****************************************************************************
+*
+*  Evaluate value and deritvative from parabole through three points. 
+*  Extrapolates for all k.
+*
+******************************************************************************/
+
+real parab_comb_ne(pot_table_t *pt,  real *xi, int col, real r, real* grad)
+{
+  real h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2, dv, d2v;
+  int  k;
+
+  /* renorm to beginning of table */
+//  rr = r - pt->begin[col];
+  k     = pt->first[col];
+  x0    = pt->xcoord[k];
+  p0    = xi[k++]; 
+  x1    = pt->xcoord[k];
+  p1    = xi[k++];
+  x2    = pt->xcoord[k];
+  p2    = xi[k  ];
+
+  h0    = x2-x1;
+  h1    = x2-x0;
+  h2    = x1-x0;
+
+  chi0  = (r-x0)/h0;
+  chi1  = (r-x1)/h1;
+  chi2  = (r-x2)/h2;
+
+  /* intermediate values */
+//  dv  = p1 - p0;
+//  d2v = p2 - 2 * p1 + p0;
+
+  /* return the potential value */
+  *grad = (chi2/h1 + chi1/h2) * p0 
+        - (chi0/h2 + chi2/h0) * p1 
+        + (chi0/h1 + chi1/h0) * p2;
+
+  return chi1 * chi2 * p0 - chi0 * chi2 * p1 + chi0 * chi1 * p2;
+}
+
 #endif
 
 /*****************************************************************************
@@ -472,7 +732,7 @@ real parab_comb_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad)
 *
 ******************************************************************************/
 
-void write_pot_table(pot_table_t *pt, char *filename)
+void write_pot_table3(pot_table_t *pt, char *filename)
 {
   FILE *outfile, *outfile2;
   char msg[255];
@@ -515,6 +775,59 @@ void write_pot_table(pot_table_t *pt, char *filename)
       if (flag) 
 	fprintf(outfile2, "%.6e %.6e %d\n",r,pt->table[j],j );
       r += pt->step[i];
+    }
+    fprintf(outfile, "\n");
+    if (flag) fprintf(outfile2,"\n\n");
+  }
+  fclose(outfile);
+  if (flag) fclose(outfile2);
+}
+/*****************************************************************************
+*
+*  write potential table (format 4)
+*
+******************************************************************************/
+
+void write_pot_table4(pot_table_t *pt, char *filename)
+{
+  FILE *outfile, *outfile2;
+  char msg[255];
+  int  i, j, flag=0;
+  real r;
+
+  if (plotpointfile != "\0") flag=1;
+
+  /* open file */
+  outfile = fopen(filename,"w");
+  if (NULL == outfile) {
+    sprintf(msg,"Could not open file %s\n",filename);
+    error(msg);
+  }
+
+  /* if needed: open file for plotpoints */
+  if (flag) {
+      outfile2 = fopen(plotpointfile,"w");
+      if (NULL == outfile) {
+	  sprintf(msg,"Could not open file %s\n",filename);
+	  error(msg);
+      }
+  }
+
+  /* write header */
+  fprintf(outfile, "#F 4 %d\n#E\n", pt->ncols ); 
+
+  /* write info block */
+  for (i=0; i<pt->ncols; i++) {
+    fprintf(outfile, "%d\n", pt->last[i] - pt->first[i] + 1);
+  }
+  fprintf(outfile, "\n");
+
+  /* write data */
+  for (i=0; i<pt->ncols; i++) {
+    for (j=pt->first[i]; j<=pt->last[i]; j++) {
+      fprintf(outfile, "%.16e %.16e\n", pt->xcoord[j], pt->table[j] );
+      if (flag) 
+	fprintf(outfile2, "%.6e %.6e %d\n",pt->xcoord[j],pt->table[j],j );
     }
     fprintf(outfile, "\n");
     if (flag) fprintf(outfile2,"\n\n");
@@ -585,7 +898,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	  col2 = i * ntypes + j;
 	  r2 = r2begin[col2];
 	  for (k=0; k<imdpotsteps; k++) { 
-	      fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
+	      fprintf(outfile, "%.16e\n", splint(pt, pt->table, col1, sqrt(r2) ));
 	      r2 += r2step[col2];
 	  }
 	  fprintf(outfile,"%.16e\n",0.0);
@@ -627,7 +940,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k=0; k<imdpotsteps; k++) { 
-	fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, sqrt(r2) ));
+	fprintf(outfile, "%.16e\n", splint(pt, pt->table, col1, sqrt(r2) ));
 	r2 += r2step[col2];
       }
       fprintf(outfile,"%.16e\n",0.0);
@@ -664,9 +977,9 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     col1=(ntypes*(ntypes+3))/2+i;
     for (k=0; k<=imdpotsteps; k++) { 
 #ifdef PARABEL
-      fprintf(outfile, "%.16e\n", parab_ed(pt, pt->table, col1, r2 ));
+      fprintf(outfile, "%.16e\n", parab(pt, pt->table, col1, r2 ));
 #else
-      fprintf(outfile, "%.16e\n", splint_ed(pt, pt->table, col1, r2 ));
+      fprintf(outfile, "%.16e\n", splint(pt, pt->table, col1, r2 ));
 #endif
       r2 += r2step[i];
       }
@@ -706,7 +1019,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       r      = pt->begin[k];
       r_step = (pt->end[k] - pt->begin[k]) / (NPLOT-1);
       for (l=0; l<NPLOT; l++) {
-        fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,k, r) );
+        fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,k, r) );
         r += r_step;
       }
       fprintf( outfile, "%e %e\n\n\n", r, 0.0);
@@ -718,7 +1031,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     r=pt->begin[i];
     r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
     for (l=0;l<NPLOT;l++) {
-      fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
+      fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,i, r) );
       r += r_step;
     }
     fprintf(outfile,"%e %e\n\n\n", r, 0.0);
@@ -728,9 +1041,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
     for (l=0;l<=NPLOT;l++) {
 #ifdef PARABEL
-      fprintf( outfile, "%e %e\n", r, parab_ed(pt, pt->table,i, r) );
+      fprintf( outfile, "%e %e\n", r, parab(pt, pt->table,i, r) );
 #else
-      fprintf( outfile, "%e %e\n", r, splint_ed(pt, pt->table,i, r) );
+      fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,i, r) );
 #endif
       r += r_step;
     }
@@ -752,7 +1065,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
 void write_pairdist(pot_table_t *pt, char *filename) {
   int *freq;			/* frequency... */
-  int h,i,j,typ1,typ2,col;
+  int h,i,j,k,l,typ1,typ2,col;
   real rr;
   atom_t *atom;
   neigh_t *neigh;
@@ -795,25 +1108,33 @@ void write_pairdist(pot_table_t *pt, char *filename) {
 
       /* Finally: Einbettungsfunktion - hier muss Index festgestellt werden */
       col  = paircol+ntypes+typ1; 
-      rr=atom->rho - pt->begin[col];
-      if (rr < 0) {printf("%f %f %d\n",atom->rho,pt->begin[col],col);error("short distance");}
-      j     = (int) (rr *  pt->invstep[col]) + pt->first[col];
+      if (format == 3) { 
+	rr=atom->rho - pt->begin[col];
+	if (rr < 0) {printf("%f %f %d\n",atom->rho,pt->begin[col],col);error("short distance");}
+	j     = (int) (rr *  pt->invstep[col]) + pt->first[col];
+      else {			/* format ==4 */
+	rr=atom->rho;
+	k=pt->first[col];
+	l=pt->last[col];
+	while (l-k > 1 ) {
+	  j=(k+l) >> 1;
+	  if (pt->xcoord[j] > rr ) l=j;
+	  else k=j;
+      }
       freq[j]++;
 #endif /* EAM */
     }
   }
   /* OK, jetzt haben wir die Daten - schreiben wir sie raus */
   j=0;
-  rr=pt->begin[0]+0.5*pt->step[0];
+//  rr=0.5*(pt->begin[0]+pt->xcoord[1]);
   col=0;
   for (i=0;i<ndimtot;i++) {
+    rr=0.5*(pt->xcoord[i]+pt->xcoord[i+1]);
     fprintf(outfile,"%f %d\n", rr, freq[i]);
-    if (i<pt->last[col]-1) {
-      rr+=pt->step[col];
-    } else {
+    if (i>=pt->last[col]-1) {
       col++;
       i++;
-      rr=pt->begin[col]+0.5*pt->step[col];
       fprintf(outfile, "\n\n");
     }
   }

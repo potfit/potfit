@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.31 $
-* $Date: 2004/07/29 09:13:14 $
+* $Revision: 1.32 $
+* $Date: 2004/08/16 13:02:49 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -84,7 +84,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     for (col1=0; col1<paircol; col1++){  /* just pair potentials */
       first=pair_pot.first[col1];
       x0=pair_pot.begin[col1];
-      x1=x0+pair_pot.step[col1];
+      x1=pair_pot.xcoord[pair_pot.first[col1]+1];
       y0=xi[first];
       y1=xi[first+1];
       /* use power law for inclination at left border */
@@ -94,26 +94,41 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	grad0=1e30; 		/* natural spline: curvature 0 */
       if (!((grad0>-1e10) && (grad0<1e10))) grad0=1e30;
       if (  (grad0>-1e-20)&& (grad0<1e-20)) grad0=0.;
-      spline_ed(pair_pot.step[col1], xi+first,
-		pair_pot.last[col1]-first+1,
-		grad0, 0.0, pair_pot.d2tab+first);
+      if (format==3) 
+	spline_ed(pair_pot.step[col1], xi+first,
+		  pair_pot.last[col1]-first+1,
+		  grad0, 0.0, pair_pot.d2tab+first);
+      else 			/* format == 4 ! */
+	spline_ne(pair_pot.xcoord+first,xi+first,
+		  pair_pot.last[col1]-first+1,
+		  grad0, 0.0, pair_pot.d2tab+first);
     }
 
 #ifdef EAM
     for (col1=paircol; col1<paircol+ntypes; col1++) { /* rho */
       first=pair_pot.first[col1];
-      spline_ed(pair_pot.step[col1], xi+first, 
-		pair_pot.last[col1]-first+1,
-		1e30,0.0,pair_pot.d2tab+first);
+      if (format==3)
+	spline_ed(pair_pot.step[col1], xi+first, 
+		  pair_pot.last[col1]-first+1,
+		  1e30,0.0,pair_pot.d2tab+first);
+      else                   /* format == 4 ! */
+	spline_ne(pair_pot.xcoord+first,xi+first,
+		  pair_pot.last[col1]-first+1,
+		  1e30,0.0,pair_pot.d2tab+first);		  
     }
 #ifndef PARABEL 		
 /* if we have parabolic interpolation, we don't need that */
     for  (col1=paircol+ntypes; col1<paircol+2*ntypes; col1++) { /* F */
       first=pair_pot.first[col1];
       /* Steigung am linken Rand ist 0 */
-      spline_ed(pair_pot.step[col1], xi+first, 
-		pair_pot.last[col1]-first+1,
-		0.,1e30,pair_pot.d2tab+first);
+      if (format==3)
+	spline_ed(pair_pot.step[col1], xi+first, 
+		  pair_pot.last[col1]-first+1,
+		  0.,1e30,pair_pot.d2tab+first);
+      else                   /* format == 4 ! */
+	spline_ne(pair_pot.xcoord+first,xi+first,
+		  pair_pot.last[col1]-first+1,
+		  0.,1e30,pair_pot.d2tab+first);
     }
 #endif /* PARABEL */
 #endif /* EAM */
@@ -189,9 +204,9 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
 	      if (neigh->r < pair_pot.end[col]) {
 		/* fn value and grad are calculated in the same step */
-		fnval = splint_comb_dir_ed(&pair_pot,xi,col,
-					   neigh->slot[0],neigh->shift[0],
-					   &grad);
+		fnval = splint_comb_dir(&pair_pot,xi,col,
+					neigh->slot[0],neigh->shift[0],
+					neigh->step[0],&grad);
 		forces[config] += fnval; /* not real force: cohesive energy */
 		tmp_force.x  = neigh->dist.x * grad;
 		tmp_force.y  = neigh->dist.y * grad;
@@ -221,21 +236,23 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	      col2 = paircol+typ2;
 	      if (typ2==typ1) { /* then transfer(a->b)==transfer(b->a) */
 		if (neigh->r < pair_pot.end[col2]) {
-		  fnval = splint_dir_ed(&pair_pot,xi,col2,
-					neigh->slot[1],neigh->shift[1]);
+		  fnval = splint_dir(&pair_pot,xi,col2,
+				     neigh->slot[1],neigh->shift[1],
+				     neigh->step[1]);
 		  atom->rho += fnval;
 		  conf_atoms[neigh->nr - firstatom ].rho += fnval;
 		}
 	      } else { 		/* transfer(a->b)!=transfer(b->a) */
 		col = paircol+typ1;
 		if (neigh->r < pair_pot.end[col2]) {
-		  atom->rho += splint_dir_ed(&pair_pot,xi,col2,
-					     neigh->slot[1],neigh->shift[1]);
+		  atom->rho += splint_dir(&pair_pot,xi,col2,
+					  neigh->slot[1],neigh->shift[1],
+					  neigh->step[1]);
 		}
 		/* cannot use slot/shift to access splines */
 		if (neigh->r < pair_pot.end[col])
 		  conf_atoms[neigh->nr - firstatom].rho += 
-		    splint_ed(&pair_pot,xi,col,neigh->r);
+		    splint(&pair_pot,xi,col,neigh->r);
 	      }	
 	      
 #endif /* EAM */
@@ -288,12 +305,12 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	  /* contribution to cohesive energy is difference between 
 	     F(n) and F(0) */
 #ifdef PARABEL
-	  fnval=parab_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
-	    - parab_ed(&pair_pot,xi,col,0.);
+	  fnval=parab_comb(&pair_pot,xi,col,atom->rho,&gradF)
+	    - parab(&pair_pot,xi,col,0.);
 #else
-	  fnval=splint_comb_ed(&pair_pot,xi,col,atom->rho,&gradF)
+	  fnval=splint_comb(&pair_pot,xi,col,atom->rho,&gradF)
 	    - (pair_pot.begin[col]<=0 ? 
-	       splint_ed(&pair_pot,xi,col,0.) :
+	       splint(&pair_pot,xi,col,0.) :
 	       xi[pair_pot.first[col]]);
 #endif
 
@@ -310,22 +327,22 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	      /* are we within reach? */
 	      if ((r < pair_pot.end[col2]) || (r < pair_pot.end[col-ntypes])) {
 		grad = (r<pair_pot.end[col2]) ? 
-		  splint_grad_dir_ed(&pair_pot,xi,col2,neigh->slot[1],
-				     neigh->shift[1]) 
+		  splint_grad_dir(&pair_pot,xi,col2,neigh->slot[1],
+				     neigh->shift[1],neigh->step[1]) 
 		  : 0.;
 
 #ifdef PARABEL
-		gradF2=parab_grad_ed(&pair_pot,xi,col2+ntypes,
+		gradF2=parab_grad(&pair_pot,xi,col2+ntypes,
 				     conf_atoms[neigh->nr-firstatom].rho);
 #else
-		gradF2=splint_grad_ed(&pair_pot,xi,col2+ntypes,
+		gradF2=splint_grad(&pair_pot,xi,col2+ntypes,
 				      conf_atoms[neigh->nr-firstatom].rho);
 #endif /* PARABEL */
 		if (typ2 == typ1) /* use actio = reactio */
 		  grad2=grad;
 		else
 		  grad2 = (r < pair_pot.end[col-ntypes]) ? 
-		    splint_grad_ed(&pair_pot,xi,col-ntypes,r) : 0.;
+		    splint_grad(&pair_pot,xi,col-ntypes,r) : 0.;
 
 		/* now we know everything - calculate forces */
 		eamforce =  (grad * gradF + grad2 * gradF2) ;
@@ -390,7 +407,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 #ifdef EAM
     if (myid==0) {
       forces[mdim-(2*ntypes+1)]= DUMMY_WEIGHT * 
-	splint_ed(&pair_pot,xi,paircol+DUMMY_COL_RHO,dummy_r)
+	splint(&pair_pot,xi,paircol+DUMMY_COL_RHO,dummy_r)
 	- force_0[mdim-(2*ntypes+1)];
 #ifdef LIMIT 			/* then we don't need that constraint */
       forces[mdim-(2*ntypes+1)]=0.;
@@ -404,13 +421,13 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 
 #ifdef PARABEL
 	forces[mdim-ntypes+g]= DUMMY_WEIGHT * /* constraints on U(n) */
-	  parab_ed(&pair_pot,xi,paircol+ntypes+g,0.) 
+	  parab(&pair_pot,xi,paircol+ntypes+g,0.) 
 	  - force_0[mdim-ntypes+g];
 #else
 	if (pair_pot.begin[paircol+ntypes+g]<=0.)
 	  /* 0 in domain of U(n) */
 	  forces[mdim-ntypes+g]= DUMMY_WEIGHT * /* constraints on U(n) */
-	    splint_ed(&pair_pot,xi,paircol+ntypes+g,0.) 
+	    splint(&pair_pot,xi,paircol+ntypes+g,0.) 
 	    - force_0[mdim-ntypes+g];
 	else
 	  /* 0 not in domain of U(n) */

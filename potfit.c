@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.28 $
-* $Date: 2004/07/29 09:13:15 $
+* $Revision: 1.29 $
+* $Date: 2004/08/16 13:02:50 $
 *****************************************************************/
 
 
@@ -102,6 +102,30 @@ int main(int argc, char **argv)
   paircol=(ntypes*(ntypes+1))/2;
   idx=pair_pot.idx;
   calc_forces = calc_forces_pair;
+
+  /* Select correct spline interpolation and other functions */
+  if (format==3) {
+    splint = splint_ed;
+    splint_comb = splint_comb_ed;
+    splint_grad = splint_grad_ed;
+    write_pot_table= write_pot_table3;
+#ifdef PARABEL
+    parab = parab_ed;
+    parab_comb = parab_comb_ed;
+    parab_grad = parab_grad_ed;
+#endif /* PARABEL */
+  } else { /*format == 4 ! */
+    splint = splint_ne;
+    splint_comb = splint_comb_ne;
+    splint_grad = splint_grad_ne;
+    write_pot_table=write_pot_table4;
+#ifdef PARABEL
+    parab = parab_ne;
+    parab_comb = parab_comb_ne;
+    parab_grad = parab_grad_ne;
+#endif /* PARABEL */
+
+  }
   force = (real *) malloc( (mdim) * sizeof(real) );
 
   if (myid > 0) 		/* all but root go to calc_forces */
@@ -119,7 +143,7 @@ int main(int argc, char **argv)
 //    rescale(&pair_pot,1.);
     tot = calc_forces(pair_pot.table,force,0);
     write_pot_table( &pair_pot, endpot );
-    printf("Potential written to file %s\n",endpot);
+    printf("Potential in format %d writte to file %s\n",format,endpot);
     printf("Plotpoint file written to file %s\n", plotpointfile);
     
     write_pot_table_imd( &pair_pot, imdpot );
@@ -129,6 +153,11 @@ int main(int argc, char **argv)
     write_pairdist(&pair_pot,distfile);
 #endif
 #endif
+    if (format == 3) {		/* then we can also write format 4 */
+      sprintf(endpot,"%s_4",endpot);
+      write_pot_table4(&pair_pot,endpot);
+      printf("Potential in format 4 writte to file %s\n",endpot);
+    }
 #ifdef EAM 
 #ifndef MPI /* Not much sense in printing rho when not communicated... */
     printf("Local electron density rho\n");
