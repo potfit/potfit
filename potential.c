@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.25 $
-* $Date: 2004/08/16 13:02:50 $
+* $Revision: 1.26 $
+* $Date: 2004/08/26 08:26:17 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -1110,9 +1110,9 @@ void write_pairdist(pot_table_t *pt, char *filename) {
       col  = paircol+ntypes+typ1; 
       if (format == 3) { 
 	rr=atom->rho - pt->begin[col];
-	if (rr < 0) {printf("%f %f %d\n",atom->rho,pt->begin[col],col);error("short distance");}
+	if (rr < 0) error("short distance");
 	j     = (int) (rr *  pt->invstep[col]) + pt->first[col];
-      else {			/* format ==4 */
+      } else {			/* format ==4 */
 	rr=atom->rho;
 	k=pt->first[col];
 	l=pt->last[col];
@@ -1120,6 +1120,8 @@ void write_pairdist(pot_table_t *pt, char *filename) {
 	  j=(k+l) >> 1;
 	  if (pt->xcoord[j] > rr ) l=j;
 	  else k=j;
+	}
+	j=k;
       }
       freq[j]++;
 #endif /* EAM */

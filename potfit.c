@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.29 $
-* $Date: 2004/08/16 13:02:50 $
+* $Revision: 1.30 $
+* $Date: 2004/08/26 08:26:18 $
 *****************************************************************/
 
 
@@ -82,6 +82,30 @@ int main(int argc, char **argv)
 #ifdef STRESS
     printf("Stress weight: %f\n",sweight);
 #endif 
+
+  /* Select correct spline interpolation and other functions */
+    if (format==3) {
+      splint = splint_ed;
+      splint_comb = splint_comb_ed;
+      splint_grad = splint_grad_ed;
+      write_pot_table= write_pot_table3;
+#ifdef PARABEL
+      parab = parab_ed;
+      parab_comb = parab_comb_ed;
+      parab_grad = parab_grad_ed;
+#endif /* PARABEL */
+    } else { /*format == 4 ! */
+      splint = splint_ne;
+      splint_comb = splint_comb_ne;
+      splint_grad = splint_grad_ne;
+      write_pot_table=write_pot_table4;
+#ifdef PARABEL
+      parab = parab_ne;
+      parab_comb = parab_comb_ne;
+      parab_grad = parab_grad_ne;
+#endif /* PARABEL */
+      
+    }
 #ifndef NORESCALE
     rescale(&pair_pot,1.,1); 	/* rescale now... */
     embed_shift(&pair_pot);	/* and shift */
@@ -103,34 +127,35 @@ int main(int argc, char **argv)
   idx=pair_pot.idx;
   calc_forces = calc_forces_pair;
 
-  /* Select correct spline interpolation and other functions */
-  if (format==3) {
-    splint = splint_ed;
-    splint_comb = splint_comb_ed;
-    splint_grad = splint_grad_ed;
-    write_pot_table= write_pot_table3;
-#ifdef PARABEL
-    parab = parab_ed;
-    parab_comb = parab_comb_ed;
-    parab_grad = parab_grad_ed;
-#endif /* PARABEL */
-  } else { /*format == 4 ! */
-    splint = splint_ne;
-    splint_comb = splint_comb_ne;
-    splint_grad = splint_grad_ne;
-    write_pot_table=write_pot_table4;
-#ifdef PARABEL
-    parab = parab_ne;
-    parab_comb = parab_comb_ne;
-    parab_grad = parab_grad_ne;
-#endif /* PARABEL */
-
-  }
   force = (real *) malloc( (mdim) * sizeof(real) );
 
-  if (myid > 0) 		/* all but root go to calc_forces */
+  if (myid > 0) {
+  /* Select correct spline interpolation and other functions */
+    /* Root process has done this earlier */
+    if (format==3) {
+      splint = splint_ed;
+      splint_comb = splint_comb_ed;
+      splint_grad = splint_grad_ed;
+      write_pot_table= write_pot_table3;
+#ifdef PARABEL
+      parab = parab_ed;
+      parab_comb = parab_comb_ed;
+      parab_grad = parab_grad_ed;
+#endif /* PARABEL */
+    } else { /*format == 4 ! */
+      splint = splint_ne;
+      splint_comb = splint_comb_ne;
+      splint_grad = splint_grad_ne;
+      write_pot_table=write_pot_table4;
+#ifdef PARABEL
+      parab = parab_ne;
+      parab_comb = parab_comb_ne;
+      parab_grad = parab_grad_ne;
+#endif /* PARABEL */
+    }
+  /* all but root go to calc_forces */
     calc_forces(pair_pot.table,force,0);
-  else {			/* root thread does minimization */
+  }  else {			/* root thread does minimization */
     if (opt) {
       anneal(pair_pot.table);
       powell_lsq(pair_pot.table);
