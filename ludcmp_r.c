@@ -4,6 +4,7 @@
 
 #include <math.h>
 #define NRANSI
+#include "potfit.h"
 #include "nrutil_r.h"
 #define TINY 1.0e-20;
 

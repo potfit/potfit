@@ -13,17 +13,13 @@
 *
 ******************************************************************************/
 
+#define POWELL
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "nrutil.h"
+#include "potfit.h"
+#include "nrutil_r.h"
 #include "powell_lsq.h"
-#define NDIM 5
-#define MDIM 9
-#define XISTART  {1.757,1.419,.6725,-.5542,-3.367}
-#define FSOLL  {3.85,2.95,2.63,2.33,2.24,2.05,1.82,1.80,1.75} 
-/*#define XISTART {-1.2,1.}*/
-/*#define FSOLL {0.,0.}*/
 #define EPS .001
 #define PRECISION 1.E-7
 /* Well, almost nothing */
@@ -31,19 +27,16 @@
 #define INNERLOOPS 61
 #define TOOBIG 10000
 
-real fsoll[MDIM] = FSOLL;  /*Value of forces from experiment*/
-int fcalls=0;
-real (*force_calc)(real []);
 
-void powell_lsq(real *xi, real *fcalc(real[]))
+void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 {
    int i,j,k,m;                    /*Simple counting variables*/
-   /* int n = NDIM; */                 /*Dimension of parameter space*/
-   /* int m = MDIM; */                /*Dimension of force space*/
+   /* int n = ndim; */                 /*Dimension of parameter space*/
+   /* int m = mdim; */                /*Dimension of force space*/
    /* real epsilon = EPS;*/            /*small increment for differentiation*/
-   /* static real xi[NDIM]=XISTART; */  /*starting value of xi*/
-   /* static real force[MDIM]; */
-    real force_xi[MDIM];              /*calculated force, alt*/
+   /* static real xi[ndim]=XISTART; */  /*starting value of xi*/
+   /* static real force[mdim]; */
+    real force_xi[mdim];              /*calculated force, alt*/
     real **d;                          /*Direction vectors*/
     real **gamma;                      /*Matrix of derivatives*/
     real **lineqsys;                   /*Lin.Eq.Sys. Matrix*/
@@ -52,42 +45,42 @@ void powell_lsq(real *xi, real *fcalc(real[]))
     real *delta_norm;			 /*Normalized vector delta */
     real *fxi1,*fxi2;			 /*last two function values */
     int *perm_indx;			 /*Keeps track of LU pivoting */
-    real p[NDIM];                  /*Vectors needed in Powell's algorithm*/
-    real q[NDIM];
-   /* real deltaforce[MDIM];         Difference between calc &  set force */
+    real p[ndim];                  /*Vectors needed in Powell's algorithm*/
+    real q[ndim];
+   /* real deltaforce[mdim];         Difference between calc &  set force */
     real perm_sig;
     real F,F2,F3,df,xi1,xi2;
     real temp,temp2;
     real norm_delta,norm_delta2=0.;
     
-    d=dmatrix(0,NDIM-1,0,NDIM-1);
-    gamma=dmatrix(0,MDIM-1,0,NDIM-1);
-    lineqsys=dmatrix(0,NDIM-1,0,NDIM-1);
-    les_inverse=dmatrix(0,NDIM-1,0,NDIM-1);
-    perm_indx=ivector(0,NDIM-1);
-    delta=dvector(0,NDIM-1);
-    delta_norm=dvector(0,NDIM-1);
-    fxi1=dvector(0,MDIM-1);
-    fxi2=dvector(0,MDIM-1);
+    d=dmatrix(0,ndim-1,0,ndim-1);
+    gamma=dmatrix(0,mdim-1,0,ndim-1);
+    lineqsys=dmatrix(0,ndim-1,0,ndim-1);
+    les_inverse=dmatrix(0,ndim-1,0,ndim-1);
+    perm_indx=ivector(0,ndim-1);
+    delta=dvector(0,ndim-1);
+    delta_norm=dvector(0,ndim-1);
+    fxi1=dvector(0,mdim-1);
+    fxi2=dvector(0,mdim-1);
     force_calc=fcalc;
     
-    /*(void) fxi_init(xi,fsoll,force_xi,NDIM, MDIM); init force_xi*/
-    F=force_calc(xi,fxi1,NDIM,MDIM);
-    (void) copy_vector(fxi1,force_xi,MDIM);
+    /*(void) fxi_init(xi,fsoll,force_xi,ndim, mdim); init force_xi*/
+    F=(*force_calc)(xi,fxi1);
+    (void) copy_vector(fxi1,force_xi,mdim);
     do { /*outer loop, includes recalculating gamma*/
     	m=0;
-    	(void) gamma_init(gamma, d, xi, fxi1, NDIM, MDIM);     /*init gamma*/
-    	(void) lineqsys_init(gamma,lineqsys,fxi1,p,NDIM,MDIM); /*init lineqsys*/
+    	(void) gamma_init(gamma, d, xi, fxi1, ndim, mdim);     /*init gamma*/
+    	(void) lineqsys_init(gamma,lineqsys,fxi1,p,ndim,mdim); /*init lineqsys*/
     	F3=F;
     	do {
-            (void) copy_matrix(lineqsys,les_inverse,NDIM,NDIM);
-            (void) ludcmp_d(les_inverse,NDIM,perm_indx,&perm_sig);
-            (void) copy_vector(p,q,NDIM);
-            (void) lubksb_d(les_inverse,NDIM,perm_indx,q); 
-            (void) mprove_d(lineqsys,les_inverse,NDIM,perm_indx,p,q);  
-            (void) matdotvec(d,q,delta,NDIM,NDIM);
-            (void) copy_vector(delta, delta_norm, NDIM);
-	    norm_delta=normalize_vector(delta_norm,NDIM);
+            (void) copy_matrix(lineqsys,les_inverse,ndim,ndim);
+            (void) ludcmp_r(les_inverse,ndim,perm_indx,&perm_sig);
+            (void) copy_vector(p,q,ndim);
+            (void) lubksb_r(les_inverse,ndim,perm_indx,q); 
+            (void) mprove_r(lineqsys,les_inverse,ndim,perm_indx,p,q);  
+            (void) matdotvec(d,q,delta,ndim,ndim);
+            (void) copy_vector(delta, delta_norm, ndim);
+	    norm_delta=normalize_vector(delta_norm,ndim);
 	    printf("%f ",norm_delta);
 	    /* Exit if norm of vector delta "explodes" - 
 	    Matrix probably became unstable */
@@ -97,7 +90,7 @@ void powell_lsq(real *xi, real *fcalc(real[]))
 		    norm_delta2=norm_delta;
             
 	    F2=F;   /*shift F*/
-	    F=linmin_d(xi,delta,F,NDIM,MDIM,&xi1,&xi2,fxi1,fxi2,force_calc);
+	    F=linmin_r(xi,delta,F,ndim,mdim,&xi1,&xi2,fxi1,fxi2,force_calc);
 	    /*printf("F(%d):=%1.10f; xi%d:=[%1.10f, %1.10f]; %1.10f;
 	    \n",m,F,m,xi[0],xi[1],d[0][0]*d[0][1]+d[1][0]*d[1][1]);*/
 	    printf("%d %f %f %f %f %f %f %d \n",
@@ -105,42 +98,42 @@ void powell_lsq(real *xi, real *fcalc(real[]))
     
         /* Find maximal p[i]*q[i]*/
             j=0;temp2=0.;
-            for (i=0;i<NDIM;i++) 
+            for (i=0;i<ndim;i++) 
                 if ((temp=fabs(p[i]*q[i]))>temp2) {j=i;temp2=temp;};
             /*set new d[j]*/
-            for (i=0;i<NDIM;i++) d[i][j]=delta_norm[i];
+            for (i=0;i<ndim;i++) d[i][j]=delta_norm[i];
 	    
 	    /* Check for degeneracy in directions */
-	    for (i=0;i<NDIM;i++) {
+	    for (i=0;i<ndim;i++) {
 		if (i!=j) {
 		    temp=0;
-	            for (k=0;k<NDIM;k++) temp+=d[k][i]*d[k][j];
+	            for (k=0;k<ndim;k++) temp+=d[k][i]*d[k][j];
 		    if (1-temp<=.0001) m=INNERLOOPS;  /*Emergency exit*/
 	        }
 	    }
 	    /*update gamma, but if fn returns 1, matrix will be sigular, 
 	    break inner loop and restart with new matrix*/
-            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,NDIM,MDIM)) break;
-            (void) lineqsys_update(gamma,lineqsys,fxi1,p,j,NDIM,MDIM);
+            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,ndim,mdim)) break;
+            (void) lineqsys_update(gamma,lineqsys,fxi1,p,j,ndim,mdim);
 	    m++;           /*increment loop counter*/
-	/* loop at least 2*NDIM times, but at most INNERLOOPS or until no
+	/* loop at least 2*ndim times, but at most INNERLOOPS or until no
 	further improvement */ 
 	    df=F2-F;  
-        } while ((m<NDIM+1 || (m<=INNERLOOPS && df>PRECISION) ) &&
+        } while ((m<ndim+1 || (m<=INNERLOOPS && df>PRECISION) ) &&
 			df<TOOBIG); 
     /*End fit if whole series didn't improve F F*/
     } while (F3-F>PRECISION/1.);
     /*normalize and store delta before passing on to linmin */
-    /*(void) minverse(lineqsys,les_inverse,NDIM,perm_indx,&perm_sign);*/
-    free_dmatrix(d,0,NDIM-1,0,NDIM-1);
-    free_dmatrix(gamma,0,MDIM-1,0,NDIM-1);
-    free_dmatrix(lineqsys,0,NDIM-1,0,NDIM-1);
-    free_dmatrix(les_inverse,0,NDIM-1,0,NDIM-1);
-    free_ivector(perm_indx,0,NDIM-1);
-    free_dvector(delta,0,NDIM-1);
-    free_dvector(delta_norm,0,NDIM-1);
+    /*(void) minverse(lineqsys,les_inverse,ndim,perm_indx,&perm_sign);*/
+    free_dmatrix(d,0,ndim-1,0,ndim-1);
+    free_dmatrix(gamma,0,mdim-1,0,ndim-1);
+    free_dmatrix(lineqsys,0,ndim-1,0,ndim-1);
+    free_dmatrix(les_inverse,0,ndim-1,0,ndim-1);
+    free_ivector(perm_indx,0,ndim-1);
+    free_dvector(delta,0,ndim-1);
+    free_dvector(delta_norm,0,ndim-1);
     
-    return 0;
+    return ;
 }
 
 /******************************************************************
@@ -150,10 +143,10 @@ void powell_lsq(real *xi, real *fcalc(real[]))
 ******************************************************************/
 
 /* real fxi_init(real *xi, real *fsoll, real *force_xi, int n, int m){
-    static real force[MDIM];
+    static real force[mdim];
     int j;
     (void) force_calc(xi,force,n,m);
-    for (j=0;j<MDIM;j++) force_xi[j]=force[j];
+    for (j=0;j<mdim;j++) force_xi[j]=force[j];
     return;
 }
  */
@@ -164,12 +157,12 @@ void powell_lsq(real *xi, real *fcalc(real[]))
  *
  ******************************************************************/
 
-real force_calc(real *xi, real *force, int n, int m) {
+/*real force_calc(real *xi, real *force, int n, int m) {
     int j;
     real temp=0., f=0.0;
-    fcalls++;
+    fcalls++;*/
     /* Chemistry problem */
-    force[0]=xi[0]+xi[1]*exp(xi[3]*0.0)+xi[2]*exp(xi[4]*0.);
+    /* force[0]=xi[0]+xi[1]*exp(xi[3]*0.0)+xi[2]*exp(xi[4]*0.);
     force[1]=xi[0]+xi[1]*exp(xi[3]*0.5)+xi[2]*exp(xi[4]*.5);
     force[2]=xi[0]+xi[1]*exp(xi[3]*1.0)+xi[2]*exp(xi[4]*1.);
     force[3]=xi[0]+xi[1]*exp(xi[3]*1.5)+xi[2]*exp(xi[4]*1.5);
@@ -177,7 +170,7 @@ real force_calc(real *xi, real *force, int n, int m) {
     force[5]=xi[0]+xi[1]*exp(xi[3]*3.0)+xi[2]*exp(xi[4]*3.);
     force[6]=xi[0]+xi[1]*exp(xi[3]*5.0)+xi[2]*exp(xi[4]*5.);
     force[7]=xi[0]+xi[1]*exp(xi[3]*8.0)+xi[2]*exp(xi[4]*8.);
-    force[8]=xi[0]+xi[1]*exp(xi[3]*10.)+xi[2]*exp(xi[4]*10.); 
+    force[8]=xi[0]+xi[1]*exp(xi[3]*10.)+xi[2]*exp(xi[4]*10.); */
 
     
 /* navigation problem */
@@ -204,12 +197,12 @@ real force_calc(real *xi, real *force, int n, int m) {
 /*    force[0]=10*(xi[1]-xi[0]*xi[0]);
     force[1]=1-xi[0];		    */
 
-    for (j=0;j<m;j++) {
+/*    for (j=0;j<m;j++) {
 	temp=(force[j]-=fsoll[j]);
 	f+=temp*temp;
     }
     return f;
-}
+    }*/
 
 /******************************************************************
 *
@@ -234,7 +227,7 @@ void gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
     force=dvector(0,m-1);
     for (i=0;i<n;i++) {           /*initialize gamma*/
 	xi[i]+=EPS;                /*increase xi[i]...*/
-	(void) force_calc(xi,force,n,m);
+	(void) (*force_calc)(xi,force);
        	for (j=0;j<m;j++) gamma[j][i]=(force[j]-force_xi[j])/EPS;
 	xi[i]-=EPS;                /*...and decrease xi[i] again*/
     }
@@ -415,3 +408,11 @@ real normalize_vector(real *v, int n){
     for (j=0;j<n;j++) v[j]/=temp;
     return temp;
 }
+
+
+
+
+
+
+
+

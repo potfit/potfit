@@ -4,6 +4,7 @@
 
 #include <math.h>
 #define NRANSI
+#include "potfit.h"
 #include "nrutil_r.h"
 #define GOLD 1.618034
 #define GLIMIT 100.0

@@ -5,6 +5,7 @@
 
 #include <math.h>
 #define NRANSI
+#include "potfit.h"
 #include "nrutil_r.h"
 #define ITMAX 100
 #define CGOLD 0.3819660
@@ -13,7 +14,7 @@
 
 extern int ncom,mcom;
 extern real *pcom,*xicom;
-extern real (*nrfunc)(real [], real [], int, int);
+extern real (*nrfunc)(real [], real []);
 
 
 real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
@@ -62,7 +63,7 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 		}
 		u=(fabs(d) >= tol1 ? x+d : x+SIGN(tol1,d));
 		for (j=0;j<ncom;j++) vecu[j]=pcom[j]+u*xicom[j]; /*set vecu*/
-		fu=(*nrfunc)(vecu,fxu,ncom,mcom);
+		fu=(*nrfunc)(vecu,fxu);
 		if (fu <= fx) {
 			if (u >= x) a=x; else b=x;
 			SHFT(v,w,x,u)

@@ -4,9 +4,6 @@
 #include <math.h>
 #include <string.h>
 
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define SQR(a)   ((a)*(a))
 
 
 /******************************************************************************
@@ -44,6 +41,12 @@ typedef struct {
 } pot_table_t;
 
 
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+static real sqrarg;
+#define SQR(a) ((sqrarg=(a)) == 0.0 ? 0.0 : sqrarg*sqrarg)
+
+
 /******************************************************************************
 *
 *  global variables
@@ -58,7 +61,9 @@ typedef struct {
 #define EXTERN extern      /* declare them extern otherwise */
 #define INIT(data)         /* skip initialization otherwise */
 #endif
-
+EXTERN int    fcalls   INIT(0);
+EXTERN int    ndim;
+EXTERN int    mdim;
 EXTERN int    ntypes   INIT(1);          /* number of atom types */
 EXTERN int    natoms   INIT(0);          /* number of atoms */
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
@@ -82,11 +87,18 @@ void read_paramfile(FILE*);
 void read_pot_table(pot_table_t*, char*, int);
 void write_pot_table(pot_table_t*, char*);
 void write_pot_table_imd(pot_table_t*, char*);
-real grad2(pot_table_t*, int, real);
+real grad2(pot_table_t*, real*, int, real);
 real pot2 (pot_table_t*, int, real);
 void read_config(char*);
-real calc_forces_pair(real*);
-void powell_lsq(real *xi, real *fcalc(real[]))
+real calc_forces_pair(real[],real[]);
+void powell_lsq(real *xi, real (*fcalc)(real[],real[]));
+
+
+
+
+
+
+
 
 
 

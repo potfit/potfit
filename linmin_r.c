@@ -6,12 +6,13 @@
 
 #define NRANSI
 #include <math.h>
+#include "potfit.h"
 #include "nrutil_r.h"
 #define TOL 2.0e-4
 
 int ncom,mcom;
 real *pcom,*xicom;
-real (*nrfunc)(real [], real [], int, int);
+real (*nrfunc)(real [], real []);
 
 void mnbrak_r(real *ax, real *bx, real *cx, real *fa, real *fb, 
 	real *fc, real (*func)(real));
@@ -21,7 +22,7 @@ real f1dim_r(real x);
 
 real linmin_r(real p[], real xi[], real fxi1, int n, int m, real *x1, 
 		real *x2, real *fret1, real *fret2, 
-		real (*func)(real [], real [], int ,int))
+		real (*func)(real [], real []))
 /* takes vector xi (direction of search), p (originating point), n,m (dimensions),
    x, x2 (two best locations),
    fret1, fret2 (return vectors) and the function to minimize with input and result

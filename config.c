@@ -57,6 +57,7 @@ void read_config(char *filename)
           error("Corrupt configuration file");
       }
     }
+    mdim=k+2;			/* mdim is dimension of force vector */
 
     /* increment natoms and configuration number */
     natoms += count;
@@ -68,5 +69,9 @@ void read_config(char *filename)
   printf("Read %d configurations with a total of %d atoms\n", nconf, natoms);
   fclose(infile);
 }
+
+
+
+
 
 

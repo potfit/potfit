@@ -31,14 +31,17 @@ int main(int argc, char **argv)
   read_parameters(argc, argv);
   read_config(config);
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
+  ndim=pair_pot.len;  
+  powell_lsq(pair_pot.table,calc_forces_pair);
   write_pot_table( &pair_pot, endpot );
   write_pot_table_imd( &pair_pot, imdpot );
 
   force = (real *) malloc( 3 * natoms * sizeof(real) );
-  tot = calc_forces_pair(force);
+  tot = calc_forces_pair(pair_pot.table,force);
 
   max = 0.0;
   for (i=0; i<3*natoms; i++) max = MAX( max, SQR(force[i]-force_0[i]) );
   printf("av %e, max %e\n", tot/(3*natoms), max);
-
+  return 0;
 }
+

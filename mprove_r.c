@@ -4,10 +4,12 @@
 
 
 #define NRANSI
+#include "potfit.h"
 #include "nrutil_r.h"
-void lubksb_d(real **a, int n, int *indx, real b[]);
 
-void mprove_d(real **a, real **alud, int n, int indx[], real b[], real x[])
+void lubksb_r(real **a, int n, int *indx, real b[]);
+
+void mprove_r(real **a, real **alud, int n, int indx[], real b[], real x[])
 {
 	int j,i;
 	real sdp;
@@ -19,7 +21,7 @@ void mprove_d(real **a, real **alud, int n, int indx[], real b[], real x[])
 		for (j=0;j<n;j++) sdp += a[i][j]*x[j]; /* zo */
 		r[i]=sdp;
 	}
-	lubksb_d(alud,n,indx,r);
+	lubksb_r(alud,n,indx,r);
 	for (i=0;i<n;i++) x[i] -= r[i]; /* zo */
 	free_dvector(r,0,n-1); /* zo */
 }

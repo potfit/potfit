@@ -124,7 +124,7 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 *
 ******************************************************************************/
 
-real grad2(pot_table_t *pt, int col, real r)
+real grad2(pot_table_t *pt, real *xi, int col, real r)
 {
   real rr, istep, chi, p0, p1, p2, dv, d2v;
   int  k;
@@ -142,9 +142,9 @@ real grad2(pot_table_t *pt, int col, real r)
   k    += pt->first[col];
 
   /* intermediate values */
-  p0  = (k<=pt->last[col]) ? pt->table[k++] : 0.0;
-  p1  = (k<=pt->last[col]) ? pt->table[k++] : 0.0;
-  p2  = (k<=pt->last[col]) ? pt->table[k++] : 0.0;
+  p0  = (k<=pt->last[col]) ? xi[k++] : 0.0;
+  p1  = (k<=pt->last[col]) ? xi[k++] : 0.0;
+  p2  = (k<=pt->last[col]) ? xi[k++] : 0.0;
   dv  = p1 - p0;
   d2v = p2 - 2 * p1 + p0;
 
