@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.1 $
-*  $Date: 2003/01/07 19:30:07 $
+*  $Revision: 1.2 $
+*  $Date: 2003/01/27 14:08:29 $
 *
 *  Convert an IMD force file to a VASP POSCAR file
 *
@@ -22,8 +22,12 @@
 #define MAXTYP 10
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
+
 typedef double real;
 typedef struct { real x, y, z; } vector;
+
+static real swaptemp;
+#define SWAP(a,b) swaptemp=(a) ; (a)=(b) ; (b)=swaptemp 
 
 /******************************************************************************
 *
@@ -49,6 +53,7 @@ int main(int argc, char **argv)
   FILE *infile, *outfile;
   vector *pos, box_x, box_y, box_z, tmp;
   int *typ, num[MAXTYP], max=0, n, i, j;
+  real triple_prod;
 
   /* open input file */
   infile = fopen(argv[1], "r" );
@@ -78,6 +83,16 @@ int main(int argc, char **argv)
 
   /* close input file */
   fclose(infile);
+
+  /* if triple product of box vectors is negative: swap vectors 1 and 2 */
+  triple_prod  = ((box_y.y * box_z.z) - (box_y.z * box_z.y)) * box_x.x;
+  triple_prod += ((box_y.z * box_z.x) - (box_y.x * box_z.z)) * box_x.y;
+  triple_prod += ((box_y.x * box_z.y) - (box_y.y * box_z.x)) * box_x.z;
+  if (triple_prod<0) { 
+      SWAP(box_x.x,box_y.x);
+      SWAP(box_x.y,box_y.y);
+      SWAP(box_x.z,box_y.z);
+  }
 
   /* open POSCAR file */
   outfile = fopen("POSCAR", "w");
