@@ -55,21 +55,22 @@ real calc_forces_pair(real *xi, real *forces)
   int     i, j, k, typ1, typ2, col,first;
   atom_t  *atom;
   neigh_t *neigh;
-  real    grad, y0,y1,x0,sum=0.0;
+  real    grad, y0, y1, x0, x1, sum=0.0;
   
   /* init second derivatives for splines */
-
   for (col=0; col<pair_pot.ncols; col++){
       first=pair_pot.first[col];
       x0=pair_pot.begin[col];
+      x1=x0+pair_pot.step[col];
       y0=xi[first];
       y1=xi[first+1];
-      grad = y0*log(y0/xi[first+1])/(x0*log(x0/(x0+pair_pot.step[col])));
-      if (!(grad>-1e10 & grad<1e10)) grad=1e30; 
-      spline_ed(pair_pot.step[col],xi+first,
+      grad = y0*log(y0/y1) / (x0*log(x0/x1));
+      if ((grad<-1e10) || (grad>1e10)) grad=1e30; 
+      spline_ed(pair_pot.step[col], xi+first,
 		pair_pot.last[col]-first+1,
-		grad,0.,pair_pot.d2tab+first);
-      }
+		grad, 0.0, pair_pot.d2tab+first);
+  }
+
   for (i=0; i<natoms; i++) {
 
     atom = atoms + i;

@@ -17,8 +17,9 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 {
 	int i,k;
       	real p,qn,un;
-	static real *u;
-	if (u == NULL) u=dvector(0,n-2);
+	static real *u=NULL;
+
+	u = (real *) realloc(u, (n-1)*sizeof(real));
 	if (yp1 > 0.99e30)
 		y2[0]=u[0]=0.0;
 	else {
@@ -132,8 +133,9 @@ void spline(real x[], real y[], int n, real yp1, real ypn, real y2[])
 {
 	int i,k;
 	real p,qn,sig,un;
-	static real *u;
-	if (u == NULL) u=dvector(0,n-2);
+	static real *u=NULL;
+
+	u = (real *) realloc(u, (n-1)*sizeof(real));
 
 	if (yp1 > 0.99e30)
 		y2[0]=u[0]=0.0;
