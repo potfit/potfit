@@ -6,9 +6,9 @@
  ********************************************************************************/
 
 
-/****** rewritten for real variables (ITAP standard) and zero-offset vectors ****
- ****** adapted to equidistant x                                             ****
- ****** by Peter Brommer, ITAP 2002-11-27                                    ****/
+/*** rewritten for real variables (ITAP standard) and zero-offset vectors ****
+ *** adapted to equidistant x                                             ****
+ *** by Peter Brommer, ITAP 2002-11-27                                    ****/
 #define NRANSI
 #include "potfit.h"
 #include "nrutil_r.h"
@@ -122,8 +122,8 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
  ********************************************************************************/
 
 
-/****** rewritten for real variables (ITAP standard) and zero-offset vectors ****
- ****** by Peter Brommer, ITAP 2002-11-27                                    ****/
+/*** rewritten for real variables (ITAP standard) and zero-offset vectors ****
+ *** by Peter Brommer, ITAP 2002-11-27                                    ****/
 
 
 #define NRANSI
@@ -135,7 +135,6 @@ void spline(real x[], real y[], int n, real yp1, real ypn, real y2[])
 	static real *u;
 	if (u == NULL) u=dvector(0,n-2);
 
-	u=vector(0,n-2);
 	if (yp1 > 0.99e30)
 		y2[0]=u[0]=0.0;
 	else {

@@ -76,6 +76,8 @@ EXTERN char endpot[255];                 /* file for end potential */
 EXTERN char imdpot[255];                 /* file for IMD potential */
 EXTERN char config[255];                 /* file with atom configuration */
 EXTERN char plotfile[255];               /* file for plotting */
+EXTERN char flagfile[255] INIT("potfit.break");
+				         /* break if file exists */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
 EXTERN int  opt INIT(0);                 /* optimization flag */
@@ -110,7 +112,3 @@ void powell_lsq(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real splint_ed(pot_table_t *pt, int col, real r);
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
-
-
-
-

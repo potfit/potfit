@@ -3,8 +3,8 @@
 *
 *  Read in parameter files (tag based)
 * 
-*  $Revision: 1.4 $
-*  $Date: 2002/11/05 12:29:11 $
+*  $Revision: 1.5 $
+*  $Date: 2002/12/10 15:53:05 $
 *
 ******************************************************************************/
 
@@ -187,6 +187,10 @@ void read_paramfile(FILE *pf)
     /* Optimization flag */
     else if (strcasecmp(token,"opt")==0) {
 	getparam("opt",&opt,PARAM_INT,1,1);
+    }
+    /* break flagfile */
+    else if (strcasecmp(token,"flagfile")==0) {
+	getparam("flagfile",flagfile,PARAM_STR,1,255);
     }
     /* unknown tag */
     else {

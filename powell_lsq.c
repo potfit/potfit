@@ -23,7 +23,7 @@
 #define PRECISION 1.E-7
 /* Well, almost nothing */
 #define NOTHING 1.E-12
-#define INNERLOOPS 401
+#define INNERLOOPS 801
 #define TOOBIG 10000
 
 
@@ -44,6 +44,7 @@ void powell_lsq(real *xi)
     real F,F2,F3,df,xi1,xi2;       /* Fn values, changes, steps ... */
     real temp,temp2;               /* as the name indicates: temporary vars */
     static char errmsg[256];	   /* Error message */
+    FILE *ff;			   /* Exit flagfile */
 
     d=dmatrix(0,ndim-1,0,ndim-1);
     gamma=dmatrix(0,mdim-1,0,ndim-1);
@@ -142,6 +143,13 @@ void powell_lsq(real *xi)
 	for (k=0;k<ndim;k++)
 	    printf("%f %f\n",pair_pot.begin[0]+k*pair_pot.step[0],xi[k]);
 	    printf("\n\n");*/
+        /* End fit if break flagfile exists */
+	ff = fopen(flagfile,"r");
+	if (NULL != ff) {
+	    printf("Fit terminated prematurely in presence of break flagfile %s!\n",
+		   flagfile);
+	    break;
+	}
     /*End fit if whole series didn't improve F */
     } while (F3-F>PRECISION/10.);
 	/* Free memory */
