@@ -19,9 +19,9 @@ real calc_forces_pair(real *xi, real *forces)
     atom = atoms + i;
     typ1 = atom->typ;
     k    = 3*i;
-    forces[k  ] = 0.0;
-    forces[k+1] = 0.0;
-    forces[k+2] = 0.0;
+    forces[k  ] = -force_0[k  ];
+    forces[k+1] = -force_0[k+2];
+    forces[k+2] = -force_0[k+2];
 
     for (j=0; j<atom->n_neigh; j++) {
 
@@ -37,9 +37,6 @@ real calc_forces_pair(real *xi, real *forces)
       }
     }
     /* Returned force is difference between calculated and input force */
-    forces[k  ]  -= force_0[k  ];
-    forces[k+1]  -= force_0[k+1];
-    forces[k+2]  -= force_0[k+2];
     sum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
   }
   fcalls++;			/* Increase function call counter */

@@ -74,7 +74,7 @@ EXTERN char imdpot[255];                 /* file for IMD potential */
 EXTERN char config[255];                 /* file with atom configuration */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
-EXTERN int    opt;                       /* optimization flag */
+EXTERN int  opt INIT(0);                 /* optimization flag */
 
 /******************************************************************************
 *
