@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.29 $
-* $Date: 2004/09/16 09:32:30 $
+* $Revision: 1.30 $
+* $Date: 2004/11/17 16:10:36 $
 *****************************************************************/
 
 /* should imd potentials be extrapolated? Set EXTEND >0 to extrapolate
@@ -906,8 +906,10 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	/* Pair potentials corrected so that U'(n_av)=0 */
 	fprintf(outfile, "%.16e\n", 
 		splint_ne(pt, pt->table, col1, sqrt(r2) )
-		+ lambda[i] * splint_ne(pt, pt->table, paircol+j, sqrt(r2))
-		+ lambda[j] * splint_ne(pt, pt->table, paircol+i, sqrt(r2)) );
+		+ (sqrt(r2)<=pt->end[paircol+j]?
+		  lambda[i]*splint_ne(pt, pt->table, paircol+j, sqrt(r2)):0.)
+		+ (sqrt(r2)<=pt->end[paircol+i]? 
+		  lambda[j]*splint_ne(pt,pt->table,paircol+i, sqrt(r2)):0.));
 #else  /* NEWSCALE */
 	fprintf(outfile, "%.16e\n", 
 		splint_ne(pt, pt->table, col1, sqrt(r2) ));
@@ -1050,8 +1052,96 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifdef NEWSCALE
         fprintf( outfile, "%e %e\n", r, 
 		 splint(pt, pt->table,k, r)
-		 + splint(pt, pt->table,paircol+i,r)*lambda[j]
-	         + splint(pt, pt->table,paircol+j,r)*lambda[i]);
+		 +(r<=pt->end[paircol+i]?
+		   splint(pt, pt->table,paircol+i,r)*lambda[j]:0.)
+		 +(r<=pt->end[paircol+j]?
+		  splint(pt, pt->table,paircol+j,r)*lambda[i]:0.));
+#else
+        fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,k, r) );
+#endif  /* NEWSCALE */
+        r += r_step;
+      }
+      fprintf( outfile, "%e %e\n\n\n", r, 0.0);
+      k++;
+    }
+#ifdef EAM
+  for (i=paircol;i<paircol+ntypes;i++){
+    r=pt->begin[i];
+    r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
+    for (l=0;l<NPLOT;l++) {
+      fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,i, r) );
+      r += r_step;
+    }
+    fprintf(outfile,"%e %e\n\n\n", r, 0.0);
+  }
+  for (i=paircol+ntypes;i<paircol+2*ntypes;i++){
+    r=pt->begin[i];
+    r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
+    for (l=0;l<NPLOT;l++) {
+#ifdef PARABEL
+      temp = parab(pt, pt->table,i, r) ;
+#else
+      temp = splint(pt, pt->table,i, r);
+#endif
+#ifdef NEWSCALE
+      temp -= lambda[i-(paircol+ntypes)]*r;
+#endif /* NEWSCALE */
+      fprintf( outfile, "%e %e\n", r, temp );
+      r += r_step;
+    }
+    fprintf(outfile,"\n\n\n");
+  }
+#endif
+  fclose(outfile);
+  printf("Potential plotting data written to %s\n", filename);
+}
+
+/*****************************************************************************
+*
+*  write alternate plot version of potential table
+*  (same intervals for all pair and transfer functions)
+*
+******************************************************************************/
+
+void write_altplot_pair(pot_table_t *pt, char *filename)
+{
+  FILE *outfile;
+  char msg[255];
+  int  i, j, k, l, col;
+  real r, rmin=100., rmax=0., r_step,temp;
+
+  /* open file */
+  outfile = fopen(filename,"w");
+  if (NULL == outfile) {
+    sprintf(msg,"Could not open file %s\n",filename);
+    error(msg);
+  }
+
+  /* write data */
+  k = 0;
+  for (i=0; i<ntypes; i++){
+    for (j=i; j<ntypes; j++) {
+      rmin=MIN(rmin,pt->begin[k]);
+      rmax=MAX(rmax,pt->end[k]);
+      k++;
+    }
+    rmin=MIN(rmin,pt->begin[paircol+i]);
+    rmax=MAX(rmax,pt->end[paircol+i]);
+  }
+  k=0;
+  r_step = (rmax - rmin) / (NPLOT-1);
+  for (i=0; i<ntypes; i++) 
+    for (j=i; j<ntypes; j++) {
+      col    = i * ntypes + j; 
+      r      = rmin;
+      for (l=0; l<NPLOT; l++) {
+#ifdef NEWSCALE
+        fprintf( outfile, "%e %e\n", r, 
+		 (r<=pt->end[k]?splint_ne(pt, pt->table,k, r):0.)
+		 + (r<=pt->end[paircol+i]?
+		    splint_ne(pt, pt->table,paircol+i,r)*lambda[j]:0.)
+		 + (r<=pt->end[paircol+j]?
+		    splint_ne(pt, pt->table,paircol+j,r)*lambda[i]:0.));
 #else
         fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,k, r) );
 #endif  /* NEWSCALE */
@@ -1063,10 +1153,10 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifdef EAM
   j=k;
   for (i=j;i<j+ntypes;i++){
-    r=pt->begin[i];
-    r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
+    r=rmin;
     for (l=0;l<NPLOT;l++) {
-      fprintf( outfile, "%e %e\n", r, splint(pt, pt->table,i, r) );
+      fprintf( outfile, "%e %e\n", r, 
+	       r<=pt->end[i]?splint_ne(pt, pt->table,i, r):0 );
       r += r_step;
     }
     fprintf(outfile,"%e %e\n\n\n", r, 0.0);
@@ -1074,7 +1164,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   for (i=j+ntypes;i<j+2*ntypes;i++){
     r=pt->begin[i];
     r_step=(pt->end[i] - pt->begin[i]) / (NPLOT-1);
-    for (l=0;l<=NPLOT;l++) {
+    for (l=0;l<NPLOT;l++) {
 #ifdef PARABEL
       temp = parab(pt, pt->table,i, r) ;
 #else
