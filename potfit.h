@@ -74,6 +74,7 @@ EXTERN char imdpot[255];                 /* file for IMD potential */
 EXTERN char config[255];                 /* file with atom configuration */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
+EXTERN int    opt;                       /* optimization flag */
 
 /******************************************************************************
 *
@@ -82,6 +83,7 @@ EXTERN pot_table_t pair_pot;             /* the potential table */
 ******************************************************************************/
 
 void error(char*);
+void warning(char*);
 void read_parameters(int, char**);
 void read_paramfile(FILE*);
 void read_pot_table(pot_table_t*, char*, int);
@@ -94,8 +96,6 @@ real pot3 (pot_table_t*, int, real);
 void read_config(char*);
 real calc_forces_pair(real[],real[]);
 void powell_lsq(real *xi, real (*fcalc)(real[],real[]));
-
-
 
 
 
