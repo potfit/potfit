@@ -39,8 +39,9 @@ int main(int argc, char **argv)
 {
   real *force, tot, min, max, sqr;
   int  i;
+  pi = 4.0 * atan(1.);
   read_parameters(argc, argv);
-
+  srandom(seed);random();random();random();random();
   read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
   read_config(config);
 
@@ -51,7 +52,10 @@ int main(int argc, char **argv)
 
   calc_forces = calc_forces_pair;
 
-  if (opt) powell_lsq(pair_pot.table);
+  if (opt) {
+      anneal(pair_pot.table);
+      powell_lsq(pair_pot.table);
+  }
 /*  for (i=0; i<pair_pot.ncols; i++) 
       spline_ed(pair_pot.step[i],pair_pot.table+pair_pot.first[i],
 		pair_pot.last[i]-pair_pot.first[i]+1,

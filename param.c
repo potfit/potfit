@@ -3,8 +3,8 @@
 *
 *  Read in parameter files (tag based)
 * 
-*  $Revision: 1.6 $
-*  $Date: 2003/01/22 09:37:39 $
+*  $Revision: 1.7 $
+*  $Date: 2003/03/07 15:23:43 $
 *
 ******************************************************************************/
 
@@ -196,7 +196,10 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token,"plotpointfile")==0) {
 	getparam("plotpointfile",plotpointfile,PARAM_STR,1,255);
     }
-
+    /* seed for RNG */
+    else if (strcasecmp(token,"seed")==0){
+	getparam("seed",&seed,PARAM_INT,1,1);
+    }
     /* unknown tag */
     else {
       fprintf(stderr,"Unknown tag <%s> ignored!\n",token);

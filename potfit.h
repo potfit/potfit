@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -64,6 +63,8 @@ typedef struct {
 #define EXTERN extern      /* declare them extern otherwise */
 #define INIT(data)         /* skip initialization otherwise */
 #endif
+EXTERN real   pi       INIT(0.);
+EXTERN int    seed     INIT(123456);     /* seed for RNG */
 EXTERN int    fcalls   INIT(0);
 EXTERN int    ndim     INIT(0);
 EXTERN int    ndimtot  INIT(0);
@@ -105,6 +106,7 @@ void read_pot_table(pot_table_t*, char*, int);
 void write_pot_table(pot_table_t*, char*);
 void write_pot_table_imd(pot_table_t*, char*);
 void write_plotpot_pair(pot_table_t*, char*);
+real normdist(void);
 real grad2(pot_table_t*, real*, int, real);
 real grad3(pot_table_t*, real*, int, real);
 real pot2 (pot_table_t*, int, real);
@@ -113,6 +115,7 @@ void read_config(char*);
 void read_config2(char*);
 real calc_forces_pair(real*,real*);
 void powell_lsq(real *xi);
+void anneal(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real splint_ed(pot_table_t *pt, int col, real r);
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
