@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.4 $
-*  $Date: 2002/11/27 13:08:35 $
+*  $Revision: 1.5 $
+*  $Date: 2003/01/02 13:48:08 $
 *
 ******************************************************************************/
 
@@ -47,6 +47,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+
+/* maximum value in potential file */
+#define MAXVAL 40.
 
 /* type of interpolation */
 #define POTVAL pot3
@@ -88,7 +91,8 @@ typedef struct {
 } pot_table_t;
 
 /* global variables */
-str255 infilename="\0", outfilename="\0", plotfilename="\0";
+str255 infilename="\0", outfilename="\0", plotfilename="\0", 
+    plotpointfile="\0";
 int    ncols=0, ntypes=0, mode=1, *nsteps=NULL;
 real   *r_start=NULL, *r_end=NULL;
 pot_table_t pt;
@@ -299,7 +303,7 @@ void getparamfile(char *paramfname)
       /* file name for output potential */
       getparam(n,"outfile",outfilename,PARAM_STR,1,255);
     }
-    if (strcasecmp(token,"plotfile")==0) {
+    else if (strcasecmp(token,"plotfile")==0) {
       /* file name for output potential in plot format */
       getparam(n,"plotfile",plotfilename,PARAM_STR,1,255);
     }
@@ -330,6 +334,10 @@ void getparamfile(char *paramfname)
       r_end = (real *) malloc( ncols * sizeof(real) );
       if (r_end==NULL) error("allocation of r_end failed");
       getparam(n,"r_end",r_end,PARAM_REAL,ncols,ncols);
+    }
+    else if (strcasecmp(token,"plotpoints")==0) {
+      /* file for plotpoints */
+	getparam(n,"plotpoints",plotpointfile,PARAM_STR,1,255);
     }
   } while (!feof(pf));
   fclose(pf);
@@ -708,16 +716,24 @@ real pot3(pot_table_t *pt, int col, int inc, real r2)
 
 void write_pot_table_pair(pot_table_t *pt, char *filename)
 {
-  FILE *outfile;
+  FILE *outfile, *outfile2;
   char msg[255];
-  int  i, j, k, l, col;
+  int  i, j, k, l, col, flag=0;
   real r, r_step;
-
+  if (plotpointfile != "\0") flag=1;
   /* open file */
   outfile = fopen(filename,"w");
   if (NULL == outfile) {
     sprintf(msg,"Could not open file %s\n",filename);
     error(msg);
+  }
+  /* if needed: open file for plotpoints */
+  if (flag) {
+      outfile2 = fopen(plotpointfile,"w");
+      if (NULL == outfile) {
+	  sprintf(msg,"Could not open file %s\n",filename);
+	  error(msg);
+      }
   }
 
   /* write header */
@@ -726,7 +742,8 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
   /* write info block */
   for (i=0; i<ncols; i++) {
     r_step = (r_end[i] - r_start[i]) / (nsteps[i] - 1);
-    fprintf( outfile, "%.16e %.16e %d\n", r_start[i], r_end[i], nsteps[i] );
+    fprintf( outfile, "%.16e %.16e %d\n", r_start[i], r_end[i], 
+	     nsteps[i] );
   }
   fprintf(outfile, "\n");
 
@@ -737,12 +754,15 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
       col    = i * ntypes + j; 
       r      = r_start[k];
       r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
-      for (l=0; l<nsteps[k]; l++) {
+      for (l=0; l<nsteps[k]-1; l++) {
         fprintf(outfile, "%.16e\n", POTVAL(pt, col, ntypes*ntypes, r*r) );
+	if (flag) 
+	  fprintf(outfile2, "%.6e %.6e\n",r,POTVAL(pt, col, ntypes*ntypes, r*r) );
         r += r_step;
       }
       k++;
-      fprintf(outfile, "\n");
+      fprintf(outfile, "%.16e\n\n",0.0);
+      if (flag) fprintf(outfile2, "%.6e %.6e\n\n\n",r,0.0);
     }
   fclose(outfile);
 }
@@ -804,17 +824,6 @@ int main(int argc, char **argv)
       error("ntypes and ncols are incompatible");
     read_pot_table(&pt,infilename,ntypes*ntypes);
 
-    /* set r_start, if not read in */
-    if (r_start==NULL) {
-      r_start = (real *) malloc( ncols * sizeof(real) );
-      if (r_start==NULL) error("allocation of r_start failed");
-      k=0;
-      for (i=0; i<ntypes; i++)
-        for (j=i; j<ntypes; j++) {
-          r_start[k++] = sqrt(pt.begin[i*ntypes+j]);
-	}
-    }
-    
     /* always set r_end from potential table */
     if (r_end==NULL) {
       r_end = (real *) malloc( ncols * sizeof(real) );
@@ -825,6 +834,22 @@ int main(int argc, char **argv)
       for (j=i; j<ntypes; j++)
         r_end[k++] = sqrt(pt.end[i*ntypes+j]);
 
+    /* set r_start, if not read in */
+    if (r_start==NULL) {
+      r_start = (real *) malloc( ncols * sizeof(real) );
+      if (r_start==NULL) error("allocation of r_start failed");
+    }
+
+    k=0;
+    for (i=0; i<ntypes; i++)
+      for (j=i; j<ntypes; j++) {
+	  r_start[k++] = sqrt(pt.begin[i*ntypes+j]);
+	  while(POTVAL(&pt,i*ntypes+j,ntypes*ntypes,
+		       r_start[k-1]*r_start[k-1])>MAXVAL){
+	      r_start[k-1]+=(r_end[k-1]-r_start[k-1])/1000.;
+	  }
+      }
+    
     /* write potential table */
     write_pot_table_pair(&pt,outfilename);
     write_plotpot_pair(&pt,plotfilename);
@@ -832,3 +857,5 @@ int main(int argc, char **argv)
 
   return 0;
 }
+
+
