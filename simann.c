@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2004/06/25 14:32:23 $
+* $Revision: 1.16 $
+* $Date: 2004/07/05 12:08:23 $
 *****************************************************************/
 
 
@@ -75,12 +75,12 @@ void makebump(real *x,real width,real height,int center)
     while (pair_pot.last[j]<idx[center]) j++;
     for (i=0;i<=4.*width;i++){
 /* using idx avoids moving fixed points */
-	if (idx[center+i]<=pair_pot.last[j]){ 
+	if ((center+i<=ndim) && (idx[center+i]<=pair_pot.last[j])){ 
 	    x[idx[center+i]]+=GAUSS((double) i / width)*height;
 	}
     }
     for (i=1;i<=4.*width;i++){
-	if (idx[center-i]>=pair_pot.first[j]){
+	if ((center-i>=0) && (idx[center-i]>=pair_pot.first[j])){
 	    x[idx[center-i]]+=GAUSS((double) i / width) * height;
 	}
     }
