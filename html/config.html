@@ -1,0 +1,89 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Reference Configurations</h1>
+
+<p>
+The reference configurations used by <em>potfit</em> are read from a
+configuration file, whose format is <a href="config.html#config">
+described below</a>.  There is a <a
+href="util_misc.html#vasp2force">utility program</a> to generate
+configuration files from <a
+href="http://cms.mpi.univie.ac.at/vasp/">VASP</a> output.
+
+<h2><a id="config" name="config">
+Configuration Files</a></h2>
+
+<p>
+A <em>potfit</em> configuration file is an ASCII file, consisting of a
+<a href="config.html#atomheader">header</a> and a <a
+href="config.html#body">body</a>, both of which are described below.</p>
+
+<h2><a id="header" name="header">Header</a</h2>
+<p>The header consists of five lines and has the following
+format:</p>
+
+<pre>
+natoms
+boxx.x boxx.y boxx.z
+boxy.x boxy.y boxy.z
+boxz.x boxz.y boxz.z
+coh_eng
+stress_xx stress_yy stress_zz stress_yz stress_zx stress_xy
+</pre>
+
+All parameters are numbers and have the following meaning:
+<table>
+<tr><td>natoms:</td><td>number of atoms in configuration</tr>
+<tr><td>boxi.j:</td><td>components of box vectors of unit cell</td></tr>
+<tr><td>coh_eng:</td><td>cohesive energy per atom</td></tr>
+<tr><td>stress.ij:</td><td>components of stress tensor</td></tr>
+</table>
+
+<p>
+Note that:</p>
+<ul>
+<li> In all directions the sample must have a size of at least 
+     the potential cutoff distance. This distance is measured
+     perpendicular to the corresponding face.</li>
+</ul>
+
+<h2><a id="header" name="header">Body</a</h2>
+
+<p>Following the header, there is one line for each atom. 
+The format of each line, described also in the header, is
+as follows:</p>
+
+<pre>
+ type x y z fx fy fz
+</pre>
+
+<p>
+These items stand for:</p>
+
+<table>
+<tr><td>type     </td><td> type of the atom; must be in the range [0..ntypes-1]
+                                                                </td></tr>
+<tr><td>x y z    </td><td> coordinates of the atom               </td></tr>
+<tr><td>fx fy fz </td><td> net force components on the atom       </td></tr>
+</table>
+
+
+
+<h2><a id="boundary" name="boundary"> 
+</a>Boundary Conditions</h2>
+
+<p>
+<em>potfit</em> uses <b>periodic boundary conditions</b>. If a
+particle coordinate is not within the simulation box, it is mapped
+back into the simulation box.
+</p>
+
+<h2>Multiple Configurations</h2>
+Multiple configuration files can just be concatenated. <em>potfit</em>
+continues reading from a reference file until it reaches the end of
+file. Should this not coincide with the end of a single configuration,
+an error will result.
+
+<!--#include virtual="potfitfoot.html" -->
+

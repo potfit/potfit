@@ -1,0 +1,126 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Compiling</h1>
+
+<p>
+<em>potfit</em> is compiled with GNU make, which we call gmake in the
+following. Note that on some systems, GNU make is called make.
+Most other implementations of make won't work.</p>
+
+<pre>
+   gmake [FLAGS="some flags"] [IMDSYS="some system"] potfit-target
+</pre>
+
+<p>
+The compiler and compilation flags are determined according to the 
+<a href="compiling.html#imdsys">IMDSYS variable</a>, which must be set
+either as an environment variable, or be passed on the command line as
+above. The usage of the IMDSYS variable, as first introduced in the
+<a href="http://www.itap.physik.uni-stuttgart.de/~imd">IMD</a> program
+is much more flexible than the just the HOSTTYPE environment variable,
+as it allows specific optimization and link flags for a wide variety
+of processors and compiler combinations.  Further compile or link
+flags, in addition to those determined by the IMDSYS variable, can be
+passed on the command line with the help of the FLAGS variable.</p>
+
+<p>
+After compiling, the <em>potfit</em> executable is moved to the directory 
+$HOME/bin/$HOSTTYPE, which must exist, and which should be in the 
+search path. The location where executables are put can be customized 
+in the Makefile. </p>
+
+<p>
+<tt>potfit-target</tt> consists of several components and has the
+following structure:</p>
+
+<pre>
+   potfit[_parallelization][_option][_option]...
+</pre>
+
+<p>
+Most features of <em>potfit</em> must be activated with the corresponding 
+compilation option in the make target. In particular, you need to 
+enable the support 
+for different interactions, if you don't want to use tabulated 
+pair potentials. Most options can coexist with each other. 
+</p>
+
+<p>
+
+<h2>Compilation Options</h2>
+
+<p>
+Most compilation options are described together with the simulation
+features they enable. For details, see the corresponding chapters.
+Here, we only list some general options.</p>
+
+<h3>Parallelization options</h3>
+
+<p>  
+<em>potfit</em> can be compiled with the following parallelization options.
+If none of these is specified, a serial executable is compiled.
+</p>
+
+<table>
+<tr><td>mpi        </td> <td>parallelization with MPI            </td></tr>
+<tr><td>omp        </td> <td>parallelization with OpenMP         </td></tr>
+<tr><td>ompi&nbsp; </td> <td>parallelization with MPI and OpenMP </td></tr>
+</table>
+
+<h3>Other options</h3>
+
+<table>
+<tr><td>eam          </td><td>use Embedded Atom Potentials</td></tr>
+<tr><td>stress       </td><td>include stress in fit</td></tr>
+<tr><td>parab        </td><td>use parabolic interpolation for
+embedding function</td></tr>
+<tr><td>limit        </td><td>use limitation constraint for embedding density</td></tr>
+<tr><td>debug        </td><td>compile with debug support</td></tr>
+</table>
+
+<a id="imdsys" name="imdsys">
+<h2>Supported values of the IMDSYS variable</h2>
+</a>
+
+<p>
+Currently, the following values of the IMDSYS variable are supported
+(though only AthlonMP-icc has been thoroughly tested, most have not
+been tested at all):</p>
+
+<table>
+<tr><td>AthlonMP-icc  </td><td> Athlon MP or XP, icc                 </td></tr>
+<tr><td>AthlonMP-gcc3 </td><td> Athlon MP or XP, gcc3                </td></tr>
+<tr><td>P4-icc        </td><td> Pentium 4 or Xeon, icc               </td></tr>
+<tr><td>P4-gcc3       </td><td> Pentium 4 or Xeon, gcc3              </td></tr>
+<tr><td>P3-icc        </td><td> Pentium II/III, icc                  </td></tr>
+<tr><td>P3-gcc3       </td><td> Pentium II/III, gcc3                 </td></tr>
+<tr><td>ia32-gcc2     </td><td> generic IA32, gcc2 (very slow)       </td></tr>
+<tr><td>ia64-ecc      </td><td> Intel Itanium 2, ecc                 </td></tr>
+<tr><td>alpha-cc      </td><td> Alpha EV56, cc                       </td></tr>
+<tr><td>alpha-gcc2    </td><td> Alpha EV56, gcc2 (slow)              </td></tr>
+<tr><td>irix-cc       </td><td> Irix, mips3, cc                      </td></tr>
+<tr><td>irix-gcc2     </td><td> Irix, mips3, gcc2 (slow)             </td></tr>
+<tr><td>USparc3-cc    </td><td> UltraSparc3, cc                      </td></tr>
+<tr><td>sparc-gcc2    </td><td> generic sparc, gcc2 (slow)           </td></tr>
+<tr><td>T3E-cc        </td><td> Cray T3E, cc                         </td></tr>
+<tr><td>sr8k-cc       </td><td> HITACHI SR8000, cc                   </td></tr>
+<tr><td>sr8k-xcc      </td><td> xcc cross compiler for HITACHI SR8000</td></tr>
+<tr><td>Power4-cc     </td><td> IBM Power4, cc </td></tr>
+</table>
+
+<p>
+The GCC 2.x compilers should usually be avoided. Especially on the IA32
+architecture, they produce very slow code. GCC 3.2 or the Intel compiler
+icc are much better choices. </p>
+
+<p>
+Support for further values of IMDSYS is easily added. The Makefile
+contains a detailed decsription of how the compile and link flags
+are determined from a number of Makefile variables, which must be
+set for each supported value of IMDSYS. There is a template from
+which one can start. </p>
+
+<!--#include virtual="potfitfoot.html" -->
+
+

@@ -1,0 +1,48 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Valid Parameters</h1>
+
+<p>
+Following is a complete list of <em>potfit</em> parameters, together
+with a short description of their meaning, and indications when they
+are needed.  Floating point numbers should be given in decimal
+notation. Vectors are given as a list of components, separated by
+spaces or tabs (all on one line). An asterik marks required parameters</p>
+
+<pre>
+# main parameters
+ntypes		# number of atom types (types vary in [0..ntypes-1]) (*)
+
+
+# file names - required
+startpot	# file name for starting potential (*)
+endpot		# file name for final potential (*)
+imdpot		# file name prefix for imd potential (*)
+plotfile	# file name for plotting potential (*)
+plotpointfile	# file name for plotting the sampling points (*)
+distfile	# file name for distribution file (* with compile
+		# option 'dist')
+config		# file with atom configuration in force format (*)
+flagfile	# file whose presence terminates fit
+
+
+# options for output
+imdpotsteps 	# number of points in each function in imd file
+
+# Minimization options
+opt		# binary, whether or not to perform an optimization.
+anneal_temp	# starting temperature for simulated annealing. 
+		# set to zero to skip simulated annealing
+eng_weight	# weight of energy in minimization
+stress_weight	# weight of stress in minimiziation
+
+# Deprecated options
+dummy_rho 	# dummy value of rho at dummy_r, now ignored
+dummy_r		# Distance, where dummy_rho and dummy_phi are used (ignored)
+dummy_phi	# vector, dummy values of phi_ii at dummy_r
+
+
+</pre>
+
+<!--#include virtual="potfitfoot.html" -->

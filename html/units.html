@@ -1,0 +1,28 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Units</h1>
+
+<p>
+<em>potfit</em> does not need a particular system of units. It can
+work with any system. The units used by <em>potfit</em> are implicitly
+defined in the configuration and potential files, and possibly by
+certain parameters specifying the potential. The reference
+configuration file contains atom positions, which implicitly defines a
+length unit. The interaction potential implicitly makes use of a
+length unit and an energy unit. Of course, this length unit must be
+the same as for the configuration file. The two units of length, and
+energy determine other units - like force and pressure - which are
+derived from them.  The &laquo;temperature&raquo; in simulated
+annealing has the same dimension as the sum of squares - none at
+all.</p>
+
+<h3>Example</h3>
+
+<p>
+If the length unit is 1&nbsp;&Aring; = 1e-10&nbsp;m, and the energy
+unit 1&nbsp;eV = 1.602e-19&nbsp;J (which corresponds to 11594&nbsp;K),
+Then the unit of pressure is 160.2&nbsp;GPa = 1602&nbsp;kbar, and the
+unit of force is 1&nbsp;eV/&Aring; = 1.602e-9&nbsp;N = 1.602&nbsp;nN</p>
+
+<!--#include virtual="potfitfoot.html" -->

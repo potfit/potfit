@@ -1,0 +1,101 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Potential File Format</h1>
+
+<p>
+The interactions supported by <em>potfit</em> are defined in terms of
+tabulated functions. Typical such functions are central pair
+potentials, which depend on the distance of two atoms and the two atom
+types involved. Such functions are tabulated with steps which are
+equidistant in the <b>distance</b>, which is the fundamental
+difference to <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a>, where
+those functions are tabulated with steps equidistant in the square of
+the distance. For EAM interactions one also needs functions which
+depend on one atom type and the host electron density at the position
+of that atom. Such functions are tabulated with steps equidistant in
+the electron density.</p>
+
+<h2>Potential File Header</h2>
+
+<p>
+The header is comparable to headers in <a
+href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a>. It
+specifies in which format the current file is, and how many data
+columns the tabulated function has for each argument. The number
+of data columns depends on the potential model used.
+The header has the
+following format:</p>
+
+<pre>
+## this is just a comment line
+#F 3 n
+## this is another comment line
+#E this is the very last header line
+</pre>
+
+</p>
+Header lines start with the character '#'. If the second character is
+'F', then the format specifier 3 (to distinguish from IMD potential
+files, format types 1 or 2) and the number n of 
+data columns of the tabulated functions are read from the rest of the 
+line. The very last header line must have a character 'E' at the 
+second position. Header lines with a second character different from 
+'F' or 'E' are treated as comments, but it is recommended that such 
+lines start with two '#' characters. </p>
+
+<h2>Format 1</h2>
+
+<p>
+In a potential file in format 1, each line contains first the function 
+argument, either the square of the distance (radius) or the host 
+electron density, and then all data columns, i.e., the function values 
+for this argument for the different atom type pairs or atom types. 
+If the atom types run from 0 to N, the lines in a format 1 file have
+either of the following formats:</p>
+
+<pre>
+r^2    V_00 V_01 ... V_0N V_10 V_11 ... V_NN 
+</pre>
+<pre>
+rho_h  E_0 ... E_N
+</pre>
+
+<p>
+Note that if a function of the square of the distance given in format
+1 does not vanish at the end of the tabulation, it is shifted so that
+it does vanish. This is for backwards compatibility; it would be
+better to change the potential file once and for all.</p>
+
+<p>
+The disadvantage of format 1 is that all data columns have to be tabulated
+for the same range and with the same spacing. </p>
+ 
+<h2>Format 2</h2>
+
+<p>
+In a potential file in format 2, each data column has its own range
+and spacing. If we have n data columns, the file starts with n lines
+of the form
+<pre>
+x_begin x_end dx
+</pre>
+specifying the start, end, and spacing of the tabulation of the
+n data columns. The argument x is either the square of the atom 
+distance, or the host electron density. These n lines are then
+followed by n blocks with the function values, one for each atom 
+type pair or atom type. The number of function values is computed 
+from the begin, end, and spacing values of the corresponding table.
+They can be different for the different data columns. The order
+of the different data columns is as described for format 1.</p>
+
+<h2>Backwards Compatibility</h2>
+
+<p>
+For backwards compatibility, potential files without header are also 
+accepted, but a warning is printed. A default format is then assumed,
+which is format 2 for EAM interactions, and format 1 for everything else.</p>
+
+<!--#include virtual="potfitfoot.html" -->
+

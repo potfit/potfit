@@ -1,0 +1,42 @@
+
+<!--#include virtual="potfithead.html" -->
+
+<h1>Usage</h1>
+
+<p>
+After having <a href="compiling.html">compiled</a> <em>potfit</em> with the
+suitable options, the simulation is started as follows:
+<pre>
+    potfit_program parameter_file
+</pre>
+The name of the <em>potfit</em> program is the same as the compilation
+target. The
+<a href="paramfile.html">parameter file</a> contains all further
+<a href="params.html">parameters</a> describing the simulation.</p>
+
+<h2>Parallel execution</h2>
+
+<p>
+<em>potfit</em> supports two parallelisation methods, OpenMP and MPI, which can
+also be combined. If OpenMP is used, the number of threads in
+each process has to specified by setting the envirent variable
+OMP_NUM_TREADS. If MPI is used, the number of MPI processes 
+must be stated at the program start. This is usually done with 
+a (system dependent) startup script like the following ones:
+<pre>
+    mpirun -np P potfit_program  parameter_file   # MPICH
+    mpprun -n  P potfit_program  parameter_file   # Cray T3E
+</pre>
+Here, P is the number of MPI processes.</p>  
+
+<p> 
+If MPI and OpenMP are combined, one usually wants to run one MPI
+process per computer node, with the number of OpenMP threads equal to
+the number of CPUs per node. Care must be taken that exactly one
+process is allocated on each node. In a pure MPI scheme, the number of
+processes P should be equal to the total number of CPUs
+available. Which parallelisation method is faster has to be checked
+case by case.</p>
+
+<!--#include virtual="potfitfoot.html" -->
+
