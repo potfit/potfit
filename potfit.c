@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.31 $
-* $Date: 2004/09/15 08:09:50 $
+* $Revision: 1.32 $
+* $Date: 2004/11/17 16:03:26 $
 *****************************************************************/
 
 
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
     sprintf(plotfile,"%s_new",plotfile);
     sprintf(imdpot,"%s_new",imdpot);
     /* write new potential plotting table */
-    if (plot) write_plotpot_pair(&pair_pot, plotfile);
+    if (plot) write_altplot_pair(&pair_pot, plotfile);
     /* write NEW imd potentials */
     write_pot_table_imd( &pair_pot, imdpot );
 #endif /* NEWSCALE */
@@ -223,13 +223,13 @@ int main(int argc, char **argv)
       max = MAX( max, sqr );
       min = MIN( min, sqr );
 #ifdef FWEIGHT
-      printf("%d %f %f %f %f %f\n",i/3,sqr,
+      printf("%d-%d %f %f %f %f %f\n",atoms[i/3].conf,i/3,sqr,
 	     force[i]*(FORCE_EPS+atoms[i/3].absforce)+force_0[i],
 	     force_0[i],
 	     (force[i]*(FORCE_EPS+atoms[i/3].absforce))/force_0[i],
 	     atoms[i/3].absforce);
 #else  /* FWEIGHT */
-      printf("%d %f %f %f %f\n",i/3,sqr,
+      printf("%d-%d %f %f %f %f\n",atoms[i/3].conf,i/3,sqr,
       force[i]+force_0[i],force_0[i],force[i]/force_0[i]);
 #endif /* FWEIGHT */
     }
@@ -287,8 +287,11 @@ int main(int argc, char **argv)
     }
 #endif
     printf("av %e, min %e, max %e\n", tot/mdim, min, max);
+    printf("Sum %f, count %d\n", tot, mdim);
     printf("Used %d function evaluations.\n",fcalls);
+#ifdef MPI
     calc_forces(pair_pot.table,force,1); /* go wake up other threads */
+#endif /* MPI */
   }
 #ifdef MPI
   /* kill MPI */
