@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.1 $
-*  $Date: 2004/04/13 14:13:50 $
+*  $Revision: 1.2 $
+*  $Date: 2004/11/17 16:12:22 $
 *
 *  Convert an IMD force file to a VASP POSCAR file
 *
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
   if (outfile==NULL) error("cannot open POSCAR file");
 
   /* write header */
-  fprintf(outfile, "Al-Co-Ni structure from %s\n", argv[1] );
+  fprintf(outfile, "Structure from %s\n", argv[1] );
   fprintf(outfile, " %f\n", (real) 1.0 );
   fprintf(outfile, "%f %f %f\n", box_x.x, box_x.y, box_x.z );
   fprintf(outfile, "%f %f %f\n", box_y.x, box_y.y, box_y.z );
