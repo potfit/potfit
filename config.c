@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.25 $
-* $Date: 2004/09/14 15:20:22 $
+* $Revision: 1.26 $
+* $Date: 2004/11/17 15:56:42 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -207,9 +207,9 @@ void read_config(char *filename)
                     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), 
                     &(atom->force.x), &(atom->force.y), &(atom->force.z)))
         error("Corrupt configuration file");
-      atom->absforce = sqrt(DSQR(atom->force.x)+
-			    DSQR(atom->force.y)+
-			    DSQR(atom->force.z));
+      atom->absforce = sqrt(SQR(atom->force.x)+
+			    SQR(atom->force.y)+
+			    SQR(atom->force.z));
       /* ++++++++++++++ */
 //      printf("Atom %d, x %f, y %f, z %f, abs %f\n", natoms+i, atom->force.x, atom->force.y, atom->force.z, atom->absforce);
       atom->conf = nconf;
