@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2004/03/19 16:05:48 $
+* $Revision: 1.4 $
+* $Date: 2004/06/23 11:57:40 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -150,6 +150,9 @@ void broadcast_params() {
   MPI_Bcast( inconf, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast( cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast( force_0, mdim, REAL, 0, MPI_COMM_WORLD);
+  /* Broadcast weights... */
+  MPI_Bcast ( &eweight, 1, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast ( &sweight, 1, REAL, 0, MPI_COMM_WORLD);
   /* Broadcast the potential... */
   MPI_Bcast(&pair_pot.len,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&pair_pot.idxlen,1,MPI_INT,0,MPI_COMM_WORLD);

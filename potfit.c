@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.25 $
-* $Date: 2004/04/13 14:10:11 $
+* $Revision: 1.26 $
+* $Date: 2004/06/23 11:57:40 $
 *****************************************************************/
 
 
@@ -78,6 +78,10 @@ int main(int argc, char **argv)
       printf("phi[%f]\t = %f \t between atoms of type %d\n",
 	     dummy_r,dummy_phi[i],i);
     }
+    printf("Energy weight: %f\n",eweight);
+#ifdef STRESS
+    printf("Stress weight: %f\n",sweight);
+#endif 
 #ifndef NORESCALE
     rescale(&pair_pot,1.,1); 	/* rescale now... */
     embed_shift(&pair_pot);	/* and shift */
