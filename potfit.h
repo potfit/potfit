@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.37 $
-* $Date: 2004/09/15 08:09:50 $
+* $Revision: 1.38 $
+* $Date: 2004/11/17 16:11:38 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -83,6 +83,7 @@ typedef struct {
   int    conf; 			/* Which configurarion... */
 #ifdef EAM
   real   rho;			/* embedding electron density */
+  real   gradF;			/* gradient of embedding fn. */
 #endif
 } atom_t;
 
@@ -219,6 +220,7 @@ void write_pot_table3(pot_table_t*, char*);
 void write_pot_table4(pot_table_t*, char*);
 void write_pot_table_imd(pot_table_t*, char*);
 void write_plotpot_pair(pot_table_t*, char*);
+void write_altplot_pair(pot_table_t*, char*);
 real normdist(void);
 real grad2(pot_table_t*, real*, int, real);
 real grad3(pot_table_t*, real*, int, real);

@@ -5,8 +5,8 @@
  *******************************************************/
 
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2004/08/16 13:02:49 $
+* $Revision: 1.7 $
+* $Date: 2004/11/17 16:11:38 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -66,11 +66,13 @@ void dbb(int i) {
  * broadcast_param: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
+  /* 9: number of entries in struct atom_t  */
+#define MAX_MPI_COMPONENTS 9
 
 void broadcast_params() {
-  int ierr,blklens[8];   /* 8: number of entries in struct atom_t  */
-  MPI_Aint displs[8]; 
-  MPI_Datatype typen[8];
+  int ierr,blklens[MAX_MPI_COMPONENTS]; 
+  MPI_Aint displs[MAX_MPI_COMPONENTS]; 
+  MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
   atom_t testatom;
   int size,i,each,odd,nodeatoms=0;
@@ -118,7 +120,8 @@ void broadcast_params() {
   size=7;
 #ifdef EAM
   blklens[7]=1;         typen[7]=REAL; /* rho */
-  size+=1;
+  blklens[8]=1;         typen[8]=REAL; /* gradF */
+  size+=2;
 #endif
     MPI_Address(&testatom.typ,&displs[0]);
     MPI_Address(&testatom.n_neigh,&displs[1]);
@@ -129,6 +132,7 @@ void broadcast_params() {
     MPI_Address(&testatom.conf,&displs[6]);
 #ifdef EAM
     MPI_Address(&testatom.rho,&displs[7]);
+    MPI_Address(&testatom.gradF,&displs[8]);
 #endif
     for(i=1;i<size;i++) {
       displs[i]-=displs[0];
