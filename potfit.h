@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.28 $
-* $Date: 2003/12/11 12:44:47 $
+* $Revision: 1.29 $
+* $Date: 2004/02/20 12:16:55 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -17,11 +17,17 @@
 #ifdef OMP
 #include <omp.h>
 #endif
+#ifdef MPI
+#include <mpi.h>
+#endif
 #ifdef LIMIT 			/* if LIMIT is defined */
 #ifndef EAM			/* but not EAM */
 #define EAM			/* then imply EAM */
 #endif EAM
 #endif LIMIT
+#ifdef MPI
+#define REAL MPI_DOUBLE
+#endif MPI
 #define NRANSI
 #define MAXNEIGH 170
 #ifdef EAM
@@ -76,15 +82,15 @@ typedef struct {
 } atom_t;
 
 typedef struct {
+  int  len;         /* total length of the table */
+  int  idxlen;      /* number of changeable potential values */
+  int  ncols;       /* number of columns */
   real *begin;      /* first value in the table */
   real *end;        /* last value in the table */
   real *step;       /* table increment */
   real *invstep;    /* inverse of increment */
   int  *first;      /* index of first entry */
   int  *last;       /* index of last entry */
-  int  len;         /* total length of the table */
-  int  idxlen;      /* number of changeable potential values */
-  int  ncols;       /* number of columns */
   real *table;      /* the actual data */
   real *d2tab;      /* second derivatives of table data for spline int */
   int  *idx;        /* indirect indexing */
@@ -109,6 +115,27 @@ typedef struct {
 #define EXTERN extern      /* declare them extern otherwise */
 #define INIT(data)         /* skip initialization otherwise */
 #endif
+EXTERN int myid INIT(0);                  /* Who am I? (0 if serial) */
+EXTERN int num_cpus INIT(1);              /* How many cpus are there */
+#ifdef MPI
+EXTERN MPI_Datatype MPI_VEKTOR;
+EXTERN MPI_Datatype MPI_STENS;
+//EXTERN MPI_Datatype MPI_POTTABLE;
+EXTERN MPI_Datatype MPI_ATOM;
+EXTERN MPI_Datatype MPI_NEIGH;
+EXTERN atom_t *conf_atoms INIT(NULL); /* Atoms in configuration */
+EXTERN real *conf_eng INIT(NULL);
+EXTERN real *conf_vol INIT(NULL);
+EXTERN stens *conf_stress INIT(NULL);
+EXTERN int *atom_len;
+EXTERN int *atom_dist;
+EXTERN int *conf_len;
+EXTERN int *conf_dist;
+#endif
+EXTERN int myconf INIT(0.);
+EXTERN int myatoms INIT(0.);
+EXTERN int firstconf INIT(0.);
+EXTERN int firstatom INIT(0.);
 EXTERN real   pi       INIT(0.);
 EXTERN real   anneal_temp INIT(1.);
 EXTERN int    seed     INIT(123456);     /* seed for RNG */
@@ -145,7 +172,7 @@ EXTERN vektor box_x,  box_y,  box_z;
 EXTERN vektor tbox_x, tbox_y, tbox_z;
 EXTERN real *rcut INIT(NULL);
 EXTERN real *rmin INIT(NULL);
-EXTERN real (*calc_forces)(real*,real*);
+EXTERN real (*calc_forces)(real*,real*,int);
 EXTERN int  *idx INIT(NULL);
 EXTERN real   *dummy_phi INIT(NULL);     /* Dummy Constraints for PairPot */
 EXTERN real   dummy_rho INIT(1.);        /* Dummy Constraint for rho */
@@ -173,7 +200,7 @@ real pot2 (pot_table_t*, int, real);
 real pot3 (pot_table_t*, int, real);
 void read_config(char*);
 void read_config2(char*);
-real calc_forces_pair(real*,real*);
+real calc_forces_pair(real*,real*,int);
 void powell_lsq(real *xi);
 void anneal(real *xi);
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
@@ -184,4 +211,10 @@ real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
 real parab_comb_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad);
 real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r);
 real parab_ed(pot_table_t *pt,  real *xi, int col, real r);
+#endif
+#ifdef MPI
+void init_mpi(int *argc_pointer, char **argv);
+void shutdown_mpi(void);
+void broadcast_params(void);
+void dbb(int i);
 #endif

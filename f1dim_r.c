@@ -4,8 +4,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2003/03/19 09:05:34 $
+* $Revision: 1.6 $
+* $Date: 2004/02/20 12:16:54 $
 *****************************************************************/
 /**** rewritten for rdouble precision and zero-offset vectors and matrices ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ****
@@ -26,7 +26,7 @@ real f1dim_r(real x)
 	if (res == NULL) res = dvector(0,mdim-1);
 
 	for (j=0; j<ndimtot; j++) xt[j]=xicom[j]+x*delcom[j];
-	return (*calc_forces)(xt,res);
+	return (*calc_forces)(xt,res,0);
 
 }
 

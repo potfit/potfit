@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2003/03/19 09:05:32 $
+* $Revision: 1.6 $
+* $Date: 2004/02/20 12:16:54 $
 *****************************************************************/
 /**** rewritten for double precision                                      ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
@@ -69,7 +69,7 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 		}
 		u=(fabs(d) >= tol1 ? x+d : x+SIGN(tol1,d));
 		for (j=0;j<ndimtot;j++) vecu[j]=xicom[j]+u*delcom[j];/*set vecu*/
-		fu=(*calc_forces)(vecu,fxu);
+		fu=(*calc_forces)(vecu,fxu,0);
 		if (fu <= fx) {
 			if (u >= x) a=x; else b=x;
 			SHFT(v,w,x,u)

@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2003/11/20 08:38:46 $
+* $Revision: 1.10 $
+* $Date: 2004/02/20 12:16:54 $
 *****************************************************************/
 
 
@@ -120,86 +120,88 @@ void anneal(real *xi)
     naccept=ivector(0,ndim-1);
     /* init step vector and optimum vector */
     for (n=0;n<ndim;n++) {
-	v[n]=1.;
-	naccept[n]=0;
+      v[n]=1.;
+      naccept[n]=0;
     }
     for (n=0;n<ndimtot;n++) {xi2[n]=xi[n];xopt[n]=xi[n];}
-    F=(*calc_forces)(xi,fxi1);
+    F=(*calc_forces)(xi,fxi1,0);
     Fopt=F;
     printf("k\tT        \tm\tF          \tFopt\n");   
     printf("%d\t%f\t%d\t%f\t%f\n", 0, T,0, F, Fopt);
     fflush(stdout);
     for (n=0;n<NEPS;n++) Fvar[-n]=F;
+    
     do {
-	for (m=0;m<ntemp;m++){
-	    for (j=0;j<nstep;j++) {
-		for (h=0;h<ndim;h++){
-		    /* Step #1 */
-		    /* Create a gaussian bump, 
-		       width & hight distributed normally */
-		    
-		    width=fabs(normdist()); height=normdist()*v[h];
-		    for (n=0;n<ndimtot;n++) xi2[n]=xi[n];
-		    makebump(xi2,width,height,idx[h]);
-		    F2=(*calc_forces)(xi2,fxi1);
-		    if (F2<=F) {		/* accept new point */
-			for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
-			F=F2;
-			i++;naccept[h]++;
-			if(F<Fopt) {
-			    for (n=0;n<ndimtot;n++) xopt[n]=xi2[n];
-			    Fopt=F2;
-			    if (tempfile != "\0") 
-			      write_pot_table( &pair_pot, tempfile );
+      for (m=0;m<ntemp;m++){
+	for (j=0;j<nstep;j++) {
+	  for (h=0;h<ndim;h++){
+	    /* Step #1 */
+	    /* Create a gaussian bump, 
+	       width & hight distributed normally */
+	    width=fabs(normdist()); height=normdist()*v[h];
+	    for (n=0;n<ndimtot;n++) xi2[n]=xi[n];
+	    makebump(xi2,width,height,idx[h]);
+	    F2=(*calc_forces)(xi2,fxi1,0);
+	    if (F2<=F) {		/* accept new point */
+	      for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
+	      F=F2;
+	      i++;naccept[h]++;
+	      if(F<Fopt) {
+		for (n=0;n<ndimtot;n++) xopt[n]=xi2[n];
+		Fopt=F2;
+		if (tempfile != "\0") 
+		  write_pot_table( &pair_pot, tempfile );
+		
+	      }
+	      
+	      else if (random()/(RAND_MAX+1.0)<exp((F-F2)/T)) {
+		for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
+		F=F2;
+		i++;naccept[h]++;
+	      }
+	    }
+	  }
+	}
+	  /* Step adjustment */
+	for (n=0;n<ndim;n++) {
+	  if (naccept[n]>0.6*nstep) 
+	    v[n]*=(1+c*((double) naccept[n]/nstep - 0.6)/0.4);
+	  else if (naccept[n]<0.4*nstep)
+	    v[n]/=(1+c*(0.4-(double) naccept[n]/nstep)/0.4);
+	  naccept[n]=0;
+	}
+	printf("%d\t%f\t%d\t%f\t%f\n", k, T,m+1, F, Fopt);
+	fflush(stdout);
+	/* End fit if break flagfile exists */
+	ff = fopen(flagfile,"r");
+	if (NULL != ff) {
+	  printf("Annealing terminated in presence of break flagfile %s!\n", flagfile);
+	  printf("Temperature was %f, returning optimum configuration\n", T);	    
+	  for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
+	  F=Fopt;
+	  k=KMAX+1;
+	  break;
+	}
+      } 
+      /*Temp adjustment */
+      T*=TEMPVAR;
+      k++;
+      Fvar[k]=F;
+      loopagain = 0; 
+      for (n=1;n<=NEPS;n++) { 
+	/* printf("%d %f %f",n,fabs(F-Fvar[k-n]),EPS); */
+	if (fabs(F-Fvar[k-n])>EPS) loopagain=1; }
+      /* if ((F-Fopt)>EPS) loopagain=1; */
+      if (loopagain) {
+	i++;
+      }
+      else if ((F-Fopt)>EPS){
+	for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
+	F=Fopt;
+	loopagain=1; i++;
+      }
+      
 
-			}
-		    }
-		    else if (random()/(RAND_MAX+1.0)<exp((F-F2)/T)) {
-			for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
-			F=F2;
-			i++;naccept[h]++;
-		    }
-		}
-	    }
-	    /* Step adjustment */
-	    for (n=0;n<ndim;n++) {
-		if (naccept[n]>0.6*nstep) 
-		    v[n]*=(1+c*((double) naccept[n]/nstep - 0.6)/0.4);
-		else if (naccept[n]<0.4*nstep)
-		    v[n]/=(1+c*(0.4-(double) naccept[n]/nstep)/0.4);
-		naccept[n]=0;
-	    }
-	    printf("%d\t%f\t%d\t%f\t%f\n", k, T,m+1, F, Fopt);
-	    fflush(stdout);
-	    /* End fit if break flagfile exists */
-	    ff = fopen(flagfile,"r");
-	    if (NULL != ff) {
-	      printf("Annealing terminated in presence of break flagfile %s!\n", flagfile);
-	      printf("Temperature was %f, returning optimum configuration\n", T);	    
-	      for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
-	      F=Fopt;
-	      k=KMAX+1;
-	      break;
-	    }
-	
-	} 
-	/*Temp adjustment */
-	T*=TEMPVAR;
-	k++;
-	Fvar[k]=F;
-	loopagain = 0; 
-	for (n=1;n<=NEPS;n++) { 
-	  /* printf("%d %f %f",n,fabs(F-Fvar[k-n]),EPS); */
-	  if (fabs(F-Fvar[k-n])>EPS) loopagain=1; }
-	/* if ((F-Fopt)>EPS) loopagain=1; */
-	if (loopagain) {
-	    i++;
-	}
-	else if ((F-Fopt)>EPS){
-	    for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
-	    F=Fopt;
-	    loopagain=1; i++;
-	}
     } while (k<KMAX && loopagain);
     for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
     F=Fopt;
@@ -207,8 +209,8 @@ void anneal(real *xi)
     free_dvector(Fvar,-NEPS+1,KMAX+5);
     free_dvector(v,0,ndim-1);
     free_dvector(xopt,0,ndimtot-1);
+    free_ivector(naccept,0,ndim-1);
     free_dvector(xi2,0,ndimtot-1);
     free_dvector(fxi1,0,mdim-1);
-    free_ivector(naccept,0,ndim-1);
     return;
 }
