@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2003/03/19 09:05:34 $
+* $Revision: 1.15 $
+* $Date: 2003/03/19 10:12:16 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -119,7 +119,7 @@ real calc_forces_pair(real *xi, real *forces)
     sum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
   }
   for (i=0;i<nconf;i++) {
-    forces[3*natoms+i]/=(real) inconf[i];
+    forces[3*natoms+i]/=(real) inconf[i]*2.0; /* double counting... */
     forces[3*natoms+i]-=force_0[3*natoms+i];
     sum += SQR(forces[3*natoms+i]);
 }
