@@ -24,28 +24,28 @@
 #define PRECISION 1.E-7
 /* Well, almost nothing */
 #define NOTHING 1.E-12
-#define INNERLOOPS 143
+#define INNERLOOPS 401
 #define TOOBIG 10000
 
 
 void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 {
-   int i,j,k,m;                    /*Simple counting variables*/
-    real *force_xi;              /*calculated force, alt*/
-    real **d;                          /*Direction vectors*/
-    real **gamma;                      /*Matrix of derivatives*/
-    real **lineqsys;                   /*Lin.Eq.Sys. Matrix*/
-    real **les_inverse;		 /*Inverse of the lineqsys */
-    real *delta;			 /*Vector pointing into correct dir'n*/
-    real *delta_norm;			 /*Normalized vector delta */
-    real *fxi1,*fxi2;			 /*last two function values */
-    int *perm_indx;			 /*Keeps track of LU pivoting */
-    real *p,*q;                  /*Vectors needed in Powell's algorithm*/
-    real perm_sig;
-    real F,F2,F3,df,xi1,xi2;
-    real temp,temp2;
-    real norm_delta,norm_delta2=0.;
-    
+   int i,j,k,m;                    /* Simple counting variables */
+    real *force_xi;                /* calculated force, alt */
+    real **d;                      /* Direction vectors */
+    real **gamma;                  /* Matrix of derivatives */
+    real **lineqsys;               /* Lin.Eq.Sys. Matrix */
+    real **les_inverse;		   /* LU decomp. of the lineqsys */
+    real *delta;		   /* Vector pointing into correct dir'n */
+    real *delta_norm;		   /* Normalized vector delta */
+    real *fxi1,*fxi2;		   /* two latest force vectors */
+    int *perm_indx;		   /* Keeps track of LU pivoting */
+    real *p,*q;                    /* Vectors needed in Powell's algorithm */
+    real perm_sig;                 /* Signature of permutation in LU decomp */
+    real F,F2,F3,df,xi1,xi2;       /* Fn values, changes, steps ... */
+    real temp,temp2;               /* as the name indicates: temporary vars */
+    static char errmsg[256];	   /* Error message */
+
     d=dmatrix(0,ndim-1,0,ndim-1);
     gamma=dmatrix(0,mdim-1,0,ndim-1);
     lineqsys=dmatrix(0,ndim-1,0,ndim-1);
@@ -60,40 +60,48 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
     q=dvector(0,ndim-1);
     force_calc=fcalc;
     
+    /* calculate the first vector */
     F=(*force_calc)(xi,fxi1);
+    
+    printf("%d %f %f %f %f %f %f %d \n",
+	       m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
     if (F<NOTHING) return;	/* If F is less than nothing, */
 				/* what is there to do?*/
     (void) copy_vector(fxi1,force_xi,mdim);
     do { /*outer loop, includes recalculating gamma*/
     	m=0;
-    	if (gamma_init(gamma, d, xi, fxi1, ndim, mdim)) break;   /*init gamma*/
-    	(void) lineqsys_init(gamma,lineqsys,fxi1,p,ndim,mdim); /*init lineqsys*/
+	/* Init gamma */
+    	if (i=gamma_init(gamma, d, xi, fxi1, ndim, mdim)) {
+	    sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
+		    i-1);
+	    error(errmsg);
+	}
+    	(void) lineqsys_init(gamma,lineqsys,fxi1,p,ndim,mdim); /*init LES */
     	F3=F;
     	do {
-            (void) copy_matrix(lineqsys,les_inverse,ndim,ndim);
-            (void) ludcmp_r(les_inverse,ndim,perm_indx,&perm_sig);
-            (void) copy_vector(p,q,ndim);
+            /* LU decomposition of LES matrix */
+	    /* 1) Store original matrix (needed later) */
+	    (void) copy_matrix(lineqsys,les_inverse,ndim,ndim);
+            /* 2) LU decompose */
+	    (void) ludcmp_r(les_inverse,ndim,perm_indx,&perm_sig);
+            /* 3) Store original vector (needed later) */
+	    (void) copy_vector(p,q,ndim);
+	    /* 4) Backsubstitute vector in lu decomp. matrix */
             (void) lubksb_r(les_inverse,ndim,perm_indx,q); 
-            (void) mprove_r(lineqsys,les_inverse,ndim,perm_indx,p,q);  
+	    /* 5) Improve that solution by iterative improvement */
+            (void) mprove_r(lineqsys,les_inverse,ndim,perm_indx,p,q); 
+	    
+	    /* get delta by multiplying q with the direction vectors */
             (void) matdotvec(d,q,delta,ndim,ndim);
+            /* store delta */
             (void) copy_vector(delta, delta_norm, ndim);
-	    norm_delta=normalize_vector(delta_norm,ndim);
-	    /*  printf("%f ",norm_delta);*/
-	    /* Exit if norm of vector delta "explodes" - 
-	    Matrix probably became unstable */
-	    /* if ((norm_delta>100.*norm_delta2) && (m>1)) 
-		    break;
-	    else 
-	    norm_delta2=norm_delta; */
+	    /* normalize it */
+	    (void) normalize_vector(delta_norm,ndim);
             
 	    F2=F;   /*shift F*/
+	    /* minimize F(xi) along vector delta, return new F */
 	    F=linmin_r(xi,delta,F,ndim,mdim,&xi1,&xi2,fxi1,fxi2,force_calc);
-	    /*printf("F(%d):=%1.10f; xi%d:=[%1.10f, %1.10f]; %1.10f;
-	    \n",m,F,m,xi[0],xi[1],d[0][0]*d[0][1]+d[1][0]*d[1][1]);*/
-	    if (!m) printf("%d %f %f %f %f %f %f %d \n",
-			    m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
     
-        /* Find maximal p[i]*q[i]*/
             j=0;temp2=0.;
             for (i=0;i<ndim;i++) 
                 if ((temp=fabs(p[i]*q[i]))>temp2) {j=i;temp2=temp;};
@@ -110,18 +118,25 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
 	    }
 	    /*update gamma, but if fn returns 1, matrix will be sigular, 
 	    break inner loop and restart with new matrix*/
-            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,ndim,mdim)) break;
+            if (gamma_update(gamma,xi1,xi2,fxi1,fxi2,j,ndim,mdim)){
+		sprintf(errmsg,"Matrix gamma singular after step %d,\nrestarting inner loop\n",m);
+		warning(errmsg);
+		break;
+	    }
             (void) lineqsys_update(gamma,lineqsys,fxi1,p,j,ndim,mdim);
 	    m++;           /*increment loop counter*/
-	/* loop at least 2*ndim times, but at most INNERLOOPS or until no
+	/* loop at least 7*ndim times, but at most INNERLOOPS or until no
 	further improvement */ 
 	    df=F2-F;  
         } while ((m<7*ndim+1 || (m<=INNERLOOPS && df>PRECISION) ) &&
 			df<TOOBIG); 
+	    /* Print the steps in current loop, F, a few values of xi, and
+	       total number of fn calls */
+        printf("%d %f %f %f %f %f %f %d \n",
+	       m,F,xi[0],xi[1],xi[2],xi[3],xi[4],fcalls);
     /*End fit if whole series didn't improve F F*/
-    } while (F3-F>PRECISION/1.);
-    /*normalize and store delta before passing on to linmin */
-    /*(void) minverse(lineqsys,les_inverse,ndim,perm_indx,&perm_sign);*/
+    } while (F3-F>PRECISION/10.);
+	/* Free memory */
     free_dmatrix(d,0,ndim-1,0,ndim-1);
     free_dmatrix(gamma,0,mdim-1,0,ndim-1);
     free_dmatrix(lineqsys,0,ndim-1,0,ndim-1);
@@ -135,77 +150,9 @@ void powell_lsq(real *xi, real (*fcalc)(real[],real[]))
     free_dvector(p,0,ndim-1);
     free_dvector(q,0,ndim-1);
 
-    
     return ;
 }
 
-/******************************************************************
-*
-* fxi_init: Set force_xi and deltaforce from force_calc results
-*
-******************************************************************/
-
-/* real fxi_init(real *xi, real *fsoll, real *force_xi, int n, int m){
-    static real force[mdim];
-    int j;
-    (void) force_calc(xi,force,n,m);
-    for (j=0;j<mdim;j++) force_xi[j]=force[j];
-    return;
-}
- */
-
-/******************************************************************
- *
- * force_calc: Get value of force at place xi
- *
- ******************************************************************/
-
-/*real force_calc(real *xi, real *force, int n, int m) {
-    int j;
-    real temp=0., f=0.0;
-    fcalls++;*/
-    /* Chemistry problem */
-    /* force[0]=xi[0]+xi[1]*exp(xi[3]*0.0)+xi[2]*exp(xi[4]*0.);
-    force[1]=xi[0]+xi[1]*exp(xi[3]*0.5)+xi[2]*exp(xi[4]*.5);
-    force[2]=xi[0]+xi[1]*exp(xi[3]*1.0)+xi[2]*exp(xi[4]*1.);
-    force[3]=xi[0]+xi[1]*exp(xi[3]*1.5)+xi[2]*exp(xi[4]*1.5);
-    force[4]=xi[0]+xi[1]*exp(xi[3]*2.0)+xi[2]*exp(xi[4]*2.);
-    force[5]=xi[0]+xi[1]*exp(xi[3]*3.0)+xi[2]*exp(xi[4]*3.);
-    force[6]=xi[0]+xi[1]*exp(xi[3]*5.0)+xi[2]*exp(xi[4]*5.);
-    force[7]=xi[0]+xi[1]*exp(xi[3]*8.0)+xi[2]*exp(xi[4]*8.);
-    force[8]=xi[0]+xi[1]*exp(xi[3]*10.)+xi[2]*exp(xi[4]*10.); */
-
-    
-/* navigation problem */
-/*    force[0]=atan((xi[1]-6.)/(xi[0]-8.));
-    force[1]=atan((xi[1]-5.)/(xi[0]+4.));
-    force[2]=atan((xi[1]+3.)/(xi[0]-1.));*/
-		    
-    
-    
-    /* Pyramidal Problem */
-    /*force[0]=xi[0];
-    force[1]=sqrt(2.)*xi[0];
-    force[2]=xi[1];
-    force[3]=sqrt(0.5*xi[0]*xi[0]+xi[1]*xi[1]);
-    force[4]=sqrt(0.25*xi[0]*xi[0]+xi[1]*xi[1]);*/
-		            
-    /* Peter's Problem */
-    /*force[0]=xi[0]-1.2;   
-    force[1]=xi[0]*exp(xi[1]*log(4.))-2.5; 
-    force[2]=xi[0]*exp(xi[1]*log(0.25))-0.63; */
-    
-		    
-    /*Rosenbrock's Problem*/
-/*    force[0]=10*(xi[1]-xi[0]*xi[0]);
-    force[1]=1-xi[0];		    */
-
-/*    for (j=0;j<m;j++) {
-	temp=(force[j]-=fsoll[j]);
-	f+=temp*temp;
-    }
-    return f;
-    }*/
 
 /******************************************************************
 *
@@ -244,7 +191,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi, int n,
 	if (temp>NOTHING) 
 	    for (j=0;j<m;j++) gamma[j][i] /= temp; /*normalize gamma*/
 	else
-	    return 1;		/* singular matrix, abort */
+	    return i+1;		/* singular matrix, abort */
     }
     return 0;
 }
@@ -300,9 +247,7 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
 	    for (j=0;j<m;j++) {
 		lineqsys[i][k]+=gamma[j][i]*gamma[j][k];
 	    }
-/*	    printf("%f ", lineqsys[i][k]);*/
 	}
-/*	printf("\n");*/
     }
     return;
 }
@@ -413,11 +358,4 @@ real normalize_vector(real *v, int n){
     for (j=0;j<n;j++) v[j]/=temp;
     return temp;
 }
-
-
-
-
-
-
-
 

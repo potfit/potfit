@@ -23,10 +23,10 @@ real f1dim_r(real x);
 real linmin_r(real p[], real xi[], real fxi1, int n, int m, real *x1, 
 		real *x2, real *fret1, real *fret2, 
 		real (*func)(real [], real []))
-/* takes vector xi (direction of search), p (originating point), n,m (dimensions),
+/* takes vector xi (direction of search), p (originating point), 
+   n,m (dimensions),
    x, x2 (two best locations),
-   fret1, fret2 (return vectors) and the function to minimize with input and result
-   vectors as arguments */
+   fret1, fret2 (return vectors) and the function to minimize as arguments */
 	{
 	int j;
 	real xx,fx,fb,bx,ax;
@@ -42,11 +42,10 @@ real linmin_r(real p[], real xi[], real fxi1, int n, int m, real *x1,
 		pcom[j]=p[j];
 		xicom[j]=xi[j];
 	}
-	ax=0.0;                 /*do not change without correcting fa*/
+	ax=0.0;                 /*do not change without correcting fa,*/
+				/*saves 1 fcalc...*/
 	xx=1.0;
 	mnbrak_r(&ax,&xx,&bx,&fa,&fx,&fb,f1dim_r);
-	/*only do brent if there's something to improve*/
-/*	if ((fabs((fa-fx)/fx)>TOL/100.)||(fabs((fb-fx)/fx))>TOL/100.) */
 		fx=brent_r(ax,xx,bx,fx,TOL,&xmin,&xmin2,fret1,fret2);
 	for (j=0;j<n;j++) {
 		xi[j] *= xmin;

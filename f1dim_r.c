@@ -29,7 +29,3 @@ real f1dim_r(real x)
 }
 #undef NRANSI
 /* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
-
-
-
-

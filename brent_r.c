@@ -67,7 +67,8 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 		if (fu <= fx) {
 			if (u >= x) a=x; else b=x;
 			SHFT(v,w,x,u)
-			for (j=0;j<mcom;j++) {      /*shifting fxmin2, fxmin, fxu*/
+			for (j=0;j<mcom;j++) {      /* shifting fxmin2, */
+						    /* fxmin, fxu */
 				fxmin2[j]=fxmin[j];
 				fxmin[j]=fxu[j];
 			}		
@@ -77,7 +78,7 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
 			if (fu <= fw || w == x) {
 				v=w;
 				w=u;
-				for (j=0;j<mcom;j++) fxmin2[j]=fxu[j]; /*shift*/
+				for (j=0;j<mcom;j++) fxmin2[j]=fxu[j]; 
 				fv=fw;
 				fw=fu;
 			} else if (fu <= fv || v == x || v == w) {

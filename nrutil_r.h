@@ -1,9 +1,6 @@
 #ifndef _NR_UTILS_H_
 #define _NR_UTILS_H_
 
-/* static float sqrarg;*/
-/* #define SQR(a) ((sqrarg=(a)) == 0.0 ? 0.0 : sqrarg*sqrarg)*/
-
 static real dsqrarg;
 #define DSQR(a) ((dsqrarg=(a)) == 0.0 ? 0.0 : dsqrarg*dsqrarg)
 
