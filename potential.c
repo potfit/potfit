@@ -6,13 +6,13 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.30 $
-* $Date: 2004/11/17 16:10:36 $
+* $Revision: 1.31 $
+* $Date: 2004/11/24 13:27:41 $
 *****************************************************************/
 
 /* should imd potentials be extrapolated? Set EXTEND >0 to extrapolate
    by EXTEND*(mean distance between points) units*/
-#define EXTEND 2. 		
+/* #define EXTEND 2. 		 */
 #define NPLOT 1000
 #ifndef POTSCALE
 #include "potfit.h"
@@ -882,7 +882,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	  col1 = i<j ? i * ntypes + j - m : j * ntypes + i - m2;
 	  col2 = i * ntypes + j;
 	  /* Extrapolation possible  */
-	  r2begin[col2] = SQR(MAX(pt->begin[col1]-EXTEND*pt->step[col1],0));
+	  r2begin[col2] = SQR(MAX(pt->begin[col1]-extend*pt->step[col1],0));
 	  r2end  [col2] = SQR(pt->end[col1]);
 	  r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
 	  fprintf(outfile, "%.16e %.16e %.16e\n", 
@@ -940,7 +940,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col1 = (ntypes*(ntypes+1))/2+j;
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
-      r2begin[col2] = SQR(MAX(pt->begin[col1]-EXTEND*pt->step[col1],0));
+      r2begin[col2] = SQR(MAX(pt->begin[col1]-extend*pt->step[col1],0));
       r2end  [col2] = SQR(pt->end[col1]);
       r2step [col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", 
@@ -980,9 +980,9 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   for (i=0; i<ntypes; i++){ 
     col1=(ntypes*(ntypes+3))/2+i;
     /* pad with zeroes */
-    r2begin[i] = pt->begin[col1]-EXTEND*pt->step[col1];
+    r2begin[i] = pt->begin[col1]-extend*pt->step[col1];
     /* extrapolation */
-    r2end  [i] = pt->end[col1]+EXTEND*pt->step[col1];
+    r2end  [i] = pt->end[col1]+extend*pt->step[col1];
     r2step [i] = (r2end[i] - r2begin[i]) / imdpotsteps;
     fprintf(outfile, "%.16e %.16e %.16e\n", 
 	    r2begin[i], r2end[i], r2step[i]);

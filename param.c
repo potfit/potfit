@@ -3,8 +3,8 @@
 *
 *  param.c: Read in parameter files (tag based)
 * 
-*  $Revision: 1.16 $
-*  $Date: 2004/11/17 17:28:49 $
+*  $Revision: 1.17 $
+*  $Date: 2004/11/24 13:27:41 $
 *
 ******************************************************************************/
 #ifndef POTSCALE
@@ -187,6 +187,10 @@ void read_paramfile(FILE *pf)
     /* number of steps in IMD potential */
     else if (strcasecmp(token,"imdpotsteps")==0) {
       getparam("imdpotsteps",&imdpotsteps,PARAM_INT,1,1);
+    }
+    /* Energy Weight */
+    else if (strcasecmp(token,"extend")==0) {
+      getparam("extend",&extend,PARAM_DOUBLE,1,1);
     }
     /* file with atom configuration */
     else if (strcasecmp(token,"config")==0) {

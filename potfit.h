@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.39 $
-* $Date: 2004/11/17 17:28:49 $
+* $Revision: 1.40 $
+* $Date: 2004/11/24 13:27:42 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -126,6 +126,7 @@ EXTERN int myatoms INIT(0.);
 EXTERN int firstconf INIT(0);
 EXTERN int firstatom INIT(0);
 EXTERN real   pi       INIT(0.);
+EXTERN real   extend INIT(2.);	/* how far should one extend imd pot */
 EXTERN real   anneal_temp INIT(1.);
 EXTERN int    seed     INIT(123456);     /* seed for RNG */
 EXTERN int    fcalls   INIT(0);
