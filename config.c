@@ -4,8 +4,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2003/05/16 12:16:59 $
+* $Revision: 1.13 $
+* $Date: 2003/06/04 07:38:49 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -234,7 +234,10 @@ void read_config(char *filename)
 				3*natoms are real forces, 
 				nconf cohesive energies, */ 
 #ifdef EAM  
-  if (eam) mdim+=2+nconf;          /* 2 dummy constraints */
+  if (eam) mdim+=2;          /* 2 dummy constraints */
+#ifdef LIMIT
+  if (eam) mdim+=nconf;		/* nconf limiting constraints */
+#endif LIMIT
 #endif EAM
   /* copy forces into single vector */
   if (NULL==(force_0 = (real *) malloc( mdim * sizeof(real) ) ) )
@@ -246,10 +249,12 @@ void read_config(char *filename)
     force_0[k++] = atoms[i].force.z;
   }
   for (i=0; i<nconf; i++) {
-    force_0[k++] = coheng[i]; }
+    force_0[k++] = coheng[i] * (real) ENG_WEIGHT; }
 #ifdef EAM
   if (eam) {
-    for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
+#ifdef LIMIT 
+   for(i=0; i<nconf; i++) force_0[k++]=0.; /* punishment rho out of bounds */
+#endif
     force_0[k++]=DUMMY_WEIGHT * DUMMY_RHO;		/* dummy constraints */
     force_0[k++]=DUMMY_WEIGHT * DUMMY_PHI;
   }

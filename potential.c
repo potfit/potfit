@@ -6,8 +6,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2003/05/16 12:17:01 $
+* $Revision: 1.16 $
+* $Date: 2003/06/04 07:38:50 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -387,7 +387,7 @@ real parab_ed(pot_table_t *pt,  real *xi, int col, real r)
 *
 ******************************************************************************/
 
-real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad)
+real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r)
 {
   real rr, istep, chi, p0, p1, p2, dv, d2v;
   int  k;

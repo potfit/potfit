@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2003/04/10 12:43:36 $
+* $Revision: 1.7 $
+* $Date: 2003/06/04 07:38:51 $
 *****************************************************************/
 
 
@@ -19,7 +19,7 @@
 #define NEPS 4
 #define NSTEP 20
 #define STEPVAR 2.0
-#define NTEMP (5*ndim)
+#define NTEMP (3*ndim)
 #define TEMPVAR 0.85
 /* #define TSTART 6 */
 #define KMAX 1000
@@ -149,6 +149,9 @@ void anneal(real *xi)
 			if(F<Fopt) {
 			    for (n=0;n<ndimtot;n++) xopt[n]=xi2[n];
 			    Fopt=F2;
+			    if (tempfile != "\0") 
+			      write_pot_table( &pair_pot, tempfile );
+
 			}
 		    }
 		    else if (random()/(RAND_MAX+1.0)<exp((F-F2)/T)) {
@@ -181,7 +184,6 @@ void anneal(real *xi)
 	
 	} 
 	/*Temp adjustment */
-	if (tempfile != "\0") write_pot_table( &pair_pot, tempfile );
 	T*=TEMPVAR;
 	k++;
 	Fvar[k]=F;

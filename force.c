@@ -5,8 +5,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2003/05/16 12:16:59 $
+* $Revision: 1.21 $
+* $Date: 2003/06/04 07:38:49 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -125,8 +125,9 @@ real calc_forces_pair(real *xi, real *forces)
     for (h=0; h<nconf; h++) {
       config = 3*natoms + h;
       forces[config]=0.;
-      forces[config+nconf]=force_0[config+nconf];
-
+#ifdef LIMIT
+      forces[config+nconf]=-force_0[config+nconf];
+#endif
       for (i=0; i<inconf[h]; i++) {
 	k    = 3*(cnfstart[h]+i);
 	forces[k  ] = -force_0[k  ];
@@ -198,7 +199,9 @@ real calc_forces_pair(real *xi, real *forces)
 #ifdef LIMIT
 	    forces[config+nconf]+=1000*SQR(atom->rho - pair_pot.end[col2]);
 #endif
+#ifndef PARABEL
 	    atom->rho = pair_pot.end[col2];
+#endif
 	  }
 /* rho too big... bad thing */
 	  if (atom->rho < pair_pot.begin[col2]) {
@@ -206,7 +209,9 @@ real calc_forces_pair(real *xi, real *forces)
 #ifdef LIMIT
 	    forces[config+nconf]+=1000*SQR(pair_pot.begin[col2]-atom->rho);
 #endif
+#ifndef PARABEL
 	    atom->rho = pair_pot.begin[col2];
+#endif
 	  }
 	} 
 #endif
@@ -260,9 +265,12 @@ real calc_forces_pair(real *xi, real *forces)
 	}	/* loop over atoms */
       }	/* if eam is used */
 #endif
-      forces[config]/=(real) inconf[h]; /* double counting... */
+      forces[config]*=(real) ENG_WEIGHT / (real) inconf[h]; 
       forces[config]-=force_0[config];
-      sum += SQR(forces[config]) + SQR(forces[config+nconf]);
+      sum += SQR(forces[config]);
+#ifdef LIMIT
+      sum += SQR(forces[config+nconf]);
+#endif
     } /* loop over configurations */
   } /* parallel region */
 #ifdef EAM

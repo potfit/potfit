@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2003/05/16 12:17:02 $
+* $Revision: 1.24 $
+* $Date: 2003/06/04 07:38:50 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -16,6 +16,9 @@
 #include <string.h>
 #ifdef OMP
 #include <omp.h>
+#endif
+#ifdef LIMIT
+#define EAM
 #endif
 #define NRANSI
 #define MAXNEIGH 170
@@ -26,7 +29,8 @@
 #define DUMMY_COL_PHI 0
 #define DUMMY_R_RHO 2.5
 #define DUMMY_R_PHI 2.5
-#define DUMMY_WEIGHT 10000.
+#define DUMMY_WEIGHT 100.
+#define ENG_WEIGHT 1.
 #endif
 
 /******************************************************************************
@@ -157,6 +161,6 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
 #ifdef PARABEL
 real parab_comb_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad);
-real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r, real *grad);
+real parab_grad_ed(pot_table_t *pt,  real *xi, int col, real r);
 real parab_ed(pot_table_t *pt,  real *xi, int col, real r);
 #endif
