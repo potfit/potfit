@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.7 $
-*  $Date: 2003/04/28 13:39:45 $
+*  $Revision: 1.1 $
+*  $Date: 2004/04/13 14:13:51 $
 *
 ******************************************************************************/
 

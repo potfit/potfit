@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.3 $
-*  $Date: 2003/12/11 12:44:46 $
+*  $Revision: 1.1 $
+*  $Date: 2004/04/13 14:13:50 $
 *
 *  Convert an IMD force file to a VASP POSCAR file
 *
@@ -75,9 +75,11 @@ int main(int argc, char **argv)
   
   /* read energy and stress -> discard */
   fscanf(infile, "%lf\n", &tmp.x);
+  //printf("%f\n",tmp.x);
 #ifdef STRESS
   fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &tmp.x, &tmp.y, &tmp.z, 
 	 &tmp2.x, &tmp2.y, &tmp2.z);
+//  printf("%f %f\n",tmp.x,tmp2.z);
 #endif
 
   /* read atoms */
@@ -88,6 +90,7 @@ int main(int argc, char **argv)
     if (typ[i]<MAXTYP) {
       num[typ[i]]++;
       max = MAX( max, typ[i]+1 );
+//      printf("Atom %d, Type %d\n",i,typ[i]);
     } else error("not enough types - increase MAXTYP");
   }
 
