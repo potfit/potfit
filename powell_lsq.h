@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2004/02/20 12:06:19 $
+* $Revision: 1.10 $
+* $Date: 2004/02/20 12:06:57 $
 *****************************************************************/
 
 
@@ -41,10 +41,6 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
 		
 real linmin_r(real p[], real xi[], real fxi1, int n, int m,
 	real *x1, real *x2, real *fret1, real *fret2);
-
-//void lubksb_r(real **a, int n, int *indx, real b[]);
-
-//int ludcmp_r(real **a, int n, int *indx, real *d);
 
 void matdotvec(real **a, real *x, real *y, int n, int m);
 
