@@ -3,12 +3,16 @@
 *
 *  param.c: Read in parameter files (tag based)
 * 
-*  $Revision: 1.11 $
-*  $Date: 2003/06/18 16:47:03 $
+*  $Revision: 1.12 $
+*  $Date: 2004/02/20 12:10:04 $
 *
 ******************************************************************************/
-
+#ifndef POTSCALE
 #include "potfit.h"
+#else
+#include "potscale.h"
+#endif
+
 
 /* the following are needed for gettimeofday */
 #include <sys/time.h>

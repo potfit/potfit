@@ -6,8 +6,8 @@
  *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2003/11/20 08:38:47 $
+* $Revision: 1.9 $
+* $Date: 2004/02/20 12:10:03 $
 *****************************************************************/
 
 
@@ -24,7 +24,11 @@
  *** adapted to equidistant x                                             ****
  *** by Peter Brommer, ITAP 2002-11-27                                    ****/
 #define NRANSI
+#ifndef POTSCALE
 #include "potfit.h"
+#else
+#include "potscale.h"
+#endif
 #include "nrutil_r.h"
 
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
@@ -154,6 +158,10 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
   k     = (int) (rr * istep);
   b     = (rr - k * pt->step[col]) * istep;
   k    += pt->first[col];
+  /* Check if we are at the last index */
+  if (k>=pt->last[col]) {
+    k--;b+=1.0;
+  }
   a     = 1.0 - b;
   p1    = xi[k];
   d21   = pt->d2tab[k++];

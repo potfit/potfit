@@ -5,8 +5,8 @@
 * 
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2003/06/04 07:38:49 $
+* $Revision: 1.9 $
+* $Date: 2004/02/20 12:10:04 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
@@ -48,12 +48,12 @@ real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
 	mnbrak_r(&ax,&xx,&bx,&fa,&fx,&fb,f1dim_r);
 	fx=brent_r(ax,xx,bx,fx,TOL,&xmin,&xmin2,fret1,fret2);
 	for (j=0;j<ndimtot;j++) {
-		del[j] *= xmin;
-		xi[j] += del[j];
-	}
+	  del[j] *= xmin;
+	  xi[j] += del[j];
+	  }
 	*x1=xmin;
 	*x2=xmin2;
-	return fx;
+       	return fx;
 }
 #undef TOL
 #undef NRANSI

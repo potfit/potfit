@@ -4,8 +4,8 @@
 *
 *****************************************************************/
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2003/03/19 09:05:38 $
+* $Revision: 1.5 $
+* $Date: 2004/02/20 12:10:05 $
 *****************************************************************/
 
 /***** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
@@ -16,7 +16,11 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#ifndef POTSCALE
 #include "potfit.h"
+#else
+#include "potscale.h"
+#endif
 #include "nrutil_r.h"
 #define NR_END 1
 #define FREE_ARG char*

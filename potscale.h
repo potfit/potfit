@@ -6,8 +6,8 @@
 
 
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2003/06/18 16:42:39 $
+* $Revision: 1.2 $
+* $Date: 2004/02/20 12:10:05 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -80,6 +80,7 @@ EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;             /* the potential table */
 EXTERN int plot INIT(0);                 /* plot output flag */
 EXTERN real *rcut INIT(NULL);
+EXTERN real *rmin INIT(NULL);
 EXTERN int  *idx INIT(NULL);
 EXTERN real   *dummy_phi INIT(NULL);     /* Dummy Constraints for PairPot */
 EXTERN real   dummy_rho INIT(1.);        /* Dummy Constraint for rho */

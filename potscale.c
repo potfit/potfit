@@ -5,8 +5,8 @@
 *****************************************************************/
 
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2003/07/29 08:47:51 $
+* $Revision: 1.3 $
+* $Date: 2004/02/20 12:10:03 $
 *****************************************************************/
 
 
@@ -141,6 +141,7 @@ void init_splines(pot_table_t *pt)
       grad0=1e30;
     if (!((grad0>-1e10) && (grad0<1e10))) grad0=1e30;
     if (  (grad0>-1e-20)&& (grad0<1e-20)) grad0=0.;
+
     spline_ed(pt->step[col1], pt->table+first,
 	      pt->last[col1]-first+1,
 	      grad0, 0.0, pt->d2tab+first);
@@ -151,6 +152,7 @@ void init_splines(pot_table_t *pt)
 	      pt->last[col1]-first+1,
 	      1e30,0.0,pt->d2tab+first);
   }
+
 #ifndef PARABEL
   for  (col1=paircol+ntypes; col1<paircol+2*ntypes; col1++) { /* F */
     first=pt->first[col1];
@@ -158,6 +160,7 @@ void init_splines(pot_table_t *pt)
 	      pt->last[col1]-first+1,
 	      0.,0.,pt->d2tab+first);
   }
+
   return;
 #endif
 }
