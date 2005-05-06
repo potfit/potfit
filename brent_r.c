@@ -3,104 +3,218 @@
 *  brent_r.c: Minmization of a multivariable function according to 
 *      Brent's algorithm.
 *
+* Copyright (C) 1996, 1997, 1998, 1999, 2000 Brian Gough
+*        2005 Peter Brommer
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
 *****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2004/02/20 12:16:54 $
+* $Revision: 1.7 $
+* $Date: 2005/05/06 13:24:16 $
 *****************************************************************/
+
 /**** rewritten for double precision                                      ****
 ***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
 /**** Adapted to Powell requirements 2002-10-11 			  ***/
 /**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
+/**** Switched to GSL Implementation, put routine under GSL protection ****/
 
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
-#define NRANSI
+#include <float.h>
 #include "potfit.h"
-#include "nrutil_r.h"
+#include "utils.h"
+#define CGOLD 0.3819660 
+
 #define ITMAX 100
-#define CGOLD 0.3819660
-#define ZEPS 1.0e-10
-#define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
+#define ZEPS 1.0e-9 
+#define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d); 
+#define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
 
-extern real *xicom,*delcom;
+extern real *xicom,*delcom; 
 
-real brent_r(real ax, real bx, real cx, real fbx, real tol, real *xmin,
-		real *xmin2, real *fxmin, real *fxmin2)
+real brent_r(real ax, real bx, real cx, real fbx, real tol, 
+		     real *xmin, real *xmin2, real *fxmin, real *fxmin2) 
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin, fxmin2 */
 {
-	int iter,j;
-	real a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
-	real e=0.0;   /*Distance moved on step before last */
-	static real *vecu = NULL, *fxu = NULL;   /* Vector of location u */
+  int iter,j;
+  real t2,tolerance;
+  real midpoint;
+  real x_left ;
+  real x_right;
+  real z;
+  real d = 0.;
+  real e = 0.;
+  real u, f_u;
+  real v;
+  real w; 
+  real f_v; 
+  real f_w; 
+  real f_z; 
+  real w_lower, w_upper; 
+  real *p_w, *p_z, *p_u, *p_temp;
+  
+  static real *vecu = NULL, *fxu = NULL;   /* Vector of location u */
+  
+  real p=0, q=0, r=0;
+  if (fxu  == NULL) fxu  = vect_real(mdim); 
+  if (vecu == NULL) vecu = vect_real(ndimtot);
+  
+  z=bx;
+  f_z = fbx;
+  x_left = (ax < cx ? ax : cx);
+  x_right = (ax > cx ? ax : cx);
 
-	if (fxu  == NULL) fxu  = dvector(0,mdim-1);
-	if (vecu == NULL) vecu = dvector(0,ndimtot-1);
-	a=(ax < cx ? ax : cx);
-	b=(ax > cx ? ax : cx);
-	x=w=v=bx;
-	fw=fv=fx=fbx;
-	for (iter=1;iter<=ITMAX;iter++) {
-		xm=0.5*(a+b);
-		tol2=2.0*(tol1=tol*fabs(x)+ZEPS);
-		if (fabs(x-xm) <= (tol2-0.5*(b-a))) {
-			*xmin=x;
-			*xmin2=w;
-			return fx;
-		}
-		if (fabs(e) > tol1) {
-			r=(x-w)*(fx-fv);
-			q=(x-v)*(fx-fw);
-			p=(x-v)*q-(x-w)*r;
-			q=2.0*(q-r);
-			if (q > 0.0) p = -p;
-			q=fabs(q);
-			etemp=e;
-			e=d;
-			if (fabs(p) >= fabs(0.5*q*etemp) || p <= q*(a-x) || p >= q*(b-x))
-				d=CGOLD*(e=(x >= xm ? a-x : b-x));
-			else {
-				d=p/q;
-				u=x+d;
-				if (u-a < tol2 || b-u < tol2)
-					d=SIGN(tol1,xm-x);
-			}
-		} else {
-			d=CGOLD*(e=(x >= xm ? a-x : b-x));
-		}
-		u=(fabs(d) >= tol1 ? x+d : x+SIGN(tol1,d));
-		for (j=0;j<ndimtot;j++) vecu[j]=xicom[j]+u*delcom[j];/*set vecu*/
-		fu=(*calc_forces)(vecu,fxu,0);
-		if (fu <= fx) {
-			if (u >= x) a=x; else b=x;
-			SHFT(v,w,x,u)
-			for (j=0;j<mdim;j++) {      /* shifting fxmin2, */
-						    /* fxmin, fxu */
-				fxmin2[j]=fxmin[j];
-				fxmin[j]=fxu[j];
-			}		
-			SHFT(fv,fw,fx,fu)
-		} else {
-			if (u < x) a=u; else b=u;
-			if (fu <= fw || w == x) {
-				v=w;
-				w=u;
-				for (j=0;j<mdim;j++) fxmin2[j]=fxu[j]; 
-				fv=fw;
-				fw=fu;
-			} else if (fu <= fv || v == x || v == w) {
-				v=u;
-				fv=fu;
-			}
-		}
-	}
-	nrerror("Too many iterations in brent");
-	*xmin=x;
-	*xmin2=w;
-	return fx;
+  v=w = x_left + CGOLD * (x_right - x_left);
+  for (j=0;j<ndimtot;j++) vecu[j]=xicom[j]+v*delcom[j];/*set vecu */
+
+  p_z=fxmin;
+  p_w=fxmin2;
+  p_u=fxu;
+  f_v=f_w=(*calc_forces)(vecu,p_w,0); 
+
+  for (iter=1;iter<=ITMAX;iter++) {
+    midpoint = 0.5 * (x_left + x_right);
+    t2=2*(tolerance=(tol*fabs(z)+ZEPS));
+    w_lower = (z - x_left);
+    w_upper = (x_right - z);
+    if (fabs(z-midpoint) <= t2-0.5*(x_right-x_left)) {
+      *xmin=z;
+      *xmin2=w;
+      /* Put correct values in pointers */
+      for (j=0;j<mdim;j++) {
+	w_lower=p_z[j]; 	/* temporary storage */
+	fxmin2[j]=p_w[j];
+	fxmin[j]=w_lower;
+      }
+      return f_z;
+    }
+    if (fabs (e) > tolerance)
+    {
+      /* fit parabola */
+
+      r = (z - w) * (f_z - f_v);
+      q = (z - v) * (f_z - f_w);
+      p = (z - v) * q - (z - w) * r;
+      q = 2 * (q - r);
+
+      if (q > 0)
+        {
+          p = -p;
+        }
+      else
+        {
+          q = -q;
+        }
+
+      r = e;
+      e = d;
+    }
+
+  if (fabs (p) < fabs (0.5 * q * r) && p < q * w_lower && p < q * w_upper)
+    {
+
+      d = p / q;
+      u = z + d;
+
+      if ((u - x_left) < t2 || (x_right - u) < t2)
+        {
+          d = (z < midpoint) ? tolerance : -tolerance ;
+        }
+    }
+  else
+    {
+      e = (z < midpoint) ? x_right - z : -(z - x_left) ;
+      d = CGOLD * e;
+    }
+
+
+  if (fabs (d) >= tolerance)
+    {
+      u = z + d;
+    }
+  else
+    {
+      u = z + ((d > 0) ? tolerance : -tolerance) ;
+    }
+   
+
+  for (j=0;j<ndimtot;j++) vecu[j]=xicom[j]+u*delcom[j];/*set vecu */
+  f_u=(*calc_forces)(vecu,p_u,0); 
+
+  if (f_u > f_z)
+    {
+      if (u < z)
+        {
+          x_left = u;
+	  /* fertig */
+        }
+      else
+        {
+          x_right = u;
+	  /* done */
+        }
+    
+      if (f_u <= f_w || w == z)
+      {
+	v = w;
+	f_v = f_w;
+	w = u;
+	f_w = f_u;
+	P_SWAP(p_w,p_u,p_temp);
+	/* done */
+      }
+      else if (f_u <= f_v || v == z || v == w)
+      {
+      v = u;
+      f_v = f_u;
+      /* done */
+      }
+    }
+  else if (f_u <= f_z)
+  {
+    if (u < z)
+    {
+      x_right = z;
+    }
+    else
+    {
+      x_left = z;
+    }
+    SHIFT(v,w,z,u);
+    SHIFT(f_v,f_w,f_z,f_u);
+    P_SWAP(p_w,p_z,p_temp);
+    P_SWAP(p_z,p_u,p_temp);
+    /* done */
+  }
+  else
+  {
+    error("Problems in Brent minimization");
+  }
+  
+  }
+  error("Too many iterations in Brent minimization");
 }
-#undef ITMAX
-#undef CGOLD
-#undef ZEPS
-#undef SHFT
-#undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
+
