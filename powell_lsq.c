@@ -6,10 +6,34 @@
 *  powell.c: Contains Powell optimization algorithm and some small subroutines
 *
 ******************************************************************************/
-
+/*
+*   Copyright 2002-2005 Peter Brommer
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2004/12/03 17:45:22 $
+* $Revision: 1.25 $
+* $Date: 2005/05/06 13:37:55 $
 *****************************************************************/
 
 /******************************************************************************
@@ -25,7 +49,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "potfit.h"
-#include "nrutil_r.h"
+#include "utils.h"
 #include "powell_lsq.h"
 #define EPS .0001
 #define PRECISION 1.E-7
@@ -60,18 +84,18 @@ void powell_lsq(real *xi)
   real ferror,berror;		/* forward/backward error estimates */
   static char errmsg[256];	   /* Error message */
   FILE *ff;			   /* Exit flagfile */
-  d=dmatrix(0,ndim-1,0,ndim-1);
-  gamma=dmatrix(0,mdim-1,0,ndim-1);
-  lineqsys=dmatrix(0,ndim-1,0,ndim-1);
-  les_inverse=dmatrix(0,ndim-1,0,ndim-1);
-  perm_indx=ivector(0,ndim-1);
-  delta_norm=dvector(0,ndimtot-1); /*==0*/
-  force_xi=dvector(0,mdim-1);
-  p=dvector(0,ndim-1);
-  q=dvector(0,ndim-1);
-  delta=dvector(0,ndimtot-1); /* ==0*/
-  fxi1=dvector(0,mdim-1);
-  fxi2=dvector(0,mdim-1);
+  d=mat_real(ndim,ndim);
+  gamma=mat_real(mdim,ndim);
+  lineqsys=mat_real(ndim,ndim);
+  les_inverse=mat_real(ndim,ndim);
+  perm_indx=vect_int(ndim);
+  delta_norm=vect_real(ndimtot); /*==0*/
+  force_xi=vect_real(mdim);
+  p=vect_real(ndim);
+  q=vect_real(ndim);
+  delta=vect_real(ndimtot); /* ==0*/
+  fxi1=vect_real(mdim);
+  fxi2=vect_real(mdim);
   worksize=64*ndim;
   work=(real *) malloc(worksize*sizeof(real));
   iwork=(int *) malloc(ndim*sizeof(int));
@@ -98,6 +122,9 @@ void powell_lsq(real *xi)
     if (i=gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
     /* perhaps rescaling helps? - Last resort...*/
+      sprintf(errmsg, "F does not depend on xi[%d], trying to rescale!\n",
+	      idx[i-1]);
+      warning(errmsg);
       rescale(&pair_pot,1.,1);
 #ifdef WZERO
 //      embed_shift(&pair_pot); ist des Teufels
@@ -233,18 +260,18 @@ void powell_lsq(real *xi)
   printf("Precision reached: %10g\n", F3-F);
 //#endif 
   /* Free memory */
-  free_dvector(delta,0,ndim-1);
-  free_dvector(fxi1,0,mdim-1);
-  free_dvector(fxi2,0,mdim-1);
-  free_dmatrix(d,0,ndim-1,0,ndim-1);
-  free_dmatrix(gamma,0,mdim-1,0,ndim-1);
-  free_dmatrix(lineqsys,0,ndim-1,0,ndim-1);
-  free_dmatrix(les_inverse,0,ndim-1,0,ndim-1);
-  free_ivector(perm_indx,0,ndim-1);
-  free_dvector(delta_norm,0,ndim-1);
-  free_dvector(force_xi,0,mdim-1);
-  free_dvector(p,0,ndim-1);
-  free_dvector(q,0,ndim-1);
+  free_vect_real(delta);
+  free_vect_real(fxi1);
+  free_vect_real(fxi2);
+  free_mat_real(d);
+  free_mat_real(gamma);
+  free_mat_real(lineqsys);
+  free_mat_real(les_inverse);
+  free_vect_int(perm_indx);
+  free_vect_real(delta_norm);
+  free_vect_real(force_xi);
+  free_vect_real(p);
+  free_vect_real(q);
   free(work);
   free(iwork);
   return ;
@@ -271,7 +298,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
     for (j=0;j<ndim;j++) d[i][j]=(i==j)?1.:0.;
   }
 /* Initialize gamma by calculating numerical derivatives    */
-  force=dvector(0,mdim-1);
+  force=vect_real(mdim);
   for (i=0;i<ndim;i++) {           /*initialize gamma*/
     xi[idx[i]]+=EPS;                /*increase xi[idx[i]]...*/
     sum = 0.;
@@ -292,7 +319,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
     else
       return i+1;		/* singular matrix, abort */
   }
-  free_dvector(force,0,mdim-1);
+  free_vect_real(force);
 /*     for (i=0;i<n;i++) { */
 /* 	sum =0.; */
 /* 	for (j=0;j<m;j++) sum += SQR(gamma[j][i]); */

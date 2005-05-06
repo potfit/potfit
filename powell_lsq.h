@@ -3,10 +3,34 @@
 *  powell_lsq.h: Header file used by powell routines.
 * 
 *****************************************************************/
-
+/*
+*   Copyright 2002-2005 Peter Brommer
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.11 $
-* $Date: 2004/02/25 16:39:10 $
+* $Revision: 1.12 $
+* $Date: 2005/05/06 13:37:55 $
 *****************************************************************/
 
 
@@ -19,14 +43,16 @@
 #define INPOW(data)         /* skip initialization otherwise */
 #endif
 
+
+void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower, 
+	       real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);
+
 real brent_r(real ax, real bx, real cx, real fbx, real tol, 
 	real *xmin, real *xmin2, real *fxmin, real *fxmin2);
 
 void copy_matrix(real **a, real **b, int n, int m);
 
 void copy_vector(real *a, real *b, int n);
-
-real f1dim_r(real x);
 
 int gamma_init(real **gamma, real **d, real *xi, real *force_xi);
 
@@ -43,8 +69,5 @@ real linmin_r(real p[], real xi[], real fxi1, int n, int m,
 	real *x1, real *x2, real *fret1, real *fret2);
 
 void matdotvec(real **a, real *x, real *y, int n, int m);
-
-void mnbrak(real *ax, real *bx, real *cx, real *fa, real *fb, 
-	real *fc, real (*func)(real));
 
 real normalize_vector(real *v, int n);

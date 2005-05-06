@@ -3,17 +3,41 @@
  *  simann.c: Contains all routines used for simulated annealing.
  *
 *****************************************************************/
-
+/*
+*   Copyright 2002-2005 Peter Brommer
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2004/12/03 17:45:21 $
+* $Revision: 1.19 $
+* $Date: 2005/05/06 13:37:55 $
 *****************************************************************/
 
 
 
 #include <math.h>
 #include "potfit.h"
-#include "nrutil_r.h"
+#include "utils.h"
 #define RAND_MAX 2147483647
 #define EPS 0.1
 #define NEPS 4
@@ -21,11 +45,9 @@
 #define STEPVAR 2.0
 #define NTEMP (3*ndim)
 #define TEMPVAR 0.85
-/* #define TSTART 6 */
 #define KMAX 1000
-#define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(DSQR(a))/2.)))
+#define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(SQRREAL(a))/2.)))
 
-/*int RAND_MAX=(1<<31)-1;*/
 
 /****************************************************************
  *
@@ -42,8 +64,6 @@ real normdist(void)
     real x1,x2,sqr,cnst;
     if (!(have)) {
 	do {
-	    /* x1=2.0*drand48()-1.0;
-	       x2=2.0*drand48()-1.0;*/
 	    x1=2.0*random()/(RAND_MAX+1.0)-1.0;
 	    x2=2.0*random()/(RAND_MAX+1.0)-1.0;
 	    sqr=x1*x1+x2*x2;
@@ -114,12 +134,12 @@ void anneal(real *xi)
     /* init starting temperature for annealing process */
     T=anneal_temp;
     if (T==0.) return; 		/* don't anneal if starttemp equal zero */
-    Fvar=dvector(-NEPS+1,KMAX+5);
-    v=dvector(0,ndim-1);
-    xopt=dvector(0,ndimtot-1);
-    xi2=dvector(0,ndimtot-1);
-    fxi1=dvector(0,mdim-1);
-    naccept=ivector(0,ndim-1);
+    Fvar=vect_real(KMAX+5+NEPS)-(NEPS+1); /* um NEPS geshiftet... */
+    v=vect_real(ndim);
+    xopt=vect_real(ndimtot);
+    xi2=vect_real(ndimtot);
+    fxi1=vect_real(mdim);
+    naccept=vect_int(ndim);
     /* init step vector and optimum vector */
     for (n=0;n<ndim;n++) {
       v[n]=1.;
@@ -226,11 +246,11 @@ void anneal(real *xi)
     for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
     F=Fopt;
     if (tempfile != "\0") write_pot_table( &pair_pot, tempfile );
-    free_dvector(Fvar,-NEPS+1,KMAX+5);
-    free_dvector(v,0,ndim-1);
-    free_dvector(xopt,0,ndimtot-1);
-    free_ivector(naccept,0,ndim-1);
-    free_dvector(xi2,0,ndimtot-1);
-    free_dvector(fxi1,0,mdim-1);
+    free_vect_real(Fvar-NEPS+1);
+    free_vect_real(v);
+    free_vect_real(xopt);
+    free_vect_int(naccept);
+    free_vect_real(xi2);
+    free_vect_real(fxi1);
     return;
 }

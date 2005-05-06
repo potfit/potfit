@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2005/05/06 13:25:12 $
+* $Revision: 1.11 $
+* $Date: 2005/05/06 13:37:56 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
@@ -42,16 +42,12 @@
 #include <math.h>
 #include "potfit.h"
 #include "utils.h"
+#include "powell_lsq.h"
 #define TOL 1.0e-1
 
 
 real *xicom,*delcom;
 
-void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower, 
-	       real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);
-
-real brent_r(real ax, real bx, real cx, real fbx, real tol, 
-	real *xmin, real *xmin2, real *fxmin, real *fxmin2);
 
 real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1, 
 		real *x2, real *fret1, real *fret2 )

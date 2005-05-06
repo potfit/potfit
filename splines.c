@@ -4,10 +4,34 @@
  *      with equidistant or non-equidistant sampling points.
  *
  *****************************************************************/
-
+/*
+*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2004/12/15 14:11:27 $
+* $Revision: 1.16 $
+* $Date: 2005/05/06 13:37:55 $
 *****************************************************************/
 
 
@@ -23,13 +47,11 @@
 /*** rewritten for real variables (ITAP standard) and zero-offset vectors ****
  *** adapted to equidistant x                                             ****
  *** by Peter Brommer, ITAP 2002-11-27                                    ****/
-#define NRANSI
 #ifndef POTSCALE
 #include "potfit.h"
 #else
 #include "potscale.h"
 #endif
-/* #include "nrutil_r.h" */
 
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 {
@@ -65,8 +87,6 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 	for (k=n-2;k>=0;k--)
 		y2[k]=y2[k]*y2[k+1]+u[k];
 }
-#undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
 /******************************************************************************
  *
@@ -103,7 +123,6 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
   return a * p1 + b * p2 +
       ((a*a*a - a) * d21 + (b*b*b - b) * d22) / (6.0 * istep * istep);
 }
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
 /******************************************************************************
  *
@@ -202,7 +221,7 @@ real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
   return a * p1 + b * p2 +
     ((a*a*a - a) * d21 + (b*b*b - b) * d22) * (step * step) / 6.0 ;
 }
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
+
 
 /****************************************************************************
  *
@@ -268,7 +287,6 @@ real splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b, real ste
  *** by Peter Brommer, ITAP 2002-11-27                                    ****/
 
 
-#define NRANSI
 
 void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
 {
@@ -304,9 +322,7 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
 	for (k=n-2;k>=0;k--)
 		y2[k]=y2[k]*y2[k+1]+u[k];
 }
-#undef NRANSI
 
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
 
 /******************************************************************************
@@ -354,7 +370,6 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
     ((a*a*a-a)*d21+(b*b*b-b)*d22)*(h*h)/6.0;
 
 }
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
 
 /******************************************************************************
