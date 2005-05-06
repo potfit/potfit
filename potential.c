@@ -4,13 +4,38 @@
 *      potential table in format 3 (potfit format).
 *
 *****************************************************************/
-
+/*
+*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2004/12/15 14:12:35 $
+* $Revision: 1.34 $
+* $Date: 2005/05/06 13:38:31 $
 *****************************************************************/
 
 #define NPLOT 1000
+#define REPULSE
 #ifndef POTSCALE
 #include "potfit.h"
 #else
@@ -950,7 +975,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   FILE *outfile;
   char msg[255];
   char filename[255];
-  real *r2begin, *r2end, *r2step, r2,temp,root;
+  real *r2begin, *r2end, *r2step, temp2,r2,temp,root;
   int  i, j, k, m, m2, col1, col2;
 
   sprintf(filename,"%s_phi.imd.pt",prefix);
@@ -1118,6 +1143,10 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #else  /* WZERO */
       temp=splint_ne(pt, pt->table, col1, r2 );
 #endif /* WZERO */
+#ifdef REPULSE
+      temp2 = r2-pt->end[col1];
+      temp += (temp2>0.) ? 5e2*(temp2*temp2*temp2) : 0. ;
+#endif
 #ifdef NEWSCALE
       temp-=lambda[i]*r2;
 #endif /* NEWSCALE */

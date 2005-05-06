@@ -4,9 +4,34 @@
 *     EAM potential.
 *
 *****************************************************************/
+/*
+*   Copyright 2002-2005 Peter Brommer
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2004/12/22 13:59:53 $
+* $Revision: 1.8 $
+* $Date: 2005/05/06 13:38:33 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -130,8 +155,8 @@ real rescale(pot_table_t *pt, real upper, int flag)
   
   for (i=0;i<ntypes;i++) {
     j=paircol+ntypes+i;
-    left[i]=minrho[i]-0.4*pt->step[j];
-    right[i]=maxrho[i]+0.4*pt->step[j];
+    left[i]=minrho[i]-0.3*pt->step[j];
+    right[i]=maxrho[i]+0.3*pt->step[j];
     /* Ist Erweiterung nötig? */
     if ( flag ||
 	 minrho[i]-pt->begin[j] < 0. ||
@@ -152,14 +177,6 @@ real rescale(pot_table_t *pt, real upper, int flag)
 
   /* Also machen wir ein Update... */
 
-  /* Null muss dabei sein ???  -- nein! */
-/*   if (sign==1) { */
-/*     for (i=0;i<ntypes;i++) */
-/*       left[i]=MIN(0.,left[i]); */
-/*   } else { */
-/*     for (i=0;i<ntypes;i++) */
-/*       right[i]=MAX(0.,right[i]); */
-/*   } */
 
   /* Potenzial erweitern */
   h=0;
@@ -169,13 +186,6 @@ real rescale(pot_table_t *pt, real upper, int flag)
     neustep[i]=(right[i]-left[i])/(double) vals;
     pos=left[i];
     for (j=0;j<=vals;j++) {
-/*       if (pt->begin[col]>pos) { /\* extrapolating... *\/ */
-/* 	grad=splint_grad(pt,xi,col,pt->begin[col]); /\* Steigung *\/ */
-/* 	neuxi[h]=grad*(pt->begin[col]-pos)+xi[pt->first[col]]; */
-/*       } else if (pt->end[col]<pos) { /\* also extrapolating *\/ */
-/* 	grad=splint_grad(pt,xi,col,pt->end[col]); /\* Steigung *\/ */
-/* 	neuxi[h]=grad*(pos-pt->end[col])+xi[pt->last[col]]; */
-/*       } else 			/\* direct calculation *\/ */
       neuxi[h]=splint_ne(pt,xi,col,pos); /* inter- or extrapolation */
       
       neuord[h]=pos;

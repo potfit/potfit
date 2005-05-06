@@ -4,9 +4,34 @@
 *     interpolation schemes. 
 *
 *****************************************************************/
+/*
+*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.38 $
-* $Date: 2004/12/22 13:59:53 $
+* $Revision: 1.39 $
+* $Date: 2005/05/06 13:38:30 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -85,17 +110,6 @@ real calc_forces_pair(real *xi, real *forces, int flag)
     /* init second derivatives for splines */
     for (col1=0; col1<paircol; col1++){  /* just pair potentials */
       first=pair_pot.first[col1];
-/*       x0=pair_pot.begin[col1]; */
-/*       x1=pair_pot.xcoord[pair_pot.first[col1]+1]; */
-/*       y0=xi[first]; */
-/*       y1=xi[first+1]; */
-/*       /\* use power law for inclination at left border *\/ */
-/*       if (y0*y1>0) */
-/* 	grad0=(y0*log(y0/y1)) /  (x0*log(x0/x1)); */
-/*       else */
-/* 	grad0=1e30; 		/\* natural spline: curvature 0 *\/ */
-/*       if (!((grad0>-1e10) && (grad0<1e10))) grad0=1e30; */
-/*       if (  (grad0>-1e-20)&& (grad0<1e-20)) grad0=0.; */
       if (format==3) 
 	spline_ed(pair_pot.step[col1], xi+first,
 		  pair_pot.last[col1]-first+1,
