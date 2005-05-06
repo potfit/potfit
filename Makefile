@@ -2,12 +2,32 @@
 #
 # potfit -- The ITAP Force Matching Program
 #
-# Copyright 2002-2004 Institute for Theoretical and Applied Physics,
+# Copyright 2002-2005 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.32 $
-# $Date: 2004/12/03 17:32:34 $
+# $Revision: 1.33 $
+# $Date: 2005/05/06 13:31:56 $
 # 
+############################################################################
+#
+#     This file is part of potfit.
+#
+#     potfit is free software; you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation; either version 2 of the License, or
+#     (at your option) any later version.
+#
+#     potfit is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with potfit; if not, write to the Free Software
+#     Foundation, Inc., 51 Franklin St, Fifth Floor, 
+#     Boston, MA 02110-1301, USA
+#
+#
 ############################################################################
 #
 # Beware: This Makefile works only with GNU make (gmake)!
@@ -499,9 +519,9 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= potfit.h powell_lsq.h nrutil_r.h 
-POTFITSRC 	= f1dim_r.c powell_lsq.c brent_r.c \
-		  linmin_r.c mnbrak_r.c nrutil_r.c force.c \
+POTFITHDR   	= potfit.h powell_lsq.h utils.h
+POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
+		  linmin_r.c force.c \
 		  config.c param.c potential.c potfit.c \
 		  splines.c simann.c rescale.c
 MPISRC          = mpi_utils.c
