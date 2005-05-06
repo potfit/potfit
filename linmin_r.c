@@ -4,9 +4,34 @@
 *     a certain direction
 * 
 *****************************************************************/
+/*
+*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
+*
+*****************************************************************/
+/*  
+*   This file is part of potfit.
+*
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
+*
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2004/02/20 12:10:04 $
+* $Revision: 1.10 $
+* $Date: 2005/05/06 13:25:12 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
@@ -14,19 +39,19 @@
 /**** by Peter Brommer, ITAP, 2002-10-10                                  ***/
 
 
-#define NRANSI
 #include <math.h>
 #include "potfit.h"
-#include "nrutil_r.h"
+#include "utils.h"
 #define TOL 1.0e-1
+
 
 real *xicom,*delcom;
 
-void mnbrak_r(real *ax, real *bx, real *cx, real *fa, real *fb, 
-	real *fc, real (*func)(real));
+void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower, 
+	       real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);
+
 real brent_r(real ax, real bx, real cx, real fbx, real tol, 
 	real *xmin, real *xmin2, real *fxmin, real *fxmin2);
-real f1dim_r(real x);
 
 real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1, 
 		real *x2, real *fret1, real *fret2 )
@@ -36,16 +61,26 @@ real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
    fret1, fret2 (return vectors) as arguments */
 	{
 	int j;
+	int status;
+	static real *vecu = NULL;   /* Vector of location u */
 	real xx,fx,fb,bx,ax;
 	real fa=fxi1;
 	real xmin;
 	real xmin2;
+
+
         xicom=xi;
         delcom=del;
 	ax=0.0;                 /*do not change without correcting fa,*/
 				/*saves 1 fcalc...*/
-	xx=1.0e-3;
-	mnbrak_r(&ax,&xx,&bx,&fa,&fx,&fb,f1dim_r);
+	bx=.1;
+	if (vecu == NULL) vecu = vect_real(ndimtot);
+	for (j=0;j<ndimtot;j++) vecu[j]=xicom[j]+bx*delcom[j];/*set vecu */
+	fb=(*calc_forces)(vecu,fret2,0); 
+
+	bracket_r(&ax,&xx,&bx,&fa,&fx,&fb,fret1,fret2);
+
+
 	fx=brent_r(ax,xx,bx,fx,TOL,&xmin,&xmin2,fret1,fret2);
 	for (j=0;j<ndimtot;j++) {
 	  del[j] *= xmin;
@@ -56,7 +91,5 @@ real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
        	return fx;
 }
 #undef TOL
-#undef NRANSI
-/* (C) Copr. 1986-92 Numerical Recipes Software X!05.W4z4'>4. */
 
 
