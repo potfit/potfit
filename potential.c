@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.34 $
-* $Date: 2005/05/06 13:38:31 $
+* $Revision: 1.35 $
+* $Date: 2005/06/10 15:09:04 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -342,7 +342,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     }
     pt->step[i] = 0.;
     pt->invstep[i] = 0.; 
-    if (i==0) pt->first[i] = 0; else pt->first[i] = pt->last[i-1] + 1;
+    if (i==0) pt->first[i] = 2; else pt->first[i] = pt->last[i-1] + 3;
     pt->last[i] = pt->first[i] + nvals[i] - 1;
     pt->len = pt->first[i] + nvals[i];
   }
