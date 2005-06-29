@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.39 $
-* $Date: 2005/05/06 13:38:30 $
+* $Revision: 1.40 $
+* $Date: 2005/06/29 13:49:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -205,8 +205,9 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	  forces[i]=0.;
 	
 	/* set dummy constraints */
+#ifdef EAM
 	forces[config+7*nconf]=-force_0[config+7*nconf];
-
+#endif
 	/* first loop over atoms: reset forces, densities */
 	for (i=0; i<inconf[h]; i++) {
 	  k    = 3*(cnfstart[h]+i);
@@ -424,8 +425,9 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	}
 #endif /* STRESS */
 	/* dummy constraints per configuration */
+#ifdef EAM
 	tmpsum += SQR(forces[config+7*nconf]);
-
+#endif
       } /* loop over configurations */
     } /* parallel region */
 
