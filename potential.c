@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.35 $
-* $Date: 2005/06/10 15:09:04 $
+* $Revision: 1.36 $
+* $Date: 2005/07/20 15:33:03 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -377,7 +377,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
         error(msg);
       } else {val++; ord++; }
       if ((j>0) && (*(ord-1) <= *(ord-2))) {
-	sprintf(msg, "Ordinate not monotonous in potential %d.",i);
+	sprintf(msg, "Abscissa not monotonous in potential %d.",i);
 	error(msg);
       }
       if (j<nvals[i]-1) pt->idx[k++] = l++;
@@ -410,7 +410,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 	error(msg);
       } else {ord++; val++;}
       if ((j>0) && (*(ord-1) <= *(ord-2))) {
-	sprintf(msg, "Ordinate not monotonous in potential %d.",i);
+	sprintf(msg, "Abscissa not monotonous in potential %d.",i);
 	error(msg);
       }
       if (j<nvals[i]-1) pt->idx[k++] = l++;
@@ -441,7 +441,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 	error(msg);
       } else {ord++;val++;}
       if ((j>0) && (*(ord-1) <= *(ord-2))) {
-	sprintf(msg, "Ordinate not monotonous in potential %d.",i);
+	sprintf(msg, "Abscissa not monotonous in potential %d.",i);
 	error(msg);
       }
       pt->idx[k++] = l++;
