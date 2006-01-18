@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.16 $
-* $Date: 2005/05/06 13:37:55 $
+* $Revision: 1.17 $
+* $Date: 2006/01/18 10:30:45 $
 *****************************************************************/
 
 
@@ -44,9 +44,6 @@
 
 
 
-/*** rewritten for real variables (ITAP standard) and zero-offset vectors ****
- *** adapted to equidistant x                                             ****
- *** by Peter Brommer, ITAP 2002-11-27                                    ****/
 #ifndef POTSCALE
 #include "potfit.h"
 #else
@@ -95,9 +92,6 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
  *
  *****************************************************************************/
 
-/**** rewritten for real variables (ITAP standard) and zero-offset vectors ****
- **** adapted to equidistant x[i]                                          ****
- **** Peter Brommer, ITAP, 2002-11-27                                      ***/
 
 real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 {
@@ -201,9 +195,6 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
  *
  *****************************************************************************/
 
-/**** rewritten for real variables (ITAP standard) and zero-offset vectors ****
- **** adapted to equidistant x[i]                                          ****
- **** Peter Brommer, ITAP, 2002-11-27                                      ***/
 real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
 {
   real a, istep, p1, p2, d21, d22;
@@ -283,9 +274,6 @@ real splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b, real ste
  *****************************************************************************/
 
 
-/*** rewritten for real variables (ITAP standard) and zero-offset vectors ****
- *** by Peter Brommer, ITAP 2002-11-27                                    ****/
-
 
 
 void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
@@ -332,13 +320,9 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
  *
  *****************************************************************************/
 
-/**** rewritten for real variables (ITAP standard)                         ****
- **** zero-offset-vectors                                                  ****
- **** Peter Brommer, ITAP, 2002-11-27                                      ***/
 
 real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 {
-/* 	void nrerror(char error_text[]); */
   int klo,khi,k;
   real h,b,a,rr,d22,d21,p1,p2,x1,x2;
 /*    check for distances shorter than minimal distance in table  */
