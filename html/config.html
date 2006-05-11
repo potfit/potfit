@@ -31,21 +31,31 @@ A <em>potfit</em> configuration file is an ASCII file, consisting of a
 href="config.html#body">body</a>, both of which are described below.</p>
 
 <h2><a id="header" name="header">Header</a</h2>
-<p>The header consists of five lines and has the following
-format:</p>
+<p>The header consists of at least six lines starting with the hash symbol #
+and has the following format:</p>
 
 <pre>
-natoms
-boxx.x boxx.y boxx.z
-boxy.x boxy.y boxy.z
-boxz.x boxz.y boxz.z
-coh_eng
-stress_xx stress_yy stress_zz stress_yz stress_zx stress_xy
+#N natoms useforce
+#X boxx.x boxx.y boxx.z
+#Y boxy.x boxy.y boxy.z
+#Z boxz.x boxz.y boxz.z
+#E coh_eng
+#S stress_xx stress_yy stress_zz stress_yz stress_zx stress_xy
+#F 
 </pre>
+
+The lines starting with #N, #X, #Y, #Z, #E and #F are mandatory, while the
+line starting with #S is optional. All other lines are ignored.
+#N must head the first line specifying the number of atoms in the
+configuration and an integer flag to control whether to use or to ignore
+force and stress information in this configuration. #F signifies the last
+header line. 
 
 All parameters are numbers and have the following meaning:
 <table>
-<tr><td>natoms:</td><td>number of atoms in configuration</tr>
+<tr><td>natoms:</td><td>number of atoms in configuration</td></tr>
+<tr><td>useforce:</td><td>if 0, forces from this configuration are
+ignored</td></tr> 
 <tr><td>boxi.j:</td><td>components of box vectors of unit cell</td></tr>
 <tr><td>coh_eng:</td><td>cohesive energy per atom</td></tr>
 <tr><td>stress.ij:</td><td>components of stress tensor</td></tr>
@@ -59,7 +69,23 @@ Note that:</p>
      perpendicular to the corresponding face.</li>
 </ul>
 
-<h2><a id="header" name="header">Body</a</h2>
+<h2><a id="oldheader" name="oldheader">Deprecated header format</a</h2>
+<p>This "old" format is still read by potfit. 
+Here, the header consists of six lines and has the following
+format:</p>
+
+<pre>
+natoms
+boxx.x boxx.y boxx.z
+boxy.x boxy.y boxy.z
+boxz.x boxz.y boxz.z
+coh_eng
+stress_xx stress_yy stress_zz stress_yz stress_zx stress_xy
+</pre>
+
+<p>The parameters have the same meaning as in the new header. The parameter
+useforce is assumed to be 1, i.e. the forces are used as reference data.</p>
+<h2><a id="header" name="#header">Body</a></h2>
 
 <p>Following the header, there is one line for each atom. 
 The format of each line, described also in the header, is
@@ -79,7 +105,8 @@ These items stand for:</p>
 <tr><td>fx fy fz </td><td> net force components on the atom       </td></tr>
 </table>
 
-
+<p>Please note that the forces cannot be omitted, even when they are ignored
+(see section on file <a href="header>Header</a>)</p>
 
 <h2><a id="boundary" name="boundary"> 
 </a>Boundary Conditions</h2>
