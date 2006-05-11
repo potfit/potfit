@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.29 $
-* $Date: 2005/05/06 13:38:30 $
+* $Revision: 1.30 $
+* $Date: 2006/05/11 07:26:17 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -160,8 +160,11 @@ void read_config(char *filename)
 {
   int     maxneigh=0, count;
   int     i, j, k, ix, iy, iz,typ1,typ2,col,slot,klo,khi;
+  int     h_stress, h_eng, h_boxx, h_boxy, h_boxz, use_force;
+  int     tag_format=0;
   FILE    *infile;
-  char    msg[255];
+  char    msg[255], buffer[1024];
+  char    *res;
   atom_t  *atom;
   neigh_t *neigh;
   stens   *stresses;
@@ -184,10 +187,22 @@ void read_config(char *filename)
 
   /* read configurations until the end of the file */
   do {
-
-    /* number of atoms in this configuration */
-    if (1>fscanf(infile, "%d", &count)) error("Unexpected end of file");
-
+    res=fgets(buffer,1024,infile);
+    if (NULL == res ) error("Unexpected end of file\n");
+    if (res[0]=='#') {	/* new file type */
+      tag_format=1;
+      h_eng=h_stress=h_boxx=h_boxy=h_boxz=0;
+      if (res[1]=='N') { 	/* Atom number line */
+	if (sscanf(res+3, "%d %d", &count, &use_force)<2) 
+	  error("Error in atom number specification\n");
+      }
+      else error("Error - number of atoms missing\n");
+    }
+    else { 
+      /* number of atoms in this configuration */
+      tag_format=0; use_force=1;
+      if (1>sscanf(buffer, "%d", &count)) error("Unexpected end of file");
+    }
     /* increase memory for this many additional atoms */
     atoms = (atom_t *) realloc(atoms, (natoms+count) * sizeof(atom_t));
     if (NULL==atoms)   error("Cannot allocate memory for atoms");
@@ -201,27 +216,75 @@ void read_config(char *filename)
     if (NULL==inconf)  error("Cannot allocate memory for atoms in conf");
     cnfstart = (int *) realloc(cnfstart, (nconf+1) * sizeof (int));
     if (NULL==cnfstart)  error("Cannot allocate memory for start of conf");
+    useforce = (int *) realloc(useforce, (nconf+1) * sizeof (int));
+    if (NULL==useforce)  error("Cannot allocate memory for useforce");
+    usestress = (int *) realloc(usestress, (nconf+1) * sizeof (int));
+    if (NULL==useforce)  error("Cannot allocate memory for usestress");
  
     inconf[nconf]=count;
     cnfstart[nconf]=natoms;
-
-    /* read the box vectors */
-    fscanf( infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z );
-    fscanf( infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z );
-    fscanf( infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z );
-    volumen[nconf]=make_box();
-
-    /* read cohesive energy */
-    if (1!=fscanf(infile, "%lf\n", &(coheng[nconf])))
-	error("Configuration file without cohesive energy -- old format!");
-
-    /* read stress tensor */
+    useforce[nconf]=use_force;
     stresses=stress+nconf;
-    if (6!=fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
+    
+    if (tag_format) {
+      do {
+	res=fgets(buffer,1024,infile);
+        /* read the box vectors */
+	if (res[1]=='X') {
+	  if (sscanf(res+3, "%lf %lf %lf\n", 
+		     &box_x.x, &box_x.y, &box_x.z )==3)
+	    h_boxx++;
+	  else error("Error in box_x vector\n");
+	}
+	else if (res[1]=='Y') {
+	  if (sscanf(res+3, "%lf %lf %lf\n", 
+		     &box_y.x, &box_y.y, &box_y.z )==3)
+	    h_boxy++;
+	  else error("Error in box_y vector\n");
+	}
+	else if (res[1]=='Z') {
+	  if (sscanf(res+3, "%lf %lf %lf\n", 
+		     &box_z.x, &box_z.y, &box_z.z )==3)
+	    h_boxz++;
+	  else error("Error in box_z vector\n");
+	}
+	else if (res[1]=='E') {
+	  if (sscanf(res+3, "%lf\n", &(coheng[nconf]))==1)
+	    h_eng++;
+	  else error("Error in energy\n");
+	}
+	  
+	/* read stress */
+	else if (res[1]=='S' ) {
+	  if (sscanf(res+3, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
 		  &(stresses->yy), &(stresses->zz), &(stresses->xy), 
-		  &(stresses->yz), &(stresses->zx))) 
-      error("No stresses given -- old format");
+		  &(stresses->yz), &(stresses->zx))==6)
+	    h_stress++;
+	  else error("Error in stress tensor\n");
+	}
+      } while (res[1]!='F');
+      if ( ! (h_eng && h_boxx && h_boxy && h_boxz))
+	error("Incomplete force file!");
+      usestress[nconf]=h_stress; /* no stress tensor available */
+    } else {
+      /* read the box vectors */
+      fscanf( infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z );
+      fscanf( infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z );
+      fscanf( infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z );
 
+      /* read cohesive energy */
+      if (1!=fscanf(infile, "%lf\n", &(coheng[nconf])))
+	error("Configuration file without cohesive energy -- old format!");
+      
+      /* read stress tensor */
+      if (6!=fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
+		    &(stresses->yy), &(stresses->zz), &(stresses->xy), 
+		  &(stresses->yz), &(stresses->zx))) 
+	error("No stresses given -- old format");
+      usestress[nconf]=1;
+    }
+
+    volumen[nconf]=make_box();
 
     /* read the atoms */
     for (i=0; i<count; i++) {
@@ -231,6 +294,8 @@ void read_config(char *filename)
                     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), 
                     &(atom->force.x), &(atom->force.y), &(atom->force.z)))
         error("Corrupt configuration file");
+      if (atom->typ >= ntypes || atom->typ < 0 )
+	error("Corrupt configuration file: Incorrect atom type");
       atom->absforce = sqrt(SQR(atom->force.x)+
 			    SQR(atom->force.y)+
 			    SQR(atom->force.z));
@@ -256,7 +321,7 @@ void read_config(char *filename)
               r = sqrt(SPROD(dd,dd));
 	      typ1=atoms[i].typ;
 	      typ2=atoms[j].typ;
-              if (r <= rcut[ typ1 * ntypes + typ2 ]) {
+              if (r <= rcut[typ1 * ntypes + typ2 ]) {
 		if (r <= rmin[typ1 * ntypes + typ2 ]){
 		  printf("%d: %f %f %f\n", i-natoms, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
 		  printf("%d: %f %f %f\n", j-natoms, dd.x, dd.y, dd.z);
@@ -405,12 +470,17 @@ void read_config(char *filename)
     force_0[k++] = coheng[i] * eweight; }
 #ifdef STRESS
   for (i=0; i<nconf; i++) {	/* then stresses */
-    force_0[k++] = stress[i].xx * sweight;
-    force_0[k++] = stress[i].yy * sweight;
-    force_0[k++] = stress[i].zz * sweight;
-    force_0[k++] = stress[i].xy * sweight;
-    force_0[k++] = stress[i].yz * sweight;
-    force_0[k++] = stress[i].zx * sweight;
+    if (usestress[i]) {
+      force_0[k++] = stress[i].xx * sweight;
+      force_0[k++] = stress[i].yy * sweight;
+      force_0[k++] = stress[i].zz * sweight;
+      force_0[k++] = stress[i].xy * sweight;
+      force_0[k++] = stress[i].yz * sweight;
+      force_0[k++] = stress[i].zx * sweight;
+    } else {
+      for (j=0; j<6; j++)
+	force_0[k++] = 0.;
+    }
   }
 #else                           
   for (i=0; i<6*nconf; i++)

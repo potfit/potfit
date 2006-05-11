@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.35 $
-* $Date: 2005/05/06 13:38:32 $
+* $Revision: 1.36 $
+* $Date: 2006/05/11 07:26:17 $
 *****************************************************************/
 
 
@@ -138,6 +138,8 @@ int main(int argc, char **argv)
      with complete set of atoms/volumes */
   conf_atoms = atoms;
   conf_vol = volumen;
+  conf_uf = useforce;
+  conf_us = usestress;
 #endif /* MPI */
  /*   mdim=3*natoms+nconf; */
   ndim=pair_pot.idxlen;

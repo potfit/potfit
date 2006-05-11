@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2005/05/06 13:38:31 $
+* $Revision: 1.11 $
+* $Date: 2006/05/11 07:26:17 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -245,8 +245,14 @@ void broadcast_params() {
 		 conf_atoms,myatoms,MPI_ATOM,
 		 0,MPI_COMM_WORLD);
   conf_vol = (real *) malloc(myconf*sizeof(real));
+  conf_uf  = (int *) malloc(myconf*sizeof(real));
+  conf_us  = (int *) malloc(myconf*sizeof(real));
   MPI_Scatterv(volumen,conf_len,conf_dist,REAL,
 	       conf_vol,myconf,REAL,0,MPI_COMM_WORLD);
+  MPI_Scatterv(useforce,conf_len,conf_dist,MPI_INT,
+	       conf_uf,myconf,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Scatterv(usestress,conf_len,conf_dist,MPI_INT,
+	       conf_us,myconf,MPI_INT,0,MPI_COMM_WORLD);
 }
 
 /***************************************************************************

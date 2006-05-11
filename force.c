@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.40 $
-* $Date: 2005/06/29 13:49:22 $
+* $Revision: 1.41 $
+* $Date: 2006/05/11 07:26:17 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -136,8 +136,8 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 /* if we have parabolic interpolation, we don't need that */
     for  (col1=paircol+ntypes; col1<paircol+2*ntypes; col1++) { /* F */
       first=pair_pot.first[col1];
-      /* Steigung  am linken Rand passt an Wurzelfunktion 
-       falls 0 nicht in domain(F), sonst natürlicher Spline */
+      /* gradient at left boundary matched to square root function, 
+       when 0 not in domain(F), else natural spline */
       if (format==3)
 	spline_ed(pair_pot.step[col1], xi+first, 
 		  pair_pot.last[col1]-first+1,
@@ -185,7 +185,7 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       atom_t *atom2;
 #endif
       vektor tmp_force;
-      int h,k,i,l,j,typ1,typ2,col,config,stresses;
+      int h,k,i,l,j,typ1,typ2,col,config,stresses,uf,us;
       real fnval, grad;
       atom_t *atom;
       neigh_t *neigh;
@@ -198,7 +198,8 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       for (h=firstconf; h<firstconf+myconf; h++) {
 	config = 3*natoms + h; 	/* slot for energies */
 	stresses = 3*natoms + nconf + 6*h; /* slot for stresses */
-	
+	uf = conf_uf[h-firstconf];
+	us = conf_us[h-firstconf];
 	/* reset forces */
 	forces[config]=0.;
 	for (i=stresses; i<stresses+6; i++) 
@@ -210,10 +211,18 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 #endif
 	/* first loop over atoms: reset forces, densities */
 	for (i=0; i<inconf[h]; i++) {
-	  k    = 3*(cnfstart[h]+i);
-	  forces[k  ] = -force_0[k  ];
-	  forces[k+1] = -force_0[k+1];
-	  forces[k+2] = -force_0[k+2];
+	  if (uf) {
+	    k    = 3*(cnfstart[h]+i);
+	    forces[k  ] = -force_0[k  ];
+	    forces[k+1] = -force_0[k+1];
+	    forces[k+2] = -force_0[k+2];
+	  } else {
+	    k    = 3*(cnfstart[h]+i);
+	    forces[k  ] = 0.;
+	    forces[k+1] = 0.;
+	    forces[k+2] = 0.;
+	  }
+	  
 #ifdef EAM
 	  conf_atoms[cnfstart[h]-firstatom+i].rho=0.0;
 #endif
@@ -238,32 +247,40 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
 	      if (neigh->r < pair_pot.end[col]) {
 		/* fn value and grad are calculated in the same step */
-		fnval = splint_comb_dir(&pair_pot,xi,col,
+
+		if (uf) fnval = splint_comb_dir(&pair_pot,xi,col,
 					neigh->slot[0],neigh->shift[0],
 					neigh->step[0],&grad);
+		else fnval = splint_dir(&pair_pot,xi,col,
+					neigh->slot[0],neigh->shift[0],
+					neigh->step[0]);
 		forces[config] += fnval; /* not real force: cohesive energy */
-		tmp_force.x  = neigh->dist.x * grad;
-		tmp_force.y  = neigh->dist.y * grad;
-		tmp_force.z  = neigh->dist.z * grad;
-		forces[k  ] += tmp_force.x;
-		forces[k+1] += tmp_force.y;
-		forces[k+2] += tmp_force.z;
-		l    = 3*neigh->nr; /* actio = reactio */
-		forces[l  ] -= tmp_force.x;
-		forces[l+1] -= tmp_force.y;
-		forces[l+2] -= tmp_force.z;
+		if (uf) {
+		  tmp_force.x  = neigh->dist.x * grad;
+		  tmp_force.y  = neigh->dist.y * grad;
+		  tmp_force.z  = neigh->dist.z * grad;
+		  forces[k  ] += tmp_force.x;
+		  forces[k+1] += tmp_force.y;
+		  forces[k+2] += tmp_force.z;
+		  l    = 3*neigh->nr; /* actio = reactio */
+		  forces[l  ] -= tmp_force.x;
+		  forces[l+1] -= tmp_force.y;
+		  forces[l+2] -= tmp_force.z;
 #ifdef STRESS
-		/* also calculate pair stresses */
-		tmp_force.x        *=neigh->r;
-		tmp_force.y        *=neigh->r;
-		tmp_force.z        *=neigh->r;
-		forces[stresses]   -= neigh->dist.x * tmp_force.x;
-		forces[stresses+1] -= neigh->dist.y * tmp_force.y;
-		forces[stresses+2] -= neigh->dist.z * tmp_force.z;
-		forces[stresses+3] -= neigh->dist.x * tmp_force.y;
-		forces[stresses+4] -= neigh->dist.y * tmp_force.z;
-		forces[stresses+5] -= neigh->dist.z * tmp_force.x;
+		  /* also calculate pair stresses */
+		  if (us) {
+		    tmp_force.x        *=neigh->r;
+		    tmp_force.y        *=neigh->r;
+		    tmp_force.z        *=neigh->r;
+		    forces[stresses]   -= neigh->dist.x * tmp_force.x;
+		    forces[stresses+1] -= neigh->dist.y * tmp_force.y;
+		    forces[stresses+2] -= neigh->dist.z * tmp_force.z;
+		    forces[stresses+3] -= neigh->dist.x * tmp_force.y;
+		    forces[stresses+4] -= neigh->dist.y * tmp_force.z;
+		    forces[stresses+5] -= neigh->dist.z * tmp_force.x;
+		  }
 #endif /* STRESS */
+		}
 	      }
 #ifdef EAM 
 	      /* calculate atomic densities */
@@ -294,16 +311,18 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	  } /* loop over neighbours */
 #ifndef EAM /*then we can calculate contribution of forces right away*/
 	  
+
+	  if (uf) {
 #ifdef FWEIGHT 		   
-	  /* Weigh by absolute value of force */
-	  forces[k]    /= FORCE_EPS + atom->absforce;
-	  forces[k+1]  /= FORCE_EPS + atom->absforce;
-	  forces[k+2]  /= FORCE_EPS + atom->absforce;
+	    /* Weigh by absolute value of force */
+	    forces[k]    /= FORCE_EPS + atom->absforce;
+	    forces[k+1]  /= FORCE_EPS + atom->absforce;
+	    forces[k+2]  /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
-	  
-	  /* Returned force is difference between calculated and input force */
-	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
-	  
+	    
+	    /* Returned force is difference between calculated and input force */
+	    tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
+	  }
 #else  /* EAM */
 	  
 	  col2=paircol+ntypes+typ1; /* column of F */
@@ -339,64 +358,67 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 	
 #ifdef EAM /* if we don't have EAM, we're done */
 	/* 3rd loop over atom: EAM force */
-	for (i=0; i<inconf[h]; i++) {
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  typ1 = atom->typ;
-	  k    = 3*(cnfstart[h]+i);
-	  col  = paircol+ntypes+typ1; /* column of F */
+	if (uf) {		/* only required if we calc forces */
+	  for (i=0; i<inconf[h]; i++) {
+	    atom = conf_atoms + i + cnfstart[h] - firstatom;
+	    typ1 = atom->typ;
+	    k    = 3*(cnfstart[h]+i);
+	    col  = paircol+ntypes+typ1; /* column of F */
+	    
 
-
-	  for (j=0; j<atom->n_neigh; j++) { /* loop over neighbours */
-	    neigh = atom->neigh+j;
-            /* only neigbours higher than current atom are of interest */
-	    if (neigh->nr > i+cnfstart[h]) { 
-	      typ2  = neigh->typ;
-	      col2  = paircol+typ2;
-	      r = neigh->r;
-
+	    for (j=0; j<atom->n_neigh; j++) { /* loop over neighbours */
+	      neigh = atom->neigh+j;
+	      /* only neigbours higher than current atom are of interest */
+	      if (neigh->nr > i+cnfstart[h]) { 
+		typ2  = neigh->typ;
+		col2  = paircol+typ2;
+		r = neigh->r;
+		
 	      /* are we within reach? */
-	      if ((r < pair_pot.end[col2]) || (r < pair_pot.end[col-ntypes])) {
-		grad = (r<pair_pot.end[col2]) ? 
-		  splint_grad_dir(&pair_pot,xi,col2,neigh->slot[1],
-				     neigh->shift[1],neigh->step[1]) 
-		  : 0.;
-
-		if (typ2 == typ1) /* use actio = reactio */
-		  grad2=grad;
-		else
-		  grad2 = (r < pair_pot.end[col-ntypes]) ? 
-		    splint_grad(&pair_pot,xi,col-ntypes,r) : 0.;
-
+		if ((r < pair_pot.end[col2])||(r < pair_pot.end[col-ntypes])) {
+		  grad = (r<pair_pot.end[col2]) ? 
+		    splint_grad_dir(&pair_pot,xi,col2,neigh->slot[1],
+				    neigh->shift[1],neigh->step[1]) 
+		    : 0.;
+		  
+		  if (typ2 == typ1) /* use actio = reactio */
+		    grad2=grad;
+		  else
+		    grad2 = (r < pair_pot.end[col-ntypes]) ? 
+		      splint_grad(&pair_pot,xi,col-ntypes,r) : 0.;
+		  
 		/* now we know everything - calculate forces */
-		eamforce =  (grad * atom->gradF + 
-			     grad2 * conf_atoms[(neigh->nr)-firstatom].gradF) ;
-
-		tmp_force.x  = neigh->dist.x * eamforce;
-		tmp_force.y  = neigh->dist.y * eamforce;
-		tmp_force.z  = neigh->dist.z * eamforce;
-		forces[k  ] += tmp_force.x;
-		forces[k+1] += tmp_force.y;
-		forces[k+2] += tmp_force.z;
-		l    = 3*neigh->nr;
-		forces[l  ] -= tmp_force.x;
-		forces[l+1] -= tmp_force.y;
-		forces[l+2] -= tmp_force.z;
+		  eamforce =  (grad * atom->gradF + 
+			       grad2 * 
+			       conf_atoms[(neigh->nr)-firstatom].gradF) ;
+		  
+		  tmp_force.x  = neigh->dist.x * eamforce;
+		  tmp_force.y  = neigh->dist.y * eamforce;
+		  tmp_force.z  = neigh->dist.z * eamforce;
+		  forces[k  ] += tmp_force.x;
+		  forces[k+1] += tmp_force.y;
+		  forces[k+2] += tmp_force.z;
+		  l    = 3*neigh->nr;
+		  forces[l  ] -= tmp_force.x;
+		  forces[l+1] -= tmp_force.y;
+		  forces[l+2] -= tmp_force.z;
 #ifdef STRESS
 		/* and stresses */
-		tmp_force.x        *=neigh->r;
-		tmp_force.y        *=neigh->r;
-		tmp_force.z        *=neigh->r;
-		forces[stresses]   -= neigh->dist.x * tmp_force.x;
-		forces[stresses+1] -= neigh->dist.y * tmp_force.y;
-		forces[stresses+2] -= neigh->dist.z * tmp_force.z;
-		forces[stresses+3] -= neigh->dist.x * tmp_force.y;
-		forces[stresses+4] -= neigh->dist.y * tmp_force.z;
-		forces[stresses+5] -= neigh->dist.z * tmp_force.x;
+		  if (us) {
+		    tmp_force.x        *=neigh->r;
+		    tmp_force.y        *=neigh->r;
+		    tmp_force.z        *=neigh->r;
+		    forces[stresses]   -= neigh->dist.x * tmp_force.x;
+		    forces[stresses+1] -= neigh->dist.y * tmp_force.y;
+		    forces[stresses+2] -= neigh->dist.z * tmp_force.z;
+		    forces[stresses+3] -= neigh->dist.x * tmp_force.y;
+		    forces[stresses+4] -= neigh->dist.y * tmp_force.z;
+		    forces[stresses+5] -= neigh->dist.z * tmp_force.x;
+		  }
 #endif /* STRESS */
-	      }	/* within reach */
-	    } /* higher neigbours */
-	  } /* loop over neighbours */
-
+		}	/* within reach */
+	      } /* higher neigbours */
+	    } /* loop over neighbours */
 #ifdef FWEIGHT
 	  /* Weigh by absolute value of force */
 	  forces[k]    /= FORCE_EPS + atom->absforce;
@@ -406,8 +428,8 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 
 	  /* sum up forces  */
 	  tmpsum += SQR(forces[k]) + SQR(forces[k+1]) + SQR(forces[k+2]);
-
-	}	/* third loop over atoms */
+	  } /* third loop over atoms */
+	} /* use forces */
 #endif /* EAM */
 
 	/* energy contributions */
@@ -417,11 +439,13 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 
 #ifdef STRESS
 	/* stress contributions */
-	for (i=stresses;i<stresses+6;i++) {
-	  forces[i]*=sweight/conf_vol[h-firstconf];
-	  forces[i]-=force_0[i];
-	  tmpsum += SQR(forces[i]);
-
+	if (uf && us) {
+	  for (i=stresses;i<stresses+6;i++) { 
+	    forces[i]*=sweight/conf_vol[h-firstconf];
+	    forces[i]-=force_0[i];
+	    tmpsum += SQR(forces[i]);
+	    
+	  }
 	}
 #endif /* STRESS */
 	/* dummy constraints per configuration */

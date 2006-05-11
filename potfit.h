@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.43 $
-* $Date: 2005/05/06 13:38:32 $
+* $Revision: 1.44 $
+* $Date: 2006/05/11 07:26:17 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -145,6 +145,8 @@ EXTERN int *atom_len;
 EXTERN int *atom_dist;
 EXTERN int *conf_len;
 EXTERN int *conf_dist;
+EXTERN int *conf_uf INIT(NULL);
+EXTERN int *conf_us INIT(NULL);
 EXTERN real sweight INIT(STRESS_WEIGHT);
 EXTERN real eweight INIT(ENG_WEIGHT);
 EXTERN int myconf INIT(0.);
@@ -170,6 +172,8 @@ EXTERN real   *volumen INIT(NULL);       /* Volume of cell*/
 EXTERN stens  *stress  INIT(NULL);       /* Stresses in each config */
 EXTERN int    *inconf  INIT(NULL);       /* Nr. of atoms in each config */
 EXTERN int    *cnfstart INIT(NULL);       /* Nr. of first atom in config */
+EXTERN int    *useforce INIT(NULL);      /* Should we use force/stress */
+EXTERN int    *usestress INIT(NULL);      /* Should we use force/stress */
 EXTERN char startpot[255];               /* file with start potential */
 EXTERN char endpot[255];                 /* file for end potential */
 EXTERN char imdpot[255];                 /* file for IMD potential */
