@@ -2,11 +2,11 @@
 #
 # potfit -- The ITAP Force Matching Program
 #
-# Copyright 2002-2005 Institute for Theoretical and Applied Physics,
+# Copyright 2002-2006 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.33 $
-# $Date: 2005/05/06 13:31:56 $
+# $Revision: 1.34 $
+# $Date: 2006/05/11 07:24:37 $
 # 
 ############################################################################
 #
@@ -147,14 +147,54 @@ OMPI_FLAGS	+= -DMPI -DOMP
 DEBUG_FLAGS	+= -DDEBUG 
 MKLPATH         =  /common/linux/paket/intel/mkl61/lib/32/
 CINCLUDE        =  -I/common/linux/paket/intel/mkl61/include/
-LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
 
 ###########################################################################
 #
 #  flags for IA32-Linux
 #
 ###########################################################################
+
+# AMD Opteron, gcc3
+ifeq (x86_64-gcc3,${IMDSYS})
+  CC_SERIAL     = gcc
+  CC_MPI        = mpicc
+  MPICH_CC      = gcc
+#  MPICH_CLINKER = gcc
+  BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
+#  FFTW_DIR     = /common/linux/paket/fftw-3.0.1
+  OPT_FLAGS     += -O -m64 -Wno-unused
+  DEBUG_FLAGS   += -g
+  PROF_FLAGS    += -g3 -pg
+  LFLAGS        +=  -static
+  MKLPATH       = /common/linux/paket/intel/mkl8/lib/64/
+  CINCLUDE      = -I/common/linux/paket/intel/mkl8/include
+  export        MPICH_CC # MPICH_CLINKER
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_lapack64.a \
+		   -L${MKLPATH} -lguide -lpthread
+endif
+
+# Intel EM64T "AMD inside", icc
+ifeq (x86_64-icc,${IMDSYS})
+  CC_SERIAL     = icc
+  CC_MPI        = mpicc
+  MPICH_CC      = icc
+  MPICH_CLINKER = icc
+  BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
+  OPT_FLAGS     += -O3 -ip -fno-builtin # -axP # remove -axP for Opteron
+  MPI_FLAGS     +=
+  OMP_FLAGS     += -openmp
+  OMPI_FLAGS    += -openmp
+  DEBUG_FLAGS   += -g
+  PROF_FLAGS    += -prof_gen
+  RCD_FLAGS     += # -DRCD -rcd
+  MPI_LIBS      +=
+  LFLAGS        +=  #-static
+  MKLPATH       = /common/linux/paket/intel/mkl8/lib/em64t/
+  CINCLUDE      = -I/common/linux/paket/intel/mkl8/include
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
+		   -L${MKLPATH} -lguide -lpthread
+  export        MPICH_CC MPICH_CLINKER
+endif
 
 # Athlon MP or XP, icc
 ifeq (AthlonMP-icc,${IMDSYS})
@@ -172,6 +212,9 @@ ifeq (AthlonMP-icc,${IMDSYS})
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -prof_gen
   RCD_FLAGS	+= -DRCD -rcd
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
+
   export MPICH_CC MPICH_CLINKER
 endif
 
@@ -186,6 +229,8 @@ ifeq (AthlonMP-gcc3,${IMDSYS})
   OPT_FLAGS	+= -O -march=athlon-mp # -static
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC #MPICH_CLINKER
 endif
 
@@ -205,6 +250,8 @@ ifeq (P4-icc,${IMDSYS})
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -prof_gen
   RCD_FLAGS	+= -DRCD -rcd
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER
 endif
 
@@ -219,6 +266,8 @@ ifeq (P4-gcc3,${IMDSYS})
   OPT_FLAGS	+= -O -march=pentium4 # -static
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC # MPICH_CLINKER
 endif
 
@@ -238,6 +287,8 @@ ifeq (P3-icc,${IMDSYS})
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -prof_gen
   RCD_FLAGS	+= -DRCD -rcd
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER
 endif
 
@@ -252,6 +303,8 @@ ifeq (P3-gcc3,${IMDSYS})
   OPT_FLAGS	+= -O -march=pentium3 # -static
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC # MPICH_CLINKER
 endif
 
@@ -266,6 +319,8 @@ ifeq (ia32-gcc2,${IMDSYS})
   OPT_FLAGS	+= -O3
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER
 endif
 
@@ -287,6 +342,8 @@ ifeq (ia64-ecc,${IMDSYS})
   OMPI_FLAGS	+= -openmp
   PROF_FLAGS	+= -prof_gen
   DEBUG_FLAGS	+= -g
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 ###########################################################################
@@ -305,6 +362,8 @@ ifeq (alpha-cc,${IMDSYS})
   OMPI_FLAGS	+= -mp
   PROF_FLAGS	+= -prof_gen
   DEBUG_FLAGS	+= -g3 -pg
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 # alpha, gcc2 - slow!
@@ -314,6 +373,8 @@ ifeq (alpha-gcc2,${IMDSYS})
   OPT_FLAGS	+= -DALPHA -O3
   PROF_FLAGS	+= -g3 -pg
   DEBUG_FLAGS	+= -g
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 ###########################################################################
@@ -332,6 +393,8 @@ ifeq (irix-cc,${IMDSYS})
   OMPI_FLAGS	+= -mp
   PROF_FLAGS	+= -g3
   DEBUG_FLAGS	+= -Dsgi -g  -n32 -mips3 -xansi -woff 1174
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 # irix, gcc2 - slow!
@@ -341,6 +404,8 @@ ifeq (irix-gcc2,${IMDSYS})
   OPT_FLAGS	+= -Dsgi -O3
   PROF_FLAGS	+= -g3 -pg
   DEBUG_FLAGS	+= -Dsgi -g
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 ###########################################################################
@@ -361,6 +426,8 @@ ifeq (USparc3-cc,${IMDSYS})
   OMPI_FLAGS	+= -xopenmp
   PROF_FLAGS	+= -p
   DEBUG_FLAGS	+= -g -xO3
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 # sparc, gcc2 - slow!
@@ -370,6 +437,8 @@ ifeq (sparc-gcc2,${IMDSYS})
   OPT_FLAGS	+= -O3
   PROF_FLAGS	+= -g3 -pg
   DEBUG_FLAGS	+= -g
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 ###########################################################################
@@ -391,6 +460,8 @@ ifeq (T3E-cc,${IMDSYS})
   PACX_DIR	= ${HOME}/WORK/PACX
   PACX_LIBS	+= -L ${PACX_DIR}/lib -lpacx -llzo -lmpi
   PACX_FLAGS	+= -I${PACX_DIR}/include
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 ###########################################################################
@@ -414,6 +485,8 @@ ifeq (sr8k-cc,${IMDSYS})
   DEBUG_OMPI_FLAGS	+= -omp -par   -O2
   PROF_FLAGS		+= -Xfuncmonitor
   PROF_LIBS		+= -lpl
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 # Hitachi sr8k, xcc cross compiler
@@ -432,6 +505,8 @@ ifeq (sr8k-xcc,${IMDSYS})
   DEBUG_OMPI_FLAGS	+= -omp -par   -O2
   PROF_FLAGS		+= -Xfuncmonitor
   PROF_LIBS		+= -lpl
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 ###########################################################################
@@ -453,6 +528,8 @@ ifeq (Power4-cc,${IMDSYS})
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -p
   PROF_LIBS	+= -lpl
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 
@@ -657,5 +734,3 @@ clean:
 help:
 	@echo "Usage: gmake potfit[_<parallel>][_<option>[_<option>...]]"
 
-socktest:
-	gcc -o ${BINDIR}/socktest sockutil.c socktest.c
