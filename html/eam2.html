@@ -16,18 +16,18 @@
 
 <p>
 The energy in potentials of the Embedded Atom type consitsts of two
-parts, a pair potential term specifyed by the function Phi(r)
+parts, a pair potential term specifyed by the function &Phi;(r)
 representing the electrostatic core-core repulsion, and a cohesive
-term specifyed by the function F(rho) representing the energy the ion
+term specifyed by the function F(n) representing the energy the ion
 core gets when it is "embedded" in the "Electron Sea". This Embedding 
 Energy is a function of the local electron density, which in turn
 is constructed as a superposition of contributions from neighboring 
-atoms. This electron transfer is specifyed by the function Rho(r).</p>
+atoms. This electron transfer is specifyed by the function &rho;(r).</p>
 
-<p> The embedding function F_i(rho) depends on the type of the
-embedded atom, the transfer function Rho_j(r) depends on the type j of
-the donating atom, whereas the pair potential Phi_ij(r) depends on the
-types i and j of both atoms involved. All potential functions are
+<p> The embedding function F<sub>i</sub>(n) depends on the type of the
+embedded atom, the transfer function &rho;<sub>j</sub>(r) depends on the type j
+of the donating atom, whereas the pair potential &Phi<sub>ij</sub>(r) depends
+on the types i and j of both atoms involved. All potential functions are
 given in a single file, whose format is described above <a
 href="potformat.html">above</a></p>
 
@@ -55,15 +55,15 @@ Ideas from the Density Functional Theory
 or the Tight Binding formalism may lead to the following form for the 
 total energy:</p>
 <p>
-E<sub>tot</sub> = &sum;<sub>i,j</sub><sup>N</sup> &Phi;<sub>ij</sub>(r<sub>ij</sub>)   + &sum;<sub>i</sub><sup>N</sup> F(&rho;<sup>h</sup><sub>i</sub>)                <BR>
-&rho;<sup>h</sup><sub>i</sub> = &sum;<sub>j</sub>
+E<sub>tot</sub> = &sum;<sub>i,j</sub><sup>N</sup> &Phi;<sub>ij</sub>(r<sub>ij</sub>)   + &sum;<sub>i</sub><sup>N</sup> F(n<sup>h</sup><sub>i</sub>)                <BR>
+n<sup>h</sup><sub>i</sub> = &sum;<sub>j</sub>
 &rho;<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) </p>
 <p>
 While an identification of the  pair potential term  &Phi;<sub>ij</sub>(r<sub>ij</sub>) with
 the electrostatic core-core repulsion, and of the cohesive term  
-F(&rho;<sup>h</sup><sub>i</sub>) with the energy the ion core
+F(n<sup>h</sup><sub>i</sub>) with the energy the ion core
 gets when it is "embedded" in the local electron density
-&rho;<sup>h</sup><sub>i</sub> may be tempting, it is nevertheless
+n<sup>h</sup><sub>i</sub> may be tempting, it is nevertheless
 without physical justification. Due to invariance properties of the
 EAM potential, a embedding energy term linear in the "electron"
 density can be described by pair interactions, thus shifting
