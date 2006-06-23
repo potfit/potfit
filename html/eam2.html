@@ -51,19 +51,19 @@ problem with two-body potentials</a>: the coordination independence of
 the bond strength, while still being acceptable fast (about 2 times
 slower than pair potentials).</p> 
 <p>
-Ideas from the Density Functional Theory
+Ideas from the Density Functional Theory 
 or the Tight Binding formalism may lead to the following form for the 
 total energy:</p>
 <p>
-E<sub>tot</sub> = \sum<sub>i,j</sub><sup>N</sup> \Phi<sub>ij</sub>(r<sub>ij</sub>)   + \sum<sub>i</sub><sup>N</sup> F(\rho<sup>h</sup><sub>i</sub>)                <BR>
-\rho<sup>h</sup><sub>i</sub> = \sum<sub>j</sub>
-\Rho<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) </p>
+E<sub>tot</sub> = &sum;<sub>i,j</sub><sup>N</sup> &Phi;<sub>ij</sub>(r<sub>ij</sub>)   + &sum;<sub>i</sub><sup>N</sup> F(&rho;<sup>h</sup><sub>i</sub>)                <BR>
+&rho;<sup>h</sup><sub>i</sub> = &sum;<sub>j</sub>
+&rho;<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) </p>
 <p>
-While an identification of the  pair potential term  \Phi<sub>ij</sub>(r<sub>ij</sub>) with
+While an identification of the  pair potential term  &Phi;<sub>ij</sub>(r<sub>ij</sub>) with
 the electrostatic core-core repulsion, and of the cohesive term  
-F(\rho<sup>h</sup><sub>i</sub>) with the energy the ion core
+F(&rho;<sup>h</sup><sub>i</sub>) with the energy the ion core
 gets when it is "embedded" in the local electron density
-\rho<sup>h</sup><sub>i</sub> may be tempting, it is nevertheless
+&rho;<sup>h</sup><sub>i</sub> may be tempting, it is nevertheless
 without physical justification. Due to invariance properties of the
 EAM potential, a embedding energy term linear in the "electron"
 density can be described by pair interactions, thus shifting
@@ -74,73 +74,12 @@ only lies in the combination of both. </p>
 <p>
  The local electron density  
 is constructed as a superposition of contributions
-\Rho<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) from neighboring
+&rho;<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) from neighboring
 atoms. </p>
 <p>
 Also belonging to this analytical form are models like the <EM>glue
 model</EM>, and the <EM>Finnis-Sinclair potentials</EM>.
 See also the <a href="http://www.itap.physik.uni-stuttgart.de/~teesem/teeseminar_texte/">
 Teeseminar</a> about EAM.</p>
-</dd>
-
-<!-- <dt><b>Use of eam</b></dt> -->
-<!-- <dd> -->
-<!-- <p> -->
-<!-- It uses actio=reactio, thus reducing the computational effort. -->
-<!-- eam should work with most of the common options. -->
-<!-- See <a href = "#Tests">Tests</a> for options that are guaranteed to work.</p> -->
-
-<!-- <p> -->
-<!-- To use eam one needs tables of three functions.  -->
-<!-- Therefore the parameter file should contain lines indicating these -->
-<!-- tables, e.g.:</p> -->
-<!-- <pre> -->
-<!-- core_potential_file     Potentials/Ni_u3/Phi_r2.Ni_u3.dat -->
-<!-- embedding_energy_file   Potentials/Ni_u3/F_rho.Ni_u3.dat -->
-<!-- atomic_e-density_file   Potentials/Ni_u3/Rho_r2.Ni_u3.dat -->
-<!-- </pre> -->
-<!-- <p> -->
-<!-- The potential file can be in either of two different  -->
-<!-- <a href="potformat.html">formats</a>.</p> -->
-<!-- <p> -->
-<!-- It is the responsibility of the creator of the potential to make -->
-<!-- sure, that the functions of r go smoothly to zero and that the last -->
-<!-- four values are 0.0. If you're having an exotic core potential with V_ij -->
-<!-- != V_ji, you have to use the option <b>asympot</b>.</p> -->
-<!-- </dd> -->
-
-<!-- <dt><b>Existing Potentials </b></dt> -->
-<!-- <dd> -->
-<!-- <p> -->
-<!-- Potentials with documentation and sample structures, parameter files -->
-<!-- and tools can be found in <a href="file:/common/share/itap/software/simulation/potfit-samples/eam"> -->
-<!-- <tt>~potfit/potfit-samples/eam</tt></a>. -->
-<!-- At the moment there are three potentials for Nickel and one for NiAl.</p> -->
-<!-- </dd> -->
-
-<!-- <dt><a id="Tests" name="Tests"><b>Tests</b></a></dt> -->
-<!-- <dd> -->
-<!-- <p> -->
-<!-- The eam option was tested by</p> -->
-<!-- <ul> -->
-<!-- <li> comparing the energy output for a dynamical nve simulation with -->
-<!-- those produced by an other MD program (FEAT by Peter Gumbsch)</li> -->
-<!-- <li> comparing the simulated values for the cohesive energy, vacancy -->
-<!-- formation energy, surface energy, bulkmodulus, lattice constant, -->
-<!-- surface relaxation,... for different potentials with published data -->
-<!-- for the specific potentials  and -->
-<!-- experimental data</li> -->
-<!-- <li> checking the conservation of energy at different temperatures  </li> -->
-<!-- </ul> -->
-
-<!-- <p> -->
-<!-- Therefore one may conclude that the eam option leads to correct -->
-<!-- results at least for: one and two different atom types, with and -->
-<!-- without periodic boundary conditions, on risc and mpi plattforms, -->
-<!-- with the MIK, NVE, NVT options.</p> -->
-
-<!-- </dd> -->
-
-</dl>
 
 <!--#include virtual="potfitfoot.html" -->
