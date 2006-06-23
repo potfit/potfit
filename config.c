@@ -4,7 +4,7 @@
 * 
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2006 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.30 $
-* $Date: 2006/05/11 07:26:17 $
+* $Revision: 1.31 $
+* $Date: 2006/06/23 11:53:43 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -161,6 +161,7 @@ void read_config(char *filename)
   int     maxneigh=0, count;
   int     i, j, k, ix, iy, iz,typ1,typ2,col,slot,klo,khi;
   int     h_stress, h_eng, h_boxx, h_boxy, h_boxz, use_force;
+  int     w_force=0, w_stress=0;
   int     tag_format=0;
   FILE    *infile;
   char    msg[255], buffer[1024];
@@ -283,7 +284,8 @@ void read_config(char *filename)
 	error("No stresses given -- old format");
       usestress[nconf]=1;
     }
-
+    if (usestress[nconf]) w_stress++;
+    if (useforce[nconf]) w_force++;
     volumen[nconf]=make_box();
 
     /* read the atoms */
@@ -509,6 +511,8 @@ void read_config(char *filename)
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
          maxneigh, MAXNEIGH );
-  printf("Read %d configurations with a total of %d atoms\nfrom file %s\n", nconf, natoms,filename);
+  printf("Read %d configurations (%d with forces, %d with stresses)\n",
+	 nconf,w_force,w_stress);
+  printf("with a total of %d atoms\nfrom file %s\n", natoms,filename);
   return;
 }
