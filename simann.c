@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2005/05/06 13:37:55 $
+* $Revision: 1.20 $
+* $Date: 2006/12/28 10:50:09 $
 *****************************************************************/
 
 
@@ -116,7 +116,7 @@ void makebump(real *x,real width,real height,int center)
 
 void anneal(real *xi)
 {
-    int i=0,j=0,m=0,k=0,n,h=0;			/* counters */
+    int j=0,m=0,k=0,n,h=0;			/* counters */
     int nstep=NSTEP,ntemp=NTEMP;
     int loopagain;		/* loop flag */
     real c=STEPVAR;
@@ -167,7 +167,7 @@ void anneal(real *xi)
 	    if (F2<=F) {		/* accept new point */
 	      for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
 	      F=F2;
-	      i++;naccept[h]++;
+	      naccept[h]++;
 	      if(F2<Fopt) {
 		for (n=0;n<ndimtot;n++) xopt[n]=xi2[n];
 		Fopt=F2;
@@ -179,7 +179,7 @@ void anneal(real *xi)
 	    else if (random()/(RAND_MAX+1.0)<exp((F-F2)/T)) {
 	      for (n=0;n<ndimtot;n++) xi[n]=xi2[n];
 	      F=F2;
-	      i++;naccept[h]++;
+	      naccept[h]++;
 	    }
 	  }
 	}
@@ -229,16 +229,11 @@ void anneal(real *xi)
       Fvar[k]=F;
       loopagain = 0; 
       for (n=1;n<=NEPS;n++) { 
-	/* printf("%d %f %f",n,fabs(F-Fvar[k-n]),EPS); */
 	if (fabs(F-Fvar[k-n])>EPS) loopagain=1; }
-      /* if ((F-Fopt)>EPS) loopagain=1; */
-      if (loopagain) {
-	i++;
-      }
-      else if ((F-Fopt)>EPS){
+      if (! loopagain && ((F-Fopt)>EPS) ) {
 	for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
 	F=Fopt;
-	loopagain=1; i++;
+	loopagain=1; 
       }
       
 
