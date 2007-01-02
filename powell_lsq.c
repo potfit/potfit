@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.25 $
-* $Date: 2005/05/06 13:37:55 $
+* $Revision: 1.26 $
+* $Date: 2007/01/02 12:06:40 $
 *****************************************************************/
 
 /******************************************************************************
@@ -213,9 +213,9 @@ void powell_lsq(real *xi)
       m++;           /*increment loop counter*/
       df=F2-F;
 
-      /* loop at least 7*ndim times, but at most INNERLOOPS or until no
+      /* loop at least ndim times, but at most INNERLOOPS or until no
 	 further improvement */ 
-    } while ((m<7*ndim+1 || (m<=INNERLOOPS && df>PRECISION) ) &&
+    } while ((m<ndim || (m<=INNERLOOPS && df>PRECISION) ) &&
 	     df<TOOBIG); 	/* inner loop */
 
     n++;			/* increment outer loop counter */
