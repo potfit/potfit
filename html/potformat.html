@@ -41,6 +41,7 @@ following format:</p>
 <pre>
 ## this is just a comment line
 #F 3 n
+#I 0 1 .... n entries (this line is optional)
 #G 2 3 .... n entries (this line is optional)
 ## this is another comment line
 #E this is the very last header line
@@ -55,6 +56,14 @@ line. The very last header line must have a character 'E' at the
 second position. Header lines with a second character different from 
 'F', 'E' or 'G' are treated as comments, but it is recommended that such 
 lines start with two '#' characters. </p>
+
+<p> The line I defines whether a whole potential function should be kept
+constant during a force matching run. Each digit corresponds to one function
+table, so there should be n digits in total. A value of '0' allows
+<em>potfit</em> to change the corresponding potential function, a value of '1'
+keeps it fixed. This is useful for example if a third component is to be added
+to a binary system and only the additional potentials are to be allowed to
+change. </p>
 
 <p> The line G specifies whether the gradient of the interpolation
 splines should be treated as fixed or as an additional degree of

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.44 $
-* $Date: 2006/05/11 07:26:17 $
+* $Revision: 1.45 $
+* $Date: 2007/02/14 17:37:54 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -137,6 +137,8 @@ EXTERN MPI_Datatype MPI_NEIGH;
 #endif
 EXTERN int *gradient INIT(NULL);       /* Gradient of potential fns.  */
 EXTERN int have_grad INIT(0);	       /* Is gradient specified?  */
+EXTERN int *invar_pot INIT(NULL);
+EXTERN int have_invar INIT(0);         /* Are invariant pots specified?  */
 EXTERN atom_t *conf_atoms INIT(NULL); /* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.36 $
-* $Date: 2005/07/20 15:33:03 $
+* $Revision: 1.37 $
+* $Date: 2007/02/14 17:37:54 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -79,6 +79,25 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
     /* stop after last header line */
     if (buffer[1]=='E') {
       end_header = 1;
+    }
+    /* invariant potentials */
+    else if (buffer[1]=='I') {
+      if (have_format) {
+        /* gradient complete */
+        for(i=0;i<size;i++) {
+          str =strtok(((i==0)?buffer+2:NULL)," \t\r\n");
+          if (str == NULL) {
+            sprintf(msg,"Not enough items in #I header line.");
+            error(msg);
+          }
+          else ((int*)invar_pot)[i] = atoi(str);
+        }
+        have_invar=1;
+      }
+      else {
+        sprintf(msg,"#I needs to be specified after #F in file %s",filename);
+        error(msg);
+      }
     }
     else if (buffer[1]=='G') {      
       if (have_format) {
@@ -130,7 +149,9 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
         error(msg);
       }
       gradient=(int*) malloc(size*sizeof(int));
+      invar_pot=(int*) malloc(size*sizeof(int));
       for (i=0;i<size;i++) gradient[i]=0;
+      for (i=0;i<size;i++) invar_pot[i]=0;
       have_format = 1;
     }
   } while (!end_header);
@@ -251,15 +272,15 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       *val=1e30; *(val+1)=0.;
     } 
     val+=2;
-    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
-    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]>>1)) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]% 2)) pt->idx[k++]=l++; else l++;
     for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf\n", val)) {
         sprintf(msg, "Premature end of potential file %s", filename);
         error(msg);
       } else val++;
       pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
-      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      if ((! invar_pot[i]) && (j<nvals[i]-1)) pt->idx[k++] = l++;
       else l++;
     }
   }
@@ -274,16 +295,16 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       *val=1e30; *(val+1)=0.;
     } 
     val+=2;
-    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
-    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]>>1)) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]% 2)) pt->idx[k++]=l++; else l++;
     for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf\n", val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
       } else val++;
       pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
-      if (j<nvals[i]-1) pt->idx[k++] = l++;
-      else l++;
+     if ((! invar_pot[i]) && (j<nvals[i]-1)) pt->idx[k++] = l++;
+     else l++;
     }
   }
   for (i=ncols+ntypes; i<ncols+2*ntypes; i++) {	/* read in F */
@@ -296,15 +317,15 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       *val=1.e30; *(val+1)=1.e30;
     } 
     val+=2;
-    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
-    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]>>1)) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]% 2)) pt->idx[k++]=l++; else l++;
     for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf\n", val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
       } else val++;
       pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
-      pt->idx[k++] = l++;
+      if (! invar_pot[i]) pt->idx[k++] = l++; else  l++;
     }
   }
   
@@ -369,8 +390,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       *val=1e30; *(val+1)=0.;
     } 
     val+=2; ord+=2;
-    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
-    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]>>1)) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]% 2)) pt->idx[k++]=l++; else l++;
     for (j=0; j<nvals[i]; j++) { /* read values */
       if (2>fscanf(infile, "%lf %lf\n", ord, val)) {
         sprintf(msg, "Premature end of potential file %s", filename);
@@ -380,7 +401,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 	sprintf(msg, "Abscissa not monotonous in potential %d.",i);
 	error(msg);
       }
-      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      if ((! invar_pot[i]) && (j<nvals[i]-1)) pt->idx[k++] = l++;
       else l++;
       
     }
@@ -402,8 +423,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       *val=1e30; *(val+1)=0.;
     } 
     val+=2; ord+=2;
-    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
-    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]>>1)) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]% 2)) pt->idx[k++]=l++; else l++;
     for (j=0; j<nvals[i]; j++) { /* read values */
       if (2>fscanf(infile, "%lf %lf\n", ord,val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
@@ -413,7 +434,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 	sprintf(msg, "Abscissa not monotonous in potential %d.",i);
 	error(msg);
       }
-      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      if ((! invar_pot[i]) && (j<nvals[i]-1)) pt->idx[k++] = l++;
       else l++;
     }
     pt->begin[i]=pt->xcoord[pt->first[i]];
@@ -433,8 +454,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       *val=1e30; *(val+1)=1.e30;
     } 
     val+=2; ord+=2;
-    if (gradient[i]>>1) pt->idx[k++]=l++; else l++;
-    if (gradient[i]% 2) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]>>1)) pt->idx[k++]=l++; else l++;
+    if ((! invar_pot[i]) && (gradient[i]% 2)) pt->idx[k++]=l++; else l++;
     for (j=0; j<nvals[i]; j++) { /* read values */
       if (1>fscanf(infile, "%lf %lf\n", ord, val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
@@ -444,7 +465,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 	sprintf(msg, "Abscissa not monotonous in potential %d.",i);
 	error(msg);
       }
-      pt->idx[k++] = l++;
+      if (! invar_pot[i]) pt->idx[k++] = l++; else  l++;
     }
     pt->begin[i]=pt->xcoord[pt->first[i]];
     pt->end[i]  =pt->xcoord[pt->last[i]];
@@ -873,8 +894,12 @@ void write_pot_table3(pot_table_t *pt, char *filename)
   }
 
   /* write header */
-  fprintf(outfile, "#F 3 %d\n", pt->ncols ); 
-  fprintf(outfile, "#G");
+  fprintf(outfile, "#F 3 %d", pt->ncols ); 
+  if (have_invar) {
+    fprintf(outfile, "\n#I");
+    for (i=0;i<pt->ncols;i++) fprintf(outfile," %d",invar_pot[i]); 
+  }
+  fprintf(outfile, "\n#G");
   for (i=0;i<pt->ncols;i++) fprintf(outfile," %d",gradient[i]);
   fprintf(outfile,"\n#E\n");
 
@@ -935,8 +960,12 @@ void write_pot_table4(pot_table_t *pt, char *filename)
   }
 
   /* write header */
-  fprintf(outfile, "#F 4 %d\n", pt->ncols ); 
-  fprintf(outfile, "#G");
+  fprintf(outfile, "#F 4 %d", pt->ncols ); 
+  if (have_invar) {
+    fprintf(outfile, "\n#I");
+    for (i=0;i<pt->ncols;i++) fprintf(outfile," %d",invar_pot[i]); 
+  }
+  fprintf(outfile, "\n#G");
   for (i=0;i<pt->ncols;i++) fprintf(outfile," %d",gradient[i]);
   fprintf(outfile,"\n#E\n");
 
