@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.37 $
-* $Date: 2007/02/14 17:37:54 $
+* $Revision: 1.38 $
+* $Date: 2007/02/16 18:03:34 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -1429,15 +1429,12 @@ void write_pairdist(pot_table_t *pt, char *filename) {
   /* OK, jetzt haben wir die Daten - schreiben wir sie raus */
   j=0;
 //  rr=0.5*(pt->begin[0]+pt->xcoord[1]);
-  col=0;
-  for (i=0;i<ndimtot;i++) {
-    rr=0.5*(pt->xcoord[i]+pt->xcoord[i+1]);
-    fprintf(outfile,"%f %d\n", rr, freq[i]);
-    if (i>=pt->last[col]-1) {
-      col++;
-      i++;
-      fprintf(outfile, "\n\n");
+  for (col=0;col<pt->ncols;col++) {
+    for (i=pt->first[col];i<pt->last[col];i++) {
+      rr=0.5*(pt->xcoord[i]+pt->xcoord[i+1]);
+      fprintf(outfile,"%f %d\n", rr, freq[i]);
     }
+    fprintf(outfile,"\n\n");
   }
   fclose(outfile);
   printf("Distribution data written to %s\n", filename);
