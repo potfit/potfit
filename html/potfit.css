@@ -6,7 +6,7 @@ body {
   font-size: 11pt;
 }
 
-h1 { font-size: 24pt; color: #0000ff; }
+h1 { font-size: 24pt; color: #0000ff; margin-bottom: 0pt; margin-top: 0pt; }
 h2 { font-size: 18pt; color: #0000ff; }
 h3 { font-size: 14pt; color: #0000ff; }
 h4 { font-size: 12pt; }
@@ -44,4 +44,9 @@ span.sub {
   margin-left: 1.2em;
 }
 
+div.nowrap { whitespace: nowrap; }
+
+.white { color: white; }
+.red   { color: red; }
+.blue  { color: blue; }
 

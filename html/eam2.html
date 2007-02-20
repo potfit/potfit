@@ -26,7 +26,7 @@ atoms. This electron transfer is specifyed by the function &rho;(r).</p>
 
 <p> The embedding function F<sub>i</sub>(n) depends on the type of the
 embedded atom, the transfer function &rho;<sub>j</sub>(r) depends on the type j
-of the donating atom, whereas the pair potential &Phi<sub>ij</sub>(r) depends
+of the donating atom, whereas the pair potential &Phi;<sub>ij</sub>(r) depends
 on the types i and j of both atoms involved. All potential functions are
 given in a single file, whose format is described above <a
 href="potformat.html">above</a></p>
@@ -38,28 +38,33 @@ implemented by Erik Bitzek. It was adapted for use in <em>potfit</em>
 by Peter Brommer.
 </p>
  
-<dl>
-<dt><b>Basic Theory</b></dt>
-<dd>
+<h2>Basic Theory</h2>
+
 <p>
 The Embedded Atom Method was suggested by Daw and Baskes (M. S. Daw
-and M. I. Baskes, <EM>Phys. Rev. B </EM><B>29</B>, 6443 (1984);
-S. M. Foiles, M. I. Baskes, and M. S. Daw, <EM> Phys. Rev. B </EM>
-<B>33</B>, 7983 (1986)) as a way to overcome the main 
+and M. I. Baskes, <em>Phys. Rev. B </em><b>29</b>, 6443 (1984);
+S. M. Foiles, M. I. Baskes, and M. S. Daw, <em> Phys. Rev. B </em>
+<b>33</b>, 7983 (1986)) as a way to overcome the main 
 <a href="http://www.fisica.uniud.it/~ercolessi/md/md/node47.html#SECTION00630000000000000000">
 problem with two-body potentials</a>: the coordination independence of
 the bond strength, while still being acceptable fast (about 2 times
 slower than pair potentials).</p> 
+
 <p>
 Ideas from the Density Functional Theory 
 or the Tight Binding formalism may lead to the following form for the 
 total energy:</p>
+
 <p>
-E<sub>tot</sub> = &sum;<sub>i,j</sub><sup>N</sup> &Phi;<sub>ij</sub>(r<sub>ij</sub>)   + &sum;<sub>i</sub><sup>N</sup> F(n<sup>h</sup><sub>i</sub>)                <BR>
+E<sub>tot</sub> = &sum;<sub>i,j</sub><sup>N</sup>
+&Phi;<sub>ij</sub>(r<sub>ij</sub>) + &sum;<sub>i</sub><sup>N</sup>
+F(n<sup>h</sup><sub>i</sub>) <br />
 n<sup>h</sup><sub>i</sub> = &sum;<sub>j</sub>
 &rho;<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) </p>
+
 <p>
-While an identification of the  pair potential term  &Phi;<sub>ij</sub>(r<sub>ij</sub>) with
+While an identification of the  pair potential term  
+&Phi;<sub>ij</sub>(r<sub>ij</sub>) with
 the electrostatic core-core repulsion, and of the cohesive term  
 F(n<sup>h</sup><sub>i</sub>) with the energy the ion core
 gets when it is "embedded" in the local electron density
@@ -72,14 +77,18 @@ consideration of either part is not possible - physical relevance
 only lies in the combination of both. </p>
 
 <p>
- The local electron density  
+The local electron density  
 is constructed as a superposition of contributions
 &rho;<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) from neighboring
 atoms. </p>
+
 <p>
-Also belonging to this analytical form are models like the <EM>glue
-model</EM>, and the <EM>Finnis-Sinclair potentials</EM>.
+Also belonging to this analytical form are models like the 
+<em>glue model</em>, and the <em>Finnis-Sinclair potentials</em>.
+
+<!--
 See also the <a href="http://www.itap.physik.uni-stuttgart.de/~teesem/teeseminar_texte/">
 Teeseminar</a> about EAM.</p>
+-->
 
 <!--#include virtual="potfitfoot.html" -->

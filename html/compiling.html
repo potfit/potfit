@@ -1,5 +1,6 @@
 
 <!--#include virtual="potfithead.html" -->
+
 <!-- Copyright (c)  2005  Peter Brommer, Franz Gaehler, ITAP.              -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
@@ -57,8 +58,6 @@ for different interactions, if you don't want to use tabulated
 pair potentials. Most options can coexist with each other. 
 </p>
 
-<p>
-
 <h2>Compilation Options</h2>
 
 <p>
@@ -73,7 +72,7 @@ Here, we only list some general options.</p>
 If none of these is specified, a serial executable is compiled.
 </p>
 
-<table>
+<table summary="supported parallalization options">
 <tr><td>mpi        </td> <td>parallelization with MPI            </td></tr>
 <tr><td>omp        </td> <td>parallelization with OpenMP         </td></tr>
 <tr><td>ompi&nbsp; </td> <td>parallelization with MPI and OpenMP </td></tr>
@@ -81,7 +80,7 @@ If none of these is specified, a serial executable is compiled.
 
 <h3>Other options</h3>
 
-<table>
+<table summary="supported compilation options">
 <tr><td>eam          </td><td>Use Embedded Atom Potentials.</td></tr>
 <tr><td>stress       </td><td>Include stress in fit.</td></tr>
 <tr><td>parab        </td><td>Use parabolic interpolation for
@@ -102,16 +101,16 @@ has been removed. Using the limitation constraint for the embedding
 density is now mandatory and not optional any more. </p>
 
 
-<a id="imdsys" name="imdsys">
+<a id="imdsys" name="imdsys"></a>
 <h2>Supported values of the IMDSYS variable</h2>
-</a>
+
 
 <p>
 Currently, the following values of the IMDSYS variable are supported
 (though only the AthlonMP and P4 has been thoroughly tested, most have not
 been tested at all):</p>
 
-<table>
+<table summary="supported IMDSYS values">
 <tr><td>AthlonMP-icc  </td><td> Athlon MP or XP, icc                 </td></tr>
 <tr><td>AthlonMP-gcc3 </td><td> Athlon MP or XP, gcc3                </td></tr>
 <tr><td>P4-icc        </td><td> Pentium 4 or Xeon, icc               </td></tr>

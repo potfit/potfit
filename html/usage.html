@@ -1,5 +1,6 @@
 
 <!--#include virtual="potfithead.html" -->
+
 <!-- Copyright (c)  2005  Peter Brommer, Franz Gaehler, ITAP.              -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
@@ -15,11 +16,11 @@
 
 <p>
 After having <a href="compiling.html">compiled</a> <em>potfit</em> with the
-suitable options, the simulation is started as follows:
+suitable options, the simulation is started as follows:</p>
 <pre>
     potfit_program parameter_file
 </pre>
-The name of the <em>potfit</em> program is the same as the compilation
+<p>The name of the <em>potfit</em> program is the same as the compilation
 target. The
 <a href="paramfile.html">parameter file</a> contains all further
 <a href="params.html">parameters</a> describing the simulation.</p>
@@ -32,12 +33,12 @@ also be combined. If OpenMP is used, the number of threads in
 each process has to specified by setting the envirent variable
 OMP_NUM_TREADS. If MPI is used, the number of MPI processes 
 must be stated at the program start. This is usually done with 
-a (system dependent) startup script like the following ones:
+a (system dependent) startup script like the following ones:</p>
 <pre>
     mpirun -np P potfit_program  parameter_file   # MPICH
     mpprun -n  P potfit_program  parameter_file   # Cray T3E
 </pre>
-Here, P is the number of MPI processes.</p>  
+<p>Here, P is the number of MPI processes.</p>  
 
 <p> 
 If MPI and OpenMP are combined, one usually wants to run one MPI

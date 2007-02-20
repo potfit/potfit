@@ -1,4 +1,5 @@
 <!--#include virtual="potfithead.html" -->
+
 <!-- Copyright (c)  2005  Peter Brommer, Franz Gaehler, ITAP.              -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
@@ -18,7 +19,7 @@ for the preparation of <em>potfit</em> input files and the postprocessing of
 <em>potfit</em> output files. 
 </p>
 
-<table cellpadding="4">
+<table cellpadding="4" summary="utility programs">
 <tr><td><a href="#force2poscar">force2poscar</a></td>
     <td>Converts force files (<a
 href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> output)
@@ -62,12 +63,12 @@ Usage: vasp2force
 directory. Requires a file called single_atom_energies in the
 <b>parent</b> directory, containing the energy of a single free atom
 calculated by <a href="http://cms.mpi.univie.ac.at/vasp/">vasp</a> in
-a single line in the same order as in the POTCAR file, e.g.:
+a single line in the same order as in the POTCAR file, e.g.:</p>
 <pre>
 -0.000219 -0.993872 -0.855835
 # Al      Co        Ni
 </pre>
-Writes a force file to be used as a <em>potfit</em> reference
+<p>Writes a force file to be used as a <em>potfit</em> reference
 configuration to standard output.</p>
 
 <h2><a id="pottrans" name="pottrans">pottrans</a></h2>
@@ -121,8 +122,8 @@ dummy_phi	# vector (length ntypes) dummy values of phi_ii at dummy_r
 
 <p>Prints the values of &rho;<sub>0</sub>(dummy_r) and
 &Phi;<sub>ii</sub>(dummy_r). If dummy_phi is given, the potential is
-transformed so that &rho;</sub>0</sub>(dummy_r)=dummy_rho and
-&Phi<sub>ii</sub>(dummy_r)=dummy_phi_ii. IMD potentials and potential plot
+transformed so that &rho;<sub>0</sub>(dummy_r)=dummy_rho and
+&Phi;<sub>ii</sub>(dummy_r)=dummy_phi_ii. IMD potentials and potential plot
 files are also written.</p> 
 
 

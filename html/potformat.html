@@ -79,11 +79,11 @@ In a potential file in format 3, each data column has its own range
 and spacing. Sampling points are equidistant in the atomic distance r
 or (when using EAM-type interactions) electron density n.
 If we have n data columns, the file starts with n lines
-of the form
+of the form</p>
 <pre>
 x_begin x_end steps
 </pre>
-specifying the start, end, and the number of function values in each
+<p>specifying the start, end, and the number of function values in each
 data set.  n data columns. The argument x is either the atom distance,
 or the host electron density. These n lines are then followed by n
 blocks with the function values, one for each atom type pair or atom
@@ -91,7 +91,7 @@ type. The spacing of function values is computed from the begin, end,
 and number of function values of the corresponding table and can be
 different for the different data columns.</p> 
 
-<p>The data sets for N atom types have to be arranged as follows:
+<p>The data sets for N atom types have to be arranged as follows:</p>
 <pre>
 V_00 V_01 ... V_0N V_11 ... V_1N ... V_NN  (pair interaction)
 rho_0 rho_1 ... rho_N  (EAM electron transfer)
@@ -106,9 +106,9 @@ make the gradient variable at boundaries where natural splines are
 specified. This will lead to undesired results.</em></p>
 
 <p> A sample format 3 potential file for a binary system for an EAM
-potential is available <a href="sample3g.pt.txt">with</a> or <a
-href="sample3.pt.txt">without</a> the #G header line.
-
+potential is available <a href="sample3g.pt.txt">with</a> or 
+<a href="sample3.pt.txt">without</a> the #G header line.
+</p>
 
 <p><b>Please note:</b></p>
 <ul>
@@ -121,6 +121,7 @@ atom only. </li>
 </ul>
 
 <h2>Format 4</h2>
+
 <p>As with potential files in format 3 each data column has its own
 spacing. But with potential format 4 the requirement that the sampling
 points be equidistant is dropped. Arbitrarily spaced sampling points
@@ -129,13 +130,14 @@ are possible, but the sampling points have to be given in order.</p>
 <p>Preceding the data columns is a header with one line per column,
 containing the number of sampling points in the corresponding
 column. Seperated by blank lines then the data columns follow. Each of
-the columns has the form
+the columns has the form</p>
 <pre>
 r_0     f(r_0)
 r_1     f(r_1)
 ...
 r_steps f(r_steps)
 </pre>
+<p>
 Please note that r<sub>0</sub> < r<sub>1</sub> < ... < r<sub>steps</sub> is
 required. 
 The order of the columns is the same as with format 3. </p>
