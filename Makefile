@@ -5,8 +5,8 @@
 # Copyright 2002-2006 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.34 $
-# $Date: 2006/05/11 07:24:37 $
+# $Revision: 1.35 $
+# $Date: 2007/07/04 15:59:52 $
 # 
 ############################################################################
 #
@@ -145,8 +145,8 @@ MPI_FLAGS	+= -DMPI
 OMP_FLAGS	+= -DOMP
 OMPI_FLAGS	+= -DMPI -DOMP
 DEBUG_FLAGS	+= -DDEBUG 
-MKLPATH         =  /common/linux/paket/intel/mkl61/lib/32/
-CINCLUDE        =  -I/common/linux/paket/intel/mkl61/include/
+MKLPATH         =  /common/linux/paket/intel/mkl8/lib/32/
+CINCLUDE        =  -I/common/linux/paket/intel/mkl8/include/
 
 ###########################################################################
 #
