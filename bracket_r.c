@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2005/05/06 13:25:47 $
+* $Revision: 1.2 $
+* $Date: 2007/08/14 14:03:24 $
 *****************************************************************/
 
 #include <math.h>
@@ -132,7 +132,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	      /* Pathological: Search between center and right */
 	      /* This means a change from original algorithm */
 #ifdef DEBUG
-	      sprintf(errmsg,"Pathological  @%i %f %f %f! center-right!\n",  
+	      sprintf(errmsg,"Pathological  @%li %f %f %f! center-right!\n",  
 		      nb_eval,x_left, x_center, x_right);
               warning(errmsg);
 #endif /* DEBUG */
@@ -167,7 +167,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	    {
 	      /* between center and left */
 #ifdef DEBUG
-	      sprintf(errmsg,"Pathological  @%i %f %f %f! center-left!\n",  nb_eval,x_left, x_center, x_right);
+	      sprintf(errmsg,"Pathological  @%li %f %f %f! center-left!\n",  nb_eval,x_left, x_center, x_right);
 	      warning(errmsg);
 #endif /* DEBUG */
 	      x_right=x_center ;
@@ -201,7 +201,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
                   /* go further to left, it goes up towards the right */
 #ifdef DEBUG
 
-		  sprintf(errmsg,"Pathological  @%i %f %f %f! Go left!\n",  
+		  sprintf(errmsg,"Pathological  @%li %f %f %f! Go left!\n",  
 			  nb_eval,x_left, x_center, x_right);
 		  warning(errmsg);
 #endif /* DEBUG */
@@ -217,7 +217,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	      else 	  /* go further to the right, to left it went up */
 	        {
 #ifdef DEBUG
-		  sprintf(errmsg,"Pathological @%i %f %f %f! go right!\n", 
+		  sprintf(errmsg,"Pathological @%li %f %f %f! go right!\n", 
 			  nb_eval, x_left, x_center, x_right);
 		  warning(errmsg);
 #endif /* DEBUG */
@@ -235,7 +235,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
     }
   while (nb_eval < MAX_IT);
 #ifdef DEBUG
-  sprintf(errmsg, "Problems with bracketing minimum: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.", 
+  sprintf(errmsg, "Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.", 
 	  nb_eval,x_left, f_left, x_center, f_center, x_right, f_right);
   error(errmsg);
 #else  /* DEBUG */
