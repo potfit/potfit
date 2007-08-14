@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.11 $
-* $Date: 2006/05/11 07:26:17 $
+* $Revision: 1.12 $
+* $Date: 2007/08/14 14:04:11 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -106,10 +106,10 @@ void broadcast_params() {
   /* first the easy ones: */
   /* MPI_VEKTOR */
   MPI_Type_contiguous(3,REAL,&MPI_VEKTOR);
-//MPI_Type_commit(&MPI_VEKTOR);
+  MPI_Type_commit(&MPI_VEKTOR);
   /* MPI_STENS */
   MPI_Type_contiguous(6,REAL,&MPI_STENS);
-//  MPI_Type_commit(&MPI_STENS);
+  MPI_Type_commit(&MPI_STENS);
 
   /* MPI_NEIGH */
   blklens[0]=1;         typen[0]=MPI_INT;  /* typ */

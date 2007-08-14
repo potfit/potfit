@@ -5,8 +5,8 @@
 # Copyright 2002-2006 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.35 $
-# $Date: 2007/07/04 15:59:52 $
+# $Revision: 1.36 $
+# $Date: 2007/08/14 14:04:11 $
 # 
 ############################################################################
 #
@@ -162,7 +162,7 @@ ifeq (x86_64-gcc3,${IMDSYS})
 #  MPICH_CLINKER = gcc
   BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
 #  FFTW_DIR     = /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS     += -O -m64 -Wno-unused
+  OPT_FLAGS     += -O -march=opteron -Wno-unused
   DEBUG_FLAGS   += -g
   PROF_FLAGS    += -g3 -pg
   LFLAGS        +=  -static
@@ -180,7 +180,7 @@ ifeq (x86_64-icc,${IMDSYS})
   MPICH_CC      = icc
   MPICH_CLINKER = icc
   BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
-  OPT_FLAGS     += -O3 -ip -fno-builtin # -axP # remove -axP for Opteron
+  OPT_FLAGS     += -O3 -ip # -fno-builtin # -axP # remove -axP for Opteron
   MPI_FLAGS     +=
   OMP_FLAGS     += -openmp
   OMPI_FLAGS    += -openmp
@@ -188,7 +188,7 @@ ifeq (x86_64-icc,${IMDSYS})
   PROF_FLAGS    += -prof_gen
   RCD_FLAGS     += # -DRCD -rcd
   MPI_LIBS      +=
-  LFLAGS        +=  #-static
+  LFLAGS        += -i-static -openmp
   MKLPATH       = /common/linux/paket/intel/mkl8/lib/em64t/
   CINCLUDE      = -I/common/linux/paket/intel/mkl8/include
   LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
@@ -694,7 +694,7 @@ powell_lsq.o: powell_lsq.c
 
 # How to link
 ${MAKETARGET}: ${OBJECTS} 
-	${CC} -o $@ ${OBJECTS} ${LIBS}
+	${CC} ${LFLAGS} -o $@ ${OBJECTS} ${LIBS}
 	${MV} $@ ${BIN_DIR}; rm -f $@
 
 # First recursion only set the MAKETARGET Variable
