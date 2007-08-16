@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2005/05/06 13:38:33 $
+* $Revision: 1.9 $
+* $Date: 2007/08/16 14:40:41 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -71,8 +71,8 @@ real rescale(pot_table_t *pt, real upper, int flag)
     maxrho[i]=-1e100;
     minrho[i]=1e100;
   }
-  /* Max/Min rho finden */
-  /* Splines initialisieren - sicher ist sicher*/
+  /* find Max/Min rho  */
+  /* init splines - better safe than sorry */
   for (col=paircol; col<paircol+ntypes; col++) { /* rho */
     first=pt->first[col];
     if (format == 3)
@@ -85,7 +85,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
   }
   for  (col=paircol+ntypes; col<paircol+2*ntypes; col++) { /* F */
     first=pt->first[col];
-    /* Steigung 0 am rechten Rand */
+    /* gradient 0 at r_cut */
     if (format == 3) 
       spline_ed(pt->step[col], xi+first, 
 		pt->last[col]-first+1,
@@ -108,7 +108,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
 		pt->d2tab+first);
   }
   
-  /* atom_rho berechnen (eigentlich Verschwendung...) */
+  /* re-calculate atom_rho (might be a waste...) */
   for (h=0; h<nconf; h++) {
     for (i=0; i<inconf[h]; i++) 
       atoms[cnfstart[h]+i].rho=0.0;
@@ -148,16 +148,16 @@ real rescale(pot_table_t *pt, real upper, int flag)
     if (maxrho[i]> max) { max=maxrho[i];maxcol=i;}
     if (minrho[i]< min) { min=minrho[i];mincol=i;}
   }
-  /* dominante Seite bestimmen */
+  /* determine dominant side */
   sign = ( max>=-min ) ? 1 : -1;
   
-  /* Neue linke und rechte Grenze ermitteln, 40 Prozent zugeben... */
+  /* determine new left and right boundary, add 40 per cent... */
   
   for (i=0;i<ntypes;i++) {
     j=paircol+ntypes+i;
     left[i]=minrho[i]-0.3*pt->step[j];
     right[i]=maxrho[i]+0.3*pt->step[j];
-    /* Ist Erweiterung nötig? */
+    /* is expansion necessary? */
     if ( flag ||
 	 minrho[i]-pt->begin[j] < 0. ||
 	 minrho[i]-pt->begin[j] > .95*pt->step[j] ||
@@ -166,22 +166,22 @@ real rescale(pot_table_t *pt, real upper, int flag)
       flag=1;
   }
   
-  /* Skalierungsfaktor bestimmen */
+  /* determine scaling factor  */
   a= (sign==1) ? upper/right[maxcol] : upper/left[mincol];
   
   if (flag || fabs(a) > 1.05 || fabs(a) < 0.95) flag=1;
   
-  /* Haben wir Grund zum Updaten? */
+  /* update needed? */
   
-  if (!flag) return 0.;		/* offensichtlich nicht */
+  if (!flag) return 0.;		/* no */
 
-  /* Also machen wir ein Update... */
+  /* Let's update... */
 
 
-  /* Potenzial erweitern */
+  /* expand potential  */
   h=0;
   for(i=0;i<ntypes;i++) {
-    col=paircol+ntypes+i;	/* 1. Einbettungsfunktion */
+    col=paircol+ntypes+i;	/* 1. embedding function */
     vals=pt->last[col]-pt->first[col]; 
     neustep[i]=(right[i]-left[i])/(double) vals;
     pos=left[i];
@@ -192,7 +192,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
       h++;
       pos+=neustep[i];
     }
-  /* Steigung korrigieren */
+  /* correct gradient */
     if (*(xi+pt->first[col]-2)<1.e30) 
       *(xi+pt->first[col]-2)=splint_grad_ne(pt,xi,col,left[i]);
     if (*(xi+pt->first[col]-1)<1.e30) 
@@ -200,20 +200,17 @@ real rescale(pot_table_t *pt, real upper, int flag)
     
   }
 
-  /* Werte zurückschreiben */
-  col=0; /* erster zu ändernder Wert */
+  /* write back values */
+  col=0; /* first value to be changed */
   for (j=paircol+ntypes;j<paircol+2*ntypes;j++)
     for (i=pt->first[j];i<=pt->last[j];i++){
       xi[i]=neuxi[col];
       pt->xcoord[i]=neuord[col];
       col++;
   }
-//#ifndef DEBUG
-  printf("Skalierungsfaktor %f\n",a);
-//#endif
-  /* skalieren */
+  printf("Scaling factor %f\n",a);
+  /* scale */
   for (i=paircol;i<paircol+ntypes;i++){
-/*    first =pt->first[i];*/
     for (j=pt->first[i];j<=pt->last[i];j++){
       pt->table[j]*=a;
     }
@@ -239,7 +236,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
       }
       j++;
     }
-  } else { 			/* wir drehen um - a negativ */
+  } else { 			/* reverse - a negativ */
     j=0;
     for (i=paircol+ntypes;i<paircol+2*ntypes;i++){
       pt->begin[i]=a*right[j];
@@ -264,14 +261,14 @@ real rescale(pot_table_t *pt, real upper, int flag)
       j++;
     }
     h=0;
-    for (i=0;i<ntypes;i++) { 	/* Werte in umgekehrter Reihenfolge */
+    for (i=0;i<ntypes;i++) { 	/* values in reverse order */
       col=paircol+ntypes+i;
       for (j=pt->last[col];j>=pt->first[col];j--){
 	neuxi[h]=xi[j];
 	h++;
       }
     }
-    col=0;	/* und wieder zurückschreiben */
+    col=0;	/* and write back */
     for (j=paircol+ntypes;j<paircol+2*ntypes;j++)
       for (i=pt->first[j];i<=pt->last[j];i++){
 	xi[i]=neuxi[col];
@@ -279,10 +276,10 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	col++;
       }
   }
-  /* Splines neuinitialisieren */
+  /* re-initialise splines */
   for  (col=paircol+ntypes; col<paircol+2*ntypes; col++) { /* F */
     first=pt->first[col];
-    /* Steigung 0 am rechten Rand */
+    /* gradient 0 at r_cut */
     if (format == 3) 
       spline_ed(pt->step[col], xi+first, 
 		pt->last[col]-first+1,
@@ -306,7 +303,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
   }
 
 
-  /* Eichung korrigieren U'(n_mean)=0 */
+  /* correct gauge: U'(n_mean)=0 */
   for (i=0;i<ntypes;i++) {
     lambda[i]=splint_grad(&pair_pot,pt->table,paircol+ntypes+i,
 			  0.5*(pt->begin[paircol+ntypes+i]+
@@ -361,10 +358,10 @@ void embed_shift(pot_table_t *pt){
   xi=pt->table;
   for (i=paircol+ntypes;i<paircol+2*ntypes;i++){
     first=pt->first[i];
-    /* init splines - sicher ist sicher */
-    /* Steigung 0 am linken Rand */
-/********* GEFAHR HIER ****************/
-/** NICHT IDIOTENSICHER ***************/
+    /* init splines - better safe than sorry */
+    /* gradient 0 at r_cut */
+/********* DANGER ****************/
+/** NOT FOOLPROOF ***************/
     if (pt->begin[i]<=0) {	/* 0 in domain of U(n) */
       if (format == 3) 
 	spline_ed(pt->step[i], xi+first,pt->last[i]-first+1,*(xi+first-2),

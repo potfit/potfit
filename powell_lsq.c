@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2007/01/02 12:06:40 $
+* $Revision: 1.27 $
+* $Date: 2007/08/16 14:40:41 $
 *****************************************************************/
 
 /******************************************************************************
@@ -126,9 +126,6 @@ void powell_lsq(real *xi)
 	      idx[i-1]);
       warning(errmsg);
       rescale(&pair_pot,1.,1);
-#ifdef WZERO
-//      embed_shift(&pair_pot); ist des Teufels
-#endif /* WZERO */
 #ifdef MPI
       /* wake other threads and sync potentials*/
       F=calc_forces(xi,fxi1,2);
@@ -240,9 +237,6 @@ void powell_lsq(real *xi)
       temp=rescale(&pair_pot,1.,0);
       /* Was rescaling necessary ?*/
       if (temp!=0.) {
-#ifdef WZERO
-	// embed_shift(&pair_pot); Ist des Teufels!
-#endif /* WZERO */
 #ifdef MPI
       /* wake other threads and sync potentials*/
 	F=calc_forces(xi,fxi1,2);
@@ -256,9 +250,8 @@ void powell_lsq(real *xi)
 
     /*End fit if whole series didn't improve F */
   } while ((F3-F>PRECISION/10.) || (F3-F<0)); /* outer loop */
-//#ifdef DEBUG
+
   printf("Precision reached: %10g\n", F3-F);
-//#endif 
   /* Free memory */
   free_vect_real(delta);
   free_vect_real(fxi1);
@@ -312,7 +305,6 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
     xi[idx[i]]-=EPS;                /*...and decrease xi[idx[i]] again*/
 /* scale gamma so that sum_j(gamma^2)=1                      */
     if (temp>NOTHING) { 
-//      printf("%f\n",temp);
       for (j=0;j<mdim;j++) gamma[j][i] /= temp; /*normalize gamma*/
       d[i][i]/=temp;	/* rescale d */
     }
@@ -320,15 +312,6 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
       return i+1;		/* singular matrix, abort */
   }
   free_vect_real(force);
-/*     for (i=0;i<n;i++) { */
-/* 	sum =0.; */
-/* 	for (j=0;j<m;j++) sum += SQR(gamma[j][i]); */
-/* 	temp=sqrt(sum); */
-/* 	if (temp>NOTHING)  */
-/* 	    for (j=0;j<m;j++) gamma[j][i] /= temp; /\*normalize gamma*\/ */
-/* 	else */
-/* 	    return i+1;		/\* singular matrix, abort *\/ */
-/*     } */
   return 0;
 }
 
@@ -392,9 +375,7 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
       for (j=0;j<m;j++)
 	lineqsys[i][i]+=SQR(gamma[j][i]);
       for (k=i+1;k<n;k++) {
-//      for (k=0;k<n;k++) {
 	lineqsys[i][k]=0.;
-//	lineqsys[k][i]=0.;
 	for (j=0;j<m;j++) {
 	  lineqsys[i][k]+=gamma[j][i]*gamma[j][k];
 	}
