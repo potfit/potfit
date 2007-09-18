@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2007 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.41 $
-* $Date: 2006/05/11 07:26:17 $
+* $Revision: 1.42 $
+* $Date: 2007/09/18 08:51:53 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -104,6 +104,8 @@ real calc_forces_pair(real *xi, real *forces, int flag)
 #ifdef EAM
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag==2) potsync();	
+    /* non root processes hang on, unless...  */
+    if (flag==1) break;		/* Exception: flag 1 means clean up */
 #endif /* EAM */
 #endif /* MPI */
     
@@ -524,8 +526,6 @@ real calc_forces_pair(real *xi, real *forces, int flag)
       return sum;
     }
 
-    /* non root processes hang on, unless...  */
-    if (flag==1) break;		/* Exception: flag 1 means clean up */
   }
   /* once a non-root process arrives here, all is done. */
   return -1.; 

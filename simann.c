@@ -4,7 +4,7 @@
  *
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer
+*   Copyright 2002-2007 Peter Brommer
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2006/12/28 10:50:09 $
+* $Revision: 1.21 $
+* $Date: 2007/09/18 08:51:53 $
 *****************************************************************/
 
 
@@ -134,7 +134,7 @@ void anneal(real *xi)
     /* init starting temperature for annealing process */
     T=anneal_temp;
     if (T==0.) return; 		/* don't anneal if starttemp equal zero */
-    Fvar=vect_real(KMAX+5+NEPS)-(NEPS+1); /* um NEPS geshiftet... */
+    Fvar=vect_real(KMAX+5+NEPS);//-(NEPS+1); /* Backlog of old F values */
     v=vect_real(ndim);
     xopt=vect_real(ndimtot);
     xi2=vect_real(ndimtot);
@@ -151,7 +151,7 @@ void anneal(real *xi)
     printf("k\tT        \tm\tF          \tFopt\n");   
     printf("%d\t%f\t%d\t%f\t%f\n", 0, T,0, F, Fopt);
     fflush(stdout);
-    for (n=0;n<NEPS;n++) Fvar[-n]=F;
+    for (n=0;n<=NEPS;n++) Fvar[n]=F;//Fvar[-n]=F;
     
     do {
       for (m=0;m<ntemp;m++){
@@ -226,10 +226,10 @@ void anneal(real *xi)
       /*Temp adjustment */
       T*=TEMPVAR;
       k++;
-      Fvar[k]=F;
+      Fvar[k+NEPS]=F;
       loopagain = 0; 
       for (n=1;n<=NEPS;n++) { 
-	if (fabs(F-Fvar[k-n])>EPS) loopagain=1; }
+	if (fabs(F-Fvar[k-n+NEPS])>EPS) loopagain=1; }
       if (! loopagain && ((F-Fopt)>EPS) ) {
 	for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
 	F=Fopt;
@@ -241,7 +241,7 @@ void anneal(real *xi)
     for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
     F=Fopt;
     if (tempfile != "\0") write_pot_table( &pair_pot, tempfile );
-    free_vect_real(Fvar-NEPS+1);
+    free_vect_real(Fvar);//-NEPS+1);
     free_vect_real(v);
     free_vect_real(xopt);
     free_vect_int(naccept);

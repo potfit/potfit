@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2007 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.36 $
-* $Date: 2006/05/11 07:26:17 $
+* $Revision: 1.37 $
+* $Date: 2007/09/18 08:51:53 $
 *****************************************************************/
 
 
@@ -46,7 +46,7 @@
 
 void error(char *msg)
 {
-  real* force;
+  real* force=NULL;
   fprintf(stderr,"Error: %s\n",msg);
   fflush(stderr);
 #ifdef MPI
@@ -85,6 +85,7 @@ int main(int argc, char **argv)
   init_mpi(&argc,argv);
 #endif
   srandom(seed+myid);random();random();random();random();
+  calc_forces = calc_forces_pair;
   if (myid==0) {
     read_parameters(argc, argv);
     read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
@@ -146,7 +147,6 @@ int main(int argc, char **argv)
   ndimtot=pair_pot.len;
   paircol=(ntypes*(ntypes+1))/2;
   idx=pair_pot.idx;
-  calc_forces = calc_forces_pair;
 
   force = (real *) malloc( (mdim) * sizeof(real) );
 

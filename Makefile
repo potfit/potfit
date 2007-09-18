@@ -2,11 +2,11 @@
 #
 # potfit -- The ITAP Force Matching Program
 #
-# Copyright 2002-2006 Institute for Theoretical and Applied Physics,
+# Copyright 2002-2007 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.36 $
-# $Date: 2007/08/14 14:04:11 $
+# $Revision: 1.37 $
+# $Date: 2007/09/18 08:51:52 $
 # 
 ############################################################################
 #
@@ -145,8 +145,9 @@ MPI_FLAGS	+= -DMPI
 OMP_FLAGS	+= -DOMP
 OMPI_FLAGS	+= -DMPI -DOMP
 DEBUG_FLAGS	+= -DDEBUG 
-MKLPATH         =  /common/linux/paket/intel/mkl8/lib/32/
-CINCLUDE        =  -I/common/linux/paket/intel/mkl8/include/
+MKLDIR          =  /common/linux/paket/intel/mkl91/
+MKLPATH         =  ${MKLDIR}/lib/
+CINCLUDE        =  -I${MKLDIR}/include/
 
 ###########################################################################
 #
@@ -166,10 +167,10 @@ ifeq (x86_64-gcc3,${IMDSYS})
   DEBUG_FLAGS   += -g
   PROF_FLAGS    += -g3 -pg
   LFLAGS        +=  -static
-  MKLPATH       = /common/linux/paket/intel/mkl8/lib/64/
-  CINCLUDE      = -I/common/linux/paket/intel/mkl8/include
+  MKLPATH       = ${MKLDIR}/lib/em64t/
+#  CINCLUDE      = -I${MKLDIR}/include
   export        MPICH_CC # MPICH_CLINKER
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_lapack64.a \
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
 endif
 
@@ -189,8 +190,8 @@ ifeq (x86_64-icc,${IMDSYS})
   RCD_FLAGS     += # -DRCD -rcd
   MPI_LIBS      +=
   LFLAGS        += -i-static -openmp
-  MKLPATH       = /common/linux/paket/intel/mkl8/lib/em64t/
-  CINCLUDE      = -I/common/linux/paket/intel/mkl8/include
+  MKLPATH       = ${MKLDIR}/lib/em64t/
+#  CINCLUDE      = -I/common/linux/paket/intel/mkl8/include
   LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER
