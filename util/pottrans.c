@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.2 $
-*  $Date: 2004/08/26 12:37:55 $
+*  $Revision: 1.3 $
+*  $Date: 2007/10/01 16:11:31 $
 *
 ******************************************************************************/
 
@@ -53,6 +53,7 @@
 
 /* type of interpolation */
 #define POTVAL pot3
+#define POTGRAD grad3
 
 /* type of potential */
 #define PAIR   1
@@ -676,6 +677,42 @@ real pot2(pot_table_t *pt, int col, int inc, real r2)
 
 /*****************************************************************************
 *
+*  Evaluate pot table gradient with quadratic interpolation. 
+*  col is p_typ * ntypes + q_typ
+*
+******************************************************************************/
+
+real grad2(pot_table_t *pt, int col, int inc, real r2)
+{
+  real r2a, istep, chi, p0, p1, p2, dv, d2v, *ptr;
+  int  k;
+
+  /* check for distances shorter than minimal distance in table */
+  r2a = MIN(r2,pt->end[col]);
+  r2a = r2a - pt->begin[col];
+  if (r2a < 0) {
+    r2a   = 0;
+  }
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = (int) (r2a * istep);
+  chi   = (r2a - k * pt->step[col]) * istep;
+
+  /* intermediate values */
+  ptr = PTR_2D(pt->table, k, col, pt->maxsteps, inc);
+  p0  = *ptr; ptr += inc;
+  p1  = *ptr; ptr += inc;
+  p2  = *ptr;
+  dv  = p1 - p0;
+  d2v = p2 - 2 * p1 + p0;
+
+  /* return the gradient value */
+  return 2 * istep * (dv + (chi - 0.5) * d2v);
+}
+
+/*****************************************************************************
+*
 *  Evaluate potential table with cubic interpolation. 
 *  col is p_typ * ntypes + q_typ
 *
@@ -718,6 +755,52 @@ real pot3(pot_table_t *pt, int col, int inc, real r2)
 
 /* return the potential value */ 
   return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
+}
+
+/*****************************************************************************
+*
+*  Evaluate potential table with cubic interpolation. 
+*  col is p_typ * ntypes + q_typ
+*
+******************************************************************************/
+
+real grad3(pot_table_t *pt, int col, int inc, real r2)
+{
+  real r2a, istep, chi, p0, p1, p2, p3, *ptr;
+  real dfac0, dfac1, dfac2, dfac3;
+  int  k;
+
+  /* check for distances shorter than minimal distance in table */
+  /* we need one extra value at the lower end for interpolation */
+  r2a = MIN(r2,pt->end[col]);
+  r2a = r2a - pt->begin[col];
+  if (r2a < 0) {
+    r2a = 0;
+  }
+
+  /* indices into potential table */
+  istep = pt->invstep[col];
+  k     = (int) (r2a * istep);  
+  if (k==0) return grad2(pt,col,inc,r2); /* parabolic fit if on left border */
+  chi   = (r2a - k * pt->step[col]) * istep; 
+  k--;  
+
+
+  /* intermediate values */ 
+  ptr = PTR_2D(pt->table, k, col, pt->maxsteps, inc);
+  p0  = *ptr; ptr += inc;   /* leftmost value*/
+  p1  = *ptr; ptr += inc;   /* next left */
+  p2  = *ptr; ptr += inc;   /* first right */
+  p3  = *ptr;               /* rightmost value*/
+
+  /* factors for the interpolation */
+  dfac0 = -(1.0/6.0) * ((3.0*chi-6.0)*chi+2.0);
+  dfac1 =        0.5 * ((3.0*chi-4.0)*chi-1.0);
+  dfac2 =       -0.5 * ((3.0*chi-2.0)*chi-2.0);
+  dfac3 =    1.0/6.0 * (3.0*chi*chi-1.0);
+
+/* return the gradient value */ 
+  return 2. * istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
 }
 
 /*****************************************************************************
@@ -810,7 +893,7 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
 /*   } */
 
   /* write header */
-  fprintf(outfile, "#F 3 %d\n#E\n", ncols ); 
+  fprintf(outfile, "#F 3 %d\n#E\n", ncols );
 
   /* write info block */
   for (i=0; i<ncols; i++) {
@@ -827,10 +910,16 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
       col    = i * ntypes + j; 
       r      = r_start[k];
       r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
+      fprintf(outfile, "%.16e 0.0\n", POTGRAD(pt, col, ntypes*ntypes, r*r)); 
+      if (flag) {      
+	fprintf(outfile2, "%.16e 0.0\n", 
+		POTGRAD(pt, col, ntypes*ntypes, r*r)); 
+      }
       for (l=0; l<nsteps[k]-1; l++) {
         fprintf(outfile, "%.16e\n", POTVAL(pt, col, ntypes*ntypes, r*r) );
 	if (flag) 
-	  fprintf(outfile2, "%.6e %.6e\n",r,POTVAL(pt, col, ntypes*ntypes, r*r) );
+	  fprintf(outfile2, "%.6e %.6e\n",r,
+		  POTVAL(pt, col, ntypes*ntypes, r*r) );
         r += r_step;
       }
       k++;
@@ -840,10 +929,16 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
   for (i=0; i<ntypes; i++) {
     r      =  r_start[k];
     r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
+    fprintf(outfile, "%.16e 0.0\n", POTGRAD(rho_tab,i, ntypes*ntypes, r*r)); 
+    if (flag) {
+      fprintf(outfile2, "%.16e 0.0\n", 
+	      POTGRAD(rho_tab,i, ntypes*ntypes, r*r)); 
+    }
     for (l=0; l<nsteps[k]-1; l++) {
       fprintf(outfile, "%.16e\n", POTVAL(rho_tab, i, ntypes*ntypes, r*r) );
       if (flag) 
-	fprintf(outfile2, "%.6e %.6e\n",r,POTVAL(rho_tab, i, ntypes*ntypes, r*r) );
+	fprintf(outfile2, "%.6e %.6e\n",r,
+		POTVAL(rho_tab, i, ntypes*ntypes, r*r) );
       r += r_step;
     }
     k++;
@@ -854,6 +949,14 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
   for (i=0; i<ntypes; i++) {
     r      =  r_start[k];
     r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
+    fprintf(outfile, "%.16e", POTGRAD(embed_pt,i, ntypes, r)); 
+    fprintf(outfile, " %.16e\n", 
+	    POTGRAD(embed_pt, i, ntypes, r_end[k])); 
+    if (flag) {
+      fprintf(outfile2, "%.16e", POTGRAD(embed_pt,i, ntypes, r)); 
+      fprintf(outfile2, " %.16e\n ", 
+	      POTGRAD(embed_pt, i, ntypes, r_end[k])); 
+    }
     for (l=0; l<nsteps[k]; l++) {
       fprintf(outfile, "%.16e\n", POTVAL(embed_pt, i, ntypes, r) );
       if (flag) 
