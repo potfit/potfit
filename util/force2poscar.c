@@ -6,8 +6,8 @@
 *  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
 *  University of Stuttgart, D-70550 Stuttgart
 *
-*  $Revision: 1.2 $
-*  $Date: 2004/11/17 16:12:22 $
+*  $Revision: 1.3 $
+*  $Date: 2007/10/04 14:55:35 $
 *
 *  Convert an IMD force file to a VASP POSCAR file
 *
@@ -52,36 +52,82 @@ int main(int argc, char **argv)
 {
   FILE *infile, *outfile;
   vector *pos, box_x, box_y, box_z, tmp;
+  char    *res;
+  char buffer[1024];
 #ifdef STRESS
   vector tmp2;
 #endif
-  int *typ, num[MAXTYP], max=0, n, i, j;
+  int *typ, num[MAXTYP], max=0, n, i, j, tag_format, h_boxx, h_boxy, h_boxz;
   real triple_prod;
 
   /* open input file */
   infile = fopen(argv[1], "r" );
   if (infile==NULL) error("cannot open input file");
 
-  /* read number of atoms, allocate memory */
-  fscanf(infile, "%d\n", &n);
+  /* old format or new format? */
+  res=fgets(buffer,1024,infile);
+  if (NULL == res ) error("Unexpected end of file\n");
+  if (res[0]=='#') {  /* new file type */
+    tag_format=1;
+    if (res[1]=='N') {        /* Atom number line */
+      if (sscanf(res+3, "%d %d", &n, &i)<2)
+	error("Error in atom number specification\n");
+    }
+    else error("Error - number of atoms missing\n");
+  }
+  else {
+    /* number of atoms in this configuration */
+    tag_format=0;
+    if (1>sscanf(buffer, "%d", &n)) error("Unexpected end of file");
+  }
+  
+  /* read number of atoms read, now allocate memory */
   pos = (vector *) malloc( n * sizeof(vector) );
   typ = (int    *) malloc( n * sizeof(int   ) );
   if ((NULL==pos) || (NULL==typ)) error("cannot allocate memory");
 
+  if  (tag_format) {
+    do {
+      res=fgets(buffer,1024,infile);
+      /* read the box vectors */
+      if (res[1]=='X') {
+	if (sscanf(res+3, "%lf %lf %lf\n",
+		   &box_x.x, &box_x.y, &box_x.z )==3)
+	  h_boxx++;
+	else error("Error in box_x vector\n");
+      }
+      else if (res[1]=='Y') {
+	if (sscanf(res+3, "%lf %lf %lf\n",
+		   &box_y.x, &box_y.y, &box_y.z )==3)
+	  h_boxy++;
+	else error("Error in box_y vector\n");
+      }
+      else if (res[1]=='Z') {
+	if (sscanf(res+3, "%lf %lf %lf\n",
+		   &box_z.x, &box_z.y, &box_z.z )==3)
+	  h_boxz++;
+	else error("Error in box_z vector\n");
+      }
+    } while (res[1]!='F');
+   /* read energy and stress -> discard */
+    if ( ! (h_boxx && h_boxy && h_boxz))
+      error("Incomplete force file!");
+  } 
+  else {
   /* read box vectors */
-  fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z ); 
-  fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z ); 
-  fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z ); 
+    fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z ); 
+    fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z ); 
+    fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z ); 
   
   /* read energy and stress -> discard */
-  fscanf(infile, "%lf\n", &tmp.x);
+    fscanf(infile, "%lf\n", &tmp.x);
   //printf("%f\n",tmp.x);
 #ifdef STRESS
-  fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &tmp.x, &tmp.y, &tmp.z, 
+    fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &tmp.x, &tmp.y, &tmp.z, 
 	 &tmp2.x, &tmp2.y, &tmp2.z);
 //  printf("%f %f\n",tmp.x,tmp2.z);
 #endif
-
+  }
   /* read atoms */
   for (i=0; i<MAXTYP; i++) num[i]=0;
   for (i=0; i<n; i++) {
