@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.37 $
-* $Date: 2007/09/18 08:51:53 $
+* $Revision: 1.38 $
+* $Date: 2007/11/07 10:36:59 $
 *****************************************************************/
 
 
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
 
     max = 0.0;
     min = 100000.0;
-    
+    printf("conf-atom df^2 f f0 df/f0 |f|\n ")
     for (i=0; i<3*natoms; i++) {
       sqr = SQR(force[i]);
       max = MAX( max, sqr );
@@ -256,6 +256,7 @@ int main(int argc, char **argv)
 #endif /* FWEIGHT */
     }
     printf("Cohesive Energies\n");
+    printf("conf w*de^2 e e0 de/e0\n");
     for (i=0; i<nconf; i++){
       sqr = SQR(force[3*natoms+i]);
       max = MAX( max, sqr );
@@ -265,6 +266,7 @@ int main(int argc, char **argv)
     }
 #ifdef STRESS
     printf("Stresses on unit cell\n");
+    printf("conf w*ds^2 s s0 ds/s0\n");
     for (i=3*natoms+nconf; i<3*natoms+7*nconf; i++) {
       sqr = SQR(force[i]);
       max = MAX( max, sqr );
@@ -275,6 +277,7 @@ int main(int argc, char **argv)
 #endif 
 #ifdef EAM
     printf("Punishment Constraints\n");
+    printf("conf dp p p0 dp/p0")
 #ifdef STRESS
     diff = 6*nconf;
 #else
