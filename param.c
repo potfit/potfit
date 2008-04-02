@@ -4,7 +4,7 @@
 * 
 ******************************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.18 $
-*  $Date: 2005/05/06 13:38:31 $
+*  $Revision: 1.19 $
+*  $Date: 2008/04/02 15:11:32 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -205,6 +205,11 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token,"plotfile")==0) {
 	getparam("plotfile",plotfile,PARAM_STR,1,255);
 	plot=1;
+    }
+    /* file for maximal change */
+    else if (strcasecmp(token,"maxchfile")==0) {
+	getparam("maxchfile",maxchfile,PARAM_STR,1,255);
+	usemaxch=1;
     }
     /* file for pair distribution */
     else if (strcasecmp(token,"distfile")==0) {

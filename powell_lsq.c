@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.28 $
-* $Date: 2008/04/02 15:05:39 $
+* $Revision: 1.29 $
+* $Date: 2008/04/02 15:11:32 $
 *****************************************************************/
 
 /******************************************************************************
@@ -183,7 +183,22 @@ void powell_lsq(real *xi)
       for (i=0; i<ndim; i++) {
 	delta[idx[i]]=0.;
 	for (j=0; j<ndim; j++) delta[idx[i]]+=d[i][j]*q[j];
+	if ( (usemaxch) && (maxchange[idx[i]]>0) && 
+	     (fabs(delta[idx[i]])>maxchange[idx[i]]) ) {
+	  /* something seriously went wrong, 
+	     parameter idx[i] out of control */
+	  sprintf(errmsg,
+		  "Direction vector component %d out of range in step %d\n", 
+		  idx[i],m);
+	  sprintf(errmsg,"%s(%g instead of %g).\n",
+		  errmsg,fabs(delta[idx[i]]),maxchange[idx[i]]);
+	  sprintf(errmsg,"%sRestarting inner loop\n",
+		  errmsg);
+	  warning(errmsg);
+	  breakflag=1;
+	}
       }
+      if (breakflag) break;
       /*     and store delta */
       copy_vector(delta, delta_norm, ndimtot);
 

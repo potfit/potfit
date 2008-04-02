@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.39 $
-* $Date: 2008/04/02 15:10:56 $
+* $Revision: 1.40 $
+* $Date: 2008/04/02 15:11:32 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -217,6 +217,24 @@ void read_pot_table( pot_table_t *pt, char *filename, int ncols )
 #endif
 #endif /* POTSCALE */
   paircol=(ntypes*(ntypes+1))/2;
+  /* read maximal changes file */
+  maxchange = (real *) malloc( pt->len * sizeof(real) );
+  if (usemaxch) { 
+  /* open file */
+    infile = fopen(maxchfile,"r");
+    if (NULL == infile) {
+      sprintf(msg,"Could not open file %s\n",maxchfile);
+      error(msg);
+    }
+    val=maxchange;
+    for (i=0;i<pt->len;i++) {
+      if (1>fscanf(infile, " %lf\n", val)){
+        sprintf(msg, "Premature end of maxch file %s", maxchfile);
+	error(msg);
+      } else val++;
+    }
+    fclose(infile);
+  }
   free(nvals);
   return;
 }
