@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2007 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.38 $
-* $Date: 2007/11/07 10:36:59 $
+* $Revision: 1.39 $
+* $Date: 2008/04/02 15:05:39 $
 *****************************************************************/
 
 
@@ -50,7 +50,7 @@ void error(char *msg)
   fprintf(stderr,"Error: %s\n",msg);
   fflush(stderr);
 #ifdef MPI
-  calc_forces(pair_pot.table,force,1); /* go wake up other threads */
+  calc_forces(calc_pot.table,force,1); /* go wake up other threads */
   shutdown_mpi();
 #endif
   exit(2);
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
   calc_forces = calc_forces_pair;
   if (myid==0) {
     read_parameters(argc, argv);
-    read_pot_table( &pair_pot, startpot, ntypes*(ntypes+1)/2 );
+    read_pot_table( &opt_pot, startpot, ntypes*(ntypes+1)/2 );
     read_config(config);
     printf("Energy weight: %f\n",eweight);
 #ifdef STRESS
@@ -125,9 +125,9 @@ int main(int argc, char **argv)
 
 #ifdef EAM
 #ifndef NORESCALE
-    rescale(&pair_pot,1.,1); 	/* rescale now... */
+    rescale(&opt_pot,1.,1); 	/* rescale now... */
 #ifdef WZERO
-//    embed_shift(&pair_pot);	/* and shift  - diabolical */
+//    embed_shift(&opt_pot);	/* and shift  - diabolical */
 #endif /* WZERO */
 #endif /* NORESCALE */
 #endif /* EAM */
@@ -143,10 +143,10 @@ int main(int argc, char **argv)
   conf_us = usestress;
 #endif /* MPI */
  /*   mdim=3*natoms+nconf; */
-  ndim=pair_pot.idxlen;
-  ndimtot=pair_pot.len;
+  ndim=opt_pot.idxlen;
+  ndimtot=opt_pot.len;
   paircol=(ntypes*(ntypes+1))/2;
-  idx=pair_pot.idx;
+  idx=opt_pot.idx;
 
   force = (real *) malloc( (mdim) * sizeof(real) );
 
@@ -175,34 +175,34 @@ int main(int argc, char **argv)
 #endif /* PARABEL */
     }
   /* all but root go to calc_forces */
-    calc_forces(pair_pot.table,force,0);
+    calc_forces(calc_pot.table,force,0);
   }  else {			/* root thread does minimization */
     if (opt) {
-      anneal(pair_pot.table);
-      powell_lsq(pair_pot.table);
+      anneal(opt_pot.table);
+      powell_lsq(opt_pot.table);
     }
-/*  for (i=0; i<pair_pot.ncols; i++) 
-      spline_ed(pair_pot.step[i],pair_pot.table+pair_pot.first[i],
-      pair_pot.last[i]-pair_pot.first[i]+1,
-      1e30,0,pair_pot.d2tab+pair_pot.first[i]);*/
+/*  for (i=0; i<opt_pot.ncols; i++) 
+      spline_ed(opt_pot.step[i],opt_pot.table+opt_pot.first[i],
+      opt_pot.last[i]-opt_pot.first[i]+1,
+      1e30,0,opt_pot.d2tab+opt_pot.first[i]);*/
 
-//    rescale(&pair_pot,1.);
-    tot = calc_forces(pair_pot.table,force,0);
-    write_pot_table( &pair_pot, endpot );
+//    rescale(&opt_pot,1.);
+    tot = calc_forces(calc_pot.table,force,0);
+    write_pot_table( &opt_pot, endpot );
     printf("Potential in format %d written to file %s\n",format,endpot);
     printf("Plotpoint file written to file %s\n", plotpointfile);
-    write_pot_table_imd( &pair_pot, imdpot );
-    if (plot) write_plotpot_pair(&pair_pot, plotfile);
+    write_pot_table_imd( &opt_pot, imdpot );
+    if (plot) write_plotpot_pair(&opt_pot, plotfile);
 
 
 #ifdef PDIST
 #ifndef MPI 			/* will not work with MPI */
-    write_pairdist(&pair_pot,distfile);
+    write_pairdist(&opt_pot,distfile);
 #endif
 #endif
     if (format == 3) {		/* then we can also write format 4 */
       sprintf(endpot,"%s_4",endpot);
-      write_pot_table4(&pair_pot,endpot);
+      write_pot_table4(&opt_pot,endpot);
       printf("Potential in format 4 written to file %s\n",endpot);
     }
 #ifdef EAM 
@@ -221,16 +221,16 @@ int main(int argc, char **argv)
     }
 #ifdef NEWSCALE
     for (i=0;i<ntypes;i++) {
-      lambda[i]=splint_grad(&pair_pot,pair_pot.table,
+      lambda[i]=splint_grad(&opt_pot,opt_pot.table,
 			    paircol+ntypes+i,totdens[i]);
       printf("lambda[%d] = %f \n", i, lambda[i]) ;
 	}
     sprintf(plotfile,"%s_new",plotfile);
     sprintf(imdpot,"%s_new",imdpot);
     /* write new potential plotting table */
-    if (plot) write_altplot_pair(&pair_pot, plotfile);
+    if (plot) write_altplot_pair(&opt_pot, plotfile);
     /* write NEW imd potentials */
-    write_pot_table_imd( &pair_pot, imdpot );
+    write_pot_table_imd( &opt_pot, imdpot );
 #endif /* NEWSCALE */
 
 
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
 
     max = 0.0;
     min = 100000.0;
-    printf("conf-atom df^2 f f0 df/f0 |f|\n ")
+//    printf("conf-atom df^2 f f0 df/f0 |f|\n ");
     for (i=0; i<3*natoms; i++) {
       sqr = SQR(force[i]);
       max = MAX( max, sqr );
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
 #endif 
 #ifdef EAM
     printf("Punishment Constraints\n");
-    printf("conf dp p p0 dp/p0")
+//    printf("conf dp p p0 dp/p0");
 #ifdef STRESS
     diff = 6*nconf;
 #else
@@ -306,9 +306,13 @@ int main(int argc, char **argv)
     printf("Sum %f, count %d\n", tot, mdim);
     printf("Used %d function evaluations.\n",fcalls);
 #ifdef MPI
-    calc_forces(pair_pot.table,force,1); /* go wake up other threads */
+    calc_forces(calc_pot.table,force,1); /* go wake up other threads */
 #endif /* MPI */
+    free(ntyp);
+    free(totdens);
+    free(lambda);
   }
+  free(force);
 #ifdef MPI
   /* kill MPI */
   shutdown_mpi();

@@ -4,10 +4,10 @@
  *
 *****************************************************************/
 /*
-*   Copyright 2002-2007 Peter Brommer
+*   Copyright 2002-2008 Peter Brommer
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
+*             http://www.itap.physik.uni-stuttgart.de/~imd/potfit
 *
 *****************************************************************/
 /*  
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2007/09/18 08:51:53 $
+* $Revision: 1.22 $
+* $Date: 2008/04/02 15:05:39 $
 *****************************************************************/
 
 
@@ -92,15 +92,15 @@ void makebump(real *x,real width,real height,int center)
 {
     int i,j=0;
     /* find pot to which center belongs */
-    while (pair_pot.last[j]<idx[center]) j++;
+    while (opt_pot.last[j]<idx[center]) j++;
     for (i=0;i<=4.*width;i++){
 /* using idx avoids moving fixed points */
-	if ((center+i<=ndim) && (idx[center+i]<=pair_pot.last[j])){ 
+	if ((center+i<=ndim) && (idx[center+i]<=opt_pot.last[j])){ 
 	    x[idx[center+i]]+=GAUSS((double) i / width)*height;
 	}
     }
     for (i=1;i<=4.*width;i++){
-	if ((center-i>=0) && (idx[center-i]>=pair_pot.first[j])){
+	if ((center-i>=0) && (idx[center-i]>=opt_pot.first[j])){
 	    x[idx[center-i]]+=GAUSS((double) i / width) * height;
 	}
     }
@@ -172,7 +172,7 @@ void anneal(real *xi)
 		for (n=0;n<ndimtot;n++) xopt[n]=xi2[n];
 		Fopt=F2;
 		if (tempfile != "\0") 
-		  write_pot_table( &pair_pot, tempfile );
+		  write_pot_table( &opt_pot, tempfile );
 	      }
 	    }
 	      
@@ -207,11 +207,11 @@ void anneal(real *xi)
 #ifndef NORESCALE
 	/* Check for rescaling... every tenth step */
 	if ( (m % 10)==0 ) {
-	  temp=rescale(&pair_pot,1.,0);
+	  temp=rescale(&opt_pot,1.,0);
 	  /* Was rescaling necessary ?*/
 	  if (temp!=0.) {
 #ifdef WZERO
-//	    embed_shift(&pair_pot);
+//	    embed_shift(&opt_pot);
 #endif /* WZERO */
 #ifdef MPI
 	    /* wake other threads and sync potentials*/
@@ -240,7 +240,7 @@ void anneal(real *xi)
     } while (k<KMAX && loopagain);
     for (n=0;n<ndimtot;n++) xi[n]=xopt[n];
     F=Fopt;
-    if (tempfile != "\0") write_pot_table( &pair_pot, tempfile );
+    if (tempfile != "\0") write_pot_table( &opt_pot, tempfile );
     free_vect_real(Fvar);//-NEPS+1);
     free_vect_real(v);
     free_vect_real(xopt);

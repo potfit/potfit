@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer
+*   Copyright 2002-2008 Peter Brommer
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2007/08/16 14:40:41 $
+* $Revision: 1.10 $
+* $Date: 2008/04/02 15:05:39 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -305,7 +305,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
 
   /* correct gauge: U'(n_mean)=0 */
   for (i=0;i<ntypes;i++) {
-    lambda[i]=splint_grad(&pair_pot,pt->table,paircol+ntypes+i,
+    lambda[i]=splint_grad(&opt_pot,pt->table,paircol+ntypes+i,
 			  0.5*(pt->begin[paircol+ntypes+i]+
 			       pt->end[paircol+ntypes+i]));
   }

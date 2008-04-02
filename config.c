@@ -4,7 +4,7 @@
 * 
 *****************************************************************/
 /*
-*   Copyright 2002-2006 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.31 $
-* $Date: 2006/06/23 11:53:43 $
+* $Revision: 1.32 $
+* $Date: 2008/04/02 15:07:57 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -287,7 +287,6 @@ void read_config(char *filename)
     if (usestress[nconf]) w_stress++;
     if (useforce[nconf]) w_force++;
     volumen[nconf]=make_box();
-
     /* read the atoms */
     for (i=0; i<count; i++) {
       k    = 3 * (natoms + i);
@@ -355,42 +354,42 @@ void read_config(char *filename)
 		   typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1))/2)
 		   : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1))/2);
 		if (format==3) {
-		  rr    = r - pair_pot.begin[col];
+		  rr    = r - calc_pot.begin[col];
 		  if (rr < 0) {
-		    printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,nconf,i-natoms);
+		    printf("%f %f %d %d %d\n",r,calc_pot.begin[col],col,nconf,i-natoms);
 //		  printf("%f %f %f %f %f %f\n", d.x,d.y,d.z,coheng[nconf],stresses->xx,stresses->yz);
 			 
 		    fflush(stdout);
 		    error("short distance in config.c!");
 		  }		
-		  istep = pair_pot.invstep[col];
+		  istep = calc_pot.invstep[col];
 		  slot  = (int)( rr * istep);
-		  shift = (rr - slot * pair_pot.step[col]) * istep;
-		  slot  += pair_pot.first[col];		
-		  step  = pair_pot.step[col];
+		  shift = (rr - slot * calc_pot.step[col]) * istep;
+		  slot  += calc_pot.first[col];		
+		  step  = calc_pot.step[col];
 
 		} else {	/* format == 4 ! */
 
-		  klo=pair_pot.first[col];
-		  khi=pair_pot.last[col];
+		  klo=calc_pot.first[col];
+		  khi=calc_pot.last[col];
 		  /* bisection */
 		  while (khi-klo > 1) {
 		    slot=(khi+klo) >> 1;
-		    if ( pair_pot.xcoord[slot] > r ) khi=slot;
+		    if ( calc_pot.xcoord[slot] > r ) khi=slot;
 		    else klo=slot;
 		  }
 		  slot=klo;
 		/* Check if we are at the last index - we should be lower */
                 /* should be impossible anyway */
-		/*  if (slot>=pair_pot.last[col]) {
+		/*  if (slot>=calc_pot.last[col]) {
 		    klo--;khi--;
 		    } */
-		  step=pair_pot.xcoord[khi]-pair_pot.xcoord[klo];
-		  shift=(r-pair_pot.xcoord[klo])/step;
+		  step=calc_pot.xcoord[khi]-calc_pot.xcoord[klo];
+		  shift=(r-calc_pot.xcoord[klo])/step;
 
 		}
 		/* independent of format - we should be left of last index */
-		if (slot>=pair_pot.last[col]) {
+		if (slot>=calc_pot.last[col]) {
 		  slot--;shift+=1.0;
 		}
 		atoms[i].neigh[k].shift[0]  = shift;
@@ -400,38 +399,38 @@ void read_config(char *filename)
 		/* EAM part */
 		col=paircol+typ2;
 		if (format==3) {
-		  rr    = r - pair_pot.begin[col];
+		  rr    = r - calc_pot.begin[col];
 		  if (rr < 0) {
-		    printf("%f %f %d %d %d\n",r,pair_pot.begin[col],col,typ1,typ2);
+		    printf("%f %f %d %d %d\n",r,calc_pot.begin[col],col,typ1,typ2);
 		    fflush(stdout);
 		    error("short distance in config.c!");
 		  }		
-		  istep = pair_pot.invstep[col];
+		  istep = calc_pot.invstep[col];
 		  slot  = (int)( rr * istep);
-		  shift = (rr - slot * pair_pot.step[col]) * istep;
-		  slot  += pair_pot.first[col];
-		  step  = pair_pot.step[col];
+		  shift = (rr - slot * calc_pot.step[col]) * istep;
+		  slot  += calc_pot.first[col];
+		  step  = calc_pot.step[col];
 		} else {	/* format == 4 ! */
-		  klo=pair_pot.first[col];
-		  khi=pair_pot.last[col];
+		  klo=calc_pot.first[col];
+		  khi=calc_pot.last[col];
 		  /* bisection */
 		  while (khi-klo > 1) {
 		    slot=(khi+klo) >> 1;
-		    if ( pair_pot.xcoord[slot] > r ) khi=slot;
+		    if ( calc_pot.xcoord[slot] > r ) khi=slot;
 		    else klo=slot;
 		  }
 		  slot=klo;
 		/* Check if we are at the last index - we should be lower */
                 /* should be impossible anyway */
-		/*   if (slot>=pair_pot.last[col]) {  */
+		/*   if (slot>=calc_pot.last[col]) {  */
  		/*    klo--;khi--; */
  		/*  } */
-		  step=pair_pot.xcoord[khi]-pair_pot.xcoord[klo];
-		  shift=(r-pair_pot.xcoord[klo])/step;
+		  step=calc_pot.xcoord[khi]-calc_pot.xcoord[klo];
+		  shift=(r-calc_pot.xcoord[klo])/step;
 		}
 		  
                 /* Check if we are at the last index */
-		if (slot>=pair_pot.last[col]) {
+		if (slot>=calc_pot.last[col]) {
 		  slot--;shift+=1.0;
 		}
 		atoms[i].neigh[k].shift[1]  = shift;
@@ -494,7 +493,7 @@ void read_config(char *filename)
                                /* XXX and U'(n_mean)=0  */
     force_0[k++]=0.;}
 #endif
-
+  
 #ifdef DEBUG
   printf("Minimal Distances Matrix \n");
   printf("Atom\t"); 
@@ -506,6 +505,7 @@ void read_config(char *filename)
       printf("%f\t",mindist[ntypes*i+j]);
     printf("\n");
   }
+  free(mindist);
 #endif
 
   /* print diagnostic message and close file */

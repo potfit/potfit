@@ -4,7 +4,7 @@
  *
  *******************************************************/
 /*
-*   Copyright 2004-2005 Peter Brommer, Franz G"ahler
+*   Copyright 2004-2008 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2007/08/14 14:04:11 $
+* $Revision: 1.13 $
+* $Date: 2008/04/02 15:05:39 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -99,7 +99,7 @@ void broadcast_params() {
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
   atom_t testatom;
-  int size,i,each,odd,nodeatoms=0;
+  int calclen,size,i,each,odd,nodeatoms=0;
 
 
   /* Define Structures */
@@ -188,34 +188,34 @@ void broadcast_params() {
   MPI_Bcast ( &sweight, 1, REAL, 0, MPI_COMM_WORLD);
   /* Broadcast the potential... */
   MPI_Bcast(&format,1,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(&pair_pot.len,1,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(&pair_pot.idxlen,1,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(&pair_pot.ncols,1,MPI_INT,0,MPI_COMM_WORLD);
-  size=pair_pot.ncols;
-  ndimtot=pair_pot.len;
-  ndim=pair_pot.idxlen;
+  MPI_Bcast(&calc_pot.len,1,MPI_INT,0,MPI_COMM_WORLD);
+//  MPI_Bcast(&calc_pot.idxlen,1,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(&calc_pot.ncols,1,MPI_INT,0,MPI_COMM_WORLD);
+  size=calc_pot.ncols;
+  calclen=calc_pot.len;
+  //ndim=calc_pot.idxlen;
   if (myid>0) {
-    pair_pot.begin = (real *) malloc(size * sizeof(real));
-    pair_pot.end = (real *) malloc(size * sizeof(real));
-    pair_pot.step = (real *) malloc(size * sizeof(real));
-    pair_pot.invstep = (real *) malloc(size * sizeof(real));
-    pair_pot.first = (int *) malloc(size * sizeof(int));
-    pair_pot.last = (int *) malloc(size * sizeof(int));
-    pair_pot.table = (real *) malloc(ndimtot * sizeof(real)); 
-    pair_pot.xcoord = (real *) malloc(ndimtot * sizeof(real));
-    pair_pot.d2tab = (real *) malloc(ndimtot * sizeof(real)); 
-    pair_pot.idx = (int *) malloc(ndim * sizeof(int));
+    calc_pot.begin = (real *) malloc(size * sizeof(real));
+    calc_pot.end = (real *) malloc(size * sizeof(real));
+    calc_pot.step = (real *) malloc(size * sizeof(real));
+    calc_pot.invstep = (real *) malloc(size * sizeof(real));
+    calc_pot.first = (int *) malloc(size * sizeof(int));
+    calc_pot.last = (int *) malloc(size * sizeof(int));
+    calc_pot.table = (real *) malloc(calclen * sizeof(real)); 
+    calc_pot.xcoord = (real *) malloc(calclen * sizeof(real));
+    calc_pot.d2tab = (real *) malloc(calclen * sizeof(real)); 
+    //calc_pot.idx = (int *) malloc(ndim * sizeof(int));
   }
-  MPI_Bcast(pair_pot.begin,size,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.end,size,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.step,size,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.invstep,size,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.first,size,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.last,size,MPI_INT,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.table,ndimtot,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.d2tab,ndimtot,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.xcoord,ndimtot,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.idx,ndim,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.begin,size,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.end,size,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.step,size,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.invstep,size,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.first,size,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.last,size,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.table,calclen,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.d2tab,calclen,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.xcoord,calclen,REAL,0,MPI_COMM_WORLD);
+//  MPI_Bcast(calc_pot.idx,ndim,MPI_INT,0,MPI_COMM_WORLD);
 
   /* Distribute configurations */
   /* Each node: nconf/num_cpus configurations. 
@@ -267,15 +267,15 @@ void potsync() {
   firstcol=paircol+ntypes;
   /* Memory is allocated - just bcast that changed potential... */
   /* bcast begin/end/step/invstep of embedding energy  */
-  MPI_Bcast(pair_pot.begin+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.end+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.step+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.invstep+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
-  MPI_Bcast(pair_pot.first+firstcol,ntypes,MPI_INT,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.begin+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.end+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.step+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.invstep+firstcol,ntypes,REAL,0,MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.first+firstcol,ntypes,MPI_INT,0,MPI_COMM_WORLD);
   /* bcast table values of transfer fn. and embedding energy */
-  firstval=pair_pot.first[paircol];
-  nvals=ndimtot-firstval;
-  MPI_Bcast(pair_pot.table+firstval,nvals,REAL,0,MPI_COMM_WORLD);
+  firstval=calc_pot.first[paircol];
+  nvals=calc_pot.len-firstval;
+  MPI_Bcast(calc_pot.table+firstval,nvals,REAL,0,MPI_COMM_WORLD);
   /* das war's auch schon... */
 }
 #endif

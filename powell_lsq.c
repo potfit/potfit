@@ -3,11 +3,12 @@
 *
 *  PoLSA - Powell Least Square Algorithm
 * 
-*  powell.c: Contains Powell optimization algorithm and some small subroutines
+*  powell_lsq.c: Contains Powell optimization algorithm 
+*                and some small subroutines
 *
 ******************************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer
+*   Copyright 2002-2008 Peter Brommer
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -32,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2007/08/16 14:40:41 $
+* $Revision: 1.28 $
+* $Date: 2008/04/02 15:05:39 $
 *****************************************************************/
 
 /******************************************************************************
@@ -44,7 +45,11 @@
 *
 ******************************************************************************/
 
+#ifdef ACML
+#include <acml.h>
+#else  /* ACML */
 #include <mkl_lapack.h>
+#endif /* ACML */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -76,6 +81,7 @@ void powell_lsq(real *xi)
   int *iwork;
   int *perm_indx;		   /* Keeps track of LU pivoting */
   int worksize;			/* Size of work array (dsysvx) */
+  int breakflag;                /* Breakflag */
   real cond;			/* Condition number dsysvx */
   real *p,*q;                    /* Vectors needed in Powell's algorithm */
   real perm_sig;                 /* Signature of permutation in LU decomp */
@@ -121,21 +127,23 @@ void powell_lsq(real *xi)
     /* Init gamma */
     if (i=gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
+#ifndef NORESCALE
     /* perhaps rescaling helps? - Last resort...*/
       sprintf(errmsg, "F does not depend on xi[%d], trying to rescale!\n",
 	      idx[i-1]);
       warning(errmsg);
-      rescale(&pair_pot,1.,1);
+      rescale(&opt_pot,1.,1);
 #ifdef MPI
       /* wake other threads and sync potentials*/
       F=calc_forces(xi,fxi1,2);
 #endif /* MPI */
       i=gamma_init(gamma, d, xi, fxi1);
+#endif /* NORESCALE */
 #endif /* EAM */
       /* try again */
       if (i) { 
 	/* ok, now this is serious, better exit cleanly */
-	write_pot_table( &pair_pot, tempfile ); /*emergency writeout*/    
+	write_pot_table( &opt_pot, tempfile ); /*emergency writeout*/    
 	sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
 		idx[i-1]);
 	warning(errmsg);
@@ -145,7 +153,7 @@ void powell_lsq(real *xi)
 
     (void) lineqsys_init(gamma,lineqsys,fxi1,p,ndim,mdim); /*init LES */
     F3=F;
-
+    breakflag=0;
     do { /*inner loop - only calculate changed rows/lines in gamma */
       /* (a) solve linear equation */
 
@@ -153,10 +161,15 @@ void powell_lsq(real *xi)
       j=1;			/* 1 rhs */
 
       /* Linear Equation Solution (lapack) */
+#ifdef ACML
+      dsysvx_(fact,uplo,&ndim,&j,&lineqsys[0][0],&ndim,&les_inverse[0][0],\
+	     &ndim,perm_indx,p,&ndim,q,&ndim,&cond,&ferror,&berror,work,\
+	     &worksize,iwork,&i,1,1);
+#else  /* ACML */
       dsysvx(fact,uplo,&ndim,&j,&lineqsys[0][0],&ndim,&les_inverse[0][0],\
 	     &ndim,perm_indx,p,&ndim,q,&ndim,&cond,&ferror,&berror,work,\
 	     &worksize,iwork,&i);
-      
+#endif /* ACML */
 #ifdef DEBUG
       printf("q0: %d %f %f %f %f %f %f %f %f\n",i, q[0],q[1],q[2],q[3],q[4],q[5],q[6],q[7]);
 #endif
@@ -234,7 +247,7 @@ void powell_lsq(real *xi)
 #ifndef NORESCALE
     /* Check for rescaling... every fourth step */
     if ( (n % 4)==0 ) {
-      temp=rescale(&pair_pot,1.,0);
+      temp=rescale(&opt_pot,1.,0);
       /* Was rescaling necessary ?*/
       if (temp!=0.) {
 #ifdef MPI
@@ -246,7 +259,7 @@ void powell_lsq(real *xi)
 #endif /* NORESCALE */
 #endif /* EAM */
     /* write temp file  */
-    if (tempfile != "\0" ) write_pot_table( &pair_pot, tempfile );
+    if (tempfile != "\0" ) write_pot_table( &opt_pot, tempfile );
 
     /*End fit if whole series didn't improve F */
   } while ((F3-F>PRECISION/10.) || (F3-F<0)); /* outer loop */
@@ -284,7 +297,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 {
   real *force;
   int i,j;			/* Auxiliary vars: Counters */
-  real sum,temp;			/* Auxiliary var: Sum */
+  real sum,temp,store;			/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
   /*Initialize direction vectors*/
   for (i=0;i<ndim;i++) {
@@ -293,6 +306,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 /* Initialize gamma by calculating numerical derivatives    */
   force=vect_real(mdim);
   for (i=0;i<ndim;i++) {           /*initialize gamma*/
+    store=xi[idx[i]];
     xi[idx[i]]+=EPS;                /*increase xi[idx[i]]...*/
     sum = 0.;
     (void) (*calc_forces)(xi,force,0);
@@ -302,7 +316,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
       sum += SQR(temp);
     }
     temp = sqrt(sum);
-    xi[idx[i]]-=EPS;                /*...and decrease xi[idx[i]] again*/
+    xi[idx[i]]=store;      /*...and reset [idx[i]] again*/
 /* scale gamma so that sum_j(gamma^2)=1                      */
     if (temp>NOTHING) { 
       for (j=0;j<mdim;j++) gamma[j][i] /= temp; /*normalize gamma*/
