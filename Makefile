@@ -2,11 +2,11 @@
 #
 # potfit -- The ITAP Force Matching Program
 #
-# Copyright 2002-2007 Institute for Theoretical and Applied Physics,
+# Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.37 $
-# $Date: 2007/09/18 08:51:52 $
+# $Revision: 1.38 $
+# $Date: 2008/04/02 14:52:27 $
 # 
 ############################################################################
 #
@@ -151,7 +151,7 @@ CINCLUDE        =  -I${MKLDIR}/include/
 
 ###########################################################################
 #
-#  flags for IA32-Linux
+#  flags for 64bit-Linux
 #
 ###########################################################################
 
@@ -164,12 +164,20 @@ ifeq (x86_64-gcc3,${IMDSYS})
   BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
 #  FFTW_DIR     = /common/linux/paket/fftw-3.0.1
   OPT_FLAGS     += -O -march=opteron -Wno-unused
-  DEBUG_FLAGS   += -g
+  DEBUG_FLAGS   += -g -O -Wall
   PROF_FLAGS    += -g3 -pg
   LFLAGS        +=  -static
+#  ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
   MKLPATH       = ${MKLDIR}/lib/em64t/
+#  CINCLUDE     += -I$(ACMLPATH)/include 
 #  CINCLUDE      = -I${MKLDIR}/include
+#  LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
   export        MPICH_CC # MPICH_CLINKER
+  export        LD_LIBRARY_PATH
+# acml
+#  LIBS		:= $(ACMLPATH)/lib/libacml.a \
+#		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c 
+# intel mkl
   LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
 endif
@@ -185,13 +193,19 @@ ifeq (x86_64-icc,${IMDSYS})
   MPI_FLAGS     +=
   OMP_FLAGS     += -openmp
   OMPI_FLAGS    += -openmp
-  DEBUG_FLAGS   += -g
+  DEBUG_FLAGS   += -g  -Wall
   PROF_FLAGS    += -prof_gen
   RCD_FLAGS     += # -DRCD -rcd
   MPI_LIBS      +=
   LFLAGS        += -i-static -openmp
+# acml
+#   ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
+#   CINCLUDE     += -I$(ACMLPATH)/include 
+#   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
+#   LIBS		:= $(ACMLPATH)/lib/libacml.a \
+# 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c 
+# intel mkl
   MKLPATH       = ${MKLDIR}/lib/em64t/
-#  CINCLUDE      = -I/common/linux/paket/intel/mkl8/include
   LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER
@@ -665,6 +679,10 @@ endif
 
 ifneq (,$(findstring fweight,${MAKETARGET}))
 CFLAGS += -DFWEIGHT
+endif
+
+ifneq (,$(findstring acml,${MAKETARGET}))
+CFLAGS += -DACML
 endif
 
 ifneq (,$(findstring noresc,${MAKETARGET}))
