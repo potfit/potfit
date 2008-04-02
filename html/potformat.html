@@ -1,6 +1,6 @@
 
 <!--#include virtual="potfithead.html" -->
-<!-- Copyright (c)  2005  Peter Brommer, Franz Gaehler, ITAP.              -->
+<!-- Copyright (c)  2005-2008  Peter Brommer, Franz Gaehler, ITAP.         -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
 <!-- or any later version published by the Free Software Foundation;       -->
@@ -146,6 +146,41 @@ The order of the columns is the same as with format 3. </p>
 potential) is available <a href="sample4g.pt.txt">here</a> (with the
 #G header line).</p>
 
+<!-- <h2>Format 5</h2> -->
 
+<!-- <p>Format 5 uses a set of Gaussian functions to describe a parameter. The -->
+<!-- function &chi; is defined as</p> -->
+<!-- <div align="center"> -->
+<!-- <img -->
+<!--  width="184" height="71" align="middle" border="0" -->
+<!--  src="equations/img1.png" -->
+<!--  alt="$\displaystyle \chi(r)=\sum\limits_{i=1}^{n}a_{i} -->
+<!-- e^{\frac{1}{2}\left(\frac{\mu_{i}-r}{\sigma_{i}}\right)^{2}} -->
+<!-- $"> -->
+<!-- </div> -->
+<!-- <p>This is the superposition of n Gaussians of amplitude a<sub>i</sub>, width -->
+<!-- &sigma;<sub>i</sub> and center &mu;<sub>i</sub>.</p> -->
+
+<!-- <p>The potential files with n data columns starts with n lines of the form</p> -->
+<!-- <pre> -->
+<!-- r_min r_cut k -->
+<!-- </pre> -->
+<!-- <p>specifying the closest distance the potential can describe, the cutoff -->
+<!-- radius and the number k of gaussians used.</p> -->
+
+<!-- <p>This block is followed by n blocks of data of the form</p> -->
+<!-- <pre> -->
+<!-- &mu;_1 &sigma;_1 a_1 -->
+<!-- &mu;_2 &sigma;_2 a_2 -->
+<!-- ... -->
+<!-- &mu;_k &sigma;_k a_k -->
+<!-- </pre> -->
+<!-- <p>The only adjustable parameters are the amplitudes a<sub>i</sub>.</p> -->
+
+<!-- <p>Functions that go to zero at r<sub>cut</sub> are smoothly cut off by two -->
+<!-- additional gaussian functions, one centered at r<sub>cut</sub>+&sigma; with an -->
+<!-- amplitude chosen so that &chi;&prime(r<sub>cut</sub>)=0, and the other -->
+<!-- centered at r<sub>cut</sub> with an amplitude chosen so that -->
+<!-- &chi;(r<sub>cut</sub>)=0.</p> -->
 <!--#include virtual="potfitfoot.html" -->
 
