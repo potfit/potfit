@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.45 $
-* $Date: 2007/02/14 17:37:54 $
+* $Revision: 1.46 $
+* $Date: 2008/04/02 15:12:23 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -111,6 +111,8 @@ typedef struct {
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SQR(a)     ((a)*(a))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
+static real sqrreal;
+#define SQRREAL(x) ((sqrreal=(x)) == 0.0 ? 0.0 : sqrreal*sqrreal)
 
 /******************************************************************************
 *
@@ -138,7 +140,7 @@ EXTERN MPI_Datatype MPI_NEIGH;
 EXTERN int *gradient INIT(NULL);       /* Gradient of potential fns.  */
 EXTERN int have_grad INIT(0);	       /* Is gradient specified?  */
 EXTERN int *invar_pot INIT(NULL);
-EXTERN int have_invar INIT(0);         /* Are invariant pots specified?  */
+EXTERN int have_invar INIT(0);	       /* Are invariant pots specified?  */
 EXTERN atom_t *conf_atoms INIT(NULL); /* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
@@ -163,10 +165,12 @@ EXTERN int    fcalls   INIT(0);
 EXTERN int    ndim     INIT(0);
 EXTERN int    ndimtot  INIT(0);
 EXTERN int    mdim     INIT(0);
+EXTERN int    usemaxch INIT(0);	         /* use maximal changes file*/
 EXTERN int    ntypes   INIT(1);          /* number of atom types */
 EXTERN int    natoms   INIT(0);          /* number of atoms */
 EXTERN int    nconf    INIT(0);	         /* number of configurations */
 EXTERN int    paircol  INIT(0);          /* How manc columns for pair pot.*/
+EXTERN real   *maxchange INIT(NULL);     /* Maximal permissible change */
 EXTERN atom_t *atoms   INIT(NULL);       /* atoms array */
 EXTERN real   *force_0 INIT(NULL);       /* the forces we aim at */
 EXTERN real   *coheng  INIT(NULL);       /* Cohesive energy for each config */
@@ -177,6 +181,7 @@ EXTERN int    *cnfstart INIT(NULL);       /* Nr. of first atom in config */
 EXTERN int    *useforce INIT(NULL);      /* Should we use force/stress */
 EXTERN int    *usestress INIT(NULL);      /* Should we use force/stress */
 EXTERN char startpot[255];               /* file with start potential */
+EXTERN char maxchfile[255];              /* file with maximal changes */
 EXTERN char endpot[255];                 /* file for end potential */
 EXTERN char imdpot[255];                 /* file for IMD potential */
 EXTERN char config[255];                 /* file with atom configuration */
@@ -188,7 +193,11 @@ EXTERN  char tempfile[255] INIT("\0");   /* backup potential file */
 EXTERN char plotpointfile[255] INIT("\0");
                                          /* write points for plotting */
 EXTERN int  imdpotsteps;                 /* resolution of IMD potential */
-EXTERN pot_table_t pair_pot;             /* the potential table */
+EXTERN pot_table_t opt_pot;              /* potential in the internal */
+                                         /* representation used for  */
+                                         /* minimisation */
+EXTERN pot_table_t calc_pot;             /* the potential table used */
+                                         /* for force calculations */
 EXTERN int format;		         /* format of potential table */
 EXTERN int  opt INIT(0);                 /* optimization flag */
 EXTERN int plot INIT(0);                 /* plot output flag */
@@ -228,8 +237,13 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		     char *filename, FILE *infile);
 void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals, 
 		     char *filename, FILE *infile);
+void read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals, 
+		     char *filename, FILE *infile);
+void init_calc_table(pot_table_t *optt, pot_table_t *calct);
+void update_calc_table(real *xi_opt, real *xi_calc);
 void write_pot_table3(pot_table_t*, char*);
 void write_pot_table4(pot_table_t*, char*);
+void write_pot_table5(pot_table_t*, char*);
 void write_pot_table_imd(pot_table_t*, char*);
 void write_plotpot_pair(pot_table_t*, char*);
 void write_altplot_pair(pot_table_t*, char*);

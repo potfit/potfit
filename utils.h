@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer
+*   Copyright 2002-2007 Peter Brommer
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,12 +29,10 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2005/05/06 13:26:40 $
+* $Revision: 1.2 $
+* $Date: 2008/04/02 15:12:23 $
 *****************************************************************/
 
-static real sqrreal;
-#define SQRREAL(x) ((sqrreal=(x)) == 0.0 ? 0.0 : sqrreal*sqrreal)
 
 #define ANSI
 
