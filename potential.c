@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.40 $
-* $Date: 2008/04/02 15:11:32 $
+* $Revision: 1.41 $
+* $Date: 2008/05/02 08:36:26 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -1528,7 +1528,6 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   k = 0;
   for (i=0; i<ntypes; i++) 
     for (j=i; j<ntypes; j++) {
-      col    = i * ntypes + j; 
       r      = pt->begin[k];
       r_step = (pt->end[k] - pt->begin[k]) / (NPLOT-1);
       for (l=0; l<NPLOT-1; l++) {

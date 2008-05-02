@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2008/04/02 15:05:39 $
+* $Revision: 1.23 $
+* $Date: 2008/05/02 08:36:26 $
 *****************************************************************/
 
 
@@ -213,10 +213,8 @@ void anneal(real *xi)
 #ifdef WZERO
 //	    embed_shift(&opt_pot);
 #endif /* WZERO */
-#ifdef MPI
 	    /* wake other threads and sync potentials*/
 	    F=(*calc_forces)(xi,fxi1,2);
-#endif /* MPI */
 	  }
 	}
 #endif /* NORESCALE */

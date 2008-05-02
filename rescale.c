@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2008/04/02 15:05:39 $
+* $Revision: 1.11 $
+* $Date: 2008/05/02 08:36:26 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -73,6 +73,18 @@ real rescale(pot_table_t *pt, real upper, int flag)
   }
   /* find Max/Min rho  */
   /* init splines - better safe than sorry */
+  /* init second derivatives for splines */
+  for (col=0; col<paircol; col++){  /* just pair potentials */
+    first=pt->first[col];
+    if (format==3) 
+      spline_ed(pt->step[col], pt->table+first,
+		pt->last[col]-first+1,
+		*(pt->table+first-2), 0.0, pt->d2tab+first);
+    else 			/* format == 4 ! */
+      spline_ne(pt->xcoord+first,pt->table+first,
+		pt->last[col]-first+1,
+		*(pt->table+first-2), 0.0, pt->d2tab+first);
+  }
   for (col=paircol; col<paircol+ntypes; col++) { /* rho */
     first=pt->first[col];
     if (format == 3)
@@ -276,7 +288,18 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	col++;
       }
   }
-  /* re-initialise splines */
+  /* re-initialise splines */  
+  for (col=paircol; col<paircol+ntypes; col++) { /* rho */
+    first=pt->first[col];
+    if (format == 3)
+      spline_ed(pt->step[col], xi+first, 
+		pt->last[col]-first+1,
+		*(xi+first-2),0.0,pt->d2tab+first);
+    else			/* format == 4 ! */
+      spline_ne(pt->xcoord+first, xi+first, pt->last[col]-first+1,
+		*(xi+first-2),0.0,pt->d2tab+first);
+  }
+
   for  (col=paircol+ntypes; col<paircol+2*ntypes; col++) { /* F */
     first=pt->first[col];
     /* gradient 0 at r_cut */
@@ -324,14 +347,54 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	   ? lambda[col2]*
 	   splint_ne(pt, pt->table, paircol+col,pt->xcoord[j])
 	   : 0.);
+      /* Gradient */
+      if (pt->table[pt->first[i]-2] < 1e29) /* natural spline */
+	pt->table[pt->first[i]-2]+=
+	  (pt->begin[i]<pt->end[paircol+col2]
+	   ? lambda[col]*
+	   splint_grad(pt, pt->table, paircol+col2,pt->begin[i])
+	   : 0.)
+	  +(pt->begin[i]<pt->end[paircol+col]
+	    ? lambda[col2]*
+	    splint_grad(pt, pt->table, paircol+col,pt->begin[i])
+	    : 0.);
+      if (pt->table[pt->first[i]-1] < 1e29) /* natural spline */
+	pt->table[pt->first[i]-1]+=
+	  (pt->end[i]<pt->end[paircol+col2]
+	   ? lambda[col]*
+	   splint_grad(pt, pt->table, paircol+col2,pt->end[i])
+	   : 0.)
+	  +(pt->end[i]<pt->end[paircol+col]
+	    ? lambda[col2]*
+	    splint_grad(pt, pt->table, paircol+col,pt->end[i])
+	    : 0.);
       i++;
     }
   for (i=0;i<ntypes;i++) {
     for (j=pt->first[paircol+ntypes+i];
 	 j<=pt->last[paircol+ntypes+i];j++) 
       pt->table[j] -= pt->xcoord[j]*lambda[i];
+  /* Gradients */
+    if (pt->table[pt->first[paircol+ntypes+i]-2]<1e29)  /* natural spline */
+      pt->table[pt->first[paircol+ntypes+i]-2]-=lambda[i];
+    if (pt->table[pt->first[paircol+ntypes+i]-1]<1e29)  /* natural spline */
+      pt->table[pt->first[paircol+ntypes+i]-1]-=lambda[i];
     lambda[i]=0.;
   }
+  
+  /* init second derivatives for splines */
+  for (col=0; col<paircol; col++){  /* just pair potentials */
+    first=pt->first[col];
+    if (format==3) 
+      spline_ed(pt->step[col], pt->table+first,
+		pt->last[col]-first+1,
+		*(pt->table+first-2), 0.0, pt->d2tab+first);
+    else 			/* format == 4 ! */
+      spline_ne(pt->xcoord+first,pt->table+first,
+		pt->last[col]-first+1,
+		*(pt->table+first-2), 0.0, pt->d2tab+first);
+  }
+ 
 
   free(neuxi);
   free(neustep);

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.39 $
-* $Date: 2008/04/02 15:05:39 $
+* $Revision: 1.40 $
+* $Date: 2008/05/02 08:36:26 $
 *****************************************************************/
 
 
@@ -193,6 +193,7 @@ int main(int argc, char **argv)
     printf("Plotpoint file written to file %s\n", plotpointfile);
     write_pot_table_imd( &opt_pot, imdpot );
     if (plot) write_plotpot_pair(&opt_pot, plotfile);
+//    if (plot) write_altplot_pair(&opt_pot, plotfile);
 
 
 #ifdef PDIST

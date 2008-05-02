@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.29 $
-* $Date: 2008/04/02 15:11:32 $
+* $Revision: 1.30 $
+* $Date: 2008/05/02 08:36:26 $
 *****************************************************************/
 
 /******************************************************************************
@@ -133,10 +133,8 @@ void powell_lsq(real *xi)
 	      idx[i-1]);
       warning(errmsg);
       rescale(&opt_pot,1.,1);
-#ifdef MPI
       /* wake other threads and sync potentials*/
       F=calc_forces(xi,fxi1,2);
-#endif /* MPI */
       i=gamma_init(gamma, d, xi, fxi1);
 #endif /* NORESCALE */
 #endif /* EAM */
@@ -265,10 +263,8 @@ void powell_lsq(real *xi)
       temp=rescale(&opt_pot,1.,0);
       /* Was rescaling necessary ?*/
       if (temp!=0.) {
-#ifdef MPI
       /* wake other threads and sync potentials*/
 	F=calc_forces(xi,fxi1,2);
-#endif /* MPI */
       }
     }
 #endif /* NORESCALE */
