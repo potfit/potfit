@@ -1,7 +1,7 @@
 #!/bin/sh
 #/****************************************************************
-#* $Revision: 1.4 $
-#* $Date: 2006/05/11 07:27:39 $
+#* $Revision: 1.5 $
+#* $Date: 2008/08/14 11:25:53 $
 #*****************************************************************/
 
 [ -f ../single_atom_energies ] || { echo file ../single_atom_energies not found; exit;}
@@ -33,6 +33,7 @@ cat OUTCAR | awk -v wdir="${wdir}" '  BEGIN {
     split(boxx,boxx_v);
     split(boxy,boxy_v);
     split(boxz,boxz_v);
+    scale=1.0;
 }
   ($2=="kB") { 
      for (i=1;i<=6;i++) stress[i]=$(i+2)/1602.;
