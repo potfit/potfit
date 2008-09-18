@@ -29,45 +29,45 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2005/05/06 13:37:55 $
+* $Revision: 1.13 $
+* $Date: 2008/09/18 14:34:10 $
 *****************************************************************/
 
 
 
 #ifdef POWELL
-#define EXPOW             /* define Variables in powell */
-#define INPOW(data) =data   /* initialize data only in powell */
+#define EXPOW			/* define Variables in powell */
+#define INPOW(data) =data	/* initialize data only in powell */
 #else
-#define EXPOW extern      /* declare them extern otherwise */
-#define INPOW(data)         /* skip initialization otherwise */
+#define EXPOW extern		/* declare them extern otherwise */
+#define INPOW(data)		/* skip initialization otherwise */
 #endif
 
 
-void bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower, 
-	       real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);
+void  bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
+		real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);
 
-real brent_r(real ax, real bx, real cx, real fbx, real tol, 
-	real *xmin, real *xmin2, real *fxmin, real *fxmin2);
+real  brent_r(real ax, real bx, real cx, real fbx, real tol,
+	      real *xmin, real *xmin2, real *fxmin, real *fxmin2);
 
-void copy_matrix(real **a, real **b, int n, int m);
+void  copy_matrix(real **a, real **b, int n, int m);
 
-void copy_vector(real *a, real *b, int n);
+void  copy_vector(real *a, real *b, int n);
 
-int gamma_init(real **gamma, real **d, real *xi, real *force_xi);
+int   gamma_init(real **gamma, real **d, real *xi, real *force_xi);
 
-int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
-		int j, int m, int n, real fmin);
-		
-void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, 
-		real *p, int n, int m);
+int   gamma_update(real **gamma, real a, real b, real *fa, real *fb,
+		   real *delta, int j, int m, int n, real fmin);
 
-void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
-		real *p, int i, int n, int m);
-		
-real linmin_r(real p[], real xi[], real fxi1, int n, int m,
-	real *x1, real *x2, real *fret1, real *fret2);
+void  lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
+		    real *p, int n, int m);
 
-void matdotvec(real **a, real *x, real *y, int n, int m);
+void  lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
+		      real *p, int i, int n, int m);
 
-real normalize_vector(real *v, int n);
+real  linmin_r(real p[], real xi[], real fxi1, int n, int m,
+	       real *x1, real *x2, real *fret1, real *fret2);
+
+void  matdotvec(real **a, real *x, real *y, int n, int m);
+
+real  normalize_vector(real *v, int n);

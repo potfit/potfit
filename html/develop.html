@@ -18,6 +18,22 @@
 Here we give some hints on how to extend <em>potfit</em>. In
 particular, we list some common pitfalls that are to be avoided.</p>
 
+<h2>Indentation</h2>
+<p><em>potfit</em> is indented according to the default emacs indentation. The
+same effect can be achieved with the <img src="localicons/linkexternicon.gif"
+alt="External Link" /> <a href="http://www.gnu.org/software/indent/">GNU indent
+command</a>, version >=2.2.10, using the following command:</p>
+<pre>
+indent -gnu -cdw -cli4 -npsl -npcs -di6 -ncs -ce -br -brs \
+  -T real -T apot_table_t -T pot_table_t -T vektor \
+  -T stens -T neigh_t -T atom_t -T FILE *.[ch]
+</pre> 
+<p>Sections that are NOT to be indented in this way are to be marked with</p>
+<pre>/* *INDENT-OFF* */</pre> 
+<p>at their beginning and </p>
+<pre>/* *INDENT-ON* */</pre>  
+<p>at their end, each control comment on a line of its own.</p>
+
 <h2>Introducing new parameters</h2>
 
 <p>
@@ -40,8 +56,8 @@ beginning of each new source code file:</p>
 
 <pre>
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2005/07/20 15:38:13 $
+* $Revision: 1.3 $
+* $Date: 2008/09/18 14:34:21 $
 *****************************************************************/
 </pre>
 

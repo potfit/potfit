@@ -29,17 +29,17 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2008/04/02 15:12:23 $
+* $Revision: 1.3 $
+* $Date: 2008/09/18 14:34:10 $
 *****************************************************************/
 
 
 #define ANSI
 
 
-int *vect_int(long dim);
+int  *vect_int(long dim);
 real *vect_real(long dim);
 real **mat_real(long rowdim, long coldim);
-void free_vect_real(real *vect);
-void free_vect_int(int *vect);
-void free_mat_real(real **matrix);
+void  free_vect_real(real *vect);
+void  free_vect_int(int *vect);
+void  free_mat_real(real **matrix);

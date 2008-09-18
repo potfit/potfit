@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2005/05/06 13:26:39 $
+* $Revision: 1.2 $
+* $Date: 2008/09/18 14:34:10 $
 *****************************************************************/
 
 #include <stdio.h>
@@ -39,37 +39,42 @@
 #include "potfit.h"
 #include "utils.h"
 
-int *vect_int(long dim)
+int  *vect_int(long dim)
 {
-  int *vect;
-  vect= (int *) malloc((size_t) (dim * sizeof(int)));
-  if (vect==NULL) error("Error in integer vector allocation");
+  int  *vect;
+  vect = (int *)malloc((size_t) (dim * sizeof(int)));
+  if (vect == NULL)
+    error("Error in integer vector allocation");
   return vect;
 }
 
 real *vect_real(long dim)
 {
   real *vect;
-  vect= (real *) malloc((size_t) (dim * sizeof(real)));
-  if (vect==NULL) error("Error in real vector allocation");
+  vect = (real *)malloc((size_t) (dim * sizeof(real)));
+  if (vect == NULL)
+    error("Error in real vector allocation");
   return vect;
 }
 
-real **mat_real(long rowdim, long coldim) 
+real **mat_real(long rowdim, long coldim)
 {
-  long i;
+  long  i;
   real **matrix;
 
   /* matrix: array of array of pointers */
   /* matrix: pointer to rows */
-  matrix= (real **) malloc ((size_t) rowdim*sizeof(real*));
-  if (matrix==NULL) error("Error in real matrix row allocation");
-  
+  matrix = (real **)malloc((size_t) rowdim * sizeof(real *));
+  if (matrix == NULL)
+    error("Error in real matrix row allocation");
+
   /* matrix[0]: pointer to elements */
-  matrix[0]= (real *) malloc((size_t) rowdim*coldim*sizeof(real));
-  if (matrix[0]==NULL) error("Error in real matrix element allocation");
-  
-  for (i=1;i<rowdim;i++) matrix[i]=matrix[i-1]+coldim;
+  matrix[0] = (real *)malloc((size_t) rowdim * coldim * sizeof(real));
+  if (matrix[0] == NULL)
+    error("Error in real matrix element allocation");
+
+  for (i = 1; i < rowdim; i++)
+    matrix[i] = matrix[i - 1] + coldim;
 
   return matrix;
 }

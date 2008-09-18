@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.13 $
-* $Date: 2008/09/18 13:05:12 $
+* $Revision: 1.14 $
+* $Date: 2008/09/18 14:34:10 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
@@ -46,46 +46,47 @@
 #define TOL 1.0e-1
 
 
-real *xicom,*delcom;
+real *xicom, *delcom;
 
 
-real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1, 
-		real *x2, real *fret1, real *fret2 )
+real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
+	      real *x2, real *fret1, real *fret2)
 /* takes vector del (direction of search), xi (originating point), 
    n,m (dimensions),
    x1, x2 (two best locations),
    fret1, fret2 (return vectors) as arguments */
-	{
-	int j;
-	int status;
-	static real *vecu = NULL;   /* Vector of location u */
-	real xx,fx,fb,bx,ax;
-	real fa=fxi1;
-	real xmin;
-	real xmin2;
+{
+  int   j;
+  int   status;
+  static real *vecu = NULL;	/* Vector of location u */
+  real  xx, fx, fb, bx, ax;
+  real  fa = fxi1;
+  real  xmin;
+  real  xmin2;
 
 
-        xicom=xi;
-        delcom=del;
-	ax=0.0;                 /*do not change without correcting fa,*/
-				/*saves 1 fcalc...*/
-	bx=.1;
-	if (vecu == NULL) vecu = vect_real(ndimtot);
-	for (j=0;j<ndimtot;j++) vecu[j]=xicom[j]+bx*delcom[j];/*set vecu */
-	fb=(*calc_forces)(vecu,fret2,0); 
+  xicom = xi;
+  delcom = del;
+  ax = 0.0;			/*do not change without correcting fa, */
+  /*saves 1 fcalc... */
+  bx = .1;
+  if (vecu == NULL)
+    vecu = vect_real(ndimtot);
+  for (j = 0; j < ndimtot; j++)
+    vecu[j] = xicom[j] + bx * delcom[j];	/*set vecu */
+  fb = (*calc_forces) (vecu, fret2, 0);
 
-	bracket_r(&ax,&xx,&bx,&fa,&fx,&fb,fret1,fret2);
+  bracket_r(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
 
 
-	fx=brent_r(ax,xx,bx,fx,TOL,&xmin,&xmin2,fret1,fret2);
-	for (j=0;j<ndimtot;j++) {
-	  del[j] *= xmin;
-	  xi[j] += del[j];
-	  }
-	*x1=xmin;
-	*x2=xmin2;
-       	return fx;
+  fx = brent_r(ax, xx, bx, fx, TOL, &xmin, &xmin2, fret1, fret2);
+  for (j = 0; j < ndimtot; j++) {
+    del[j] *= xmin;
+    xi[j] += del[j];
+  }
+  *x1 = xmin;
+  *x2 = xmin2;
+  return fx;
 }
+
 #undef TOL
-
-
