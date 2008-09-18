@@ -5,7 +5,7 @@
 *****************************************************************/
 /* Copyright (C) 1996, 1997, 1998, 1999, 2000 Fabrice Rossi 
 *                 (gsl/min/bracketing.c)
-*            2005 Peter Brommer
+*            2005-2007 Peter Brommer
 *            Institute for Theoretical and Applied Physics
 *            University of Stuttgart, D-70550 Stuttgart, Germany
 *            http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2007/08/14 14:03:24 $
+* $Revision: 1.3 $
+* $Date: 2008/09/18 13:05:12 $
 *****************************************************************/
 
 #include <math.h>

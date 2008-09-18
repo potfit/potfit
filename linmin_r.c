@@ -5,7 +5,7 @@
 * 
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2007 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2007/08/16 14:40:41 $
+* $Revision: 1.13 $
+* $Date: 2008/09/18 13:05:12 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
