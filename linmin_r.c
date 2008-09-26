@@ -5,7 +5,7 @@
 * 
 *****************************************************************/
 /*
-*   Copyright 2002-2007 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.15 $
+* $Date: 2008/09/26 06:09:51 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
@@ -45,9 +45,7 @@
 #include "powell_lsq.h"
 #define TOL 1.0e-1
 
-
 real *xicom, *delcom;
-
 
 real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
 	      real *x2, real *fret1, real *fret2)
@@ -64,12 +62,12 @@ real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
   real  xmin;
   real  xmin2;
 
-
   xicom = xi;
   delcom = del;
   ax = 0.0;			/*do not change without correcting fa, */
   /*saves 1 fcalc... */
   bx = .1;
+
   if (vecu == NULL)
     vecu = vect_real(ndimtot);
   for (j = 0; j < ndimtot; j++)
@@ -77,7 +75,6 @@ real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
   fb = (*calc_forces) (vecu, fret2, 0);
 
   bracket_r(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
-
 
   fx = brent_r(ax, xx, bx, fx, TOL, &xmin, &xmin2, fret1, fret2);
   for (j = 0; j < ndimtot; j++) {

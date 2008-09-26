@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.44 $
-* $Date: 2008/09/18 14:34:09 $
+* $Revision: 1.45 $
+* $Date: 2008/09/26 06:04:44 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -93,6 +93,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
   real *xi;
   switch (format) {
+      case 0:
+	xi = calc_pot.table;
+	break;
       case 3:			/* fall through */
       case 4:
 	xi = xi_opt;		/* calc-table is opt-table */
@@ -103,7 +106,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
-    if (format > 4 && myid == 0)
+    if ((format == 0 || format > 4) && myid == 0)
       update_calc_table(xi_opt, xi);
 
 #ifdef MPI
@@ -111,20 +114,22 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-#ifdef EAM
+    /* TODO MPI only available with EAM? */
+#if defined(EAM) || defined(APOT)
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
       potsync();
     /* non root processes hang on, unless...  */
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
-#endif /* EAM */
+#endif /* EAM || APOT */
+
 #endif /* MPI */
 
     /* init second derivatives for splines */
     for (col1 = 0; col1 < paircol; col1++) {	/* just pair potentials */
       first = calc_pot.first[col1];
-      if (format == 3)
+      if (format == 3 || format == 0)
 	spline_ed(calc_pot.step[col1], xi + first,
 		  calc_pot.last[col1] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
@@ -141,7 +146,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	spline_ed(calc_pot.step[col1], xi + first,
 		  calc_pot.last[col1] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-      else			/* format == 4 ! */
+      else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
 		  calc_pot.last[col1] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
@@ -152,7 +157,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       first = calc_pot.first[col1];
       /* gradient at left boundary matched to square root function, 
          when 0 not in domain(F), else natural spline */
-      if (format == 3)
+      if (format == 3 || format == 0)
 	spline_ed(calc_pot.step[col1], xi + first,
 		  calc_pot.last[col1] - first + 1,
 #ifdef WZERO
@@ -202,8 +207,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       int   h, k, i, l, j, typ1, typ2, col, config, stresses, uf, us;
       real  fnval, grad;
       atom_t *atom;
-      neigh_t *neigh;
 
+      neigh_t *neigh;
 
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum)
@@ -401,8 +406,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		    (r < calc_pot.end[col2]) ? splint_grad_dir(&calc_pot, xi,
 							       col2,
 							       neigh->slot[1],
-							       neigh->
-							       shift[1],
+							       neigh->shift
+							       [1],
 							       neigh->step[1])
 		    : 0.;
 
@@ -482,6 +487,27 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     }				/* parallel region */
 
     /* dummy constraints (global) */
+#ifdef APOT
+    int   i, j;
+    real  x;
+    /* TODO: adjust punishment for out of bounds */
+    if (myid == 0) {
+      for (i = 0; i < ndim; i++) {
+	forces[mdim - apot_table.total_par + i] = 0;
+	if (x = xi_opt[idx[i]] -
+	    apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
+	    x <= 0) {
+	  forces[mdim - apot_table.total_par + i] = 10e20 * x * x;
+	} else if (x = xi_opt[idx[i]] -
+		   apot_table.pmax[apot_table.
+				   idxpot[i]][apot_table.idxparam[i]],
+		   x >= 0) {
+	  forces[mdim - apot_table.total_par + i] = 10e20 * x * x;
+	}
+	tmpsum += forces[mdim - apot_table.total_par + i];
+      }
+    }
+#endif
 #ifdef EAM
     if (myid == 0) {
 

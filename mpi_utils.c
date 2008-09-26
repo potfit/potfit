@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.15 $
+* $Date: 2008/09/26 06:11:33 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -269,7 +269,7 @@ void broadcast_params()
  * potsync: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
-#ifdef EAM
+#if defined(EAM) || defined(APOT)
 
 void potsync()
 {
