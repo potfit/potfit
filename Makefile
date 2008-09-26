@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.38 $
-# $Date: 2008/04/02 14:52:27 $
+# $Revision: 1.39 $
+# $Date: 2008/09/26 06:22:17 $
 # 
 ############################################################################
 #
@@ -32,7 +32,7 @@
 #
 # Beware: This Makefile works only with GNU make (gmake)!
 #
-# Usage:  gmake <target>
+# Usage:  make <target>
 #
 # <target> has the form 
 #
@@ -43,9 +43,6 @@
 #    mpi   compile for parallel execution, using MPI
 #    omp   compile for parallel execution, using OpenMP
 #    ompi  compile for parallel execution, using OpenMP and MPI
-#
-# The compilation options, whose names are parsed from the make target,
-# must include at least one ensemble (integrator).
 #
 ###########################################################################
 #
@@ -63,7 +60,7 @@
 # are then selected as a function of this variable. It is also possible 
 # to pass the value of IMDSYS on the command line, e.g.:
 #
-#   gmake IMDSYS=P4-icc imd_mpi_nve 
+#   make IMDSYS=P4-icc potfit_mpi_eam
 #
 # Another important ingredient is the parallelization method, which is
 # determined from the make target. The parallelization method is stored
@@ -615,7 +612,7 @@ POTFITHDR   	= potfit.h powell_lsq.h utils.h
 POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
 		  linmin_r.c force.c \
 		  config.c param.c potential.c potfit.c \
-		  splines.c simann.c rescale.c
+		  splines.c simann.c rescale.c functions.c
 MPISRC          = mpi_utils.c
 
 #########################################################
@@ -641,6 +638,11 @@ endif
 # EAM2 or EAM  -  this is now the same
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 CFLAGS  += -DEAM
+endif
+
+# APOT - for analytic potentials
+ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+CFLAGS += -DAPOT
 endif
 
 # Stress
