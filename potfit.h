@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.47 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.48 $
+* $Date: 2008/09/26 06:32:44 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@
 #define REAL MPI_DOUBLE
 #endif /* MPI */
 #define NRANSI
-#define MAXNEIGH 170
+#define MAXNEIGH 570
 #ifdef EAM
 
 #define DUMMY_WEIGHT 100.
@@ -95,7 +95,7 @@ typedef struct {
   vektor force;
   real  absforce;
   neigh_t neigh[MAXNEIGH];
-  int   conf;			/* Which configurarion... */
+  int   conf;			/* Which configuration... */
 #ifdef EAM
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
@@ -117,6 +117,28 @@ typedef struct {
   real *d2tab;			/* second derivatives of table data for spline int */
   int  *idx;			/* indirect indexing */
 } pot_table_t;
+
+#ifdef APOT
+typedef void (*fvalue_pointer) (double, double *, double *);
+
+/* function pointer for analytic potential evaluation */
+
+typedef struct {
+  int   number;			/* number of analytic potentials */
+  int   total_par;		/* total number of parameters for all potentials */
+  int  *n_par;			/* number of parameters for analytic potential */
+  char **names;			/* name of analytic potentials */
+  char ***param_name;		/* name of parameter */
+  double **values;		/* parameter values for analytic potentials */
+  double *begin;		/* starting position of potential */
+  double *end;			/* end position of potential = cutoff radius */
+  double **pmin;		/* minimum values for parameters */
+  double **pmax;		/* maximum values for parameters */
+  int  *idxpot;			/* indirect index for potentials */
+  int  *idxparam;		/* indirect index for potential parameters */
+  fvalue_pointer *fvalue;	/* functions pointers for analytic potentials */
+} apot_table_t;
+#endif
 
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
@@ -152,6 +174,7 @@ EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int *invar_pot INIT(NULL);
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
+EXTERN int *smoothen INIT(NULL);	/* smoothen analytic potential at co? */
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
@@ -202,13 +225,16 @@ EXTERN char flagfile[255] INIT("potfit.break");
 					 /* break if file exists */
 EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
 EXTERN char plotpointfile[255] INIT("\0");
-					 /* write points for plotting */
+					/* write points for plotting */
 EXTERN int imdpotsteps;		/* resolution of IMD potential */
 EXTERN pot_table_t opt_pot;	/* potential in the internal */
 					 /* representation used for  */
 					 /* minimisation */
 EXTERN pot_table_t calc_pot;	/* the potential table used */
 					 /* for force calculations */
+#ifdef APOT
+EXTERN apot_table_t apot_table;	/* potential in analytic form */
+#endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
 EXTERN int plot INIT(0);	/* plot output flag */
@@ -221,7 +247,11 @@ EXTERN real (*calc_forces) (real *, real *, int);
 EXTERN real (*splint) (pot_table_t *, real *, int, real);
 EXTERN real (*splint_grad) (pot_table_t *, real *, int, real);
 EXTERN real (*splint_comb) (pot_table_t *, real *, int, real, real *);
+#ifdef APOT
+EXTERN void (*write_pot_table) (apot_table_t *, char *);
+#else
 EXTERN void (*write_pot_table) (pot_table_t *, char *);
+#endif
 #ifdef PARABEL
 EXTERN real (*parab) (pot_table_t *, real *, int, real);
 EXTERN real (*parab_comb) (pot_table_t *, real *, int, real, real *);
@@ -243,7 +273,16 @@ void  error(char *);
 void  warning(char *);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
+#ifdef APOT
+void  read_pot_table(pot_table_t *, apot_table_t *, char *, int);
+#else
 void  read_pot_table(pot_table_t *, char *, int);
+#endif
+#ifdef APOT
+void  read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
+		      int ncols, int *nvals, char *filename, FILE *infile);
+void  write_apot_table(apot_table_t *, char *);
+#endif
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
@@ -308,4 +347,31 @@ void  potsync();
 #endif
 #ifdef PDIST
 void  write_pairdist(pot_table_t *pt, char *filename);
+#endif
+
+#ifdef APOT
+
+#define APOT_STEPS 1000		/* number of sampling points for analytic pot */
+#define CUTOFF_MARGIN 1.0	/* number to multiply cutoff radius with */
+
+int   apot_parameters(char *);
+int   apot_assign_functions(apot_table_t *);
+void  apot_validate_functions(apot_table_t *);
+
+/* actual functions for different potentials */
+/* arguments are: real for the x-value */
+/* real* for array of parameters */
+/* real* for function value */
+
+/* lennard-jones potential */
+void  lj_value(real, real *, real *);
+
+/* lennard-jones potential */
+void  test4_value(real, real *, real *);
+
+/* lennard-jones potential */
+void  test6_value(real, real *, real *);
+
+void  debug_calc_pot(real *);
+void  debug_apot(apot_table_t *);
 #endif

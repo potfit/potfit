@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,10 +29,9 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.41 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.42 $
+* $Date: 2008/09/26 06:29:43 $
 *****************************************************************/
-
 
 #define MAIN
 
@@ -80,7 +79,13 @@ int main(int argc, char **argv)
   real *force;
   real  tot, min, max, sqr, *totdens;
   int   i, diff, *ntyp;
+  char  msg[255];
   pi = 4.0 * atan(1.);
+#if defined(APOT) && (defined(OMP) || defined(EAM) || defined(STRESS) || defined(PARABEL) || defined(NORESC) || defined(FWEIGHT) || defined(DIST) || defined(NEWSCALE))
+  sprintf(msg,
+	  "The selected options do no work together (yet)!\nPlease recompile the potfit binary without apot or without the other options.\n");
+  error(msg);
+#endif
 #ifdef MPI
   init_mpi(&argc, argv);
 #endif
@@ -92,14 +97,35 @@ int main(int argc, char **argv)
   calc_forces = calc_forces_pair;
   if (myid == 0) {
     read_parameters(argc, argv);
+#ifdef APOT
+    read_pot_table(&opt_pot, &apot_table, startpot,
+		   ntypes * (ntypes + 1) / 2);
+#else
     read_pot_table(&opt_pot, startpot, ntypes * (ntypes + 1) / 2);
+#endif
     read_config(config);
     printf("Energy weight: %f\n", eweight);
 #ifdef STRESS
     printf("Stress weight: %f\n", sweight);
 #endif
     /* Select correct spline interpolation and other functions */
-    if (format == 3) {
+    if (format == 0) {
+#ifndef APOT
+      sprintf(msg,
+	      "potfit binary compiled without analytic potential support\n");
+      error(msg);
+#else
+      splint = splint_ed;
+      splint_comb = splint_comb_ed;
+      splint_grad = splint_grad_ed;
+      write_pot_table = write_apot_table;
+#endif
+    } else if (format == 3) {
+#ifdef APOT
+      sprintf(msg,
+	      "potfit binary compiled without tabulated potential support\n");
+      error(msg);
+#else
       splint = splint_ed;
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
@@ -109,7 +135,13 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
-    } else {			/*format == 4 ! */
+#endif /* APOT */
+    } else if (format >= 4) {	/*format == 4 ! */
+#ifdef APOT
+      sprintf(msg,
+	      "potfit binary compiled without tabulated potential support\n");
+      error(msg);
+#else
       splint = splint_ne;
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
@@ -119,14 +151,18 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ne;
       parab_grad = parab_grad_ne;
 #endif /* PARABEL */
-
+#endif /* APOT */
     }
+
     /* set spline density corrections to 0 */
+#ifndef APOT
     lambda = (real *)malloc(ntypes * sizeof(real));
     totdens = (real *)malloc(ntypes * sizeof(real));
     ntyp = (int *)malloc(ntypes * sizeof(int));
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
+#endif /* APOT */
+
 
 #ifdef EAM
 #ifndef NORESCALE
@@ -158,7 +194,15 @@ int main(int argc, char **argv)
   if (myid > 0) {
     /* Select correct spline interpolation and other functions */
     /* Root process has done this earlier */
-    if (format == 3) {
+    if (format == 0) {
+#ifdef APOT
+      splint = splint_ed;
+      splint_comb = splint_comb_ed;
+      splint_grad = splint_grad_ed;
+      write_pot_table = write_apot_table;
+#endif
+    } else if (format == 3) {
+#ifndef APOT
       splint = splint_ed;
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
@@ -168,7 +212,9 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
-    } else {			/*format == 4 ! */
+#endif /* APOT */
+    } else if (format == 4) {	/*format == 4 ! */
+#ifndef APOT
       splint = splint_ne;
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
@@ -178,11 +224,14 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ne;
       parab_grad = parab_grad_ne;
 #endif /* PARABEL */
+#endif /* APOT */
     }
+
     /* all but root go to calc_forces */
     calc_forces(calc_pot.table, force, 0);
   } else {			/* root thread does minimization */
     if (opt) {
+/*     debug_apot(&apot_table); */
       anneal(opt_pot.table);
       powell_lsq(opt_pot.table);
     }
@@ -192,13 +241,20 @@ int main(int argc, char **argv)
       1e30,0,opt_pot.d2tab+opt_pot.first[i]);*/
 
 //    rescale(&opt_pot,1.);
+#ifndef APOT
     tot = calc_forces(calc_pot.table, force, 0);
     write_pot_table(&opt_pot, endpot);
+#else
+    tot = calc_forces(opt_pot.table, force, 0);
+    write_pot_table(&apot_table, endpot);
+#endif
     printf("Potential in format %d written to file %s\n", format, endpot);
+#ifndef APOT
     printf("Plotpoint file written to file %s\n", plotpointfile);
-    write_pot_table_imd(&opt_pot, imdpot);
+#endif
+    write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
-      write_plotpot_pair(&opt_pot, plotfile);
+      write_plotpot_pair(&calc_pot, plotfile);
 //    if (plot) write_altplot_pair(&opt_pot, plotfile);
 
 
@@ -256,35 +312,35 @@ int main(int argc, char **argv)
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
-      printf("%d-%d %f %f %f %f %f\n", atoms[i / 3].conf, i / 3, sqr,
+      printf("%d-%d\t%f\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf, i / 3, sqr,
 	     force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	     force_0[i],
 	     (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
 	     atoms[i / 3].absforce);
 #else /* FWEIGHT */
-      printf("%d-%d %f %f %f %f\n", atoms[i / 3].conf, i / 3, sqr,
+      printf("%d-%d\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf, i / 3, sqr,
 	     force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
     printf("Cohesive Energies\n");
-    printf("conf w*de^2 e e0 de/e0\n");
+    printf("conf\tw*de^2\t\te\t\te0\t\tde/e0\n");
     for (i = 0; i < nconf; i++) {
       sqr = SQR(force[3 * natoms + i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      printf("%d %f %f %f %f\n", i, sqr,
+      printf("%d\t%f\t%f\t%f\t%f\n", i, sqr,
 	     force[3 * natoms + i] + force_0[3 * natoms + i],
 	     force_0[3 * natoms + i],
 	     force[3 * natoms + i] / force_0[3 * natoms + i]);
     }
 #ifdef STRESS
     printf("Stresses on unit cell\n");
-    printf("conf w*ds^2 s s0 ds/s0\n");
+    printf("conf\tw*ds^2\ts\ts0\tds/s0\n");
     for (i = 3 * natoms + nconf; i < 3 * natoms + 7 * nconf; i++) {
       sqr = SQR(force[i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      printf("%d %f %f %f %f\n", (i - (3 * natoms + nconf)) / 6, sqr,
+      printf("%d\t%f\t%f\t%f\t%f\n", (i - (3 * natoms + nconf)) / 6, sqr,
 	     force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
     }
 #endif
@@ -320,8 +376,10 @@ int main(int argc, char **argv)
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
+#ifndef APOT
     free(ntyp);
     free(totdens);
+#endif
     free(lambda);
   }
   free(force);
