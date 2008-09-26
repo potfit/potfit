@@ -8,7 +8,7 @@
 *
 ******************************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer
+*   Copyright 2002-2008 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.31 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.32 $
+* $Date: 2008/09/26 06:37:55 $
 *****************************************************************/
 
 /******************************************************************************
@@ -90,6 +90,7 @@ void powell_lsq(real *xi)
   real  ferror, berror;		/* forward/backward error estimates */
   static char errmsg[256];	/* Error message */
   FILE *ff;			/* Exit flagfile */
+
   d = mat_real(ndim, ndim);
   gamma = mat_real(mdim, ndim);
   lineqsys = mat_real(ndim, ndim);
@@ -113,16 +114,20 @@ void powell_lsq(real *xi)
 
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
-
-  printf("%d %f %f %f %f %f %f %d \n",
+#ifndef APOT
+  printf("%d %f %f %f %f %f %f %d\n",
 	 m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
   fflush(stdout);
+#endif
 
   if (F < NOTHING)
     return;			/* If F is less than nothing, */
   /* what is there to do? */
 
   (void)copy_vector(fxi1, force_xi, mdim);
+#ifdef APOT
+  printf("loops\tforce\t\tfunction calls\n");
+#endif
 
   do {				/*outer loop, includes recalculating gamma */
     m = 0;
@@ -144,14 +149,17 @@ void powell_lsq(real *xi)
       /* try again */
       if (i) {
 	/* ok, now this is serious, better exit cleanly */
+#ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
+#else
+	write_pot_table(&apot_table, tempfile);
+#endif
 	sprintf(errmsg,
 		"F does not depend on xi[%d], fit impossible!\n", idx[i - 1]);
 	warning(errmsg);
 	break;
       }
     }
-
     (void)lineqsys_init(gamma, lineqsys, fxi1, p, ndim, mdim);	/*init LES */
     F3 = F;
     breakflag = 0;
@@ -185,6 +193,7 @@ void powell_lsq(real *xi)
 	delta[idx[i]] = 0.;
 	for (j = 0; j < ndim; j++)
 	  delta[idx[i]] += d[i][j] * q[j];
+#ifndef APOT
 	if ((usemaxch) && (maxchange[idx[i]] > 0) &&
 	    (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
 	  /* something seriously went wrong, 
@@ -198,6 +207,7 @@ void powell_lsq(real *xi)
 	  warning(errmsg);
 	  breakflag = 1;
 	}
+#endif
       }
       if (breakflag)
 	break;
@@ -210,7 +220,7 @@ void powell_lsq(real *xi)
       F = linmin_r(xi, delta, F, ndim, mdim, &xi1, &xi2, fxi1, fxi2);
 
 #ifdef DEBUG
-      printf("%f %6g %f %f %d \n", F, cond, ferror, berror, i);
+      printf("%f %6g %f %f %d\n", F, cond, ferror, berror, i);
 #endif
 
       /* (d) if error estimate is too high after minimization
@@ -257,8 +267,12 @@ void powell_lsq(real *xi)
 
     /* Print the steps in current loop, F, a few values of xi, and
        total number of fn calls */
-    printf("%d %f %f %f %f %f %f %d \n",
+#ifdef APOT
+    printf("%d\t%f\t%d\n", m, F, fcalls);
+#else
+    printf("%d %f %f %f %f %f %f %d\n",
 	   m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
+#endif
     fflush(stdout);
 
     /* End fit if break flagfile exists */
@@ -284,7 +298,11 @@ void powell_lsq(real *xi)
 #endif /* EAM */
     /* write temp file  */
     if (tempfile != "\0")
-      write_pot_table(&opt_pot, tempfile);
+#ifndef APOT
+      write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
+#else
+      write_pot_table(&apot_table, tempfile);
+#endif
 
     /*End fit if whole series didn't improve F */
   }
@@ -292,6 +310,11 @@ void powell_lsq(real *xi)
 
   printf("Precision reached: %10g\n", F3 - F);
   /* Free memory */
+#ifdef APOT
+  for (i = 0; i < ndim; i++)
+    apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
+      xi[idx[i]];
+#endif
   free_vect_real(delta);
   free_vect_real(fxi1);
   free_vect_real(fxi2);

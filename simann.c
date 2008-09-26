@@ -4,7 +4,7 @@
  *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer
+*   Copyright 2002-2008 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/~imd/potfit
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.25 $
+* $Date: 2008/09/26 06:42:34 $
 *****************************************************************/
 
 
@@ -48,6 +48,27 @@
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(SQRREAL(a))/2.)))
 
+#ifdef APOT
+
+void randomize_parameter(int n, real *xi2, real *v)
+{
+  real  temp, rand;
+  int   done = 0;
+
+  do {
+    temp = xi2[idx[n]];
+    rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
+    temp += (rand * v[n]);
+    if (temp >= apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]]
+	&& temp <=
+	apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]])
+      done = 1;
+  } while (!done);
+  xi2[idx[n]] = temp;
+}
+
+#else
+
 
 /****************************************************************
  *
@@ -62,6 +83,7 @@ real normdist(void)
   static int have = 0;
   static real nd2;
   real  x1, x2, sqr, cnst;
+
   if (!(have)) {
     do {
       x1 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
@@ -91,6 +113,7 @@ real normdist(void)
 void makebump(real *x, real width, real height, int center)
 {
   int   i, j = 0;
+
   /* find pot to which center belongs */
   while (opt_pot.last[j] < idx[center])
     j++;
@@ -107,6 +130,7 @@ void makebump(real *x, real width, real height, int center)
   }
   return;
 }
+#endif
 
 /****************************************************************
  *
@@ -121,15 +145,17 @@ void anneal(real *xi)
   int   nstep = NSTEP, ntemp = NTEMP;
   int   loopagain;		/* loop flag */
   real  c = STEPVAR;
-  real  temp;			/* temporary variable */
-  real  p;			/* Probability */
   real  T;			/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
   real *v;			/* step vector */
   real *xopt, *xi2;		/* optimal value */
   real *fxi1;			/* two latest force vectors */
+  real  temp;			/* temporary variable */
+#ifndef APOT
+  real  p;			/* Probability */
   real  width, height;		/* gaussian bump size */
+#endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
   /* init starting temperature for annealing process */
@@ -166,11 +192,15 @@ void anneal(real *xi)
 	  /* Step #1 */
 	  /* Create a gaussian bump, 
 	     width & hight distributed normally */
-	  width = fabs(normdist());
-	  height = normdist() * v[h];
 	  for (n = 0; n < ndimtot; n++)
 	    xi2[n] = xi[n];
+#ifdef APOT
+	  randomize_parameter(h, xi2, v);
+#else
+	  width = fabs(normdist());
+	  height = normdist() * v[h];
 	  makebump(xi2, width, height, h);
+#endif
 	  F2 = (*calc_forces) (xi2, fxi1, 0);
 	  if (F2 <= F) {	/* accept new point */
 	    for (n = 0; n < ndimtot; n++)
@@ -182,7 +212,11 @@ void anneal(real *xi)
 		xopt[n] = xi2[n];
 	      Fopt = F2;
 	      if (tempfile != "\0")
+#ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
+#else
+		write_pot_table(&apot_table, tempfile);
+#endif
 	    }
 	  }
 
@@ -254,9 +288,21 @@ void anneal(real *xi)
   } while (k < KMAX && loopagain);
   for (n = 0; n < ndimtot; n++)
     xi[n] = xopt[n];
+
+#ifdef APOT
+  for (n = 0; n < ndim; n++)
+    apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
+      xopt[idx[n]];
+#endif
+
   F = Fopt;
+#ifndef APOT
   if (tempfile != "\0")
     write_pot_table(&opt_pot, tempfile);
+#else
+  if (tempfile != "\0")
+    write_pot_table(&apot_table, tempfile);
+#endif
   free_vect_real(Fvar);		//-NEPS+1);
   free_vect_real(v);
   free_vect_real(xopt);
