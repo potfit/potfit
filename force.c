@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.45 $
-* $Date: 2008/09/26 06:04:44 $
+* $Revision: 1.46 $
+* $Date: 2008/09/26 06:53:43 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -499,8 +499,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    x <= 0) {
 	  forces[mdim - apot_table.total_par + i] = 10e20 * x * x;
 	} else if (x = xi_opt[idx[i]] -
-		   apot_table.pmax[apot_table.
-				   idxpot[i]][apot_table.idxparam[i]],
+		   apot_table.pmax[apot_table.idxpot[i]][apot_table.
+							 idxparam[i]],
 		   x >= 0) {
 	  forces[mdim - apot_table.total_par + i] = 10e20 * x * x;
 	}
