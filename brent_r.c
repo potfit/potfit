@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2008/09/18 14:34:09 $
+* $Revision: 1.10 $
+* $Date: 2008/09/26 06:49:45 $
 *****************************************************************/
 
 /**** rewritten for double precision                                      ****
@@ -198,4 +198,5 @@ real brent_r(real ax, real bx, real cx, real fbx, real tol,
 
   }
   error("Too many iterations in Brent minimization");
+  return 0;
 }
