@@ -4,7 +4,7 @@
 * 
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2008/09/18 14:34:09 $
+* $Revision: 1.34 $
+* $Date: 2008/09/26 05:59:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -182,7 +182,8 @@ void read_config(char *filename)
   stens *stresses;
   vektor d, dd;
   real  r, rr, istep, shift, step;
-#ifdef DEBUG
+
+#if defined(DEBUG) || defined (APOT)
   real *mindist;
   mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
   for (i = 0; i < ntypes * ntypes; i++)
@@ -369,7 +370,7 @@ void read_config(char *filename)
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
 		atoms[i].n_neigh++;
-#ifdef DEBUG
+#if defined(DEBUG) || defined (APOT)
 		/* Minimal distance check */
 		mindist[ntypes * typ1 + typ2] =
 		  MIN(mindist[ntypes * typ1 + typ2], r);
@@ -380,7 +381,7 @@ void read_config(char *filename)
 		col = (typ1 <= typ2) ?
 		  typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 		  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-		if (format == 3) {
+		if (format == 3 || format == 0) {
 		  rr = r - calc_pot.begin[col];
 		  if (rr < 0) {
 		    printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
@@ -461,8 +462,8 @@ void read_config(char *filename)
 		  /*  } */
 		  step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
 		  shift = (r - calc_pot.xcoord[klo]) / step;
-		}
 
+		}
 		/* Check if we are at the last index */
 		if (slot >= calc_pot.last[col]) {
 		  slot--;
@@ -489,6 +490,9 @@ void read_config(char *filename)
 					   3*natoms are real forces, 
 					   nconf cohesive energies,
 					   6*nconf stress tensor components */
+#ifdef APOT
+  mdim += apot_table.total_par;
+#endif
 #ifdef EAM
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
   mdim += nconf;		/* nconf limiting constraints */
@@ -529,6 +533,21 @@ void read_config(char *filename)
   for (i = 0; i < 2 * ntypes; i++) {	/* constraint on U(n=0):=0 */
     /* XXX and U'(n_mean)=0  */
     force_0[k++] = 0.;
+  }
+#endif
+
+#ifdef APOT
+  for (i = 0; i < opt_pot.ncols; i++) {
+    r = fabs(mindist[i * (i + 1) / 2] - rmin[i * (i + 1) / 2]);
+    if (r > (.2 * mindist[i * (i + 1) / 2]) && !invar_pot[i]) {
+      printf("The given minimum distance for potential #%d is too small.\n",
+	     i);
+      printf
+	("Please adjust it from %f to somwhere between %f and %f for accurate calculations.\n",
+	 rmin[i * (i + 1) / 2], .9 * mindist[i * (i + 1) / 2],
+	 mindist[i * (i + 1) / 2]);
+      exit(2);
+    }
   }
 #endif
 
