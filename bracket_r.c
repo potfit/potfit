@@ -1,17 +1,17 @@
 /****************************************************************
-* 
+*
 *  bracket_r.c: Brackets a minimum of a function.
-* 
+*
 *****************************************************************/
-/* Copyright (C) 1996, 1997, 1998, 1999, 2000 Fabrice Rossi 
+/* Copyright (C) 1996, 1997, 1998, 1999, 2000 Fabrice Rossi
 *                 (gsl/min/bracketing.c)
-*            2005-2007 Peter Brommer
+*            2005-2008 Peter Brommer
 *            Institute for Theoretical and Applied Physics
 *            University of Stuttgart, D-70550 Stuttgart, Germany
 *            http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2008/09/18 14:34:09 $
+* $Revision: 1.5 $
+* $Date: 2008/09/26 05:54:15 $
 *****************************************************************/
 
 #include <math.h>
@@ -42,7 +42,6 @@
 #define MAX_IT 100
 
 #define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
-
 
 extern real *xicom, *delcom;
 
@@ -56,7 +55,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
      store in regular memory, the extended precision will then be lost and
      values that are different in extended precision might have equal
      representation in double precision. This behavior might break the
-     algorithm. 
+     algorithm.
    */
   volatile double f_left = *f_lower;
   volatile double f_right = *f_upper;
@@ -71,6 +70,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
   int   j;
   int   last = 0;		/* indicates whether upwards is left or right */
   long  nb_eval = 0;
+
   if (vecu == NULL)
     vecu = vect_real(ndimtot);
   if (f_vec3 == NULL)
@@ -135,14 +135,11 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 		nb_eval, x_left, x_center, x_right);
 	warning(errmsg);
 #endif /* DEBUG */
-	x_left = x_center;
-	f_left = f_center;
-	P_SWAP(p_left, p_center, p_temp);
-	x_center = -(x_right - x_left) * CGOLD + x_right;
+	x_right = (x_right - x_left) * CGOLD + x_right;
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
-	  vecu[j] = xicom[j] + x_center * delcom[j];
-	f_center = (*calc_forces) (vecu, p_center, 0);
+	  vecu[j] = xicom[j] + x_right * delcom[j];
+	f_right = (*calc_forces) (vecu, p_right, 0);
 	last = 1;
       }
     } else if (f_center > f_left)
@@ -169,14 +166,11 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 		nb_eval, x_left, x_center, x_right);
 	warning(errmsg);
 #endif /* DEBUG */
-	x_right = x_center;
-	f_right = f_center;
-	P_SWAP(p_right, p_center, p_temp);
-	x_center = (x_right - x_left) * CGOLD + x_left;
+	x_left = -(x_right - x_left) * CGOLD + x_left;
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
-	  vecu[j] = xicom[j] + x_center * delcom[j];
-	f_center = (*calc_forces) (vecu, p_center, 0);
+	  vecu[j] = xicom[j] + x_left * delcom[j];
+	f_left = (*calc_forces) (vecu, p_left, 0);
 	last = 2;
       } else if (f_center > f_right) {
 	/* Search to the right */
@@ -202,10 +196,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 		  nb_eval, x_left, x_center, x_right);
 	  warning(errmsg);
 #endif /* DEBUG */
-	  x_center = x_left;
-	  f_center = f_left;
-	  P_SWAP(p_center, p_left, p_temp);
-	  x_left = -(x_right - x_center) / CGOLD + x_right;
+	  x_left = -(x_right - x_left) / CGOLD + x_left;
 	  nb_eval++;
 	  for (j = 0; j < ndimtot; j++)
 	    vecu[j] = xicom[j] + x_left * delcom[j];
@@ -218,10 +209,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 		  nb_eval, x_left, x_center, x_right);
 	  warning(errmsg);
 #endif /* DEBUG */
-	  x_center = x_right;
-	  f_center = f_right;
-	  P_SWAP(p_center, p_right, p_temp);
-	  x_right = (x_center - x_left) / CGOLD + x_left;
+	  x_right = (x_right - x_left) / CGOLD + x_right;
 	  nb_eval++;
 	  for (j = 0; j < ndimtot; j++)
 	    vecu[j] = xicom[j] + x_right * delcom[j];
