@@ -83,17 +83,31 @@ required parameters in paramfile (here with example values)
 
 ntypes     2           # number of atom types
 ncols      3           # number of output potentials
-infile     in.pot      # input potential file
+infile     in.pot      # input potential file for pair potentials
 outfile    out.pot     # output potential file
-plotfile   plot.pot    # file name for plot version of output potentials
 nsteps     20 20 20    # number of steps for the output potentials
+atomic_e-density_file  rho.pot   # atomic density for EAM potentials
+embedding_energy_file  embed.pot # embedding energy for EAM potentials
+core_potential_file    phi.pot   # pair potential for EAM potentials
+
+#optional parameters
+
+reorder     0 1        # permutes order of potentials in final file,
+                       # ntypes parameters necessary
+r_start   1.8 1.8 1.8  # minimal r for each column in output potential
+r_end     6.5 6.2 6.3  # maximal r for each column in final potential
+
 </pre>
 <p>in.pot is converted to out.pot. in.pot can be of <a
 href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> potential
 format 1 or 2, out.pot is of <em>potfit</em> <a
-href="potformat.html">potential format</a>. To convert from
+href="potformat.html">potential format</a>. For EAM potentials, specify the
+appropriate number of columns in ncols and the required IMD format potential
+files. The order of the different atom types can be changed with the
+<tt>reorder</tt> parameter by specifying the desired sequence.</p> 
+<p>To convert from
 <em>potfit</em> to IMD use <em>potfit</em> with <tt>opt 0</tt> in
-parameter file.
+parameter file. 
 </p>
 
 <h2><a id="potscale" name="potscale">potscale - not maintained any more.</a></h2>

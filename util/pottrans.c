@@ -1,17 +1,39 @@
 
-/******************************************************************************
+/****************************************************************
+* 
+*  pottrans.c: transform IMD potential format 1 or 2 into
+*      potential table in format 3 (potfit format).
 *
-*  IMD -- The ITAP Molecular Dynamics Program
+*****************************************************************/
+/*
+*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
+*             Institute for Theoretical and Applied Physics
+*             University of Stuttgart, D-70550 Stuttgart, Germany
+*             http://www.itap.physik.uni-stuttgart.de/
 *
-*  Copyright 1996-2001 Institute for Theoretical and Applied Physics,
-*  University of Stuttgart, D-70550 Stuttgart
+*****************************************************************/
+/*  
+*   This file is part of potfit.
 *
-*  $Revision: 1.3 $
-*  $Date: 2007/10/01 16:11:31 $
+*   potfit is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; either version 2 of the License, or
+*   (at your option) any later version.
 *
-******************************************************************************/
-
-/******************************************************************************
+*   potfit is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with potfit; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Boston, MA  02110-1301  USA
+*/
+/****************************************************************
+* $Revision: 1.4 $
+* $Date: 2008/10/08 10:20:52 $  
+******************************************************************
 *
 *  The utility program pottrans translates potential tables in IMD 
 *  formats 1 or 2 into format 3 required by the potfit program. The 
@@ -94,7 +116,8 @@ typedef struct {
 /* global variables */
 str255 infilename="\0", outfilename="\0", plotfilename="\0", 
   plotpointfile="\0", rho_r2_file="\0", f_rho_file="\0", phi_r2_file="\0";
-int    ncols=0, ntypes=0, mode=1, *nsteps=NULL, eam;
+int    ncols=0, ntypes=0, mode=1, *nsteps=NULL, eam, *reorder=NULL;
+int    *idx=NULL;
 real   *r_start=NULL, *r_end=NULL;
 pot_table_t pt,embed_pt,rho_tab;
 
@@ -312,7 +335,7 @@ void getparamfile(char *paramfname)
       /* file name for input potential */
       getparam(n,"core_potential_file",phi_r2_file,PARAM_STR,1,255);
     }
-   else if (strcasecmp(token,"outfile")==0) {
+    else if (strcasecmp(token,"outfile")==0) {
       /* file name for output potential */
       getparam(n,"outfile",outfilename,PARAM_STR,1,255);
     }
@@ -333,6 +356,12 @@ void getparamfile(char *paramfname)
       nsteps = (int *) malloc( ncols * sizeof(int) );
       /* number of output potential values */
       getparam(n,"nsteps",nsteps,PARAM_INT,ncols,ncols);
+    }
+    else if (strcasecmp(token,"reorder")==0) {      
+      if (ncols==0) error("specify ntypes before reorder");
+      reorder = (int *) malloc( ntypes * sizeof(int) );
+      /* number of output potential values */
+      getparam(n,"reorder",reorder,PARAM_INT,ntypes,ntypes);
     }
     else if (strcasecmp(token,"r_start")==0) {
       /* minimal radius */
@@ -846,7 +875,7 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
   k = 0;
   for (i=0; i<ntypes; i++) 
     for (j=i; j<ntypes; j++) {
-      col    = i * ntypes + j; 
+      col    = idx[i * ntypes + j]; 
       r      = r_start[k];
       r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
       for (l=0; l<nsteps[k]-1; l++) {
@@ -907,7 +936,7 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
   k = 0;
   for (i=0; i<ntypes; i++) 
     for (j=i; j<ntypes; j++) {
-      col    = i * ntypes + j; 
+      col    = idx[i * ntypes + j]; 
       r      = r_start[k];
       r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
       fprintf(outfile, "%.16e 0.0\n", POTGRAD(pt, col, ntypes*ntypes, r*r)); 
@@ -929,16 +958,18 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
   for (i=0; i<ntypes; i++) {
     r      =  r_start[k];
     r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
-    fprintf(outfile, "%.16e 0.0\n", POTGRAD(rho_tab,i, ntypes*ntypes, r*r)); 
+    fprintf(outfile, "%.16e 0.0\n", 
+	    POTGRAD(rho_tab,idx[i], ntypes*ntypes, r*r)); 
     if (flag) {
       fprintf(outfile2, "%.16e 0.0\n", 
-	      POTGRAD(rho_tab,i, ntypes*ntypes, r*r)); 
+	      POTGRAD(rho_tab,idx[i], ntypes*ntypes, r*r)); 
     }
     for (l=0; l<nsteps[k]-1; l++) {
-      fprintf(outfile, "%.16e\n", POTVAL(rho_tab, i, ntypes*ntypes, r*r) );
+      fprintf(outfile, "%.16e\n", 
+	      POTVAL(rho_tab, idx[i], ntypes*ntypes, r*r) ); 
       if (flag) 
 	fprintf(outfile2, "%.6e %.6e\n",r,
-		POTVAL(rho_tab, i, ntypes*ntypes, r*r) );
+		POTVAL(rho_tab, idx[i], ntypes*ntypes, r*r) );
       r += r_step;
     }
     k++;
@@ -949,18 +980,19 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
   for (i=0; i<ntypes; i++) {
     r      =  r_start[k];
     r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
-    fprintf(outfile, "%.16e", POTGRAD(embed_pt,i, ntypes, r)); 
+    fprintf(outfile, "%.16e", POTGRAD(embed_pt,reorder[i], ntypes, r)); 
     fprintf(outfile, " %.16e\n", 
-	    POTGRAD(embed_pt, i, ntypes, r_end[k])); 
+	    POTGRAD(embed_pt, reorder[i], ntypes, r_end[k])); 
     if (flag) {
-      fprintf(outfile2, "%.16e", POTGRAD(embed_pt,i, ntypes, r)); 
+      fprintf(outfile2, "%.16e", POTGRAD(embed_pt,reorder[i], ntypes, r)); 
       fprintf(outfile2, " %.16e\n ", 
-	      POTGRAD(embed_pt, i, ntypes, r_end[k])); 
+	      POTGRAD(embed_pt, reorder[i], ntypes, r_end[k])); 
     }
     for (l=0; l<nsteps[k]; l++) {
-      fprintf(outfile, "%.16e\n", POTVAL(embed_pt, i, ntypes, r) );
+      fprintf(outfile, "%.16e\n", POTVAL(embed_pt, reorder[i], ntypes, r) );
       if (flag) 
-	fprintf(outfile2, "%.6e %.6e\n",r,POTVAL(embed_pt, i, ntypes, r) );
+	fprintf(outfile2, "%.6e %.6e\n",r,
+		POTVAL(embed_pt, reorder[i], ntypes, r) );
       r += r_step;
     }
     k++;
@@ -1066,6 +1098,43 @@ int main(int argc, char **argv)
     } else {
       read_pot_table(&pt,infilename,ntypes*ntypes);
     }
+    /* set up permutation index */
+    if (idx==NULL) {
+      idx = (int *) malloc( ntypes*ntypes * sizeof(int) );
+      if (idx==NULL) error("allocation of idx failed");
+    }
+    if (reorder==NULL) {
+      reorder = (int *) malloc( ntypes * sizeof(int) );
+      if (reorder==NULL) error("allocation of reorder failed");
+      for (i=0;i<ntypes;i++) { 
+	reorder[i]=i; 
+      }
+      for (i=0;i<ntypes*ntypes;i++) {
+	idx[i]=i;
+      }
+    } else { 			/* reordering necessary */
+      /* check reorder field */
+      for (i=0;i<ntypes;i++) {
+	idx[i]=0;
+      }
+      for (i=0;i<ntypes;i++) {
+	if (reorder[i]<0 || reorder[i] >=ntypes)
+	  error("Reordering failure - out of range");
+	idx[reorder[i]]++;
+      }
+      for (i=0;i<ntypes;i++) {
+	if (idx[i] != 1 ) 
+	  error("Reordering failure - doubly used index");
+      }
+
+      /* pair pot */
+      k=0;
+      for (i=0;i<ntypes;i++) {
+	for (j=0;j<ntypes;j++) {
+	  idx[k++]=ntypes*reorder[i]+reorder[j];
+	}
+      }
+    }  
     /* always set r_end from potential table */
     if (r_end==NULL) {
       r_end = (real *) malloc( ncols * sizeof(real) );
@@ -1074,35 +1143,39 @@ int main(int argc, char **argv)
     k=0;
     for (i=0; i<ntypes; i++)
       for (j=i; j<ntypes; j++)
-        r_end[k++] = sqrt(pt.end[i*ntypes+j]);
+        r_end[k++] = sqrt(pt.end[idx[i*ntypes+j]]);
     if (eam) {
       for (i=0; i<ntypes; i++)
-	r_end[k++] = sqrt(rho_tab.end[i]);
+	r_end[k++] = sqrt(rho_tab.end[idx[i]]);
       for (i=0; i<ntypes; i++)
-	r_end[k++] = embed_pt.end[i];
+	r_end[k++] = embed_pt.end[reorder[i]];
     }
     /* set r_start, if not read in */
     if (r_start==NULL) {
       r_start = (real *) malloc( ncols * sizeof(real) );
       if (r_start==NULL) error("allocation of r_start failed");
-    }
-
-    k=0;
-    for (i=0; i<ntypes; i++)
-      for (j=i; j<ntypes; j++) {
-	  r_start[k++] = sqrt(pt.begin[i*ntypes+j]);
-	  while(POTVAL(&pt,i*ntypes+j,ntypes*ntypes,
-		       r_start[k-1]*r_start[k-1])>MAXVAL){
-	      r_start[k-1]+=(r_end[k-1]-r_start[k-1])/1000.;
-	  }
-      }
-    if (eam) {
-      for (i=0; i<ntypes; i++)
-	r_start[k++] = sqrt(rho_tab.begin[i]);
-      for (i=0; i<ntypes; i++)
-	r_start[k++] = embed_pt.begin[i];
-    }
     
+
+      k=0;
+      for (i=0; i<ntypes; i++)
+	for (j=i; j<ntypes; j++) {
+	  r_start[k++] = sqrt(pt.begin[idx[i*ntypes+j]]);
+	  while(POTVAL(&pt,idx[i*ntypes+j],ntypes*ntypes,
+		       r_start[k-1]*r_start[k-1])>MAXVAL){
+	    r_start[k-1]+=(r_end[k-1]-r_start[k-1])/1000.;
+	  }
+	}
+      if (eam) {
+	for (i=0; i<ntypes; i++)
+	  r_start[k++] = sqrt(rho_tab.begin[idx[i]]);
+      }
+    } else {
+      k = (ntypes * (ntypes + 1))/2 + ntypes;
+    }
+    if (eam)
+      for (i=0; i<ntypes; i++)
+	r_start[k++] = embed_pt.begin[reorder[i]];
+
     /* write potential table */
     if (eam)
       write_pot_table_eam(&pt,&embed_pt,&rho_tab,outfilename);
@@ -1110,7 +1183,7 @@ int main(int argc, char **argv)
       write_pot_table_pair(&pt,outfilename);
 //    write_plotpot_pair(&pt,plotfilename);
   }
-
+  
   return 0;
 }
 
