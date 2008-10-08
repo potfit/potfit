@@ -31,8 +31,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2008/10/08 10:20:52 $  
+* $Revision: 1.5 $
+* $Date: 2008/10/08 17:49:58 $  
 ******************************************************************
 *
 *  The utility program pottrans translates potential tables in IMD 
@@ -69,6 +69,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 /* maximum value in potential file */
 #define MAXVAL 40.
@@ -115,7 +116,8 @@ typedef struct {
 
 /* global variables */
 str255 infilename="\0", outfilename="\0", plotfilename="\0", 
-  plotpointfile="\0", rho_r2_file="\0", f_rho_file="\0", phi_r2_file="\0";
+  plotpointfile="\0", rho_r2_file="\0", f_rho_file="\0", phi_r2_file="\0",
+  progname="\0";
 int    ncols=0, ntypes=0, mode=1, *nsteps=NULL, eam, *reorder=NULL;
 int    *idx=NULL;
 real   *r_start=NULL, *r_end=NULL;
@@ -829,7 +831,9 @@ real grad3(pot_table_t *pt, int col, int inc, real r2)
   dfac3 =    1.0/6.0 * (3.0*chi*chi-1.0);
 
 /* return the gradient value */ 
-  return 2. * istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
+//  return 2. * istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
+  chi=2. * istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
+  return chi;
 }
 
 /*****************************************************************************
@@ -844,6 +848,7 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
   char msg[255];
   int  i, j, k, l, col, flag=0;
   real r, r_step;
+  time_t now;
 //  if (plotfilename != "\0") flag=1;
   /* open file */
   outfile = fopen(filename,"w");
@@ -860,8 +865,15 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
 /*       } */
 /*   } */
 
-  /* write header */
-  fprintf(outfile, "#F 3 %d\n#E\n", ncols ); 
+  time(&now);
+  fprintf(outfile, "#F 3 %d\n", ncols );
+  fprintf(outfile, "#G");
+  for (i=0;i<ncols;i++) {
+    fprintf(outfile, " 2");
+  }
+  fprintf(outfile, "\n## created by %s at %s", progname, 
+	  asctime(gmtime(&now)));
+  fprintf(outfile, "#E\n");
 
   /* write info block */
   for (i=0; i<ncols; i++) {
@@ -878,6 +890,7 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
       col    = idx[i * ntypes + j]; 
       r      = r_start[k];
       r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
+      fprintf(outfile, "%.16e 0.0\n", POTGRAD(pt, col, ntypes*ntypes, r*r)); 
       for (l=0; l<nsteps[k]-1; l++) {
         fprintf(outfile, "%.16e\n", POTVAL(pt, col, ntypes*ntypes, r*r) );
 	if (flag) 
@@ -902,6 +915,7 @@ void write_pot_table_pair(pot_table_t *pt, char *filename)
 void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rho_tab, char *filename)
 {
   FILE *outfile, *outfile2;
+  time_t now;
   char msg[255];
   int  i, j, k, l, col, flag=0;
   real r, r_step;
@@ -922,7 +936,18 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
 /*   } */
 
   /* write header */
-  fprintf(outfile, "#F 3 %d\n#E\n", ncols );
+  time(&now);
+  fprintf(outfile, "#F 3 %d\n", ncols );
+  fprintf(outfile, "#G");
+  for (i=0;i<ncols-ntypes;i++) {
+    fprintf(outfile, " 2");
+  }
+  for (i=0;i<ntypes;i++) {
+    fprintf(outfile, " 3");
+  }
+  fprintf(outfile, "\n## created by %s at %s", progname, 
+	  asctime(gmtime(&now)));
+  fprintf(outfile, "#E\n");
 
   /* write info block */
   for (i=0; i<ncols; i++) {
@@ -939,10 +964,10 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
       col    = idx[i * ntypes + j]; 
       r      = r_start[k];
       r_step = (r_end[k] - r_start[k]) / (nsteps[k] - 1);
-      fprintf(outfile, "%.16e 0.0\n", POTGRAD(pt, col, ntypes*ntypes, r*r)); 
+      fprintf(outfile, "%.16e 0.0\n", POTGRAD(pt, col, ntypes*ntypes, r*r)*r); 
       if (flag) {      
 	fprintf(outfile2, "%.16e 0.0\n", 
-		POTGRAD(pt, col, ntypes*ntypes, r*r)); 
+		POTGRAD(pt, col, ntypes*ntypes, r*r)*r); 
       }
       for (l=0; l<nsteps[k]-1; l++) {
         fprintf(outfile, "%.16e\n", POTVAL(pt, col, ntypes*ntypes, r*r) );
@@ -959,10 +984,10 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
     r      =  r_start[k];
     r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
     fprintf(outfile, "%.16e 0.0\n", 
-	    POTGRAD(rho_tab,idx[i], ntypes*ntypes, r*r)); 
+	    POTGRAD(rho_tab,idx[i], ntypes*ntypes, r*r)*r); 
     if (flag) {
       fprintf(outfile2, "%.16e 0.0\n", 
-	      POTGRAD(rho_tab,idx[i], ntypes*ntypes, r*r)); 
+	      POTGRAD(rho_tab,idx[i], ntypes*ntypes, r*r)*r); 
     }
     for (l=0; l<nsteps[k]-1; l++) {
       fprintf(outfile, "%.16e\n", 
@@ -980,13 +1005,13 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
   for (i=0; i<ntypes; i++) {
     r      =  r_start[k];
     r_step =  (r_end[k] - r_start[k]) / (nsteps[k] - 1);
-    fprintf(outfile, "%.16e", POTGRAD(embed_pt,reorder[i], ntypes, r)); 
+    fprintf(outfile, "%.16e", 0.5*POTGRAD(embed_pt,reorder[i], ntypes, r)); 
     fprintf(outfile, " %.16e\n", 
-	    POTGRAD(embed_pt, reorder[i], ntypes, r_end[k])); 
+	    0.5*POTGRAD(embed_pt, reorder[i], ntypes, r_end[k])); 
     if (flag) {
-      fprintf(outfile2, "%.16e", POTGRAD(embed_pt,reorder[i], ntypes, r)); 
+      fprintf(outfile2, "%.16e", 0.5*POTGRAD(embed_pt,reorder[i], ntypes, r)); 
       fprintf(outfile2, " %.16e\n ", 
-	      POTGRAD(embed_pt, reorder[i], ntypes, r_end[k])); 
+	      0.5*POTGRAD(embed_pt, reorder[i], ntypes, r_end[k])); 
     }
     for (l=0; l<nsteps[k]; l++) {
       fprintf(outfile, "%.16e\n", POTVAL(embed_pt, reorder[i], ntypes, r) );
@@ -1073,7 +1098,7 @@ void write_pot_table_eam(pot_table_t *pt, pot_table_t *embed_pt, pot_table_t *rh
 int main(int argc, char **argv)
 {
   int i, j, k;
-
+  strcpy(progname,argv[0]);
   read_parameters(argc, argv);
 
   /* pair interactions */
@@ -1147,8 +1172,9 @@ int main(int argc, char **argv)
     if (eam) {
       for (i=0; i<ntypes; i++)
 	r_end[k++] = sqrt(rho_tab.end[idx[i]]);
-      for (i=0; i<ntypes; i++)
-	r_end[k++] = embed_pt.end[reorder[i]];
+      for (i=0; i<ntypes; i++)	
+	/* move a little to the left for interpolation reasons */
+	r_end[k++] = embed_pt.end[reorder[i]]-2.*embed_pt.step[reorder[i]];
     }
     /* set r_start, if not read in */
     if (r_start==NULL) {
@@ -1164,17 +1190,18 @@ int main(int argc, char **argv)
 		       r_start[k-1]*r_start[k-1])>MAXVAL){
 	    r_start[k-1]+=(r_end[k-1]-r_start[k-1])/1000.;
 	  }
+	  if (r_start[k-1] <= 
+	      sqrt(pt.begin[idx[i*ntypes+j]] + 2.*pt.step[idx[i*ntypes+j]]) )
+	    r_start[k-1] = sqrt(2.*pt.step[idx[i*ntypes+j]]);
 	}
       if (eam) {
 	for (i=0; i<ntypes; i++)
-	  r_start[k++] = sqrt(rho_tab.begin[idx[i]]);
+	  r_start[k++] = sqrt(rho_tab.begin[idx[i]]+2.*rho_tab.step[idx[i]]);
+	for (i=0; i<ntypes; i++)
+	  r_start[k++] = embed_pt.begin[reorder[i]] + 
+	    2.*embed_pt.step[reorder[i]];
       }
-    } else {
-      k = (ntypes * (ntypes + 1))/2 + ntypes;
-    }
-    if (eam)
-      for (i=0; i<ntypes; i++)
-	r_start[k++] = embed_pt.begin[reorder[i]];
+    } 
 
     /* write potential table */
     if (eam)
