@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.35 $
-* $Date: 2008/10/08 09:19:34 $
+* $Revision: 1.36 $
+* $Date: 2008/10/08 09:29:25 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -585,7 +585,7 @@ void read_config(char *filename)
 
 /* recalculate the slots of the atoms for tabulated potential */
 
-int new_slots()
+int new_slots(void)
 {
   int   i, j, col, typ1, typ2;
   real  r, rr;

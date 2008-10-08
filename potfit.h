@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.49 $
-* $Date: 2008/10/08 09:19:34 $
+* $Revision: 1.50 $
+* $Date: 2008/10/08 09:29:25 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -360,7 +360,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 void  apot_validate_functions(apot_table_t *);
-int   new_slots(int);		/* new slots for adjustable cutoff */
+int   new_slots(void);		/* new slots for adjustable cutoff */
 
 /* functions for the smooth cutoff (_sc option) of analytic potentials */
 real  smooth(void (*function) (real, real *, real *),

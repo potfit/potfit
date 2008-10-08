@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.44 $
-* $Date: 2008/10/08 09:19:34 $
+* $Revision: 1.45 $
+* $Date: 2008/10/08 09:29:25 $
 *****************************************************************/
 
 #define NPLOT 10000
@@ -1166,9 +1166,6 @@ void update_calc_table(real *xi_opt, real *xi_calc)
 	xi_calc[k] = f;
       }
     } else if (!invar_pot[i] && smooth_pot[i]) {
-/* TODO reread configuration to put atoms in right slots */
-/*       printf("smooth cutoff currently not supported.\nAborting\n"); */
-/*       exit(2); */
       k = i * APOT_STEPS + (i + 1) * 2;
       l = i * (i + 1) / 2;
       x0 =
@@ -1186,7 +1183,7 @@ void update_calc_table(real *xi_opt, real *xi_calc)
 	    params[1] * temp * temp + temp * params[2] + params[3];
 	calc_pot.xcoord[k + j] = calc_pot.begin[i] + j * calc_pot.step[i];
       }
-      if (new_slots(i)) {
+      if (new_slots()) {
 	error
 	  ("Could not calculate new slots. Please check your cutoff radius.\n");
       }
@@ -1688,8 +1685,11 @@ void write_apot_table(apot_table_t *apt, char *filename)
     } else {
       fprintf(outfile, "type %s\n", apt->names[i]);
     }
-    /* TODO output: new cutoff radius */
-    fprintf(outfile, "range %f %f\n", apt->begin[i], calc_pot.end[i]);
+    if (!smooth_pot[i])
+      fprintf(outfile, "range %f %f\n", apt->begin[i], apt->end[i]);
+    else
+      fprintf(outfile, "range %f %f (sc: %f)\n", apt->begin[i], apt->end[i],
+	      calc_pot.end[i]);
     for (j = 0; j < apt->n_par[i]; j++) {
       fprintf(outfile, "%s %.16f %f %f\n", apt->param_name[i][j],
 	      apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
