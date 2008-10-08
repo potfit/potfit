@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.20 $
-*  $Date: 2008/09/18 14:34:10 $
+*  $Revision: 1.21 $
+*  $Date: 2008/10/08 09:19:34 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -149,12 +149,12 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
 		"Double vector of length %u expected!\n", (unsigned)pnum_min);
 	error(errmsg);
       } else
-	((double *)param)[i] = atof(str);
+	((real *)param)[i] = atof(str);
       numread++;
     }
     for (i = pnum_min; i < pnum_max; i++) {
       if ((str = strtok(NULL, " \t\r\n")) != NULL) {
-	((double *)param)[i] = atof(str);
+	((real *)param)[i] = atof(str);
 	numread++;
       } else
 	break;

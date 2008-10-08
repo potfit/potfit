@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.43 $
-* $Date: 2008/09/26 06:22:01 $
+* $Revision: 1.44 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 #define NPLOT 10000
@@ -161,11 +161,11 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       }
       gradient = (int *)malloc(size * sizeof(int));
       invar_pot = (int *)malloc(size * sizeof(int));
-      smoothen = (int *)malloc(size * sizeof(int));
+      smooth_pot = (int *)malloc(size * sizeof(int));
       for (i = 0; i < size; i++) {
 	gradient[i] = 0;
 	invar_pot[i] = 0;
-	smoothen[i] = 0;
+	smooth_pot[i] = 0;
       }
       have_format = 1;
     }
@@ -191,6 +191,13 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   pt->first = (int *)malloc(size * sizeof(int));
   pt->last = (int *)malloc(size * sizeof(int));
   nvals = (int *)malloc(size * sizeof(int));
+  if ((pt->begin == NULL) || (pt->end == NULL) || (pt->step == NULL) ||
+      (pt->invstep == NULL) || (pt->first == NULL) || (pt->last == NULL) ||
+      (nvals == NULL)) {
+    sprintf(msg, "Cannot allocate info block for potential table %s",
+	    filename);
+    error(msg);
+  }
 #ifdef APOT
   /* allocate memory for analytic potential table */
   apt->number = size;
@@ -215,13 +222,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     error(msg);
   }
 #endif
-  if ((pt->begin == NULL) || (pt->end == NULL) || (pt->step == NULL) ||
-      (pt->invstep == NULL) || (pt->first == NULL) || (pt->last == NULL) ||
-      (nvals == NULL)) {
-    sprintf(msg, "Cannot allocate info block for potential table %s",
-	    filename);
-    error(msg);
-  }
   switch (format) {
 #ifdef APOT
       case 0:
@@ -252,13 +252,8 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2)
 	: j * ntypes + i - ((j * (j + 1)) / 2);
-#ifndef APOT
       rmin[i * ntypes + j] = pt->begin[k];
       rcut[i * ntypes + j] = pt->end[k];
-#else
-      rmin[i * ntypes + j] = apt->begin[k];
-      rcut[i * ntypes + j] = apt->end[k] * CUTOFF_MARGIN;
-#endif
     }
 #ifdef EAM
   for (i = 0; i < ntypes; i++) {
@@ -309,6 +304,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 *  	please check the documentation 
 *
 ******************************************************************************/
+
 #ifdef APOT
 void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
 		     int ncols, int *nvals, char *filename, FILE *infile)
@@ -318,7 +314,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
   char  buffer[255];
   char  name[255];
   char *token;
-  double *val;
+  real *val;
 
   for (i = 0; i < apt->number; i++) {
     /* read type */
@@ -348,8 +344,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
 	      filename, name);
       error(msg);
     }
-    if (strcmp(msg, "sc") == 0)
-      smoothen[i] = 1;
+    if (strcmp(msg, "sc") == 0) {
+      smooth_pot[i] = 1;
+      do_smooth = 1;
+    }
     strcpy(msg, "");
 
     strcpy(apt->names[i], name);
@@ -733,7 +731,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
 
   }
@@ -778,7 +776,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
 
   }
@@ -822,7 +820,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
   }
 
@@ -969,7 +967,7 @@ void read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
 /*     pt->begin[i]=pt->xcoord[pt->first[i]]; */
 /*     pt->end[i]  =pt->xcoord[pt->last[i]]; */
 /*     /\* pt->step is average step length.. *\/ */
-/*     pt->step[i] = (pt->end[i]-pt->begin[i])/((double) nvals[i]-1); */
+/*     pt->step[i] = (pt->end[i]-pt->begin[i])/((real) nvals[i]-1); */
 /*     pt->invstep[i] = 1./pt->step[i];  */
 
   }
@@ -1010,7 +1008,7 @@ void read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
 /*     pt->begin[i]=pt->xcoord[pt->first[i]]; */
 /*     pt->end[i]  =pt->xcoord[pt->last[i]]; */
 /*     /\* pt->step is average step length.. *\/ */
-/*     pt->step[i] = (pt->end[i]-pt->begin[i])/((double) nvals[i]-1); */
+/*     pt->step[i] = (pt->end[i]-pt->begin[i])/((real) nvals[i]-1); */
 /*     pt->invstep[i] = 1./pt->step[i];  */
   }
 
@@ -1069,7 +1067,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    calct->last[i] = (x += APOT_STEPS - 1);
 	    x++;
 	    calct->step[i] =
-	      fabs((calct->end[i] - calct->begin[i])) / (APOT_STEPS - 1);
+	      (calct->end[i] - calct->begin[i]) / (APOT_STEPS - 1);
 	    calct->invstep[i] = 1. / calct->step[i];
 	    for (j = 0; j < APOT_STEPS; j++) {
 	      index = i * APOT_STEPS + (i + 1) * 2 + j;
@@ -1144,8 +1142,9 @@ void update_calc_table(real *xi_opt, real *xi_calc)
 {
   int   i, j, k, l, size;
   int  *sp;
-  real  r;
+  real  r, x0, temp;
   real *val, *ord, f;
+  real *params;
 
   switch (format) {
       case 3:			/* fall through */
@@ -1156,19 +1155,44 @@ void update_calc_table(real *xi_opt, real *xi_calc)
 	break;
   }
 #ifdef APOT
+  if (do_smooth)
+    params = (real *)malloc(4 * sizeof(real));
   val = xi_opt + 2;
   for (i = 0; i < calc_pot.ncols; i++) {
-    if (!invar_pot[i]) {
+    if (!invar_pot[i] && !smooth_pot[i]) {
       for (j = 0; j < APOT_STEPS; j++) {
 	k = i * APOT_STEPS + (i + 1) * 2 + j;
 	apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
 	xi_calc[k] = f;
       }
+    } else if (!invar_pot[i] && smooth_pot[i]) {
+/* TODO reread configuration to put atoms in right slots */
+/*       printf("smooth cutoff currently not supported.\nAborting\n"); */
+/*       exit(2); */
+      k = i * APOT_STEPS + (i + 1) * 2;
+      l = i * (i + 1) / 2;
+      x0 =
+	smooth(apot_table.fvalue[i], rcut[l], val, rmin[l],
+	       rcut[l] * CUTOFF_MARGIN, params);
+      calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
+      calc_pot.end[i] = params[0];
+      calc_pot.invstep[i] = 1. / calc_pot.step[i];
+      for (j = 0; j < APOT_STEPS; j++) {
+	temp = j * calc_pot.step[i] + rmin[l];
+	if (temp < x0)
+	  apot_table.fvalue[i] (temp, val, xi_calc + k + j);
+	else
+	  *(xi_calc + k + j) =
+	    params[1] * temp * temp + temp * params[2] + params[3];
+	calc_pot.xcoord[k + j] = calc_pot.begin[i] + j * calc_pot.step[i];
+      }
+      if (new_slots(i)) {
+	error
+	  ("Could not calculate new slots. Please check your cutoff radius.\n");
+      }
     }
-/*     if(myid==0) printf("val=%f val+1=%f\n",*val,*(val+1)); */
     val += apot_table.n_par[i] + 2;
   }
-/* 	debug_calc_pot(calc_pot.table); */
 #else
   error("This potential is not yet implemented");
   size = calc_pot.ncols;
@@ -1659,15 +1683,16 @@ void write_apot_table(apot_table_t *apt, char *filename)
 
   /* write data */
   for (i = 0; i < apt->number; i++) {
-    if (smoothen[i]) {
+    if (smooth_pot[i]) {
       fprintf(outfile, "type %s_sc\n", apt->names[i]);
     } else {
       fprintf(outfile, "type %s\n", apt->names[i]);
     }
-    fprintf(outfile, "range %f %f\n", apt->begin[i], apt->end[i]);
+    /* TODO output: new cutoff radius */
+    fprintf(outfile, "range %f %f\n", apt->begin[i], calc_pot.end[i]);
     for (j = 0; j < apt->n_par[i]; j++) {
-      fprintf(outfile, "%s %.16f\n", apt->param_name[i][j],
-	      apt->values[i][j]);
+      fprintf(outfile, "%s %.16f %f %f\n", apt->param_name[i][j],
+	      apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
     }
     fprintf(outfile, "\n");
   }

@@ -29,11 +29,9 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.25 $
-* $Date: 2008/09/26 06:42:34 $
+* $Revision: 1.26 $
+* $Date: 2008/10/08 09:19:35 $
 *****************************************************************/
-
-
 
 #include <math.h>
 #include "potfit.h"
@@ -50,13 +48,23 @@
 
 #ifdef APOT
 
+/*******************************************************************************
+*
+* Function to generate random parameters for analytic potentials.
+* We loop over a new random parameter until we find one inside
+* the predefined range, specified by the user.
+* This is a lot faster that throwing a point away and increase
+* the counter in the SA algorithm.
+*
+*******************************************************************************/
+
 void randomize_parameter(int n, real *xi2, real *v)
 {
   real  temp, rand;
   int   done = 0;
 
+  temp = xi2[idx[n]];
   do {
-    temp = xi2[idx[n]];
     rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
     temp += (rand * v[n]);
     if (temp >= apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]]
@@ -69,14 +77,12 @@ void randomize_parameter(int n, real *xi2, real *v)
 
 #else
 
-
 /****************************************************************
  *
  *  real normdist(): Returns a normally distributed random variable
  *          Uses random() to generate a random number.
  * 
  *****************************************************************/
-
 
 real normdist(void)
 {
@@ -109,7 +115,6 @@ real normdist(void)
  * 
  *****************************************************************/
 
-
 void makebump(real *x, real width, real height, int center)
 {
   int   i, j = 0;
@@ -120,12 +125,12 @@ void makebump(real *x, real width, real height, int center)
   for (i = 0; i <= 4. * width; i++) {
 /* using idx avoids moving fixed points */
     if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
-      x[idx[center + i]] += GAUSS((double)i / width) * height;
+      x[idx[center + i]] += GAUSS((real)i / width) * height;
     }
   }
   for (i = 1; i <= 4. * width; i++) {
     if ((center - i >= 0) && (idx[center - i] >= opt_pot.first[j])) {
-      x[idx[center - i]] += GAUSS((double)i / width) * height;
+      x[idx[center - i]] += GAUSS((real)i / width) * height;
     }
   }
   return;
@@ -228,12 +233,18 @@ void anneal(real *xi)
 	  }
 	}
       }
+#ifdef APOT
+      for (n = 0; n < ndim; n++)
+	apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
+	  xopt[idx[n]];
+#endif
+
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
 	if (naccept[n] > 0.6 * nstep)
-	  v[n] *= (1 + c * ((double)naccept[n] / nstep - 0.6) / 0.4);
+	  v[n] *= (1 + c * ((real)naccept[n] / nstep - 0.6) / 0.4);
 	else if (naccept[n] < 0.4 * nstep)
-	  v[n] /= (1 + c * (0.4 - (double)naccept[n] / nstep) / 0.4);
+	  v[n] /= (1 + c * (0.4 - (real)naccept[n] / nstep) / 0.4);
 	naccept[n] = 0;
       }
       printf("%d\t%f\t%d\t%f\t%f\n", k, T, m + 1, F, Fopt);

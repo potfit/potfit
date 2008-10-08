@@ -5,9 +5,9 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.39 $
-# $Date: 2008/09/26 06:22:17 $
-# 
+# $Revision: 1.40 $
+# $Date: 2008/10/08 09:19:34 $
+#
 ############################################################################
 #
 #     This file is part of potfit.
@@ -24,9 +24,8 @@
 #
 #     You should have received a copy of the GNU General Public License
 #     along with potfit; if not, write to the Free Software
-#     Foundation, Inc., 51 Franklin St, Fifth Floor, 
+#     Foundation, Inc., 51 Franklin St, Fifth Floor,
 #     Boston, MA 02110-1301, USA
-#
 #
 ############################################################################
 #
@@ -34,7 +33,7 @@
 #
 # Usage:  make <target>
 #
-# <target> has the form 
+# <target> has the form
 #
 #    potfit[_<parallel>][_<option>[_<option>...]]
 #
@@ -48,16 +47,16 @@
 #
 # Customizing this Makefile
 #
-# As potfit supports a large number of compile options, you will have to 
-# compile potfit freqently. Before doing so, however, you must check whether 
-# the settings in this Makefile fit your needs. You possibly have to 
-# customize these setttings. Before you can do that, we have to explain 
+# As potfit supports a large number of compile options, you will have to
+# compile potfit freqently. Before doing so, however, you must check whether
+# the settings in this Makefile fit your needs. You possibly have to
+# customize these setttings. Before you can do that, we have to explain
 # a bit how the compilation process works.
 #
-# The compilation process requires the environment variable IMDSYS to 
-# be set to a recognized value. It specifies what system you have, and 
-# what compiler you are using. The flags for the compiler and the linker 
-# are then selected as a function of this variable. It is also possible 
+# The compilation process requires the environment variable IMDSYS to
+# be set to a recognized value. It specifies what system you have, and
+# what compiler you are using. The flags for the compiler and the linker
+# are then selected as a function of this variable. It is also possible
 # to pass the value of IMDSYS on the command line, e.g.:
 #
 #   make IMDSYS=P4-icc potfit_mpi_eam
@@ -65,13 +64,13 @@
 # Another important ingredient is the parallelization method, which is
 # determined from the make target. The parallelization method is stored
 # in the variable PARALLEL, which takes as value one of SERIAL, MPI,
-# OMP, OMPI, or PACX. 
+# OMP, OMPI, or PACX.
 #
 # Depending on the value of ${IMDSYS}, a number of variables must be
 # set, from which everything else is constructed.
 #
-# CC_${PARALLEL} defines the compiler to be used for parallelization 
-# method ${PARALLEL}. If not defined, the parallelization method 
+# CC_${PARALLEL} defines the compiler to be used for parallelization
+# method ${PARALLEL}. If not defined, the parallelization method
 # ${PARALLEL} is not available.
 #
 # BIN_DIR defines the directory where the potfit binary is put. Note that
@@ -82,14 +81,14 @@
 #
 # The compilation options are stored in the variable CFLAGS.
 # The initial value of CFLAGS is set to the variable FLAGS,
-# which can be given on the command line as explained above for 
+# which can be given on the command line as explained above for
 # IMDSYS, although this is usually not necessary.
 #
-# If the option debug was specified, ${DEBUG_FLAGS} is then appended 
-# to ${CFLAGS}, otherwise ${OPT_FLAGS}. If the option prof was specified 
-# (for profiling), ${PROF_FLAGS} is also appended to ${CFLAGS}. However, 
-# before appending ${OPT_FLAGS} or ${DEBUG_FLAGS} to ${CFLAGS}, some 
-# parallelization specific flags are appended to them: 
+# If the option debug was specified, ${DEBUG_FLAGS} is then appended
+# to ${CFLAGS}, otherwise ${OPT_FLAGS}. If the option prof was specified
+# (for profiling), ${PROF_FLAGS} is also appended to ${CFLAGS}. However,
+# before appending ${OPT_FLAGS} or ${DEBUG_FLAGS} to ${CFLAGS}, some
+# parallelization specific flags are appended to them:
 #
 #   OPT_FLAGS   += ${${PARALLEL}_FLAGS} ${OPT_${PARALLEL}_FLAGS}
 #   DEBUG_FLAGS += ${${PARALLEL}_FLAGS} ${DEBUG_${PARALLEL}_FLAGS}
@@ -141,7 +140,7 @@ LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 OMP_FLAGS	+= -DOMP
 OMPI_FLAGS	+= -DMPI -DOMP
-DEBUG_FLAGS	+= -DDEBUG 
+DEBUG_FLAGS	+= -DDEBUG
 MKLDIR          =  /common/linux/paket/intel/mkl91/
 MKLPATH         =  ${MKLDIR}/lib/
 CINCLUDE        =  -I${MKLDIR}/include/
@@ -166,14 +165,14 @@ ifeq (x86_64-gcc3,${IMDSYS})
   LFLAGS        +=  -static
 #  ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
   MKLPATH       = ${MKLDIR}/lib/em64t/
-#  CINCLUDE     += -I$(ACMLPATH)/include 
+#  CINCLUDE     += -I$(ACMLPATH)/include
 #  CINCLUDE      = -I${MKLDIR}/include
 #  LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
   export        MPICH_CC # MPICH_CLINKER
   export        LD_LIBRARY_PATH
 # acml
 #  LIBS		:= $(ACMLPATH)/lib/libacml.a \
-#		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c 
+#		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
 # intel mkl
   LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
@@ -197,10 +196,10 @@ ifeq (x86_64-icc,${IMDSYS})
   LFLAGS        += -i-static -openmp
 # acml
 #   ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
-#   CINCLUDE     += -I$(ACMLPATH)/include 
+#   CINCLUDE     += -I$(ACMLPATH)/include
 #   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
 #   LIBS		:= $(ACMLPATH)/lib/libacml.a \
-# 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c 
+# 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
 # intel mkl
   MKLPATH       = ${MKLDIR}/lib/em64t/
   LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
@@ -250,7 +249,7 @@ endif
 ifeq (P4-icc,${IMDSYS})
   CC_SERIAL	= icc
   CC_OMP	= icc
-  CC_MPI	= mpicc 
+  CC_MPI	= mpicc
   CC_OMPI	= mpicc
   MPICH_CC      = icc
   MPICH_CLINKER = icc
@@ -612,7 +611,7 @@ POTFITHDR   	= potfit.h powell_lsq.h utils.h
 POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
 		  linmin_r.c force.c \
 		  config.c param.c potential.c potfit.c \
-		  splines.c simann.c rescale.c functions.c
+		  splines.c simann.c rescale.c functions.c smooth.c
 MPISRC          = mpi_utils.c
 
 #########################################################
@@ -641,8 +640,12 @@ CFLAGS  += -DEAM
 endif
 
 # APOT - for analytic potentials
-ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+ifneq (,$(findstring apot,${MAKETARGET}))
+ifeq (,$(findstring eam,${MAKETARGET}))
 CFLAGS += -DAPOT
+else
+ERROR += "apot and eam are not compatible yet -- "
+endif
 endif
 
 # Stress
@@ -666,7 +669,7 @@ ifneq (,$(findstring dist,${MAKETARGET}))
 ifeq (,$(findstring MPI,${PARALLEL}))
 CFLAGS += -DPDIST
 else
-ERROR += "dist is not mpi parallelized -- " 
+ERROR += "dist is not mpi parallelized -- "
 endif
 endif
 
@@ -675,7 +678,7 @@ ifneq (,$(findstring newscale,${MAKETARGET}))
 ifeq (,$(findstring MPI,${PARALLEL}))
 CFLAGS += -DNEWSCALE
 else
-ERROR += "newscale is not mpi parallelized -- " 
+ERROR += "newscale is not mpi parallelized -- "
 endif
 endif
 
@@ -714,13 +717,13 @@ powell_lsq.o: powell_lsq.c
 	${CC} ${CFLAGS} -c $<
 
 # How to link
-${MAKETARGET}: ${OBJECTS} 
+${MAKETARGET}: ${OBJECTS}
 	${CC} ${LFLAGS} -o $@ ${OBJECTS} ${LIBS}
 	${MV} $@ ${BIN_DIR}; rm -f $@
 
 # First recursion only set the MAKETARGET Variable
 .DEFAULT:
-ifneq (,${CC}) 
+ifneq (,${CC})
 	${MAKE} MAKETARGET='$@' STAGE2
 else
 ifneq (,${IMDSYS})

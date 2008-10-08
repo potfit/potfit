@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.46 $
-* $Date: 2008/09/26 06:53:43 $
+* $Revision: 1.47 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -88,7 +88,7 @@
 real calc_forces_pair(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
-  int   first, col1, g;
+  int   first, col1;
   real  grad0, y0, y1, x0, x1;
 
   real *xi;
@@ -114,7 +114,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    /* TODO MPI only available with EAM? */
 #if defined(EAM) || defined(APOT)
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
@@ -490,19 +489,18 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef APOT
     int   i, j;
     real  x;
-    /* TODO: adjust punishment for out of bounds */
     if (myid == 0) {
       for (i = 0; i < ndim; i++) {
 	forces[mdim - apot_table.total_par + i] = 0;
 	if (x = xi_opt[idx[i]] -
 	    apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
 	    x <= 0) {
-	  forces[mdim - apot_table.total_par + i] = 10e20 * x * x;
+	  forces[mdim - apot_table.total_par + i] = APOT_PUNISH * x * x;
 	} else if (x = xi_opt[idx[i]] -
-		   apot_table.pmax[apot_table.idxpot[i]][apot_table.
-							 idxparam[i]],
+		   apot_table.pmax[apot_table.
+				   idxpot[i]][apot_table.idxparam[i]],
 		   x >= 0) {
-	  forces[mdim - apot_table.total_par + i] = 10e20 * x * x;
+	  forces[mdim - apot_table.total_par + i] = APOT_PUNISH * x * x;
 	}
 	tmpsum += forces[mdim - apot_table.total_par + i];
       }

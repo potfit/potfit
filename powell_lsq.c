@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.32 $
-* $Date: 2008/09/26 06:37:55 $
+* $Revision: 1.33 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 /******************************************************************************
@@ -427,7 +427,7 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
 		   real *p, int n, int m)
 {
   int   i, j, k;		/* Auxiliary vars: Counters */
-  real  temp;
+/*   real  temp; */
   /* calculating vector p (lineqsys . q == P in LinEqSys) */
 
   for (i = 0; i < n; i++) {
@@ -474,7 +474,7 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
 #endif
     for (k = 0; k < n; k++) {
       int   j;
-      real  temp;
+/*       real  temp; */
       p[k] = 0.;
       lineqsys[i][k] = 0.;
       for (j = 0; j < m; j++) {

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.34 $
-* $Date: 2008/09/26 05:59:22 $
+* $Revision: 1.35 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -349,7 +349,13 @@ void read_config(char *filename)
 	      r = sqrt(SPROD(dd, dd));
 	      typ1 = atoms[i].typ;
 	      typ2 = atoms[j].typ;
+#ifdef APOT
+	      if (r <=
+		  (rcut[typ1 * ntypes + typ2] *
+		   (do_smooth ? CUTOFF_MARGIN : 1))) {
+#else
 	      if (r <= rcut[typ1 * ntypes + typ2]) {
+#endif
 		if (r <= rmin[typ1 * ntypes + typ2]) {
 		  printf("%d: %f %f %f\n", i - natoms, atoms[i].pos.x,
 			 atoms[i].pos.y, atoms[i].pos.z);
@@ -574,3 +580,37 @@ void read_config(char *filename)
   printf("with a total of %d atoms\nfrom file %s\n", natoms, filename);
   return;
 }
+
+#ifdef APOT
+
+/* recalculate the slots of the atoms for tabulated potential */
+
+int new_slots()
+{
+  int   i, j, col, typ1, typ2;
+  real  r, rr;
+
+  for (i = 0; i < natoms; i++)
+    for (j = 0; j < atoms[i].n_neigh; j++) {
+      typ1 = atoms[i].typ;
+      typ2 = atoms[i].neigh[j].typ;
+      col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+	: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+      if (smooth_pot[col] && !invar_pot[col]) {
+	r = atoms[i].neigh[j].r;
+	if (r < calc_pot.end[col]) {
+	  rr = r - calc_pot.begin[col];
+	  atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	  atoms[i].neigh[j].shift[0] =
+	    (rr -
+	     atoms[i].neigh[j].slot[0] * calc_pot.step[col]) *
+	    calc_pot.invstep[col];
+	  atoms[i].neigh[j].slot[0] += calc_pot.first[col];
+	  atoms[i].neigh[j].step[0] = calc_pot.step[col];
+	}
+      }
+    }
+  return 0;
+}
+
+#endif

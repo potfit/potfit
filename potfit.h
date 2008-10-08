@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.48 $
-* $Date: 2008/09/26 06:32:44 $
+* $Revision: 1.49 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -119,9 +119,8 @@ typedef struct {
 } pot_table_t;
 
 #ifdef APOT
-typedef void (*fvalue_pointer) (double, double *, double *);
-
 /* function pointer for analytic potential evaluation */
+typedef void (*fvalue_pointer) (real, real *, real *);
 
 typedef struct {
   int   number;			/* number of analytic potentials */
@@ -129,11 +128,11 @@ typedef struct {
   int  *n_par;			/* number of parameters for analytic potential */
   char **names;			/* name of analytic potentials */
   char ***param_name;		/* name of parameter */
-  double **values;		/* parameter values for analytic potentials */
-  double *begin;		/* starting position of potential */
-  double *end;			/* end position of potential = cutoff radius */
-  double **pmin;		/* minimum values for parameters */
-  double **pmax;		/* maximum values for parameters */
+  real **values;		/* parameter values for analytic potentials */
+  real *begin;			/* starting position of potential */
+  real *end;			/* end position of potential = cutoff radius */
+  real **pmin;			/* minimum values for parameters */
+  real **pmax;			/* maximum values for parameters */
   int  *idxpot;			/* indirect index for potentials */
   int  *idxparam;		/* indirect index for potential parameters */
   fvalue_pointer *fvalue;	/* functions pointers for analytic potentials */
@@ -144,8 +143,10 @@ typedef struct {
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SQR(a)     ((a)*(a))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
+#ifndef APOT
 static real sqrreal;
 #define SQRREAL(x) ((sqrreal=(x)) == 0.0 ? 0.0 : sqrreal*sqrreal)
+#endif
 
 /******************************************************************************
 *
@@ -174,7 +175,8 @@ EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int *invar_pot INIT(NULL);
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
-EXTERN int *smoothen INIT(NULL);	/* smoothen analytic potential at co? */
+EXTERN int do_smooth INIT(0);	/* smooth analytic potential at co? */
+EXTERN int *smooth_pot INIT(NULL);
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
@@ -352,25 +354,36 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 #ifdef APOT
 
 #define APOT_STEPS 1000		/* number of sampling points for analytic pot */
-#define CUTOFF_MARGIN 1.0	/* number to multiply cutoff radius with */
+#define CUTOFF_MARGIN 1.25	/* number to multiply cutoff radius with */
+#define APOT_PUNISH 10e10	/* punishment for out of bounds */
 
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 void  apot_validate_functions(apot_table_t *);
+int   new_slots(int);		/* new slots for adjustable cutoff */
+
+/* functions for the smooth cutoff (_sc option) of analytic potentials */
+real  smooth(void (*function) (real, real *, real *),
+	     real, real *, real, real, real *);
+void  find_root(void (*function) (real, real *, real *),
+		real, real *, real *, real *);
+void  bracket_range(void (*function) (real, real *, real *),
+		    real *, real, real x2, int n, real *xb1, real *xb2,
+		    int *nb);
+real  root_bisect(void (*function) (real, real *, real *), real *,
+		  real x1, real x2, real xacc);
 
 /* actual functions for different potentials */
-/* arguments are: real for the x-value */
-/* real* for array of parameters */
-/* real* for function value */
 
 /* lennard-jones potential */
 void  lj_value(real, real *, real *);
 
-/* lennard-jones potential */
-void  test4_value(real, real *, real *);
+/* template function for new potential*/
 
-/* lennard-jones potential */
-void  test6_value(real, real *, real *);
+/* name of the potential */
+/*  
+void  mypotential_value(real, real *, real *);
+*/
 
 void  debug_calc_pot(real *);
 void  debug_apot(apot_table_t *);

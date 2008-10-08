@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.13 $
+* $Date: 2008/10/08 09:19:35 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -204,7 +204,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
   for (i = 0; i < ntypes; i++) {
     col = paircol + ntypes + i;	/* 1. embedding function */
     vals = pt->last[col] - pt->first[col];
-    neustep[i] = (right[i] - left[i]) / (double)vals;
+    neustep[i] = (right[i] - left[i]) / (real)vals;
     pos = left[i];
     for (j = 0; j <= vals; j++) {
       neuxi[h] = splint_ne(pt, xi, col, pos);	/* inter- or extrapolation */

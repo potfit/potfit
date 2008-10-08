@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2008/09/26 05:54:15 $
+* $Revision: 1.6 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 #include <math.h>
@@ -57,12 +57,12 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
      representation in double precision. This behavior might break the
      algorithm.
    */
-  volatile double f_left = *f_lower;
-  volatile double f_right = *f_upper;
-  volatile double f_center;
-  double x_left = *x_lower;
-  double x_right = *x_upper;
-  double x_center;
+  volatile real f_left = *f_lower;
+  volatile real f_right = *f_upper;
+  volatile real f_center;
+  real  x_left = *x_lower;
+  real  x_right = *x_upper;
+  real  x_center;
   static char errmsg[255];
   static real *vecu = NULL;	/* Vector of location u */
   static real *f_vec3 = NULL;	/* 3rd target vector */

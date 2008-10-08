@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.42 $
-* $Date: 2008/09/26 06:29:43 $
+* $Revision: 1.43 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 #define MAIN
@@ -81,11 +81,6 @@ int main(int argc, char **argv)
   int   i, diff, *ntyp;
   char  msg[255];
   pi = 4.0 * atan(1.);
-#if defined(APOT) && (defined(OMP) || defined(EAM) || defined(STRESS) || defined(PARABEL) || defined(NORESC) || defined(FWEIGHT) || defined(DIST) || defined(NEWSCALE))
-  sprintf(msg,
-	  "The selected options do no work together (yet)!\nPlease recompile the potfit binary without apot or without the other options.\n");
-  error(msg);
-#endif
 #ifdef MPI
   init_mpi(&argc, argv);
 #endif
@@ -231,7 +226,6 @@ int main(int argc, char **argv)
     calc_forces(calc_pot.table, force, 0);
   } else {			/* root thread does minimization */
     if (opt) {
-/*     debug_apot(&apot_table); */
       anneal(opt_pot.table);
       powell_lsq(opt_pot.table);
     }

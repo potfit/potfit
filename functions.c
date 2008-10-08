@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2008/09/26 06:07:10 $
+* $Revision: 1.3 $
+* $Date: 2008/10/08 09:19:34 $
 *****************************************************************/
 
 #ifdef APOT
@@ -47,13 +47,15 @@ int apot_parameters(char *name)
 {
   if (strcmp(name, "lj") == 0) {
     return 2;
-  } else if (strcmp(name, "test4") == 0) {
-    return 4;
-  } else if (strcmp(name, "test6") == 0) {
-    return 6;
   }
+  /* template for new potential function called mypotential */
+  else if (strcmp(name, "mypotential") == 0) {
+    return 2;
+  }
+  /* end of template */
   return -1;
 }
+
 
 /*****************************************************************************
 *
@@ -68,16 +70,24 @@ int apot_assign_functions(apot_table_t *apt)
   for (i = 0; i < apt->number; i++) {
     if (strcmp(apt->names[i], "lj") == 0) {
       apt->fvalue[i] = &lj_value;
-    } else if (strcmp(apt->names[i], "test4") == 0) {
-      apt->fvalue[i] = &test4_value;
-    } else if (strcmp(apt->names[i], "test6") == 0) {
-      apt->fvalue[i] = &test6_value;
-    } else
-      return -1;
+    }
 
+/* template for new potential function called mypotential */
+
+/*
+    else if (strcmp(apt->names[i], "mypotential") == 0) {
+      apt->fvalue[i] = &mypotential_value;
+    }
+*/
+
+/* end of template */
+
+    else
+      return -1;
   }
   return 0;
 }
+
 
 /*****************************************************************************
 *
@@ -87,8 +97,9 @@ int apot_assign_functions(apot_table_t *apt)
 
 void apot_validate_functions(apot_table_t *apt)
 {
-/* 	 TODO: check if given function is valid */
+/* 	 TODO check if given function is valid */
 }
+
 
 /*****************************************************************************
 *
@@ -103,27 +114,44 @@ void lj_value(real r, real *p, real *f)
   sig_d_rad6 = (p[1] * p[1]) / (r * r);
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
   sig_d_rad12 = sig_d_rad6 * sig_d_rad6;
+
   /* Lennard-Jones is 4*epsilon*((sigma/r)^12-(sigma/r)^6) */
   *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
 }
 
-void test4_value(real r, real *p, real *f)
-{
-  *f = r + p[0] + p[1] + p[2] + p[3];
-}
+/******************************************************************************
+* 
+* template for new potential function called mypotential 
+* for further information plase have a look at the online documentation
+* 
+* http://www.itap.physik.uni-stuttgart.de/~imd/potfit/potfit.html
+*
+******************************************************************************/
 
-void test6_value(real r, real *p, real *f)
+/*
+void mypotential_value(real r, real *p, real *f)
 {
-  *f = r + p[0] + p[1] + p[2] + p[3] + p[4] + p[5];
+  *f = r + p[0] + p[1];
 }
+*/
+
+/*******************************************************************************
+*
+* debug functions - TODO remove before release
+*
+*******************************************************************************/
 
 void debug_calc_pot(real *pot)
 {
-  int   i, j;
-  for (j = 0; j < apot_table.number; j++)
-    for (i = 0; i < APOT_STEPS + 2; i++)
-      fprintf(stderr, "%d %f\n", j * (APOT_STEPS + 2) + i,
-	      pot[j * (APOT_STEPS + 2) + i]);
+  int   j, i;
+
+  for (j = 0; j < apot_table.number; j++) {
+    for (i = 0; i < APOT_STEPS; i++)
+      fprintf(stderr, "%f %f\n",
+	      calc_pot.xcoord[j * (APOT_STEPS + 2) + i + 2],
+	      pot[j * (APOT_STEPS + 2) + i + 2]);
+    fprintf(stderr, "\n\n");
+  }
   exit(2);
 }
 
@@ -137,7 +165,7 @@ void debug_apot(apot_table_t *apt)
     printf("Potential #%d is a %s potential (%f-%f) with %d parameters\n",
 	   i, apt->names[i], apt->begin[i], apt->end[i],
 	   apot_parameters(apt->names[i]));
-    if (smoothen[i])
+    if (smooth_pot[i])
       printf("Smoothening potential #%d.\n", i + 1);
     if (invar_pot[i])
       printf("potential #%d is fixed and will not be adjusted.\n", i);
