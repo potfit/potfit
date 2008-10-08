@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.45 $
-* $Date: 2008/10/08 09:29:25 $
+* $Revision: 1.46 $
+* $Date: 2008/10/08 10:20:35 $
 *****************************************************************/
 
 #define NPLOT 10000
@@ -289,9 +289,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       } else
 	val++;
     }
+  fclose(infile);
   }
 
-  fclose(infile);
 #endif
   free(nvals);
   return;
