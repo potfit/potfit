@@ -1,7 +1,7 @@
 /****************************************************************
-* 
+*
 *  smooth.c: Calculates a cutoff radius for a smooth cutoff
-* 
+*
 *****************************************************************/
 /*
 *   Copyright 2008 Daniel Schopf
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2008/10/08 09:20:38 $
+* $Revision: 1.2 $
+* $Date: 2008/10/08 09:23:16 $
 *****************************************************************/
 
 #ifdef APOT
@@ -82,7 +82,7 @@ real smooth(void (*function) (real, real *, real *),
 }
 
 /******************************************************************************
-* 
+*
 * function for root finding used by the smooth algorithm
 *
 ******************************************************************************/
@@ -118,7 +118,7 @@ void find_root(void (*function) (real, real *, real *),
 }
 
 /******************************************************************************
-* 
+*
 * function to bracket root used by the smooth algorithm
 *
 ******************************************************************************/
@@ -150,7 +150,7 @@ void bracket_range(void (*function) (real, real *, real *), real *p,
 }
 
 /******************************************************************************
-* 
+*
 * function for root bisecting used by the smooth algorithm
 *
 ******************************************************************************/
