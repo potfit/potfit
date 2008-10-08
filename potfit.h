@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.50 $
-* $Date: 2008/10/08 09:29:25 $
+* $Revision: 1.51 $
+* $Date: 2008/10/08 13:48:26 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -378,12 +378,12 @@ real  root_bisect(void (*function) (real, real *, real *), real *,
 /* lennard-jones potential */
 void  lj_value(real, real *, real *);
 
-/* template function for new potential*/
+/* template for new potential function called newpot */
 
-/* name of the potential */
-/*  
-void  mypotential_value(real, real *, real *);
-*/
+/* newpot potential */
+void  newpot_value(real, real *, real *);
+
+/* end of template */
 
 void  debug_calc_pot(real *);
 void  debug_apot(apot_table_t *);

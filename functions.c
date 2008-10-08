@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2008/10/08 09:19:34 $
+* $Revision: 1.4 $
+* $Date: 2008/10/08 13:48:26 $
 *****************************************************************/
 
 #ifdef APOT
@@ -48,14 +48,17 @@ int apot_parameters(char *name)
   if (strcmp(name, "lj") == 0) {
     return 2;
   }
-  /* template for new potential function called mypotential */
-  else if (strcmp(name, "mypotential") == 0) {
+
+  /* template for new potential function called newpot */
+
+  else if (strcmp(name, "newpot") == 0) {
     return 2;
   }
+
   /* end of template */
+
   return -1;
 }
-
 
 /*****************************************************************************
 *
@@ -72,13 +75,11 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &lj_value;
     }
 
-/* template for new potential function called mypotential */
+/* template for new potential function called newpot */
 
-/*
-    else if (strcmp(apt->names[i], "mypotential") == 0) {
-      apt->fvalue[i] = &mypotential_value;
+    else if (strcmp(apt->names[i], "newpot") == 0) {
+      apt->fvalue[i] = &newpot_value;
     }
-*/
 
 /* end of template */
 
@@ -88,22 +89,15 @@ int apot_assign_functions(apot_table_t *apt)
   return 0;
 }
 
-
-/*****************************************************************************
-*
-* check if the given analytic potential is valid
-*
-******************************************************************************/
-
-void apot_validate_functions(apot_table_t *apt)
-{
-/* 	 TODO check if given function is valid */
-}
-
-
 /*****************************************************************************
 *
 * actual functions representing the analytic potentials
+*
+******************************************************************************/
+
+/******************************************************************************
+*
+* lennard-jones potential
 *
 ******************************************************************************/
 
@@ -128,12 +122,37 @@ void lj_value(real r, real *p, real *f)
 *
 ******************************************************************************/
 
-/*
-void mypotential_value(real r, real *p, real *f)
+/* template for new function */
+
+/******************************************************************************
+*
+* newpot potential
+*
+******************************************************************************/
+
+void newpot_value(real r, real *p, real *f)
 {
   *f = r + p[0] + p[1];
 }
-*/
+
+/* end of template */
+
+/******************************************************************************
+*
+* end of analytic potentials
+*
+******************************************************************************/
+
+/*****************************************************************************
+*
+* check if the given analytic potential is valid
+*
+******************************************************************************/
+
+void apot_validate_functions(apot_table_t *apt)
+{
+/* 	 TODO check if given function is valid */
+}
 
 /*******************************************************************************
 *
