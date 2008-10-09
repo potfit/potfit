@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 # 
 ####################################################################
-# $Revision: 1.1 $
-# $Date: 2008/10/09 10:08:36 $
+# $Revision: 1.2 $
+# $Date: 2008/10/09 18:03:01 $
 ####################################################################
 #
 # Usage: genpot.awk 
@@ -47,14 +47,26 @@
 #
 # Implemented potential types:
 #
+#    0) f(r) = 0
+#       constant potential = 0
 #    1) f(r) = a1 * r^(-12) 
 #       repulsive part of Lennard-Jones potential.
+#    2) f(r) = a1 * exp(-a2 * r)
+#       exponential decay
+#    3) f(r) = a1 * (r - a[2])^2 + a[3]
+#       parabola with vertex (a[2],a[3])
 #
 BEGIN {
   # define functions
   # Repulsive part of Lennard-Jones
+  fn[0] ="f(r)=0";
+  cmt[0]="Constant potential, zero everywhere."
   fn[1] ="f(r)=a[1]*r^-12";
-
+  cmt[1]="Repulsive part of Lennard-Jones potential.";
+  fn[2] ="f(r)=a[1]*exp(-a[2]*r)";
+  cmt[2]="Exponential decay";
+  fn[3] ="f(r)=a[1]*(r-a[2])^2 + a[3]";
+  cmt[3]="Parabola with vertex (a[2],a[3])";
   OFMT="%.12g";
   par1=3;
   print "Enter minimal distance" > "/dev/stderr";
@@ -69,15 +81,16 @@ NR==2 {
 }
 NR==3 {
   nsamp=$1;
-  i = 1;
+  i = 0;
   while ( i in fn ) {
-    print i ") " fn[i] "\n" > "/dev/stderr";
+    print i ") " fn[i] "\n" cmt[i] > "/dev/stderr";
     i++;
   }
   print "Which potential type do you want?" > "/dev/stderr";
 }
 NR==4 {
   type=$1;
+  gstring=(type==3)?"3":"2";
   print "Enter space separated list of parameters" > "/dev/stderr";
 }
 NR>4 {
@@ -87,7 +100,7 @@ NR>4 {
 END {
 #header
   print "#F 3 1";
-  print "#G 2";
+  print "#G " gstring;
   print "## Interpolated potential from  " fn[type]  ;
   print "## generated with genpot.awk at " strftime();
   print "## Parameters:";
@@ -102,15 +115,25 @@ END {
 
 # Gradient
   r=mindist;
+  grad = 0;
   if (type==1) {
     grad=1.0/(r*r*r);
     grad *= grad;
     grad *= grad;
     grad *= -12.0*a[1]/r;
+  } else if (type==2) {
+    grad = -a[1]*a[2]*exp(-a[2]*r);
+  } else if (type==3) {
+    grad = 2.*a[1]*(r-a[2]);
   }
-  printf("%.10e %.10e\n", grad,0.0000000);
-     
+  if (type==3) {
+# Not a pair, but an embedding potential!
+    printf("%.10e %.10e\n", grad,2.*a[1]*(maxdist-a[2]));
+  } else {
+    printf("%.10e %.10e\n", grad,0.0000000);
+  }
 # Table
+  val=0;
   for (i=0;i<nsamp-1;i++) {
     r=mindist+i*step; 
     if (type==1) {
@@ -118,9 +141,18 @@ END {
       val *= val; 
       val *= val; 
       val *= a[1];
+    } else if (type==2) {
+      val = a[1]*exp(-a[2]*r);
+    } else if (type==3) {
+      val = a[1]*(r-a[2])*(r-a[2])+a[3];
     }
     printf("%.10e\n", val);
   }
-  print "0.000000000\n";
+  if (type==3) {
+# not a pair, but an embedding potential
+    printf("%.10e\n", a[1]*(maxdist-a[2])*(maxdist-a[2])+a[3]);
+  } else {
+    print "0.000000000\n";
+  }
 }
 	

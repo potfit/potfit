@@ -30,9 +30,9 @@ to vasp POSCAR files.</td></tr>
     <td>Converts various <a
 href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> and
 <em>potfit</em> potential formats.</td></tr>
-<tr><td><a href="#genpot">genpot.awk</a></td>
-    <td>Generates an interpolated representation of an analytic 
-        potential.</td></tr>
+<tr><td><a href="#awk">awk scripts</a></td>
+    <td>A series of awk scripts to handle various tasks with potential files,
+    like combining, appending, creating from analytical functions...</td></tr>
 <tr><td><a href="#potscale">potscale</a></td>
     <td>Performs gauge transformations of <em>potfit</em> EAM
     potentials.</td></tr>
@@ -111,12 +111,43 @@ files. The order of the different atom types can be changed with the
 <em>potfit</em> to IMD use <em>potfit</em> with <tt>opt 0</tt> in
 parameter file. 
 </p>
-<h2><a id="genpot" name="genpot">genpot.awk</a></h2>
+<h2><a id="awk" name="awk">awk scripts</a></h2>
+<p>A series of awk scripts to help with tasks concerning potential files. </p>
+<pre>
+Compilation: make awkscripts
+</pre>
+
+<h3>add_type.awk</h3>
+<p>add_type adds potentials for another atom type to an existing EAM
+potential.</p>
+<pre>
+Usage:       add_type.awk orig_eam.pt add_eam.pt cross_pair1.pt ...
+
+add_type.awk needs the following arguments
+  orig_eam.pt    - original EAM potential for n atom types.
+  add_eam.pt     - EAM potential for additional atom type (3 columns).
+  cross_pair*.pt - old-new pair interaction potential, each 1 column.
+                   (1 file for each original atom type, n in total).
+</pre>
+<p>The potentials are rearranged in the proper order. The resulting potential
+is written to standard output.</p>
+
+<h3>combine_eam.awk</h3>
+<p>combine_eam.awk</h3> combines single potentials from separate files into a
+single potential file.
+<pre>
+Usage:       combine_eam.awk potential1.pt potential2.pt ....
+
+  where potential1.pt ... are files containing a single potential.
+</pre>
+<p>Combines all potentials into one single potential file written to 
+  standard output. Can be used to combine three potentials to form
+  an EAM potential, but will combine any files containing only 
+  a single potential.</p>
+<h3>genpot.awk</h3>
 <p>genpot is an interactive AWK script that generates an interpolated
 representation of an analytic potential with an arbitrary number of parameters.</p>
 <pre>
-Compilation: make genpot
-
 Usage:       genpot.awk
 </pre>
 <p>genpot takes no parameters, however the parameters of the potentials are
@@ -131,10 +162,14 @@ parameter on each line). The sequence of the parameters is as follows:</p>
 </dl>
 <p>genpot does not verify or validate any parameter or input value.</p>
 <p> Potential functions supported:</p>
-<ol>
-<li>f(x)=a<sub>1</sub>*r<sup>-12</sup> &ndash; Repulsive part of Lennard-Jones
+<ol start=0>
+<li>f(r)=0 &ndash; Potential which is zero everywhere.</li>
+<li>f(r)=a<sub>1</sub>*r<sup>-12</sup> &ndash; Repulsive part of Lennard-Jones
 potential.
 </li>
+<li>f(r)=a<sub>1</sub>*exp(-a<sub>2<sub>*r) &ndash; Exponential decay. </li>
+<li>f(r)=a<sub>1</sub>*(r-a<sub>2</sub>)^2 + a<sub>3</sub> &ndash; Parabola
+with vertex (a<sub>2</sub>,a<sub>3</sub>).</li>
 </ol>
 
 <h2><a id="potscale" name="potscale">potscale - not maintained any more.</a></h2>
