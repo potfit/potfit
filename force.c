@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.48 $
-* $Date: 2008/10/08 13:48:26 $
+* $Revision: 1.49 $
+* $Date: 2008/10/09 06:30:02 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -489,6 +489,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef APOT
     int   i, j;
     real  x;
+    /* *INDENT-OFF* */ 
+    /* turn off indent because of a bug in GNU indent 2.2.10 */
     if (myid == 0) {
       for (i = 0; i < ndim; i++) {
 	forces[mdim - apot_table.total_par + i] = 0;
@@ -497,14 +499,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    x <= 0) {
 	  forces[mdim - apot_table.total_par + i] = APOT_PUNISH * x * x;
 	} else if (x = xi_opt[idx[i]] -
-		   apot_table.pmax[apot_table.idxpot[i]][apot_table.
-							 idxparam[i]],
+		   apot_table.pmax[apot_table.
+				   idxpot[i]][apot_table.idxparam[i]],
 		   x >= 0) {
 	  forces[mdim - apot_table.total_par + i] = APOT_PUNISH * x * x;
 	}
 	tmpsum += forces[mdim - apot_table.total_par + i];
       }
     }
+    /* *INDENT-ON* */
 #endif
 #ifdef EAM
     if (myid == 0) {
