@@ -29,5 +29,8 @@ force2poscar: force2poscar.c
 potscale: ${POTSCALEOBJ} ${POTSCALEHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTSCALEOBJ} -lm
 
-vasp2force:
+vasp2force: vasp2force.sh
 	cp vasp2force.sh ${HOME}/bin/share
+
+genpot: genpot.awk
+	cp genpot.awk ${HOME}/bin/share

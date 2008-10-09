@@ -1,6 +1,6 @@
 <!--#include virtual="potfithead.html" -->
 
-<!-- Copyright (c)  2005  Peter Brommer, Franz Gaehler, ITAP.              -->
+<!-- Copyright (c)  2005--2008  Peter Brommer, Franz Gaehler, ITAP.        -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
 <!-- or any later version published by the Free Software Foundation;       -->
@@ -31,8 +31,12 @@ to vasp POSCAR files.</td></tr>
     <td>Converts various <a
 href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> and
 <em>potfit</em> potential formats.</td></tr>
+<tr><td><a href="#genpot">genpot.awk</a></td>
+    <td>Generates an interpolated representation of an analytic 
+        potential.</td></tr>
 <tr><td><a href="#potscale">potscale</a></td>
-    <td>Performs gauge transformations of <em>potfit</em> EAM potentials.</td></tr>
+    <td>Performs gauge transformations of <em>potfit</em> EAM
+    potentials.</td></tr>
 </table>
 
 <h2><a id="force2poscar" name="force2poscar">force2poscar</a></h2>
@@ -108,6 +112,31 @@ files. The order of the different atom types can be changed with the
 <em>potfit</em> to IMD use <em>potfit</em> with <tt>opt 0</tt> in
 parameter file. 
 </p>
+<h2><a id="genpot" name="genpot">genpot.awk</a></h2>
+<p>genpot is an interactive AWK script that generates an interpolated
+representation of an analytic potential with an arbitrary number of parameters.</p>
+<pre>
+Compilation: make genpot
+
+Usage:       genpot.awk
+</pre>
+<p>genpot takes no parameters, however the parameters of the potentials are
+read from standard input and may of course be supplied through a pipe (one
+parameter on each line). The sequence of the parameters is as follows:</p>
+<dl>
+<dd>mindist</dd><dt>Minimal distance in table.</dt>
+<dd>maxdist</dd><dt>Maximal distance in table.</dt>
+<dd>nsamp  </dd><dt>Number of sampling points.</dt>
+<dd>type   </dd><dt>Potential function to be used (s. below)</dt>
+<dd>params </dd><dt>Space separated list of all parameters.</dt>
+</dl>
+<p>genpot does not verify or validate any parameter or input value.</p>
+<p> Potential functions supported:</p>
+<ol>
+<li>f(x)=a<sub>1</sub>*r<sup>-12</sup> &endash; Repulsive part of Lennard-Jones
+potential.
+</li>
+</ol>
 
 <h2><a id="potscale" name="potscale">potscale - not maintained any more.</a></h2>
 <p>potscale performs gauge transformations on EAM potentials. </p>
