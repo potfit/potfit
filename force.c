@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.49 $
-* $Date: 2008/10/09 06:30:02 $
+* $Revision: 1.50 $
+* $Date: 2008/10/10 09:28:16 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -152,7 +152,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     }
 #ifndef PARABEL
 /* if we have parabolic interpolation, we don't need that */
-    for (col1 = paircol + ntypes; col1 < paircol + 2 * ntypes; col1++) {	/* F */
+    for (col1 = paircol + ntypes; col1 < paircol + 2 * ntypes; col1++) {
+      /* F */
       first = calc_pot.first[col1];
       /* gradient at left boundary matched to square root function, 
          when 0 not in domain(F), else natural spline */
@@ -274,7 +275,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  fnval = splint_dir(&calc_pot, xi, col,
 				     neigh->slot[0], neigh->shift[0],
 				     neigh->step[0]);
-		forces[config] += fnval;	/* not real force: cohesive energy */
+		forces[config] += fnval;
+/* not real force: cohesive energy */
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;
@@ -305,7 +307,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef EAM
 	      /* calculate atomic densities */
 	      col2 = paircol + typ2;
-	      if (typ2 == typ1) {	/* then transfer(a->b)==transfer(b->a) */
+	      if (typ2 == typ1) {
+/* then transfer(a->b)==transfer(b->a) */
 		if (neigh->r < calc_pot.end[col2]) {
 		  fnval = splint_dir(&calc_pot, xi, col2,
 				     neigh->slot[1], neigh->shift[1],
@@ -329,7 +332,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* EAM */
 	    }			/*  neighbours with bigger atom nr */
 	  }			/* loop over neighbours */
-#ifndef EAM			/*then we can calculate contribution of forces right away */
+#ifndef EAM
+/*then we can calculate contribution of forces right away */
 
 
 	  if (uf) {
@@ -340,7 +344,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
 
-	    /* Returned force is difference between calculated and input force */
+	    /* Returned force is difference between */
+	    /* calculated and input force */
 	    tmpsum +=
 	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
 	  }
@@ -352,7 +357,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* then punish target function -> bad potential */
 	    forces[config + 7 * nconf] +=
 	      1000 * SQR(atom->rho - calc_pot.end[col2]);
-#ifndef PARABEL			/* then we use the final value, with PARABEL: extrapolate */
+#ifndef PARABEL
+/* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.end[col2];
 #endif /* PARABEL */
 	  }
@@ -361,7 +367,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* then punish target function -> bad potential */
 	    forces[config + 7 * nconf] +=
 	      1000 * SQR(calc_pot.begin[col2] - atom->rho);
-#ifndef PARABEL			/* then we use the final value, with PARABEL: extrapolate */
+#ifndef PARABEL
+/* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.begin[col2];
 #endif /* PARABEL */
 	  }
@@ -390,7 +397,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    col = paircol + ntypes + typ1;	/* column of F */
 
 
-	    for (j = 0; j < atom->n_neigh; j++) {	/* loop over neighbours */
+	    for (j = 0; j < atom->n_neigh; j++) {
+/* loop over neighbours */
 	      neigh = atom->neigh + j;
 	      /* only neigbours higher than current atom are of interest */
 	      if (neigh->nr > i + cnfstart[h]) {
@@ -515,19 +523,22 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       for (g = 0; g < ntypes; g++) {
 
 #ifdef PARABEL
-	forces[mdim - ntypes + g] = DUMMY_WEIGHT *	/* constraints on U(n) */
+/* constraints on U(n) */
+	forces[mdim - ntypes + g] = DUMMY_WEIGHT *
 	  parab(&calc_pot, xi, paircol + ntypes + g, 0.)
 	  - force_0[mdim - ntypes + g];
-	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *	/* constraints on U`(n) */
+/* constraints on U`(n) */
+	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  parab_grad(&calc_pot, xi, paircol + ntypes + g,
 		     .5 * (calc_pot.begin[paircol + ntypes + g] +
 			   calc_pot.end[paircol + ntypes + g]))
 	  - force_0[mdim - 2 * ntypes + g];
-#else
+#else /* PARABEL */
 #ifdef WZERO
 	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
 	  /* 0 in domain of U(n) */
-	  forces[mdim - ntypes + g] = DUMMY_WEIGHT *	/* constraints on U(n) */
+/* constraints on U(n) */
+	  forces[mdim - ntypes + g] = DUMMY_WEIGHT *
 	    splint(&calc_pot, xi, paircol + ntypes + g, 0.)
 	    - force_0[mdim - ntypes + g];
 	else
@@ -536,7 +547,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #else /* WZERO: Dummy constraint not enforced */
 	forces[mdim - ntypes + g] = 0.;	/* Free end... */
 #endif /* WZERO */
-	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *	/* constraints on U`(n) */
+/* constraints on U`(n) */
+	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g,
 		      .5 * (calc_pot.begin[paircol + ntypes + g] +
 			    calc_pot.end[paircol + ntypes + g]))
