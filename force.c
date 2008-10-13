@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.50 $
-* $Date: 2008/10/10 09:28:16 $
+* $Revision: 1.51 $
+* $Date: 2008/10/13 09:31:24 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -519,7 +519,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 #ifdef EAM
     if (myid == 0) {
-
+      int g;
       for (g = 0; g < ntypes; g++) {
 
 #ifdef PARABEL
