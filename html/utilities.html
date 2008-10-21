@@ -60,7 +60,7 @@ output to force files.</p>
 <pre>
 Compilation: make vasp2force
 
-Usage: vasp2force
+Usage: vasp2force [-f] [-s list]
 </pre>
 <p> Reads information from the files POSCAR and OUTCAR in the current
 directory. Requires a file called single_atom_energies in the
@@ -72,7 +72,15 @@ a single line in the same order as in the POTCAR file, e.g.:</p>
 # Al      Co        Ni
 </pre>
 <p>Writes a force file to be used as a <em>potfit</em> reference
-configuration to standard output.</p>
+configuration to standard output. If no options are given, force data is
+generated from each ionic step.</p>
+<p>Options:</p>
+<dl>
+<dt>-f</dt>
+<dd>Uses only final configuration of multiple ionic steps.</dd>
+<dt>-s list</dt>
+<dd>List is a comma separated list of ionic steps to use, e.g. "1,4,7,9".</dd>
+</dl>
 
 <h2><a id="pottrans" name="pottrans">pottrans</a></h2>
 
@@ -133,7 +141,7 @@ add_type.awk needs the following arguments
 is written to standard output.</p>
 
 <h3>combine_eam.awk</h3>
-<p>combine_eam.awk</h3> combines single potentials from separate files into a
+<p>combine_eam.awk combines single potentials from separate files into a
 single potential file.
 <pre>
 Usage:       combine_eam.awk potential1.pt potential2.pt ....

@@ -26,13 +26,42 @@
 #   Boston, MA  02110-1301  USA
 # 
 #/****************************************************************
-#* $Revision: 1.6 $
-#* $Date: 2008/10/09 09:11:29 $
+#* $Revision: 1.7 $
+#* $Date: 2008/10/21 11:18:54 $
 #*****************************************************************/
 
-[ -f ../single_atom_energies ] || { echo file ../single_atom_energies not found; exit;}
+[ -f ../single_atom_energies ] || { 
+    echo>&2 "file ../single_atom_energies not found"; 
+    exit;
+}
 wdir=`pwd`
-cat OUTCAR | awk -v wdir="${wdir}" '  BEGIN { 
+count=`grep -c "TOTAL-FORCE" OUTCAR`
+echo "There are $count configurations in OUTCAR" >&2
+while getopts 'fs:' OPTION
+  do
+  case $OPTION in
+      f) pr_conf="$count";
+	  ;;
+      s) pr_conf="$OPTARG";
+	  ;;
+      ?) printf "Usage: %s: [-f] [-s list] \n" $(basename $0) >&2
+	  exit 2
+	  ;;
+  esac
+done
+if [ "X$pr_conf" == "X" ]; then
+    pr_conf=1;
+    for (( i=2; $i<=$count; i++ )); do
+	pr_conf="${pr_conf},$i";
+    done
+fi
+
+cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" '  BEGIN { 
+#Select confs to print
+    count=0;
+    split(pr_conf,pr_arr,",");
+    for (i in pr_arr) pr_flag[i]++;
+#pr_flag now is set for the configurations to be printed.
     getline saeng < "../single_atom_energies"; 
     getline < "POSCAR"; getline scale < "POSCAR";
     getline boxx < "POSCAR"; getline boxy < "POSCAR"; getline boxz < "POSCAR";
@@ -64,16 +93,21 @@ cat OUTCAR | awk -v wdir="${wdir}" '  BEGIN {
   ($2=="kB") { 
      for (i=1;i<=6;i++) stress[i]=$(i+2)/1602.;
 }
-  ($2=="TOTAL-FORCE") { 
-     print "#N",a[ntypes],1; #flag indicates whether to use forces or not
-     print "## force file generated from directory " wdir;
-     print "#X",boxx_v[1]*scale " " boxx_v[2]*scale " " boxx_v[3]*scale; 
-     print "#Y",boxy_v[1]*scale " " boxy_v[2]*scale " " boxy_v[3]*scale; 
-     print "#Z",boxz_v[1]*scale " " boxz_v[2]*scale " " boxz_v[3]*scale; 
-     printf("#E %.10f\n",energy) ;
-     if ( 1 in stress ) 
-       print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];
-     print "#F";  
+  ($2=="TOTAL-FORCE") {
+     count++; 
+     if (count in pr_flag) {
+       print "#N",a[ntypes],1; #flag indicates whether to use forces or not
+       print "## force file generated from directory " wdir;
+       print "#X",boxx_v[1]*scale " " boxx_v[2]*scale " " boxx_v[3]*scale; 
+       print "#Y",boxy_v[1]*scale " " boxy_v[2]*scale " " boxy_v[3]*scale; 
+       print "#Z",boxz_v[1]*scale " " boxz_v[2]*scale " " boxz_v[3]*scale; 
+       printf("#E %.10f\n",energy) ;
+       if ( 1 in stress ) 
+         print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];
+       print "#F";
+     }  
      getline; getline;
-     for (i=1; i<=a[ntypes]; i++) { print b[i],$1,$2,$3,$4,$5,$6; getline; } 
+     for (i=1; i<=a[ntypes]; i++) { 
+       if (count in pr_flag) print b[i],$1,$2,$3,$4,$5,$6; 
+     getline; } 
   };' 
