@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 # 
 ####################################################################
-# $Revision: 1.1 $
-# $Date: 2008/10/09 18:03:01 $
+# $Revision: 1.2 $
+# $Date: 2008/10/28 15:24:41 $
 ####################################################################
 #
 # Usage: combine_eam.awk potential1.pt potential2.pt ....
@@ -45,17 +45,20 @@
 #
 ####################################################################
 
-BEGIN { gstring="#G" }
+BEGIN { gstring="#G"; istring="#I" }
 $1=="#F" { #beginning of new file
   fn=ARGIND
   if ($2 != 3 || $3 != 1 ) {
     print "Error - wrong potential format" ;
     exit 2;
   }
+  iflag=0;
   while (substr($0,1,1)=="#") { 
     getline; 
     if ($1=="#G") gstring = gstring " " $2;
+    if ($1=="#I") {istring = istring " " $2;iflag++}
   }
+  if (! iflag) istring  = istring " 0";
   range[fn]=$0;
   steps[fn]=$3;
   getline; getline;
@@ -68,6 +71,7 @@ $1=="#F" { #beginning of new file
 END {
   print "#F 3 " fn;
   print gstring;
+  print istring;
   print "## EAM potential collated with combine_eam.awk at " strftime();
   printf("## from files");
   for (i=1;i<=fn;i++) printf(" %s",ARGV[i]);

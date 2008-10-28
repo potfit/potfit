@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 # 
 ####################################################################
-# $Revision: 1.1 $
-# $Date: 2008/10/09 18:03:01 $
+# $Revision: 1.2 $
+# $Date: 2008/10/28 15:24:41 $
 ####################################################################
 #
 # Usage: add_type.awk orig_eam.pt add_eam.pt cross_pair1.pt ...
@@ -63,6 +63,11 @@ ARGIND==1 { # Original potential
   }
   while (substr($0,1,2)!="#E") { 
     getline; 
+    if ($1=="#I") {
+      for (i=1;i<=ncols_old;i++) {
+	istring[i] = $(i+1);
+      }
+    }
     if ($1=="#G") {
       for (i=1;i<=ncols_old;i++) {
 	gstring[i] = $(i+1);
@@ -98,6 +103,11 @@ ARGIND==2 { # EAM potential of additional atom
 	gstring[i+startcol] = $(i+2);
       }
     }
+    if ($1=="#I") {
+      for (i=0;i<3;i++) {
+	istring[i+startcol] = $(i+2);
+      }
+    }
   }
   for (i=startcol;i<startcol+3;i++) {
     getline;
@@ -124,6 +134,9 @@ ARGIND>2 { # new mixed pair potentials
     getline;
     if ($1=="#G") {
       gstring[startcol] = $2;
+    }
+    if ($1=="#I") {
+      istring[startcol] = $2;
     }
   }
   getline;
@@ -173,6 +186,16 @@ END {
     printf(" %i",gstring[nc[i]]);
   }
   print "";
+  printf ("#I");
+  for (i=1;i<=new_cols;i++) {
+    if (nc[i] in istring) {
+      printf(" %i",istring[nc[i]]);
+    } else {
+      printf(" 0");
+    }
+  }
+  print "";
+
   print "## EAM potential " ARGV[1] " with additional type ";
   print "## from " ARGV[2] ", cross-pair potentials used: ";
   printf("##");

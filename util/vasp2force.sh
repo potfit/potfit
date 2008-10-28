@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 # 
 #/****************************************************************
-#* $Revision: 1.7 $
-#* $Date: 2008/10/21 11:18:54 $
+#* $Revision: 1.8 $
+#* $Date: 2008/10/28 15:24:41 $
 #*****************************************************************/
 
 [ -f ../single_atom_energies ] || { 
@@ -36,31 +36,33 @@
 }
 wdir=`pwd`
 count=`grep -c "TOTAL-FORCE" OUTCAR`
+pr_conf="0";
 echo "There are $count configurations in OUTCAR" >&2
 while getopts 'fs:' OPTION
   do
   case $OPTION in
-      f) pr_conf="$count";
+      f) pr_conf="${pr_conf},$count";
 	  ;;
-      s) pr_conf="$OPTARG";
+      s) pr_conf="${pr_conf},$OPTARG";
 	  ;;
       ?) printf "Usage: %s: [-f] [-s list] \n" $(basename $0) >&2
 	  exit 2
 	  ;;
   esac
 done
-if [ "X$pr_conf" == "X" ]; then
+if [ "X$pr_conf" == "X0" ]; then
     pr_conf=1;
     for (( i=2; $i<=$count; i++ )); do
 	pr_conf="${pr_conf},$i";
     done
 fi
-
+echo $pr_conf >&2
 cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" '  BEGIN { 
+    OFMT="%11.7g"
 #Select confs to print
     count=0;
     split(pr_conf,pr_arr,",");
-    for (i in pr_arr) pr_flag[i]++;
+    for (i in pr_arr) pr_flag[pr_arr[i]]++;
 #pr_flag now is set for the configurations to be printed.
     getline saeng < "../single_atom_energies"; 
     getline < "POSCAR"; getline scale < "POSCAR";
@@ -108,6 +110,8 @@ cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" '  BEGIN {
      }  
      getline; getline;
      for (i=1; i<=a[ntypes]; i++) { 
-       if (count in pr_flag) print b[i],$1,$2,$3,$4,$5,$6; 
+       if (count in pr_flag) 
+	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n", 
+	       b[i],$1,$2,$3,$4,$5,$6); 
      getline; } 
   };' 
