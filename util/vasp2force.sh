@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 # 
 #/****************************************************************
-#* $Revision: 1.8 $
-#* $Date: 2008/10/28 15:24:41 $
+#* $Revision: 1.9 $
+#* $Date: 2008/10/28 15:32:05 $
 #*****************************************************************/
 
 [ -f ../single_atom_energies ] || { 
@@ -56,7 +56,7 @@ if [ "X$pr_conf" == "X0" ]; then
 	pr_conf="${pr_conf},$i";
     done
 fi
-echo $pr_conf >&2
+#echo $pr_conf >&2
 cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" '  BEGIN { 
     OFMT="%11.7g"
 #Select confs to print
