@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.36 $
-* $Date: 2008/10/08 09:29:25 $
+* $Revision: 1.37 $
+* $Date: 2008/10/31 11:57:41 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -174,6 +174,7 @@ void read_config(char *filename)
   int   h_stress, h_eng, h_boxx, h_boxy, h_boxz, use_force;
   int   w_force = 0, w_stress = 0;
   int   tag_format = 0;
+  int   sh_dist = 0;		/* short distance flag */
   FILE *infile;
   char  msg[255], buffer[1024];
   char *res;
@@ -183,13 +184,16 @@ void read_config(char *filename)
   vektor d, dd;
   real  r, rr, istep, shift, step;
 
-#if defined(DEBUG) || defined (APOT)
   real *mindist;
   mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
   for (i = 0; i < ntypes * ntypes; i++)
     mindist[i] = rcut[i];
-#endif
 
+/*   /\* allocate na_typ array *\/ */
+/*   na_typ = (int *)malloc(ntypes * sizeof(int)); */
+/*   if (na_typ == NULL) { */
+/*     error("Could not allocate number of atoms per type array"); */
+/*   } */
   nconf = 0;
 
   /* open file */
@@ -357,13 +361,14 @@ void read_config(char *filename)
 	      if (r <= rcut[typ1 * ntypes + typ2]) {
 #endif
 		if (r <= rmin[typ1 * ntypes + typ2]) {
-		  printf("%d: %f %f %f\n", i - natoms, atoms[i].pos.x,
-			 atoms[i].pos.y, atoms[i].pos.z);
-		  printf("%d: %f %f %f\n", j - natoms, dd.x, dd.y, dd.z);
-		  sprintf(msg,
-			  "Distance %f too short between atom %d (type %d) and %d (type %d) in conf %d",
-			  r, i - natoms, typ1, j - natoms, typ2, nconf);
-		  error(msg);
+		  sh_dist = nconf;
+		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf,
+			  r);
+		  fprintf(stderr, "%d (type %d): %f %f %f\n", i - natoms,
+			  typ1, atoms[i].pos.x, atoms[i].pos.y,
+			  atoms[i].pos.z);
+		  fprintf(stderr, "%d (type %d): %f %f %f\n", j - natoms,
+			  typ2, dd.x, dd.y, dd.z);
 		}
 		if (atoms[i].n_neigh == MAXNEIGH)
 		  error("Neighbor table is too small");
@@ -376,110 +381,115 @@ void read_config(char *filename)
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
 		atoms[i].n_neigh++;
-#if defined(DEBUG) || defined (APOT)
 		/* Minimal distance check */
 		mindist[ntypes * typ1 + typ2] =
 		  MIN(mindist[ntypes * typ1 + typ2], r);
-#endif
 
 		/* pre-compute index and shift into potential table */
 		/* pair potential */
-		col = (typ1 <= typ2) ?
-		  typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-		  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-		if (format == 3 || format == 0) {
-		  rr = r - calc_pot.begin[col];
-		  if (rr < 0) {
-		    printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			   nconf, i - natoms);
+		if (!sh_dist) {
+		  col = (typ1 <= typ2) ?
+		    typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+		    : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+		  if (format == 3 || format == 0) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
+			     nconf, i - natoms);
 //                printf("%f %f %f %f %f %f\n", d.x,d.y,d.z,coheng[nconf],stresses->xx,stresses->yz);
 
-		    fflush(stdout);
-		    error("short distance in config.c!");
+		      fflush(stdout);
+		      error("short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+
+		  } else {	/* format == 4 ! */
+
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    /* Check if we are at the last index - we should be lower */
+		    /* should be impossible anyway */
+		    /*  if (slot>=calc_pot.last[col]) {
+		       klo--;khi--;
+		       } */
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
 		  }
-		  istep = calc_pot.invstep[col];
-		  slot = (int)(rr * istep);
-		  shift = (rr - slot * calc_pot.step[col]) * istep;
-		  slot += calc_pot.first[col];
-		  step = calc_pot.step[col];
-
-		} else {	/* format == 4 ! */
-
-		  klo = calc_pot.first[col];
-		  khi = calc_pot.last[col];
-		  /* bisection */
-		  while (khi - klo > 1) {
-		    slot = (khi + klo) >> 1;
-		    if (calc_pot.xcoord[slot] > r)
-		      khi = slot;
-		    else
-		      klo = slot;
+		  /* independent of format - we should be left of last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
 		  }
-		  slot = klo;
-		  /* Check if we are at the last index - we should be lower */
-		  /* should be impossible anyway */
-		  /*  if (slot>=calc_pot.last[col]) {
-		     klo--;khi--;
-		     } */
-		  step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
-		  shift = (r - calc_pot.xcoord[klo]) / step;
-
-		}
-		/* independent of format - we should be left of last index */
-		if (slot >= calc_pot.last[col]) {
-		  slot--;
-		  shift += 1.0;
-		}
-		atoms[i].neigh[k].shift[0] = shift;
-		atoms[i].neigh[k].slot[0] = slot;
-		atoms[i].neigh[k].step[0] = step;
+		  atoms[i].neigh[k].shift[0] = shift;
+		  atoms[i].neigh[k].slot[0] = slot;
+		  atoms[i].neigh[k].step[0] = step;
 #ifdef EAM
-		/* EAM part */
-		col = paircol + typ2;
-		if (format == 3) {
-		  rr = r - calc_pot.begin[col];
-		  if (rr < 0) {
-		    printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			   typ1, typ2);
-		    fflush(stdout);
-		    error("short distance in config.c!");
-		  }
-		  istep = calc_pot.invstep[col];
-		  slot = (int)(rr * istep);
-		  shift = (rr - slot * calc_pot.step[col]) * istep;
-		  slot += calc_pot.first[col];
-		  step = calc_pot.step[col];
-		} else {	/* format == 4 ! */
-		  klo = calc_pot.first[col];
-		  khi = calc_pot.last[col];
-		  /* bisection */
-		  while (khi - klo > 1) {
-		    slot = (khi + klo) >> 1;
-		    if (calc_pot.xcoord[slot] > r)
-		      khi = slot;
-		    else
-		      klo = slot;
-		  }
-		  slot = klo;
-		  /* Check if we are at the last index - we should be lower */
-		  /* should be impossible anyway */
-		  /*   if (slot>=calc_pot.last[col]) {  */
-		  /*    klo--;khi--; */
-		  /*  } */
-		  step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
-		  shift = (r - calc_pot.xcoord[klo]) / step;
+		  /* EAM part */
+		  col = paircol + typ2;
+		  if (format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
+			     typ1, typ2);
+		      fflush(stdout);
+		      error("short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    /* Check if we are at the last index - we should be lower */
+		    /* should be impossible anyway */
+		    /*   if (slot>=calc_pot.last[col]) {  */
+		    /*    klo--;khi--; */
+		    /*  } */
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
 
-		}
-		/* Check if we are at the last index */
-		if (slot >= calc_pot.last[col]) {
-		  slot--;
-		  shift += 1.0;
-		}
-		atoms[i].neigh[k].shift[1] = shift;
-		atoms[i].neigh[k].slot[1] = slot;
-		atoms[i].neigh[k].step[1] = step;
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[1] = shift;
+		  atoms[i].neigh[k].slot[1] = slot;
+		  atoms[i].neigh[k].step[1] = step;
 #endif
+		}
+#ifdef APOT			/* just for emacs indentation */
 	      }
+#else
+	      }
+#endif
+
 	    }
       }
       maxneigh = MAX(maxneigh, atoms[i].n_neigh);
@@ -557,7 +567,6 @@ void read_config(char *filename)
   }
 #endif
 
-#ifdef DEBUG
   printf("Minimal Distances Matrix \n");
   printf("Atom\t");
   for (i = 0; i < ntypes; i++)
@@ -570,7 +579,6 @@ void read_config(char *filename)
     printf("\n");
   }
   free(mindist);
-#endif
 
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
@@ -578,6 +586,12 @@ void read_config(char *filename)
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
 	 nconf, w_force, w_stress);
   printf("with a total of %d atoms\nfrom file %s\n", natoms, filename);
+  if (sh_dist) {
+    sprintf(msg,
+	    "Distances too short, last occurence conf %d, see above for details",
+	    sh_dist);
+    error(msg);
+  }
   return;
 }
 
