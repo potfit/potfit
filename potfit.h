@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.51 $
-* $Date: 2008/10/08 13:48:26 $
+* $Revision: 1.52 $
+* $Date: 2008/10/31 12:08:38 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -204,6 +204,7 @@ EXTERN int mdim INIT(0);
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int ntypes INIT(1);	/* number of atom types */
 EXTERN int natoms INIT(0);	/* number of atoms */
+/* EXTERN int *na_typ INIT(NULL);  /\* number of atoms per type *\/ */
 EXTERN int nconf INIT(0);	/* number of configurations */
 EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */

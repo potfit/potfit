@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.47 $
-* $Date: 2008/10/08 13:50:33 $
+* $Revision: 1.48 $
+* $Date: 2008/10/31 12:08:38 $
 *****************************************************************/
 
 #define NPLOT 10000
@@ -1904,7 +1904,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
 #ifdef NEWSCALE
-	/* Pair potentials corrected so that U'(n_av)=0 */
+	/* Pair potentials corrected so that U'(1)   =0 with NORESCALE */
+	/*                               and U'(n_av)=0 without */
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2))
 		+ (sqrt(r2) <= pt->end[paircol + j] ?
 		   lambda[i] * splint_ne(pt, pt->table, paircol + j,
@@ -2262,9 +2263,15 @@ void write_pairdist(pot_table_t *pt, char *filename)
       col = paircol + ntypes + typ1;
       if (format == 3) {
 	rr = atom->rho - pt->begin[col];
+#ifdef NORESCALE
+	if (rr < 0)
+	  rr = 0;		/* Extrapolation */
+	j = MIN((int)(rr * pt->invstep[col]) + pt->first[col], pt->last[col]);
+#else
 	if (rr < 0)
 	  error("short distance");
 	j = (int)(rr * pt->invstep[col]) + pt->first[col];
+#endif
       } else {			/* format ==4 */
 	rr = atom->rho;
 	k = pt->first[col];

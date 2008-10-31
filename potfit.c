@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.43 $
-* $Date: 2008/10/08 09:19:34 $
+* $Revision: 1.44 $
+* $Date: 2008/10/31 12:08:38 $
 *****************************************************************/
 
 #define MAIN
@@ -263,7 +263,8 @@ int main(int argc, char **argv)
       printf("Potential in format 4 written to file %s\n", endpot);
     }
 #ifdef EAM
-#ifndef MPI			/* Not much sense in printing rho when not communicated... */
+#ifndef MPI
+/* Not much sense in printing rho when not communicated... */
     printf("Local electron density rho\n");
     for (i = 0; i < ntypes; i++) {
       totdens[i] = 0.;
@@ -281,8 +282,15 @@ int main(int argc, char **argv)
     }
 #ifdef NEWSCALE
     for (i = 0; i < ntypes; i++) {
-      lambda[i] = splint_grad(&opt_pot, opt_pot.table,
+#ifdef NORESCALE
+      /* U'(1.) = 0. */
+      lambda[i] = splint_grad(&calc_pot, calc_pot.table,
+			      paircol + ntypes + i, 1.0);
+#else /* NORESCALE */
+      /* U'(<n>)=0; */
+      lambda[i] = splint_grad(&calc_pot, calc_pot.table,
 			      paircol + ntypes + i, totdens[i]);
+#endif /* NORESCALE */
       printf("lambda[%d] = %f \n", i, lambda[i]);
     }
     sprintf(plotfile, "%s_new", plotfile);

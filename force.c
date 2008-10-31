@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.51 $
-* $Date: 2008/10/13 09:31:24 $
+* $Revision: 1.52 $
+* $Date: 2008/10/31 12:08:38 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -90,8 +90,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   real  tmpsum, sum = 0.;
   int   first, col1;
   real  grad0, y0, y1, x0, x1;
-
   real *xi;
+#ifdef EAM
+  static real rho_sum_loc, rho_sum;
+  rho_sum_loc = rho_sum = 0.;
+#endif /* EAM */
   switch (format) {
       case 0:
 	xi = calc_pot.table;
@@ -210,8 +213,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
       neigh_t *neigh;
 
+
 #ifdef _OPENMP
-#pragma omp for reduction(+:tmpsum)
+#pragma omp for reduction(+:tmpsum,rho_sum_loc)
 #endif
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -224,8 +228,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	for (i = stresses; i < stresses + 6; i++)
 	  forces[i] = 0.;
 
-	/* set dummy constraints */
 #ifdef EAM
+	/* set dummy constraints */
 	forces[config + 7 * nconf] = -force_0[config + 7 * nconf];
 #endif
 	/* first loop over atoms: reset forces, densities */
@@ -352,7 +356,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #else /* EAM */
 
 	  col2 = paircol + ntypes + typ1;	/* column of F */
-
+#ifndef NORESCALE
 	  if (atom->rho > calc_pot.end[col2]) {
 	    /* then punish target function -> bad potential */
 	    forces[config + 7 * nconf] +=
@@ -372,18 +376,39 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    atom->rho = calc_pot.begin[col2];
 #endif /* PARABEL */
 	  }
-
+#endif /* NOT NORESCALE */
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 #ifdef PARABEL
 	  forces[config] +=
 	    parab_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
+#elif defined(NORESCALE)
+	  if (atom->rho < calc_pot.begin[col2]) {
+	    /* linear extrapolation left */
+	    fnval =
+	      splint_comb(&calc_pot, xi, col2, calc_pot.begin[col2],
+			  &atom->gradF);
+	    forces[config] +=
+	      fnval + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
+	  } else if (atom->rho > calc_pot.end[col2]) {
+	    /* and right */
+	    fnval =
+	      splint_comb(&calc_pot, xi, col2, calc_pot.end[col2],
+			  &atom->gradF);
+	    forces[config] +=
+	      fnval + (atom->rho - calc_pot.end[col2]) * atom->gradF;
+	  }
+	  /* and in-between */
+	  else {
+	    forces[config] +=
+	      splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
+	  }
 #else
 	  forces[config] +=
 	    splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 #endif
-
-
+	  /* sum up rho */
+	  rho_sum_loc += atom->rho;
 #endif /* EAM */
 	}			/* second loop over atoms */
 
@@ -398,7 +423,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 
 	    for (j = 0; j < atom->n_neigh; j++) {
-/* loop over neighbours */
+	      /* loop over neighbours */
 	      neigh = atom->neigh + j;
 	      /* only neigbours higher than current atom are of interest */
 	      if (neigh->nr > i + cnfstart[h]) {
@@ -410,12 +435,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		if ((r < calc_pot.end[col2])
 		    || (r < calc_pot.end[col - ntypes])) {
 		  grad =
-		    (r < calc_pot.end[col2]) ? splint_grad_dir(&calc_pot, xi,
-							       col2,
-							       neigh->slot[1],
-							       neigh->shift
-							       [1],
-							       neigh->step[1])
+		    (r < calc_pot.end[col2]) ?
+		    splint_grad_dir(&calc_pot, xi, col2, neigh->slot[1],
+				    neigh->shift[1], neigh->step[1])
 		    : 0.;
 
 		  if (typ2 == typ1)	/* use actio = reactio */
@@ -492,7 +514,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
       }				/* loop over configurations */
     }				/* parallel region */
-
+#ifdef MPI
+    /* Reduce rho_sum */
+    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+#else /* MPI */
+    rho_sum = rho_sum_loc;
+#endif /* MPI */
     /* dummy constraints (global) */
 #ifdef APOT
     int   i, j;
@@ -519,9 +546,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 #ifdef EAM
     if (myid == 0) {
-      int g;
+      int   g, i;
       for (g = 0; g < ntypes; g++) {
-
+	/* PARABEL, WZERO, NORESC - different behaviour */
 #ifdef PARABEL
 /* constraints on U(n) */
 	forces[mdim - ntypes + g] = DUMMY_WEIGHT *
@@ -533,8 +560,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		     .5 * (calc_pot.begin[paircol + ntypes + g] +
 			   calc_pot.end[paircol + ntypes + g]))
 	  - force_0[mdim - 2 * ntypes + g];
-#else /* PARABEL */
-#ifdef WZERO
+#elif defined(WZERO)
 	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
 	  /* 0 in domain of U(n) */
 /* constraints on U(n) */
@@ -544,9 +570,20 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	else
 	  /* 0 not in domain of U(n) */
 	  forces[mdim - ntypes + g] = 0.;	/* Free end... */
-#else /* WZERO: Dummy constraint not enforced */
+/* constraints on U`(n) */
+	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
+	  splint_grad(&calc_pot, xi, paircol + ntypes + g,
+		      .5 * (calc_pot.begin[paircol + ntypes + g] +
+			    calc_pot.end[paircol + ntypes + g]))
+	  - force_0[mdim - 2 * ntypes + g];
+#elif defined(NORESCALE)
+	/* clear field */
 	forces[mdim - ntypes + g] = 0.;	/* Free end... */
-#endif /* WZERO */
+	/* NEW: Constraint on U': U'(1.)=0; */
+	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
+	  splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
+#else /* NOTHING */
+	forces[mdim - ntypes + g] = 0.;	/* Free end... */
 /* constraints on U`(n) */
 	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g,
@@ -554,10 +591,18 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 			    calc_pot.end[paircol + ntypes + g]))
 	  - force_0[mdim - 2 * ntypes + g];
 
-#endif /* PARABEL */
+#endif /* Dummy constraints */
 	tmpsum += SQR(forces[mdim - ntypes + g]);
 	tmpsum += SQR(forces[mdim - 2 * ntypes + g]);
       }				/* loop over types */
+#ifdef NORESCALE
+      /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
+      /* Calculate averages */
+      rho_sum /= (real)natoms;
+      /* ATTN: if there are invariant potentials, things might be problematic */
+      forces[mdim - ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+      tmpsum += SQR(forces[mdim - ntypes]);
+#endif
     }				/* only root process */
 #endif
     sum = tmpsum;		/* global sum = local sum  */

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2008/09/26 06:11:33 $
+* $Revision: 1.16 $
+* $Date: 2008/10/31 12:08:38 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -181,10 +181,12 @@ void broadcast_params()
   MPI_Bcast(&anneal_temp, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (myid > 0) {
+/*     na_typ = (int *)malloc(ntypes * sizeof(int)); */
     inconf = (int *)malloc(nconf * sizeof(int));
     cnfstart = (int *)malloc(nconf * sizeof(int));
     force_0 = (real *)malloc(mdim * sizeof(real));
   }
+/*   MPI_Bcast(na_typ, ntypes, MPI_INT, 0, MPI_COMM_WORLD); */
   MPI_Bcast(inconf, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(force_0, mdim, REAL, 0, MPI_COMM_WORLD);
