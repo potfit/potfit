@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.40 $
-# $Date: 2008/10/08 09:19:34 $
+# $Revision: 1.41 $
+# $Date: 2008/11/03 10:28:32 $
 #
 ############################################################################
 #
@@ -646,6 +646,9 @@ CFLAGS += -DAPOT
 else
 ERROR += "apot and eam are not compatible yet -- "
 endif
+ifneq (,$(findstring mpi,${MAKETARGET}))
+ERROR += "apot and mpi are not compatible yet -- "
+endif
 endif
 
 # Stress
@@ -711,6 +714,10 @@ ${OBJECTS}: ${HEADERS}
 # special rules for force computation
 powell_lsq.o: powell_lsq.c
 	${CC} ${CFLAGS} ${CINCLUDE} -c powell_lsq.c
+
+# special rules for function evaluation
+functions.o: functions.c
+	${CC} ${CFLAGS} ${CINCLUDE} -c functions.c
 
 # generic compilation rule
 .c.o:
