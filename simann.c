@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2008/10/08 09:19:35 $
+* $Revision: 1.27 $
+* $Date: 2008/11/03 11:46:21 $
 *****************************************************************/
 
 #include <math.h>
@@ -58,21 +58,31 @@
 *
 *******************************************************************************/
 
-void randomize_parameter(int n, real *xi2, real *v)
+void randomize_parameter(int n, real *xi, real *v)
 {
   real  temp, rand;
   int   done = 0;
+  real  min, max;
 
-  temp = xi2[idx[n]];
+  min = apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]];
+  max = apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]];
+
   do {
+    temp = xi[idx[n]];
     rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
+    /* TODO check this properly */
+    if (v[n] > (max - min))
+      v[n] = max - min;
     temp += (rand * v[n]);
-    if (temp >= apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]]
-	&& temp <=
-	apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]])
+    if (temp >= min && temp <= max)
       done = 1;
   } while (!done);
-  xi2[idx[n]] = temp;
+  xi[idx[n]] = temp;
+/*   if (myid == 0) { */
+/*     for (done = 0; done < apot_table.total_par; done++) */
+/*       fprintf(stderr, "%f ", xi[idx[done]]); */
+/*     fprintf(stderr, "v[n=%d]=%f\n", n, v[n]); */
+/*   } */
 }
 
 #else
@@ -195,13 +205,13 @@ void anneal(real *xi)
       for (j = 0; j < nstep; j++) {
 	for (h = 0; h < ndim; h++) {
 	  /* Step #1 */
-	  /* Create a gaussian bump, 
-	     width & hight distributed normally */
 	  for (n = 0; n < ndimtot; n++)
 	    xi2[n] = xi[n];
 #ifdef APOT
 	  randomize_parameter(h, xi2, v);
 #else
+	  /* Create a gaussian bump, 
+	     width & hight distributed normally */
 	  width = fabs(normdist());
 	  height = normdist() * v[h];
 	  makebump(xi2, width, height, h);

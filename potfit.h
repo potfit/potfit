@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.52 $
-* $Date: 2008/10/31 12:08:38 $
+* $Revision: 1.53 $
+* $Date: 2008/11/03 11:46:21 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@
 #define REAL MPI_DOUBLE
 #endif /* MPI */
 #define NRANSI
-#define MAXNEIGH 570
+#define MAXNEIGH 290
 #ifdef EAM
 
 #define DUMMY_WEIGHT 100.
@@ -129,6 +129,7 @@ typedef struct {
   char **names;			/* name of analytic potentials */
   char ***param_name;		/* name of parameter */
   real **values;		/* parameter values for analytic potentials */
+//  real **is_pow;		/* is this parameter a power? */
   real *begin;			/* starting position of potential */
   real *end;			/* end position of potential = cutoff radius */
   real **pmin;			/* minimum values for parameters */
@@ -237,6 +238,11 @@ EXTERN pot_table_t calc_pot;	/* the potential table used */
 					 /* for force calculations */
 #ifdef APOT
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
+EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
+EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
+//EXTERN real *power_value INIT(NULL);
+//EXTERN real *power_index INIT(NULL);
+//EXTERN int *power_index_pot INIT(NULL);
 #endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
@@ -278,13 +284,11 @@ void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 #ifdef APOT
 void  read_pot_table(pot_table_t *, apot_table_t *, char *, int);
+void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
+		      FILE *infile);
+void  write_apot_table(apot_table_t *, char *);
 #else
 void  read_pot_table(pot_table_t *, char *, int);
-#endif
-#ifdef APOT
-void  read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
-		      int ncols, int *nvals, char *filename, FILE *infile);
-void  write_apot_table(apot_table_t *, char *);
 #endif
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
@@ -361,23 +365,26 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 void  apot_validate_functions(apot_table_t *);
-int   new_slots(void);		/* new slots for adjustable cutoff */
+//real  apot_pow(real, real);
+//int   apot_set_pow(apot_table_t *);
+//void  apot_pow_update(real *);
+void  new_slots(int);		/* new slots for adjustable cutoff */
 
-/* functions for the smooth cutoff (_sc option) of analytic potentials */
 real  smooth(void (*function) (real, real *, real *),
 	     real, real *, real, real, real *);
-void  find_root(void (*function) (real, real *, real *),
-		real, real *, real *, real *);
-void  bracket_range(void (*function) (real, real *, real *),
-		    real *, real, real x2, int n, real *xb1, real *xb2,
-		    int *nb);
-real  root_bisect(void (*function) (real, real *, real *), real *,
-		  real x1, real x2, real xacc);
+
+
+#ifdef MPI
+void  potsync_apot();
+#endif
 
 /* actual functions for different potentials */
 
 /* lennard-jones potential */
 void  lj_value(real, real *, real *);
+
+/* empirical oscillating pair potential */
+void  eopp_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 
@@ -386,6 +393,4 @@ void  newpot_value(real, real *, real *);
 
 /* end of template */
 
-void  debug_calc_pot(real *);
-void  debug_apot(apot_table_t *);
 #endif

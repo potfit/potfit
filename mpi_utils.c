@@ -4,7 +4,7 @@
  *
  *******************************************************/
 /*
-*   Copyright 2004-2008 Peter Brommer, Franz G"ahler
+*   Copyright 2004-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.16 $
-* $Date: 2008/10/31 12:08:38 $
+* $Revision: 1.17 $
+* $Date: 2008/11/03 11:46:21 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -271,7 +271,7 @@ void broadcast_params()
  * potsync: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
-#if defined(EAM) || defined(APOT)
+#ifdef EAM
 
 void potsync()
 {
@@ -290,5 +290,29 @@ void potsync()
   MPI_Bcast(calc_pot.table + firstval, nvals, REAL, 0, MPI_COMM_WORLD);
   /* das war's auch schon... */
 }
-#endif
-#endif
+#endif /* EAM */
+
+/***************************************************************************
+ *
+ * potsync_apot: Broadcast parameters etc to other nodes if we have
+ * 		 the _sc option
+ *
+ **************************************************************************/
+
+#ifdef APOT
+
+void potsync_apot()
+{
+  int   length;
+  length = apot_table.number;
+  if (do_smooth) {
+    MPI_Bcast(calc_pot.begin, length - 1, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(calc_pot.end, length - 1, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(calc_pot.step, length - 1, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(calc_pot.invstep, length - 1, REAL, 0, MPI_COMM_WORLD);
+  }
+}
+
+#endif /* APOT */
+
+#endif /* MPI */

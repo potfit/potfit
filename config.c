@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.37 $
-* $Date: 2008/10/31 11:57:41 $
+* $Revision: 1.38 $
+* $Date: 2008/11/03 11:46:21 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -169,7 +169,7 @@ real make_box(void)
 
 void read_config(char *filename)
 {
-  int   maxneigh = 0, count;
+  int   maxneigh = 0, count, index;
   int   i, j, k, ix, iy, iz, typ1, typ2, col, slot, klo, khi;
   int   h_stress, h_eng, h_boxx, h_boxy, h_boxz, use_force;
   int   w_force = 0, w_stress = 0;
@@ -406,6 +406,19 @@ void read_config(char *filename)
 		    shift = (rr - slot * calc_pot.step[col]) * istep;
 		    slot += calc_pot.first[col];
 		    step = calc_pot.step[col];
+#ifdef APOT
+		  if (do_smooth) {
+		    pot_list[col] =
+		      (int **)realloc(pot_list[col],
+				      (pot_list_length[col] +
+				       1) * sizeof(int *));
+		    pot_list[col][pot_list_length[col]] =
+		      (int *)malloc(2 * sizeof(int));
+		    pot_list[col][pot_list_length[col]][0] = i;
+		    pot_list[col][pot_list_length[col]][1] = k;
+		    pot_list_length[col]++;
+		  }
+#endif
 
 		  } else {	/* format == 4 ! */
 
@@ -554,17 +567,18 @@ void read_config(char *filename)
 
 #ifdef APOT
   for (i = 0; i < opt_pot.ncols; i++) {
-    r = fabs(mindist[i * (i + 1) / 2] - rmin[i * (i + 1) / 2]);
-    if (r > (.2 * mindist[i * (i + 1) / 2]) && !invar_pot[i]) {
-      printf("The given minimum distance for potential #%d is too small.\n",
-	     i);
-      printf
-	("Please adjust it from %f to somwhere between %f and %f for accurate calculations.\n",
-	 rmin[i * (i + 1) / 2], .9 * mindist[i * (i + 1) / 2],
-	 mindist[i * (i + 1) / 2]);
-      exit(2);
-    }
+    j = i * (i + 1) / 2;
+    rmin[j] = mindist[j] * 0.95;
+    apot_table.begin[i] = mindist[j] * 0.95;
+    opt_pot.begin[i] = mindist[j] * 0.95;
+    calc_pot.begin[i] = mindist[j] * 0.95;
   }
+  for (i = 0; i < calc_pot.ncols; i++)
+    for (j = 0; j < APOT_STEPS; j++) {
+      index = i * APOT_STEPS + (i + 1) * 2 + j;
+      calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
+    }
+  update_calc_table(opt_pot.table, calc_pot.table);
 #endif
 
   printf("Minimal Distances Matrix \n");
@@ -599,32 +613,32 @@ void read_config(char *filename)
 
 /* recalculate the slots of the atoms for tabulated potential */
 
-int new_slots(void)
+void new_slots(int a1)
 {
-  int   i, j, col, typ1, typ2;
+  int   i, j, col, typ1, typ2, a2;
   real  r, rr;
 
-  for (i = 0; i < natoms; i++)
-    for (j = 0; j < atoms[i].n_neigh; j++) {
-      typ1 = atoms[i].typ;
-      typ2 = atoms[i].neigh[j].typ;
-      col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-	: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-      if (smooth_pot[col] && !invar_pot[col]) {
-	r = atoms[i].neigh[j].r;
-	if (r < calc_pot.end[col]) {
-	  rr = r - calc_pot.begin[col];
-	  atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
-	  atoms[i].neigh[j].shift[0] =
-	    (rr -
-	     atoms[i].neigh[j].slot[0] * calc_pot.step[col]) *
-	    calc_pot.invstep[col];
-	  atoms[i].neigh[j].slot[0] += calc_pot.first[col];
-	  atoms[i].neigh[j].step[0] = calc_pot.step[col];
-	}
+  for (a2 = 0; a2 < pot_list_length[a1]; a2++) {
+    i = pot_list[a1][a2][0];
+    j = pot_list[a1][a2][1];
+    typ1 = atoms[i].typ;
+    typ2 = atoms[i].neigh[j].typ;
+    col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+      : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+    if (smooth_pot[col] && !invar_pot[col]) {
+      r = atoms[i].neigh[j].r;
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].shift[0] =
+	  (rr -
+	   atoms[i].neigh[j].slot[0] * calc_pot.step[col]) *
+	  calc_pot.invstep[col];
+	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
+	atoms[i].neigh[j].step[0] = calc_pot.step[col];
       }
     }
-  return 0;
+  }
 }
 
 #endif

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.52 $
-* $Date: 2008/10/31 12:08:38 $
+* $Revision: 1.53 $
+* $Date: 2008/11/03 11:46:21 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -117,7 +117,14 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-#if defined(EAM) || defined(APOT)
+#ifdef APOT
+    if (myid == 0 && do_smooth)
+      potsync_apot();
+    if (flag == 1)
+      break;
+#endif
+
+#ifdef EAM
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
       potsync();
@@ -518,7 +525,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* Reduce rho_sum */
     MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
 #else /* MPI */
+#ifdef EAM
     rho_sum = rho_sum_loc;
+#endif /* EAM */
 #endif /* MPI */
     /* dummy constraints (global) */
 #ifdef APOT

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.48 $
-* $Date: 2008/10/31 12:08:38 $
+* $Revision: 1.49 $
+* $Date: 2008/11/03 11:46:21 $
 *****************************************************************/
 
 #define NPLOT 10000
@@ -145,11 +145,11 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       else {
 #ifdef EAM
 	sprintf(msg,
-		"Wrong number of data columns in file %s,\n should be %d (pair potentials), but are %d",
+		"Wrong number of data columns in file %s,\n should be %d for EAM, but are %d",
 		filename, ncols + 2 * ntypes, size);
 #else
 	sprintf(msg,
-		"Wrong number of data columns in file %s,\n should be %d for EAM, but are %d",
+		"Wrong number of data columns in file %s,\n should be %d (pair potentials), but are %d",
 		filename, ncols, size);
 #endif
 	error(msg);
@@ -210,14 +210,21 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   apt->param_name = (char ***)malloc(size * sizeof(char **));
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
   apt->values = (real **)malloc(size * sizeof(real));
+/*   apt->is_pow = (real **)malloc(size * sizeof(real)); */
   apt->names = (char **)malloc(size * sizeof(char *));
-  for (i = 0; i < size; i++)
+  pot_list_length = (int *)malloc(size * sizeof(int));
+  pot_list = (int ***)malloc(size * sizeof(int **));
+  for (i = 0; i < size; i++) {
     apt->names[i] = (char *)malloc(20 * sizeof(char));
+    pot_list[i] = (int **)malloc(sizeof(int *));
+    pot_list_length[i] = 0;
+  }
   if ((apt->begin == NULL) || (apt->end == NULL) || (apt->fvalue == NULL) ||
       (apt->names == NULL) || (apt->pmin == NULL) || (apt->pmax == NULL) ||
-      (apt->param_name == NULL) || (apt->values == NULL)) {
-    sprintf(msg,
-	    "Cannot allocate info block for analytic potential table %s",
+      (apt->param_name == NULL) || (apt->values == NULL)
+      // || (apt->is_pow == NULL)
+      ) {
+    sprintf(msg, "Cannot allocate info block for analytic potential table %s",
 	    filename);
     error(msg);
   }
@@ -225,7 +232,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   switch (format) {
 #ifdef APOT
       case 0:
-	read_apot_table(pt, apt, size, ncols, nvals, filename, infile);
+	read_apot_table(pt, apt, filename, infile);
 	break;
 #endif
       case 3:
@@ -305,10 +312,10 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 ******************************************************************************/
 
 #ifdef APOT
-void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
-		     int ncols, int *nvals, char *filename, FILE *infile)
+void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
+		     FILE *infile)
 {
-  int   c, i, j, k, l;
+  int   c, i, j, k, l, comment;
   char  msg[255];
   char  buffer[255];
   char  name[255];
@@ -358,21 +365,23 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
       c = getc(infile);
     } while (c != 10);
 
-    /* read range */
-    if (2 >
-	fscanf(infile, "%s %lf %lf", buffer, &apt->begin[i], &apt->end[i])) {
+    /* read cutoff */
+    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
       sprintf(msg,
-	      "Could not read range for potential #%d in file %s\nAborting",
+	      "Could not read cutoff for potential #%d in file %s\nAborting",
 	      i, filename);
       error(msg);
     }
-    if (strcmp(buffer, "range") != 0) {
+    if (strcmp(buffer, "cutoff") != 0) {
       sprintf(msg,
 	      "No cutoff for potential #%d found after type keyword in file %s\nAborting",
 	      i, filename);
       error(msg);
     }
+    /* set small begin to prevent division by zero-errors */
+    apt->begin[i] = 0.0001;
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+/*     apt->is_pow[i] = (real *)malloc(apt->n_par[i] * sizeof(real)); */
     apt->pmin[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->pmax[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
@@ -384,15 +393,37 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
       error(msg);
     }
 
+    /* check for comment */
+
+    do {
+      j = fgetc(infile);
+    } while (j != 10);
+
+    fgets(buffer, 255, infile);
+    if (buffer[0] == '#') {
+      comment = 1;
+    } else {
+      comment = 0;
+    }
+
     /* read parameters */
     for (j = 0; j < apt->n_par[i]; j++) {
-      /* TODO allocate 20 chars for a parameter name, maybe too small? */
-      apt->param_name[i][j] = (char *)malloc(20 * sizeof(char));
+      /* Warning: The array for parameter names holds only 30 chars
+       * so there is the chance of a buffer overflow.
+       * If you need longer parameter names increase the size of
+       * the array.
+       */
+      apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
       if (NULL == apt->param_name[i][j])
 	error("Error in allocating memory for parameter name");
-      if (4 >
+      if ((comment || j != 0) ? 4 >
 	  fscanf(infile, "%s %lf %lf %lf", apt->param_name[i][j],
-		 &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j])) {
+		 &apt->values[i][j], &apt->pmin[i][j],
+		 &apt->pmax[i][j]) : 4 > sscanf(buffer, "%s %lf %lf %lf",
+						apt->param_name[i][j],
+						&apt->values[i][j],
+						&apt->pmin[i][j],
+						&apt->pmax[i][j])) {
 	if (strcmp(apt->param_name[i][j], "type") == 0) {
 	  sprintf(msg,
 		  "Not enough parameters for potential #%d in file %s specified.\nYou specified %d parameters, but needed are %d.\nAborting",
@@ -419,6 +450,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
       }
     }
   }
+
+  if (do_smooth)
+    printf
+      ("\nWARNING: the smooth cutoff option is currently highly unstable\nUse at own risk!\n\n");
 
   /* assign the potential functions to the function pointers */
   if (apot_assign_functions(apt) == -1) {
@@ -476,6 +511,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, int size,
       pt->idxlen += apt->n_par[i];
   }
 
+/*   apot_set_pow(apt); */
   init_calc_table(pt, &calc_pot);
   return;
 }
@@ -826,7 +862,6 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 #endif
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
-
 }
 
 /*****************************************************************************
@@ -1071,12 +1106,12 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    for (j = 0; j < APOT_STEPS; j++) {
 	      index = i * APOT_STEPS + (i + 1) * 2 + j;
 	      calct->xcoord[index] = calct->begin[i] + j * calct->step[i];
-	      apot_table.fvalue[i] (calct->begin[i] +
-				    j * calct->step[i], val, &f);
+	      apot_table.fvalue[i] (calct->xcoord[index], val, &f);
 	      calct->table[index] = f;
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
 	  }
+/* 	  apot_pow_update(optt->table); */
 	}
 	break;
 #endif
@@ -1139,11 +1174,11 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 
 void update_calc_table(real *xi_opt, real *xi_calc)
 {
-  int   i, j, k, l, size;
+  int   i, j, k, l, size, index;
   int  *sp;
   real  r, x0, temp;
-  real *val, *ord, f;
-  real *params;
+  real *val, *ord;
+  static real *params;
 
   switch (format) {
       case 3:			/* fall through */
@@ -1154,25 +1189,25 @@ void update_calc_table(real *xi_opt, real *xi_calc)
 	break;
   }
 #ifdef APOT
-  if (do_smooth)
+  if (do_smooth && params == NULL)
     params = (real *)malloc(4 * sizeof(real));
   val = xi_opt + 2;
   for (i = 0; i < calc_pot.ncols; i++) {
     if (!invar_pot[i] && !smooth_pot[i]) {
+/*       apot_pow_update(xi_opt); */
       for (j = 0; j < APOT_STEPS; j++) {
 	k = i * APOT_STEPS + (i + 1) * 2 + j;
-	apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
-	xi_calc[k] = f;
+	apot_table.fvalue[i] (calc_pot.xcoord[k], val, xi_calc + k);
       }
     } else if (!invar_pot[i] && smooth_pot[i]) {
       k = i * APOT_STEPS + (i + 1) * 2;
       l = i * (i + 1) / 2;
-      x0 =
-	smooth(apot_table.fvalue[i], rcut[l], val, rmin[l],
-	       rcut[l] * CUTOFF_MARGIN, params);
+      x0 = smooth(apot_table.fvalue[i], rcut[l], val, rmin[l],
+		  rcut[l] * CUTOFF_MARGIN, params);
       calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
       calc_pot.end[i] = params[0];
       calc_pot.invstep[i] = 1. / calc_pot.step[i];
+/*       apot_pow_update(xi_opt); */
       for (j = 0; j < APOT_STEPS; j++) {
 	temp = j * calc_pot.step[i] + rmin[l];
 	if (temp < x0)
@@ -1182,10 +1217,7 @@ void update_calc_table(real *xi_opt, real *xi_calc)
 	    params[1] * temp * temp + temp * params[2] + params[3];
 	calc_pot.xcoord[k + j] = calc_pot.begin[i] + j * calc_pot.step[i];
       }
-      if (new_slots()) {
-	error
-	  ("Could not calculate new slots. Please check your cutoff radius.\n");
-      }
+      new_slots(i);
     }
     val += apot_table.n_par[i] + 2;
   }
@@ -1656,10 +1688,9 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 
 void write_apot_table(apot_table_t *apt, char *filename)
 {
+  int   i, j;
   FILE *outfile;
   char  msg[255];
-  int   i, j;
-  real  r;
 
   /* open file */
   outfile = fopen(filename, "w");
@@ -1684,11 +1715,12 @@ void write_apot_table(apot_table_t *apt, char *filename)
     } else {
       fprintf(outfile, "type %s\n", apt->names[i]);
     }
-    if (!smooth_pot[i])
-      fprintf(outfile, "range %f %f\n", apt->begin[i], apt->end[i]);
+    fprintf(outfile, "cutoff %f\n", calc_pot.end[i]);
+    if (smooth_pot[i])
+      fprintf(outfile, "## rmin=%f rcut_old=%f\n", apt->begin[i],
+	      apt->end[i]);
     else
-      fprintf(outfile, "range %f %f (sc: %f)\n", apt->begin[i], apt->end[i],
-	      calc_pot.end[i]);
+      fprintf(outfile, "## rmin=%f\n", apt->begin[i]);
     for (j = 0; j < apt->n_par[i]; j++) {
       fprintf(outfile, "%s %.16f %f %f\n", apt->param_name[i][j],
 	      apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
