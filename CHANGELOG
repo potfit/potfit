@@ -1,0 +1,24 @@
+Changes in potfit20081104
+
+Bugfix:
+
++ Error in bracketing (pathological cases)
++ Issues with new MKL/icc releases.
++ Bug in potential rescaling
++ vasp2force Bug: Incorrect scale.
+
+Enhancement:
+
++ ACML support in Makefile
++ Better output in cases of short distance errors
++ Separate optimisation potential from calculation potential
++ EAM potentials: Implementation of gauge constraints with NORESC compilation
+  option redone. 
++ Improved output during optimisation.
++ vasp2force support for multiple MD steps greatly improved.
++ Reorder potentials with pottrans.
+
+New Features:
+
++ Analytic pair potentials (alpha). 
++ Awk scripts for potential generation, combination, ...
