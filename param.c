@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.21 $
-*  $Date: 2008/10/08 09:19:34 $
+*  $Revision: 1.22 $
+*  $Date: 2008/11/13 08:32:20 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -203,6 +203,7 @@ void read_paramfile(FILE *pf)
     /* file for IMD potential */
     else if (strcasecmp(token, "imdpot") == 0) {
       getparam("imdpot", imdpot, PARAM_STR, 1, 255);
+      writeimd = 1;
     }
     /* file for plotting */
     else if (strcasecmp(token, "plotfile") == 0) {
@@ -221,6 +222,10 @@ void read_paramfile(FILE *pf)
     /* number of steps in IMD potential */
     else if (strcasecmp(token, "imdpotsteps") == 0) {
       getparam("imdpotsteps", &imdpotsteps, PARAM_INT, 1, 1);
+    }
+    /* minimum for plotfile */
+    else if (strcasecmp(token, "plotmin") == 0) {
+      getparam("plotmin", &plotmin, PARAM_DOUBLE, 1, 1);
     }
     /* Energy Weight */
     else if (strcasecmp(token, "extend") == 0) {

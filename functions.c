@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.6 $
+* $Date: 2008/11/13 08:32:20 $
 *****************************************************************/
 
 #ifdef APOT
@@ -96,40 +96,6 @@ int apot_assign_functions(apot_table_t *apt)
 
 /*****************************************************************************
 *
-* set is_pow table in analytic potential
-*
-******************************************************************************/
-
-/* int apot_set_pow(apot_table_t *apt) */
-/* { */
-/*   int   i, j; */
-/*  */
-/*   for (i = 0; i < apt->number; i++) { */
-/*     for (j = 0; j < apt->n_par[i]; j++) { */
-/*       apt->is_pow[i][j] = 0; */
-/*     } */
-/*   } */
-/*  */
-/*   for (i = 0; i < apt->number; i++) { */
-/*     if (strcmp(apt->names[i], "eopp") == 0) { */
-/*       apt->is_pow[i][1] = 1; */
-/*       apt->is_pow[i][3] = 1; */
-/*     } */
-/*  */
-    /*  template for new potential function called newpot */
-/*  */
-/*     if (strcmp(apt->names[i], "newpot") == 0) { */
-/*       apt->is_pow[i][0] = 1; */
-/*     } */
-/*  */
-    /* end of template */
-/*  */
-/*   } */
-/*   return 0; */
-/* } */
-
-/*****************************************************************************
-*
 * actual functions representing the analytic potentials
 *
 ******************************************************************************/
@@ -160,15 +126,15 @@ void lj_value(real r, real *p, real *f)
 
 void eopp_value(real r, real *p, real *f)
 {
-/*   static real x[2], y[2], power[2]; */
-/*  */
-/*   x[0] = r; */
-/*   x[1] = r; */
-/*   y[0] = p[1]; */
-/*   y[1] = p[3]; */
-/*   vdPow(2, x, y, power); */
+  static real x[2], y[2], power[2];
 
-  *f = p[0] / pow(r, p[1]) + (p[2] / pow(r, p[3])) * cos(p[4] * r + p[5]);
+  x[0] = r;
+  x[1] = r;
+  y[0] = p[1];
+  y[1] = p[3];
+  vdPow(2, x, y, power);
+
+  *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
 
 /******************************************************************************
@@ -211,83 +177,5 @@ void apot_validate_functions(apot_table_t *apt)
 {
 /* 	 TODO check if given function is valid */
 }
-
-/*****************************************************************************
-*
-* set table for power-values
-*
-******************************************************************************/
-
-/* void apot_pow_update(real *vals) */
-/* { */
-/*   int   i, j, k = 0; */
-/*   static real *x, *y; */
-/*   real *val; */
-/*   val = vals + 2; */
-/*   for (i = 0; i < apot_table.number; i++) */
-/*     for (j = 0; j < apot_table.n_par[i]; j++) */
-/*       if (apot_table.is_pow[i][j] == 1) */
-/* 	k++; */
-/*   if (k == 0) */
-/*     return; */
-/*   if (power_value == NULL) */
-/*     power_value = (real *)malloc(APOT_STEPS * k * sizeof(real)); */
-/*   if (power_index == NULL) */
-/*     power_index = (real *)malloc(k * sizeof(real)); */
-/*   if (power_index_pot == NULL) */
-/*     power_index_pot = (int *)malloc(k * sizeof(int)); */
-/*   if (x == NULL) */
-/*     x = (real *)malloc(APOT_STEPS * k * sizeof(real)); */
-/*   if (y == NULL) */
-/*     y = (real *)malloc(APOT_STEPS * k * sizeof(real)); */
-/*   real  l[k]; */
-/*   k = 0; */
-/*   for (i = 0; i < apot_table.number; i++) { */
-/*     for (j = 0; j < apot_table.n_par[i]; j++) */
-/*       if (apot_table.is_pow[i][j] == 1) { */
-/* 	l[k] = *(val + j); */
-/* 	power_index_pot[k++] = i; */
-/*       } */
-/*     val = val + apot_table.n_par[i] + 2; */
-/*   } */
-/*  */
-/*   for (i = 0; i < k; i++) { */
-/*     for (j = 0; j < APOT_STEPS; j++) { */
-/*       x[j + i * APOT_STEPS] = */
-/* 	calc_pot.begin[power_index_pot[i]] + */
-/* 	j * calc_pot.step[power_index_pot[i]]; */
-/*       y[j + i * APOT_STEPS] = l[i]; */
-/*     } */
-/*     power_index[i] = l[i]; */
-/*   } */
-/*   vdPow(APOT_STEPS * k, x, y, power_value); */
-/* } */
-
-/*****************************************************************************
-*
-* read table for power-values
-*
-******************************************************************************/
-
-/* real apot_pow(real x, real y) */
-/* { */
-/*   int   i = 0, done = 0; */
-/*   real  temp; */
-/*   if (power_index == NULL) */
-/*     return pow(x, y); */
-/*   do { */
-/*     if (power_index[i++] == y) */
-/*       done = 1; */
-/*   } while (done == 0 && i < apot_table.total_par); */
-/*   if (done == 1) */
-/*     i--; */
-/*   else { */
-/*     return pow(x, y); */
-/*   } */
-/*  */
-/*   temp = (x - calc_pot.begin[power_index_pot[i]]) */
-/*     / calc_pot.step[power_index_pot[i]]; */
-/*   return power_value[i * APOT_STEPS + lround(temp)]; */
-/* } */
 
 #endif

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.44 $
-* $Date: 2008/10/31 12:08:38 $
+* $Revision: 1.45 $
+* $Date: 2008/11/13 08:32:21 $
 *****************************************************************/
 
 #define MAIN
@@ -246,7 +246,8 @@ int main(int argc, char **argv)
 #ifndef APOT
     printf("Plotpoint file written to file %s\n", plotpointfile);
 #endif
-    write_pot_table_imd(&calc_pot, imdpot);
+    if (writeimd)
+      write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
 //    if (plot) write_altplot_pair(&opt_pot, plotfile);
@@ -299,7 +300,8 @@ int main(int argc, char **argv)
     if (plot)
       write_altplot_pair(&opt_pot, plotfile);
     /* write NEW imd potentials */
-    write_pot_table_imd(&opt_pot, imdpot);
+    if (writeimd)
+      write_pot_table_imd(&opt_pot, imdpot);
 #endif /* NEWSCALE */
 
 

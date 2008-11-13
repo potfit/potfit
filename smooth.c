@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.4 $
+* $Date: 2008/11/13 08:32:21 $
 *****************************************************************/
 
 #ifdef APOT
@@ -46,22 +46,28 @@
 real root_bisect(void (*function) (real, real *, real *), real *p,
 		 real x1, real x2, real xacc)
 {
-  int   j = 0;
-  real  dx, f, fmid, xmid, rtb;
+  int   i = 0;
+  real  f0, fl, fr, x0, xl, xr;
 
-  function(x1, p, &f);
-  function(x2, p, &fmid);
-  rtb = f < 0 ? (dx = x2 - x1, x1) : (dx = x1 - x2, x2);
-  do {
-    j++;
-    function(xmid = rtb + (dx *= .5), p, &fmid);
-    if (fmid <= 0)
-      rtb = xmid;
-    if (fabs(dx) < xacc || fmid == 0)
-      return rtb;
+  xl = x1;
+  xr = x2;
+
+  function(xl, p, &fl);
+  function(xr, p, &fr);
+  x0 = xl - fl * (xr - xl) / (fr - fl);
+  function(x0, p, &f0);
+
+  while (f0 > xacc && i++ < 50) {
+    if (fl * f0 < 0)
+      xr = x0;
+    else if (f0 * fr < 0)
+      xl = x0;
+    function(xl, p, &fl);
+    function(xr, p, &fr);
+    x0 = xl - fl * (xr - xl) / (fr - fl);
+    function(x0, p, &f0);
   }
-  while (j < 100);
-  return 0;
+  return x0;
 }
 
 /******************************************************************************
@@ -70,30 +76,51 @@ real root_bisect(void (*function) (real, real *, real *), real *p,
 *
 ******************************************************************************/
 
-void bracket_range(void (*function) (real, real *, real *), real *p,
-		   real x1, real x2, int n, real *xb1, real *xb2, int *nb)
+void bracket_root(void (*function) (real, real *, real *), real *p,
+		  real x, real *x_lower, real *x_upper)
 {
-  int   nbb, i;
-  real  x, fp, fc, dx;
+  real  size, f_x, f_temp;
+  int   found = 1;
 
-  nbb = 0;
-  dx = (x2 - x1) / n;
-  function(x = x1, p, &fp);
-  for (i = 0; i < n; i++) {
-    if (nbb > 9) {
-      printf("Too many roots near cutoff radius found\n");
-      exit(2);
+  size = .01 * x;
+  function(x, p, &f_x);
+
+  x_lower[0] = 0;
+  x_upper[0] = 0;
+  x_lower[1] = 0;
+  x_upper[1] = 0;
+
+  function(x - size, p, &f_temp);
+  while (f_x * f_temp > 0) {
+    size *= 1.05;
+    function(x - size, p, &f_temp);
+    if (size > (x / 2)) {
+      found = 0;
+      break;
     }
-    function(x += dx, p, &fc);
-    if (fc * fp < 0) {
-      xb1[nbb] = x - dx;
-      xb2[nbb++] = x;
-      if (*nb == (nbb - 1))
-	return;
-    }
-    fp = fc;
   }
-  *nb = nbb;
+  if (found) {
+    x_lower[0] = x - size;
+    x_upper[0] = x - size / 1.05;
+  }
+
+  found = 1;
+  size = .01 * x;
+  function(x + size, p, &f_temp);
+  while (f_x * f_temp > 0) {
+    size *= 1.05;
+    function(x + size, p, &f_temp);
+    if (size > (x / 2)) {
+      found = 0;
+      break;
+    }
+  }
+  if (found) {
+    x_lower[1] = x + size / 1.05;
+    x_upper[1] = x + size;
+  }
+
+  return;
 }
 
 /******************************************************************************
@@ -102,41 +129,39 @@ void bracket_range(void (*function) (real, real *, real *), real *p,
 *
 ******************************************************************************/
 
-void find_root(void (*function) (real, real *, real *),
-	       real x, real *p, real *root, real *dist, int *cut)
+int find_root(void (*function) (real, real *, real *),
+	      real x, real *p, real *root)
 {
-  int   n, i = 0;
-  real *xb1, *xb2, x1, x2;
-  n = 10;
-  xb1 = (real *)malloc(n * sizeof(real));
-  xb2 = (real *)malloc(n * sizeof(real));
-  bracket_range(function, p, 0.8 * x, 1.2 * x, 200, xb1, xb2, &n);
-  if (n > 1)
-    while ((xb1[i] < x) && (xb2[i] < x)) {
-      i++;
-      if (i == n) {
-	break;
-      }
-  } else {
-    if (n == 1) {
-      *cut = 1;
-      *root = root_bisect(function, p, xb1[0], xb2[0], 1e-6);
-      return;
-    }
-    *cut = 1;
-    *root = 0;
-    return;
+  int   i = 0;
+  real  x_lower[2], x_upper[2], x1, x2;
+
+  bracket_root(function, p, x, x_lower, x_upper);
+
+  if (x_lower[0] != 0 && x_upper[0] != 0) {
+    x1 = root_bisect(function, p, x_lower[0], x_upper[0], 1e-6);
+    i += 1;
   }
-  x1 = root_bisect(function, p, xb1[--i], xb2[i], 1e-6);
-  x2 = root_bisect(function, p, xb1[++i], xb2[i], 1e-6);
-  *dist = fabs(x1 - x2) / 4;
-  if (fabs(x1 - x) > fabs(x - x2)) {
-    *root = x2;
-  } else {
-    *root = x1;
+  if (x_lower[1] != 0 && x_upper[1] != 0) {
+    x2 = root_bisect(function, p, x_lower[1], x_upper[1], 1e-6);
+    i += 2;
   }
-  cut = 0;
-  return;
+
+  root[0] = 0;
+  root[1] = 0;
+  if (i == 3) {
+    root[0] = x1;
+    root[1] = x2;
+    return 2;
+  } else if (i == 2) {
+    root[0] = x2;
+    return 1;
+  } else if (i == 1) {
+    root[0] = x1;
+    return 0;
+  } else if (i == 0) {
+    return 0;
+  }
+  return -1;
 }
 
 /******************************************************************************
@@ -148,42 +173,72 @@ void find_root(void (*function) (real, real *, real *),
 real smooth(void (*function) (real, real *, real *),
 	    real x, real *p, real xmin, real xmax, real *params)
 {
-  real  dist, root, f, g, temp;
-  real  a, b, c, x0, x1;
-  int   cut = 0;
+  real  dist = 0, f, g, temp;
+  real  a, b, c, x0 = 0, x1;
+  int   i, nroot = 0;
   char  msg[255];
+  static real *roots;
 
-  find_root(function, x, p, &root, &dist, &cut);
-/*   printf("root=%f\n", root); */
-  if (cut == 1 || root < xmin || root > xmax) {
-    x0 = (root == 0 ? x : root) * 0.98;
+  if (roots == NULL)
+    roots = (real *)malloc(2 * sizeof(real));
+
+  nroot = find_root(function, x, p, roots);
+
+  if (nroot == 2) {
+    dist = fabs(roots[1] - roots[0]) / 4;
+    if (fabs(roots[1] - x) < fabs(roots[0] - x)) {
+      temp = roots[1];
+      roots[1] = roots[0];
+      roots[0] = temp;
+    }
+  }
+  if (nroot != 0) {
+    for (i = 0; i < nroot; i++) {
+      if (roots[i] < xmin && roots[i] > xmax && dist == 0) {
+	x0 = roots[i] * 0.95;
+      } else {
+	x0 = roots[i] - dist;
+      }
+
+      function(x0, p, &f);
+      function(x0 + 1e-6, p, &temp);
+      function(x0 - 1e-6, p, &g);
+
+      g = (temp - g) / 2e-6;
+
+      if (f * g < 0)
+	break;
+      x0 = 0;
+    }
   } else {
-    x0 = root - dist;
+    x0 = x * 0.95;
+    function(x0, p, &f);
+    function(x0 + 1e-6, p, &temp);
+    function(x0 - 1e-6, p, &g);
+
+    g = (temp - g) / 2e-6;
+    if (f * g > 0)
+      x0 = 0;
   }
 
-  /* we need the first derivative at x0 */
-  function(x0, p, &f);
-  function(x0 + 1e-6, p, &temp);
-  function(x0 - 1e-6, p, &g);
+  if (x0 != 0) {
+    a = g * g / (4 * f);
+    b = g - 2 * a * x0;
+    c = f + a * x0 * x0 - g * x0;
+    x1 = x0 - g / (2 * a);
 
-  g = (temp - g) / 2e-6;
-/*   printf("root=%f f=%f g=%f\n", x0, f, g); */
-
-  if (f * g > 0) {
-    sprintf(msg, "Could not truncate potential near the cutoff radius.\n");
-    error(msg);
+    params[0] = x1;
+    params[1] = a;
+    params[2] = b;
+    params[3] = c;
+    return x0;
+  } else {
+    params[0] = x;
+    params[1] = 0;
+    params[2] = 0;
+    params[3] = 0;
+    return 0;
   }
-  a = g * g / (4 * f);
-  b = g - 2 * a * x0;
-  c = f + a * x0 * x0 - g * x0;
-  x1 = x0 - g / (2 * a);
-
-  params[0] = x1;
-  params[1] = a;
-  params[2] = b;
-  params[3] = c;
-
-  return x0;
 }
 
 #endif /* APOT */

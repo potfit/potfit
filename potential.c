@@ -30,10 +30,13 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.49 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.50 $
+* $Date: 2008/11/13 08:32:20 $
 *****************************************************************/
 
+#ifdef APOT
+#include <unistd.h>
+#endif
 #define NPLOT 10000
 #define REPULSE
 #ifndef POTSCALE
@@ -210,7 +213,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   apt->param_name = (char ***)malloc(size * sizeof(char **));
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
   apt->values = (real **)malloc(size * sizeof(real));
-/*   apt->is_pow = (real **)malloc(size * sizeof(real)); */
   apt->names = (char **)malloc(size * sizeof(char *));
   pot_list_length = (int *)malloc(size * sizeof(int));
   pot_list = (int ***)malloc(size * sizeof(int **));
@@ -219,11 +221,11 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     pot_list[i] = (int **)malloc(sizeof(int *));
     pot_list_length[i] = 0;
   }
-  if ((apt->begin == NULL) || (apt->end == NULL) || (apt->fvalue == NULL) ||
-      (apt->names == NULL) || (apt->pmin == NULL) || (apt->pmax == NULL) ||
-      (apt->param_name == NULL) || (apt->values == NULL)
-      // || (apt->is_pow == NULL)
-      ) {
+  if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL)
+      || (apt->fvalue == NULL) || (apt->names == NULL) || (apt->pmin == NULL)
+      || (apt->pmax == NULL) || (apt->param_name == NULL)
+      || (apt->values == NULL) || (pot_list_length == NULL)
+      || (pot_list == NULL)) {
     sprintf(msg, "Cannot allocate info block for analytic potential table %s",
 	    filename);
     error(msg);
@@ -381,7 +383,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     /* set small begin to prevent division by zero-errors */
     apt->begin[i] = 0.0001;
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
-/*     apt->is_pow[i] = (real *)malloc(apt->n_par[i] * sizeof(real)); */
     apt->pmin[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->pmax[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
@@ -427,7 +428,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	if (strcmp(apt->param_name[i][j], "type") == 0) {
 	  sprintf(msg,
 		  "Not enough parameters for potential #%d in file %s specified.\nYou specified %d parameters, but needed are %d.\nAborting",
-		  i + 1, filename, j, apt->n_par[i]);
+		  i + 1, filename, j + 1, apt->n_par[i]);
 	  error(msg);
 	}
 	sprintf(msg,
@@ -453,17 +454,15 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
   if (do_smooth)
     printf
-      ("\nWARNING: the smooth cutoff option is currently highly unstable\nUse at own risk!\n\n");
+      ("\nWARNING: the smooth cutoff option is currently in beta stage.\nUse at own risk!\n\n");
 
   /* assign the potential functions to the function pointers */
   if (apot_assign_functions(apt) == -1) {
-    sprintf(msg,
-	    "Something went wrong with assigning the function pointers.\nAborting");
+    sprintf(msg, "Could not assign the function pointers.\nAborting");
     error(msg);
   }
 
-  /* Actually does nothing */
-  apot_validate_functions(apt);
+/*   apot_validate_functions(apt); */
 
   /* initialize function table and write indirect index */
   for (i = 0; i < apt->number; i++) {
@@ -486,7 +485,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   apt->idxpot = (int *)malloc(apt->number * sizeof(int));
   apt->idxparam = (int *)malloc(apt->number * sizeof(int));
   if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab)
-      || (NULL == pt->xcoord)) {
+      || (NULL == pt->xcoord) || (apt->idxpot == NULL)
+      || (apt->idxparam == NULL)) {
     sprintf(msg, "Cannot allocate memory for potential table.\nAborting");
     error(msg);
   }
@@ -511,7 +511,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       pt->idxlen += apt->n_par[i];
   }
 
-/*   apot_set_pow(apt); */
   init_calc_table(pt, &calc_pot);
   return;
 }
@@ -1111,7 +1110,6 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
 	  }
-/* 	  apot_pow_update(optt->table); */
 	}
 	break;
 #endif
@@ -1194,7 +1192,6 @@ void update_calc_table(real *xi_opt, real *xi_calc)
   val = xi_opt + 2;
   for (i = 0; i < calc_pot.ncols; i++) {
     if (!invar_pot[i] && !smooth_pot[i]) {
-/*       apot_pow_update(xi_opt); */
       for (j = 0; j < APOT_STEPS; j++) {
 	k = i * APOT_STEPS + (i + 1) * 2 + j;
 	apot_table.fvalue[i] (calc_pot.xcoord[k], val, xi_calc + k);
@@ -1202,22 +1199,31 @@ void update_calc_table(real *xi_opt, real *xi_calc)
     } else if (!invar_pot[i] && smooth_pot[i]) {
       k = i * APOT_STEPS + (i + 1) * 2;
       l = i * (i + 1) / 2;
-      x0 = smooth(apot_table.fvalue[i], rcut[l], val, rmin[l],
+      temp = rcut[l] - (rcut[l] - rmin[l]) / 2;
+      x0 = smooth(apot_table.fvalue[i], rcut[l], val, temp,
 		  rcut[l] * CUTOFF_MARGIN, params);
-      calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
-      calc_pot.end[i] = params[0];
-      calc_pot.invstep[i] = 1. / calc_pot.step[i];
-/*       apot_pow_update(xi_opt); */
-      for (j = 0; j < APOT_STEPS; j++) {
-	temp = j * calc_pot.step[i] + rmin[l];
-	if (temp < x0)
-	  apot_table.fvalue[i] (temp, val, xi_calc + k + j);
-	else
-	  *(xi_calc + k + j) =
-	    params[1] * temp * temp + temp * params[2] + params[3];
-	calc_pot.xcoord[k + j] = calc_pot.begin[i] + j * calc_pot.step[i];
+      if (params[0] != calc_pot.end[i]) {
+	calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
+	calc_pot.end[i] = params[0];
+	calc_pot.invstep[i] = 1. / calc_pot.step[i];
+	new_slots(i);
       }
-      new_slots(i);
+      if (x0 == 0) {
+	for (j = 0; j < APOT_STEPS; j++) {
+	  temp = j * calc_pot.step[i] + rmin[l];
+	  apot_table.fvalue[i] (temp, val, xi_calc + k + j);
+	}
+      } else {
+	for (j = 0; j < APOT_STEPS; j++) {
+	  temp = j * calc_pot.step[i] + rmin[l];
+	  if (temp <= x0)
+	    apot_table.fvalue[i] (temp, val, xi_calc + k + j);
+	  else
+	    *(xi_calc + k + j) =
+	      params[1] * temp * temp + temp * params[2] + params[3];
+	  calc_pot.xcoord[k + j] = calc_pot.begin[i] + j * calc_pot.step[i];
+	}
+      }
     }
     val += apot_table.n_par[i] + 2;
   }
@@ -1884,8 +1890,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   FILE *outfile;
   char  msg[255];
   char  filename[255];
-  real *r2begin, *r2end, *r2step, temp2, r2, temp, root;
+  real *r2begin, *r2end, *r2step, temp2, r2, temp, root, x0;
   int   i, j, k, m, m2, col1, col2;
+#ifdef APOT
+  real  params[4];
+#endif
 
   sprintf(filename, "%s_phi.imd.pt", prefix);
   /* allocate memory */
@@ -1915,7 +1924,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
+#ifdef APOT
+      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+#else
       r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n",
@@ -1924,6 +1937,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   }
   fprintf(outfile, "\n");
 
+#ifndef APOT
   /* write data */
   m = 0;
   for (i = 0; i < ntypes; i++) {
@@ -1956,6 +1970,24 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       fprintf(outfile, "\n");
     }
   }
+#else
+  for (i = 0; i < apot_table.number; i++) {
+    r2 = r2begin[i];
+    j = i * (i + 1) / 2;
+    x0 = smooth(apot_table.fvalue[i], rcut[j], apot_table.values[i], rmin[j],
+		rcut[j] * CUTOFF_MARGIN, params);
+    for (k = 0; k < imdpotsteps; k++) {
+      if (sqrt(r2) < x0)
+	apot_table.fvalue[i] (sqrt(r2), apot_table.values[i], &temp);
+      else
+	temp = params[1] * r2 + params[2] * sqrt(r2) + params[3];
+      fprintf(outfile, "%.16e\n", temp);
+      r2 += r2step[i];
+    }
+    fprintf(outfile, "%.16e\n", 0.0);
+    fprintf(outfile, "\n\n");
+  }
+#endif
   fclose(outfile);
   printf("IMD pair potential data written to %s\n", filename);
 #ifdef EAM
@@ -2085,7 +2117,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   FILE *outfile;
   char  msg[255];
   int   i, j, k, l, col;
-  real  r, r_step, temp;
+  real  r, r_step, temp, x0;
+  real  params[4];
 
   /* open file */
   outfile = fopen(filename, "w");
@@ -2096,10 +2129,12 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
   /* write data */
   k = 0;
+
+#ifndef APOT
   for (i = 0; i < ntypes; i++)
     for (j = i; j < ntypes; j++) {
       r = pt->begin[k];
-      r_step = (pt->end[k] - pt->begin[k]) / (NPLOT - 1);
+      r_step = (pt->end[k] - r) / (NPLOT - 1);
       for (l = 0; l < NPLOT - 1; l++) {
 #ifdef NEWSCALE
 	fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r)
@@ -2143,6 +2178,25 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "\n\n\n");
   }
+#endif
+#else
+  for (i = 0; i < apot_table.number; i++) {
+    r = (plotmin == 0 ? 0.1 : plotmin);
+    r_step = (pt->end[k] - r) / (NPLOT - 1);
+    j = i * (i + 1) / 2;
+    x0 = smooth(apot_table.fvalue[i], rcut[j], apot_table.values[i], rmin[j],
+		rcut[j] * CUTOFF_MARGIN, params);
+    for (l = 0; l < NPLOT; l++) {
+      if (r < x0)
+	apot_table.fvalue[i] (r, apot_table.values[i], &temp);
+      else
+	temp = params[1] * r * r + params[2] * r + params[3];
+      fprintf(outfile, "%e %e\n", r, temp);
+      r += r_step;
+    }
+    fprintf(outfile, "\n\n");
+  }
+
 #endif
   fclose(outfile);
   printf("Potential plotting data written to %s\n", filename);

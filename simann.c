@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.28 $
+* $Date: 2008/11/13 08:32:21 $
 *****************************************************************/
 
 #include <math.h>
@@ -78,11 +78,6 @@ void randomize_parameter(int n, real *xi, real *v)
       done = 1;
   } while (!done);
   xi[idx[n]] = temp;
-/*   if (myid == 0) { */
-/*     for (done = 0; done < apot_table.total_par; done++) */
-/*       fprintf(stderr, "%f ", xi[idx[done]]); */
-/*     fprintf(stderr, "v[n=%d]=%f\n", n, v[n]); */
-/*   } */
 }
 
 #else

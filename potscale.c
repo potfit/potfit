@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.8 $
+* $Date: 2008/11/13 08:32:21 $
 *****************************************************************/
 
 
@@ -93,7 +93,8 @@ int main(int argc, char **argv)
     print_scaling(&pair_pot);
   }
   write_pot_table(&pair_pot, endpot);
-  write_pot_table_imd(&pair_pot, imdpot);
+  if (writeimd)
+    write_pot_table_imd(&pair_pot, imdpot);
   if (plot)
     write_plotpot_pair(&pair_pot, plotfile);
 

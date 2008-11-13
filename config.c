@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.38 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.39 $
+* $Date: 2008/11/13 08:32:20 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -407,17 +407,17 @@ void read_config(char *filename)
 		    slot += calc_pot.first[col];
 		    step = calc_pot.step[col];
 #ifdef APOT
-		  if (do_smooth) {
-		    pot_list[col] =
-		      (int **)realloc(pot_list[col],
-				      (pot_list_length[col] +
-				       1) * sizeof(int *));
-		    pot_list[col][pot_list_length[col]] =
-		      (int *)malloc(2 * sizeof(int));
-		    pot_list[col][pot_list_length[col]][0] = i;
-		    pot_list[col][pot_list_length[col]][1] = k;
-		    pot_list_length[col]++;
-		  }
+		    if (do_smooth) {
+		      pot_list[col] =
+			(int **)realloc(pot_list[col],
+					(pot_list_length[col] +
+					 1) * sizeof(int *));
+		      pot_list[col][pot_list_length[col]] =
+			(int *)malloc(2 * sizeof(int));
+		      pot_list[col][pot_list_length[col]][0] = i;
+		      pot_list[col][pot_list_length[col]][1] = k;
+		      pot_list_length[col]++;
+		    }
 #endif
 
 		  } else {	/* format == 4 ! */
@@ -611,7 +611,11 @@ void read_config(char *filename)
 
 #ifdef APOT
 
-/* recalculate the slots of the atoms for tabulated potential */
+/*******************************************************************************
+ *
+ * recalculate the slots of the atoms for tabulated potential 
+ *
+ ******************************************************************************/
 
 void new_slots(int a1)
 {

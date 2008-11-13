@@ -1,3 +1,11 @@
+CVS Version 20081113
+
++ removed precomputed power-tables
++ completely rewritten the smooth-cutoff option (now beta stage)
++ imdpot is now optional and no longer mandatory
++ new parameter "plotmin", the plotting potential and imd potential will
+  begin at this point (works only for APOT)
+
 Changes in potfit20081104
 
 Bugfix:
@@ -13,12 +21,12 @@ Enhancement:
 + Better output in cases of short distance errors
 + Separate optimisation potential from calculation potential
 + EAM potentials: Implementation of gauge constraints with NORESC compilation
-  option redone. 
+  option redone.
 + Improved output during optimisation.
 + vasp2force support for multiple MD steps greatly improved.
 + Reorder potentials with pottrans.
 
 New Features:
 
-+ Analytic pair potentials (alpha). 
++ Analytic pair potentials (alpha).
 + Awk scripts for potential generation, combination, ...

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.53 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.54 $
+* $Date: 2008/11/13 08:32:21 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@
 #define REAL MPI_DOUBLE
 #endif /* MPI */
 #define NRANSI
-#define MAXNEIGH 290
+#define MAXNEIGH 400
 #ifdef EAM
 
 #define DUMMY_WEIGHT 100.
@@ -129,14 +129,13 @@ typedef struct {
   char **names;			/* name of analytic potentials */
   char ***param_name;		/* name of parameter */
   real **values;		/* parameter values for analytic potentials */
-//  real **is_pow;		/* is this parameter a power? */
   real *begin;			/* starting position of potential */
   real *end;			/* end position of potential = cutoff radius */
   real **pmin;			/* minimum values for parameters */
   real **pmax;			/* maximum values for parameters */
   int  *idxpot;			/* indirect index for potentials */
   int  *idxparam;		/* indirect index for potential parameters */
-  fvalue_pointer *fvalue;	/* functions pointers for analytic potentials */
+  fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
 #endif
 
@@ -196,6 +195,7 @@ EXTERN int firstconf INIT(0);
 EXTERN int firstatom INIT(0);
 EXTERN real pi INIT(0.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
+EXTERN int writeimd INIT(0);
 EXTERN real anneal_temp INIT(1.);
 EXTERN int seed INIT(123456);	/* seed for RNG */
 EXTERN int fcalls INIT(0);
@@ -240,9 +240,7 @@ EXTERN pot_table_t calc_pot;	/* the potential table used */
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
 EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
 EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
-//EXTERN real *power_value INIT(NULL);
-//EXTERN real *power_index INIT(NULL);
-//EXTERN int *power_index_pot INIT(NULL);
+EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 #endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
@@ -365,14 +363,10 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 void  apot_validate_functions(apot_table_t *);
-//real  apot_pow(real, real);
-//int   apot_set_pow(apot_table_t *);
-//void  apot_pow_update(real *);
 void  new_slots(int);		/* new slots for adjustable cutoff */
 
 real  smooth(void (*function) (real, real *, real *),
 	     real, real *, real, real, real *);
-
 
 #ifdef MPI
 void  potsync_apot();
