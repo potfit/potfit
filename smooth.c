@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2008/11/13 08:32:21 $
+* $Revision: 1.5 $
+* $Date: 2008/11/13 10:13:51 $
 *****************************************************************/
 
 #ifdef APOT
@@ -227,6 +227,13 @@ real smooth(void (*function) (real, real *, real *),
     c = f + a * x0 * x0 - g * x0;
     x1 = x0 - g / (2 * a);
 
+    if (x1 > 1.75 * xmax) {
+      params[0] = x;
+      params[1] = 0;
+      params[2] = 0;
+      params[3] = 0;
+      return x;
+    }
     params[0] = x1;
     params[1] = a;
     params[2] = b;
@@ -237,7 +244,7 @@ real smooth(void (*function) (real, real *, real *),
     params[1] = 0;
     params[2] = 0;
     params[3] = 0;
-    return 0;
+    return x;
   }
 }
 
