@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.50 $
-* $Date: 2008/11/13 08:32:20 $
+* $Revision: 1.51 $
+* $Date: 2008/11/17 14:18:27 $
 *****************************************************************/
 
 #ifdef APOT
@@ -1712,7 +1712,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     for (i = 0; i < apt->number; i++)
       fprintf(outfile, " %d", invar_pot[i]);
   }
-  fprintf(outfile, "\n#E\n");
+  fprintf(outfile, "\n#E\n\n");
 
   /* write data */
   for (i = 0; i < apt->number; i++) {

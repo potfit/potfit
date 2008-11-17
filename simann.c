@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.28 $
-* $Date: 2008/11/13 08:32:21 $
+* $Revision: 1.29 $
+* $Date: 2008/11/17 14:18:27 $
 *****************************************************************/
 
 #include <math.h>
@@ -71,8 +71,8 @@ void randomize_parameter(int n, real *xi, real *v)
     temp = xi[idx[n]];
     rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
     /* TODO check this properly */
-    if (v[n] > (max - min))
-      v[n] = max - min;
+/*     if (v[n] > (max - min)) */
+/*       v[n] = max - min; */
     temp += (rand * v[n]);
     if (temp >= min && temp <= max)
       done = 1;

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.54 $
-* $Date: 2008/11/13 08:32:21 $
+* $Revision: 1.55 $
+* $Date: 2008/11/17 14:18:27 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -127,7 +127,7 @@ typedef struct {
   int   total_par;		/* total number of parameters for all potentials */
   int  *n_par;			/* number of parameters for analytic potential */
   char **names;			/* name of analytic potentials */
-  char ***param_name;		/* name of parameter */
+  char ***param_name;		/* name of parameters */
   real **values;		/* parameter values for analytic potentials */
   real *begin;			/* starting position of potential */
   real *end;			/* end position of potential = cutoff radius */
@@ -175,7 +175,7 @@ EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int *invar_pot INIT(NULL);
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
-EXTERN int do_smooth INIT(0);	/* smooth analytic potential at co? */
+EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
 EXTERN int *smooth_pot INIT(NULL);
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
@@ -363,7 +363,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 void  apot_validate_functions(apot_table_t *);
-void  new_slots(int);		/* new slots for adjustable cutoff */
+void  new_slots(int);		/* new slots for smooth cutoff */
 
 real  smooth(void (*function) (real, real *, real *),
 	     real, real *, real, real, real *);

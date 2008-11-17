@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.22 $
-*  $Date: 2008/11/13 08:32:20 $
+*  $Revision: 1.23 $
+*  $Date: 2008/11/17 14:18:27 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -223,10 +223,12 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "imdpotsteps") == 0) {
       getparam("imdpotsteps", &imdpotsteps, PARAM_INT, 1, 1);
     }
+#ifdef APOT
     /* minimum for plotfile */
     else if (strcasecmp(token, "plotmin") == 0) {
       getparam("plotmin", &plotmin, PARAM_DOUBLE, 1, 1);
     }
+#endif
     /* Energy Weight */
     else if (strcasecmp(token, "extend") == 0) {
       getparam("extend", &extend, PARAM_DOUBLE, 1, 1);
