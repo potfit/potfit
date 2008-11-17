@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.51 $
-* $Date: 2008/11/17 14:18:27 $
+* $Revision: 1.52 $
+* $Date: 2008/11/17 14:46:57 $
 *****************************************************************/
 
 #ifdef APOT
@@ -482,8 +482,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   pt->xcoord = (real *)malloc(pt->len * sizeof(real));
   pt->d2tab = (real *)malloc(pt->len * sizeof(real));
   pt->idx = (int *)malloc(pt->len * sizeof(int));
-  apt->idxpot = (int *)malloc(apt->number * sizeof(int));
-  apt->idxparam = (int *)malloc(apt->number * sizeof(int));
+  apt->idxpot = (int *)malloc(apt->total_par * sizeof(int));
+  apt->idxparam = (int *)malloc(apt->total_par * sizeof(int));
   if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab)
       || (NULL == pt->xcoord) || (apt->idxpot == NULL)
       || (apt->idxparam == NULL)) {
