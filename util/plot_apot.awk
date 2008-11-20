@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.1 $
-# $Date: 2008/11/20 10:06:51 $
+# $Revision: 1.2 $
+# $Date: 2008/11/20 10:24:45 $
 ####################################################################
 #
 # Usage: plot_pot.awk potfit_apot.pot
@@ -50,11 +50,11 @@
     exit 2;
   }
   total_pots=$3;
-  if (int(total_pots)!=total_pots) { 
+  if (int(total_pots)!=total_pots) {
     printf "ERROR - incorrect parameter file " ARGV[ARGIND]  ;
     exit 2;
   }
-  while (substr($0,1,1)!="#") getline; 
+  while (substr($0,1,1)!="#") getline;
   maxdist = 0;
   for (i=1;i<=total_pots;i++){
   while (substr($0,1,4)!="type") getline;
@@ -70,7 +70,7 @@
 	getline;
 	 for (j=1;j<=n_param[i];j++) {
 		params[i "," j ] = $2;
-		getline	
+		getline
 		 }
  }
  nextfile;
@@ -87,4 +87,3 @@ END {
 			print ",";
 	}
 }
-  
