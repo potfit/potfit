@@ -1,9 +1,12 @@
-CVS Version 20081113
+CVS Version 20081126
 
-+ removed precomputed power-tables
-+ completely rewritten the smooth-cutoff option (now beta stage)
++ Added an awk script to convert apot potentials to gnuplot format
++ A new validate function to check the generated potentials has
+  been implemented
++ Removed precomputed power-tables
++ Completely rewritten the smooth-cutoff option (now beta stage)
 + imdpot is now optional and no longer mandatory
-+ new parameter "plotmin", the plotting potential and imd potential will
++ New parameter "plotmin", the plotting potential and imd potential will
   begin at this point (works only for APOT)
 
 Changes in potfit20081104

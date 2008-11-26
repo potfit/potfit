@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.55 $
-* $Date: 2008/11/17 14:18:27 $
+* $Revision: 1.56 $
+* $Date: 2008/11/26 08:58:22 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@
 #define REAL MPI_DOUBLE
 #endif /* MPI */
 #define NRANSI
-#define MAXNEIGH 400
+#define MAXNEIGH 900
 #ifdef EAM
 
 #define DUMMY_WEIGHT 100.
@@ -357,12 +357,12 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 #ifdef APOT
 
 #define APOT_STEPS 1000		/* number of sampling points for analytic pot */
-#define CUTOFF_MARGIN 1.25	/* number to multiply cutoff radius with */
+#define CUTOFF_MARGIN 1.4	/* number to multiply cutoff radius with */
 #define APOT_PUNISH 10e10	/* punishment for out of bounds */
 
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
-void  apot_validate_functions(apot_table_t *);
+int   apot_validate(int, real);
 void  new_slots(int);		/* new slots for smooth cutoff */
 
 real  smooth(void (*function) (real, real *, real *),

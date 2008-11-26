@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2008/11/13 08:32:20 $
+* $Revision: 1.7 $
+* $Date: 2008/11/26 08:58:22 $
 *****************************************************************/
 
 #ifdef APOT
@@ -173,9 +173,32 @@ void newpot_value(real r, real *p, real *f)
 *
 ******************************************************************************/
 
-void apot_validate_functions(apot_table_t *apt)
+int apot_validate(int param_index, real new_val)
 {
-/* 	 TODO check if given function is valid */
+  printf("entering validate\n");
+
+  int   pot_index = apot_table.idxpot[param_index];
+  real *par, x, dx;
+
+  par = apot_table.values[pot_index];
+  *(par + param_index) = new_val;
+
+
+  apot_table.fvalue[pot_index] (apot_table.begin[pot_index] * .8 + 10e-4, par,
+				&x);
+  apot_table.fvalue[pot_index] (apot_table.begin[pot_index] * .8 - 10e-4, par,
+				&dx);
+  dx = (x - dx) / 2 / 10e-4;
+  apot_table.fvalue[pot_index] (apot_table.begin[pot_index] * .8, par, &x);
+
+
+  if (!((x > 0) && (dx < 0))) {
+    printf("validate failed\n");
+/* 	  return 0; */
+  }
+
+  printf("leaving validate\n");
+  return 1;
 }
 
 #endif

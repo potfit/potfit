@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2008/11/13 10:13:51 $
+* $Revision: 1.6 $
+* $Date: 2008/11/26 08:58:22 $
 *****************************************************************/
 
 #ifdef APOT
@@ -166,6 +166,35 @@ int find_root(void (*function) (real, real *, real *),
 
 /******************************************************************************
 *
+* fit a parabola to the given potential
+*
+******************************************************************************/
+
+int fit_parab(void (*function) (real, real *, real *), real x, real *p,
+	      real *par)
+{
+  real  f, g;
+  real  temp;
+
+  function(x, p, &f);
+  function(x + 1e-6, p, &temp);
+  function(x - 1e-6, p, &g);
+
+  g = (temp - g) / 2e-6;
+
+  if (f * g > 0)
+    return 0;
+
+  par[1] = g * g / (4 * f);
+  par[2] = g - 2 * par[1] * x;
+  par[3] = f + par[1] * x * x - g * x;
+  par[0] = x - g / (2 * par[1]);
+
+  return 1;
+}
+
+/******************************************************************************
+*
 * function for smooth cutoff radius
 *
 ******************************************************************************/
@@ -175,7 +204,7 @@ real smooth(void (*function) (real, real *, real *),
 {
   real  dist = 0, f, g, temp;
   real  a, b, c, x0 = 0, x1;
-  int   i, nroot = 0;
+  int   i, nroot = 0, done = 0;
   char  msg[255];
   static real *roots;
 
@@ -192,52 +221,33 @@ real smooth(void (*function) (real, real *, real *),
       roots[0] = temp;
     }
   }
+
   if (nroot != 0) {
     for (i = 0; i < nroot; i++) {
-      if (roots[i] < xmin && roots[i] > xmax && dist == 0) {
+      if (done)
+	break;
+      if (roots[i] > xmin && roots[i] < xmax && dist == 0) {
 	x0 = roots[i] * 0.95;
-      } else {
+      } else if (roots[i] > xmin && roots[i] < xmax && dist != 0) {
 	x0 = roots[i] - dist;
+      } else {
+	x0 = 0;
       }
 
-      function(x0, p, &f);
-      function(x0 + 1e-6, p, &temp);
-      function(x0 - 1e-6, p, &g);
-
-      g = (temp - g) / 2e-6;
-
-      if (f * g < 0)
-	break;
-      x0 = 0;
+      if (x0 != 0 && fit_parab(function, x0, p, params)
+	  && params[0] < (xmax / 1.2 * CUTOFF_MARGIN) && params[0] > xmin)
+	done = 1;
+      else
+	x0 = 0;
     }
   } else {
     x0 = x * 0.95;
-    function(x0, p, &f);
-    function(x0 + 1e-6, p, &temp);
-    function(x0 - 1e-6, p, &g);
-
-    g = (temp - g) / 2e-6;
-    if (f * g > 0)
+    if (!(x0 != 0 && fit_parab(function, x0, p, params)
+	  && params[0] < (xmax / 1.2 * CUTOFF_MARGIN) && params[0] > xmin))
       x0 = 0;
   }
 
   if (x0 != 0) {
-    a = g * g / (4 * f);
-    b = g - 2 * a * x0;
-    c = f + a * x0 * x0 - g * x0;
-    x1 = x0 - g / (2 * a);
-
-    if (x1 > 1.75 * xmax) {
-      params[0] = x;
-      params[1] = 0;
-      params[2] = 0;
-      params[3] = 0;
-      return x;
-    }
-    params[0] = x1;
-    params[1] = a;
-    params[2] = b;
-    params[3] = c;
     return x0;
   } else {
     params[0] = x;

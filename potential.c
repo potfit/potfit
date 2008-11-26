@@ -1,6 +1,6 @@
 /****************************************************************
-* 
-*  potential.c: Routines for reading, writing and interpolating a 
+*
+*  potential.c: Routines for reading, writing and interpolating a
 *      potential table in format 3 (potfit format).
 *
 *****************************************************************/
@@ -11,7 +11,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.52 $
-* $Date: 2008/11/17 14:46:57 $
+* $Revision: 1.53 $
+* $Date: 2008/11/26 08:58:22 $
 *****************************************************************/
 
 #ifdef APOT
@@ -1199,9 +1199,8 @@ void update_calc_table(real *xi_opt, real *xi_calc)
     } else if (!invar_pot[i] && smooth_pot[i]) {
       k = i * APOT_STEPS + (i + 1) * 2;
       l = i * (i + 1) / 2;
-      temp = rcut[l] - (rcut[l] - rmin[l]) / 2;
-      x0 = smooth(apot_table.fvalue[i], rcut[l], val, temp,
-		  rcut[l] * CUTOFF_MARGIN, params);
+      x0 = smooth(apot_table.fvalue[i], rcut[l], val, rcut[l] * 0.8,
+		  rcut[l] * 1.2, params);
       if (params[0] != calc_pot.end[i]) {
 	calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
 	calc_pot.end[i] = params[0];
@@ -1926,10 +1925,14 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       /* Extrapolation possible  */
 #ifdef APOT
       r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      x0 =
+	smooth(apot_table.fvalue[col1], rcut[col2], apot_table.values[col1],
+	       rmin[col2], rcut[col2] * CUTOFF_MARGIN, params);
+      r2end[col2] = SQR(params[0]);
 #else
       r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
-#endif
       r2end[col2] = SQR(pt->end[col1]);
+#endif
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n",
 	      r2begin[col2], r2end[col2], r2step[col2]);
@@ -1971,21 +1974,30 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     }
   }
 #else
-  for (i = 0; i < apot_table.number; i++) {
-    r2 = r2begin[i];
-    j = i * (i + 1) / 2;
-    x0 = smooth(apot_table.fvalue[i], rcut[j], apot_table.values[i], rmin[j],
-		rcut[j] * CUTOFF_MARGIN, params);
-    for (k = 0; k < imdpotsteps; k++) {
-      if (sqrt(r2) < x0)
-	apot_table.fvalue[i] (sqrt(r2), apot_table.values[i], &temp);
-      else
-	temp = params[1] * r2 + params[2] * sqrt(r2) + params[3];
-      fprintf(outfile, "%.16e\n", temp);
-      r2 += r2step[i];
+  m = 0;
+  for (i = 0; i < ntypes; i++) {
+    m += i;
+    m2 = 0;
+    for (j = 0; j < ntypes; j++) {
+      m2 += j;
+      col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col2 = i * ntypes + j;
+      r2 = r2begin[col2];
+      x0 =
+	smooth(apot_table.fvalue[col1], rcut[col2], apot_table.values[col1],
+	       rmin[col2], rcut[col2] * CUTOFF_MARGIN, params);
+      for (k = 0; k < imdpotsteps; k++) {
+	if (sqrt(r2) < x0)
+	  apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
+	else
+	  temp = params[1] * r2 + params[2] * sqrt(r2) + params[3];
+	fprintf(outfile, "%.16e\n", temp);
+	r2 += r2step[col2];
+      }
+      fprintf(outfile, "%.16e", 0.0);
+      if (!((i == (ntypes - 1)) && (j == (ntypes - 1))))
+	fprintf(outfile, "\n\n\n");
     }
-    fprintf(outfile, "%.16e\n", 0.0);
-    fprintf(outfile, "\n\n");
   }
 #endif
   fclose(outfile);
@@ -2182,10 +2194,10 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #else
   for (i = 0; i < apot_table.number; i++) {
     r = (plotmin == 0 ? 0.1 : plotmin);
-    r_step = (pt->end[k] - r) / (NPLOT - 1);
     j = i * (i + 1) / 2;
     x0 = smooth(apot_table.fvalue[i], rcut[j], apot_table.values[i], rmin[j],
 		rcut[j] * CUTOFF_MARGIN, params);
+    r_step = (params[0] - r) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
       if (r < x0)
 	apot_table.fvalue[i] (r, apot_table.values[i], &temp);
@@ -2194,7 +2206,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       fprintf(outfile, "%e %e\n", r, temp);
       r += r_step;
     }
-    fprintf(outfile, "\n\n");
+    if (i != (apot_table.number - 1))
+      fprintf(outfile, "\n\n");
   }
 
 #endif

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.29 $
-* $Date: 2008/11/17 14:18:27 $
+* $Revision: 1.30 $
+* $Date: 2008/11/26 08:58:22 $
 *****************************************************************/
 
 #include <math.h>
@@ -70,12 +70,12 @@ void randomize_parameter(int n, real *xi, real *v)
   do {
     temp = xi[idx[n]];
     rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
-    /* TODO check this properly */
-/*     if (v[n] > (max - min)) */
-/*       v[n] = max - min; */
+    /* this is needed to make the algorithm work with a defined range */
+    if (v[n] > (max - min))
+      v[n] = max - min;
     temp += (rand * v[n]);
-    if (temp >= min && temp <= max)
-      done = 1;
+    if (temp >= min && temp <= max);	// && apot_validate(n,temp))
+    done = 1;
   } while (!done);
   xi[idx[n]] = temp;
 }
