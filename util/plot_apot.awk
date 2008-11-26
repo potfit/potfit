@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.2 $
-# $Date: 2008/11/20 10:24:45 $
+# $Revision: 1.3 $
+# $Date: 2008/11/26 14:18:56 $
 ####################################################################
 #
 # Usage: plot_pot.awk potfit_apot.pot
@@ -43,47 +43,59 @@
 #
 ####################################################################
 
+BEGIN {
+	count=0;
+	maxdist=0;
+	ORS="";
+}
+
 {
-  while (substr($0,2,1)!="F") getline;
-  if ($2 != 0) {
-    print "Error - wrong potential format of " ARGV[ARGIND]  ;
-    exit 2;
-  }
-  total_pots=$3;
-  if (int(total_pots)!=total_pots) {
-    printf "ERROR - incorrect parameter file " ARGV[ARGIND]  ;
-    exit 2;
-  }
-  while (substr($0,1,1)!="#") getline;
-  maxdist = 0;
-  for (i=1;i<=total_pots;i++){
-  while (substr($0,1,4)!="type") getline;
-	 pot_name[i] = $2;
-	 if ((x=index(pot_name[i],"_"))>0)
-		 pot_name[i] = substr(pot_name[i],1,x-1);
-	 if (pot_name[i]=="eopp")
-		 n_param[i]=6;
-	 getline;
-	if ($2>maxdist)
-		maxdist=$2;
-	getline;
-	getline;
-	 for (j=1;j<=n_param[i];j++) {
-		params[i "," j ] = $2;
-		getline
-		 }
- }
- nextfile;
+	for (a=0;a<(ARGC-1);a++) {
+		while (substr($0,2,1)!="F") getline;
+		if ($2 != 0) {
+			print "Error - wrong potential format of " ARGV[ARGIND]  ;
+			exit 2;
+		}
+		total_pots=$3;
+		if (int(total_pots)!=total_pots) {
+			print "ERROR - incorrect parameter file " ARGV[ARGIND]  ;
+			exit 2;
+		}
+		for (i=count;i<(count+total_pots);i++){
+			while (substr($0,1,4)!="type") getline;
+			pot_name[i] = $2;
+			if ((x=index(pot_name[i],"_"))>0)
+				pot_name[i] = substr(pot_name[i],1,x-1);
+			if (pot_name[i]=="eopp")
+				n_param[i]=6;
+			getline;
+			if ($2>maxdist)
+				maxdist=$2;
+			getline;
+			if (substr($0,1,1)=="#") getline;
+			for (l=1;l<=n_param[i];l++) {
+				params[i "," l ] = $2;
+				getline
+			}
+		}
+		count = count + total_pots;
+	}
+	nextfile;
 }
 
 END {
-	print "set grid;";
-	print "pl [0:" maxdist*1.1 "][:3]";
-	for (i=1;i<=total_pots;i++) {
+	print "reset;" > "plot";
+	print "set grid;" > "plot";
+	print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;" > "plot";
+	print "set label \"cutoff\" at " maxdist*0.95 ",0.23;" > "plot";
+	print "pl [0.1:" maxdist*1.1 "][-0.5:1.5]" > "plot";
+	for (i=0;i<count;i++) {
 		if (pot_name[i] == "eopp") {
-		print params[i","1] "/x**" params[i","2] "+" params[i","3] "/x**" params[i","4] "*cos(" params[i","5] "*x+" params[i","6] ") w l"
+			printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
 		}
-		if (i!=total_pots)
-			print ",";
+		if (i!=(count-1))
+			print "," > "plot";
 	}
+	print ";" > "plot";
+	system("gnuplot -persist plot");
 }
