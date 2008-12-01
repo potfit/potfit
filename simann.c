@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.30 $
-* $Date: 2008/11/26 08:58:22 $
+* $Revision: 1.31 $
+* $Date: 2008/12/01 10:26:36 $
 *****************************************************************/
 
 #include <math.h>
@@ -41,7 +41,11 @@
 #define NEPS 4
 #define NSTEP 20
 #define STEPVAR 2.0
+#ifndef APOT
 #define NTEMP (3*ndim)
+#else
+#define NTEMP ndim
+#endif
 #define TEMPVAR 0.85
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(SQRREAL(a))/2.)))
@@ -70,11 +74,11 @@ void randomize_parameter(int n, real *xi, real *v)
   do {
     temp = xi[idx[n]];
     rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
-    /* this is needed to make the algorithm work with a defined range */
+    /* this is needed to make the algorithm work with a predefined range */
     if (v[n] > (max - min))
       v[n] = max - min;
     temp += (rand * v[n]);
-    if (temp >= min && temp <= max);	// && apot_validate(n,temp))
+    if (temp >= min && temp <= max && apot_validate(n,temp))
     done = 1;
   } while (!done);
   xi[idx[n]] = temp;
@@ -225,7 +229,11 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-		write_pot_table(&apot_table, tempfile);
+		for (n = 0; n < ndim; n++)
+		  apot_table.values[apot_table.idxpot[n]][apot_table.
+							  idxparam[n]] =
+		    xopt[idx[n]];
+	      write_pot_table(&apot_table, tempfile);
 #endif
 	    }
 	  }
@@ -238,11 +246,6 @@ void anneal(real *xi)
 	  }
 	}
       }
-#ifdef APOT
-      for (n = 0; n < ndim; n++)
-	apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
-	  xopt[idx[n]];
-#endif
 
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {

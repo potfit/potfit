@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.53 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.54 $
+* $Date: 2008/12/01 10:26:34 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -110,7 +110,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
     if ((format == 0 || format > 4) && myid == 0)
-      update_calc_table(xi_opt, xi);
+      update_calc_table(xi_opt, xi, 0);
 
 #ifdef MPI
     /* exchange potential and flag value */

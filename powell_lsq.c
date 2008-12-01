@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2008/10/08 09:19:34 $
+* $Revision: 1.34 $
+* $Date: 2008/12/01 10:26:36 $
 *****************************************************************/
 
 /******************************************************************************
@@ -152,6 +152,9 @@ void powell_lsq(real *xi)
 #ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
 #else
+	for (n = 0; n < ndim; n++)
+	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
+	    xi[idx[n]];
 	write_pot_table(&apot_table, tempfile);
 #endif
 	sprintf(errmsg,

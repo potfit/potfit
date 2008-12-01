@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.56 $
-* $Date: 2008/11/26 08:58:22 $
+* $Revision: 1.57 $
+* $Date: 2008/12/01 10:26:36 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@
 #define REAL MPI_DOUBLE
 #endif /* MPI */
 #define NRANSI
-#define MAXNEIGH 900
+#define MAXNEIGH 400
 #ifdef EAM
 
 #define DUMMY_WEIGHT 100.
@@ -241,6 +241,7 @@ EXTERN apot_table_t apot_table;	/* potential in analytic form */
 EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
 EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
 EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
+EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
 #endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
@@ -295,7 +296,11 @@ void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 void  read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
+#ifdef APOT
+void  update_calc_table(real *xi_opt, real *xi_calc, int);
+#else
 void  update_calc_table(real *xi_opt, real *xi_calc);
+#endif
 void  write_pot_table3(pot_table_t *, char *);
 void  write_pot_table4(pot_table_t *, char *);
 void  write_pot_table5(pot_table_t *, char *);

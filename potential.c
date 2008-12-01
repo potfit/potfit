@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.53 $
-* $Date: 2008/11/26 08:58:22 $
+* $Revision: 1.54 $
+* $Date: 2008/12/01 10:26:35 $
 *****************************************************************/
 
 #ifdef APOT
@@ -322,7 +322,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   char  buffer[255];
   char  name[255];
   char *token;
-  real *val;
+  real *val, *list;
 
   for (i = 0; i < apt->number; i++) {
     /* read type */
@@ -479,6 +479,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   pt->len = pt->first[apt->number - 1] + apt->n_par[apt->number - 1];
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
+  calc_list = (real *)malloc(pt->len * sizeof(real));
   pt->xcoord = (real *)malloc(pt->len * sizeof(real));
   pt->d2tab = (real *)malloc(pt->len * sizeof(real));
   pt->idx = (int *)malloc(pt->len * sizeof(int));
@@ -493,12 +494,16 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   k = 0;
   l = 0;
   val = pt->table;
+  list = calc_list;
   for (i = 0; i < apt->number; i++) {
     val += 2;
+    list += 2;
     l += 2;
     for (j = 0; j < apt->n_par[i]; j++) {
       *val = apt->values[i][j];
+      *list = apt->values[i][j];
       val++;
+      list++;
       if (!invar_pot[i]) {
 	pt->idx[k] = l++;
 	apt->idxpot[k] = i;
@@ -1048,7 +1053,7 @@ void read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
 #endif
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
-  update_calc_table(pt->table, calc_pot.table);
+  update_calc_table(pt->table, calc_pot.table, 1);
 }
 
 /*****************************************************************************
@@ -1170,13 +1175,13 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
   }
 }
 
-void update_calc_table(real *xi_opt, real *xi_calc)
+void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
-  int   i, j, k, l, size, index;
+  int   i, j, k, l, size, change;
   int  *sp;
   real  r, x0, temp;
   real *val, *ord;
-  static real *params;
+  static real *params, *list;
 
   switch (format) {
       case 3:			/* fall through */
@@ -1190,41 +1195,52 @@ void update_calc_table(real *xi_opt, real *xi_calc)
   if (do_smooth && params == NULL)
     params = (real *)malloc(4 * sizeof(real));
   val = xi_opt + 2;
+  list = calc_list + 2;
   for (i = 0; i < calc_pot.ncols; i++) {
-    if (!invar_pot[i] && !smooth_pot[i]) {
-      for (j = 0; j < APOT_STEPS; j++) {
-	k = i * APOT_STEPS + (i + 1) * 2 + j;
-	apot_table.fvalue[i] (calc_pot.xcoord[k], val, xi_calc + k);
+    change = 0;
+    for (j = 0; j < apot_table.n_par[i]; j++)
+      if (list[j] != val[j])
+      {
+	change = 1;
+	list[j]=val[j];
       }
-    } else if (!invar_pot[i] && smooth_pot[i]) {
-      k = i * APOT_STEPS + (i + 1) * 2;
-      l = i * (i + 1) / 2;
-      x0 = smooth(apot_table.fvalue[i], rcut[l], val, rcut[l] * 0.8,
-		  rcut[l] * 1.2, params);
-      if (params[0] != calc_pot.end[i]) {
-	calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
-	calc_pot.end[i] = params[0];
-	calc_pot.invstep[i] = 1. / calc_pot.step[i];
-	new_slots(i);
-      }
-      if (x0 == 0) {
+    if (change || do_all) {
+      if (!invar_pot[i] && !smooth_pot[i]) {
 	for (j = 0; j < APOT_STEPS; j++) {
-	  temp = j * calc_pot.step[i] + rmin[l];
-	  apot_table.fvalue[i] (temp, val, xi_calc + k + j);
+	  k = i * APOT_STEPS + (i + 1) * 2 + j;
+	  apot_table.fvalue[i] (calc_pot.xcoord[k], val, xi_calc + k);
 	}
-      } else {
-	for (j = 0; j < APOT_STEPS; j++) {
-	  temp = j * calc_pot.step[i] + rmin[l];
-	  if (temp <= x0)
+      } else if (!invar_pot[i] && smooth_pot[i]) {
+	k = i * APOT_STEPS + (i + 1) * 2;
+	l = i * (i + 1) / 2;
+	x0 = smooth(apot_table.fvalue[i], rcut[l], val, rcut[l] * 0.8,
+		    rcut[l] * 1.2, params);
+	if (fabs(params[0] - calc_pot.end[i])>10e-3) {
+	  calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
+	  calc_pot.end[i] = params[0];
+	  calc_pot.invstep[i] = 1. / calc_pot.step[i];
+	  new_slots(i);
+	}
+	if (x0 == 0) {
+	  for (j = 0; j < APOT_STEPS; j++) {
+	    temp = j * calc_pot.step[i] + rmin[l];
 	    apot_table.fvalue[i] (temp, val, xi_calc + k + j);
-	  else
-	    *(xi_calc + k + j) =
-	      params[1] * temp * temp + temp * params[2] + params[3];
-	  calc_pot.xcoord[k + j] = calc_pot.begin[i] + j * calc_pot.step[i];
+	  }
+	} else {
+	  for (j = 0; j < APOT_STEPS; j++) {
+	    temp = j * calc_pot.step[i] + rmin[l];
+	    if (temp <= x0)
+	      apot_table.fvalue[i] (temp, val, xi_calc + k + j);
+	    else
+	      *(xi_calc + k + j) =
+		params[1] * temp * temp + temp * params[2] + params[3];
+	    calc_pot.xcoord[k + j] = calc_pot.begin[i] + j * calc_pot.step[i];
+	  }
 	}
       }
     }
     val += apot_table.n_par[i] + 2;
+    list += apot_table.n_par[i] + 2;
   }
 #else
   error("This potential is not yet implemented");

@@ -1,5 +1,14 @@
-CVS Version 20081126
+CVS-20081201
++ new_slots should now be a lot faster as we only update if there actually
+  is a new parameter or a new cutoff radius
++ Improved awk script to read an arbitrary number of potential files
++ some minor tweaks in the SA-algorithm, mainly for speed purposes
++ fixed bug with temporary potential files, now the current potential
+  and not the past one is written to the tempfile
++ new variable real *calc_list that stores the parameters with which
+  the potential in the calc_table was generated from
 
+CVS-20081126
 + Added an awk script to convert apot potentials to gnuplot format
 + A new validate function to check the generated potentials has
   been implemented

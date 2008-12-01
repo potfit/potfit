@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.39 $
-* $Date: 2008/11/13 08:32:20 $
+* $Revision: 1.40 $
+* $Date: 2008/12/01 10:26:34 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -578,7 +578,7 @@ void read_config(char *filename)
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
-  update_calc_table(opt_pot.table, calc_pot.table);
+  update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif
 
   printf("Minimal Distances Matrix \n");
