@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.31 $
-* $Date: 2008/12/01 10:26:36 $
+* $Revision: 1.32 $
+* $Date: 2008/12/02 15:19:53 $
 *****************************************************************/
 
 #include <math.h>
@@ -41,11 +41,7 @@
 #define NEPS 4
 #define NSTEP 20
 #define STEPVAR 2.0
-#ifndef APOT
 #define NTEMP (3*ndim)
-#else
-#define NTEMP ndim
-#endif
 #define TEMPVAR 0.85
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(SQRREAL(a))/2.)))

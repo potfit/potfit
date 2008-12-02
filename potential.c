@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.54 $
-* $Date: 2008/12/01 10:26:35 $
+* $Revision: 1.55 $
+* $Date: 2008/12/02 15:19:53 $
 *****************************************************************/
 
 #ifdef APOT
@@ -1053,7 +1053,11 @@ void read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
 #endif
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
+#ifndef APOT
+  update_calc_table(pt->table, calc_pot.table);
+#else
   update_calc_table(pt->table, calc_pot.table, 1);
+#endif
 }
 
 /*****************************************************************************
@@ -1175,7 +1179,11 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
   }
 }
 
+#ifndef APOT
+void update_calc_table(real *xi_opt, real *xi_calc)
+#else
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
+#endif
 {
   int   i, j, k, l, size, change;
   int  *sp;
