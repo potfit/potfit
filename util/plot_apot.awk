@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.3 $
-# $Date: 2008/11/26 14:18:56 $
+# $Revision: 1.4 $
+# $Date: 2008/12/16 10:26:09 $
 ####################################################################
 #
 # Usage: plot_pot.awk potfit_apot.pot
@@ -51,7 +51,11 @@ BEGIN {
 
 {
 	for (a=0;a<(ARGC-1);a++) {
-		while (substr($0,2,1)!="F") getline;
+		if (substr($0,3,6)=="radial") {
+			dist_file = ARGV[a+1];
+		}
+		else {
+			while (substr($0,2,1)!="F") getline;
 		if ($2 != 0) {
 			print "Error - wrong potential format of " ARGV[ARGIND]  ;
 			exit 2;
@@ -68,11 +72,15 @@ BEGIN {
 				pot_name[i] = substr(pot_name[i],1,x-1);
 			if (pot_name[i]=="eopp")
 				n_param[i]=6;
+			else if (pot_name[i]=="lj")
+				n_param[i]=2;
 			getline;
-			if ($2>maxdist)
-				maxdist=$2;
 			getline;
-			if (substr($0,1,1)=="#") getline;
+			if (substr($0,1,1)=="#") {
+				if ($5>maxdist)
+					maxdist=$5;
+				getline;
+			} 
 			for (l=1;l<=n_param[i];l++) {
 				params[i "," l ] = $2;
 				getline
@@ -80,22 +88,39 @@ BEGIN {
 		}
 		count = count + total_pots;
 	}
-	nextfile;
+}
+nextfile;
 }
 
 END {
-	print "reset;" > "plot";
-	print "set grid;" > "plot";
-	print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;" > "plot";
-	print "set label \"cutoff\" at " maxdist*0.95 ",0.23;" > "plot";
-	print "pl [0.1:" maxdist*1.1 "][-0.5:1.5]" > "plot";
-	for (i=0;i<count;i++) {
-		if (pot_name[i] == "eopp") {
-			printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
+	if (count != 0) {
+		print "reset;" > "plot";
+		print "set grid;" > "plot";
+		print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;" > "plot";
+		print "set label \"cutoff\" at " maxdist*0.95 ",0.23;" > "plot";
+		print "pl [0.1:" maxdist*1.1 "][-0.4:1.2]" > "plot";
+		for (i=0;i<count;i++) {
+			if (pot_name[i] == "eopp") {
+				printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
+			} else if (pot_name[i] == "lj") {
+			printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > "plot";
 		}
 		if (i!=(count-1))
 			print "," > "plot";
 	}
+	if (dist_file != "") {
+		print "," > "plot";
+		for (i=0;i<count;i++) {
+			if (i==0)
+				print "'" dist_file "' i " i " w l t \"rad_dist pot " i "\"" > "plot";
+			else 
+				print "'' i " i " w l t \"rad_dist pot " i "\"" > "plot";
+			if (i!=(count-1))
+				print "," > "plot";
+		}
+	}
+
 	print ";" > "plot";
 	system("gnuplot -persist plot");
+}
 }
