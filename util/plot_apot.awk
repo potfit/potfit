@@ -31,15 +31,13 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.5 $
-# $Date: 2008/12/16 12:14:00 $
+# $Revision: 1.6 $
+# $Date: 2008/12/19 09:40:34 $
 ####################################################################
 #
-# Usage: plot_pot.awk potfit_apot.pot
+# Usage: plot_pot.awk pot_file_1 pot_file_2 ... pair_file
 #
 # The resulting potential is written to standard output.
-#
-# ATTENTION plot_pot.awk is PRE-ALPHA. No valdiation whatsoever!!!
 #
 ####################################################################
 
@@ -76,6 +74,8 @@ BEGIN {
 			else if (pot_name[i]=="lj")
 				n_param[i]=2;
 			getline;
+			if ($2>maxdist)
+				maxdist=$2;
 			getline;
 			if (substr($0,1,1)=="#") {
 				if ($3<mindist)
@@ -97,11 +97,11 @@ nextfile;
 
 END {
 	if (count != 0) {
-		print "reset;" > "plot";
-		print "set grid;" > "plot";
-		print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;" > "plot";
-		print "set label \"cutoff\" at " maxdist*0.95 ",0.23;" > "plot";
-		print "pl [" 0.9*mindist ":" maxdist*1.1 "][-0.3:1.1]" > "plot";
+		print "reset;\n" > "plot";
+		print "set grid;\n" > "plot";
+		print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;\n" > "plot";
+		print "set label \"cutoff\" at " maxdist*0.95 ",0.23;\n" > "plot";
+		print "pl [" 0.5*mindist ":" maxdist*1.1 "][-0.3:1.1] " > "plot";
 		for (i=0;i<count;i++) {
 			if (pot_name[i] == "eopp") {
 				printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
@@ -109,17 +109,17 @@ END {
 			printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > "plot";
 		}
 		if (i!=(count-1))
-			print "," > "plot";
+			print ", " > "plot";
 	}
 	if (dist_file != "") {
-		print "," > "plot";
+		print ", " > "plot";
 		for (i=0;i<count;i++) {
 			if (i==0)
 				print "'" dist_file "' i " i " w steps t \"rad_dist pot " i "\"" > "plot";
 			else 
 				print "'' i " i " w steps t \"rad_dist pot " i "\"" > "plot";
 			if (i!=(count-1))
-				print "," > "plot";
+				print ", " > "plot";
 		}
 	}
 
