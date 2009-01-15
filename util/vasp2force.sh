@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 # 
 #/****************************************************************
-#* $Revision: 1.9 $
-#* $Date: 2008/10/28 15:32:05 $
+#* $Revision: 1.10 $
+#* $Date: 2009/01/15 09:43:05 $
 #*****************************************************************/
 
 [ -f ../single_atom_energies ] || { 
@@ -87,6 +87,9 @@ cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" '  BEGIN {
   /VOLUME and BASIS/ {
     for (i=1;i<=4;i++) getline;
     getline boxx; getline boxy; getline boxz;
+    gsub("-"," -",boxx);
+    gsub("-"," -",boxy);
+    gsub("-"," -",boxz);
     split(boxx,boxx_v);
     split(boxy,boxy_v);
     split(boxz,boxz_v);
@@ -100,9 +103,12 @@ cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" '  BEGIN {
      if (count in pr_flag) {
        print "#N",a[ntypes],1; #flag indicates whether to use forces or not
        print "## force file generated from directory " wdir;
-       print "#X",boxx_v[1]*scale " " boxx_v[2]*scale " " boxx_v[3]*scale; 
-       print "#Y",boxy_v[1]*scale " " boxy_v[2]*scale " " boxy_v[3]*scale; 
-       print "#Z",boxz_v[1]*scale " " boxz_v[2]*scale " " boxz_v[3]*scale; 
+       printf "#X %13.8f %13.8f %13.8f\n",boxx_v[1]*scale,\
+                   boxx_v[2]*scale,boxx_v[3]*scale;  
+       printf "#Y %13.8f %13.8f %13.8f\n",boxy_v[1]*scale,\
+                   boxy_v[2]*scale,boxy_v[3]*scale;  
+       printf "#Z %13.8f %13.8f %13.8f\n",boxz_v[1]*scale,\
+                   boxz_v[2]*scale,boxz_v[3]*scale;  
        printf("#E %.10f\n",energy) ;
        if ( 1 in stress ) 
          print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];
