@@ -1,22 +1,36 @@
+CVS-20090116
++ [APOT] reworked the validate part
++ [APOT] enabled MPI support for apot, not tested yet, probably broken by chemical potentials
++ [APOT] added chemical potentials to the fit parameters
++ added na_typ variable, that holds the number of atoms per atomtype
++ write force data to file if endforce is given in parameter file
++ added option to write radial pair distances
++ [APOT] cp_# parameters in potential files are now ignored if disable_cp=1
++ [APOT] apot now displays rcut as cutoff and no longer the end of the potential
++ [APOT] added radial distribution to awk script
++ [APOT] fix bug where potential output was always smoothed
++ added rms errors for forces, energies, stress
++ [APOT] the awk script now accepts radial distributions as well
+
 CVS-20081201
-+ new_slots should now be a lot faster as we only update if there actually
++ [APOT] new_slots should now be a lot faster since we only update if there actually
   is a new parameter or a new cutoff radius
-+ Improved awk script to read an arbitrary number of potential files
-+ some minor tweaks in the SA-algorithm, mainly for speed purposes
-+ fixed bug with temporary potential files, now the current potential
++ [APOT] Improved awk script to read an arbitrary number of potential files
++ [APOT] some minor tweaks in the SA-algorithm, mainly for speed purposes
++ [APOT] fixed bug with temporary potential files, now the current potential
   and not the past one is written to the tempfile
-+ new variable real *calc_list that stores the parameters with which
++ new variable real *calc_list that stores the parameters
   the potential in the calc_table was generated from
 
 CVS-20081126
-+ Added an awk script to convert apot potentials to gnuplot format
-+ A new validate function to check the generated potentials has
++ [APOT] Added an awk script to convert apot potentials to gnuplot format
++ [APOT] A new validate function to check the generated potentials has
   been implemented
-+ Removed precomputed power-tables
-+ Completely rewritten the smooth-cutoff option (now beta stage)
++ [APOT] Removed precomputed power-tables
++ [APOT] Completely rewritten the smooth-cutoff option (now beta stage)
 + imdpot is now optional and no longer mandatory
-+ New parameter "plotmin", the plotting potential and imd potential will
-  begin at this point (works only for APOT)
++ [APOT] New parameter "plotmin", the plotting potential and imd potential will
+  begin at this point
 
 Changes in potfit20081104
 

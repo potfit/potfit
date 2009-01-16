@@ -4,7 +4,7 @@
  *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Daniel Schopf
+*   Copyright 2002-2009 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/~imd/potfit
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.32 $
-* $Date: 2008/12/02 15:19:53 $
+* $Revision: 1.33 $
+* $Date: 2009/01/16 08:36:23 $
 *****************************************************************/
 
 #include <math.h>
@@ -53,8 +53,6 @@
 * Function to generate random parameters for analytic potentials.
 * We loop over a new random parameter until we find one inside
 * the predefined range, specified by the user.
-* This is a lot faster that throwing a point away and increase
-* the counter in the SA algorithm.
 *
 *******************************************************************************/
 
@@ -72,10 +70,10 @@ void randomize_parameter(int n, real *xi, real *v)
     rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
     /* this is needed to make the algorithm work with a predefined range */
     if (v[n] > (max - min))
-      v[n] = max - min;
+      v[n] = (max - min);
     temp += (rand * v[n]);
-    if (temp >= min && temp <= max && apot_validate(n,temp))
-    done = 1;
+    if (temp >= min && temp <= max)	// && apot_validate(n, temp))
+      done = 1;
   } while (!done);
   xi[idx[n]] = temp;
 }
@@ -229,7 +227,7 @@ void anneal(real *xi)
 		  apot_table.values[apot_table.idxpot[n]][apot_table.
 							  idxparam[n]] =
 		    xopt[idx[n]];
-	      write_pot_table(&apot_table, tempfile);
+		write_pot_table(&apot_table, tempfile);
 #endif
 	    }
 	  }

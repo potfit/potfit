@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.41 $
-# $Date: 2008/11/03 10:28:32 $
+# $Revision: 1.42 $
+# $Date: 2009/01/16 08:36:22 $
 #
 ############################################################################
 #
@@ -646,9 +646,9 @@ CFLAGS += -DAPOT
 else
 ERROR += "apot and eam are not compatible yet -- "
 endif
-ifneq (,$(findstring mpi,${MAKETARGET}))
-ERROR += "apot and mpi are not compatible yet -- "
-endif
+#ifneq (,$(findstring mpi,${MAKETARGET}))
+#ERROR += "apot and mpi are not compatible yet -- "
+#endif
 endif
 
 # Stress

@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2008 Daniel Schopf
+*   Copyright 2008-2009 Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2008/12/01 10:26:35 $
+* $Revision: 1.9 $
+* $Date: 2009/01/16 08:36:22 $
 *****************************************************************/
 
 #ifdef APOT
@@ -175,26 +175,27 @@ void newpot_value(real r, real *p, real *f)
 
 int apot_validate(int param_index, real new_val)
 {
-/*   int   pot_index = apot_table.idxpot[param_index]; */
-/*   real *par, x, dx; */
-/*  */
-/*   par = apot_table.values[pot_index]; */
-/*   *(par + param_index) = new_val; */
-/*  */
-/*  */
-/*   apot_table.fvalue[pot_index] (apot_table.begin[pot_index] * .8 + 10e-4, par, */
-/* 				&x); */
-/*   apot_table.fvalue[pot_index] (apot_table.begin[pot_index] * .8 - 10e-4, par, */
-/* 				&dx); */
-/*   dx = (x - dx) / 2 / 10e-4; */
-/*   apot_table.fvalue[pot_index] (apot_table.begin[pot_index] * .8, par, &x); */
-/*  */
-/*  */
-/*   if (!((x > 0) && (dx < 0))) { */
-/*     printf("validate failed\n"); */
-/* 	  return 0; */
-/*   } */
+  int   pot_index = apot_table.idxpot[param_index], i;
+  real  x;
 
+  if (pot_index < apot_table.number) {
+/*     if (par == NULL) */
+/*       par = (real *)malloc(apot_table.n_par[pot_index] * sizeof(real)); */
+/*     for (i = 0; i < apot_table.n_par[pot_index]; i++) */
+/*       *(par + i) = apot_table.values[pot_index][i]; */
+/*     *(par + apot_table.idxparam[param_index]) = new_val; */
+
+    /* check if potential vanishes at 3*cutoff */
+    apot_table.fvalue[pot_index] (3 * apot_table.end[pot_index],
+				  apot_table.values[pot_index], &x);
+
+    if (fabs(x) > 10e-2) {
+#ifdef DEBUG
+      printf("Validate failed\n");
+#endif
+      return 0;
+    }
+  }
   return 1;
 }
 

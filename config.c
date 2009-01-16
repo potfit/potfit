@@ -4,7 +4,7 @@
 * 
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.40 $
-* $Date: 2008/12/01 10:26:34 $
+* $Revision: 1.41 $
+* $Date: 2009/01/16 08:36:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -189,11 +189,6 @@ void read_config(char *filename)
   for (i = 0; i < ntypes * ntypes; i++)
     mindist[i] = rcut[i];
 
-/*   /\* allocate na_typ array *\/ */
-/*   na_typ = (int *)malloc(ntypes * sizeof(int)); */
-/*   if (na_typ == NULL) { */
-/*     error("Could not allocate number of atoms per type array"); */
-/*   } */
   nconf = 0;
 
   /* open file */
@@ -248,6 +243,15 @@ void read_config(char *filename)
     usestress = (int *)realloc(usestress, (nconf + 1) * sizeof(int));
     if (NULL == useforce)
       error("Cannot allocate memory for usestress");
+    na_typ = (int **)realloc(na_typ, (nconf + 2) * sizeof(int *));
+    if (NULL == na_typ)
+      error("Cannot allocate memory for na_typ");
+    na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
+    if (NULL == na_typ[nconf])
+      error("Cannot allocate memory for na_typ");
+
+    for (i = 0; i < ntypes; i++)
+      na_typ[nconf][i] = 0;
 
     inconf[nconf] = count;
     cnfstart[nconf] = natoms;
@@ -333,6 +337,7 @@ void read_config(char *filename)
       /* ++++++++++++++ */
 //      printf("Atom %d, x %f, y %f, z %f, abs %f\n", natoms+i, atom->force.x, atom->force.y, atom->force.z, atom->absforce);
       atom->conf = nconf;
+      na_typ[nconf][atom->typ] += 1;
     }
 
     /* compute the neighbor table */
@@ -382,6 +387,8 @@ void read_config(char *filename)
 		atoms[i].neigh[k].dist = dd;
 		atoms[i].n_neigh++;
 		/* Minimal distance check */
+/* 		if (mindist[ntypes*typ1+typ2]>r) */
+/* 			printf("new mindist[%d]=%f i=%d k=%d\n",ntypes*typ1+typ2,r,i,k); */
 		mindist[ntypes * typ1 + typ2] =
 		  MIN(mindist[ntypes * typ1 + typ2], r);
 
@@ -519,9 +526,6 @@ void read_config(char *filename)
 					   3*natoms are real forces, 
 					   nconf cohesive energies,
 					   6*nconf stress tensor components */
-#ifdef APOT
-  mdim += apot_table.total_par;
-#endif
 #ifdef EAM
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
   mdim += nconf;		/* nconf limiting constraints */
@@ -565,6 +569,74 @@ void read_config(char *filename)
   }
 #endif
 
+  if (write_pair == 1) {
+    char  pairname[255];
+    FILE *pairfile;
+#ifdef APOT
+    int   pair_steps = APOT_STEPS / 2;
+#else
+    int   pair_steps = 1000 / 2;
+#endif
+    int   pot_count = ntypes * (ntypes + 1) / 2;
+    real  pair_table[pot_count * pair_steps];
+    real  pair_dist[pot_count];
+    int   pos, max_count = 0;
+
+    strcpy(pairname, config);
+    strcat(pairname, ".pair");
+    pairfile = fopen(pairname, "w");
+    fprintf(pairfile, "# radial distribution file\n");
+
+    for (i = 0; i < pot_count * pair_steps; i++)
+      pair_table[i] = 0;
+
+    for (i = 0; i < ntypes; i++)
+      for (k = 0; k < ntypes; k++)
+#ifdef APOT
+	pair_dist[(i <=
+		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i -
+		  (k * (k + 1) / 2)] =
+	  rcut[i * ntypes + k] * (do_smooth ? CUTOFF_MARGIN : 1) / pair_steps;
+#else
+	pair_dist[(i <=
+		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i -
+		  (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
+#endif
+
+    for (k = 0; k < pot_count; k++) {
+      for (i = 0; i < natoms; i++)
+	for (j = 0; j < atoms[i].n_neigh; j++) {
+	  col = (atoms[i].typ <= atoms[i].neigh[j].typ) ?
+	    atoms[i].typ * ntypes + atoms[i].neigh[j].typ -
+	    ((atoms[i].typ * (atoms[i].typ + 1)) / 2)
+	    : atoms[i].neigh[j].typ * ntypes + atoms[i].typ -
+	    ((atoms[i].neigh[j].typ * (atoms[i].neigh[j].typ + 1)) / 2);
+	  if (col == k) {
+	    pos = (int)(atoms[i].neigh[j].r / pair_dist[k]);
+#ifdef DEBUG
+	    if (atoms[i].neigh[j].r <= 1) {
+	      fprintf(stderr, "Short distance (%f) found.\n",atoms[i].neigh[j].r);
+	      fprintf(stderr, "\tatom=%d neighbor=%d\n", i, j);
+	    }
+#endif
+	    pair_table[k * pair_steps + pos]++;
+	    if (pair_table[k * pair_steps + pos] > max_count)
+	      max_count = pair_table[k * pair_steps + pos];
+	  }
+	}
+    }
+
+    for (k = 0; k < pot_count; k++) {
+      for (i = 0; i < pair_steps; i++) {
+	pair_table[k * pair_steps + i] /= max_count;
+	fprintf(pairfile, "%f %f\n", i * pair_dist[k],
+		pair_table[k * pair_steps + i]);
+      }
+      if (k != (pot_count - 1))
+	fprintf(pairfile, "\n\n");
+    }
+    fclose(pairfile);
+  }
 #ifdef APOT
   for (i = 0; i < opt_pot.ncols; i++) {
     j = i * (i + 1) / 2;
@@ -581,7 +653,7 @@ void read_config(char *filename)
   update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif
 
-  printf("Minimal Distances Matrix \n");
+  printf("Minimal Distances Matrix\n");
   printf("Atom\t");
   for (i = 0; i < ntypes; i++)
     printf("%8d\t", i);
@@ -594,12 +666,29 @@ void read_config(char *filename)
   }
   free(mindist);
 
+  na_typ = (int **)realloc(na_typ, (nconf + 1) * sizeof(int *));
+  if (NULL == na_typ)
+    error("Cannot allocate memory for na_typ");
+  na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
+  for (i = 0; i < ntypes; i++)
+    na_typ[nconf][i] = 0;
+
+  for (i = 0; i < nconf; i++)
+    for (j = 0; j < ntypes; j++)
+      na_typ[nconf][j] += na_typ[i][j];
+
   /* print diagnostic message and close file */
   printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
 	 maxneigh, MAXNEIGH);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
 	 nconf, w_force, w_stress);
-  printf("with a total of %d atoms\nfrom file %s\n", natoms, filename);
+  printf("with a total of %d atoms (", natoms);
+  for (i = 0; i < ntypes; i++) {
+    printf("%d of type %d", na_typ[nconf][i], i);
+    if (i != (ntypes - 1))
+      printf(", ");
+  }
+  printf(")\nfrom file %s\n", filename);
   if (sh_dist) {
     sprintf(msg,
 	    "Distances too short, last occurence conf %d, see above for details",

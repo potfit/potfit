@@ -4,7 +4,7 @@
  *
  *******************************************************/
 /*
-*   Copyright 2004-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2004-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.17 $
-* $Date: 2008/11/03 11:46:21 $
+* $Revision: 1.18 $
+* $Date: 2009/01/16 08:36:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -101,7 +101,7 @@ void broadcast_params()
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
   atom_t testatom;
-  int   calclen, size, i, each, odd, nodeatoms = 0;
+  int   calclen, size, i, each, odd, nodeatoms = 0, list_length;
 
 
   /* Define Structures */
@@ -225,6 +225,19 @@ void broadcast_params()
   MPI_Bcast(calc_pot.xcoord, calclen, REAL, 0, MPI_COMM_WORLD);
 //  MPI_Bcast(calc_pot.idx,ndim,MPI_INT,0,MPI_COMM_WORLD);
 
+#ifdef APOT
+  MPI_Bcast(&do_smooth, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&disable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (!disable_cp) {
+    if (myid > 0) {
+      na_typ = (int **)malloc((nconf + 1) * sizeof(int *));
+      for (i = 0; i < (nconf + 1); i++)
+	na_typ[i] = (int *)malloc(2 * sizeof(int));
+    }
+    MPI_Bcast(na_typ, (nconf + 1) * 2, MPI_INT, 0, MPI_COMM_WORLD);
+  }
+#endif
+
   /* Distribute configurations */
   /* Each node: nconf/num_cpus configurations. 
      Last nconf%num_cpus nodes: 1 additional config */
@@ -304,13 +317,14 @@ void potsync()
 void potsync_apot()
 {
   int   length;
-  length = apot_table.number;
-  if (do_smooth) {
-    MPI_Bcast(calc_pot.begin, length - 1, REAL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(calc_pot.end, length - 1, REAL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(calc_pot.step, length - 1, REAL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(calc_pot.invstep, length - 1, REAL, 0, MPI_COMM_WORLD);
-  }
+  length = calc_pot.ncols;
+
+  MPI_Bcast(calc_pot.end, length, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.step, length, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.invstep, length, REAL, 0, MPI_COMM_WORLD);
+  /* TODO */
+/*   MPI_Scatterv(atoms, atom_len, atom_dist, MPI_ATOM, */
+/* 	       conf_atoms, myatoms, MPI_ATOM, 0, MPI_COMM_WORLD); */
 }
 
 #endif /* APOT */

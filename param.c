@@ -4,7 +4,7 @@
 * 
 ******************************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler
+*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.23 $
-*  $Date: 2008/11/17 14:18:27 $
+*  $Revision: 1.24 $
+*  $Date: 2009/01/16 08:36:22 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -200,6 +200,10 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "endpot") == 0) {
       getparam("endpot", endpot, PARAM_STR, 1, 255);
     }
+    /* file for end force */
+    else if (strcasecmp(token, "endforce") == 0) {
+      getparam("endforce", endforce, PARAM_STR, 1, 255);
+    }
     /* file for IMD potential */
     else if (strcasecmp(token, "imdpot") == 0) {
       getparam("imdpot", imdpot, PARAM_STR, 1, 255);
@@ -228,6 +232,10 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "plotmin") == 0) {
       getparam("plotmin", &plotmin, PARAM_DOUBLE, 1, 1);
     }
+    /* exclude chemical potential from energy calculations */
+    else if (strcasecmp(token, "disable_cp") == 0) {
+      getparam("disable_cp", &disable_cp, PARAM_INT, 1, 1);
+    }
 #endif
     /* Energy Weight */
     else if (strcasecmp(token, "extend") == 0) {
@@ -244,6 +252,10 @@ void read_paramfile(FILE *pf)
     /* break flagfile */
     else if (strcasecmp(token, "flagfile") == 0) {
       getparam("flagfile", flagfile, PARAM_STR, 1, 255);
+    }
+    /* write radial pair distribution ? */
+    else if (strcasecmp(token, "write_pair") == 0) {
+      getparam("write_pair", &write_pair, PARAM_INT, 1, 1);
     }
     /* plotpoint file */
     else if (strcasecmp(token, "plotpointfile") == 0) {

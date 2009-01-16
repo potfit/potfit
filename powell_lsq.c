@@ -8,7 +8,7 @@
 *
 ******************************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Daniel Schopf
+*   Copyright 2002-2009 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.34 $
-* $Date: 2008/12/01 10:26:36 $
+* $Revision: 1.35 $
+* $Date: 2009/01/16 08:36:23 $
 *****************************************************************/
 
 /******************************************************************************
@@ -182,7 +182,7 @@ void powell_lsq(real *xi)
 	     &les_inverse[0][0], &ndim, perm_indx, p, &ndim, q, &ndim,
 	     &cond, &ferror, &berror, work, &worksize, iwork, &i);
 #endif /* ACML */
-#ifdef DEBUG
+#if defined DEBUG && !(defined APOT)
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2],
 	     q[3], q[4], q[5], q[6], q[7]);
 #endif
@@ -304,7 +304,10 @@ void powell_lsq(real *xi)
 #ifndef APOT
       write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
 #else
-      write_pot_table(&apot_table, tempfile);
+      for (i = 0; i < ndim; i++)
+	apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
+	  xi[idx[i]];
+    write_pot_table(&apot_table, tempfile);
 #endif
 
     /*End fit if whole series didn't improve F */

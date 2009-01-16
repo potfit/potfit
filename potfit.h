@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.57 $
-* $Date: 2008/12/01 10:26:36 $
+* $Revision: 1.58 $
+* $Date: 2009/01/16 08:36:23 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -129,6 +129,7 @@ typedef struct {
   char **names;			/* name of analytic potentials */
   char ***param_name;		/* name of parameters */
   real **values;		/* parameter values for analytic potentials */
+  real *chempot;		/* chemical potentials */
   real *begin;			/* starting position of potential */
   real *end;			/* end position of potential = cutoff radius */
   real **pmin;			/* minimum values for parameters */
@@ -143,10 +144,8 @@ typedef struct {
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SQR(a)     ((a)*(a))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-#ifndef APOT
 static real sqrreal;
 #define SQRREAL(x) ((sqrreal=(x)) == 0.0 ? 0.0 : sqrreal*sqrreal)
-#endif
 
 /******************************************************************************
 *
@@ -177,6 +176,7 @@ EXTERN int *invar_pot INIT(NULL);
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
 EXTERN int *smooth_pot INIT(NULL);
+EXTERN int write_pair INIT(0);
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
@@ -193,6 +193,7 @@ EXTERN int myconf INIT(0.);
 EXTERN int myatoms INIT(0.);
 EXTERN int firstconf INIT(0);
 EXTERN int firstatom INIT(0);
+EXTERN real *rms INIT(NULL);
 EXTERN real pi INIT(0.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
 EXTERN int writeimd INIT(0);
@@ -205,7 +206,7 @@ EXTERN int mdim INIT(0);
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int ntypes INIT(1);	/* number of atom types */
 EXTERN int natoms INIT(0);	/* number of atoms */
-/* EXTERN int *na_typ INIT(NULL);  /\* number of atoms per type *\/ */
+EXTERN int **na_typ INIT(NULL);	/* number of atoms per type */
 EXTERN int nconf INIT(0);	/* number of configurations */
 EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
@@ -225,6 +226,8 @@ EXTERN char imdpot[255];	/* file for IMD potential */
 EXTERN char config[255];	/* file with atom configuration */
 EXTERN char plotfile[255];	/* file for plotting */
 EXTERN char distfile[255];	/* file for distributions */
+EXTERN char endforce[255] INIT("stdout");	/* file for force deviations */
+
 EXTERN char flagfile[255] INIT("potfit.break");
 					 /* break if file exists */
 EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
@@ -242,6 +245,7 @@ EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
 EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
 EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
+EXTERN int disable_cp INIT(0);	/* switch chemical potential on/off */
 #endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
@@ -296,11 +300,7 @@ void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 void  read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
-#ifdef APOT
 void  update_calc_table(real *xi_opt, real *xi_calc, int);
-#else
-void  update_calc_table(real *xi_opt, real *xi_calc);
-#endif
 void  write_pot_table3(pot_table_t *, char *);
 void  write_pot_table4(pot_table_t *, char *);
 void  write_pot_table5(pot_table_t *, char *);
@@ -369,6 +369,13 @@ int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 int   apot_validate(int, real);
 void  new_slots(int);		/* new slots for smooth cutoff */
+
+/* global counting variables for misc. purposes */
+
+//int count_1 INIT(0);
+//int count_2 INIT(0);
+
+/* end of counting variables */
 
 real  smooth(void (*function) (real, real *, real *),
 	     real, real *, real, real, real *);

@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.55 $
-* $Date: 2008/12/02 15:19:53 $
+* $Revision: 1.56 $
+* $Date: 2009/01/16 08:36:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -88,7 +88,7 @@
 real calc_forces_pair(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
-  int   first, col1;
+  int   first, col1, i;
   real  grad0, y0, y1, x0, x1;
   real *xi;
 #ifdef EAM
@@ -110,11 +110,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
     if ((format == 0 || format > 4) && myid == 0)
-#ifdef APOT
       update_calc_table(xi_opt, xi, 0);
-#else
-      update_calc_table(xi_opt, xi);
-#endif
 
 #ifdef MPI
     /* exchange potential and flag value */
@@ -122,8 +118,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 #ifdef APOT
-    if (myid == 0 && do_smooth)
+    if (do_smooth) {
+      MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
       potsync_apot();
+    }
+
     if (flag == 1)
       break;
 #endif
@@ -135,7 +134,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* non root processes hang on, unless...  */
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
-#endif /* EAM || APOT */
+#endif /* EAM */
 
 #endif /* MPI */
 
@@ -243,6 +242,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* set dummy constraints */
 	forces[config + 7 * nconf] = -force_0[config + 7 * nconf];
 #endif
+#ifdef APOT
+	if (!disable_cp) {
+	  for (i = 0; i < ntypes; i++)
+	    forces[config] += (na_typ[h][i] * xi_opt[ndimtot - ntypes + i]);
+	}
+#endif
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
@@ -260,14 +265,14 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef EAM
 	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
 #endif
-	}			/* end first loop */
+	}
+	/* end first loop */
 
 	/* 2nd loop: calculate pair forces and energies, atomic densities. */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
 	  k = 3 * (cnfstart[h] + i);
-
 	  /* loop over neighbours */
 	  for (j = 0; j < atom->n_neigh; j++) {
 	    neigh = atom->neigh + j;
@@ -284,12 +289,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 		if (uf)
 		  fnval = splint_comb_dir(&calc_pot, xi, col,
-					  neigh->slot[0], neigh->shift[0],
+					  neigh->slot[0],
+					  neigh->shift[0],
 					  neigh->step[0], &grad);
 		else
 		  fnval = splint_dir(&calc_pot, xi, col,
-				     neigh->slot[0], neigh->shift[0],
-				     neigh->step[0]);
+				     neigh->slot[0],
+				     neigh->shift[0], neigh->step[0]);
 		forces[config] += fnval;
 /* not real force: cohesive energy */
 		if (uf) {
@@ -326,8 +332,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 /* then transfer(a->b)==transfer(b->a) */
 		if (neigh->r < calc_pot.end[col2]) {
 		  fnval = splint_dir(&calc_pot, xi, col2,
-				     neigh->slot[1], neigh->shift[1],
-				     neigh->step[1]);
+				     neigh->slot[1],
+				     neigh->shift[1], neigh->step[1]);
 		  atom->rho += fnval;
 		  conf_atoms[neigh->nr - firstatom].rho += fnval;
 		}
@@ -335,8 +341,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		col = paircol + typ1;
 		if (neigh->r < calc_pot.end[col2]) {
 		  atom->rho += splint_dir(&calc_pot, xi, col2,
-					  neigh->slot[1], neigh->shift[1],
-					  neigh->step[1]);
+					  neigh->slot[1],
+					  neigh->shift[1], neigh->step[1]);
 		}
 		/* cannot use slot/shift to access splines */
 		if (neigh->r < calc_pot.end[col])
@@ -358,7 +364,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] /= FORCE_EPS + atom->absforce;
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
-
 	    /* Returned force is difference between */
 	    /* calculated and input force */
 	    tmpsum +=
@@ -397,15 +402,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* linear extrapolation left */
 	    fnval =
-	      splint_comb(&calc_pot, xi, col2, calc_pot.begin[col2],
-			  &atom->gradF);
+	      splint_comb(&calc_pot, xi, col2,
+			  calc_pot.begin[col2], &atom->gradF);
 	    forces[config] +=
 	      fnval + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col2]) {
 	    /* and right */
 	    fnval =
-	      splint_comb(&calc_pot, xi, col2, calc_pot.end[col2],
-			  &atom->gradF);
+	      splint_comb(&calc_pot, xi, col2,
+			  calc_pot.end[col2], &atom->gradF);
 	    forces[config] +=
 	      fnval + (atom->rho - calc_pot.end[col2]) * atom->gradF;
 	  }
@@ -431,8 +436,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    typ1 = atom->typ;
 	    k = 3 * (cnfstart[h] + i);
 	    col = paircol + ntypes + typ1;	/* column of F */
-
-
 	    for (j = 0; j < atom->n_neigh; j++) {
 	      /* loop over neighbours */
 	      neigh = atom->neigh + j;
@@ -441,27 +444,24 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		typ2 = neigh->typ;
 		col2 = paircol + typ2;
 		r = neigh->r;
-
 		/* are we within reach? */
 		if ((r < calc_pot.end[col2])
 		    || (r < calc_pot.end[col - ntypes])) {
 		  grad =
 		    (r < calc_pot.end[col2]) ?
-		    splint_grad_dir(&calc_pot, xi, col2, neigh->slot[1],
-				    neigh->shift[1], neigh->step[1])
+		    splint_grad_dir(&calc_pot, xi, col2,
+				    neigh->slot[1], neigh->shift[1],
+				    neigh->step[1])
 		    : 0.;
-
 		  if (typ2 == typ1)	/* use actio = reactio */
 		    grad2 = grad;
 		  else
 		    grad2 = (r < calc_pot.end[col - ntypes]) ?
 		      splint_grad(&calc_pot, xi, col - ntypes, r) : 0.;
-
 		  /* now we know everything - calculate forces */
 		  eamforce = (grad * atom->gradF +
 			      grad2 *
 			      conf_atoms[(neigh->nr) - firstatom].gradF);
-
 		  tmp_force.x = neigh->dist.x * eamforce;
 		  tmp_force.y = neigh->dist.y * eamforce;
 		  tmp_force.z = neigh->dist.z * eamforce;
@@ -495,7 +495,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] /= FORCE_EPS + atom->absforce;
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
-
 	    /* sum up forces  */
 	    tmpsum +=
 	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
@@ -507,7 +506,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	forces[config] *= eweight / (real)inconf[h];
 	forces[config] -= force_0[config];
 	tmpsum += SQR(forces[config]);
-
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -515,7 +513,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[i] *= sweight / conf_vol[h - firstconf];
 	    forces[i] -= force_0[i];
 	    tmpsum += SQR(forces[i]);
-
 	  }
 	}
 #endif /* STRESS */
@@ -525,7 +522,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
       }				/* loop over configurations */
     }				/* parallel region */
-#ifdef MPI
+#if defined MPI && !(defined APOT)
     /* Reduce rho_sum */
     MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
 #else /* MPI */
@@ -535,28 +532,27 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* MPI */
     /* dummy constraints (global) */
 #ifdef APOT
-    int   i, j;
-    real  x;
-    /* *INDENT-OFF* */ 
-    /* turn off indent because of a bug in GNU indent 2.2.10 */
+    /* add punishment for out of bounds (mostly for powell_lsq) */
     if (myid == 0) {
-      for (i = 0; i < ndim; i++) {
-	forces[mdim - apot_table.total_par + i] = 0;
-	if (x = xi_opt[idx[i]] -
-	    apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
-	    x <= 0) {
-	  forces[mdim - apot_table.total_par + i] = APOT_PUNISH * x * x;
-	} else if (x = xi_opt[idx[i]] -
-		   apot_table.pmax[apot_table.
-				   idxpot[i]][apot_table.idxparam[i]],
-		   x >= 0) {
-	  forces[mdim - apot_table.total_par + i] = APOT_PUNISH * x * x;
-	}
-	tmpsum += forces[mdim - apot_table.total_par + i];
+      int   i, j;
+      real  x;
+      /* turn off indent because of a bug in GNU indent 2.2.10 */
+    /* *INDENT-OFF* */
+    for (i = 0; i < ndim; i++) {
+      if (x = xi_opt[idx[i]] -
+	  apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
+	  x <= 0) {
+	tmpsum += APOT_PUNISH * x * x;
+      } else if (x = xi_opt[idx[i]] -
+		 apot_table.pmax[apot_table.idxpot[i]][apot_table.
+						       idxparam[i]], x >= 0) {
+	tmpsum += APOT_PUNISH * x * x;
       }
     }
     /* *INDENT-ON* */
+    }
 #endif
+
 #ifdef EAM
     if (myid == 0) {
       int   g, i;
@@ -570,8 +566,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 /* constraints on U`(n) */
 	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  parab_grad(&calc_pot, xi, paircol + ntypes + g,
-		     .5 * (calc_pot.begin[paircol + ntypes + g] +
-			   calc_pot.end[paircol + ntypes + g]))
+		     .5 *
+		     (calc_pot.begin[paircol + ntypes + g] +
+		      calc_pot.end[paircol + ntypes + g]))
 	  - force_0[mdim - 2 * ntypes + g];
 #elif defined(WZERO)
 	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
@@ -586,8 +583,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 /* constraints on U`(n) */
 	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g,
-		      .5 * (calc_pot.begin[paircol + ntypes + g] +
-			    calc_pot.end[paircol + ntypes + g]))
+		      .5 *
+		      (calc_pot.begin[paircol + ntypes + g] +
+		       calc_pot.end[paircol + ntypes + g]))
 	  - force_0[mdim - 2 * ntypes + g];
 #elif defined(NORESCALE)
 	/* clear field */
@@ -600,10 +598,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 /* constraints on U`(n) */
 	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g,
-		      .5 * (calc_pot.begin[paircol + ntypes + g] +
-			    calc_pot.end[paircol + ntypes + g]))
+		      .5 *
+		      (calc_pot.begin[paircol + ntypes + g] +
+		       calc_pot.end[paircol + ntypes + g]))
 	  - force_0[mdim - 2 * ntypes + g];
-
 #endif /* Dummy constraints */
 	tmpsum += SQR(forces[mdim - ntypes + g]);
 	tmpsum += SQR(forces[mdim - 2 * ntypes + g]);
@@ -627,17 +625,19 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,	/* forces */
 		forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,	/* energies */
-		forces + natoms * 3, conf_len, conf_dist, REAL, 0,
-		MPI_COMM_WORLD);
+		forces
+		+ natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf,
-		MPI_STENS, forces + natoms * 3 + nconf, conf_len, conf_dist,
-		MPI_STENS, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + nconf +
+		6 * firstconf, myconf, MPI_STENS,
+		forces + natoms * 3 + nconf,
+		conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #ifdef EAM
     /* punishment constraints */
-    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, REAL,
-		forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, REAL,
-		0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + 7 * nconf +
+		firstconf, myconf, REAL,
+		forces + natoms * 3 + 7 * nconf,
+		conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
 #endif /* EAM */
 #endif /* MPI */
@@ -645,7 +645,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* root process exits this function now */
     if (myid == 0) {
       fcalls++;			/* Increase function call counter */
-      return sum;
+      if (isnan(sum))
+	return 10e10;
+      else
+	return sum;
     }
 
   }

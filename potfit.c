@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.45 $
-* $Date: 2008/11/13 08:32:21 $
+* $Revision: 1.46 $
+* $Date: 2009/01/16 08:36:23 $
 *****************************************************************/
 
 #define MAIN
@@ -78,8 +78,10 @@ int main(int argc, char **argv)
 {
   real *force;
   real  tot, min, max, sqr, *totdens;
-  int   i, diff, *ntyp;
+  int   i, j, diff, *ntyp;
   char  msg[255];
+  FILE *outforce;
+
   pi = 4.0 * atan(1.);
 #ifdef MPI
   init_mpi(&argc, argv);
@@ -185,6 +187,7 @@ int main(int argc, char **argv)
   idx = opt_pot.idx;
 
   force = (real *)malloc((mdim) * sizeof(real));
+  rms = (real *)malloc(3 * sizeof(real));
 
   if (myid > 0) {
     /* Select correct spline interpolation and other functions */
@@ -242,7 +245,7 @@ int main(int argc, char **argv)
     tot = calc_forces(opt_pot.table, force, 0);
     write_pot_table(&apot_table, endpot);
 #endif
-    printf("Potential in format %d written to file %s\n", format, endpot);
+    printf("\nPotential in format %d written to file %s\n", format, endpot);
 #ifndef APOT
     printf("Plotpoint file written to file %s\n", plotpointfile);
 #endif
@@ -311,20 +314,33 @@ int main(int argc, char **argv)
     max = 0.0;
     min = 100000.0;
 //    printf("conf-atom df^2 f f0 df/f0 |f|\n ");
+    if (strcmp(endforce, "stdout") != 0) {
+      outforce = fopen(endforce, "w");
+      if (NULL == outforce) {
+	sprintf(msg, "Could not open file %s\n", endforce);
+	error(msg);
+      }
+    } else
+      outforce = stdout;
     for (i = 0; i < 3 * natoms; i++) {
       sqr = SQR(force[i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
-      printf("%d-%d\t%f\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf, i / 3, sqr,
-	     force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
-	     force_0[i],
-	     (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
-	     atoms[i / 3].absforce);
+      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf,
+	      i / 3, sqr,
+	      force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
+	      force_0[i],
+	      (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
+	      atoms[i / 3].absforce);
 #else /* FWEIGHT */
-      printf("%d-%d\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf, i / 3, sqr,
-	     force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf, i / 3,
+	      sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
+    }
+    if (strcmp(endforce, "stdout") != 0) {
+      printf("Force data written to %s\n", endforce);
+      fclose(outforce);
     }
     printf("Cohesive Energies\n");
     printf("conf\tw*de^2\t\te\t\te0\t\tde/e0\n");
@@ -374,6 +390,27 @@ int main(int argc, char **argv)
 	     force_0[mdim - i], force[mdim - i] / force_0[mdim - i]);
     }
 #endif
+
+    /* calculate the rms errors for forces, energies, stress */
+    rms[0] = 0;			/* rms rms for forces */
+    rms[1] = 0;			/* energies */
+    rms[2] = 0;			/* stresses */
+
+    for (i = 0; i < 3 * natoms; i++)
+      rms[0] += SQR(force[i]);
+    rms[0] = sqrt(rms[0] / natoms);
+
+    for (i = 0; i < nconf; i++)
+      rms[1] += SQR(force[3 * natoms + i]);
+    rms[1] = sqrt(rms[1] / nconf);
+
+    for (i = 0; i < nconf; i++)
+      for (j = 0; j < 6; j++)
+	rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j]);
+    rms[2] = sqrt(rms[2] / nconf);
+
+    printf("RMS-errors:\nforce %f, energy %f, stress %f\n", rms[0], rms[1], rms[2]);
+
     printf("av %e, min %e, max %e\n", tot / mdim, min, max);
     printf("Sum %f, count %d\n", tot, mdim);
     printf("Used %d function evaluations.\n", fcalls);
