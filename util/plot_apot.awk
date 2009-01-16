@@ -6,7 +6,7 @@
 #
 ####################################################################
 #
-#   Copyright 2008 Daniel Schopf
+#   Copyright 2008-2009 Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.6 $
-# $Date: 2008/12/19 09:40:34 $
+# $Revision: 1.7 $
+# $Date: 2009/01/16 08:37:07 $
 ####################################################################
 #
 # Usage: plot_pot.awk pot_file_1 pot_file_2 ... pair_file
@@ -56,12 +56,12 @@ BEGIN {
 		else {
 			while (substr($0,2,1)!="F") getline;
 		if ($2 != 0) {
-			print "Error - wrong potential format of " ARGV[ARGIND]  ;
+			print "Error - wrong potential format of " ARGV[ARGIND] "\n" ;
 			exit 2;
 		}
 		total_pots=$3;
 		if (int(total_pots)!=total_pots) {
-			print "ERROR - incorrect parameter file " ARGV[ARGIND]  ;
+			print "ERROR - incorrect parameter file " ARGV[ARGIND]  "\n" ;
 			exit 2;
 		}
 		for (i=count;i<(count+total_pots);i++){
@@ -115,9 +115,9 @@ END {
 		print ", " > "plot";
 		for (i=0;i<count;i++) {
 			if (i==0)
-				print "'" dist_file "' i " i " w steps t \"rad_dist pot " i "\"" > "plot";
+				print "'" dist_file "' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
 			else 
-				print "'' i " i " w steps t \"rad_dist pot " i "\"" > "plot";
+				print "'' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
 			if (i!=(count-1))
 				print ", " > "plot";
 		}
