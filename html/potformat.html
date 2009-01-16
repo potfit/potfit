@@ -72,6 +72,35 @@ be n digits in total. The information is bit-coded, '0' declares both
 lower and upper gradient fixed, '1' allows adjusting the gradient at
 the upper end, '2' at the lower end, and '3' at both ends. </p>
 
+<!--
+<h2>Format 0</h>
+
+<p>
+The potential format 0 is used for analytical potentials exclusively.
+All of the above apply here, except for the G line.</p>
+<p>
+To add chemical potentials to the calculations, just add 
+<pre>
+cp_# value min max
+</pre>
+for every atom type in the simulation. The # can be a number, the element
+or anything else.</p>
+
+<p>
+Every analytic potential has to be specified as follows:
+<pre>
+type mypotential_sc
+cutoff value
+p_1 value min max
+p_2 value min max
+...
+</pre>
+The <b>type</b> keyword has to be followed by the unique identifier for
+your potential (in this case <em>mypotential</em>). You can then also
+enable the smooth cutoff option by adding a <b>_sc</b> at the end.
+
+-->
+
 <h2>Format 3</h2>
 
 <p>

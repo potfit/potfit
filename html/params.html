@@ -29,7 +29,8 @@ ntypes		# number of atom types (types vary in [0..ntypes-1]) (*)
 # file names - required
 startpot	# file name for starting potential (*)
 endpot		# file name for final potential (*)
-imdpot		# file name prefix for imd potential (*)
+endforce 	# file name for final force deviations of atoms
+imdpot		# file name prefix for imd potential
 tempfile	# file name for temporary (intermediate) potential (*)
 plotfile	# file name for plotting potential (*)
 plotpointfile	# file name for plotting the sampling points (*)
@@ -38,6 +39,11 @@ distfile	# file name for distribution file (* with compile
 config		# file with atom configuration in force format (*)
 flagfile	# file whose presence terminates fit
 maxchfile	# file with maximal permissible changes for each parameter
+write_pair 	# file name for radial pair distribution
+
+# options only for apot
+plotmin 	# starting point for plotting potentials
+disable_cp 	# binary, whether or not to include chemical potentials
 
 # options for output
 imdpotsteps 	# number of points in each function in imd file
