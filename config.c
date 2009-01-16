@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.41 $
-* $Date: 2009/01/16 08:36:22 $
+* $Revision: 1.42 $
+* $Date: 2009/01/16 09:04:21 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -615,7 +615,8 @@ void read_config(char *filename)
 	    pos = (int)(atoms[i].neigh[j].r / pair_dist[k]);
 #ifdef DEBUG
 	    if (atoms[i].neigh[j].r <= 1) {
-	      fprintf(stderr, "Short distance (%f) found.\n",atoms[i].neigh[j].r);
+	      fprintf(stderr, "Short distance (%f) found.\n",
+		      atoms[i].neigh[j].r);
 	      fprintf(stderr, "\tatom=%d neighbor=%d\n", i, j);
 	    }
 #endif

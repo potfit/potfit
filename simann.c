@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2009/01/16 08:36:23 $
+* $Revision: 1.34 $
+* $Date: 2009/01/16 09:04:22 $
 *****************************************************************/
 
 #include <math.h>
@@ -223,11 +223,15 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
+	      {
+/* *INDENT-OFF* */
 		for (n = 0; n < ndim; n++)
 		  apot_table.values[apot_table.idxpot[n]][apot_table.
 							  idxparam[n]] =
 		    xopt[idx[n]];
 		write_pot_table(&apot_table, tempfile);
+/* *INDENT-ON* */
+	      }
 #endif
 	    }
 	  }
@@ -254,8 +258,9 @@ void anneal(real *xi)
       /* End fit if break flagfile exists */
       ff = fopen(flagfile, "r");
       if (NULL != ff) {
-	printf("Annealing terminated in presence of break flagfile %s!\n",
-	       flagfile);
+	printf
+	  ("Annealing terminated in presence of break flagfile %s!\n",
+	   flagfile);
 	printf("Temperature was %f, returning optimum configuration\n", T);
 	for (n = 0; n < ndimtot; n++)
 	  xi[n] = xopt[n];
@@ -298,7 +303,8 @@ void anneal(real *xi)
     }
 
 
-  } while (k < KMAX && loopagain);
+  }
+  while (k < KMAX && loopagain);
   for (n = 0; n < ndimtot; n++)
     xi[n] = xopt[n];
 

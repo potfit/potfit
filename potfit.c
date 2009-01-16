@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.46 $
-* $Date: 2009/01/16 08:36:23 $
+* $Revision: 1.47 $
+* $Date: 2009/01/16 09:04:22 $
 *****************************************************************/
 
 #define MAIN
@@ -409,7 +409,8 @@ int main(int argc, char **argv)
 	rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j]);
     rms[2] = sqrt(rms[2] / nconf);
 
-    printf("RMS-errors:\nforce %f, energy %f, stress %f\n", rms[0], rms[1], rms[2]);
+    printf("RMS-errors:\nforce %f, energy %f, stress %f\n", rms[0], rms[1],
+	   rms[2]);
 
     printf("av %e, min %e, max %e\n", tot / mdim, min, max);
     printf("Sum %f, count %d\n", tot, mdim);
