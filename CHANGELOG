@@ -1,3 +1,6 @@
+CVS-20090210
++ [ACML] Updated compiler flags for acml, gcc...
+
 CVS-20090116
 + [APOT] reworked the validate part
 + [APOT] enabled MPI support for apot, not tested yet, probably broken by chemical potentials

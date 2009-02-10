@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.42 $
-# $Date: 2009/01/16 08:36:22 $
+# $Revision: 1.43 $
+# $Date: 2009/02/10 09:57:46 $
 #
 ############################################################################
 #
@@ -143,7 +143,7 @@ OMPI_FLAGS	+= -DMPI -DOMP
 DEBUG_FLAGS	+= -DDEBUG
 MKLDIR          =  /common/linux/paket/intel/mkl91/
 MKLPATH         =  ${MKLDIR}/lib/
-CINCLUDE        =  -I${MKLDIR}/include/
+#CINCLUDE        =  -I${MKLDIR}/include/
 
 ###########################################################################
 #
@@ -152,30 +152,30 @@ CINCLUDE        =  -I${MKLDIR}/include/
 ###########################################################################
 
 # AMD Opteron, gcc3
-ifeq (x86_64-gcc3,${IMDSYS})
+ifeq (x86_64-gcc,${IMDSYS})
   CC_SERIAL     = gcc
   CC_MPI        = mpicc
-  MPICH_CC      = gcc
+  OMPI_MPICC      = gcc
 #  MPICH_CLINKER = gcc
   BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
 #  FFTW_DIR     = /common/linux/paket/fftw-3.0.1
   OPT_FLAGS     += -O -march=opteron -Wno-unused
   DEBUG_FLAGS   += -g -O -Wall
   PROF_FLAGS    += -g3 -pg
-  LFLAGS        +=  -static
-#  ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
-  MKLPATH       = ${MKLDIR}/lib/em64t/
-#  CINCLUDE     += -I$(ACMLPATH)/include
+#  LFLAGS        +=  -static
+  ACMLPATH      = /common/linux/paket/acml4.2.0/gfortran64_mp
+#  MKLPATH       = ${MKLDIR}/lib/em64t/
+  CINCLUDE     += -I$(ACMLPATH)/include
 #  CINCLUDE      = -I${MKLDIR}/include
-#  LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
-  export        MPICH_CC # MPICH_CLINKER
+   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
+  export        OMPI_MPICC # MPICH_CLINKER
   export        LD_LIBRARY_PATH
 # acml
-#  LIBS		:= $(ACMLPATH)/lib/libacml.a \
-#		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
+  LIBS		:= $(ACMLPATH)/lib/libacml_mp.a \
+		   -L${ACMLPATH}/lib -lpthread -lacml_mp -lgfortran
 # intel mkl
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
-		   -L${MKLPATH} -lguide -lpthread
+#  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
+#		   -L${MKLPATH} -lguide -lpthread
 endif
 
 # Intel EM64T "AMD inside", icc
@@ -202,6 +202,7 @@ ifeq (x86_64-icc,${IMDSYS})
 # 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
 # intel mkl
   MKLPATH       = ${MKLDIR}/lib/em64t/
+  CINCLUDE        =  -I${MKLDIR}/include/	
   LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER

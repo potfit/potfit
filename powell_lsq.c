@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.35 $
-* $Date: 2009/01/16 08:36:23 $
+* $Revision: 1.36 $
+* $Date: 2009/02/10 09:57:46 $
 *****************************************************************/
 
 /******************************************************************************
@@ -77,10 +77,12 @@ void powell_lsq(real *xi)
   real *delta;			/* Vector pointing into correct dir'n */
   real *delta_norm;		/* Normalized vector delta */
   real *fxi1, *fxi2;		/* two latest force vectors */
+#ifndef ACML 			/* work arrays not needed for ACML */
   real *work;			/* work array to be used by dsysvx */
   int  *iwork;
-  int  *perm_indx;		/* Keeps track of LU pivoting */
   int   worksize;		/* Size of work array (dsysvx) */
+#endif /* ACML */
+  int  *perm_indx;		/* Keeps track of LU pivoting */
   int   breakflag;		/* Breakflag */
   real  cond;			/* Condition number dsysvx */
   real *p, *q;			/* Vectors needed in Powell's algorithm */
@@ -104,9 +106,11 @@ void powell_lsq(real *xi)
   delta = vect_real(ndimtot);	/* ==0 */
   fxi1 = vect_real(mdim);
   fxi2 = vect_real(mdim);
+#ifndef ACML  			/* work arrays not needed */
   worksize = 64 * ndim;
   work = (real *)malloc(worksize * sizeof(real));
   iwork = (int *)malloc(ndim * sizeof(int));
+#endif /* ACML */
 
   /* clear delta */
   for (i = 0; i < ndimtot; i++)
@@ -174,9 +178,9 @@ void powell_lsq(real *xi)
 
       /* Linear Equation Solution (lapack) */
 #ifdef ACML
-      dsysvx_(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim,
-	      &les_inverse[0][0], &ndim, perm_indx, p, &ndim, q, &ndim,
-	      &cond, &ferror, &berror, work, &worksize, iwork, &i, 1, 1);
+      dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
+	      &les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
+	      &cond, &ferror, &berror,  &i);
 #else /* ACML */
       dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim,
 	     &les_inverse[0][0], &ndim, perm_indx, p, &ndim, q, &ndim,
@@ -333,8 +337,10 @@ void powell_lsq(real *xi)
   free_vect_real(force_xi);
   free_vect_real(p);
   free_vect_real(q);
+#ifndef ACML
   free(work);
   free(iwork);
+#endif /* ACML */
   return;
 }
 
