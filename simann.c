@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.34 $
-* $Date: 2009/01/16 09:04:22 $
+* $Revision: 1.35 $
+* $Date: 2009/02/16 14:10:28 $
 *****************************************************************/
 
 #include <math.h>
@@ -163,6 +163,8 @@ void anneal(real *xi)
 #ifndef APOT
   real  p;			/* Probability */
   real  width, height;		/* gaussian bump size */
+#else
+  int   new_pot = 0;
 #endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
@@ -223,15 +225,7 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-	      {
-/* *INDENT-OFF* */
-		for (n = 0; n < ndim; n++)
-		  apot_table.values[apot_table.idxpot[n]][apot_table.
-							  idxparam[n]] =
-		    xopt[idx[n]];
-		write_pot_table(&apot_table, tempfile);
-/* *INDENT-ON* */
-	      }
+		new_pot = 1;
 #endif
 	    }
 	  }
@@ -253,6 +247,15 @@ void anneal(real *xi)
 	  v[n] /= (1 + c * (0.4 - (real)naccept[n] / nstep) / 0.4);
 	naccept[n] = 0;
       }
+#ifdef APOT
+      if (new_pot == 1) {
+	for (n = 0; n < ndim; n++)
+	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
+	    xopt[idx[n]];
+	write_pot_table(&apot_table, tempfile);
+	new_pot = 0;
+      }
+#endif
       printf("%d\t%f\t%d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
       /* End fit if break flagfile exists */

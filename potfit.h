@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.58 $
-* $Date: 2009/01/16 08:36:23 $
+* $Revision: 1.59 $
+* $Date: 2009/02/16 14:10:28 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -391,6 +391,18 @@ void  lj_value(real, real *, real *);
 
 /* empirical oscillating pair potential */
 void  eopp_value(real, real *, real *);
+
+/* morse potential */
+void  morse_value(real, real *, real *);
+
+/* soft shell potential */
+void  softshell_value(real, real *, real *);
+
+/* eopp_exp potential */
+void  eoppexp_value(real, real *, real *);
+
+/* meopp potential */
+void  meopp_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.36 $
-* $Date: 2009/02/10 09:57:46 $
+* $Revision: 1.37 $
+* $Date: 2009/02/16 14:10:28 $
 *****************************************************************/
 
 /******************************************************************************
@@ -77,7 +77,7 @@ void powell_lsq(real *xi)
   real *delta;			/* Vector pointing into correct dir'n */
   real *delta_norm;		/* Normalized vector delta */
   real *fxi1, *fxi2;		/* two latest force vectors */
-#ifndef ACML 			/* work arrays not needed for ACML */
+#ifndef ACML			/* work arrays not needed for ACML */
   real *work;			/* work array to be used by dsysvx */
   int  *iwork;
   int   worksize;		/* Size of work array (dsysvx) */
@@ -106,7 +106,7 @@ void powell_lsq(real *xi)
   delta = vect_real(ndimtot);	/* ==0 */
   fxi1 = vect_real(mdim);
   fxi2 = vect_real(mdim);
-#ifndef ACML  			/* work arrays not needed */
+#ifndef ACML			/* work arrays not needed */
   worksize = 64 * ndim;
   work = (real *)malloc(worksize * sizeof(real));
   iwork = (int *)malloc(ndim * sizeof(int));
@@ -179,8 +179,8 @@ void powell_lsq(real *xi)
       /* Linear Equation Solution (lapack) */
 #ifdef ACML
       dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
-	      &les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
-	      &cond, &ferror, &berror,  &i);
+	     &les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
+	     &cond, &ferror, &berror, &i);
 #else /* ACML */
       dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim,
 	     &les_inverse[0][0], &ndim, perm_indx, p, &ndim, q, &ndim,

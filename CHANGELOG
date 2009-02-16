@@ -1,3 +1,12 @@
+CVS-20090216
++ fix rms error for energy-weight
++ [APOT] only write new potential after step adjustment
++ [APOT] the first step of a newly read potential was always wrong
++ don't write end_pot if there was no optimization
++ some cleanup for the error output
++ write unweighted energies and stresses
++ [APOT] added new potentials, for details see web page
+
 CVS-20090210
 + [ACML] Updated compiler flags for acml, gcc...
 

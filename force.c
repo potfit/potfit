@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.56 $
-* $Date: 2009/01/16 08:36:22 $
+* $Revision: 1.57 $
+* $Date: 2009/02/16 14:10:28 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -244,8 +244,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 #ifdef APOT
 	if (!disable_cp) {
-	  for (i = 0; i < ntypes; i++)
+	  for (i = 0; i < ntypes; i++) {
 	    forces[config] += (na_typ[h][i] * xi_opt[ndimtot - ntypes + i]);
+	  }
 	}
 #endif
 	/* first loop over atoms: reset forces, densities */

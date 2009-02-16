@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.42 $
-* $Date: 2009/01/16 09:04:21 $
+* $Revision: 1.43 $
+* $Date: 2009/02/16 14:10:28 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -629,7 +629,7 @@ void read_config(char *filename)
 
     for (k = 0; k < pot_count; k++) {
       for (i = 0; i < pair_steps; i++) {
-	pair_table[k * pair_steps + i] /= max_count;
+	pair_table[k * pair_steps + i] /= (max_count * 10 / 6);
 	fprintf(pairfile, "%f %f\n", i * pair_dist[k],
 		pair_table[k * pair_steps + i]);
       }
@@ -646,11 +646,13 @@ void read_config(char *filename)
     opt_pot.begin[i] = mindist[j] * 0.95;
     calc_pot.begin[i] = mindist[j] * 0.95;
   }
-  for (i = 0; i < calc_pot.ncols; i++)
+  for (i = 0; i < calc_pot.ncols; i++) {
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
+    new_slots(i);
+  }
   update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif
 

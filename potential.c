@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.56 $
-* $Date: 2009/01/16 08:36:22 $
+* $Revision: 1.57 $
+* $Date: 2009/02/16 14:10:28 $
 *****************************************************************/
 
 /* #ifdef APOT */
@@ -181,7 +181,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   } else if (format != 0)
     printf("Potential file format %d.\n", format);
   else
-    printf("Potential file format %d (analytic potentials) detected.\n",
+    printf("Potential file format %d (analytical potentials) detected.\n",
 	   format);
 
   /* allocate info block of function table */
@@ -334,6 +334,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   char *token;
   real *val, *list, temp;
 
+  /* read cp */
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++) {
       if (4 >
@@ -365,6 +366,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       sprintf(msg, "Premature end of potential file %s", filename);
       error(msg);
     }
+    /* skip cp_ if found */
     if (strncmp(buffer, "cp_", 3) == 0) {
       fscanf(infile, "%s %s", buffer, name);
       for (j = 0; j < (ntypes - 1); j++)

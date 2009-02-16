@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.47 $
-* $Date: 2009/01/16 09:04:22 $
+* $Revision: 1.48 $
+* $Date: 2009/02/16 14:10:28 $
 *****************************************************************/
 
 #define MAIN
@@ -240,12 +240,15 @@ int main(int argc, char **argv)
 //    rescale(&opt_pot,1.);
 #ifndef APOT
     tot = calc_forces(calc_pot.table, force, 0);
-    write_pot_table(&opt_pot, endpot);
+    if (opt == 1) {
+      write_pot_table(&opt_pot, endpot);
 #else
     tot = calc_forces(opt_pot.table, force, 0);
-    write_pot_table(&apot_table, endpot);
+    if (opt == 1) {
+      write_pot_table(&apot_table, endpot);
 #endif
-    printf("\nPotential in format %d written to file %s\n", format, endpot);
+      printf("\nPotential in format %d written to file %s\n", format, endpot);
+    }
 #ifndef APOT
     printf("Plotpoint file written to file %s\n", plotpointfile);
 #endif
@@ -313,7 +316,6 @@ int main(int argc, char **argv)
 
     max = 0.0;
     min = 100000.0;
-//    printf("conf-atom df^2 f f0 df/f0 |f|\n ");
     if (strcmp(endforce, "stdout") != 0) {
       outforce = fopen(endforce, "w");
       if (NULL == outforce) {
@@ -322,19 +324,20 @@ int main(int argc, char **argv)
       }
     } else
       outforce = stdout;
+    fprintf(outforce, "conf-atom   df^2\t f\t\t f0\t\t df/f0\t\t |f|\n");
     for (i = 0; i < 3 * natoms; i++) {
       sqr = SQR(force[i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
-      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf,
+      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf,
 	      i / 3, sqr,
 	      force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	      force_0[i],
 	      (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
 	      atoms[i / 3].absforce);
 #else /* FWEIGHT */
-      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t\t%f\n", atoms[i / 3].conf, i / 3,
+      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf, i / 3,
 	      sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
@@ -343,25 +346,31 @@ int main(int argc, char **argv)
       fclose(outforce);
     }
     printf("Cohesive Energies\n");
-    printf("conf\tw*de^2\t\te\t\te0\t\tde/e0\n");
+    printf("conf\t(w*de)^2\te\t\te0\t\tde/e0\n");
+
+    real  e_sum = 0, s_sum = 0;
+
     for (i = 0; i < nconf; i++) {
       sqr = SQR(force[3 * natoms + i]);
+      e_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
       printf("%d\t%f\t%f\t%f\t%f\n", i, sqr,
-	     force[3 * natoms + i] + force_0[3 * natoms + i],
-	     force_0[3 * natoms + i],
+	     (force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
+	     force_0[3 * natoms + i] / eweight,
 	     force[3 * natoms + i] / force_0[3 * natoms + i]);
     }
 #ifdef STRESS
     printf("Stresses on unit cell\n");
-    printf("conf\tw*ds^2\ts\ts0\tds/s0\n");
+    printf("conf\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     for (i = 3 * natoms + nconf; i < 3 * natoms + 7 * nconf; i++) {
       sqr = SQR(force[i]);
+      s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
       printf("%d\t%f\t%f\t%f\t%f\n", (i - (3 * natoms + nconf)) / 6, sqr,
-	     force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+	     (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
+	     force[i] / force_0[i]);
     }
 #endif
 #ifdef EAM
@@ -391,6 +400,15 @@ int main(int argc, char **argv)
     }
 #endif
 
+    printf("\n###### error report #####\n");
+#ifndef STRESS
+    printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
+	   mdim - 6 * nconf, 3 * natoms, nconf);
+#else
+    printf
+      ("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
+       tot, mdim, 3 * natoms, nconf, 6 * nconf);
+#endif
     /* calculate the rms errors for forces, energies, stress */
     rms[0] = 0;			/* rms rms for forces */
     rms[1] = 0;			/* energies */
@@ -401,20 +419,34 @@ int main(int argc, char **argv)
     rms[0] = sqrt(rms[0] / natoms);
 
     for (i = 0; i < nconf; i++)
-      rms[1] += SQR(force[3 * natoms + i]);
+      rms[1] += SQR(force[3 * natoms + i] / eweight);
     rms[1] = sqrt(rms[1] / nconf);
 
     for (i = 0; i < nconf; i++)
       for (j = 0; j < 6; j++)
-	rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j]);
-    rms[2] = sqrt(rms[2] / nconf);
+	rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j] / sweight);
+    rms[2] = sqrt(rms[2] / (6 * nconf));
 
-    printf("RMS-errors:\nforce %f, energy %f, stress %f\n", rms[0], rms[1],
+#ifndef STRESS
+    printf("sum of force-errors = %f\t\t( %.2f%% - av: %e)\n", tot - e_sum,
+	   (tot - e_sum) / tot * 100, (tot - e_sum) / (3 * natoms));
+    printf("sum of energy-errors = %f\t\t( %.2f% )\n", e_sum,
+	   e_sum / tot * 100);
+    printf("min: %e - max: %e\n", min, max);
+    printf("rms-errors:\nforce %f\nenergy %f\n", rms[0], rms[1]);
+#else
+    printf("sum of force-errors = %f\t\t( %.2f%% - av: %e)\n",
+	   tot - e_sum - s_sum, (tot - e_sum - s_sum) / tot * 100,
+	   (tot - e_sum - s_sum) / (3 * natoms));
+    printf("sum of energy-errors = %f\t\t( %.2f% )\n", e_sum,
+	   e_sum / tot * 100);
+    printf("sum of stress-errors = %f\t\t( %.2f% )\n", s_sum,
+	   s_sum / tot * 100);
+    printf("min: %e - max: %e\n", min, max);
+    printf("rms-errors:\nforce %f\nenergy %f\nstress %f\n", rms[0], rms[1],
 	   rms[2]);
+#endif
 
-    printf("av %e, min %e, max %e\n", tot / mdim, min, max);
-    printf("Sum %f, count %d\n", tot, mdim);
-    printf("Used %d function evaluations.\n", fcalls);
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
