@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.7 $
-# $Date: 2009/01/16 08:37:07 $
+# $Revision: 1.8 $
+# $Date: 2009/02/16 14:10:46 $
 ####################################################################
 #
 # Usage: plot_pot.awk pot_file_1 pot_file_2 ... pair_file
@@ -67,12 +67,20 @@ BEGIN {
 		for (i=count;i<(count+total_pots);i++){
 			while (substr($0,1,4)!="type") getline;
 			pot_name[i] = $2;
-			if ((x=index(pot_name[i],"_"))>0)
-				pot_name[i] = substr(pot_name[i],1,x-1);
+			if (match(pot_name[i],"_sc$",arr)>0)
+				pot_name[i] = substr(pot_name[i],1,length(pot_name[i])-3);
 			if (pot_name[i]=="eopp")
 				n_param[i]=6;
 			else if (pot_name[i]=="lj")
 				n_param[i]=2;
+			else if (pot_name[i]=="morse")
+				n_param[i]=3;
+			else if (pot_name[i]=="softshell")
+				n_param[i]=2;
+			else if (pot_name[i]=="eoppexp")
+				n_param[i]=6;
+			else if (pot_name[i]=="meopp")
+				n_param[i]=7;
 			getline;
 			if ($2>maxdist)
 				maxdist=$2;
@@ -83,7 +91,7 @@ BEGIN {
 				if ($5>maxdist)
 					maxdist=$5;
 				getline;
-			} 
+			}
 			for (l=1;l<=n_param[i];l++) {
 				params[i "," l ] = $2;
 				getline
@@ -101,29 +109,36 @@ END {
 		print "set grid;\n" > "plot";
 		print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;\n" > "plot";
 		print "set label \"cutoff\" at " maxdist*0.95 ",0.23;\n" > "plot";
-		print "pl [" 0.5*mindist ":" maxdist*1.1 "][-0.3:1.1] " > "plot";
+		print "pl [" 0.5*mindist ":" maxdist*1.1 "][-0.3:.6] " > "plot";
 		for (i=0;i<count;i++) {
 			if (pot_name[i] == "eopp") {
 				printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
 			} else if (pot_name[i] == "lj") {
-			printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > "plot";
-		}
+				printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > "plot";
+			} else if (pot_name[i] == "morse") {
+				printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f))) w l",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > "plot";
+			} else if (pot_name[i] == "softshell") {
+				printf "(%f/r)**%f w l",params[i","1],params[i","2] > "plot";
+			} else if (pot_name[i] == "eoppexp") {
+				printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
+			} else if (pot_name[i] == "meopp") {
+				printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
+			}
 		if (i!=(count-1))
 			print ", " > "plot";
-	}
-	if (dist_file != "") {
-		print ", " > "plot";
-		for (i=0;i<count;i++) {
-			if (i==0)
-				print "'" dist_file "' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
-			else 
-				print "'' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
-			if (i!=(count-1))
-				print ", " > "plot";
 		}
+		if (dist_file != "") {
+			print ", " > "plot";
+			for (i=0;i<count;i++) {
+				if (i==0)
+					print "'" dist_file "' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
+				else
+					print "'' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
+				if (i!=(count-1))
+					print ", " > "plot";
+			}
+		}
+		print ";" > "plot";
+		system("gnuplot -persist plot");
 	}
-
-	print ";" > "plot";
-	system("gnuplot -persist plot");
-}
 }
