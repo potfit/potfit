@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.43 $
-# $Date: 2009/02/10 09:57:46 $
+# $Revision: 1.44 $
+# $Date: 2009/03/06 08:52:30 $
 #
 ############################################################################
 #
@@ -612,7 +612,8 @@ POTFITHDR   	= potfit.h powell_lsq.h utils.h
 POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
 		  linmin_r.c force.c \
 		  config.c param.c potential.c potfit.c \
-		  splines.c simann.c rescale.c functions.c smooth.c
+		  splines.c simann.c rescale.c functions.c smooth.c \
+		  chempot.c
 MPISRC          = mpi_utils.c
 
 #########################################################

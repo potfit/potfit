@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.57 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.58 $
+* $Date: 2009/03/06 08:52:31 $
 *****************************************************************/
 
 /* #ifdef APOT */
@@ -333,6 +333,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   char  name[255];
   char *token;
   real *val, *list, temp;
+  fpos_t fpos;
 
   /* read cp */
   if (!disable_cp) {
@@ -358,26 +359,74 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	error(msg);
       }
     }
+    if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
+      sprintf(msg,
+	      "Could not read number of composition nodes from potential file.\n");
+      error(msg);
+    }
+    if (strcmp(buffer, "cn") != 0 && ntypes > 1) {
+      sprintf(msg,
+	      "No composition nodes found in %s.\n(cn 0 is also allowed)\n",
+	      filename);
+      error(msg);
+    }
+    if (ntypes == 1) {
+/*       compnodes = 0; */
+    }
+    apt->values[apt->number] =
+      (real *)realloc(apt->values[apt->number],
+		      (ntypes + compnodes) * sizeof(real));
+    apt->pmin[apt->number] =
+      (real *)realloc(apt->pmin[apt->number],
+		      (ntypes + compnodes) * sizeof(real));
+    apt->pmax[apt->number] =
+      (real *)realloc(apt->pmax[apt->number],
+		      (ntypes + compnodes) * sizeof(real));
+    apt->chempot = apt->values[apt->number];
+    compnodelist = (real *)malloc((ntypes + compnodes) * sizeof(real));
+
+    for (j = 0; j < compnodes; j++) {
+      if (4 >
+	  fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
+		 &apt->chempot[ntypes + j],
+		 &apt->pmin[apt->number][ntypes + j],
+		 &apt->pmax[apt->number][ntypes + j])) {
+	sprintf(msg, "Could not read composition node %d\n", j + 1);
+	error(msg);
+      }
+      if (apt->pmin[apt->number][ntypes + j] > apt->chempot[ntypes + j]
+	  || apt->pmax[apt->number][ntypes + j] < apt->chempot[ntypes + j]) {
+	sprintf(msg, "composition node %d is out of bounds.\n", j + 1);
+	error(msg);
+      }
+    }
+
+    /* check compnodes for valid values */
+    if (ntypes == 2) {
+      for (j = 0; j < compnodes; j++)
+	if (compnodelist[j] > 1 || compnodelist[j] < 0) {
+	  sprintf(msg,
+		  "Composition node %d is %f but should be inside [0;1].\n",
+		  j + 1, compnodelist[j]);
+	  error(msg);
+	}
+    }
+
+    printf("Enabled chemical potentials with %d extra composition node(s).\n",
+	   compnodes);
   }
+
+  do {
+    fgetpos(infile, &fpos);
+    fscanf(infile, "%s", buffer);
+  } while (strcmp(buffer, "type") != 0);
+  fsetpos(infile, &fpos);
 
   for (i = 0; i < apt->number; i++) {
     /* read type */
     if (2 > fscanf(infile, "%s %s", buffer, name)) {
       sprintf(msg, "Premature end of potential file %s", filename);
       error(msg);
-    }
-    /* skip cp_ if found */
-    if (strncmp(buffer, "cp_", 3) == 0) {
-      fscanf(infile, "%s %s", buffer, name);
-      for (j = 0; j < (ntypes - 1); j++)
-	if (4 > fscanf(infile, "%s %s %s %s", buffer, name, msg, msg)) {
-	  sprintf(msg, "Premature end of potential file %s", filename);
-	  error(msg);
-	}
-      if (2 > fscanf(infile, "%s %s", buffer, name)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
     }
     if (strcmp(buffer, "type") != 0) {
       sprintf(msg,
@@ -489,7 +538,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
       if (apt->pmin[i][j] > apt->pmax[i][j]) {
 	sprintf(msg,
-		"paramter minimum is bigger than parameter maximum for parameter #%d in potential #%d.\nAborting",
+		"parameter minimum is bigger than parameter maximum for parameter #%d in potential #%d.\nAborting",
 		j + 1, i + 1);
 	error(msg);
       } else if ((apt->values[i][j] < apt->pmin[i][j])
@@ -502,10 +551,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
 
-/*   if (do_smooth) */
-/*     printf */
-/*       ("\nWARNING: the smooth cutoff option is currently in beta stage.\nUse at own risk!\n\n"); */
-
   /* assign the potential functions to the function pointers */
   if (apot_assign_functions(apt) == -1) {
     sprintf(msg, "Could not assign the function pointers.\nAborting");
@@ -513,7 +558,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
   if (!disable_cp) {
-    apt->total_par += ntypes;
+    apt->total_par += (ntypes + compnodes);
   }
 /*   apot_validate_functions(apt); */
 
@@ -531,7 +576,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
   pt->len = pt->first[apt->number - 1] + apt->n_par[apt->number - 1];
   if (!disable_cp) {
-    pt->len += ntypes;
+    pt->len += (ntypes + compnodes);
   }
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
@@ -569,14 +614,15 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       pt->idxlen += apt->n_par[i];
   }
   if (!disable_cp) {
+    init_chemical_potential(ntypes);
     i = apt->number;
-    for (j = 0; j < ntypes; j++) {
-      *(val + j) = apt->values[apt->number][j];
+    for (j = 0; j < (ntypes + compnodes); j++) {
+      *(val + j) = apt->values[i][j];
       pt->idx[k] = l++;
       apt->idxpot[k] = i;
       apt->idxparam[k++] = j;
     }
-    pt->idxlen += ntypes;
+    pt->idxlen += (ntypes + compnodes);
   }
 
   init_calc_table(pt, &calc_pot);
@@ -1141,7 +1187,8 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
       case 0:
 	{
 	  size = apot_table.number;
-	  calct->len = size * APOT_STEPS + 2 * optt->ncols;
+	  calct->len =
+	    size * APOT_STEPS + 2 * optt->ncols + ntypes + compnodes;
 	  calct->idxlen = APOT_STEPS;
 	  calct->ncols = optt->ncols;
 	  calct->begin = optt->begin;
@@ -1277,7 +1324,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		  calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
 		  calc_pot.end[i] = params[0];
 		  calc_pot.invstep[i] = 1. / calc_pot.step[i];
-		  new_slots(i);
+		  new_slots(i, 0);
 		}
 		if (x0 == 0) {
 		  for (j = 0; j < APOT_STEPS; j++) {
@@ -1811,6 +1858,11 @@ void write_apot_table(apot_table_t *apt, char *filename)
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, "cp_%d %f %f %f\n", i, apt->chempot[i],
 	      apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
+    fprintf(outfile, "cn %d\n", compnodes);
+    for (j = 0; j < compnodes; j++)
+      fprintf(outfile, "%f %f %f %f\n", compnodelist[j],
+	      apt->chempot[ntypes + j], apt->pmin[apt->number][ntypes + j],
+	      apt->pmax[apt->number][ntypes + j]);
     fprintf(outfile, "\n");
   }
 

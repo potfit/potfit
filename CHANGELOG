@@ -1,3 +1,8 @@
+CVS-20090306
++ output for stress can now be written to a file as well
++ [APOT] fixed potentials without _sc option
++ [APOT] added composition nodes to chemical potentials (only 2d)
+
 CVS-20090216
 + fix rms error for energy-weight
 + [APOT] only write new potential after step adjustment

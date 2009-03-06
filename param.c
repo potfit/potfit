@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.24 $
-*  $Date: 2009/01/16 08:36:22 $
+*  $Revision: 1.25 $
+*  $Date: 2009/03/06 08:52:31 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -203,6 +203,10 @@ void read_paramfile(FILE *pf)
     /* file for end force */
     else if (strcasecmp(token, "endforce") == 0) {
       getparam("endforce", endforce, PARAM_STR, 1, 255);
+    }
+    /* file for end stress */
+    else if (strcasecmp(token, "endstress") == 0) {
+      getparam("endstress", endstress, PARAM_STR, 1, 255);
     }
     /* file for IMD potential */
     else if (strcasecmp(token, "imdpot") == 0) {

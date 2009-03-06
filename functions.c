@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.11 $
+* $Date: 2009/03/06 08:52:30 $
 *****************************************************************/
 
 #ifdef APOT
@@ -253,7 +253,7 @@ void newpot_value(real r, real *p, real *f)
 
 int apot_validate(int param_index, real new_val)
 {
-  int   pot_index = apot_table.idxpot[param_index], i;
+  int   pot_index = apot_table.idxpot[param_index];
   real  x;
 
   if (pot_index < apot_table.number) {
@@ -272,4 +272,52 @@ int apot_validate(int param_index, real new_val)
   return 1;
 }
 
+/*****************************************************************************
+*
+*  debug function to print the potentials
+*
+******************************************************************************/
+
+#ifdef DEBUG
+
+void debug_apot()
+{
+  int   i, j;
+
+  fflush(stdout);
+  fprintf(stderr, "\n\n##############################################\n");
+  fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
+  fprintf(stderr, "##############################################\n");
+  for (i = 0; i < apot_table.number; i++) {
+    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
+	    apot_table.names[i], smooth_pot[i]);
+    for (j = 0; j < apot_table.n_par[i]; j++) {
+      fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
+	      apot_table.param_name[i][j], apot_table.values[i][j],
+	      apot_table.pmin[i][j], apot_table.pmax[i][j]);
+    }
+  }
+  if (disable_cp) {
+    fprintf(stderr, "\nchemical potentials are DISABLED!\n");
+  } else {
+    fprintf(stderr, "\nchemical potentials:\n");
+    for (i = 0; i < ntypes; i++)
+      fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, apot_table.chempot[i],
+	      apot_table.pmin[apot_table.number][i],
+	      apot_table.pmax[apot_table.number][i]);
+    if (compnodes > 0) {
+      if (ntypes == 2) {
+	fprintf(stderr, "composition nodes:\n");
+	for (j = 0; j < compnodes; j++)
+	  fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
+		  compnodelist[j], apot_table.chempot[ntypes + j],
+		  apot_table.pmin[apot_table.number][ntypes + j],
+		  apot_table.pmax[apot_table.number][ntypes + j]);
+      }
+    }
+  }
+  exit(2);
+}
+
+#endif
 #endif

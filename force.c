@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.57 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.58 $
+* $Date: 2009/03/06 08:52:30 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -244,9 +244,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 #ifdef APOT
 	if (!disable_cp) {
-	  for (i = 0; i < ntypes; i++) {
-	    forces[config] += (na_typ[h][i] * xi_opt[ndimtot - ntypes + i]);
-	  }
+	  forces[config] += chemical_potential(ntypes, na_typ[h]);
 	}
 #endif
 	/* first loop over atoms: reset forces, densities */
@@ -542,11 +540,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     for (i = 0; i < ndim; i++) {
       if (x = xi_opt[idx[i]] -
 	  apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
-	  x <= 0) {
+	  x < 0) {
 	tmpsum += APOT_PUNISH * x * x;
       } else if (x = xi_opt[idx[i]] -
 		 apot_table.pmax[apot_table.idxpot[i]][apot_table.
-						       idxparam[i]], x >= 0) {
+						       idxparam[i]], x > 0) {
 	tmpsum += APOT_PUNISH * x * x;
       }
     }
@@ -653,6 +651,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     }
 
   }
+
   /* once a non-root process arrives here, all is done. */
   return -1.;
 }

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.59 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.60 $
+* $Date: 2009/03/06 08:52:31 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -227,6 +227,7 @@ EXTERN char config[255];	/* file with atom configuration */
 EXTERN char plotfile[255];	/* file for plotting */
 EXTERN char distfile[255];	/* file for distributions */
 EXTERN char endforce[255] INIT("stdout");	/* file for force deviations */
+EXTERN char endstress[255] INIT("stdout");	/* file for stress deviations */
 
 EXTERN char flagfile[255] INIT("potfit.break");
 					 /* break if file exists */
@@ -246,6 +247,8 @@ EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
 EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
 EXTERN int disable_cp INIT(0);	/* switch chemical potential on/off */
+EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
+EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
 #endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
@@ -368,7 +371,15 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 int   apot_validate(int, real);
-void  new_slots(int);		/* new slots for smooth cutoff */
+void  new_slots(int, int);	/* new slots for smooth cutoff */
+real  chemical_potential(int, int *);
+void  init_chemical_potential(int);
+
+#ifdef DEBUG
+
+void  debug_apot();
+
+#endif
 
 /* global counting variables for misc. purposes */
 

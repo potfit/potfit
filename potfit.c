@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.48 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.49 $
+* $Date: 2009/03/06 08:52:31 $
 *****************************************************************/
 
 #define MAIN
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   real  tot, min, max, sqr, *totdens;
   int   i, j, diff, *ntyp;
   char  msg[255];
-  FILE *outforce;
+  FILE *outforce, *outstress;
 
   pi = 4.0 * atan(1.);
 #ifdef MPI
@@ -240,11 +240,11 @@ int main(int argc, char **argv)
 //    rescale(&opt_pot,1.);
 #ifndef APOT
     tot = calc_forces(calc_pot.table, force, 0);
-    if (opt == 1) {
+    if (opt) {
       write_pot_table(&opt_pot, endpot);
 #else
     tot = calc_forces(opt_pot.table, force, 0);
-    if (opt == 1) {
+    if (opt) {
       write_pot_table(&apot_table, endpot);
 #endif
       printf("\nPotential in format %d written to file %s\n", format, endpot);
@@ -361,16 +361,25 @@ int main(int argc, char **argv)
 	     force[3 * natoms + i] / force_0[3 * natoms + i]);
     }
 #ifdef STRESS
-    printf("Stresses on unit cell\n");
-    printf("conf\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
+    if (strcmp(endstress, "stdout") != 0) {
+      outstress = fopen(endstress, "w");
+      if (NULL == outstress) {
+	sprintf(msg, "Could not open file %s\n", endstress);
+	error(msg);
+      }
+    } else
+      outstress = stdout;
+    fprintf(outstress, "Stresses on unit cell\n");
+    fprintf(outstress, "conf\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     for (i = 3 * natoms + nconf; i < 3 * natoms + 7 * nconf; i++) {
       sqr = SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      printf("%d\t%f\t%f\t%f\t%f\n", (i - (3 * natoms + nconf)) / 6, sqr,
-	     (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
-	     force[i] / force_0[i]);
+      fprintf(outstress, "%d\t%f\t%f\t%f\t%f\n",
+	      (i - (3 * natoms + nconf)) / 6, sqr,
+	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
+	      force[i] / force_0[i]);
     }
 #endif
 #ifdef EAM
@@ -430,7 +439,7 @@ int main(int argc, char **argv)
 #ifndef STRESS
     printf("sum of force-errors = %f\t\t( %.2f%% - av: %e)\n", tot - e_sum,
 	   (tot - e_sum) / tot * 100, (tot - e_sum) / (3 * natoms));
-    printf("sum of energy-errors = %f\t\t( %.2f% )\n", e_sum,
+    printf("sum of energy-errors = %f\t\t( %.2f%% )\n", e_sum,
 	   e_sum / tot * 100);
     printf("min: %e - max: %e\n", min, max);
     printf("rms-errors:\nforce %f\nenergy %f\n", rms[0], rms[1]);
@@ -438,9 +447,9 @@ int main(int argc, char **argv)
     printf("sum of force-errors = %f\t\t( %.2f%% - av: %e)\n",
 	   tot - e_sum - s_sum, (tot - e_sum - s_sum) / tot * 100,
 	   (tot - e_sum - s_sum) / (3 * natoms));
-    printf("sum of energy-errors = %f\t\t( %.2f% )\n", e_sum,
+    printf("sum of energy-errors = %f\t\t( %.2f%% )\n", e_sum,
 	   e_sum / tot * 100);
-    printf("sum of stress-errors = %f\t\t( %.2f% )\n", s_sum,
+    printf("sum of stress-errors = %f\t\t( %.2f%% )\n", s_sum,
 	   s_sum / tot * 100);
     printf("min: %e - max: %e\n", min, max);
     printf("rms-errors:\nforce %f\nenergy %f\nstress %f\n", rms[0], rms[1],

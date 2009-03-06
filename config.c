@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.43 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.44 $
+* $Date: 2009/03/06 08:52:30 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -414,17 +414,15 @@ void read_config(char *filename)
 		    slot += calc_pot.first[col];
 		    step = calc_pot.step[col];
 #ifdef APOT
-		    if (do_smooth) {
-		      pot_list[col] =
-			(int **)realloc(pot_list[col],
-					(pot_list_length[col] +
-					 1) * sizeof(int *));
-		      pot_list[col][pot_list_length[col]] =
-			(int *)malloc(2 * sizeof(int));
-		      pot_list[col][pot_list_length[col]][0] = i;
-		      pot_list[col][pot_list_length[col]][1] = k;
-		      pot_list_length[col]++;
-		    }
+		    pot_list[col] =
+		      (int **)realloc(pot_list[col],
+				      (pot_list_length[col] +
+				       1) * sizeof(int *));
+		    pot_list[col][pot_list_length[col]] =
+		      (int *)malloc(2 * sizeof(int));
+		    pot_list[col][pot_list_length[col]][0] = i;
+		    pot_list[col][pot_list_length[col]][1] = k;
+		    pot_list_length[col]++;
 #endif
 
 		  } else {	/* format == 4 ! */
@@ -651,7 +649,7 @@ void read_config(char *filename)
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
-    new_slots(i);
+    new_slots(i, 1);
   }
   update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif
@@ -709,7 +707,7 @@ void read_config(char *filename)
  *
  ******************************************************************************/
 
-void new_slots(int a1)
+void new_slots(int a1, int force_update)
 {
   int   i, j, col, typ1, typ2, a2;
   real  r, rr;
@@ -721,7 +719,7 @@ void new_slots(int a1)
     typ2 = atoms[i].neigh[j].typ;
     col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
       : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-    if (smooth_pot[col] && !invar_pot[col]) {
+    if ((force_update || smooth_pot[col]) && !invar_pot[col]) {
       r = atoms[i].neigh[j].r;
       if (r < calc_pot.end[col]) {
 	rr = r - calc_pot.begin[col];
