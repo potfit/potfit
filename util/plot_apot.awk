@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.8 $
-# $Date: 2009/02/16 14:10:46 $
+# $Revision: 1.9 $
+# $Date: 2009/03/06 08:52:45 $
 ####################################################################
 #
 # Usage: plot_pot.awk pot_file_1 pot_file_2 ... pair_file
@@ -118,7 +118,7 @@ END {
 			} else if (pot_name[i] == "morse") {
 				printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f))) w l",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > "plot";
 			} else if (pot_name[i] == "softshell") {
-				printf "(%f/r)**%f w l",params[i","1],params[i","2] > "plot";
+				printf "(%f/x)**%f w l",params[i","1],params[i","2] > "plot";
 			} else if (pot_name[i] == "eoppexp") {
 				printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
 			} else if (pot_name[i] == "meopp") {
