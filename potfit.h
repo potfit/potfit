@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.60 $
-* $Date: 2009/03/06 08:52:31 $
+* $Revision: 1.61 $
+* $Date: 2009/03/12 15:00:21 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -249,6 +249,7 @@ EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc tabl
 EXTERN int disable_cp INIT(0);	/* switch chemical potential on/off */
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
+EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
 #endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
@@ -372,7 +373,7 @@ int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 int   apot_validate(int, real);
 void  new_slots(int, int);	/* new slots for smooth cutoff */
-real  chemical_potential(int, int *);
+real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
 
 #ifdef DEBUG

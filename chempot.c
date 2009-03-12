@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2009/03/06 08:52:30 $
+* $Revision: 1.2 $
+* $Date: 2009/03/12 15:00:20 $
 *****************************************************************/
 
 #ifdef APOT
@@ -61,51 +61,61 @@ int sort_chem_pot_2d()
   /* bubble sort */
   int   i, swapped;
 
-  do {
-    swapped = 0;
-    for (i = 0; i < (compnodes - 1); i++) {
-      if (compnodelist[i] > compnodelist[i + 1]) {
-	swap_chem_pot(ntypes + i, ntypes + i + 1);
-	swapped = 1;
+  if (compnodes > 0)
+    do {
+      swapped = 0;
+      for (i = 0; i < (compnodes - 1); i++) {
+	if (compnodelist[i] > compnodelist[i + 1]) {
+	  swap_chem_pot(ntypes + i, ntypes + i + 1);
+	  swapped = 1;
+	}
       }
-    }
-  } while (swapped);
+    } while (swapped);
 
   return 0;
 }
 
-real chemical_potential_2d(int *n)
+real chemical_potential_1d(int *n, real *mu)
 {
-  real  nfrac, temp;
-  real  xl, xr, yl, yr;
-  int   i, ntot;
+  return n[0] * mu[0];
+}
+
+real chemical_potential_2d(int *n, real *mu)
+{
+  real  nfrac;
+  int   ntot;
 
   ntot = n[0] + n[1];
   nfrac = (real)n[1] / ntot;
 
-  if (nfrac == 0 || nfrac == 1 || compnodes == 0)
-    return n[0] * apot_table.chempot[0] + n[1] * apot_table.chempot[1];
+  if (nfrac == 0 || nfrac == 1 || compnodes == 0) {
+    return n[0] * mu[0] + n[1] * mu[1];
+  }
+
+  int   i;
 
   i = 0;
   while (nfrac > compnodelist[i] && i < compnodes) {
     i++;
   }
 
+  real  xl, xr, yl, yr, temp;
+
   if (i == 0) {
     xl = 0;
     xr = compnodelist[0];
-    yl = apot_table.chempot[0];
-    yr = apot_table.chempot[2];
+    yl = mu[0];
+    yr = mu[2];
   } else if (i == compnodes) {
     xr = 1;
     xl = compnodelist[compnodes - 1];
-    yl = apot_table.chempot[ntypes + compnodes - 1];
-    yr = apot_table.chempot[1];
+    yl = mu[ntypes + compnodes - 1];
+    yr = mu[1];
   } else {
     xl = compnodelist[i - 1];
     xr = compnodelist[i];
-    yl = apot_table.chempot[ntypes + i - 2];
-    yr = apot_table.chempot[ntypes + i - 1];
+    yl = mu[ntypes + i - 2];
+    yr = mu[ntypes + i - 1];
   }
 
   temp = (yr - yl) / (xr - xl);
@@ -114,10 +124,9 @@ real chemical_potential_2d(int *n)
   return temp * ntot;
 }
 
-real chemical_potential_3d(int *n)
+real chemical_potential_3d(int *n, real *mu)
 {
-  return n[0] * apot_table.chempot[0] + n[1] * apot_table.chempot[1] +
-    n[2] * apot_table.chempot[2];
+  return n[0] * mu[0] + n[1] * mu[1] + n[2] * mu[2];
 }
 
 void init_chemical_potential(int dim)
@@ -129,14 +138,14 @@ void init_chemical_potential(int dim)
       ("Chemical potentials for n>=3 is not implemented.\nFalling back to N_i*mu_i\n");
 }
 
-real chemical_potential(int dim, int *n)
+real chemical_potential(int dim, int *n, real *mu)
 {
   if (dim == 1)
-    return n[0];
+    return chemical_potential_1d(n, mu);
   if (dim == 2)
-    return chemical_potential_2d(n);
+    return chemical_potential_2d(n, mu);
   if (dim >= 3)
-    return chemical_potential_3d(n);
+    return chemical_potential_3d(n, mu);
   return 0.;
 }
 

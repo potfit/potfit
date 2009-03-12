@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.58 $
-* $Date: 2009/03/06 08:52:30 $
+* $Revision: 1.59 $
+* $Date: 2009/03/12 15:00:21 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -244,7 +244,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 #ifdef APOT
 	if (!disable_cp) {
-	  forces[config] += chemical_potential(ntypes, na_typ[h]);
+	  forces[config] +=
+	    chemical_potential(ntypes, na_typ[h], xi_opt + cp_start);
 	}
 #endif
 	/* first loop over atoms: reset forces, densities */

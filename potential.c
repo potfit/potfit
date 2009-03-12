@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.58 $
-* $Date: 2009/03/06 08:52:31 $
+* $Revision: 1.59 $
+* $Date: 2009/03/12 15:00:21 $
 *****************************************************************/
 
 /* #ifdef APOT */
@@ -359,63 +359,72 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	error(msg);
       }
     }
+    fgetpos(infile, &fpos);
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
-      sprintf(msg,
-	      "Could not read number of composition nodes from potential file.\n");
-      error(msg);
+      if (strcmp("type", buffer) == 0)
+	compnodes = -1;
+      else {
+	sprintf(msg,
+		"Could not read number of composition nodes from potential file.\n");
+	error(msg);
+      }
     }
-    if (strcmp(buffer, "cn") != 0 && ntypes > 1) {
+    if (strcmp(buffer, "cn") != 0 && ntypes > 1 && compnodes != -1) {
       sprintf(msg,
 	      "No composition nodes found in %s.\n(cn 0 is also allowed)\n",
 	      filename);
       error(msg);
     }
     if (ntypes == 1) {
-/*       compnodes = 0; */
+      compnodes = 0;
     }
-    apt->values[apt->number] =
-      (real *)realloc(apt->values[apt->number],
-		      (ntypes + compnodes) * sizeof(real));
-    apt->pmin[apt->number] =
-      (real *)realloc(apt->pmin[apt->number],
-		      (ntypes + compnodes) * sizeof(real));
-    apt->pmax[apt->number] =
-      (real *)realloc(apt->pmax[apt->number],
-		      (ntypes + compnodes) * sizeof(real));
-    apt->chempot = apt->values[apt->number];
-    compnodelist = (real *)malloc((ntypes + compnodes) * sizeof(real));
+    if (compnodes != -1) {
+      apt->values[apt->number] =
+	(real *)realloc(apt->values[apt->number],
+			(ntypes + compnodes) * sizeof(real));
+      apt->pmin[apt->number] =
+	(real *)realloc(apt->pmin[apt->number],
+			(ntypes + compnodes) * sizeof(real));
+      apt->pmax[apt->number] =
+	(real *)realloc(apt->pmax[apt->number],
+			(ntypes + compnodes) * sizeof(real));
+      apt->chempot = apt->values[apt->number];
+      compnodelist = (real *)malloc((ntypes + compnodes) * sizeof(real));
 
-    for (j = 0; j < compnodes; j++) {
-      if (4 >
-	  fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
-		 &apt->chempot[ntypes + j],
-		 &apt->pmin[apt->number][ntypes + j],
-		 &apt->pmax[apt->number][ntypes + j])) {
-	sprintf(msg, "Could not read composition node %d\n", j + 1);
-	error(msg);
-      }
-      if (apt->pmin[apt->number][ntypes + j] > apt->chempot[ntypes + j]
-	  || apt->pmax[apt->number][ntypes + j] < apt->chempot[ntypes + j]) {
-	sprintf(msg, "composition node %d is out of bounds.\n", j + 1);
-	error(msg);
-      }
-    }
-
-    /* check compnodes for valid values */
-    if (ntypes == 2) {
-      for (j = 0; j < compnodes; j++)
-	if (compnodelist[j] > 1 || compnodelist[j] < 0) {
-	  sprintf(msg,
-		  "Composition node %d is %f but should be inside [0;1].\n",
-		  j + 1, compnodelist[j]);
+      for (j = 0; j < compnodes; j++) {
+	if (4 >
+	    fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
+		   &apt->chempot[ntypes + j],
+		   &apt->pmin[apt->number][ntypes + j],
+		   &apt->pmax[apt->number][ntypes + j])) {
+	  sprintf(msg, "Could not read composition node %d\n", j + 1);
 	  error(msg);
 	}
-    }
+	if (apt->pmin[apt->number][ntypes + j] > apt->chempot[ntypes + j]
+	    || apt->pmax[apt->number][ntypes + j] < apt->chempot[ntypes + j]) {
+	  sprintf(msg, "composition node %d is out of bounds.\n", j + 1);
+	  error(msg);
+	}
+      }
 
+      /* check compnodes for valid values */
+      if (ntypes == 2) {
+	for (j = 0; j < compnodes; j++)
+	  if (compnodelist[j] > 1 || compnodelist[j] < 0) {
+	    sprintf(msg,
+		    "Composition node %d is %f but should be inside [0;1].\n",
+		    j + 1, compnodelist[j]);
+	    error(msg);
+	  }
+      }
+    }
     printf("Enabled chemical potentials with %d extra composition node(s).\n",
-	   compnodes);
+	   (compnodes == -1 ? 0 : compnodes));
+    if (compnodes == -1)
+      compnodes = 0;
   }
 
+  fsetpos(infile, &fpos);
   do {
     fgetpos(infile, &fpos);
     fscanf(infile, "%s", buffer);
@@ -558,6 +567,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
   if (!disable_cp) {
+    cp_start = apt->total_par + ntypes * (ntypes + 1);
     apt->total_par += (ntypes + compnodes);
   }
 /*   apot_validate_functions(apt); */
