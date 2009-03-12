@@ -31,11 +31,17 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.2 $
-# $Date: 2009/03/11 13:14:16 $
+# $Revision: 1.3 $
+# $Date: 2009/03/12 15:00:35 $
 ####################################################################
 #
-# Usage: compnodes config.file
+# Usage: compnodes <option> config.file
+#
+# <option> can be one of the following:
+# 	-l 	lists all configurations with different atom types
+# 	-la 	lists all configurations
+# 	-ls 	lists all configurations with different atom types sorted
+# 	-le 	lists all effective configurations
 #
 ####################################################################
 
@@ -75,10 +81,17 @@ function sort(to_sort,to_change,n,nr)
 
 
 function list_conf(ntot,conc,n,conf) {
-	printf "Listing "n" configurations with 2 atom types:\n";
+	if (listall)
+		printf "Listing all "n" configurations with 2 atom types:\n";
+	if (listsorted)
+		printf "Listing "n" sorted configurations with 2 atom types:\n";
+	if (list)
+		printf "Listing "n" configurations with 2 atom types:\n";
+	if (listeff)
+		printf "Listing "n" effective configurations with 2 atom types:\n";
 	printf "conf\tc[0]\tc[1]\tn[0]\tn[1]\n";
 	for (i=0;i<n;i++)
-		printf "%d\t%.3f\t%.3f\t%d\t%d\n",conf[i]+1,conc[i]/ntot[i],1-conc[i]/ntot[i],conc[i],ntot[i]-conc[i];
+		printf "%d\t%.3f\t%.3f\t%d\t%d\n",conf[i]+1,conc[conf[i]]/ntot[conf[i]],1-conc[conf[i]]/ntot[conf[i]],conc[conf[i]],ntot[conf[i]]-conc[conf[i]];
 }
 
 BEGIN {
@@ -93,7 +106,10 @@ BEGIN {
 } else if (ARGV[1]=="-ls") {
 listsorted=1;
 delete ARGV[1];
-	} else list=0;
+	} else if (ARGV[1]=="-le") {
+	listeff=1;
+	delete ARGV[1];
+} else list=0;
 }
 
 {
@@ -137,6 +153,8 @@ END {
 		printf "conf";
 		for (i=0;i<=max;i++)
 			printf "\tc["i"]";
+		for (i=0;i<=max;i++)
+			printf "\tn["i"]";
 	}
 	for (i=0;i<n;i++) {
 		if (listall)
@@ -144,7 +162,11 @@ END {
 		for (j=0;j<=max;j++){
 			c[i,j]=nconf[i,j]/nconf[i,"tot"];	
 			if (listall)
-				printf "\t%.2f",c[i,j];
+				printf "\t%.3f",c[i,j];
+		}
+		for (j=0;j<=max;j++){
+			if (listall)
+				printf "\t%d",nconf[i,j];
 		}
 	}
 	if (listall)
@@ -198,18 +220,22 @@ END {
 		i=i+j-1;
 	}
 
+
 	if ((concentration[len-2]/config[len-2])!=(concentration[len-1]/config[len-1])) {
 		effconfig[k]=len-1;
 		k++
 		 }
 
-		print "Found "k" effective configurations.";
+	if (listeff)
+		list_conf(config,concentration,k,effconfig);
+
 
 		for (i=0;i<k;i++) {
 			concentration[i]=concentration[effconfig[i]]/config[effconfig[i]];
 			config[i]=config[effconfig[i]];
 		}
 
+		print "Found "k" effective configurations.";
 		if (k>5) {
 			print "All composition nodes:";
 			for (i=0;i<k;i++)
