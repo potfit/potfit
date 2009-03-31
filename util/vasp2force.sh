@@ -1,7 +1,7 @@
 #!/bin/sh
 ####################################################################
 # 
-#   Copyright 2003--2008 Peter Brommer
+#   Copyright 2003-2009 Peter Brommer, Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 # 
 #/****************************************************************
-#* $Revision: 1.10 $
-#* $Date: 2009/01/15 09:43:05 $
+#* $Revision: 1.11 $
+#* $Date: 2009/03/31 07:25:02 $
 #*****************************************************************/
 
 [ -f ../single_atom_energies ] || { 
@@ -37,6 +37,7 @@
 wdir=`pwd`
 count=`grep -c "TOTAL-FORCE" OUTCAR`
 pr_conf="0";
+poscar=`[ -f POSCAR ]`;
 echo "There are $count configurations in OUTCAR" >&2
 while getopts 'fs:' OPTION
   do
@@ -57,26 +58,29 @@ if [ "X$pr_conf" == "X0" ]; then
     done
 fi
 #echo $pr_conf >&2
-cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" '  BEGIN { 
+cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" '  BEGIN {
     OFMT="%11.7g"
 #Select confs to print
     count=0;
     split(pr_conf,pr_arr,",");
     for (i in pr_arr) pr_flag[pr_arr[i]]++;
 #pr_flag now is set for the configurations to be printed.
-    getline saeng < "../single_atom_energies"; 
+    getline saeng < "../single_atom_energies";
+    if (poscar) {
     getline < "POSCAR"; getline scale < "POSCAR";
     getline boxx < "POSCAR"; getline boxy < "POSCAR"; getline boxz < "POSCAR";
-    getline < "POSCAR"; ntypes = split($0,a);single_energy=0.;
+    getline < "POSCAR"; ntypes = split($0,a);
+    }
+    single_energy=0.;
     split(saeng,sae);
-    #sae[1]=-0.000219; sae[2]=-0.993872; sae[3]=-0.855835;
-    for (i=1; i<=ntypes; i++) single_energy += a[i]*sae[i];
-     for (i=2; i<=ntypes; i++) a[i]=a[i-1]+$i;
-    j=1; for (i=1; i<=a[ntypes]; i++) { if (i>a[j]) j++; b[i]=j-1; }
-    split(boxx,boxx_v);
-    split(boxy,boxy_v);
-    split(boxz,boxz_v);
   };
+  /ions per type/ {
+    ntypes = split($0,a) - 4;
+    for (i=1;i<=ntypes;i++) a[i]=a[i+4];
+    for (i=1; i<=ntypes; i++) single_energy += a[i]*sae[i];
+    for (i=2; i<=ntypes; i++) a[i]+=a[i-1];
+    j=1; for (i=1; i<=a[ntypes]; i++) { if (i>a[j]) j++; b[i]=j-1; }
+    }
 # Marker for energy is two spaces between energy and without.
 # Correct energy is energy(sigma->0)
   /energy  without/ {
