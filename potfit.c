@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.49 $
-* $Date: 2009/03/06 08:52:31 $
+* $Revision: 1.50 $
+* $Date: 2009/04/07 09:01:38 $
 *****************************************************************/
 
 #define MAIN
@@ -152,16 +152,12 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#ifndef APOT
+#ifdef EAM
     lambda = (real *)malloc(ntypes * sizeof(real));
     totdens = (real *)malloc(ntypes * sizeof(real));
     ntyp = (int *)malloc(ntypes * sizeof(int));
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
-#endif /* APOT */
-
-
-#ifdef EAM
 #ifndef NORESCALE
     rescale(&opt_pot, 1., 1);	/* rescale now... */
 #ifdef WZERO
