@@ -30,14 +30,11 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.59 $
-* $Date: 2009/03/12 15:00:21 $
+* $Revision: 1.60 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
-/* #ifdef APOT */
-/* #include <unistd.h> */
-/* #endif */
-#define NPLOT 10000
+#define NPLOT 1000
 #define REPULSE
 #ifndef POTSCALE
 #include "potfit.h"
@@ -263,6 +260,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   /* compute rcut and rmin */
   rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
   rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
+  pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
+  for (i = 0; i < ntypes * (ntypes + 1) / 2; i++)
+    pot_index[i] = ntypes * ntypes;
   if (NULL == rcut)
     error("Cannot allocate rcut");
   if (NULL == rmin)
@@ -273,6 +273,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	: j * ntypes + i - ((j * (j + 1)) / 2);
       rmin[i * ntypes + j] = pt->begin[k];
       rcut[i * ntypes + j] = pt->end[k];
+      pot_index[k] = MIN(pot_index[k], i * ntypes + j);
     }
 #ifdef EAM
   for (i = 0; i < ntypes; i++) {
@@ -335,26 +336,23 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   real *val, *list, temp;
   fpos_t fpos;
 
+  fgetpos(infile, &fpos);
   /* read cp */
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++) {
-      if (4 >
-	  fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
-		 &apt->pmin[apt->number][i], &apt->pmax[apt->number][i])) {
+      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
+		     &apt->pmin[apt->number][i],
+		     &apt->pmax[apt->number][i])) {
 	sprintf(msg, "Could not read chemical potential for atomtype #%d\n",
 		i);
 	error(msg);
       }
 
       /* split cp and _# */
-      token = strtok(buffer, "_");
+      token = strchr(buffer, '_');
       if (token != NULL)
-	strcpy(name, token);
-      token = strtok(NULL, "_");
-      if (token != NULL)
-	strcpy(msg, token);
-
-      if (strcmp(name, "cp") != 0) {
+	strncpy(name, buffer, strlen(token));
+      if (strcmp("cp", name) != 0) {
 	sprintf(msg, "No chemical potentials found in %s.\n", filename);
 	error(msg);
       }
@@ -412,7 +410,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	for (j = 0; j < compnodes; j++)
 	  if (compnodelist[j] > 1 || compnodelist[j] < 0) {
 	    sprintf(msg,
-		    "Composition node %d is %f but should be inside [0;1].\n",
+		    "Composition node %d is %f but should be inside [0,1].\n",
 		    j + 1, compnodelist[j]);
 	    error(msg);
 	  }
@@ -445,13 +443,13 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
 
     /* split name and _sc */
-    strcpy(buffer, name);
-    token = strtok(buffer, "_");
-    if (token != NULL)
-      strcpy(name, token);
-    token = strtok(NULL, "_");
-    if (token != NULL)
-      strcpy(msg, token);
+    token = strrchr(name, '_');
+    if (token != NULL && strcmp(token + 1, "sc") == 0) {
+      strncpy(buffer, name, strlen(name) - strlen(token));
+      strcpy(name, buffer);
+      smooth_pot[i] = 1;
+      do_smooth = 1;
+    }
 
     if (apot_parameters(name) == -1) {
       sprintf(msg,
@@ -459,20 +457,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	      filename, name);
       error(msg);
     }
-    if (strcmp(msg, "sc") == 0) {
-      smooth_pot[i] = 1;
-      do_smooth = 1;
-    }
-    strcpy(msg, "");
 
     strcpy(apt->names[i], name);
     apt->n_par[i] = apot_parameters(name);
     apt->total_par += apt->n_par[i];
-
-    /* throw away garbage at the end */
-    do {
-      c = getc(infile);
-    } while (c != 10);
 
     /* read cutoff */
     if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
@@ -1312,11 +1300,12 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	  list = calc_list + 2;
 	  for (i = 0; i < calc_pot.ncols; i++) {
 	    change = 0;
-	    for (j = 0; j < apot_table.n_par[i]; j++)
+	    for (j = 0; j < apot_table.n_par[i]; j++) {
 	      if (list[j] != val[j]) {
 		change = 1;
 		list[j] = val[j];
 	      }
+	    }
 	    if (change || do_all) {
 	      if (!invar_pot[i] && !smooth_pot[i]) {
 		for (j = 0; j < APOT_STEPS; j++) {
@@ -1326,7 +1315,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		x0 = 0;
 	      } else if (!invar_pot[i] && smooth_pot[i]) {
 		k = i * APOT_STEPS + (i + 1) * 2;
-		l = i * (i + 1) / 2;
+		l = pot_index[i];
 		x0 =
 		  smooth(apot_table.fvalue[i], rcut[l], val,
 			 rcut[l] * 0.8, rcut[l] * 1.2, params);
@@ -1883,7 +1872,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     } else {
       fprintf(outfile, "type %s\n", apt->names[i]);
     }
-    fprintf(outfile, "cutoff %f\n", rcut[i * (i + 1) / 2]);
+    fprintf(outfile, "cutoff %f\n", rcut[pot_index[i]]);
     if (smooth_pot[i])
       fprintf(outfile, "# rmin %f rmax %f\n", apt->begin[i], calc_pot.end[i]);
     else

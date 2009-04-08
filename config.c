@@ -29,10 +29,13 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.44 $
-* $Date: 2009/03/06 08:52:30 $
+* $Revision: 1.45 $
+* $Date: 2009/04/08 06:47:21 $
 *****************************************************************/
 
+#ifdef DEBUG
+#include <assert.h>
+#endif
 #include "potfit.h"
 
 /*****************************************************************************
@@ -175,9 +178,10 @@ void read_config(char *filename)
   int   w_force = 0, w_stress = 0;
   int   tag_format = 0;
   int   sh_dist = 0;		/* short distance flag */
+  int   has_name = 0;
   FILE *infile;
   char  msg[255], buffer[1024];
-  char *res;
+  char *res, *ptr;
   atom_t *atom;
   neigh_t *neigh;
   stens *stresses;
@@ -187,7 +191,13 @@ void read_config(char *filename)
   real *mindist;
   mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
   for (i = 0; i < ntypes * ntypes; i++)
-    mindist[i] = rcut[i];
+    mindist[i] = 99;
+  for (i = 0; i < ntypes; i++)
+    for (j = 0; j < ntypes; j++) {
+      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
+	((j * (j + 1)) / 2);
+      mindist[k] = MAX(rcut[i * ntypes + j], mindist[i * ntypes + j]);
+    }
 
   nconf = 0;
 
@@ -249,6 +259,14 @@ void read_config(char *filename)
     na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
     if (NULL == na_typ[nconf])
       error("Cannot allocate memory for na_typ");
+    if (config_name == NULL)
+      config_name = (char **)malloc(sizeof(char *));
+    else
+      config_name =
+	(char **)realloc(config_name, (nconf + 1) * sizeof(char *));
+    config_name[nconf] = (char *)malloc(255 * sizeof(char));
+    if (NULL == config_name[nconf])
+      error("Cannot allocate memory for config_name");
 
     for (i = 0; i < ntypes; i++)
       na_typ[nconf][i] = 0;
@@ -285,6 +303,15 @@ void read_config(char *filename)
 	    h_eng++;
 	  else
 	    error("Error in energy\n");
+	} else if (strncmp(res, "## force file generated from directory ", 39)
+		   == 0) {
+	  strncpy(config_name[nconf], res + 39, strlen(res + 39));
+	  strcpy(msg, config_name[nconf]);
+	  strncpy(config_name[nconf], strrchr(msg, '/') + 1, 50);
+	  if ((ptr = strchr(config_name[nconf], '\n')) != NULL)
+	    *ptr = '\0';
+	  if (strlen(config_name[nconf]) > config_name_max)
+	    config_name_max = strlen(config_name[nconf]);
 	}
 
 	/* read stress */
@@ -389,15 +416,15 @@ void read_config(char *filename)
 		/* Minimal distance check */
 /* 		if (mindist[ntypes*typ1+typ2]>r) */
 /* 			printf("new mindist[%d]=%f i=%d k=%d\n",ntypes*typ1+typ2,r,i,k); */
-		mindist[ntypes * typ1 + typ2] =
-		  MIN(mindist[ntypes * typ1 + typ2], r);
+
+		col = (typ1 <= typ2) ?
+		  typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+		  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+		mindist[col] = MIN(mindist[col], r);
 
 		/* pre-compute index and shift into potential table */
 		/* pair potential */
 		if (!sh_dist) {
-		  col = (typ1 <= typ2) ?
-		    typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-		    : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 		  if (format == 3 || format == 0) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
@@ -637,13 +664,15 @@ void read_config(char *filename)
     fclose(pairfile);
   }
 #ifdef APOT
-  for (i = 0; i < opt_pot.ncols; i++) {
-    j = i * (i + 1) / 2;
-    rmin[j] = mindist[j] * 0.95;
-    apot_table.begin[i] = mindist[j] * 0.95;
-    opt_pot.begin[i] = mindist[j] * 0.95;
-    calc_pot.begin[i] = mindist[j] * 0.95;
-  }
+  for (i = 0; i < ntypes; i++)
+    for (j = 0; j < ntypes; j++) {
+      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
+	((j * (j + 1)) / 2);
+      rmin[i * ntypes + j] = mindist[k] * 0.95;
+      apot_table.begin[k] = mindist[k] * 0.95;
+      opt_pot.begin[k] = mindist[k] * 0.95;
+      calc_pot.begin[k] = mindist[k] * 0.95;
+    }
   for (i = 0; i < calc_pot.ncols; i++) {
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
@@ -661,8 +690,12 @@ void read_config(char *filename)
   printf("with\n");
   for (i = 0; i < ntypes; i++) {
     printf("%d\t", i);
-    for (j = 0; j < ntypes; j++)
-      printf("%f\t", mindist[ntypes * i + j]);
+    for (j = 0; j < ntypes; j++) {
+      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
+	((j * (j + 1)) / 2);
+      printf("%f\t", mindist[k]);
+
+    }
     printf("\n");
   }
   free(mindist);
@@ -711,25 +744,33 @@ void new_slots(int a1, int force_update)
 {
   int   i, j, col, typ1, typ2, a2;
   real  r, rr;
+  atom_t *atom;
 
   for (a2 = 0; a2 < pot_list_length[a1]; a2++) {
+    atom = conf_atoms - firstatom;
     i = pot_list[a1][a2][0];
     j = pot_list[a1][a2][1];
-    typ1 = atoms[i].typ;
-    typ2 = atoms[i].neigh[j].typ;
-    col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-      : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-    if ((force_update || smooth_pot[col]) && !invar_pot[col]) {
-      r = atoms[i].neigh[j].r;
-      if (r < calc_pot.end[col]) {
-	rr = r - calc_pot.begin[col];
-	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
-	atoms[i].neigh[j].shift[0] =
-	  (rr -
-	   atoms[i].neigh[j].slot[0] * calc_pot.step[col]) *
-	  calc_pot.invstep[col];
-	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
-	atoms[i].neigh[j].step[0] = calc_pot.step[col];
+    if (i >= firstatom && i < (firstatom + myatoms)) {
+      atom += i;
+      if (&atom->typ != NULL) {
+	typ1 = atom->typ;
+	typ2 = atom->neigh[j].typ;
+	col =
+	  (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+	if ((force_update || smooth_pot[col]) && !invar_pot[col]) {
+	  r = atom->neigh[j].r;
+	  if (r < calc_pot.end[col]) {
+	    rr = r - calc_pot.begin[col];
+	    atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	    atom->neigh[j].shift[0] =
+	      (rr -
+	       atom->neigh[j].slot[0] * calc_pot.step[col]) *
+	      calc_pot.invstep[col];
+	    atom->neigh[j].slot[0] += calc_pot.first[col];
+	    atom->neigh[j].step[0] = calc_pot.step[col];
+	  }
+	}
       }
     }
   }

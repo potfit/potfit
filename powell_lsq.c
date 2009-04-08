@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.37 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.38 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
 /******************************************************************************
@@ -191,7 +191,8 @@ void powell_lsq(real *xi)
 	     q[3], q[4], q[5], q[6], q[7]);
 #endif
       if (i > 0 && i <= ndim) {
-	sprintf(errmsg, "Linear equation system singular after step %d", m);
+	sprintf(errmsg, "Linear equation system singular after step %d i=%d",
+		m, i);
 	warning(errmsg);
 	break;
       }

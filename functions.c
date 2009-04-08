@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.11 $
-* $Date: 2009/03/06 08:52:30 $
+* $Revision: 1.12 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
 #ifdef APOT
@@ -54,7 +54,7 @@ int apot_parameters(char *name)
     return 3;
   } else if (strcmp(name, "softshell") == 0) {
     return 2;
-  } else if (strcmp(name, "eoppexp") == 0) {
+  } else if (strcmp(name, "eopp_exp") == 0) {
     return 6;
   } else if (strcmp(name, "meopp") == 0) {
     return 7;
@@ -90,8 +90,8 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &morse_value;
     } else if (strcmp(apt->names[i], "softshell") == 0) {
       apt->fvalue[i] = &softshell_value;
-    } else if (strcmp(apt->names[i], "eoppexp") == 0) {
-      apt->fvalue[i] = &eoppexp_value;
+    } else if (strcmp(apt->names[i], "eopp_exp") == 0) {
+      apt->fvalue[i] = &eopp_exp_value;
     } else if (strcmp(apt->names[i], "meopp") == 0) {
       apt->fvalue[i] = &meopp_value;
     }
@@ -185,7 +185,7 @@ void softshell_value(real r, real *p, real *f)
 *
 ******************************************************************************/
 
-void eoppexp_value(real r, real *p, real *f)
+void eopp_exp_value(real r, real *p, real *f)
 {
   static real x, y, power;
 

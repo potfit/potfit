@@ -1,3 +1,16 @@
+CVS-20090408
++ [APOT] update compnodes script with -n option (only shows compnodes)
++ [APOT] add makeapot script to generate analytic potential files easily
++ add option to write energy output to file (endenergy)
++ potfit now reads the comments from the vasp2force.sh script and
+  assigns the names to the potentials
++ [APOT] update "_" detection for potentials
++ fix mindist for ntypes > 2
++ vasp2force.sh does not need POSCAR anymore, it's optional now
++ added pot_index to iterate through potentials
++ [APOT] fix bug with disable_cp ending up in an infinite loop
++ [APOT] added MPI-parallelisation
+
 CVS-20090312
 + [APOT] composition nodes were completely broken, fix that
 + [APOT] compnodes utility to calculate some composition nodes

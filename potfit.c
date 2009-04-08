@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.50 $
-* $Date: 2009/04/07 09:01:38 $
+* $Revision: 1.51 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
 #define MAIN
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   real  tot, min, max, sqr, *totdens;
   int   i, j, diff, *ntyp;
   char  msg[255];
-  FILE *outforce, *outstress;
+  FILE *outforce, *outenergy, *outstress;
 
   pi = 4.0 * atan(1.);
 #ifdef MPI
@@ -175,6 +175,7 @@ int main(int argc, char **argv)
   conf_vol = volumen;
   conf_uf = useforce;
   conf_us = usestress;
+  myatoms = natoms;
 #endif /* MPI */
   /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
@@ -222,7 +223,11 @@ int main(int argc, char **argv)
     }
 
     /* all but root go to calc_forces */
+#ifndef APOT
     calc_forces(calc_pot.table, force, 0);
+#else
+    calc_forces(opt_pot.table, force, 0);
+#endif
   } else {			/* root thread does minimization */
     if (opt) {
       anneal(opt_pot.table);
@@ -341,8 +346,27 @@ int main(int argc, char **argv)
       printf("Force data written to %s\n", endforce);
       fclose(outforce);
     }
-    printf("Cohesive Energies\n");
-    printf("conf\t(w*de)^2\te\t\te0\t\tde/e0\n");
+
+    if (strcmp(endenergy, "stdout") != 0) {
+      outenergy = fopen(endenergy, "w");
+      if (NULL == outenergy) {
+	sprintf(msg, "Could not open file %s\n", endenergy);
+	error(msg);
+      }
+    } else {
+      outenergy = stdout;
+      printf("Cohesive Energies\n");
+    }
+
+    if (strcmp(endenergy, "stdout") != 0) {
+      strcpy(msg, "");
+      for (j = 4; j < config_name_max; j++)
+	strcat(msg, " ");
+      fprintf(outenergy,
+	      "#\tconf%s\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n",
+	      msg);
+    } else
+      fprintf(outenergy, "#\tconf\t(w*de)^2\te\t\te0\t\tde/e0\n");
 
     real  e_sum = 0, s_sum = 0;
 
@@ -351,10 +375,27 @@ int main(int argc, char **argv)
       e_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      printf("%d\t%f\t%f\t%f\t%f\n", i, sqr,
-	     (force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
-	     force_0[3 * natoms + i] / eweight,
-	     force[3 * natoms + i] / force_0[3 * natoms + i]);
+      strcpy(msg, "");
+      if (strcmp(endenergy, "stdout") != 0) {
+	if (strlen(config_name[i]) < config_name_max)
+	  for (j = 0; j < (config_name_max - strlen(config_name[i])); j++)
+	    strcat(msg, " ");
+	fprintf(outenergy, "%d\t%s%s\t%f\t%f\t%f\t%f\t%f\t%f\n", i,
+		config_name[i], msg, sqr,
+		(force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
+		force_0[3 * natoms + i] / eweight,
+		fabs(force[3 * natoms + i]) / eweight,
+		force[3 * natoms + i] / eweight,
+		force[3 * natoms + i] / force_0[3 * natoms + i]);
+      } else
+	fprintf(outenergy, "%d\t%f\t%f\t%f\t%f\n", i, sqr,
+		(force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
+		force_0[3 * natoms + i] / eweight,
+		force[3 * natoms + i] / force_0[3 * natoms + i]);
+    }
+    if (strcmp(endenergy, "stdout") != 0) {
+      printf("Energy data written to %s\n", endenergy);
+      fclose(outenergy);
     }
 #ifdef STRESS
     if (strcmp(endstress, "stdout") != 0) {

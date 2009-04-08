@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.59 $
-* $Date: 2009/03/12 15:00:21 $
+* $Revision: 1.60 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -109,20 +109,27 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
-    if ((format == 0 || format > 4) && myid == 0)
+#if !defined APOT
+    if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
+#endif
+
+#if defined APOT && !defined MPI
+    if (format == 0)
+      update_calc_table(xi_opt, xi, 0);
+#endif
 
 #ifdef MPI
     /* exchange potential and flag value */
+#ifndef APOT
     MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
+#endif
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 #ifdef APOT
-    if (do_smooth) {
-      MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
-      potsync_apot();
-    }
-
+    MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
+    if (format == 0)
+      update_calc_table(xi_opt, xi, 0);
     if (flag == 1)
       break;
 #endif
@@ -286,7 +293,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 	      if (neigh->r < calc_pot.end[col]) {
 		/* fn value and grad are calculated in the same step */
-
 		if (uf)
 		  fnval = splint_comb_dir(&calc_pot, xi, col,
 					  neigh->slot[0],
@@ -368,6 +374,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* calculated and input force */
 	    tmpsum +=
 	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
+/* 	    fprintf(stderr,"k %d forces %f %f %f\n",k,forces[k],forces[k+1],forces[k+2]); */
 	  }
 #else /* EAM */
 
@@ -645,9 +652,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* root process exits this function now */
     if (myid == 0) {
       fcalls++;			/* Increase function call counter */
-      if (isnan(sum))
+      if (isnan(sum)) {
+#ifdef DEBUG
+	printf("Force is nan!\n");
+#endif
 	return 10e10;
-      else
+      } else
 	return sum;
     }
 

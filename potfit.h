@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.61 $
-* $Date: 2009/03/12 15:00:21 $
+* $Revision: 1.62 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -227,7 +227,10 @@ EXTERN char config[255];	/* file with atom configuration */
 EXTERN char plotfile[255];	/* file for plotting */
 EXTERN char distfile[255];	/* file for distributions */
 EXTERN char endforce[255] INIT("stdout");	/* file for force deviations */
+EXTERN char endenergy[255] INIT("stdout");	/* file for energy deviations */
 EXTERN char endstress[255] INIT("stdout");	/* file for stress deviations */
+EXTERN char **config_name INIT(NULL);
+EXTERN int config_name_max INIT(0);
 
 EXTERN char flagfile[255] INIT("potfit.break");
 					 /* break if file exists */
@@ -250,6 +253,7 @@ EXTERN int disable_cp INIT(0);	/* switch chemical potential on/off */
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
+EXTERN int *pot_index INIT(NULL);	/* index to access i*n+j from i*(i+1)/2 */
 #endif
 EXTERN int format;		/* format of potential table */
 EXTERN int opt INIT(0);		/* optimization flag */
@@ -365,7 +369,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 #ifdef APOT
 
-#define APOT_STEPS 1000		/* number of sampling points for analytic pot */
+#define APOT_STEPS 200		/* number of sampling points for analytic pot */
 #define CUTOFF_MARGIN 1.4	/* number to multiply cutoff radius with */
 #define APOT_PUNISH 10e10	/* punishment for out of bounds */
 
@@ -384,7 +388,7 @@ void  debug_apot();
 
 /* global counting variables for misc. purposes */
 
-//int count_1 INIT(0);
+int count_1 INIT(0);
 //int count_2 INIT(0);
 
 /* end of counting variables */
@@ -411,7 +415,7 @@ void  morse_value(real, real *, real *);
 void  softshell_value(real, real *, real *);
 
 /* eopp_exp potential */
-void  eoppexp_value(real, real *, real *);
+void  eopp_exp_value(real, real *, real *);
 
 /* meopp potential */
 void  meopp_value(real, real *, real *);

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.35 $
-* $Date: 2009/02/16 14:10:28 $
+* $Revision: 1.36 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
 #include <math.h>
@@ -45,6 +45,13 @@
 #define TEMPVAR 0.85
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(SQRREAL(a))/2.)))
+
+int my_rand()
+{
+  int   x;
+  x = random();
+  return x;
+}
 
 #ifdef APOT
 
@@ -67,7 +74,7 @@ void randomize_parameter(int n, real *xi, real *v)
 
   do {
     temp = xi[idx[n]];
-    rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
+    rand = 2.0 * my_rand() / (RAND_MAX + 1.) - 1;
     /* this is needed to make the algorithm work with a predefined range */
     if (v[n] > (max - min))
       v[n] = (max - min);
@@ -230,7 +237,7 @@ void anneal(real *xi)
 	    }
 	  }
 
-	  else if (random() / (RAND_MAX + 1.0) < exp((F - F2) / T)) {
+	  else if (my_rand() / (RAND_MAX + 1.0) < exp((F - F2) / T)) {
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
 	    F = F2;

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2009/03/12 15:00:20 $
+* $Revision: 1.3 $
+* $Date: 2009/04/08 06:47:21 $
 *****************************************************************/
 
 #ifdef APOT
@@ -135,7 +135,7 @@ void init_chemical_potential(int dim)
     sort_chem_pot_2d();
   if (dim == 3)
     printf
-      ("Chemical potentials for n>=3 is not implemented.\nFalling back to N_i*mu_i\n");
+      ("Chemical potentials for n>2 is not implemented.\nFalling back to N*mu\n");
 }
 
 real chemical_potential(int dim, int *n, real *mu)

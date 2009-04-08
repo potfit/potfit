@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2009/01/16 08:36:22 $
+* $Revision: 1.19 $
+* $Date: 2009/04/08 06:47:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -101,7 +101,7 @@ void broadcast_params()
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
   atom_t testatom;
-  int   calclen, size, i, each, odd, nodeatoms = 0, list_length;
+  int   calclen, size, i, j, each, odd, nodeatoms = 0, list_length;
 
 
   /* Define Structures */
@@ -228,14 +228,52 @@ void broadcast_params()
 #ifdef APOT
   MPI_Bcast(&do_smooth, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&disable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&opt_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&apot_table.number, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (myid > 0) {
+    pot_list_length = (int *)malloc(apot_table.number * sizeof(int));
+  }
+  MPI_Bcast(pot_list_length, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   if (!disable_cp) {
     if (myid > 0) {
       na_typ = (int **)malloc((nconf + 1) * sizeof(int *));
       for (i = 0; i < (nconf + 1); i++)
-	na_typ[i] = (int *)malloc(2 * sizeof(int));
+	na_typ[i] = (int *)malloc(ntypes * sizeof(int));
     }
-    MPI_Bcast(na_typ, (nconf + 1) * 2, MPI_INT, 0, MPI_COMM_WORLD);
+    for (i = 0; i < (nconf + 1); i++)
+      MPI_Bcast(na_typ[i], ntypes, MPI_INT, 0, MPI_COMM_WORLD);
   }
+  if (myid > 0) {
+    calc_list = (real *)malloc(opt_pot.len * sizeof(real));
+    apot_table.n_par = (int *)malloc(apot_table.number * sizeof(int));
+    smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
+    invar_pot = (int *)malloc(apot_table.number * sizeof(int));
+    pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
+    rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
+    rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
+    apot_table.fvalue =
+      (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
+    pot_list = (int ***)malloc(apot_table.number * sizeof(int **));
+    for (i = 0; i < apot_table.number; i++) {
+      pot_list[i] = (int **)malloc(pot_list_length[i] * sizeof(int *));
+      for (j = 0; j < pot_list_length[i]; j++)
+	pot_list[i][j] = (int *)malloc(2 * sizeof(int));
+    }
+    opt_pot.table = (real *)malloc(opt_pot.len * sizeof(real));
+  }
+  for (i = 0; i < apot_table.number; i++)
+    for (j = 0; j < pot_list_length[i]; j++) {
+      MPI_Bcast(pot_list[i][j], 2, MPI_INT, 0, MPI_COMM_WORLD);
+    }
+  MPI_Bcast(smooth_pot, calc_pot.ncols, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(invar_pot, calc_pot.ncols, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_list, opt_pot.len, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.n_par, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(pot_index, ntypes * (ntypes + 1) / 2, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(rcut, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(rmin, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.fvalue, apot_table.number, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cp_start, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
   /* Distribute configurations */
@@ -316,15 +354,12 @@ void potsync()
 
 void potsync_apot()
 {
-  int   length;
-  length = calc_pot.ncols;
-
-  MPI_Bcast(calc_pot.end, length, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.step, length, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.invstep, length, REAL, 0, MPI_COMM_WORLD);
-  /* TODO */
-/*   MPI_Scatterv(atoms, atom_len, atom_dist, MPI_ATOM, */
-/* 	       conf_atoms, myatoms, MPI_ATOM, 0, MPI_COMM_WORLD); */
+/*   int   length; */
+/*   length = calc_pot.ncols; */
+/*  */
+/*   MPI_Bcast(calc_pot.end, length, REAL, 0, MPI_COMM_WORLD); */
+/*   MPI_Bcast(calc_pot.step, length, REAL, 0, MPI_COMM_WORLD); */
+/*   MPI_Bcast(calc_pot.invstep, length, REAL, 0, MPI_COMM_WORLD); */
 }
 
 #endif /* APOT */
