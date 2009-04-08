@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.4 $
-# $Date: 2009/03/13 09:33:14 $
+# $Revision: 1.5 $
+# $Date: 2009/04/08 06:47:40 $
 ####################################################################
 #
 # Usage: compnodes <option> config.file
@@ -101,25 +101,25 @@ BEGIN {
 		print "Configuration file missing." > "/dev/stderr";
 		abort=1;
 		exit 1;
-		}
+	}
 
 	if (ARGV[1]=="-l") {
 		list=1;
 		delete ARGV[1];
 	} else if (ARGV[1]=="-la") {
-		listall=1;
-		delete ARGV[1];
-	} else if (ARGV[1]=="-ls") {
-		listsorted=1;
-		delete ARGV[1];
+	listall=1;
+	delete ARGV[1];
+} else if (ARGV[1]=="-ls") {
+listsorted=1;
+delete ARGV[1];
 	} else if (ARGV[1]=="-le") {
-		listeff=1;
-		delete ARGV[1];
-	} else if (ARGV[1]=="-n") {
-		only_n=1;
-		print_n=ARGV[2];
-		delete ARGV[1];
-		delete ARGV[2];
+	listeff=1;
+	delete ARGV[1];
+} else if (ARGV[1]=="-n") {
+only_n=1;
+print_n=ARGV[2];
+delete ARGV[1];
+delete ARGV[2];
 	} else list=0;
 }
 
@@ -161,7 +161,7 @@ END {
 	}
 
 	if (!only_n)
-	print "Found "n" configurations with "max+1" different atom types.";
+		print "Found "n" configurations with "max+1" different atom types.";
 	if (listall) {
 		print "Listing all "n" configurations:";
 		printf "conf";
@@ -209,17 +209,18 @@ END {
 
 	if (list || listsorted)
 		for (i=0;i<=len;i++)
-			nonzeroconf[i]=i;
-	if (list)
-		list_conf(config,concentration,len,nonzeroconf);
+		nonzeroconf[i]=i;
+if (list)
+	list_conf(config,concentration,len,nonzeroconf);
 
-	sort(concentration,config,len,nonzeroconf);
+sort(concentration,config,len,nonzeroconf);
 
-	if (listsorted)
-		list_conf(config,concentration,len,nonzeroconf);
+if (listsorted)
+	list_conf(config,concentration,len,nonzeroconf);
 
-	# filter out multiple configurations with same concentration
-	k=0;
+# filter out multiple configurations with same concentration
+k=0;
+if (len>1) {
 	for (i=0;i<(len-1);i++) {
 		j=1;
 		done=false
@@ -242,69 +243,73 @@ END {
 		effconfig[k]=len-1;
 		k++
 		 }
+	} else {
+	effconfig[0]=0;
+	k=1;
+}
 
-	if (listeff)
-		list_conf(config,concentration,k,effconfig);
+if (listeff)
+	list_conf(config,concentration,k,effconfig);
 
 
-		for (i=0;i<k;i++) {
-			concentration[i]=concentration[effconfig[i]]/config[effconfig[i]];
-			config[i]=config[effconfig[i]];
-		}
+for (i=0;i<k;i++) {
+	concentration[i]=concentration[effconfig[i]]/config[effconfig[i]];
+	config[i]=config[effconfig[i]];
+}
 
-		if (!only_n) {
-		print "Found "k" effective configurations.";
-		if (k>5) {
-			print "All composition nodes:";
-			for (i=0;i<k;i++)
-				printf "%.3f ",concentration[i];
-			printf "\n";
-		}
-
-		print "Proposing the following composition nodes:";
-		if (k<6) {
-			printf k" node(s): ";
-			for (i=0;i<k;i++)
-				printf "%.3f ",concentration[i];
-			printf "\n";
-		}
-	}
-	if (only_n) {
-		if (print_n>k) {
-			print "There are not enough configurations for "print_n" composition nodes" > "/dev/stderr";
-		exit 1;
-			}
-		if (print_n==k) {
-			for (i=0;i<k;i++)
+if (!only_n) {
+	print "Found "k" effective configurations.";
+	if (k>5) {
+		print "All composition nodes:";
+		for (i=0;i<k;i++)
 			printf "%.3f ",concentration[i];
-			printf "\n";
-			}
-		}
-		for (i=(k-1);i>=0;i--) {
-			reduce_nodes(i,concentration,config);	
-			show = false;
-			if (!only_n){
-				prefix=i" node(s): ";
-				show=true;
-			}
-			if (only_n)
-				if (i==print_n)
-				show=true;
-			if (i==5 && show) {
-					printf "%s%.3f %.3f %.3f %.3f %.3f\n",prefix,concentration[0],concentration[1],concentration[2],concentration[3],concentration[4]; 
-			}
-			if (i==4 && show) {
-					printf "%s%.3f %.3f %.3f %.3f\n",prefix,concentration[0],concentration[1],concentration[2],concentration[3]; 
-			}
-			if (i==3 && show) {
-					printf "%s%.3f %.3f %.3f\n",prefix,concentration[0],concentration[1],concentration[2];
-			}
-			if (i==2 && show) {
-					printf "%s%.3f %.3f\n",prefix,concentration[0],concentration[1];
-			}
-			if (i==1 && show) {
-					printf "%s%.3f\n",prefix,concentration[0];
-			}
-		}
-
+		printf "\n";
 	}
+
+	print "Proposing the following composition nodes:";
+	if (k<6) {
+		printf k" node(s): ";
+		for (i=0;i<k;i++)
+			printf "%.3f ",concentration[i];
+		printf "\n";
+	}
+}
+if (only_n) {
+	if (print_n>k) {
+		print "There are not enough configurations for "print_n" composition nodes" > "/dev/stderr";
+		exit 1;
+	}
+	if (print_n==k) {
+		for (i=0;i<k;i++)
+			printf "%.3f ",concentration[i];
+		printf "\n";
+	}
+}
+for (i=(k-1);i>=0;i--) {
+	reduce_nodes(i,concentration,config);	
+	show = false;
+	if (!only_n){
+		prefix=i" node(s): ";
+		show=true;
+	}
+	if (only_n)
+		if (i==print_n)
+		show=true;
+	if (i==5 && show) {
+		printf "%s%.3f %.3f %.3f %.3f %.3f\n",prefix,concentration[0],concentration[1],concentration[2],concentration[3],concentration[4]; 
+	}
+	if (i==4 && show) {
+		printf "%s%.3f %.3f %.3f %.3f\n",prefix,concentration[0],concentration[1],concentration[2],concentration[3]; 
+	}
+	if (i==3 && show) {
+		printf "%s%.3f %.3f %.3f\n",prefix,concentration[0],concentration[1],concentration[2];
+	}
+	if (i==2 && show) {
+		printf "%s%.3f %.3f\n",prefix,concentration[0],concentration[1];
+	}
+	if (i==1 && show) {
+		printf "%s%.3f\n",prefix,concentration[0];
+	}
+}
+
+}
