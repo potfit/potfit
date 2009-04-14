@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.51 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.52 $
+* $Date: 2009/04/14 08:16:23 $
 *****************************************************************/
 
 #define MAIN
@@ -185,6 +185,13 @@ int main(int argc, char **argv)
 
   force = (real *)malloc((mdim) * sizeof(real));
   rms = (real *)malloc(3 * sizeof(real));
+
+#ifdef APOT
+#ifdef MPI
+  MPI_Bcast(opt_pot.table, ndimtot, REAL, 0, MPI_COMM_WORLD);
+#endif
+  update_calc_table(opt_pot.table, calc_pot.table, 1);
+#endif
 
   if (myid > 0) {
     /* Select correct spline interpolation and other functions */
@@ -466,11 +473,15 @@ int main(int argc, char **argv)
 
     for (i = 0; i < nconf; i++)
       rms[1] += SQR(force[3 * natoms + i] / eweight);
+    if (isnan(rms[1]))
+	    rms[1]=0;
     rms[1] = sqrt(rms[1] / nconf);
 
     for (i = 0; i < nconf; i++)
       for (j = 0; j < 6; j++)
 	rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j] / sweight);
+    if (isnan(rms[2]))
+	    rms[2]=0;
     rms[2] = sqrt(rms[2] / (6 * nconf));
 
 #ifndef STRESS

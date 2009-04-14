@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2008 Peter Brommer
+*   Copyright 2002-2009 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,15 +30,15 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.13 $
-* $Date: 2008/10/08 09:19:35 $
+* $Revision: 1.14 $
+* $Date: 2009/04/14 08:16:23 $
 *****************************************************************/
 
 #include "potfit.h"
 
 /* Doesn't make much sense without EAM  */
 
-#ifdef EAM
+#if defined EAM && !defined NORESCALE
 
 
 /****************************************************************
@@ -78,7 +78,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
   /* init second derivatives for splines */
   for (col = 0; col < paircol; col++) {	/* just pair potentials */
     first = pt->first[col];
-    if (format == 3)
+    if (format == 3 || format == 0)
       spline_ed(pt->step[col], pt->table + first,
 		pt->last[col] - first + 1,
 		*(pt->table + first - 2), 0.0, pt->d2tab + first);

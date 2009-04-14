@@ -1,3 +1,8 @@
+CVS-20090414
++ [APOT] first (working) EAM implementation - needs lots of testing
++ [APOT] don't use rcut
++ [APOT] always enable -DNORESCALE (only important for EAM)
+
 CVS-20090408
 + [APOT] update compnodes script with -n option (only shows compnodes)
 + [APOT] add makeapot script to generate analytic potential files easily

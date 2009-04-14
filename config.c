@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.45 $
-* $Date: 2009/04/08 06:47:21 $
+* $Revision: 1.46 $
+* $Date: 2009/04/14 08:16:21 $
 *****************************************************************/
 
 #ifdef DEBUG
@@ -668,7 +668,7 @@ void read_config(char *filename)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
 	((j * (j + 1)) / 2);
-      rmin[i * ntypes + j] = mindist[k] * 0.95;
+      rmin[i * ntypes + j] = mindist[k];
       apot_table.begin[k] = mindist[k] * 0.95;
       opt_pot.begin[k] = mindist[k] * 0.95;
       calc_pot.begin[k] = mindist[k] * 0.95;
@@ -678,9 +678,7 @@ void read_config(char *filename)
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
-    new_slots(i, 1);
   }
-  update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif
 
   printf("Minimal Distances Matrix\n");

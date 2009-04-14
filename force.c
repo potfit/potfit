@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.60 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.61 $
+* $Date: 2009/04/14 08:16:23 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -249,7 +249,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* set dummy constraints */
 	forces[config + 7 * nconf] = -force_0[config + 7 * nconf];
 #endif
-#ifdef APOT
+#if defined APOT && !defined EAM
 	if (!disable_cp) {
 	  forces[config] +=
 	    chemical_potential(ntypes, na_typ[h], xi_opt + cp_start);
@@ -330,6 +330,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  }
 #endif /* STRESS */
 		}
+/* 		fprintf(stderr, "k %d forces %f %f %f grad %f\n", k, */
+/* 			forces[k], forces[k + 1], forces[k + 2], grad); */
+/* 		fprintf(stderr, " dist %f %f %f atom=%d neigh=%d\n", */
+/* 			neigh->dist.x, neigh->dist.y, neigh->dist.z, i, j); */
 	      }
 #ifdef EAM
 	      /* calculate atomic densities */
@@ -374,7 +378,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* calculated and input force */
 	    tmpsum +=
 	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
-/* 	    fprintf(stderr,"k %d forces %f %f %f\n",k,forces[k],forces[k+1],forces[k+2]); */
 	  }
 #else /* EAM */
 
@@ -409,15 +412,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* linear extrapolation left */
 	    fnval =
-	      splint_comb(&calc_pot, xi, col2,
-			  calc_pot.begin[col2], &atom->gradF);
+	      splint_comb(&calc_pot, xi, col2, calc_pot.begin[col2],
+			  &atom->gradF);
 	    forces[config] +=
 	      fnval + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col2]) {
 	    /* and right */
 	    fnval =
-	      splint_comb(&calc_pot, xi, col2,
-			  calc_pot.end[col2], &atom->gradF);
+	      splint_comb(&calc_pot, xi, col2, calc_pot.end[col2],
+			  &atom->gradF);
 	    forces[config] +=
 	      fnval + (atom->rho - calc_pot.end[col2]) * atom->gradF;
 	  }

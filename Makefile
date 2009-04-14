@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.44 $
-# $Date: 2009/03/06 08:52:30 $
+# $Revision: 1.45 $
+# $Date: 2009/04/14 08:16:21 $
 #
 ############################################################################
 #
@@ -643,14 +643,7 @@ endif
 
 # APOT - for analytic potentials
 ifneq (,$(findstring apot,${MAKETARGET}))
-ifeq (,$(findstring eam,${MAKETARGET}))
-CFLAGS += -DAPOT
-else
-ERROR += "apot and eam are not compatible yet -- "
-endif
-#ifneq (,$(findstring mpi,${MAKETARGET}))
-#ERROR += "apot and mpi are not compatible yet -- "
-#endif
+CFLAGS += -DAPOT -DNORESCALE
 endif
 
 # Stress

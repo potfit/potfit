@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.20 $
+* $Date: 2009/04/14 08:16:23 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -246,6 +246,8 @@ void broadcast_params()
   if (myid > 0) {
     calc_list = (real *)malloc(opt_pot.len * sizeof(real));
     apot_table.n_par = (int *)malloc(apot_table.number * sizeof(int));
+    apot_table.end = (real *)malloc(apot_table.number * sizeof(real));
+    apot_table.begin = (real *)malloc(apot_table.number * sizeof(real));
     smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
     pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
@@ -265,14 +267,16 @@ void broadcast_params()
     for (j = 0; j < pot_list_length[i]; j++) {
       MPI_Bcast(pot_list[i][j], 2, MPI_INT, 0, MPI_COMM_WORLD);
     }
-  MPI_Bcast(smooth_pot, calc_pot.ncols, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(invar_pot, calc_pot.ncols, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(smooth_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(invar_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_list, opt_pot.len, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.n_par, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(pot_index, ntypes * (ntypes + 1) / 2, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(rcut, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(rmin, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.fvalue, apot_table.number, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.end, apot_table.number, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.begin, apot_table.number, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cp_start, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 

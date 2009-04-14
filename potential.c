@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.60 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.61 $
+* $Date: 2009/04/14 08:16:23 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -237,6 +237,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	    filename);
     error(msg);
   }
+#ifdef EAM
+  disable_cp = 1;
+#endif
 #endif
   switch (format) {
 #ifdef APOT
@@ -260,9 +263,16 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   /* compute rcut and rmin */
   rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
   rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
+#ifdef EAM
+  pot_index =
+    (int *)malloc(((ntypes * (ntypes + 1) / 2) + ntypes) * sizeof(int));
+  for (i = 0; i < (ntypes * (ntypes + 1) / 2 + ntypes); i++)
+    pot_index[i] = ntypes * ntypes;
+#else
   pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
   for (i = 0; i < ntypes * (ntypes + 1) / 2; i++)
     pot_index[i] = ntypes * ntypes;
+#endif
   if (NULL == rcut)
     error("Cannot allocate rcut");
   if (NULL == rmin)
@@ -276,15 +286,22 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       pot_index[k] = MIN(pot_index[k], i * ntypes + j);
     }
 #ifdef EAM
+  j = 0;
+  for (i = 0; i < ntypes; i++) {
+    pot_index[++k] = pot_index[j];
+    j += ntypes - i;
+  }
+#endif
+#ifdef EAM
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
       rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j],
 				 pt->end[(ntypes * (ntypes + 1)) / 2 + i]);
       rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j],
 				 pt->end[(ntypes * (ntypes + 1)) / 2 + j]);
-      rmin[i * ntypes + j] = MAX(rmin[i * ntypes + j],
+      rmin[i * ntypes + j] = MIN(rmin[i * ntypes + j],
 				 pt->begin[(ntypes * (ntypes + 1)) / 2 + i]);
-      rmin[i * ntypes + j] = MAX(rmin[i * ntypes + j],
+      rmin[i * ntypes + j] = MIN(rmin[i * ntypes + j],
 				 pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
     }
   }
@@ -611,6 +628,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (!invar_pot[i])
       pt->idxlen += apt->n_par[i];
   }
+#ifndef EAM
   if (!disable_cp) {
     init_chemical_potential(ntypes);
     i = apt->number;
@@ -622,6 +640,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     pt->idxlen += (ntypes + compnodes);
   }
+#endif
 
   init_calc_table(pt, &calc_pot);
   return;
@@ -1287,13 +1306,14 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
   int   i, j, k, l, size, change;
   int  *sp;
   real  r, x0, temp;
-  real *val, *ord;
+  real *val, *ord, *cut;
   static real *params, *list;
 
   switch (format) {
       case 0:
 #ifdef APOT
 	{
+	  cut = apot_table.end;
 	  if (do_smooth && params == NULL)
 	    params = (real *)malloc(4 * sizeof(real));
 	  val = xi_opt + 2;
@@ -1307,7 +1327,8 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	      }
 	    }
 	    if (change || do_all) {
-	      if (!invar_pot[i] && !smooth_pot[i]) {
+	      if ((!invar_pot[i] && !smooth_pot[i])
+		  || i >= (ntypes * (ntypes + 1) / 2 + ntypes)) {
 		for (j = 0; j < APOT_STEPS; j++) {
 		  k = i * APOT_STEPS + (i + 1) * 2 + j;
 		  apot_table.fvalue[i] (calc_pot.xcoord[k], val, xi_calc + k);
@@ -1315,24 +1336,24 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		x0 = 0;
 	      } else if (!invar_pot[i] && smooth_pot[i]) {
 		k = i * APOT_STEPS + (i + 1) * 2;
-		l = pot_index[i];
 		x0 =
-		  smooth(apot_table.fvalue[i], rcut[l], val,
-			 rcut[l] * 0.8, rcut[l] * 1.2, params);
+		  smooth(apot_table.fvalue[i], cut[i], val, cut[i] * 0.8,
+			 cut[i] * 1.2, params);
 		if (fabs(params[0] - calc_pot.end[i]) > 10e-3) {
-		  calc_pot.step[i] = (params[0] - rmin[l]) / (APOT_STEPS - 1);
+		  calc_pot.step[i] =
+		    (params[0] - apot_table.begin[i]) / (APOT_STEPS - 1);
 		  calc_pot.end[i] = params[0];
 		  calc_pot.invstep[i] = 1. / calc_pot.step[i];
 		  new_slots(i, 0);
 		}
 		if (x0 == 0) {
 		  for (j = 0; j < APOT_STEPS; j++) {
-		    temp = j * calc_pot.step[i] + rmin[l];
+		    temp = j * calc_pot.step[i] + apot_table.begin[i];
 		    apot_table.fvalue[i] (temp, val, xi_calc + k + j);
 		  }
 		} else {
 		  for (j = 0; j < APOT_STEPS; j++) {
-		    temp = j * calc_pot.step[i] + rmin[l];
+		    temp = j * calc_pot.step[i] + apot_table.begin[i];
 		    if (temp <= x0)
 		      apot_table.fvalue[i] (temp, val, xi_calc + k + j);
 		    else
@@ -1348,7 +1369,6 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    val += apot_table.n_par[i] + 2;
 	    list += apot_table.n_par[i] + 2;
 	  }
-
 	}
 #endif
 	return;
@@ -1872,7 +1892,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     } else {
       fprintf(outfile, "type %s\n", apt->names[i]);
     }
-    fprintf(outfile, "cutoff %f\n", rcut[pot_index[i]]);
+    fprintf(outfile, "cutoff %f\n", apot_table.end[i]);
     if (smooth_pot[i])
       fprintf(outfile, "# rmin %f rmax %f\n", apt->begin[i], calc_pot.end[i]);
     else

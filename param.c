@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.26 $
-*  $Date: 2009/04/08 06:47:22 $
+*  $Revision: 1.27 $
+*  $Date: 2009/04/14 08:16:23 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -240,10 +240,12 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "plotmin") == 0) {
       getparam("plotmin", &plotmin, PARAM_DOUBLE, 1, 1);
     }
+#ifndef EAM
     /* exclude chemical potential from energy calculations */
     else if (strcasecmp(token, "disable_cp") == 0) {
       getparam("disable_cp", &disable_cp, PARAM_INT, 1, 1);
     }
+#endif
 #endif
     /* Energy Weight */
     else if (strcasecmp(token, "extend") == 0) {
