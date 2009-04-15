@@ -26,26 +26,25 @@
 #   Boston, MA  02110-1301  USA
 # 
 #/****************************************************************
-#* $Revision: 1.12 $
-#* $Date: 2009/04/15 13:00:06 $
+#* $Revision: 1.13 $
+#* $Date: 2009/04/15 13:30:24 $
 #*****************************************************************/
 
-[ -f ../single_atom_energies ] || { 
-    echo>&2 "file ../single_atom_energies not found"; 
-    exit;
-}
 wdir=`pwd`
 count=`grep -c "TOTAL-FORCE" OUTCAR`
 pr_conf="0";
 list_types="0";
 new_list="0";
 poscar=`[ -f POSCAR ]`;
+e_file="../single_atom_energies";
+saeng="0 0 0";
 declare -a type_list;
-echo "There are $count configurations in OUTCAR" >&2
 
-while getopts 'lfr:s:' OPTION
+while getopts 'e:lfr:s:' OPTION
   do
   case $OPTION in
+      e) e_file="$OPTARG";
+          ;;
       l) list_types="1";
       	  ;;
       f) pr_conf="${pr_conf},$count";
@@ -54,33 +53,49 @@ while getopts 'lfr:s:' OPTION
 	  ;;
       r) new_list="$OPTARG";
           ;;
-      ?) printf "Usage: %s: [-l] [-f] [-s list]\n" $(basename $0) >&2
+      ?) printf "\nUsage: %s: [-e file] [-f] [-l] [-r list] [-s list]\n" $(basename $0) >&2
+         printf "\n -e <file>\t\tspecify file to read single atom energies from\n" >&2
+	 printf "\t\t\tif not found, 0 will be used instead\n" >&2
+	 printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
+	 printf " -l\t\t\tlist all chemical species found in OUTCAR and exit\n" >&2
+	 printf " -r <list>\t\trewrite atom types according to <list>\n" >&2
+	 printf "\t\t\t(same order as listed with -l; -r 1,0 will swap 0 and 1)\n" >&2
+	 printf " -s <list>\t\tcomma separated list of configurations to use\n" >&2
 	  exit 2
 	  ;;
   esac
 done
+
+if [ "$list_types" == "1" ]; then
+	types=`cat OUTCAR | grep VRHFIN | wc -l`;
+	name=(`cat OUTCAR | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
+	echo "Found $types atom types in OUTCAR:";
+    for (( i=0; $i<$types; i++ )); do
+	    echo ${name[$i]} "= "$i;
+    done
+else
+echo "There are $count configurations in OUTCAR" >&2
+if [ -f $e_file ]; then 
+saeng=`cat $e_file`;
+else 
+printf "Warning: $e_file could not be found - using \"0 0 0\"\n" >&2;
+fi
+
 if [ "X$pr_conf" == "X0" ]; then
     pr_conf=1;
     for (( i=2; $i<=$count; i++ )); do
 	pr_conf="${pr_conf},$i";
     done
 fi
-if [ "$list_types" == "1" ]; then
-	types=`cat OUTCAR | grep VRHFIN | wc -l`;
-	name=(`cat OUTCAR | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
-	echo "Found $types atom types";
-    for (( i=0; $i<$types; i++ )); do
-	    echo ${name[$i]} "= "$i;
-    done
-else
-cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v new_list="$new_list" '  BEGIN {
+
+cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v new_list="$new_list" -v saeng="$saeng" '  BEGIN {
     OFMT="%11.7g"
 #Select confs to print
     count=0;
     split(pr_conf,pr_arr,",");
     for (i in pr_arr) pr_flag[pr_arr[i]]++;
 #pr_flag now is set for the configurations to be printed.
-    getline saeng < "../single_atom_energies";
+#    getline saeng < "../single_atom_energies";
     if (poscar) {
     getline < "POSCAR"; getline scale < "POSCAR";
     getline boxx < "POSCAR"; getline boxy < "POSCAR"; getline boxz < "POSCAR";
@@ -91,7 +106,7 @@ cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}"
     if (new_list!="0") {
 	    split(new_list,number,",");
     } else {
-	number[1]=0;number[2]=1;number[3]=2;number[4]=3;number[5]=4;
+	number[1]=0;number[2]=1;number[3]=2;
     }
   };
   /ions per type/ {
