@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.4 $
-# $Date: 2009/04/14 08:16:47 $
+# $Revision: 1.5 $
+# $Date: 2009/04/20 15:17:29 $
 ####################################################################
 #
 # Usage: makeapot <options>
@@ -90,6 +90,20 @@ function write_pot(name)
 		print "eta_2 4 1 100";
 		print "k 2 0 6";
 		print "phi 0 -6.3 6.3";
+		}
+	else if (name=="morse") {
+		print "D 0.1 0.01 1";
+		print "alpha 2 0.5 5";
+		print "r_0 2.5 1 7";
+		}
+	else if (name=="power_decay") {
+		print "a 1 0.1 10";
+		print "b 2 0.1 10";
+		print "c 1 0 5";
+		}
+	else if (name=="pohlong") {
+		print "F_e 1 0.1 10";
+		print "gamma 1 0.1 5";
 		}
 }
 
