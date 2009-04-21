@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.38 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.39 $
+* $Date: 2009/04/21 13:48:09 $
 *****************************************************************/
 
 /******************************************************************************
@@ -370,7 +370,14 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   force = vect_real(mdim);
   for (i = 0; i < ndim; i++) {	/*initialize gamma */
     store = xi[idx[i]];
+#ifdef APOT
+    xi[idx[i]] +=
+      (EPS *
+       (apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
+	apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]]));
+#else
     xi[idx[i]] += EPS;		/*increase xi[idx[i]]... */
+#endif
     sum = 0.;
     (void)(*calc_forces) (xi, force, 0);
     for (j = 0; j < mdim; j++) {

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.46 $
-* $Date: 2009/04/14 08:16:21 $
+* $Revision: 1.47 $
+* $Date: 2009/04/21 13:48:08 $
 *****************************************************************/
 
 #ifdef DEBUG
@@ -306,8 +306,10 @@ void read_config(char *filename)
 	} else if (strncmp(res, "## force file generated from directory ", 39)
 		   == 0) {
 	  strncpy(config_name[nconf], res + 39, strlen(res + 39));
+	  config_name[nconf][strlen(res + 39)] = '\0';
 	  strcpy(msg, config_name[nconf]);
 	  strncpy(config_name[nconf], strrchr(msg, '/') + 1, 50);
+	  config_name[nconf][50] = '\0';
 	  if ((ptr = strchr(config_name[nconf], '\n')) != NULL)
 	    *ptr = '\0';
 	  if (strlen(config_name[nconf]) > config_name_max)

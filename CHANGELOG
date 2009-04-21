@@ -1,3 +1,7 @@
+CVS-20090421
++ [APOT] fixed parameters (pmin==pmax) are now really fixed
++ [APOT] lots of eam bugs fixed
+
 CVS-20090414
 + [APOT] first (working) EAM implementation - needs lots of testing
 + [APOT] don't use rcut

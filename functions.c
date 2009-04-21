@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.12 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.13 $
+* $Date: 2009/04/21 13:48:08 $
 *****************************************************************/
 
 #ifdef APOT
@@ -58,6 +58,10 @@ int apot_parameters(char *name)
     return 6;
   } else if (strcmp(name, "meopp") == 0) {
     return 7;
+  } else if (strcmp(name, "power_decay") == 0) {
+    return 2;
+  } else if (strcmp(name, "pohlong") == 0) {
+    return 2;
   }
 
   /* template for new potential function called newpot */
@@ -94,6 +98,10 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &eopp_exp_value;
     } else if (strcmp(apt->names[i], "meopp") == 0) {
       apt->fvalue[i] = &meopp_value;
+    } else if (strcmp(apt->names[i], "power_decay") == 0) {
+      apt->fvalue[i] = &power_decay_value;
+    } else if (strcmp(apt->names[i], "pohlong") == 0) {
+      apt->fvalue[i] = &pohlong_value;
     }
 
 /* template for new potential function called newpot */
@@ -130,7 +138,6 @@ void lj_value(real r, real *p, real *f)
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
   sig_d_rad12 = sig_d_rad6 * sig_d_rad6;
 
-  /* Lennard-Jones is 4*epsilon*((sigma/r)^12-(sigma/r)^6) */
   *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
 }
 
@@ -172,7 +179,7 @@ void morse_value(real r, real *p, real *f)
 
 void softshell_value(real r, real *p, real *f)
 {
-  static real x, y, power;
+  static real x, y;
 
   x = p[0] / r;
   y = p[1];
@@ -214,6 +221,39 @@ void meopp_value(real r, real *p, real *f)
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
+
+/******************************************************************************
+*
+* power_decay potential
+*
+******************************************************************************/
+
+void power_decay_value(real r, real *p, real *f)
+{
+  static real x, y, power;
+
+  x = 1. / r;
+  y = p[1];
+  vdPow(1, &x, &y, &power);
+
+  *f = p[0] * power;
+}
+
+/******************************************************************************
+*
+* pohlong potential
+*
+******************************************************************************/
+
+void pohlong_value(real r, real *p, real *f)
+{
+  real  power;
+
+  vdPow(1, &r, &p[1], &power);
+
+  *f = p[0] * (1 - p[1] * log(r)) * power;
+}
+
 
 /******************************************************************************
 * 

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.62 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.63 $
+* $Date: 2009/04/21 13:48:09 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -129,6 +129,7 @@ typedef struct {
   char **names;			/* name of analytic potentials */
   char ***param_name;		/* name of parameters */
   real **values;		/* parameter values for analytic potentials */
+  int **invar_par;		/* parameter values for analytic potentials */
   real *chempot;		/* chemical potentials */
   real *begin;			/* starting position of potential */
   real *end;			/* end position of potential = cutoff radius */
@@ -402,23 +403,14 @@ void  potsync_apot();
 
 /* actual functions for different potentials */
 
-/* lennard-jones potential */
 void  lj_value(real, real *, real *);
-
-/* empirical oscillating pair potential */
 void  eopp_value(real, real *, real *);
-
-/* morse potential */
 void  morse_value(real, real *, real *);
-
-/* soft shell potential */
 void  softshell_value(real, real *, real *);
-
-/* eopp_exp potential */
 void  eopp_exp_value(real, real *, real *);
-
-/* meopp potential */
 void  meopp_value(real, real *, real *);
+void  power_decay_value(real, real *, real *);
+void  pohlong_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

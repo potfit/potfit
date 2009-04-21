@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.61 $
-* $Date: 2009/04/14 08:16:23 $
+* $Revision: 1.62 $
+* $Date: 2009/04/21 13:48:08 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -109,6 +109,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
+    rho_sum_loc = 0.;
 #if !defined APOT
     if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
@@ -134,7 +135,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       break;
 #endif
 
-#ifdef EAM
+#if defined EAM && !defined APOT
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
       potsync();
@@ -330,10 +331,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  }
 #endif /* STRESS */
 		}
-/* 		fprintf(stderr, "k %d forces %f %f %f grad %f\n", k, */
-/* 			forces[k], forces[k + 1], forces[k + 2], grad); */
-/* 		fprintf(stderr, " dist %f %f %f atom=%d neigh=%d\n", */
-/* 			neigh->dist.x, neigh->dist.y, neigh->dist.z, i, j); */
 	      }
 #ifdef EAM
 	      /* calculate atomic densities */
@@ -411,6 +408,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* linear extrapolation left */
+	    /* TODO real extrapolation */
 	    fnval =
 	      splint_comb(&calc_pot, xi, col2, calc_pot.begin[col2],
 			  &atom->gradF);
@@ -532,14 +530,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
       }				/* loop over configurations */
     }				/* parallel region */
-#if defined MPI && !(defined APOT)
+#ifdef EAM
+#ifdef MPI
     /* Reduce rho_sum */
     MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
 #else /* MPI */
-#ifdef EAM
     rho_sum = rho_sum_loc;
-#endif /* EAM */
 #endif /* MPI */
+#endif /* EAM */
+
     /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */

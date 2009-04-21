@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.52 $
-* $Date: 2009/04/14 08:16:23 $
+* $Revision: 1.53 $
+* $Date: 2009/04/21 13:48:09 $
 *****************************************************************/
 
 #define MAIN
@@ -474,14 +474,14 @@ int main(int argc, char **argv)
     for (i = 0; i < nconf; i++)
       rms[1] += SQR(force[3 * natoms + i] / eweight);
     if (isnan(rms[1]))
-	    rms[1]=0;
+      rms[1] = 0;
     rms[1] = sqrt(rms[1] / nconf);
 
     for (i = 0; i < nconf; i++)
       for (j = 0; j < 6; j++)
 	rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j] / sweight);
     if (isnan(rms[2]))
-	    rms[2]=0;
+      rms[2] = 0;
     rms[2] = sqrt(rms[2] / (6 * nconf));
 
 #ifndef STRESS

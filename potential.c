@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.61 $
-* $Date: 2009/04/14 08:16:23 $
+* $Revision: 1.62 $
+* $Date: 2009/04/21 13:48:08 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -208,17 +208,19 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   apt->param_name = (char ***)malloc(size * sizeof(char **));
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
   if (!disable_cp) {
-    apt->values = (real **)malloc((size + 1) * sizeof(real));
+    apt->values = (real **)malloc((size + 1) * sizeof(real *));
     apt->values[size] = (real *)malloc(ntypes * sizeof(real));
+    apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->chempot = apt->values[size];
-    apt->pmin = (real **)malloc((size + 1) * sizeof(real));
+    apt->pmin = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmin[size] = (real *)malloc(ntypes * sizeof(real));
-    apt->pmax = (real **)malloc((size + 1) * sizeof(real));
+    apt->pmax = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
   } else {
-    apt->values = (real **)malloc(size * sizeof(real));
-    apt->pmin = (real **)malloc(size * sizeof(real));
-    apt->pmax = (real **)malloc(size * sizeof(real));
+    apt->values = (real **)malloc(size * sizeof(real *));
+    apt->invar_par = (int **)malloc(size * sizeof(int *));
+    apt->pmin = (real **)malloc(size * sizeof(real *));
+    apt->pmax = (real **)malloc(size * sizeof(real *));
   }
   apt->names = (char **)malloc(size * sizeof(char *));
   pot_list_length = (int *)malloc(size * sizeof(int));
@@ -353,8 +355,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   real *val, *list, temp;
   fpos_t fpos;
 
-  fgetpos(infile, &fpos);
+#ifndef EAM
   /* read cp */
+  fgetpos(infile, &fpos);
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++) {
       if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
@@ -367,9 +370,12 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
       /* split cp and _# */
       token = strchr(buffer, '_');
-      if (token != NULL)
+      if (token != NULL) {
 	strncpy(name, buffer, strlen(token));
+	name[strlen(token)] = '\0';
+      }
       if (strcmp("cp", name) != 0) {
+	fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
 	sprintf(msg, "No chemical potentials found in %s.\n", filename);
 	error(msg);
       }
@@ -438,8 +444,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (compnodes == -1)
       compnodes = 0;
   }
-
   fsetpos(infile, &fpos);
+#endif
+
   do {
     fgetpos(infile, &fpos);
     fscanf(infile, "%s", buffer);
@@ -489,13 +496,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     if (strcmp(buffer, "cutoff") != 0) {
       sprintf(msg,
-	      "No cutoff for potential #%d found after type keyword in file %s\nAborting",
+	      "No cutoff for potential #%d found after \"type\" keyword in file %s\nAborting",
 	      i, filename);
       error(msg);
     }
     /* set small begin to prevent division by zero-errors */
     apt->begin[i] = 0.0001;
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+    apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
     apt->pmin[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->pmax[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
@@ -521,6 +529,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
 
     /* read parameters */
+    apt->invar_par[i][apt->n_par[i]] = 0;
     for (j = 0; j < apt->n_par[i]; j++) {
       /* Warning: The array for parameter names holds only 30 chars
        * so there is the chance of a buffer overflow.
@@ -550,17 +559,22 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	error(msg);
 	printf("%s\n", apt->param_name[i][0]);
       }
-      if (apt->pmin[i][j] > apt->pmax[i][j]) {
-	sprintf(msg,
-		"parameter minimum is bigger than parameter maximum for parameter #%d in potential #%d.\nAborting",
-		j + 1, i + 1);
-	error(msg);
+      apt->invar_par[i][j] = 0;
+      if (apt->pmin[i][j] == apt->pmax[i][j]) {
+	apt->invar_par[i][j] = 1;
+	apt->invar_par[i][apt->n_par[i]]++;
+/*        apt->total_par--;*/
+      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
+	temp = apt->pmin[i][j];
+	apt->pmin[i][j] = apt->pmax[i][j];
+	apt->pmax[i][j] = temp;
       } else if ((apt->values[i][j] < apt->pmin[i][j])
 		 || (apt->values[i][j] > apt->pmax[i][j])) {
-	sprintf(msg,
-		"starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAborting",
+	apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
+	fprintf(stderr, "\n ############ WARNING ############\n");
+	fprintf(stderr,
+		"Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAutosetting it to (pmin+pmax)/2\n",
 		j + 1, i + 1);
-	error(msg);
       }
     }
   }
@@ -575,7 +589,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     cp_start = apt->total_par + ntypes * (ntypes + 1);
     apt->total_par += (ntypes + compnodes);
   }
-/*   apot_validate_functions(apt); */
 
   /* initialize function table and write indirect index */
   for (i = 0; i < apt->number; i++) {
@@ -617,7 +630,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       *list = apt->values[i][j];
       val++;
       list++;
-      if (!invar_pot[i]) {
+      if (!invar_pot[i] && !apt->invar_par[i][j]) {
 	pt->idx[k] = l++;
 	apt->idxpot[k] = i;
 	apt->idxparam[k++] = j;
@@ -626,7 +639,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
     }
     if (!invar_pot[i])
-      pt->idxlen += apt->n_par[i];
+      pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
   }
 #ifndef EAM
   if (!disable_cp) {

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2009/04/14 08:16:23 $
+* $Revision: 1.21 $
+* $Date: 2009/04/21 13:48:08 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -212,7 +212,7 @@ void broadcast_params()
     calc_pot.table = (real *)malloc(calclen * sizeof(real));
     calc_pot.xcoord = (real *)malloc(calclen * sizeof(real));
     calc_pot.d2tab = (real *)malloc(calclen * sizeof(real));
-    //calc_pot.idx = (int *) malloc(ndim * sizeof(int));
+/*    calc_pot.idx = (int *) malloc(ndim * sizeof(int));*/
   }
   MPI_Bcast(calc_pot.begin, size, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.end, size, REAL, 0, MPI_COMM_WORLD);
@@ -223,7 +223,7 @@ void broadcast_params()
   MPI_Bcast(calc_pot.table, calclen, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.d2tab, calclen, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.xcoord, calclen, REAL, 0, MPI_COMM_WORLD);
-//  MPI_Bcast(calc_pot.idx,ndim,MPI_INT,0,MPI_COMM_WORLD);
+/*  MPI_Bcast(calc_pot.idx,ndim,MPI_INT,0,MPI_COMM_WORLD);*/
 
 #ifdef APOT
   MPI_Bcast(&do_smooth, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -326,7 +326,7 @@ void broadcast_params()
  * potsync: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
-#ifdef EAM
+#if defined EAM && !defined APOT
 
 void potsync()
 {
