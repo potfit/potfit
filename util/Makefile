@@ -34,5 +34,5 @@ potscale: ${POTSCALEOBJ} ${POTSCALEHDR}
 vasp2force: vasp2force.sh
 	cp vasp2force.sh ${HOME}/bin/share
 
-awkscripts: ${AWKSCRIPTS}
-	cd awk; cp -pr ${AWKSCRIPTS} ${HOME}/bin/share ; cd -
+awkscripts:
+	cd awk;	cp -pr ${AWKSCRIPTS} ${HOME}/bin/share;	cd -
