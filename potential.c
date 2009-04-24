@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.62 $
-* $Date: 2009/04/21 13:48:08 $
+* $Revision: 1.63 $
+* $Date: 2009/04/24 09:31:53 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -264,30 +264,37 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 #ifndef POTSCALE		/* not needed in potscale program */
   /* compute rcut and rmin */
   rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
+  if (NULL == rcut)
+    error("Cannot allocate rcut");
   rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
+  if (NULL == rmin)
+    error("Cannot allocate rmin");
+#ifdef APOT
 #ifdef EAM
   pot_index =
     (int *)malloc(((ntypes * (ntypes + 1) / 2) + ntypes) * sizeof(int));
+  if (NULL == pot_index) 
+    error("Cannot allocate pot_index");
   for (i = 0; i < (ntypes * (ntypes + 1) / 2 + ntypes); i++)
     pot_index[i] = ntypes * ntypes;
-#else
+#else  /* EAM */
   pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
+    error("Cannot allocate pot_index");
   for (i = 0; i < ntypes * (ntypes + 1) / 2; i++)
     pot_index[i] = ntypes * ntypes;
-#endif
-  if (NULL == rcut)
-    error("Cannot allocate rcut");
-  if (NULL == rmin)
-    error("Cannot allocate rmin");
+#endif	/* EAM */
+#endif	/* APOT */
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2)
 	: j * ntypes + i - ((j * (j + 1)) / 2);
       rmin[i * ntypes + j] = pt->begin[k];
       rcut[i * ntypes + j] = pt->end[k];
+#ifdef APOT
       pot_index[k] = MIN(pot_index[k], i * ntypes + j);
+#endif	/* APOT */
     }
-#ifdef EAM
+#if defined EAM && defined APOT
   j = 0;
   for (i = 0; i < ntypes; i++) {
     pot_index[++k] = pot_index[j];
