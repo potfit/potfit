@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.4 $
-# $Date: 2009/04/21 13:48:19 $
+# $Revision: 1.5 $
+# $Date: 2009/05/05 18:50:03 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -49,6 +49,7 @@ BEGIN {
 {
 	for (a=0;a<(ARGC-1);a++) {
 		if (substr($0,3,6)=="radial") {
+			n_rad = $6;
 			dist_file = ARGV[a+1];
 		}
 		else {
@@ -137,12 +138,12 @@ END {
 		}
 		if (dist_file != "") {
 			print ", " > "plot";
-			for (i=0;i<count;i++) {
+			for (i=0;i<n_rad;i++) {
 				if (i==0)
 					print "'" dist_file "' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
 				else
 					print "'' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
-				if (i!=(count-1))
+				if (i!=(n_rad-1))
 					print ", " > "plot";
 			}
 		}
