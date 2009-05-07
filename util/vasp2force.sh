@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.14 $
-#* $Date: 2009/05/07 13:24:47 $
+#* $Revision: 1.15 $
+#* $Date: 2009/05/07 14:04:25 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -40,7 +40,7 @@ e_file="../single_atom_energies";
 saeng="0 0 0";
 declare -a type_list;
 
-while getopts 'e:lfr:s:' OPTION
+while getopts 'e:lfr:s:?h' OPTION
   do
   case $OPTION in
       e) e_file="$OPTARG";
@@ -53,7 +53,10 @@ while getopts 'e:lfr:s:' OPTION
 	  ;;
       r) new_list="$OPTARG";
           ;;
-      ?) printf "\nUsage: %s: [-e file] [-f] [-l] [-r list] [-s list] <FILELIST>\n" $(basename $0) >&2
+      ?) printf "\nUsage: %s: [-e file] [-f] [-l] [-r list] [-s list] <OUTCAR files>\n" $(basename $0) >&2
+         printf "\n <OUTCAR files> is an optional list of files, if not given all files" >&2
+	 printf "\n starting with OUTCAR will be scanned" >&2
+	 printf "\n (it is possible to read gzipped files ending with .gz)\n" >&2
          printf "\n -e <file>\t\tspecify file to read single atom energies from\n" >&2
 	 printf "\t\t\tif not found, 0 will be used instead\n" >&2
 	 printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
@@ -70,13 +73,23 @@ shift $(($OPTIND-1))
 outcars="$*";
 
 if [ "$outcars" == "" ]; then
-	outcars="OUTCAR";
+	echo "No files specified on the command line. Searching for OUTCAR* ..." >&2;
+	for i in `find . -name OUTCAR\* -print`; do
+		outcars="${outcars} `basename $i`";
+	done
+	if [ "$outcars" != "" ]; then
+		echo "Found the following files: $outcars" >&2;
+	else
+		echo "Could not find any OUTCAR files in this directory, aborting."
+		break;
+	fi
 fi
 
 for file in $outcars; do
 if [ ! -f $file ]; then
 	continue;
 fi
+filename=$file;
 zipped=`echo $file | awk 'sub(/\.gz$/,""){print $0}'`
 if [ "$zipped" != "" ]; then
 	gunzip $file -c > .vasp2force.tmp;
@@ -93,12 +106,12 @@ fi
 if [ "$list_types" == "1" ]; then
 	types=`cat $file | grep VRHFIN | wc -l`;
 	name=(`cat $file | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
-	echo "Found $types atom types in $file:";
+	echo "Found $types atom types in $filename:";
     for (( i=0; $i<$types; i++ )); do
 	    echo ${name[$i]} "= "$i;
     done
 else
-	echo "There are $count configurations in $file" >&2
+	echo "There are $count configurations in $filename" >&2
 if [ -f $e_file ]; then
 saeng=`cat $e_file`;
 else
