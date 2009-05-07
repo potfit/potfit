@@ -1,13 +1,13 @@
 #!/bin/sh
 ####################################################################
-# 
+#
 #   Copyright 2003-2009 Peter Brommer, Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
 #
 ####################################################################
-#   
+#
 #   This file is part of potfit.
 #
 #   potfit is free software; you can redistribute it and/or modify
@@ -22,19 +22,19 @@
 #
 #   You should have received a copy of the GNU General Public License
 #   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+#   Foundation, Inc., 51 Franklin St, Fifth Floor,
 #   Boston, MA  02110-1301  USA
-# 
+#
 #/****************************************************************
-#* $Revision: 1.13 $
-#* $Date: 2009/04/15 13:30:24 $
+#* $Revision: 1.14 $
+#* $Date: 2009/05/07 13:24:47 $
 #*****************************************************************/
 
 wdir=`pwd`
-count=`grep -c "TOTAL-FORCE" OUTCAR`
-pr_conf="0";
 list_types="0";
 new_list="0";
+f_arg="0";
+s_arg="0";
 poscar=`[ -f POSCAR ]`;
 e_file="../single_atom_energies";
 saeng="0 0 0";
@@ -47,13 +47,13 @@ while getopts 'e:lfr:s:' OPTION
           ;;
       l) list_types="1";
       	  ;;
-      f) pr_conf="${pr_conf},$count";
+      f) f_arg="1";
 	  ;;
-      s) pr_conf="${pr_conf},$OPTARG";
+      s) s_arg="$OPTARG";
 	  ;;
       r) new_list="$OPTARG";
           ;;
-      ?) printf "\nUsage: %s: [-e file] [-f] [-l] [-r list] [-s list]\n" $(basename $0) >&2
+      ?) printf "\nUsage: %s: [-e file] [-f] [-l] [-r list] [-s list] <FILELIST>\n" $(basename $0) >&2
          printf "\n -e <file>\t\tspecify file to read single atom energies from\n" >&2
 	 printf "\t\t\tif not found, 0 will be used instead\n" >&2
 	 printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
@@ -66,18 +66,42 @@ while getopts 'e:lfr:s:' OPTION
   esac
 done
 
+shift $(($OPTIND-1))
+outcars="$*";
+
+if [ "$outcars" == "" ]; then
+	outcars="OUTCAR";
+fi
+
+for file in $outcars; do
+if [ ! -f $file ]; then
+	continue;
+fi
+zipped=`echo $file | awk 'sub(/\.gz$/,""){print $0}'`
+if [ "$zipped" != "" ]; then
+	gunzip $file -c > .vasp2force.tmp;
+	file=".vasp2force.tmp";
+fi
+	count=`grep -c "TOTAL-FORCE" $file`;
+	pr_conf="0";
+if [ "$f_arg" == "1" ]; then
+	pr_conf="${pr_conf},$count";
+fi
+if [ "$s_arg" != "0" ]; then
+	pr_conf="${pr_conf},$s_arg";
+fi
 if [ "$list_types" == "1" ]; then
-	types=`cat OUTCAR | grep VRHFIN | wc -l`;
-	name=(`cat OUTCAR | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
-	echo "Found $types atom types in OUTCAR:";
+	types=`cat $file | grep VRHFIN | wc -l`;
+	name=(`cat $file | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
+	echo "Found $types atom types in $file:";
     for (( i=0; $i<$types; i++ )); do
 	    echo ${name[$i]} "= "$i;
     done
 else
-echo "There are $count configurations in OUTCAR" >&2
-if [ -f $e_file ]; then 
+	echo "There are $count configurations in $file" >&2
+if [ -f $e_file ]; then
 saeng=`cat $e_file`;
-else 
+else
 printf "Warning: $e_file could not be found - using \"0 0 0\"\n" >&2;
 fi
 
@@ -88,7 +112,7 @@ if [ "X$pr_conf" == "X0" ]; then
     done
 fi
 
-cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v new_list="$new_list" -v saeng="$saeng" '  BEGIN {
+cat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v new_list="$new_list" -v saeng="$saeng" '  BEGIN {
     OFMT="%11.7g"
 #Select confs to print
     count=0;
@@ -134,30 +158,34 @@ cat OUTCAR | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}"
     split(boxz,boxz_v);
     scale=1.0;
 }
-  ($2=="kB") { 
+  ($2=="kB") {
      for (i=1;i<=6;i++) stress[i]=$(i+2)/1602.;
 }
   ($2=="TOTAL-FORCE") {
-     count++; 
+     count++;
      if (count in pr_flag) {
        print "#N",a[ntypes],1; #flag indicates whether to use forces or not
        print "## force file generated from directory " wdir;
        printf "#X %13.8f %13.8f %13.8f\n",boxx_v[1]*scale,\
-                   boxx_v[2]*scale,boxx_v[3]*scale;  
+                   boxx_v[2]*scale,boxx_v[3]*scale;
        printf "#Y %13.8f %13.8f %13.8f\n",boxy_v[1]*scale,\
-                   boxy_v[2]*scale,boxy_v[3]*scale;  
+                   boxy_v[2]*scale,boxy_v[3]*scale;
        printf "#Z %13.8f %13.8f %13.8f\n",boxz_v[1]*scale,\
-                   boxz_v[2]*scale,boxz_v[3]*scale;  
+                   boxz_v[2]*scale,boxz_v[3]*scale;
        printf("#E %.10f\n",energy) ;
-       if ( 1 in stress ) 
+       if ( 1 in stress )
          print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];
        print "#F";
-     }  
+     }
      getline; getline;
-     for (i=1; i<=a[ntypes]; i++) { 
-       if (count in pr_flag) 
-	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n", 
-	       number[b[i]+1],$1,$2,$3,$4,$5,$6); 
-     getline; } 
-  };' 
+     for (i=1; i<=a[ntypes]; i++) {
+       if (count in pr_flag)
+	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n",
+	       number[b[i]+1],$1,$2,$3,$4,$5,$6);
+     getline; }
+  };'
 fi
+if [ "$zipped" != "" ]; then
+	rm $file;
+fi
+done
