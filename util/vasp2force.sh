@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.15 $
-#* $Date: 2009/05/07 14:04:25 $
+#* $Revision: 1.16 $
+#* $Date: 2009/05/08 13:37:19 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -41,7 +41,7 @@ saeng="0 0 0";
 declare -a type_list;
 
 while getopts 'e:lfr:s:?h' OPTION
-  do
+do
   case $OPTION in
       e) e_file="$OPTARG";
           ;;
@@ -54,16 +54,16 @@ while getopts 'e:lfr:s:?h' OPTION
       r) new_list="$OPTARG";
           ;;
       ?) printf "\nUsage: %s: [-e file] [-f] [-l] [-r list] [-s list] <OUTCAR files>\n" $(basename $0) >&2
-         printf "\n <OUTCAR files> is an optional list of files, if not given all files" >&2
-	 printf "\n starting with OUTCAR will be scanned" >&2
-	 printf "\n (it is possible to read gzipped files ending with .gz)\n" >&2
-         printf "\n -e <file>\t\tspecify file to read single atom energies from\n" >&2
-	 printf "\t\t\tif not found, 0 will be used instead\n" >&2
-	 printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
-	 printf " -l\t\t\tlist all chemical species found in OUTCAR and exit\n" >&2
-	 printf " -r <list>\t\trewrite atom types according to <list>\n" >&2
-	 printf "\t\t\t(same order as listed with -l; -r 1,0 will swap 0 and 1)\n" >&2
-	 printf " -s <list>\t\tcomma separated list of configurations to use\n" >&2
+          printf "\n <OUTCAR files> is an optional list of files, if not given all files" >&2
+	  printf "\n starting with OUTCAR will be scanned" >&2
+	  printf "\n (it is possible to read gzipped files ending with .gz)\n" >&2
+          printf "\n -e <file>\t\tspecify file to read single atom energies from\n" >&2
+	  printf "\t\t\tif not found, 0 will be used instead\n" >&2
+	  printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
+	  printf " -l\t\t\tlist all chemical species found in OUTCAR and exit\n" >&2
+	  printf " -r <list>\t\trewrite atom types according to <list>\n" >&2
+	  printf "\t\t\t(same order as listed with -l; -r 1,0 will swap 0 and 1)\n" >&2
+	  printf " -s <list>\t\tcomma separated list of configurations to use\n" >&2
 	  exit 2
 	  ;;
   esac
@@ -73,59 +73,59 @@ shift $(($OPTIND-1))
 outcars="$*";
 
 if [ "$outcars" == "" ]; then
-	echo "No files specified on the command line. Searching for OUTCAR* ..." >&2;
-	for i in `find . -name OUTCAR\* -print`; do
-		outcars="${outcars} `basename $i`";
-	done
-	if [ "$outcars" != "" ]; then
-		echo "Found the following files: $outcars" >&2;
-	else
-		echo "Could not find any OUTCAR files in this directory, aborting."
-		break;
-	fi
+    echo "No files specified on the command line. Searching for OUTCAR* ..." >&2;
+    for i in `find . -name OUTCAR\* -print`; do
+	outcars="${outcars} `basename $i`";
+    done
+    if [ "$outcars" != "" ]; then
+	echo "Found the following files: $outcars" >&2;
+    else
+	echo "Could not find any OUTCAR files in this directory, aborting."
+	break;
+    fi
 fi
 
 for file in $outcars; do
-if [ ! -f $file ]; then
+    if [ ! -f $file ]; then
 	continue;
-fi
-filename=$file;
-zipped=`echo $file | awk 'sub(/\.gz$/,""){print $0}'`
-if [ "$zipped" != "" ]; then
+    fi
+    filename=$file;
+    zipped=`echo $file | awk 'sub(/\.gz$/,""){print $0}'`
+    if [ "$zipped" != "" ]; then
 	gunzip $file -c > .vasp2force.tmp;
 	file=".vasp2force.tmp";
-fi
-	count=`grep -c "TOTAL-FORCE" $file`;
-	pr_conf="0";
-if [ "$f_arg" == "1" ]; then
+    fi
+    count=`grep -c "TOTAL-FORCE" $file`;
+    pr_conf="0";
+    if [ "$f_arg" == "1" ]; then
 	pr_conf="${pr_conf},$count";
-fi
-if [ "$s_arg" != "0" ]; then
+    fi
+    if [ "$s_arg" != "0" ]; then
 	pr_conf="${pr_conf},$s_arg";
-fi
-if [ "$list_types" == "1" ]; then
+    fi
+    if [ "$list_types" == "1" ]; then
 	types=`cat $file | grep VRHFIN | wc -l`;
 	name=(`cat $file | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
 	echo "Found $types atom types in $filename:";
-    for (( i=0; $i<$types; i++ )); do
+	for (( i=0; $i<$types; i++ )); do
 	    echo ${name[$i]} "= "$i;
-    done
-else
+	done
+    else
 	echo "There are $count configurations in $filename" >&2
-if [ -f $e_file ]; then
-saeng=`cat $e_file`;
-else
-printf "Warning: $e_file could not be found - using \"0 0 0\"\n" >&2;
-fi
+	if [ -f $e_file ]; then
+	    saeng=`cat $e_file`;
+	else
+	    printf "Warning: $e_file could not be found - using \"0 0 0\"\n" >&2;
+	fi
 
-if [ "X$pr_conf" == "X0" ]; then
-    pr_conf=1;
-    for (( i=2; $i<=$count; i++ )); do
-	pr_conf="${pr_conf},$i";
-    done
-fi
+	if [ "X$pr_conf" == "X0" ]; then
+	    pr_conf=1;
+	    for (( i=2; $i<=$count; i++ )); do
+		pr_conf="${pr_conf},$i";
+	    done
+	fi
 
-cat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v new_list="$new_list" -v saeng="$saeng" '  BEGIN {
+	cat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v new_list="$new_list" -v saeng="$saeng" '  BEGIN {
     OFMT="%11.7g"
 #Select confs to print
     count=0;
@@ -197,8 +197,8 @@ cat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" 
 	       number[b[i]+1],$1,$2,$3,$4,$5,$6);
      getline; }
   };'
-fi
-if [ "$zipped" != "" ]; then
+    fi
+    if [ "$zipped" != "" ]; then
 	rm $file;
-fi
+    fi
 done
