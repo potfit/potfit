@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.63 $
-* $Date: 2009/04/21 13:48:09 $
+* $Revision: 1.64 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -227,9 +227,8 @@ EXTERN char imdpot[255];	/* file for IMD potential */
 EXTERN char config[255];	/* file with atom configuration */
 EXTERN char plotfile[255];	/* file for plotting */
 EXTERN char distfile[255];	/* file for distributions */
-EXTERN char endforce[255] INIT("stdout");	/* file for force deviations */
-EXTERN char endenergy[255] INIT("stdout");	/* file for energy deviations */
-EXTERN char endstress[255] INIT("stdout");	/* file for stress deviations */
+EXTERN int write_output_files INIT(0);
+EXTERN char output_prefix[255] INIT("");	/* prefix for all output files */
 EXTERN char **config_name INIT(NULL);
 EXTERN int config_name_max INIT(0);
 
@@ -279,6 +278,7 @@ EXTERN real (*parab_comb) (pot_table_t *, real *, int, real, real *);
 EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 #endif /* PARABEL */
 EXTERN int *idx INIT(NULL);
+EXTERN int init_done INIT(0);
 /* EXTERN real   *dummy_phi INIT(NULL);     /\* Dummy Constraints for PairPot *\/ */
 /* EXTERN real   dummy_rho INIT(1.);        /\* Dummy Constraint for rho *\/ */
 /* EXTERN real   dummy_r  INIT(2.5);        /\* Distance of Dummy Constraints *\/ */
@@ -389,7 +389,7 @@ void  debug_apot();
 
 /* global counting variables for misc. purposes */
 
-int count_1 INIT(0);
+//int count_1 INIT(0);
 //int count_2 INIT(0);
 
 /* end of counting variables */
@@ -411,6 +411,7 @@ void  eopp_exp_value(real, real *, real *);
 void  meopp_value(real, real *, real *);
 void  power_decay_value(real, real *, real *);
 void  pohlong_value(real, real *, real *);
+void  parabola_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

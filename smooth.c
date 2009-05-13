@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2008/11/26 08:58:22 $
+* $Revision: 1.7 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #ifdef APOT
@@ -203,7 +203,7 @@ real smooth(void (*function) (real, real *, real *),
 	    real x, real *p, real xmin, real xmax, real *params)
 {
   real  dist = 0, f, g, temp;
-  real  a, b, c, x0 = 0, x1;
+  real  a, b, c, d, x0 = 0, x1;
   int   i, nroot = 0, done = 0;
   char  msg[255];
   static real *roots;

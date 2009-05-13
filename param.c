@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.27 $
-*  $Date: 2009/04/14 08:16:23 $
+*  $Revision: 1.28 $
+*  $Date: 2009/05/13 10:11:19 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -200,17 +200,23 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "endpot") == 0) {
       getparam("endpot", endpot, PARAM_STR, 1, 255);
     }
-    /* file for end force */
-    else if (strcasecmp(token, "endforce") == 0) {
-      getparam("endforce", endforce, PARAM_STR, 1, 255);
-    }
-    /* file for end energy */
-    else if (strcasecmp(token, "endenergy") == 0) {
-      getparam("endenergy", endenergy, PARAM_STR, 1, 255);
-    }
-    /* file for end stress */
-    else if (strcasecmp(token, "endstress") == 0) {
-      getparam("endstress", endstress, PARAM_STR, 1, 255);
+/*     file for end force */
+/*    else if (strcasecmp(token, "endforce") == 0) {*/
+/*      getparam("endforce", endforce, PARAM_STR, 1, 255);*/
+/*    }*/
+/*     file for end energy */
+/*    else if (strcasecmp(token, "endenergy") == 0) {*/
+/*      getparam("endenergy", endenergy, PARAM_STR, 1, 255);*/
+/*    }*/
+/*     file for end stress */
+/*    else if (strcasecmp(token, "endstress") == 0) {*/
+/*      getparam("endstress", endstress, PARAM_STR, 1, 255);*/
+/*    }*/
+    /* prefix for all output files */
+    else if (strcasecmp(token, "output_prefix") == 0) {
+      getparam("output_prefix", output_prefix, PARAM_STR, 1, 255);
+      if (strcmp(output_prefix, "") != 0)
+	write_output_files = 1;
     }
     /* file for IMD potential */
     else if (strcasecmp(token, "imdpot") == 0) {
@@ -296,6 +302,7 @@ void read_paramfile(FILE *pf)
     /* unknown tag */
     else {
       fprintf(stderr, "Unknown tag <%s> ignored!\n", token);
+      fflush(stderr);
     }
   } while (!feof(pf));
   fclose(pf);

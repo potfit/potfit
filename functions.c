@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.13 $
-* $Date: 2009/04/21 13:48:08 $
+* $Revision: 1.14 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #ifdef APOT
@@ -62,6 +62,9 @@ int apot_parameters(char *name)
     return 2;
   } else if (strcmp(name, "pohlong") == 0) {
     return 2;
+  }
+  else if (strcmp(name, "parabola") == 0) {
+    return 3;
   }
 
   /* template for new potential function called newpot */
@@ -102,6 +105,9 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &power_decay_value;
     } else if (strcmp(apt->names[i], "pohlong") == 0) {
       apt->fvalue[i] = &pohlong_value;
+    }
+    else if (strcmp(apt->names[i], "parabola") == 0) {
+      apt->fvalue[i] = &parabola_value;
     }
 
 /* template for new potential function called newpot */
@@ -254,6 +260,16 @@ void pohlong_value(real r, real *p, real *f)
   *f = p[0] * (1 - p[1] * log(r)) * power;
 }
 
+/******************************************************************************
+*
+* parabola potential
+*
+******************************************************************************/
+
+void parabola_value(real r, real *p, real *f)
+{
+  *f = r*r * p[0] + r*p[1]+p[2];
+}
 
 /******************************************************************************
 * 

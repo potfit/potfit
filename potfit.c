@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.53 $
-* $Date: 2009/04/21 13:48:09 $
+* $Revision: 1.54 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #define MAIN
@@ -78,9 +78,9 @@ int main(int argc, char **argv)
 {
   real *force;
   real  tot, min, max, sqr, *totdens;
-  int   i, j, diff, *ntyp;
-  char  msg[255];
-  FILE *outforce, *outenergy, *outstress;
+  int   i, j, k, diff, *ntyp;
+  char  msg[255], file[255];
+  FILE *outfile;
 
   pi = 4.0 * atan(1.);
 #ifdef MPI
@@ -165,8 +165,10 @@ int main(int argc, char **argv)
 #endif /* WZERO */
 #endif /* NORESCALE */
 #endif /* EAM */
+    init_done = 1;
   }
 #ifdef MPI
+  MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
   broadcast_params();		/* let the others know what's going on */
 #else /* MPI */
   /* Identify subset of atoms/volumes belonging to individual process
@@ -176,6 +178,8 @@ int main(int argc, char **argv)
   conf_uf = useforce;
   conf_us = usestress;
   myatoms = natoms;
+  for (i = 0; i < paircol; i++)
+    new_slots(i, 1);
 #endif /* MPI */
   /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
@@ -280,16 +284,33 @@ int main(int argc, char **argv)
 #ifdef EAM
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
-    printf("Local electron density rho\n");
+    if (write_output_files) {
+      strcpy(file, output_prefix);
+      strcat(file, ".rho_loc");
+      outfile = fopen(file, "w");
+      if (NULL == outfile) {
+	sprintf(msg, "Could not open file %s\n", file);
+	error(msg);
+      }
+    } else {
+      outfile = stdout;
+      printf("Local electron density rho\n");
+    }
     for (i = 0; i < ntypes; i++) {
       totdens[i] = 0.;
       ntyp[i] = 0;
     }
+    fprintf(outfile, "#    atomtype\trho\n");
     for (i = 0; i < natoms; i++) {
-      printf("%d %d %f\n", i, atoms[i].typ, atoms[i].rho);
+      fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].typ, atoms[i].rho);
       totdens[atoms[i].typ] += atoms[i].rho;
       ntyp[atoms[i].typ]++;
     }
+    if (write_output_files) {
+      printf("Local electron density data written to %s\n", file);
+      fclose(outfile);
+    }
+    /* TODO write to file? */
     for (i = 0; i < ntypes; i++) {
       totdens[i] /= (real)ntyp[i];
       printf("Average local electron density at atom sites type %d: %f\n",
@@ -324,56 +345,67 @@ int main(int argc, char **argv)
 
     max = 0.0;
     min = 100000.0;
-    if (strcmp(endforce, "stdout") != 0) {
-      outforce = fopen(endforce, "w");
-      if (NULL == outforce) {
-	sprintf(msg, "Could not open file %s\n", endforce);
+    if (write_output_files) {
+      strcpy(file, output_prefix);
+      strcat(file, ".force");
+      outfile = fopen(file, "w");
+      if (NULL == outfile) {
+	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
-    } else
-      outforce = stdout;
-    fprintf(outforce, "conf-atom   df^2\t f\t\t f0\t\t df/f0\t\t |f|\n");
+    } else {
+      outfile = stdout;
+      printf("Forces:\n");
+    }
     for (i = 0; i < 3 * natoms; i++) {
       sqr = SQR(force[i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
-      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf,
-	      i / 3, sqr,
+      if (i == 0)
+	fprintf(outfile,
+		"conf-atom    type\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+      fprintf(outfile, "%d-%d\t%d\t%f\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf,
+	      i / 3, atoms[i / 3].typ, sqr,
 	      force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	      force_0[i],
 	      (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
 	      atoms[i / 3].absforce);
 #else /* FWEIGHT */
-      fprintf(outforce, "%d-%d\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf, i / 3,
-	      sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+      if (i == 0)
+	fprintf(outfile, "conf-atom    type\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
+      fprintf(outfile, "%d-%d\t\t%d\t%.8f\t%.8f\t%.8f\t%f\n",
+	      atoms[i / 3].conf, i / 3, atoms[i / 3].typ, sqr,
+	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
-    if (strcmp(endforce, "stdout") != 0) {
-      printf("Force data written to %s\n", endforce);
-      fclose(outforce);
+    if (write_output_files) {
+      printf("Force data written to %s\n", file);
+      fclose(outfile);
     }
 
-    if (strcmp(endenergy, "stdout") != 0) {
-      outenergy = fopen(endenergy, "w");
-      if (NULL == outenergy) {
-	sprintf(msg, "Could not open file %s\n", endenergy);
+    if (write_output_files) {
+      strcpy(file, output_prefix);
+      strcat(file, ".energy");
+      outfile = fopen(file, "w");
+      if (NULL == outfile) {
+	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
     } else {
-      outenergy = stdout;
+      outfile = stdout;
       printf("Cohesive Energies\n");
     }
 
-    if (strcmp(endenergy, "stdout") != 0) {
+    if (write_output_files) {
       strcpy(msg, "");
       for (j = 4; j < config_name_max; j++)
 	strcat(msg, " ");
-      fprintf(outenergy,
+      fprintf(outfile,
 	      "#\tconf%s\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n",
 	      msg);
     } else
-      fprintf(outenergy, "#\tconf\t(w*de)^2\te\t\te0\t\tde/e0\n");
+      fprintf(outfile, "#\tconf\t(w*de)^2\te\t\te0\t\tde/e0\n");
 
     real  e_sum = 0, s_sum = 0;
 
@@ -383,11 +415,11 @@ int main(int argc, char **argv)
       max = MAX(max, sqr);
       min = MIN(min, sqr);
       strcpy(msg, "");
-      if (strcmp(endenergy, "stdout") != 0) {
+      if (write_output_files) {
 	if (strlen(config_name[i]) < config_name_max)
 	  for (j = 0; j < (config_name_max - strlen(config_name[i])); j++)
 	    strcat(msg, " ");
-	fprintf(outenergy, "%d\t%s%s\t%f\t%f\t%f\t%f\t%f\t%f\n", i,
+	fprintf(outfile, "%d\t%s%s\t%f\t%f\t%f\t%f\t%f\t%f\n", i,
 		config_name[i], msg, sqr,
 		(force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
 		force_0[3 * natoms + i] / eweight,
@@ -395,39 +427,73 @@ int main(int argc, char **argv)
 		force[3 * natoms + i] / eweight,
 		force[3 * natoms + i] / force_0[3 * natoms + i]);
       } else
-	fprintf(outenergy, "%d\t%f\t%f\t%f\t%f\n", i, sqr,
+	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n", i, sqr,
 		(force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
 		force_0[3 * natoms + i] / eweight,
 		force[3 * natoms + i] / force_0[3 * natoms + i]);
     }
-    if (strcmp(endenergy, "stdout") != 0) {
-      printf("Energy data written to %s\n", endenergy);
-      fclose(outenergy);
+    if (write_output_files) {
+      printf("Energy data written to %s\n", file);
+      fclose(outfile);
     }
 #ifdef STRESS
-    if (strcmp(endstress, "stdout") != 0) {
-      outstress = fopen(endstress, "w");
-      if (NULL == outstress) {
-	sprintf(msg, "Could not open file %s\n", endstress);
+    if (write_output_files) {
+      strcpy(file, output_prefix);
+      strcat(file, ".stress");
+      outfile = fopen(file, "w");
+      if (NULL == outfile) {
+	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
-    } else
-      outstress = stdout;
-    fprintf(outstress, "Stresses on unit cell\n");
-    fprintf(outstress, "conf\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
+      strcpy(msg, "");
+      for (j = 4; j < config_name_max; j++)
+	strcat(msg, " ");
+      fprintf(outfile, "#\tconf%s\t(w*ds)^2\ts\t\ts0\t\tds/s0\n", msg);
+    } else {
+      outfile = stdout;
+      fprintf(outfile, "Stresses on unit cell\n");
+      fprintf(outfile, "#\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
+    }
     for (i = 3 * natoms + nconf; i < 3 * natoms + 7 * nconf; i++) {
       sqr = SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      fprintf(outstress, "%d\t%f\t%f\t%f\t%f\n",
-	      (i - (3 * natoms + nconf)) / 6, sqr,
-	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
-	      force[i] / force_0[i]);
+      if (write_output_files) {
+	k = (i - (3 * natoms + nconf)) / 6;
+	strcpy(msg, "");
+	if (strlen(config_name[k]) < config_name_max)
+	  for (j = 0; j < (config_name_max - strlen(config_name[k])); j++)
+	    strcat(msg, " ");
+	fprintf(outfile, "%d\t%s%s\t%f\t%f\t%f\t%f\n",
+		(i - (3 * natoms + nconf)) / 6, config_name[k], msg, sqr,
+		(force[i] + force_0[i]) / sweight, force_0[i] / sweight,
+		force[i] / force_0[i]);
+      } else {
+	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n",
+		(i - (3 * natoms + nconf)) / 6, sqr,
+		(force[i] + force_0[i]) / sweight, force_0[i] / sweight,
+		force[i] / force_0[i]);
+      }
+    }
+    if (write_output_files) {
+      printf("Stress data written to %s\n", file);
+      fclose(outfile);
     }
 #endif
 #ifdef EAM
-    printf("Punishment Constraints\n");
+    if (write_output_files) {
+      strcpy(file, output_prefix);
+      strcat(file, ".punish");
+      outfile = fopen(file, "w");
+      if (NULL == outfile) {
+	sprintf(msg, "Could not open file %s\n", file);
+	error(msg);
+      }
+    } else {
+      outfile = stdout;
+      printf("Punishment Constraints\n");
+    }
 //    printf("conf dp p p0 dp/p0");
 #ifdef STRESS
     diff = 6 * nconf;
@@ -439,17 +505,21 @@ int main(int argc, char **argv)
       sqr = SQR(force[i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      printf("%d %f %f %f %f\n", i - (3 * natoms + nconf + diff), sqr,
-	     force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+      fprintf(outfile, "%d %f %f %f %f\n", i - (3 * natoms + nconf + diff),
+	      sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
     }
-    printf("Dummy Constraints\n");
+    fprintf(outfile, "Dummy Constraints\n");
     for (i = 2 * ntypes; i > 0; i--) {
       sqr = SQR(force[mdim - i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      printf("%d %f %f %f %f\n", ntypes - i, sqr,
-	     force[mdim - i] + force_0[mdim - i],
-	     force_0[mdim - i], force[mdim - i] / force_0[mdim - i]);
+      fprintf(outfile, "%d %f %f %f %f\n", ntypes - i, sqr,
+	      force[mdim - i] + force_0[mdim - i],
+	      force_0[mdim - i], force[mdim - i] / force_0[mdim - i]);
+    }
+    if (write_output_files) {
+      printf("Punishment constraints data written to %s\n", file);
+      fclose(outfile);
     }
 #endif
 

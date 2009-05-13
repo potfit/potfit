@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.36 $
-* $Date: 2009/04/08 06:47:22 $
+* $Revision: 1.37 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #include <math.h>
@@ -289,7 +289,9 @@ void anneal(real *xi)
 //          embed_shift(&opt_pot);
 #endif /* WZERO */
 	  /* wake other threads and sync potentials */
+#ifndef APOT
 	  F = (*calc_forces) (xi, fxi1, 2);
+#endif
 	}
       }
 #endif /* NORESCALE */

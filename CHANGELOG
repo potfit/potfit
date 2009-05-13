@@ -1,3 +1,14 @@
+CVS-20090513
++ [MPI] fixed a bug that ended in an endless loop if an error was
+  encountered before the first broadcast
++ the radial distribution output now states how many functions it contains
++ [APOT] the plotapot script now reads how many rad. dist. there are
++ [APOT] fixed a bug with potentials not using _sc
++ replaced end{force,energy,stress} by output_prefix
+  the files "output_prefix".{force,energy,stress,rho_loc,punish} will be written if present
+  else the output will be redirected to stdout
++ the force file now shows the atomtype
+
 CVS-20090421
 + [APOT] fixed parameters (pmin==pmax) are now really fixed
 + [APOT] lots of eam bugs fixed

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2009/04/21 13:48:08 $
+* $Revision: 1.22 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -64,6 +64,8 @@ void init_mpi(int *argc_pointer, char **argv)
 
 void shutdown_mpi(void)
 {
+  if (!init_done)
+    MPI_Abort(MPI_COMM_WORLD, -1);
   MPI_Barrier(MPI_COMM_WORLD);	/* Wait for all processes to arrive */
   MPI_Finalize();		/* Shutdown */
 }
@@ -102,7 +104,6 @@ void broadcast_params()
   neigh_t testneigh;
   atom_t testatom;
   int   calclen, size, i, j, each, odd, nodeatoms = 0, list_length;
-
 
   /* Define Structures */
   /* first the easy ones: */

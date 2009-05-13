@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.63 $
-* $Date: 2009/04/24 09:31:53 $
+* $Revision: 1.64 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -273,26 +273,29 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 #ifdef EAM
   pot_index =
     (int *)malloc(((ntypes * (ntypes + 1) / 2) + ntypes) * sizeof(int));
-  if (NULL == pot_index) 
+  if (NULL == pot_index)
     error("Cannot allocate pot_index");
   for (i = 0; i < (ntypes * (ntypes + 1) / 2 + ntypes); i++)
     pot_index[i] = ntypes * ntypes;
-#else  /* EAM */
+#else /* EAM */
   pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
+  if (NULL == pot_index)
     error("Cannot allocate pot_index");
   for (i = 0; i < ntypes * (ntypes + 1) / 2; i++)
     pot_index[i] = ntypes * ntypes;
-#endif	/* EAM */
-#endif	/* APOT */
+#endif /* EAM */
+#endif /* APOT */
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2)
 	: j * ntypes + i - ((j * (j + 1)) / 2);
       rmin[i * ntypes + j] = pt->begin[k];
-      rcut[i * ntypes + j] = pt->end[k];
 #ifdef APOT
+      rcut[i * ntypes + j] = pt->end[k] * (do_smooth ? CUTOFF_MARGIN : 1);
       pot_index[k] = MIN(pot_index[k], i * ntypes + j);
-#endif	/* APOT */
+#else
+      rcut[i * ntypes + j] = pt->end[k];
+#endif /* APOT */
     }
 #if defined EAM && defined APOT
   j = 0;
@@ -1891,7 +1894,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     for (i = 0; i < apt->number; i++)
       fprintf(outfile, " %d", invar_pot[i]);
   }
-  fprintf(outfile, "\n#E\n\n");
+  fprintf(outfile, "\n#E\n");
 
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++)
@@ -2119,9 +2122,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
       if (!invar_pot[col1] && smooth_pot[col1]) {
 	x0 =
-	  smooth(apot_table.fvalue[col1], rcut[col2],
-		 apot_table.values[col1], rmin[col2],
-		 rcut[col2] * CUTOFF_MARGIN, params);
+	  smooth(apot_table.fvalue[col1], apot_table.end[col1],
+		 apot_table.values[col1], rmin[col2], rcut[col2], params);
 	r2end[col2] = SQR(params[0]);
       } else
 	r2end[col2] = SQR(pt->end[col1]);
@@ -2187,8 +2189,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       r2 = r2begin[col2];
       if (do_smooth && smooth_pot[col1])
 	x0 =
-	  smooth(apot_table.fvalue[col1], rcut[col2], apot_table.values[col1],
-		 rmin[col2], rcut[col2] * CUTOFF_MARGIN, params);
+	  smooth(apot_table.fvalue[col1], apot_table.end[col1],
+		 apot_table.values[col1], rmin[col2], rcut[col2], params);
       else
 	x0 = rcut[col2];
       for (k = 0; k < imdpotsteps; k++) {
@@ -2403,12 +2405,12 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     j = i * (i + 1) / 2;
     if (!invar_pot[i] && smooth_pot[i]) {
       x0 =
-	smooth(apot_table.fvalue[i], rcut[j], apot_table.values[i],
-	       rmin[j], rcut[j] * CUTOFF_MARGIN, params);
+	smooth(apot_table.fvalue[i], apot_table.end[i], apot_table.values[i],
+	       apot_table.end[i] * .8, apot_table.end[i] * 1.2, params);
       r_step = (params[0] - r) / (NPLOT - 1);
     } else {
       x0 = 0;
-      r_step = (rcut[j] - r) / (NPLOT - 1);
+      r_step = (apot_table.end[i] - r) / (NPLOT - 1);
     }
     for (l = 0; l < NPLOT; l++) {
       if (x0 == 0 || r <= x0)

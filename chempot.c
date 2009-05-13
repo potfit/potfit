@@ -1,5 +1,5 @@
 /****************************************************************
-* 
+*
 *  chempot.c: calculation of the chemical potential
 *
 *****************************************************************/
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2009/04/14 08:16:21 $
+* $Revision: 1.5 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #if defined APOT && !defined EAM

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.62 $
-* $Date: 2009/04/21 13:48:08 $
+* $Revision: 1.63 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -109,7 +109,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
+#ifdef EAM
     rho_sum_loc = 0.;
+#endif
 #if !defined APOT
     if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
@@ -304,11 +306,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 				     neigh->slot[0],
 				     neigh->shift[0], neigh->step[0]);
 		forces[config] += fnval;
+/*                fprintf(stderr,"k=%d energy %f r %f\n",k,fnval,neigh->r);*/
 /* not real force: cohesive energy */
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;
 		  tmp_force.z = neigh->dist.z * grad;
+/*                  fprintf(stderr,"k=%d dist %f %f %f grad %f\n",k,neigh->dist.x,neigh->dist.y,neigh->dist.z,grad);*/
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
@@ -408,7 +412,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* linear extrapolation left */
-	    /* TODO real extrapolation */
 	    fnval =
 	      splint_comb(&calc_pot, xi, col2, calc_pot.begin[col2],
 			  &atom->gradF);
@@ -600,8 +603,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* clear field */
 	forces[mdim - ntypes + g] = 0.;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
+#ifdef APOT
+#warning EAM PUNISHMENT DISABLED
+#else
 	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
+#endif
 #else /* NOTHING */
 	forces[mdim - ntypes + g] = 0.;	/* Free end... */
 /* constraints on U`(n) */
@@ -620,8 +627,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       /* Calculate averages */
       rho_sum /= (real)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
+#ifdef APOT
+#warning EAM PUNISHMENT DISABLED
+#else
       forces[mdim - ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
       tmpsum += SQR(forces[mdim - ntypes]);
+#endif
 #endif
     }				/* only root process */
 #endif

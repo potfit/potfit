@@ -2,8 +2,8 @@
 /******************************************************************************
 *
 *  PoLSA - Powell Least Square Algorithm
-* 
-*  powell_lsq.c: Contains Powell optimization algorithm 
+*
+*  powell_lsq.c: Contains Powell optimization algorithm
 *                and some small subroutines
 *
 ******************************************************************************/
@@ -14,7 +14,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -29,17 +29,17 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.39 $
-* $Date: 2009/04/21 13:48:09 $
+* $Revision: 1.40 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 /******************************************************************************
 *
-* This utility will optimize a parameter vector xi[N] to minimize the sum of 
+* This utility will optimize a parameter vector xi[N] to minimize the sum of
 * squares U=sum_{i=1..M}(f_i(xi)-F_i)^2, where F_i is an array passed to the
 * utility, and f_i(xi) is a function of the vector xi.
 *
@@ -89,6 +89,7 @@ void powell_lsq(real *xi)
   real  perm_sig;		/* Signature of permutation in LU decomp */
   real  F, F2, F3, df, xi1, xi2;	/* Fn values, changes, steps ... */
   real  temp, temp2;		/* as the name indicates: temporary vars */
+  int   itemp, itemp2;		/* the same for integer */
   real  ferror, berror;		/* forward/backward error estimates */
   static char errmsg[256];	/* Error message */
   FILE *ff;			/* Exit flagfile */
@@ -116,6 +117,8 @@ void powell_lsq(real *xi)
   for (i = 0; i < ndimtot; i++)
     delta[i] = 0.;
 
+/*  fprintf(stderr, "Calculating force in powell_lsq.c\n");*/
+/*  fflush(stderr);*/
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
 #ifndef APOT
@@ -137,6 +140,8 @@ void powell_lsq(real *xi)
     m = 0;
 
     /* Init gamma */
+/*    fprintf(stderr, "Initialising gamma in powell_lsq.c\n");*/
+/*    fflush(stderr);*/
     if (i = gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
 #ifndef NORESCALE
@@ -155,18 +160,26 @@ void powell_lsq(real *xi)
 	/* ok, now this is serious, better exit cleanly */
 #ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
+	sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
+		idx[i - 1]);
 #else
 	for (n = 0; n < ndim; n++)
 	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
 	    xi[idx[n]];
 	write_pot_table(&apot_table, tempfile);
-#endif
+	itemp = apot_table.idxpot[i - 1];
+	itemp2 = apot_table.idxparam[i - 1];
 	sprintf(errmsg,
-		"F does not depend on xi[%d], fit impossible!\n", idx[i - 1]);
+		"F does not depend on the %d. parameter (%s) of the %d. potential (%s).\nFit impossible!\n",
+		itemp2 + 1, apot_table.param_name[itemp][itemp2],
+		itemp + 1, apot_table.names[itemp]);
+#endif
 	warning(errmsg);
 	break;
       }
     }
+/*    fprintf(stderr, "Initialising lineqsys in powell_lsq.c\n");*/
+/*    fflush(stderr);*/
     (void)lineqsys_init(gamma, lineqsys, fxi1, p, ndim, mdim);	/*init LES */
     F3 = F;
     breakflag = 0;
@@ -177,6 +190,8 @@ void powell_lsq(real *xi)
       j = 1;			/* 1 rhs */
 
       /* Linear Equation Solution (lapack) */
+/*      fprintf(stderr, "Solving lineqsys in powell_lsq.c\n");*/
+/*      fflush(stderr);*/
 #ifdef ACML
       dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
 	     &les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
@@ -190,6 +205,8 @@ void powell_lsq(real *xi)
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2],
 	     q[3], q[4], q[5], q[6], q[7]);
 #endif
+/*      fprintf(stderr, "Done solving lineqsys in powell_lsq.c\n");*/
+/*      fflush(stderr);*/
       if (i > 0 && i <= ndim) {
 	sprintf(errmsg, "Linear equation system singular after step %d i=%d",
 		m, i);
@@ -214,6 +231,35 @@ void powell_lsq(real *xi)
 	  sprintf(errmsg, "%sRestarting inner loop\n", errmsg);
 	  warning(errmsg);
 	  breakflag = 1;
+	}
+#else
+	if ((xi[idx[i]] + delta[idx[i]]) <
+	    apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]]) {
+#ifdef DEBUG
+/*          fprintf(stderr, "Change in parameter %d too small in powell_lsq\n",*/
+/*                  i);*/
+/*          fprintf(stderr, "i %d xi %f delta %f min %f max %f\n",i,xi[idx[i]],delta[idx[i]],apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]]);*/
+#endif
+	  delta[idx[i]] =
+	    apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]] -
+	    xi[idx[i]];
+#ifdef DEBUG
+/*          fprintf(stderr,"-> new delta %f\n",delta[idx[i]]);*/
+#endif
+	}
+	if ((xi[idx[i]] + delta[idx[i]]) >
+	    apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]]) {
+#ifdef DEBUG
+/*          fprintf(stderr, "Change in parameter %d too big in powell_lsq\n",*/
+/*                  i);*/
+/*          fprintf(stderr, "i %d xi %f delta %f min %f max %f\n",i,xi[idx[i]],delta[idx[i]],apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]]);*/
+#endif
+	  delta[idx[i]] =
+	    apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
+	    xi[idx[i]];
+#ifdef DEBUG
+/*          fprintf(stderr,"-> new delta %f\n",delta[idx[i]]);*/
+#endif
 	}
 #endif
       }
@@ -319,7 +365,10 @@ void powell_lsq(real *xi)
   }
   while ((F3 - F > PRECISION / 10.) || (F3 - F < 0));	/* outer loop */
 
-  printf("Precision reached: %10g\n", F3 - F);
+  if (fabs(F3 - F) < PRECISION)
+    printf("Precision reached: %10g\n", F3 - F);
+  else
+    printf("Precision not reached!\n");
   /* Free memory */
 #ifdef APOT
   for (i = 0; i < ndim; i++)
@@ -359,7 +408,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 {
   real *force;
   int   i, j;			/* Auxiliary vars: Counters */
-  real  sum, temp, store;	/* Auxiliary var: Sum */
+  real  sum, temp, scale, store;	/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
   /*Initialize direction vectors */
   for (i = 0; i < ndim; i++) {
@@ -371,17 +420,17 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   for (i = 0; i < ndim; i++) {	/*initialize gamma */
     store = xi[idx[i]];
 #ifdef APOT
-    xi[idx[i]] +=
-      (EPS *
-       (apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
-	apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]]));
+    scale = apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
+      apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]];
+    xi[idx[i]] += (EPS * scale);
 #else
+    scale = 1.;
     xi[idx[i]] += EPS;		/*increase xi[idx[i]]... */
 #endif
     sum = 0.;
     (void)(*calc_forces) (xi, force, 0);
     for (j = 0; j < mdim; j++) {
-      temp = (force[j] - force_xi[j]) / EPS;
+      temp = (force[j] - force_xi[j]) / (EPS * scale);
       gamma[j][i] = temp;
       sum += SQR(temp);
     }

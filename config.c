@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.47 $
-* $Date: 2009/04/21 13:48:08 $
+* $Revision: 1.48 $
+* $Date: 2009/05/13 10:11:19 $
 *****************************************************************/
 
 #ifdef DEBUG
@@ -267,6 +267,7 @@ void read_config(char *filename)
     config_name[nconf] = (char *)malloc(255 * sizeof(char));
     if (NULL == config_name[nconf])
       error("Cannot allocate memory for config_name");
+    strcpy(config_name[nconf], "");
 
     for (i = 0; i < ntypes; i++)
       na_typ[nconf][i] = 0;
@@ -387,13 +388,7 @@ void read_config(char *filename)
 	      r = sqrt(SPROD(dd, dd));
 	      typ1 = atoms[i].typ;
 	      typ2 = atoms[j].typ;
-#ifdef APOT
-	      if (r <=
-		  (rcut[typ1 * ntypes + typ2] *
-		   (do_smooth ? CUTOFF_MARGIN : 1))) {
-#else
 	      if (r <= rcut[typ1 * ntypes + typ2]) {
-#endif
 		if (r <= rmin[typ1 * ntypes + typ2]) {
 		  sh_dist = nconf;
 		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf,
@@ -612,23 +607,17 @@ void read_config(char *filename)
     strcpy(pairname, config);
     strcat(pairname, ".pair");
     pairfile = fopen(pairname, "w");
-    fprintf(pairfile, "# radial distribution file\n");
+    fprintf(pairfile, "# radial distribution file for %d potential(s)\n",
+	    pot_count);
 
     for (i = 0; i < pot_count * pair_steps; i++)
       pair_table[i] = 0;
 
     for (i = 0; i < ntypes; i++)
       for (k = 0; k < ntypes; k++)
-#ifdef APOT
-	pair_dist[(i <=
-		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i -
-		  (k * (k + 1) / 2)] =
-	  rcut[i * ntypes + k] * (do_smooth ? CUTOFF_MARGIN : 1) / pair_steps;
-#else
 	pair_dist[(i <=
 		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i -
 		  (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
-#endif
 
     for (k = 0; k < pot_count; k++) {
       for (i = 0; i < natoms; i++)
@@ -666,6 +655,8 @@ void read_config(char *filename)
     fclose(pairfile);
   }
 #ifdef APOT
+  real  min = 10.;
+
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
@@ -674,10 +665,29 @@ void read_config(char *filename)
       apot_table.begin[k] = mindist[k] * 0.95;
       opt_pot.begin[k] = mindist[k] * 0.95;
       calc_pot.begin[k] = mindist[k] * 0.95;
+      min = MIN(min, mindist[k]);
     }
+#ifdef EAM
+/*  for (i = 0; i < ntypes; i++) {*/
+/*    j = ntypes * (ntypes + 1) / 2 + i;*/
+/*    apot_table.begin[j] = min;*/
+/*    opt_pot.begin[j] = min;*/
+/*    calc_pot.begin[j] = min;*/
+/*  }*/
+/*  for (i = 0; i < ntypes; i++)*/
+/*    for (j = 0; j < APOT_STEPS; j++) {*/
+/*      k = i + ntypes * (ntypes + 1) / 2;*/
+/*      index = k * APOT_STEPS + (k + 1) * 2 + j;*/
+/*      calc_pot.step[k] =*/
+/*        (calc_pot.end[k] - calc_pot.begin[k]) / (APOT_STEPS - 1);*/
+/*      calc_pot.xcoord[index] = calc_pot.begin[k] + j * calc_pot.step[k];*/
+/*    }*/
+#endif
   for (i = 0; i < calc_pot.ncols; i++) {
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
+      calc_pot.step[i] =
+	(calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
   }
