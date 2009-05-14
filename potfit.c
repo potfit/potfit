@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.54 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.55 $
+* $Date: 2009/05/14 12:39:36 $
 *****************************************************************/
 
 #define MAIN
@@ -178,8 +178,10 @@ int main(int argc, char **argv)
   conf_uf = useforce;
   conf_us = usestress;
   myatoms = natoms;
+#ifdef APOT
   for (i = 0; i < paircol; i++)
     new_slots(i, 1);
+#endif	/* APOT */
 #endif /* MPI */
   /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
