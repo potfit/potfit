@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.65 $
-* $Date: 2009/05/15 08:58:38 $
+* $Revision: 1.66 $
+* $Date: 2009/05/15 16:28:50 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -360,6 +360,12 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     fclose(infile);
   }
 #endif
+  for (i = 0; i < ntypes; i++) {
+    for (j = 0; j < ntypes; j++) {
+      rcutmax = MAX(rcutmax, rcut[i + ntypes * j]);
+    }
+  }
+
   free(nvals);
   return;
 }

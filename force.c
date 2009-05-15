@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.64 $
-* $Date: 2009/05/15 08:58:38 $
+* $Revision: 1.65 $
+* $Date: 2009/05/15 16:28:50 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -223,6 +223,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef EAM
       vektor d;
       int   col2;
+      int   self;
       real  gradF, gradF2, grad2, r, eamforce;
       atom_t *atom2;
 #endif
@@ -288,7 +289,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    neigh = atom->neigh + j;
 	    /* only use neigbours with higher numbers, 
 	       others are calculated by actio=reactio */
-	    if (neigh->nr > i + cnfstart[h]) {
+	    if (neigh->nr >= i + cnfstart[h]) {
+	      /* In small cells, an atom might interact with itself */
+	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 	      typ2 = neigh->typ;
 	      /* find correct column */
 	      col = (typ1 <= typ2) ?
@@ -305,8 +308,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  fnval = splint_dir(&calc_pot, xi, col,
 				     neigh->slot[0],
 				     neigh->shift[0], neigh->step[0]);
+		/* avoid double counting if atom is interacting with a
+		   copy of itself */
+		if (self) {
+		  fnval *= 0.5;
+		  grad *= 0.5;
+		}
 		forces[config] += fnval;
-/*                fprintf(stderr,"k=%d energy %f r %f\n",k,fnval,neigh->r);*/
 /* not real force: cohesive energy */
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
@@ -346,7 +354,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 				     neigh->slot[1],
 				     neigh->shift[1], neigh->step[1]);
 		  atom->rho += fnval;
-		  conf_atoms[neigh->nr - firstatom].rho += fnval;
+		  /* avoid double counting if atom is interacting with a
+		     copy of itself */
+		  if (!self) {
+		    conf_atoms[neigh->nr - firstatom].rho += fnval;
+		  }
 		}
 	      } else {		/* transfer(a->b)!=transfer(b->a) */
 		col = paircol + typ1;
@@ -386,8 +398,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifndef NORESCALE
 	  if (atom->rho > calc_pot.end[col2]) {
 	    /* then punish target function -> bad potential */
-	    forces[config + 7 * nconf] +=
-	      1000 * SQR(atom->rho - calc_pot.end[col2]);
+	    forces[config + 7 * nconf] += DUMMY_WEIGHT *
+	      10. * SQR(atom->rho - calc_pot.end[col2]);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.end[col2];
@@ -396,8 +408,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* then punish target function -> bad potential */
-	    forces[config + 7 * nconf] +=
-	      1000 * SQR(calc_pot.begin[col2] - atom->rho);
+	    forces[config + 7 * nconf] += DUMMY_WEIGHT *
+	      10. * SQR(calc_pot.begin[col2] - atom->rho);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.begin[col2];
@@ -451,7 +463,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      /* loop over neighbours */
 	      neigh = atom->neigh + j;
 	      /* only neigbours higher than current atom are of interest */
-	      if (neigh->nr > i + cnfstart[h]) {
+	      if (neigh->nr >= i + cnfstart[h]) {
+		/* In small cells, an atom might interact with itself */
+		self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 		typ2 = neigh->typ;
 		col2 = paircol + typ2;
 		r = neigh->r;
@@ -473,6 +487,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  eamforce = (grad * atom->gradF +
 			      grad2 *
 			      conf_atoms[(neigh->nr) - firstatom].gradF);
+		  /* avoid double counting if atom is interacting with a
+		     copy of itself */
+		  if (self)
+		    eamforce *= 0.5;
 		  tmp_force.x = neigh->dist.x * eamforce;
 		  tmp_force.y = neigh->dist.y * eamforce;
 		  tmp_force.z = neigh->dist.z * eamforce;

@@ -1,4 +1,5 @@
 CVS-20090515
++ added support for cells smaller than cutoff radius
 + added support for chemical species via #C in config and potential files
 + [APOT] smooth_cutoff is now using a cubic polynomial instead of a parabola
   that makes it a lot more stable regarding the cutoff radius

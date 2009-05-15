@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.65 $
-* $Date: 2009/05/15 08:58:39 $
+* $Revision: 1.66 $
+* $Date: 2009/05/15 16:28:50 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -262,6 +262,7 @@ EXTERN int opt INIT(0);		/* optimization flag */
 EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN vektor box_x, box_y, box_z;
 EXTERN vektor tbox_x, tbox_y, tbox_z;
+EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
 EXTERN real *rcut INIT(NULL);
 EXTERN real *rmin INIT(NULL);
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */

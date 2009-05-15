@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.49 $
-* $Date: 2009/05/15 08:58:37 $
+* $Revision: 1.50 $
+* $Date: 2009/05/15 16:28:50 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -176,6 +176,7 @@ void read_config(char *filename)
   int   tag_format = 0;
   int   sh_dist = 0;		/* short distance flag */
   int   has_name = 0;
+  int   cell_scale[3];
   FILE *infile;
   fpos_t fpos;
   char  msg[255], buffer[1024];
@@ -183,7 +184,7 @@ void read_config(char *filename)
   atom_t *atom;
   neigh_t *neigh;
   stens *stresses;
-  vektor d, dd;
+  vektor d, dd, iheight;
   real  r, rr, istep, shift, step;
 
   real *mindist;
@@ -413,6 +414,42 @@ void read_config(char *filename)
       atom->conf = nconf;
       na_typ[nconf][atom->typ] += 1;
     }
+    /* check cell size */
+    /* inverse height in direction */
+    iheight.x = sqrt(SPROD(tbox_x, tbox_x));
+    iheight.y = sqrt(SPROD(tbox_y, tbox_y));
+    iheight.z = sqrt(SPROD(tbox_z, tbox_z));
+
+    if ((ceil(rcutmax * iheight.x) > 30000) ||
+	(ceil(rcutmax * iheight.y) > 30000) ||
+	(ceil(rcutmax * iheight.z) > 30000))
+      error("Very bizarrly small cell size - aborting");
+
+    cell_scale[0] = (int)ceil(rcutmax * iheight.x);
+    cell_scale[1] = (int)ceil(rcutmax * iheight.y);
+    cell_scale[2] = (int)ceil(rcutmax * iheight.z);
+
+#ifdef DEBUG
+    fprintf(stderr, "Periodic cell images:\n");
+    fprintf(stderr, "Box dimensions:\n");
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_x.x, box_x.y, box_x.z);
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_y.x, box_y.y, box_y.z);
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_z.x, box_z.y, box_z.z);
+    fprintf(stderr, "Box normals:\n");
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_x.x, tbox_x.y,
+	    tbox_x.z);
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_y.x, tbox_y.y,
+	    tbox_y.z);
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_z.x, tbox_z.y,
+	    tbox_z.z);
+    fprintf(stderr, "Box heights:\n");
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n",
+	    1. / iheight.x, 1. / iheight.y, 1. / iheight.z);
+    fprintf(stderr, "Potential range:  %f\n", rcutmax);
+    fprintf(stderr, "Periodic images needed: %d %d %d\n",
+	    2 * cell_scale[0] + 1, 2 * cell_scale[1] + 1,
+	    2 * cell_scale[2] + 1);
+#endif /* DEBUG */
 
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
@@ -421,9 +458,9 @@ void read_config(char *filename)
 	d.x = atoms[j].pos.x - atoms[i].pos.x;
 	d.y = atoms[j].pos.y - atoms[i].pos.y;
 	d.z = atoms[j].pos.z - atoms[i].pos.z;
-	for (ix = -1; ix <= 1; ix++)
-	  for (iy = -1; iy <= 1; iy++)
-	    for (iz = -1; iz <= 1; iz++) {
+	for (ix = -cell_scale[0]; ix <= cell_scale[0]; ix++)
+	  for (iy = -cell_scale[1]; iy <= cell_scale[1]; iy++)
+	    for (iz = -cell_scale[2]; iz <= cell_scale[2]; iz++) {
 	      if ((i == j) && (ix == 0) && (iy == 0) && (iz == 0))
 		continue;
 	      dd.x = d.x + ix * box_x.x + iy * box_y.x + iz * box_z.x;
@@ -585,8 +622,7 @@ void read_config(char *filename)
     natoms += count;
     nconf++;
 
-  }
-  while (!feof(infile));
+  } while (!feof(infile));
   fclose(infile);
 
   mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector 
