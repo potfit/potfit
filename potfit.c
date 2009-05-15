@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.55 $
-* $Date: 2009/05/14 12:39:36 $
+* $Revision: 1.56 $
+* $Date: 2009/05/15 08:58:39 $
 *****************************************************************/
 
 #define MAIN
@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 #ifdef APOT
   for (i = 0; i < paircol; i++)
     new_slots(i, 1);
-#endif	/* APOT */
+#endif /* APOT */
 #endif /* MPI */
   /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
@@ -367,8 +367,8 @@ int main(int argc, char **argv)
       if (i == 0)
 	fprintf(outfile,
 		"conf-atom    type\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
-      fprintf(outfile, "%d-%d\t%d\t%f\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf,
-	      i / 3, atoms[i / 3].typ, sqr,
+      fprintf(outfile, "%d-%d\t%s\t%f\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf,
+	      i / 3, elements[atoms[i / 3].typ], sqr,
 	      force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	      force_0[i],
 	      (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
@@ -376,8 +376,8 @@ int main(int argc, char **argv)
 #else /* FWEIGHT */
       if (i == 0)
 	fprintf(outfile, "conf-atom    type\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%d-%d\t\t%d\t%.8f\t%.8f\t%.8f\t%f\n",
-	      atoms[i / 3].conf, i / 3, atoms[i / 3].typ, sqr,
+      fprintf(outfile, "%d-%d\t\t%s\t%.8f\t%.8f\t%.8f\t%f\n",
+	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
 	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
@@ -407,7 +407,7 @@ int main(int argc, char **argv)
 	      "#\tconf%s\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n",
 	      msg);
     } else
-      fprintf(outfile, "#\tconf\t(w*de)^2\te\t\te0\t\tde/e0\n");
+      fprintf(outfile, "#\t(w*de)^2\te\t\te0\t\tde/e0\n");
 
     real  e_sum = 0, s_sum = 0;
 

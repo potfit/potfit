@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.15 $
+* $Date: 2009/05/15 08:58:38 $
 *****************************************************************/
 
 #ifdef APOT
@@ -62,9 +62,12 @@ int apot_parameters(char *name)
     return 2;
   } else if (strcmp(name, "pohlong") == 0) {
     return 2;
-  }
-  else if (strcmp(name, "parabola") == 0) {
+  } else if (strcmp(name, "parabola") == 0) {
     return 3;
+  } else if (strcmp(name, "csw") == 0) {
+    return 4;
+  } else if (strcmp(name, "universal") == 0) {
+    return 4;
   }
 
   /* template for new potential function called newpot */
@@ -105,9 +108,12 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &power_decay_value;
     } else if (strcmp(apt->names[i], "pohlong") == 0) {
       apt->fvalue[i] = &pohlong_value;
-    }
-    else if (strcmp(apt->names[i], "parabola") == 0) {
+    } else if (strcmp(apt->names[i], "parabola") == 0) {
       apt->fvalue[i] = &parabola_value;
+    } else if (strcmp(apt->names[i], "csw") == 0) {
+      apt->fvalue[i] = &csw_value;
+    } else if (strcmp(apt->names[i], "universal") == 0) {
+      apt->fvalue[i] = &universal_value;
     }
 
 /* template for new potential function called newpot */
@@ -268,7 +274,43 @@ void pohlong_value(real r, real *p, real *f)
 
 void parabola_value(real r, real *p, real *f)
 {
-  *f = r*r * p[0] + r*p[1]+p[2];
+  *f = r * r * p[0] + r * p[1] + p[2];
+}
+
+/******************************************************************************
+*
+* chantasiriwan (csw) and milstein potential
+*
+******************************************************************************/
+
+void csw_value(real r, real *p, real *f)
+{
+  real  power;
+
+  vdPow(1, &r, &p[3], &power);
+
+  *f = (1 + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
+}
+
+/******************************************************************************
+*
+* universal embedding function
+*
+******************************************************************************/
+
+void universal_value(real r, real *p, real *f)
+{
+  static real x[2], y[2], power[2];
+
+  x[0] = r;
+  x[1] = r;
+  y[0] = p[1];
+  y[1] = p[2];
+  vdPow(2, x, y, power);
+
+  *f =
+    p[0] * (p[2] / (p[2] - p[1]) * power[0] -
+	    p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
 }
 
 /******************************************************************************

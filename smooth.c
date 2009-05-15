@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2008 Daniel Schopf
+*   Copyright 2008-2009 Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.8 $
+* $Date: 2009/05/15 08:58:39 $
 *****************************************************************/
 
 #ifdef APOT
@@ -85,10 +85,8 @@ void bracket_root(void (*function) (real, real *, real *), real *p,
   size = .01 * x;
   function(x, p, &f_x);
 
-  x_lower[0] = 0;
-  x_upper[0] = 0;
-  x_lower[1] = 0;
-  x_upper[1] = 0;
+  *x_lower = 0;
+  *x_upper = 0;
 
   function(x - size, p, &f_temp);
   while (f_x * f_temp > 0) {
@@ -100,24 +98,8 @@ void bracket_root(void (*function) (real, real *, real *), real *p,
     }
   }
   if (found) {
-    x_lower[0] = x - size;
-    x_upper[0] = x - size / 1.05;
-  }
-
-  found = 1;
-  size = .01 * x;
-  function(x + size, p, &f_temp);
-  while (f_x * f_temp > 0) {
-    size *= 1.05;
-    function(x + size, p, &f_temp);
-    if (size > (x / 2)) {
-      found = 0;
-      break;
-    }
-  }
-  if (found) {
-    x_lower[1] = x + size / 1.05;
-    x_upper[1] = x + size;
+    *x_lower = x - size;
+    *x_upper = x - size / 1.05;
   }
 
   return;
@@ -133,30 +115,18 @@ int find_root(void (*function) (real, real *, real *),
 	      real x, real *p, real *root)
 {
   int   i = 0;
-  real  x_lower[2], x_upper[2], x1, x2;
+  real  x_lower, x_upper, x1;
 
-  bracket_root(function, p, x, x_lower, x_upper);
+  bracket_root(function, p, x, &x_lower, &x_upper);
 
-  if (x_lower[0] != 0 && x_upper[0] != 0) {
-    x1 = root_bisect(function, p, x_lower[0], x_upper[0], 1e-6);
-    i += 1;
-  }
-  if (x_lower[1] != 0 && x_upper[1] != 0) {
-    x2 = root_bisect(function, p, x_lower[1], x_upper[1], 1e-6);
-    i += 2;
+  if (x_lower != 0 && x_upper != 0) {
+    x1 = root_bisect(function, p, x_lower, x_upper, 1e-6);
+    i = 1;
   }
 
-  root[0] = 0;
-  root[1] = 0;
-  if (i == 3) {
-    root[0] = x1;
-    root[1] = x2;
-    return 2;
-  } else if (i == 2) {
-    root[0] = x2;
-    return 1;
-  } else if (i == 1) {
-    root[0] = x1;
+  *root = 0;
+  if (i == 1) {
+    *root = x1;
     return 0;
   } else if (i == 0) {
     return 0;
@@ -166,29 +136,30 @@ int find_root(void (*function) (real, real *, real *),
 
 /******************************************************************************
 *
-* fit a parabola to the given potential
+* fit a cubic polynomial to the given potential
 *
 ******************************************************************************/
 
-int fit_parab(void (*function) (real, real *, real *), real x, real *p,
-	      real *par)
+int fit_cubic(void (*function) (real, real *, real *), real x1, real x0,
+	      real *p, real *par)
 {
   real  f, g;
   real  temp;
 
-  function(x, p, &f);
-  function(x + 1e-6, p, &temp);
-  function(x - 1e-6, p, &g);
+  function(x1, p, &f);
+  function(x1 + 1e-6, p, &temp);
+  function(x1 - 1e-6, p, &g);
 
   g = (temp - g) / 2e-6;
 
-  if (f * g > 0)
-    return 0;
-
-  par[1] = g * g / (4 * f);
-  par[2] = g - 2 * par[1] * x;
-  par[3] = f + par[1] * x * x - g * x;
-  par[0] = x - g / (2 * par[1]);
+  /* *INDENT-OFF* */
+  par[0] = (g * (x1 - x0) - 2 * f) / 
+	  (x1 * x1 * x1 - x0 * x0 * x0 + 3 * x0 * x1 * (x0 - x1));
+  par[1] = (f - par[0] * (x1 * x1 * x1 - 3 * x0 * x0 * x1 + 2 * x0 * x0 * x0)) / 
+	  ((x1 - x0) * (x1 - x0));
+  par[2] = -(3 * par[0] * x0 * x0 + 2 * par[1] * x0);
+  par[3] = -(par[0] * x0 * x0 * x0 + par[1] * x0 * x0 + par[2] * x0);
+  /* *INDENT-ON* */
 
   return 1;
 }
@@ -199,63 +170,25 @@ int fit_parab(void (*function) (real, real *, real *), real x, real *p,
 *
 ******************************************************************************/
 
-real smooth(void (*function) (real, real *, real *),
-	    real x, real *p, real xmin, real xmax, real *params)
+real smooth(void (*function) (real, real *, real *), real x, real *p,
+	    real *params)
 {
   real  dist = 0, f, g, temp;
   real  a, b, c, d, x0 = 0, x1;
   int   i, nroot = 0, done = 0;
   char  msg[255];
-  static real *roots;
+  real  root;
 
-  if (roots == NULL)
-    roots = (real *)malloc(2 * sizeof(real));
+  nroot = find_root(function, x, p, &root);
 
-  nroot = find_root(function, x, p, roots);
-
-  if (nroot == 2) {
-    dist = fabs(roots[1] - roots[0]) / 4;
-    if (fabs(roots[1] - x) < fabs(roots[0] - x)) {
-      temp = roots[1];
-      roots[1] = roots[0];
-      roots[0] = temp;
-    }
-  }
-
-  if (nroot != 0) {
-    for (i = 0; i < nroot; i++) {
-      if (done)
-	break;
-      if (roots[i] > xmin && roots[i] < xmax && dist == 0) {
-	x0 = roots[i] * 0.95;
-      } else if (roots[i] > xmin && roots[i] < xmax && dist != 0) {
-	x0 = roots[i] - dist;
-      } else {
-	x0 = 0;
-      }
-
-      if (x0 != 0 && fit_parab(function, x0, p, params)
-	  && params[0] < (xmax / 1.2 * CUTOFF_MARGIN) && params[0] > xmin)
-	done = 1;
-      else
-	x0 = 0;
-    }
+  if (nroot == 1) {
+    fit_cubic(function, root * 0.9, x, p, params);
+    temp = root * 0.9;
   } else {
-    x0 = x * 0.95;
-    if (!(x0 != 0 && fit_parab(function, x0, p, params)
-	  && params[0] < (xmax / 1.2 * CUTOFF_MARGIN) && params[0] > xmin))
-      x0 = 0;
+    fit_cubic(function, x * 0.85, x, p, params);
+    temp = x * 0.85;
   }
-
-  if (x0 != 0) {
-    return x0;
-  } else {
-    params[0] = x;
-    params[1] = 0;
-    params[2] = 0;
-    params[3] = 0;
-    return x;
-  }
+  return temp;
 }
 
 #endif /* APOT */

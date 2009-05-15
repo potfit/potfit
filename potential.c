@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.64 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.65 $
+* $Date: 2009/05/15 08:58:38 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -104,6 +104,25 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	error(msg);
       }
     }
+/* maybe used in the future? */
+/* just skip #C lines for now */
+/*    else if (buffer[1] == 'C') {*/
+/*      if (have_format) {*/
+/*        for (i = 0; i < size; i++) {*/
+/*          str = strtok(((i == 0) ? buffer + 2 : NULL), " \t\r\n");*/
+/*          if (str == NULL) {*/
+/*            sprintf(msg, "Not enough items in #I header line.");*/
+/*            error(msg);*/
+/*          } else*/
+/*            ((int *)invar_pot)[i] = atoi(str);*/
+/*        }*/
+/*        have_invar = 1;*/
+/*      } else {*/
+/*        sprintf(msg, "#I needs to be specified after #F in file %s",*/
+/*                filename);*/
+/*        error(msg);*/
+/*      }*/
+/*    }*/
 #ifndef APOT
     else if (buffer[1] == 'G') {
       if (have_format) {
@@ -1356,36 +1375,19 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		  k = i * APOT_STEPS + (i + 1) * 2 + j;
 		  apot_table.fvalue[i] (calc_pot.xcoord[k], val, xi_calc + k);
 		}
-		x0 = 0;
 	      } else if (!invar_pot[i] && smooth_pot[i]) {
 		k = i * APOT_STEPS + (i + 1) * 2;
-		x0 =
-		  smooth(apot_table.fvalue[i], cut[i], val, cut[i] * 0.8,
-			 cut[i] * 1.2, params);
-		if (fabs(params[0] - calc_pot.end[i]) > 10e-3) {
-		  calc_pot.step[i] =
-		    (params[0] - apot_table.begin[i]) / (APOT_STEPS - 1);
-		  calc_pot.end[i] = params[0];
-		  calc_pot.invstep[i] = 1. / calc_pot.step[i];
-		  new_slots(i, 0);
-		}
-		if (x0 == 0) {
-		  for (j = 0; j < APOT_STEPS; j++) {
-		    temp = j * calc_pot.step[i] + apot_table.begin[i];
+		x0 = smooth(apot_table.fvalue[i], cut[i], val, params);
+		for (j = 0; j < APOT_STEPS; j++) {
+		  temp = j * calc_pot.step[i] + apot_table.begin[i];
+		  if (temp <= x0)
 		    apot_table.fvalue[i] (temp, val, xi_calc + k + j);
-		  }
-		} else {
-		  for (j = 0; j < APOT_STEPS; j++) {
-		    temp = j * calc_pot.step[i] + apot_table.begin[i];
-		    if (temp <= x0)
-		      apot_table.fvalue[i] (temp, val, xi_calc + k + j);
-		    else
-		      *(xi_calc + k + j) =
-			params[1] * temp * temp + temp * params[2] +
-			params[3];
-		    calc_pot.xcoord[k + j] =
-		      calc_pot.begin[i] + j * calc_pot.step[i];
-		  }
+		  else
+		    *(xi_calc + k + j) =
+		      params[0] * temp * temp * temp +
+		      temp * temp * params[1] + temp * params[2] + temp;
+		  calc_pot.xcoord[k + j] =
+		    calc_pot.begin[i] + j * calc_pot.step[i];
 		}
 	      }
 	    }
@@ -1889,12 +1891,29 @@ void write_apot_table(apot_table_t *apt, char *filename)
 
   /* write header */
   fprintf(outfile, "#F 0 %d", apt->number);
+  if (have_elements) {
+    fprintf(outfile, "\n#C");
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    fprintf(outfile, "\n##");
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+#ifdef EAM
+    /* transfer functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    /* embedding functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+#endif
+  }
   if (have_invar) {
     fprintf(outfile, "\n#I");
     for (i = 0; i < apt->number; i++)
       fprintf(outfile, " %d", invar_pot[i]);
   }
-  fprintf(outfile, "\n#E\n");
+  fprintf(outfile, "\n#E\n\n");
 
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++)
@@ -1916,10 +1935,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
       fprintf(outfile, "type %s\n", apt->names[i]);
     }
     fprintf(outfile, "cutoff %f\n", apot_table.end[i]);
-    if (smooth_pot[i])
-      fprintf(outfile, "# rmin %f rmax %f\n", apt->begin[i], calc_pot.end[i]);
-    else
-      fprintf(outfile, "# rmin %f\n", apt->begin[i]);
+    fprintf(outfile, "# rmin %f\n", apt->begin[i]);
     for (j = 0; j < apt->n_par[i]; j++) {
       fprintf(outfile, "%s %.10f %f %f\n", apt->param_name[i][j],
 	      apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
@@ -2123,8 +2139,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       if (!invar_pot[col1] && smooth_pot[col1]) {
 	x0 =
 	  smooth(apot_table.fvalue[col1], apot_table.end[col1],
-		 apot_table.values[col1], rmin[col2], rcut[col2], params);
-	r2end[col2] = SQR(params[0]);
+		 apot_table.values[col1], params);
+	r2end[col2] = SQR(apot_table.end[col1]);
       } else
 	r2end[col2] = SQR(pt->end[col1]);
 #else
@@ -2190,14 +2206,16 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       if (do_smooth && smooth_pot[col1])
 	x0 =
 	  smooth(apot_table.fvalue[col1], apot_table.end[col1],
-		 apot_table.values[col1], rmin[col2], rcut[col2], params);
+		 apot_table.values[col1], params);
       else
 	x0 = rcut[col2];
       for (k = 0; k < imdpotsteps; k++) {
 	if (sqrt(r2) < x0)
 	  apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
 	else
-	  temp = params[1] * r2 + params[2] * sqrt(r2) + params[3];
+	  temp =
+	    params[0] * r2 * sqrt(r2) + params[1] * r2 +
+	    params[2] * sqrt(r2) + params[3];
 	fprintf(outfile, "%.16e\n", temp);
 	r2 += r2step[col2];
       }
@@ -2406,8 +2424,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     if (!invar_pot[i] && smooth_pot[i]) {
       x0 =
 	smooth(apot_table.fvalue[i], apot_table.end[i], apot_table.values[i],
-	       apot_table.end[i] * .8, apot_table.end[i] * 1.2, params);
-      r_step = (params[0] - r) / (NPLOT - 1);
+	       params);
+      r_step = (apot_table.end[i] - r) / (NPLOT - 1);
     } else {
       x0 = 0;
       r_step = (apot_table.end[i] - r) / (NPLOT - 1);
@@ -2416,7 +2434,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       if (x0 == 0 || r <= x0)
 	apot_table.fvalue[i] (r, apot_table.values[i], &temp);
       else
-	temp = params[1] * r * r + params[2] * r + params[3];
+	temp =
+	  params[0] * r * r * r + params[1] * r * r + params[2] * r +
+	  params[3];
       fprintf(outfile, "%e %e\n", r, temp);
       r += r_step;
     }

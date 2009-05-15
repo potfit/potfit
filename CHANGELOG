@@ -1,3 +1,8 @@
+CVS-20090515
++ added support for chemical species via #C in config and potential files
++ [APOT] smooth_cutoff is now using a cubic polynomial instead of a parabola
+  that makes it a lot more stable regarding the cutoff radius
+
 CVS-20090513
 + [MPI] fixed a bug that ended in an endless loop if an error was
   encountered before the first broadcast

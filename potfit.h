@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.64 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.65 $
+* $Date: 2009/05/15 08:58:39 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -207,6 +207,8 @@ EXTERN int mdim INIT(0);
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int ntypes INIT(1);	/* number of atom types */
 EXTERN int natoms INIT(0);	/* number of atoms */
+EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
+EXTERN int have_elements INIT(0);	/* do we have the elements ? */
 EXTERN int **na_typ INIT(NULL);	/* number of atoms per type */
 EXTERN int nconf INIT(0);	/* number of configurations */
 EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
@@ -394,8 +396,7 @@ void  debug_apot();
 
 /* end of counting variables */
 
-real  smooth(void (*function) (real, real *, real *),
-	     real, real *, real, real, real *);
+real  smooth(void (*function) (real, real *, real *), real, real *, real *);
 
 #ifdef MPI
 void  potsync_apot();
@@ -412,6 +413,8 @@ void  meopp_value(real, real *, real *);
 void  power_decay_value(real, real *, real *);
 void  pohlong_value(real, real *, real *);
 void  parabola_value(real, real *, real *);
+void  csw_value(real, real *, real *);
+void  universal_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

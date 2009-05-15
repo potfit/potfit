@@ -29,13 +29,10 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.48 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.49 $
+* $Date: 2009/05/15 08:58:37 $
 *****************************************************************/
 
-#ifdef DEBUG
-#include <assert.h>
-#endif
 #include "potfit.h"
 
 /*****************************************************************************
@@ -180,6 +177,7 @@ void read_config(char *filename)
   int   sh_dist = 0;		/* short distance flag */
   int   has_name = 0;
   FILE *infile;
+  fpos_t fpos;
   char  msg[255], buffer[1024];
   char *res, *ptr;
   atom_t *atom;
@@ -190,6 +188,20 @@ void read_config(char *filename)
 
   real *mindist;
   mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
+  if (NULL == mindist)
+    error("Cannot allocate memory for minimal distance.");
+  elements = (char **)malloc(ntypes * sizeof(char *));
+  if (NULL == elements)
+    error("Cannot allocate memory for element names.");
+  for (i = 0; i < ntypes; i++) {
+    elements[i] = (char *)malloc(2 * sizeof(char));
+    if (NULL == elements[i]) {
+      sprintf(msg, "Cannot allocate memory for element name %d\n", i);
+      error(msg);
+    }
+    sprintf(elements[i], "%d", i);
+  }
+
   for (i = 0; i < ntypes * ntypes; i++)
     mindist[i] = 99;
   for (i = 0; i < ntypes; i++)
@@ -315,6 +327,38 @@ void read_config(char *filename)
 	    *ptr = '\0';
 	  if (strlen(config_name[nconf]) > config_name_max)
 	    config_name_max = strlen(config_name[nconf]);
+	} else if (res[1] == 'C') {
+	  fgetpos(infile, &fpos);
+	  if (!have_elements) {
+	    i = -1;
+	    do {
+	      i++;
+	      sscanf(res + 3 * (i + 1), "%s", elements[i]);
+	    } while (elements[i][0] != '#' && i < (ntypes - 1));
+	    have_elements = 1;
+	  } else {
+	    i = -1;
+	    do {
+	      i++;
+	      sscanf(res + 3 * (i + 1), "%s", msg);
+	      if (strcmp(msg, elements[i]) != 0) {
+		if (atoi(elements[i]) == i) {
+		  strcpy(elements[i], msg);
+		} else {
+		  printf
+		    ("\nWARNING: Found element mismatch in configuration file!\n");
+		  if ((ptr = strchr(msg, '\n')) != NULL)
+		    *ptr = '\0';
+		  printf("Mismatch found in configuration %d.\n", nconf + 1);
+		  strncpy(msg, res + 3 * (i + 1), 2);
+		  msg[2] = '\0';
+		  printf("Expected element %s but found element %s.\n",
+			 elements[i], msg);
+		  error("Please check your configuration files!");
+		}
+	      }
+	    } while (elements[i][0] != '#' && i < (ntypes - 1));
+	  }
 	}
 
 	/* read stress */
@@ -541,7 +585,8 @@ void read_config(char *filename)
     natoms += count;
     nconf++;
 
-  } while (!feof(infile));
+  }
+  while (!feof(infile));
   fclose(infile);
 
   mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector 
@@ -616,8 +661,8 @@ void read_config(char *filename)
     for (i = 0; i < ntypes; i++)
       for (k = 0; k < ntypes; k++)
 	pair_dist[(i <=
-		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i -
-		  (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
+		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes +
+		  i - (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
 
     for (k = 0; k < pot_count; k++) {
       for (i = 0; i < natoms; i++)
@@ -667,22 +712,6 @@ void read_config(char *filename)
       calc_pot.begin[k] = mindist[k] * 0.95;
       min = MIN(min, mindist[k]);
     }
-#ifdef EAM
-/*  for (i = 0; i < ntypes; i++) {*/
-/*    j = ntypes * (ntypes + 1) / 2 + i;*/
-/*    apot_table.begin[j] = min;*/
-/*    opt_pot.begin[j] = min;*/
-/*    calc_pot.begin[j] = min;*/
-/*  }*/
-/*  for (i = 0; i < ntypes; i++)*/
-/*    for (j = 0; j < APOT_STEPS; j++) {*/
-/*      k = i + ntypes * (ntypes + 1) / 2;*/
-/*      index = k * APOT_STEPS + (k + 1) * 2 + j;*/
-/*      calc_pot.step[k] =*/
-/*        (calc_pot.end[k] - calc_pot.begin[k]) / (APOT_STEPS - 1);*/
-/*      calc_pot.xcoord[index] = calc_pot.begin[k] + j * calc_pot.step[k];*/
-/*    }*/
-#endif
   for (i = 0; i < calc_pot.ncols; i++) {
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
@@ -696,10 +725,10 @@ void read_config(char *filename)
   printf("Minimal Distances Matrix\n");
   printf("Atom\t");
   for (i = 0; i < ntypes; i++)
-    printf("%8d\t", i);
+    printf("%8s\t", elements[i]);
   printf("with\n");
   for (i = 0; i < ntypes; i++) {
-    printf("%d\t", i);
+    printf("%s\t", elements[i]);
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
 	((j * (j + 1)) / 2);
@@ -728,7 +757,10 @@ void read_config(char *filename)
 	 nconf, w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
-    printf("%d of type %d", na_typ[nconf][i], i);
+    if (have_elements)
+      printf("%d %s", na_typ[nconf][i], elements[i]);
+    else
+      printf("%d of type %d", na_typ[nconf][i], i);
     if (i != (ntypes - 1))
       printf(", ");
   }
