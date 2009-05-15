@@ -31,165 +31,184 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.7 $
-# $Date: 2009/05/08 13:37:32 $
+# $Revision: 1.8 $
+# $Date: 2009/05/15 08:59:30 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
 #
 ####################################################################
 
+function write_pot(i,name,params,file)
+{
+    if (name == "eopp") {
+	printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+    } else if (name == "lj") {
+	printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > file;
+    } else if (name == "morse") {
+	printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f))) w l",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > file;
+    } else if (name == "softshell") {
+	printf "(%f/x)**%f w l",params[i","1],params[i","2] > file;
+    } else if (name == "eoppexp") {
+	printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+    } else if (name == "meopp") {
+	printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+    } else if (name == "pohlong") {
+	printf "%f*(1-%f*log(x))*(x)**%f w l",params[i","1],params[i","2],params[i","2] > file;
+    } else if (name == "power_decay") {
+	printf "%f*(1/x)**%f w l",params[i","1],params[i","2] > file;
+    } else if (name == "parabola") {
+	printf "%f*x**2+%f*x+%f w l",params[i","1],params[i","2],params[i","3] > file;
+    } else if (name == "csw") {
+	printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f w l",params[i","1],params[i","3],params[i","2],params[i","3],params[i","4] > file;
+    } else if (name == "universal") {
+	printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x w l",params[i","1],params[i","3],params[i","3],params[i","2],params[i","2],params[i","2],params[i","3],params[i","2],params[i","3],params[i","4] > file;
+    }
+    if (have_species)
+	printf " t \"%s\"",elements[i+1] > file;
+}
+
+function read_pot(name)
+{
+    if (name=="eopp")
+	return 6;
+    else if (name=="lj")
+	return 2;
+    else if (name=="morse")
+	return 3;
+    else if (name=="softshell")
+	return 2;
+    else if (name=="eoppexp")
+	return 6;
+    else if (name=="meopp")
+	return 7;
+    else if (name=="power_decay")
+	return 2;
+    else if (name=="pohlong")
+	return 2;
+    else if (name=="parabola")
+	return 3;
+    else if (name=="csw")
+	return 4;
+    else if (name=="universal")
+	return 4;
+}
+
 BEGIN {
-	count=0;
-	mindist=10;
-	maxdist=0;
-	ORS="";
+    count=0;
+    mindist=10;
+    maxdist=0;
+    ORS="";
 }
 
 {
-	for (a=0;a<(ARGC-1);a++) {
-		if (substr($0,3,6)=="radial") {
-			n_rad = $6;
-			dist_file = ARGV[a+1];
-		}
-		else {
-			while (substr($0,2,1)!="F") getline;
-		if ($2 != 0) {
-			print "Error - wrong potential format of " ARGV[ARGIND] "\n" ;
-			exit 2;
-		}
-		total_pots=$3;
-		if (int(total_pots)!=total_pots) {
-			print "ERROR - incorrect potential file " ARGV[ARGIND]  "\n" ;
-			exit 2;
-		}
-		for (i=count;i<(count+total_pots);i++){
-			while (substr($0,1,4)!="type") getline;
-			pot_name[i] = $2;
-			if (match(pot_name[i],"_sc$",arr)>0)
-				pot_name[i] = substr(pot_name[i],1,length(pot_name[i])-3);
-			if (pot_name[i]=="eopp")
-				n_param[i]=6;
-			else if (pot_name[i]=="lj")
-				n_param[i]=2;
-			else if (pot_name[i]=="morse")
-				n_param[i]=3;
-			else if (pot_name[i]=="softshell")
-				n_param[i]=2;
-			else if (pot_name[i]=="eoppexp")
-				n_param[i]=6;
-			else if (pot_name[i]=="meopp")
-				n_param[i]=7;
-			else if (pot_name[i]=="power_decay")
-				n_param[i]=2;
-			else if (pot_name[i]=="pohlong")
-				n_param[i]=2;
-			else if (pot_name[i]=="parabola")
-				n_param[i]=3;
-			getline;
-			if ($2>maxdist)
-				maxdist=$2;
-			getline;
-			if (substr($0,1,1)=="#") {
-				if ($3<mindist)
-					mindist=$3;
-				if ($5>maxdist)
-					maxdist=$5;
-				getline;
-			}
-			for (l=1;l<=n_param[i];l++) {
-				params[i "," l ] = $2;
-				getline
-			}
-		}
-		count = count + total_pots;
+    for (a=0;a<(ARGC-1);a++) {
+	if (substr($0,3,6)=="radial") {
+	    n_rad = $6;
+	    dist_file = ARGV[a+1];
 	}
-}
-nextfile;
+	else {
+	    while (substr($0,2,1)!="F") getline;
+	    if ($2 != 0) {
+		print "Error - wrong potential format of " ARGV[ARGIND] "\n" ;
+		exit 2;
+	    }
+	    total_pots=$3;
+	    if (int(total_pots)!=total_pots) {
+		print "ERROR - incorrect potential file " ARGV[ARGIND]  "\n" ;
+		exit 2;
+	    }
+	    getline;
+	    if (substr($0,2,1)=="C") {
+		title=$0;
+		sub("#C ","",title);
+		gsub(" ","-",title);
+		saved_title=title;
+		getline;
+		chem_species=$0;
+		sub("## ","",chem_species);
+		split(chem_species,elements," ");
+		have_species=1;
+	    }
+	    for (i=count;i<(count+total_pots);i++){
+		while (substr($0,1,4)!="type") getline;
+		pot_name[i] = $2;
+		if (match(pot_name[i],"_sc$",arr)>0)
+		    pot_name[i] = substr(pot_name[i],1,length(pot_name[i])-3);
+		n_param[i]=read_pot(pot_name[i]);
+		getline;
+		if ($2>maxdist)
+		    maxdist=$2;
+		getline;
+		if (substr($0,1,1)=="#") {
+		    if ($3<mindist)
+			mindist=$3;
+		    if ($5>maxdist)
+			maxdist=$5;
+		    getline;
+		}
+		for (l=1;l<=n_param[i];l++) {
+		    params[i "," l ] = $2;
+		    getline
+		}
+	    }
+	    count = count + total_pots;
+	}
+    }
+    nextfile;
 }
 
 END {
-	if (count == 7) {
-		count = count - 2;
-		eam_count = 2;
+    if (count == 7) {
+	count = count - 2;
+	eam_count = 2;
+    }
+    if (count == 12) {
+	count = count - 3;
+	eam_count = 3;
+    }
+    if (mindist == 10)
+	mindist = 2;
+    if (count != 0) {
+	print "reset;\n" > "plot";
+	print "set grid;\n" > "plot";
+	print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;\n" > "plot";
+	print "set label \"cutoff\" at " maxdist*0.95 ",0.23;\n" > "plot";
+	print "pl [" 0.5*mindist ":" maxdist*1.1 "][-0.3:.6] " > "plot";
+	for (i=0;i<count;i++) {
+	    write_pot(i,pot_name[i],params,"plot");
+	    if (i!=(count-1))
+		print ", " > "plot";
 	}
-	if (count == 12) {
-		count = count - 3;
-		eam_count = 3;
+	if (dist_file != "") {
+	    print ", " > "plot";
+	    for (i=0;i<n_rad;i++) {
+		if (i==0)
+		    print "'" dist_file "' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
+		else
+		    print "'' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
+		if (i!=(n_rad-1))
+		    print ", " > "plot";
+	    }
 	}
-	if (mindist == 10)
-		mindist = 2;
-	if (count != 0) {
-		print "reset;\n" > "plot";
-		print "set grid;\n" > "plot";
-		print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;\n" > "plot";
-		print "set label \"cutoff\" at " maxdist*0.95 ",0.23;\n" > "plot";
-		print "pl [" 0.5*mindist ":" maxdist*1.1 "][-0.3:.6] " > "plot";
-		for (i=0;i<count;i++) {
-			if (pot_name[i] == "eopp") {
-				printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
-			} else if (pot_name[i] == "lj") {
-				printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > "plot";
-			} else if (pot_name[i] == "morse") {
-				printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f))) w l",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > "plot";
-			} else if (pot_name[i] == "softshell") {
-				printf "(%f/x)**%f w l",params[i","1],params[i","2] > "plot";
-			} else if (pot_name[i] == "eoppexp") {
-				printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
-			} else if (pot_name[i] == "meopp") {
-				printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot";
-			} else if (pot_name[i] == "pohlong") {
-				printf "%f*(1-%f*log(x))*(x)**%f w l",params[i","1],params[i","2],params[i","2] > "plot";
-			} else if (pot_name[i] == "power_decay") {
-				printf "%f*(1/x)**%f w l",params[i","1],params[i","2] > "plot";
-			} else if (pot_name[i] == "parabola") {
-				printf "%f*x**2+%f*x+%f w l",params[i","1],params[i","2],params[i","3] > "plot";
-			}
-		if (i!=(count-1))
-			print ", " > "plot";
-		}
-		if (dist_file != "") {
-			print ", " > "plot";
-			for (i=0;i<n_rad;i++) {
-				if (i==0)
-					print "'" dist_file "' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
-				else
-					print "'' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
-				if (i!=(n_rad-1))
-					print ", " > "plot";
-			}
-		}
-		print ";" > "plot";
-		system("gnuplot -persist plot");
+	print ";" > "plot";
+	if (eam_count > 0)
+		title = title" pair potential and transfer function";
+	else
+		title = saved_title" pair potential";
+	system("gnuplot -persist -title \""title"\" plot");
+    }
+    if (eam_count > 0) {
+	print "reset;\n" > "plot_eam";
+	print "set grid;\n" > "plot_eam";
+	print "pl [0:2] " > "plot_eam";
+	for (i=count;i<(count+eam_count);i++) {
+	    write_pot(i,pot_name[i],params,"plot_eam");
+	    if (i!=(count+eam_count-1))
+		print ", " > "plot_eam";
 	}
-	if (eam_count > 0) {
-		print "reset;\n" > "plot_eam";
-		print "set grid;\n" > "plot_eam";
-		print "pl [0:2] " > "plot_eam";
-		for (i=count;i<(count+eam_count);i++) {
-			if (pot_name[i] == "eopp") {
-				printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot_eam";
-			} else if (pot_name[i] == "lj") {
-				printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > "plot_eam";
-			} else if (pot_name[i] == "morse") {
-				printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f))) w l",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > "plot_eam";
-			} else if (pot_name[i] == "softshell") {
-				printf "(%f/x)**%f w l",params[i","1],params[i","2] > "plot_eam";
-			} else if (pot_name[i] == "eoppexp") {
-				printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot_eam";
-			} else if (pot_name[i] == "meopp") {
-				printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > "plot_eam";
-			} else if (pot_name[i] == "pohlong") {
-				printf "%f*(1-%f*log(x))*(x)**%f w l",params[i","1],params[i","2],params[i","2] > "plot_eam";
-			} else if (pot_name[i] == "power_decay") {
-				printf "%f*(1/x)**%f w l",params[i","1],params[i","2] > "plot_eam";
-			} else if (pot_name[i] == "parabola") {
-				printf "%f*x**2+%f*x+%f w l",params[i","1],params[i","2],params[i","3] > "plot_eam";
-			}
-		if (i!=(count+eam_count-1))
-			print ", " > "plot_eam";
-		}
-		print ";" > "plot_eam";
-		system("gnuplot -persist plot_eam");
-		}
+	print ";" > "plot_eam";
+	title = saved_title" embedding function";
+	system("gnuplot -persist -title \""title"\" plot_eam");
+    }
 }
