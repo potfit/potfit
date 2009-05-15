@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.40 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.41 $
+* $Date: 2009/05/15 16:35:47 $
 *****************************************************************/
 
 /******************************************************************************
@@ -314,8 +314,9 @@ void powell_lsq(real *xi)
 
       /* loop at least ndim times, but at most INNERLOOPS or until no
          further improvement */
-    }
-    while ((m < ndim || (m <= INNERLOOPS && df > PRECISION)) && df < TOOBIG);	/* inner loop */
+    } while ((m < ndim || (m <= INNERLOOPS && df > PRECISION))
+	     && df < TOOBIG);
+    /* inner loop */
 
     n++;			/* increment outer loop counter */
 
@@ -362,8 +363,8 @@ void powell_lsq(real *xi)
 #endif
 
     /*End fit if whole series didn't improve F */
-  }
-  while ((F3 - F > PRECISION / 10.) || (F3 - F < 0));	/* outer loop */
+  } while ((F3 - F > PRECISION / 10.) || (F3 - F < 0));
+  /* outer loop */
 
   if (fabs(F3 - F) < PRECISION)
     printf("Precision reached: %10g\n", F3 - F);

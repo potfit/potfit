@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.37 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.38 $
+* $Date: 2009/05/15 16:35:46 $
 *****************************************************************/
 
 #include <math.h>
@@ -315,8 +315,7 @@ void anneal(real *xi)
     }
 
 
-  }
-  while (k < KMAX && loopagain);
+  } while (k < KMAX && loopagain);
   for (n = 0; n < ndimtot; n++)
     xi[n] = xopt[n];
 

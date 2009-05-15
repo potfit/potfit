@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2008/10/08 09:19:34 $
+* $Revision: 1.7 $
+* $Date: 2009/05/15 16:35:47 $
 *****************************************************************/
 
 #include <math.h>
@@ -218,8 +218,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 	}
       }
     }
-  }
-  while (nb_eval < MAX_IT);
+  } while (nb_eval < MAX_IT);
 #ifdef DEBUG
   sprintf(errmsg,
 	  "Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.",
