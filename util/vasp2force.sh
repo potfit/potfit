@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.17 $
-#* $Date: 2009/05/12 08:31:03 $
+#* $Revision: 1.18 $
+#* $Date: 2009/05/15 08:59:07 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -41,9 +41,11 @@ saeng="0 0 0";
 mycat="cat";
 declare -a type_list;
 
-while getopts 'e:lfr:s:?h' OPTION
+while getopts 'c:e:flrs:?h' OPTION
 do
     case $OPTION in
+	c) c_string="$OPTARG";
+            ;;
 	e) e_file="$OPTARG";
             ;;
 	l) list_types="1";
@@ -52,18 +54,19 @@ do
 	    ;;
 	s) s_arg="$OPTARG";
 	    ;;
-	r) new_list="$OPTARG";
-            ;;
-	?) printf "\nUsage: %s: [-e file] [-f] [-l] [-r list] [-s list] <OUTCAR files>\n" $(basename $0) >&2
+	r) scan_recursive="1";
+	    ;;
+	?) printf "\nUsage: %s: [-c list] [-e file] [-f] [-l] [-r] [-s list] <OUTCAR files>\n" $(basename $0) >&2
             printf "\n <OUTCAR files> is an optional list of files, if not given" >&2
 	    printf "\n all files starting with OUTCAR will be scanned" >&2
 	    printf "\n (it is possible to read gzipped files ending with .gz)\n" >&2
-            printf "\n -e <file>\t\tspecify file to read single atom energies from\n" >&2
+	    printf "\n -c <list>\t\tlist of chemical species to use\n" >&2
+	    printf "\t\t\t(eg. \"vasp2force.sh -c Al=0,Mn=1,Pd=2 -r\")\n" >&2
+            printf " -e <file>\t\tspecify file to read single atom energies from\n" >&2
 	    printf "\t\t\tif not found, \"0\" will be used for every atom type\n" >&2
 	    printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
 	    printf " -l\t\t\tlist all chemical species found in OUTCAR and exit\n" >&2
-	    printf " -r <list>\t\trewrite atom types according to <list>\n" >&2
-	    printf "\t\t\t(same order as listed with -l; -r 1,0 will swap 0 and 1)\n" >&2
+	    printf " -r\t\t\tscan recursively for OUTCAR files\n" >&2
 	    printf " -s <list>\t\tcomma separated list of configurations to use\n" >&2
 	    exit 2
 	    ;;
@@ -74,10 +77,16 @@ shift $(($OPTIND-1))
 outcars="$*";
 
 if [ "$outcars" == "" ]; then
-    echo "No files specified on the command line. Searching for OUTCAR* ..." >&2;
+    echo "No input files given on the command line. Searching for OUTCAR* ..." >&2;
+    if [ "$scan_recursive" == "1" ]; then
+    for i in `find . -name OUTCAR\* -print`; do
+	outcars="${outcars} $i";
+    done
+    else
     for i in `find . -maxdepth 1 -name OUTCAR\* -print`; do
 	outcars="${outcars} `basename $i`";
     done
+    fi
     if [ "$outcars" != "" ]; then
 	echo "Found the following files: $outcars" >&2;
     else
@@ -103,24 +112,28 @@ for file in $outcars; do
     if [ "$s_arg" != "0" ]; then
 	pr_conf="${pr_conf},$s_arg";
     fi
-    if [ "$list_types" == "1" ]; then
-	types=`$mycat $file | grep VRHFIN | wc -l`;
-	if [ $types != "0" ]; then
-	    name=(`$mycat $file | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
+    types=`$mycat $file | grep VRHFIN | wc -l`;
+    if [ $types != "0" ]; then
+	name=(`$mycat $file | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
+    	if [ "$list_types" == "1" ]; then
 	    echo "Found $types atom types in $file:";
 	    for (( i=0; $i<$types; i++ )); do
 		echo ${name[$i]} "= "$i;
 	    done
-	else
-	    types=`$mycat $file | grep TITEL | wc -l`;
-	    if [ $types != "0" ]; then
-		name=(`$mycat $file | grep TITEL | awk '{print $4; }'`);
+	fi
+    else
+	types=`$mycat $file | grep TITEL | wc -l`;
+	if [ $types != "0" ]; then
+	    name=(`$mycat $file | grep TITEL | awk '{print $4; }'`);
+    	    if [ "$list_types" == "1" ]; then
 		echo "Found $types atom types in $file:";
 		for (( i=0; $i<$types; i++ )); do
 		    echo ${name[$i]} "= "$i;
 		done
-	    else
-		types=`$mycat $file | grep POTCAR | wc -l`;
+	    fi
+	else
+	    types=`$mycat $file | grep POTCAR | wc -l`;
+	    if [ "$list_types" == "1" ]; then
 		name=(`$mycat $file | grep POTCAR | awk '{print $3; }'`);
 		echo "Found $(($types/2)) atom types in $file:";
 		for (( i=0; $i<$(($types/2)); i++ )); do
@@ -128,7 +141,8 @@ for file in $outcars; do
 		done
 	    fi
 	fi
-    else
+    fi
+    if [ "$list_types" != "1" ]; then
 	echo "There are $count configurations in $file" >&2
 	if [ -f $e_file ]; then
 	    saeng=`cat $e_file`;
@@ -142,12 +156,32 @@ for file in $outcars; do
 		pr_conf="${pr_conf},$i";
 	    done
 	fi
-	
-	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v new_list="$new_list" -v saeng="$saeng" '  BEGIN {
+	name_array=$( printf "%s," "${name[@]}" )
+	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v saeng="$saeng" -v name="$name_array" -v c_string="$c_string" -v file="$file" -v recursive="$scan_recursive" '  BEGIN {
     OFMT="%11.7g"
 #Select confs to print
     count=0;
     split(pr_conf,pr_arr,",");
+    sub(/,$/,"",name);
+    n_names=split(name,names,",")
+    n_elements=split(c_string,el_names,",");
+    sub(/=./,"",c_string);
+    if (n_names>n_elements && c_string != "") {
+	print "\nERROR:";
+        print "There are more elements in the configuration than specified on the command line.";
+	print "Found "n_names" ("name") in "file" but expected only "n_elements" ("c_string").";
+	exit;
+    }
+    if (c_string != "") {
+	    asort(el_names);
+	    for (i in el_names) {
+		    split(el_names[i],temp,"=");
+		    el_array[temp[1]]=temp[2];
+	    }
+	    for (i in el_names) {
+	    el_number[names[i]]=el_array[names[i]];
+    		}
+    }
     for (i in pr_arr) pr_flag[pr_arr[i]]++;
 #pr_flag now is set for the configurations to be printed.
 #    getline saeng < "../single_atom_energies";
@@ -158,11 +192,6 @@ for file in $outcars; do
     }
     single_energy=0.;
     split(saeng,sae);
-    if (new_list!="0") {
-	    split(new_list,number,",");
-    } else {
-	number[1]=0;number[2]=1;number[3]=2;
-    }
   };
   /ions per type/ {
     ntypes = split($0,a) - 4;
@@ -196,7 +225,24 @@ for file in $outcars; do
      count++;
      if (count in pr_flag) {
        print "#N",a[ntypes],1; #flag indicates whether to use forces or not
+       printf "#C";
+       if (c_string == "") {
+       for (j=1;j<=ntypes;j++) 
+	       printf " %s",names[j];
+       } else {
+       for (j=1;j<=n_elements;j++) {
+	       split(el_names[j],temp,"=");
+		printf " %s",temp[1];
+	}
+       }
+       printf "\n";
+       if (recursive==1) {
+       sub(/^\./,"",file);
+       sub(/\/OUTCAR.*$/,"",file);
+       print "## force file generated from directory " wdir""file;
+       } else {
        print "## force file generated from directory " wdir;
+       }
        printf "#X %13.8f %13.8f %13.8f\n",boxx_v[1]*scale,\
                    boxx_v[2]*scale,boxx_v[3]*scale;
        printf "#Y %13.8f %13.8f %13.8f\n",boxy_v[1]*scale,\
@@ -210,9 +256,15 @@ for file in $outcars; do
      }
      getline; getline;
      for (i=1; i<=a[ntypes]; i++) {
+	     if (c_string == "") {
        if (count in pr_flag)
 	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n",
-	       number[b[i]+1],$1,$2,$3,$4,$5,$6);
+	       b[i],$1,$2,$3,$4,$5,$6);
+       } else {
+       if (count in pr_flag)
+	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n",
+	       el_number[names[b[i]+1]],$1,$2,$3,$4,$5,$6);
+       }
      getline; }
   };'
     fi
