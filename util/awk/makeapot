@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.9 $
-# $Date: 2009/05/15 08:59:29 $
+# $Revision: 1.10 $
+# $Date: 2009/05/18 13:06:32 $
 ####################################################################
 #
 # Usage: makeapot <options>
@@ -110,16 +110,16 @@ function write_pot(name)
 	print "gamma 1 -10 10";
     }
     else if (name=="csw") {
-	print "a_1 0.2 -10 10";
-	print "a_2 0.2 -10 10";
+	print "a_1 0.2 -20 20";
+	print "a_2 0.2 -20 20";
 	print "alpha 2 0 10";
 	print "beta 3 0 10";
     }
     else if (name=="universal") {
-	print "F_0 0 -10 10";
-	print "m 1 -10 10";
-	print "n 2 -10 10";
-	print "F_1 0.5 -10 10";
+	print "F_0 1 -10 10";
+	print "m 1 0 20";
+	print "n 2 0 20";
+	print "F_1 0 0 0";
     }
 }
 
