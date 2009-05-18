@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.65 $
-* $Date: 2009/05/15 16:28:50 $
+* $Revision: 1.66 $
+* $Date: 2009/05/18 09:12:59 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -223,10 +223,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef EAM
       vektor d;
       int   col2;
-      int   self;
       real  gradF, gradF2, grad2, r, eamforce;
       atom_t *atom2;
 #endif
+      int   self;
       vektor tmp_force;
       int   h, k, i, l, j, typ1, typ2, col, config, stresses, uf, us;
       real  fnval, grad;
