@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.18 $
-#* $Date: 2009/05/15 08:59:07 $
+#* $Revision: 1.19 $
+#* $Date: 2009/05/18 13:06:11 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -133,10 +133,11 @@ for file in $outcars; do
 	    fi
 	else
 	    types=`$mycat $file | grep POTCAR | wc -l`;
-	    if [ "$list_types" == "1" ]; then
+	    types=$(($types/2));
 		name=(`$mycat $file | grep POTCAR | awk '{print $3; }'`);
-		echo "Found $(($types/2)) atom types in $file:";
-		for (( i=0; $i<$(($types/2)); i++ )); do
+		if [ "$list_types" == "1" ]; then
+		echo "Found $types atom types in $file:";
+		for (( i=0; $i<$types; i++ )); do
 		    echo ${name[$i]} "= "$i;
 		done
 	    fi
