@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.8 $
-# $Date: 2009/05/15 08:59:30 $
+# $Revision: 1.9 $
+# $Date: 2009/06/03 10:49:06 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -172,9 +172,9 @@ END {
     if (count != 0) {
 	print "reset;\n" > "plot";
 	print "set grid;\n" > "plot";
-	print "set arrow 1 from " maxdist ",.2 to " maxdist ",-.2 nohead size 2,15,10 lw 2;\n" > "plot";
-	print "set label \"cutoff\" at " maxdist*0.95 ",0.23;\n" > "plot";
-	print "pl [" 0.5*mindist ":" maxdist*1.1 "][-0.3:.6] " > "plot";
+	print "set arrow 1 from " maxdist ",.1 to " maxdist ",-.1 nohead size 2,15,10 lw 2;\n" > "plot";
+	print "set label \"cutoff\" at " maxdist*0.95 ",-0.13;\n" > "plot";
+	print "pl [" 0.5*mindist ":" maxdist*1.1 "][-.3:.3] " > "plot";
 	for (i=0;i<count;i++) {
 	    write_pot(i,pot_name[i],params,"plot");
 	    if (i!=(count-1))
