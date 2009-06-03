@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.50 $
-* $Date: 2009/05/15 16:28:50 $
+* $Revision: 1.51 $
+* $Date: 2009/06/03 10:48:00 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -346,15 +346,17 @@ void read_config(char *filename)
 		if (atoi(elements[i]) == i) {
 		  strcpy(elements[i], msg);
 		} else {
-		  printf
-		    ("\nWARNING: Found element mismatch in configuration file!\n");
+		  fprintf(stderr,
+			  "\nWARNING: Found element mismatch in configuration file!\n");
 		  if ((ptr = strchr(msg, '\n')) != NULL)
 		    *ptr = '\0';
-		  printf("Mismatch found in configuration %d.\n", nconf + 1);
+		  fprintf(stderr, "Mismatch found in configuration %d.\n",
+			  nconf + 1);
 		  strncpy(msg, res + 3 * (i + 1), 2);
 		  msg[2] = '\0';
-		  printf("Expected element %s but found element %s.\n",
-			 elements[i], msg);
+		  fprintf(stderr,
+			  "Expected element %s but found element %s.\n",
+			  elements[i], msg);
 		  error("Please check your configuration files!");
 		}
 	      }
@@ -794,9 +796,11 @@ void read_config(char *filename)
   printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
-      printf("%d %s", na_typ[nconf][i], elements[i]);
+      printf("%d %s (%.2f%%)", na_typ[nconf][i], elements[i],
+	     100. * na_typ[nconf][i] / natoms);
     else
-      printf("%d of type %d", na_typ[nconf][i], i);
+      printf("%d type %d (%.2f%%)", na_typ[nconf][i], i,
+	     100. * na_typ[nconf][i] / natoms);
     if (i != (ntypes - 1))
       printf(", ");
   }

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.56 $
-* $Date: 2009/05/15 08:58:39 $
+* $Revision: 1.57 $
+* $Date: 2009/06/03 10:48:00 $
 *****************************************************************/
 
 #define MAIN
@@ -178,10 +178,6 @@ int main(int argc, char **argv)
   conf_uf = useforce;
   conf_us = usestress;
   myatoms = natoms;
-#ifdef APOT
-  for (i = 0; i < paircol; i++)
-    new_slots(i, 1);
-#endif /* APOT */
 #endif /* MPI */
   /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
@@ -197,6 +193,8 @@ int main(int argc, char **argv)
   MPI_Bcast(opt_pot.table, ndimtot, REAL, 0, MPI_COMM_WORLD);
 #endif
   update_calc_table(opt_pot.table, calc_pot.table, 1);
+  for (i = 0; i < paircol; i++)
+    new_slots(i, 1);
 #endif
 
   if (myid > 0) {
@@ -376,9 +374,15 @@ int main(int argc, char **argv)
 #else /* FWEIGHT */
       if (i == 0)
 	fprintf(outfile, "conf-atom    type\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%d-%d\t\t%s\t%.8f\t%.8f\t%.8f\t%f\n",
-	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
-	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+      if (atoms[i / 3].conf > 99 && i / 3 > 999) {
+	fprintf(outfile, "%d-%d\t%s\t%.8f\t%.8f\t%.8f\t%f\n",
+		atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
+		force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+      } else {
+	fprintf(outfile, "%d-%d\t\t%s\t%.8f\t%.8f\t%.8f\t%f\n",
+		atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
+		force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+      }
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
@@ -557,14 +561,16 @@ int main(int argc, char **argv)
     rms[2] = sqrt(rms[2] / (6 * nconf));
 
 #ifndef STRESS
-    printf("sum of force-errors = %f\t\t( %.2f%% - av: %e)\n", tot - e_sum,
+    printf("sum of force-errors = %f\t\t( %.2f%% - av: %f)\n", tot - e_sum,
 	   (tot - e_sum) / tot * 100, (tot - e_sum) / (3 * natoms));
     printf("sum of energy-errors = %f\t\t( %.2f%% )\n", e_sum,
 	   e_sum / tot * 100);
     printf("min: %e - max: %e\n", min, max);
-    printf("rms-errors:\nforce %f\nenergy %f\n", rms[0], rms[1]);
+    printf("rms-errors:\n");
+    printf("force \t%f\t(%e N)\n", rms[0], rms[0] * 1.602e-9);
+    printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
 #else
-    printf("sum of force-errors = %f\t\t( %.2f%% - av: %e)\n",
+    printf("sum of force-errors = %f\t\t( %.2f%% - av: %f)\n",
 	   tot - e_sum - s_sum, (tot - e_sum - s_sum) / tot * 100,
 	   (tot - e_sum - s_sum) / (3 * natoms));
     printf("sum of energy-errors = %f\t\t( %.2f%% )\n", e_sum,
@@ -572,8 +578,10 @@ int main(int argc, char **argv)
     printf("sum of stress-errors = %f\t\t( %.2f%% )\n", s_sum,
 	   s_sum / tot * 100);
     printf("min: %e - max: %e\n", min, max);
-    printf("rms-errors:\nforce %f\nenergy %f\nstress %f\n", rms[0], rms[1],
-	   rms[2]);
+    printf("rms-errors:\n");
+    printf("force \t%f\t(%e N)\n", rms[0], rms[0] * 1.602e-9);
+    printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
+    printf("stress \t%f\t(%f GPa)\n", rms[2], rms[2] * 160.2);
 #endif
 
 #ifdef MPI

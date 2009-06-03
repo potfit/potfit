@@ -1,3 +1,8 @@
+CVS-20090603
++ [APOT] added function to check parameters for some additional constraints
++ [APOT] moved punishment to extra function and add eopp punishment
++ [APOT] initialize splines for eam correctly
+
 CVS-20090515
 + added support for cells smaller than cutoff radius
 + added support for chemical species via #C in config and potential files

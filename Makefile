@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.45 $
-# $Date: 2009/04/14 08:16:21 $
+# $Revision: 1.46 $
+# $Date: 2009/06/03 10:48:00 $
 #
 ############################################################################
 #
@@ -644,6 +644,11 @@ endif
 # APOT - for analytic potentials
 ifneq (,$(findstring apot,${MAKETARGET}))
 CFLAGS += -DAPOT -DNORESCALE
+endif
+
+# Forces (only used for debugging)
+ifneq (,$(findstring forces,${MAKETARGET}))
+CFLAGS += -DFORCES
 endif
 
 # Stress

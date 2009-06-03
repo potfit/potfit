@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.66 $
-* $Date: 2009/05/18 09:12:59 $
+* $Revision: 1.67 $
+* $Date: 2009/06/03 10:48:00 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -118,8 +118,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 
 #if defined APOT && !defined MPI
-    if (format == 0)
+    if (format == 0) {
+      apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
+    }
 #endif
 
 #ifdef MPI
@@ -164,7 +166,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef EAM
     for (col1 = paircol; col1 < paircol + ntypes; col1++) {	/* rho */
       first = calc_pot.first[col1];
-      if (format == 3)
+      if (format == 3 || format == 0)
 	spline_ed(calc_pot.step[col1], xi + first,
 		  calc_pot.last[col1] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
@@ -233,7 +235,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       atom_t *atom;
 
       neigh_t *neigh;
-
 
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
@@ -320,10 +321,17 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;
 		  tmp_force.z = neigh->dist.z * grad;
-/*                  fprintf(stderr,"k=%d dist %f %f %f grad %f\n",k,neigh->dist.x,neigh->dist.y,neigh->dist.z,grad);*/
+#if defined DEBUG && defined FORCES
+		  fprintf(stderr, "k=%d dist %f %f %f grad %f\n", k,
+			  neigh->dist.x, neigh->dist.y, neigh->dist.z, grad);
+#endif
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
+#if defined DEBUG && defined FORCES
+		  fprintf(stderr, "k=%d forces %f %f %f\n", k, forces[k],
+			  forces[k + 1], forces[k + 2]);
+#endif
 		  l = 3 * neigh->nr;	/* actio = reactio */
 		  forces[l] -= tmp_force.x;
 		  forces[l + 1] -= tmp_force.y;
@@ -487,6 +495,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  eamforce = (grad * atom->gradF +
 			      grad2 *
 			      conf_atoms[(neigh->nr) - firstatom].gradF);
+#if defined DEBUG && defined FORCES
+		  fprintf(stderr,
+			  "eamforce %f grad %f gradF %f grad2 %f gradF %f\n",
+			  eamforce, grad, atom->gradF, grad2,
+			  conf_atoms[(neigh->nr) - firstatom].gradF);
+#endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
 		  if (self)
@@ -497,6 +511,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
+#if defined DEBUG && defined FORCES
+		  fprintf(stderr, "EAM k=%d dist %f %f %f eamforce %f\n", k,
+			  neigh->dist.x, neigh->dist.y, neigh->dist.z,
+			  eamforce);
+		  fprintf(stderr, "EAM k=%d forces %f %f %f\n", k, forces[k],
+			  forces[k + 1], forces[k + 2]);
+#endif
 		  l = 3 * neigh->nr;
 		  forces[l] -= tmp_force.x;
 		  forces[l + 1] -= tmp_force.y;
@@ -527,6 +548,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* sum up forces  */
 	    tmpsum +=
 	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
+#if defined DEBUG && defined FORCES
+	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
+		    forces[k + 1], forces[k + 2], tmpsum);
+#endif
 	  }			/* third loop over atoms */
 	}			/* use forces */
 #endif /* EAM */
@@ -564,22 +589,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
     if (myid == 0) {
-      int   i, j;
-      real  x;
-      /* turn off indent because of a bug in GNU indent 2.2.10 */
-    /* *INDENT-OFF* */
-    for (i = 0; i < ndim; i++) {
-      if (x = xi_opt[idx[i]] -
-	  apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
-	  x < 0) {
-	tmpsum += APOT_PUNISH * x * x;
-      } else if (x = xi_opt[idx[i]] -
-		 apot_table.pmax[apot_table.idxpot[i]][apot_table.
-						       idxparam[i]], x > 0) {
-	tmpsum += APOT_PUNISH * x * x;
-      }
-    }
-    /* *INDENT-ON* */
+      tmpsum += apot_punish(xi_opt);
     }
 #endif
 
@@ -689,7 +699,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       fcalls++;			/* Increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
-	printf("Force is nan!\n");
+	printf("\n--> Force is nan! <--\n\n");
 #endif
 	return 10e10;
       } else

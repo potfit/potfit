@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.66 $
-* $Date: 2009/05/15 16:28:50 $
+* $Revision: 1.67 $
+* $Date: 2009/06/03 10:48:00 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -379,7 +379,8 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
-int   apot_validate(int, real);
+int   apot_check_params(real *);
+real  apot_punish(real *);
 void  new_slots(int, int);	/* new slots for smooth cutoff */
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2009/05/15 08:58:38 $
+* $Revision: 1.16 $
+* $Date: 2009/06/03 10:48:00 $
 *****************************************************************/
 
 #ifdef APOT
@@ -345,29 +345,85 @@ void newpot_value(real r, real *p, real *f)
 
 /*****************************************************************************
 *
-* check if the given analytic potential is valid
+* check analytic parameters for special conditions
 *
 ******************************************************************************/
 
-int apot_validate(int param_index, real new_val)
+int apot_check_params(real *params)
 {
-  int   pot_index = apot_table.idxpot[param_index];
-  real  x;
+  int   i, j = 2, k, l;
 
-  if (pot_index < apot_table.number) {
+  for (i = 0; i < apot_table.number; i++) {
 
-    /* check if potential vanishes at 3*cutoff */
-    apot_table.fvalue[pot_index] (3 * apot_table.end[pot_index],
-				  apot_table.values[pot_index], &x);
+    /* last parameter of eopp potential is 2 pi periodic */
+    if (strcmp(apot_table.names[i], "eopp") == 0) {
+      k = j + 5;
+      if (params[k] > 2 * M_PI)
+	do {
+	  params[k] -= M_PI;
+	} while (params[k] > 2 * M_PI);
+      if (params[k] < 0)
+	do {
+	  params[k] += M_PI;
+	} while (params[k] < 0);
+    }
 
-    if (fabs(x) > 10e-2) {
-#ifdef DEBUG
-      printf("Validate failed\n");
-#endif
-      return 0;
+    /* jump to next potential */
+    j += 2 + apot_table.n_par[i];
+  }
+  return 0;
+}
+
+/*****************************************************************************
+*
+* punish analytic potential for bad habits
+*
+******************************************************************************/
+
+real apot_punish(real *params)
+{
+  int   i, j;
+  real  x, tmpsum = 0;
+
+  /* loop over parameters */
+  for (i = 0; i < ndim; i++) {
+    /* punishment for out of bounds */
+    if (x = params[idx[i]] -
+	apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
+	x < 0) {
+      tmpsum += APOT_PUNISH * x * x;
+    } else if (x = params[idx[i]] -
+	       apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]],
+	       x > 0) {
+      tmpsum += APOT_PUNISH * x * x;
     }
   }
-  return 1;
+
+  j = 2;
+  /* loop over potentials */
+  for (i = 0; i < apot_table.number; i++) {
+
+    /* punish eta_2 > eta_1 for eopp potentials */
+    if (strcmp(apot_table.names[i], "eopp") == 0) {
+      x = params[j + 3] - params[j + 1];
+      if (x > 0) {
+	tmpsum += APOT_PUNISH * x * x;
+      }
+    }
+
+    /* punish m=n for universal embedding function */
+    if (strcmp(apot_table.names[i], "universal") == 0) {
+      x = params[j + 2] - params[j + 1];
+      if (fabs(x) > 1e-10) {
+	tmpsum += APOT_PUNISH * x * x;
+      }
+    }
+
+    /* jump to next potential */
+    j += 2 + apot_table.n_par[i];
+  }
+
+  return tmpsum;
 }
 
 /*****************************************************************************
