@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.19 $
-#* $Date: 2009/05/18 13:06:11 $
+#* $Revision: 1.20 $
+#* $Date: 2009/06/03 10:48:51 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -61,7 +61,7 @@ do
 	    printf "\n all files starting with OUTCAR will be scanned" >&2
 	    printf "\n (it is possible to read gzipped files ending with .gz)\n" >&2
 	    printf "\n -c <list>\t\tlist of chemical species to use\n" >&2
-	    printf "\t\t\t(eg. \"vasp2force.sh -c Al=0,Mn=1,Pd=2 -r\")\n" >&2
+	    printf "\t\t\t(eg. \"vasp2force.sh -c Al=0,Mn=1,Pd=2\")\n" >&2
             printf " -e <file>\t\tspecify file to read single atom energies from\n" >&2
 	    printf "\t\t\tif not found, \"0\" will be used for every atom type\n" >&2
 	    printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
@@ -148,9 +148,9 @@ for file in $outcars; do
 	if [ -f $e_file ]; then
 	    saeng=`cat $e_file`;
 	else
-	    printf "Warning: $e_file could not be found - using \"0 0 0\"\n" >&2;
+	    printf "Warning: $e_file could not be found - using 0 instead\n" >&2;
 	fi
-	
+
 	if [ "X$pr_conf" == "X0" ]; then
 	    pr_conf=1;
 	    for (( i=2; $i<=$count; i++ )); do
@@ -228,7 +228,7 @@ for file in $outcars; do
        print "#N",a[ntypes],1; #flag indicates whether to use forces or not
        printf "#C";
        if (c_string == "") {
-       for (j=1;j<=ntypes;j++) 
+       for (j=1;j<=ntypes;j++)
 	       printf " %s",names[j];
        } else {
        for (j=1;j<=n_elements;j++) {
