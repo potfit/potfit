@@ -31,16 +31,25 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.9 $
-# $Date: 2009/06/03 10:49:06 $
+# $Revision: 1.10 $
+# $Date: 2009/06/10 08:48:59 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
 #
 ####################################################################
 
+function abs(x)
+{
+    return x<0 ? -x : x
+}
+
 function write_pot(i,name,params,file)
 {
+    if (name == "universal" && abs(params[i","2]-params[i","3])<10e-6) {
+	name = "pohlong";
+	printf "Switched universal to pohlong in limit m->n\n";
+    }
     if (name == "eopp") {
 	printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
     } else if (name == "lj") {

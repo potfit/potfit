@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.11 $
-# $Date: 2009/06/03 10:49:06 $
+# $Revision: 1.12 $
+# $Date: 2009/06/10 08:48:59 $
 ####################################################################
 #
 # Usage: makeapot <options>
@@ -84,12 +84,12 @@ function write_pot(name)
     print "cutoff "co;
     gsub("_sc$","",name);
     if (name=="eopp") {
-	print "C_1 40 0.5 10000";
-	print "eta_1 6 1 20";
-	print "C_2 20 -100 100";
-	print "eta_2 4 1 20";
+	print "C_1 10 0.5 10000";
+	print "eta_1 4 1 20";
+	print "C_2 5 -100 100";
+	print "eta_2 3 1 20";
 	print "k 2 0 6";
-	print "phi 0 -6.3 6.3";
+	print "phi 3 0 6.3";
     }
     else if (name=="morse") {
 	print "D 0.1 0 1";
