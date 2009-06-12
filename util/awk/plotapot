@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.10 $
-# $Date: 2009/06/10 08:48:59 $
+# $Revision: 1.11 $
+# $Date: 2009/06/12 09:05:54 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -192,10 +192,14 @@ END {
 	if (dist_file != "") {
 	    print ", " > "plot";
 	    for (i=0;i<n_rad;i++) {
+    		if (have_species)
+			label = elements[i+1];
+		else 
+			label = "pot "i;
 		if (i==0)
-		    print "'" dist_file "' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
+		    print "'" dist_file "' i " i " w lines t \"rad_dist " label "\"" > "plot";
 		else
-		    print "'' i " i " w lines t \"rad_dist pot " i "\"" > "plot";
+		    print "'' i " i " w lines t \"rad_dist " label "\"" > "plot";
 		if (i!=(n_rad-1))
 		    print ", " > "plot";
 	    }
