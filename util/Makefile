@@ -34,5 +34,8 @@ potscale: ${POTSCALEOBJ} ${POTSCALEHDR}
 vasp2force: vasp2force.sh
 	cp vasp2force.sh ${HOME}/bin/share
 
+list_config: list_config.sh
+	cp list_config.sh ${HOME}/bin/share
+
 awkscripts:
 	cd awk;	cp -pr ${AWKSCRIPTS} ${HOME}/bin/share;	cd -
