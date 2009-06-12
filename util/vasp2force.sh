@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.21 $
-#* $Date: 2009/06/10 08:48:44 $
+#* $Revision: 1.22 $
+#* $Date: 2009/06/12 09:05:03 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -237,10 +237,9 @@ for file in $outcars; do
 	}
        }
        printf "\n";
-       sub(/\/OUTCAR.*$/,"",file);
        ("readlink -f "file) | getline x;
 
-       print "## force file generated from directory "x;
+       print "## force file generated from file "x;
 
        printf "#X %13.8f %13.8f %13.8f\n",boxx_v[1]*scale,\
                    boxx_v[2]*scale,boxx_v[3]*scale;
