@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.66 $
-* $Date: 2009/05/15 16:28:50 $
+* $Revision: 1.67 $
+* $Date: 2009/06/16 12:04:39 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -605,14 +605,39 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	apt->pmax[i][j] = temp;
       } else if ((apt->values[i][j] < apt->pmin[i][j])
 		 || (apt->values[i][j] > apt->pmax[i][j])) {
-	apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
-	fprintf(stderr, "\n ############ WARNING ############\n");
-	fprintf(stderr,
-		"Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAutosetting it to (pmin+pmax)/2\n",
-		j + 1, i + 1);
+	if (!opt) {
+	  if (apt->values[i][j] < apt->pmin[i][j]) {
+	    fprintf(stderr, "\n ############ WARNING ############\n");
+	    fprintf(stderr,
+		    "Starting value for paramter #%d in potential #%d is smaller than the specified minimum.\nResetting it from %f to pmin (%f)\n",
+		    j + 1, i + 1, apt->values[i][j], apt->pmin[i][j]);
+	    apt->values[i][j] = apt->pmin[i][j];
+	  }
+	  if (apt->values[i][j] > apt->pmax[i][j]) {
+	    fprintf(stderr, "\n ############ WARNING ############\n");
+	    fprintf(stderr,
+		    "Starting value for paramter #%d in potential #%d is bigger than the specified maximumm.\nResetting it from %f to pmax (%f)\n",
+		    j + 1, i + 1, apt->values[i][j], apt->pmax[i][j]);
+	    apt->values[i][j] = apt->pmax[i][j];
+	  }
+	} else {
+	  apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
+	  fprintf(stderr, "\n ############ WARNING ############\n");
+	  if (apt->values[i][j] == 0) {
+	    apt->values[i][j] = apt->pmax[i][j] * 0.25;
+	    fprintf(stderr,
+		    "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAutosetting it to %f (pmax*.25)\n",
+		    j + 1, i + 1, apt->values[i][j]);
+	  } else {
+	    fprintf(stderr,
+		    "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAutosetting it to %f ((pmin+pmax)/2)\n",
+		    j + 1, i + 1, apt->values[i][j]);
+	  }
+	}
       }
     }
   }
+  printf("\n");
 
   /* assign the potential functions to the function pointers */
   if (apot_assign_functions(apt) == -1) {

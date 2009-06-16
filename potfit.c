@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.57 $
-* $Date: 2009/06/03 10:48:00 $
+* $Revision: 1.58 $
+* $Date: 2009/06/16 12:04:39 $
 *****************************************************************/
 
 #define MAIN
@@ -242,6 +242,7 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
     if (opt) {
       anneal(opt_pot.table);
+/*      printf("Finished anneal()\n");*/
       powell_lsq(opt_pot.table);
     }
 /*  for (i=0; i<opt_pot.ncols; i++) 
@@ -310,7 +311,6 @@ int main(int argc, char **argv)
       printf("Local electron density data written to %s\n", file);
       fclose(outfile);
     }
-    /* TODO write to file? */
     for (i = 0; i < ntypes; i++) {
       totdens[i] /= (real)ntyp[i];
       printf("Average local electron density at atom sites type %d: %f\n",
@@ -345,6 +345,8 @@ int main(int argc, char **argv)
 
     max = 0.0;
     min = 100000.0;
+    real  f_sum = 0, e_sum = 0, s_sum = 0;
+
     if (write_output_files) {
       strcpy(file, output_prefix);
       strcat(file, ".force");
@@ -359,6 +361,7 @@ int main(int argc, char **argv)
     }
     for (i = 0; i < 3 * natoms; i++) {
       sqr = SQR(force[i]);
+      f_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
@@ -404,29 +407,17 @@ int main(int argc, char **argv)
     }
 
     if (write_output_files) {
-      strcpy(msg, "");
-      for (j = 4; j < config_name_max; j++)
-	strcat(msg, " ");
-      fprintf(outfile,
-	      "#\tconf%s\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n",
-	      msg);
+      fprintf(outfile, "#\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
     } else
       fprintf(outfile, "#\t(w*de)^2\te\t\te0\t\tde/e0\n");
-
-    real  e_sum = 0, s_sum = 0;
 
     for (i = 0; i < nconf; i++) {
       sqr = SQR(force[3 * natoms + i]);
       e_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      strcpy(msg, "");
       if (write_output_files) {
-	if (strlen(config_name[i]) < config_name_max)
-	  for (j = 0; j < (config_name_max - strlen(config_name[i])); j++)
-	    strcat(msg, " ");
-	fprintf(outfile, "%d\t%s%s\t%f\t%f\t%f\t%f\t%f\t%f\n", i,
-		config_name[i], msg, sqr,
+	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\t%f\t%f\n", i, sqr,
 		(force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
 		force_0[3 * natoms + i] / eweight,
 		fabs(force[3 * natoms + i]) / eweight,
@@ -451,36 +442,20 @@ int main(int argc, char **argv)
 	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
-      strcpy(msg, "");
-      for (j = 4; j < config_name_max; j++)
-	strcat(msg, " ");
-      fprintf(outfile, "#\tconf%s\t(w*ds)^2\ts\t\ts0\t\tds/s0\n", msg);
     } else {
       outfile = stdout;
       fprintf(outfile, "Stresses on unit cell\n");
-      fprintf(outfile, "#\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     }
+    fprintf(outfile, "#\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     for (i = 3 * natoms + nconf; i < 3 * natoms + 7 * nconf; i++) {
       sqr = SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      if (write_output_files) {
-	k = (i - (3 * natoms + nconf)) / 6;
-	strcpy(msg, "");
-	if (strlen(config_name[k]) < config_name_max)
-	  for (j = 0; j < (config_name_max - strlen(config_name[k])); j++)
-	    strcat(msg, " ");
-	fprintf(outfile, "%d\t%s%s\t%f\t%f\t%f\t%f\n",
-		(i - (3 * natoms + nconf)) / 6, config_name[k], msg, sqr,
-		(force[i] + force_0[i]) / sweight, force_0[i] / sweight,
-		force[i] / force_0[i]);
-      } else {
-	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n",
-		(i - (3 * natoms + nconf)) / 6, sqr,
-		(force[i] + force_0[i]) / sweight, force_0[i] / sweight,
-		force[i] / force_0[i]);
-      }
+      fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n",
+	      (i - (3 * natoms + nconf)) / 6, sqr,
+	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
+	      force[i] / force_0[i]);
     }
     if (write_output_files) {
       printf("Stress data written to %s\n", file);
@@ -560,28 +535,27 @@ int main(int argc, char **argv)
       rms[2] = 0;
     rms[2] = sqrt(rms[2] / (6 * nconf));
 
-#ifndef STRESS
-    printf("sum of force-errors = %f\t\t( %.2f%% - av: %f)\n", tot - e_sum,
-	   (tot - e_sum) / tot * 100, (tot - e_sum) / (3 * natoms));
-    printf("sum of energy-errors = %f\t\t( %.2f%% )\n", e_sum,
+    printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
+	   f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
+    printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
 	   e_sum / tot * 100);
-    printf("min: %e - max: %e\n", min, max);
-    printf("rms-errors:\n");
-    printf("force \t%f\t(%e N)\n", rms[0], rms[0] * 1.602e-9);
-    printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
-#else
-    printf("sum of force-errors = %f\t\t( %.2f%% - av: %f)\n",
-	   tot - e_sum - s_sum, (tot - e_sum - s_sum) / tot * 100,
-	   (tot - e_sum - s_sum) / (3 * natoms));
-    printf("sum of energy-errors = %f\t\t( %.2f%% )\n", e_sum,
-	   e_sum / tot * 100);
-    printf("sum of stress-errors = %f\t\t( %.2f%% )\n", s_sum,
+#ifdef STRESS
+    printf("sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
 	   s_sum / tot * 100);
+#endif
+    if ((tot - f_sum - e_sum - s_sum) > 0.01) {
+      printf
+	("\n--> Warning: This sum contains some artificial punishments! Check your results.\n");
+      printf("sum of punishments = %f\t\t( %.3f%% )\n\n",
+	     tot - f_sum - e_sum - s_sum,
+	     (tot - f_sum - e_sum - s_sum) / tot * 100);
+    }
     printf("min: %e - max: %e\n", min, max);
     printf("rms-errors:\n");
-    printf("force \t%f\t(%e N)\n", rms[0], rms[0] * 1.602e-9);
+    printf("force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
     printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
-    printf("stress \t%f\t(%f GPa)\n", rms[2], rms[2] * 160.2);
+#ifdef STRESS
+    printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif
 
 #ifdef MPI

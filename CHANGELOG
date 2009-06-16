@@ -1,3 +1,15 @@
+CVS-20090616
++ new build target FORCES - prints out every force calculated, so be very careful about
+  logging, only recommended for runs without optimization
+  (FORCES is only active in combination with DEBUG)
++ [APOT] added new potential and some tweaks for optimizaion
++ added some units to the rms error
++ potfit no longer reads and prints configuration names
++ new script available: list_config.sh - reads vasp2force comments from force files
+  and displays them with the corresponding potential number
++ potfit now reports any punishments in the error report, if there are any
++ new terminating criterion for simann: now depending on the relative change of F and Fopt
+
 CVS-20090603
 + [APOT] added function to check parameters for some additional constraints
 + [APOT] moved punishment to extra function and add eopp punishment

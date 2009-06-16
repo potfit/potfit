@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.67 $
-* $Date: 2009/06/03 10:48:00 $
+* $Revision: 1.68 $
+* $Date: 2009/06/16 12:04:39 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -231,8 +231,6 @@ EXTERN char plotfile[255];	/* file for plotting */
 EXTERN char distfile[255];	/* file for distributions */
 EXTERN int write_output_files INIT(0);
 EXTERN char output_prefix[255] INIT("");	/* prefix for all output files */
-EXTERN char **config_name INIT(NULL);
-EXTERN int config_name_max INIT(0);
 
 EXTERN char flagfile[255] INIT("potfit.break");
 					 /* break if file exists */
@@ -413,6 +411,7 @@ void  softshell_value(real, real *, real *);
 void  eopp_exp_value(real, real *, real *);
 void  meopp_value(real, real *, real *);
 void  power_decay_value(real, real *, real *);
+void  exp_decay_value(real, real *, real *);
 void  pohlong_value(real, real *, real *);
 void  parabola_value(real, real *, real *);
 void  csw_value(real, real *, real *);

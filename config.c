@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.51 $
-* $Date: 2009/06/03 10:48:00 $
+* $Revision: 1.52 $
+* $Date: 2009/06/16 12:04:38 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -272,15 +272,6 @@ void read_config(char *filename)
     na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
     if (NULL == na_typ[nconf])
       error("Cannot allocate memory for na_typ");
-    if (config_name == NULL)
-      config_name = (char **)malloc(sizeof(char *));
-    else
-      config_name =
-	(char **)realloc(config_name, (nconf + 1) * sizeof(char *));
-    config_name[nconf] = (char *)malloc(255 * sizeof(char));
-    if (NULL == config_name[nconf])
-      error("Cannot allocate memory for config_name");
-    strcpy(config_name[nconf], "");
 
     for (i = 0; i < ntypes; i++)
       na_typ[nconf][i] = 0;
@@ -317,17 +308,6 @@ void read_config(char *filename)
 	    h_eng++;
 	  else
 	    error("Error in energy\n");
-	} else if (strncmp(res, "## force file generated from directory ", 39)
-		   == 0) {
-	  strncpy(config_name[nconf], res + 39, strlen(res + 39));
-	  config_name[nconf][strlen(res + 39)] = '\0';
-	  strcpy(msg, config_name[nconf]);
-	  strncpy(config_name[nconf], strrchr(msg, '/') + 1, 50);
-	  config_name[nconf][50] = '\0';
-	  if ((ptr = strchr(config_name[nconf], '\n')) != NULL)
-	    *ptr = '\0';
-	  if (strlen(config_name[nconf]) > config_name_max)
-	    config_name_max = strlen(config_name[nconf]);
 	} else if (res[1] == 'C') {
 	  fgetpos(infile, &fpos);
 	  if (!have_elements) {

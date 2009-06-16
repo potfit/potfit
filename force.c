@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.67 $
-* $Date: 2009/06/03 10:48:00 $
+* $Revision: 1.68 $
+* $Date: 2009/06/16 12:04:38 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -399,6 +399,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* calculated and input force */
 	    tmpsum +=
 	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
+#if defined DEBUG && defined FORCES
+	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
+		    forces[k + 1], forces[k + 2], tmpsum);
+#endif
 	  }
 #else /* EAM */
 
@@ -560,6 +564,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	forces[config] *= eweight / (real)inconf[h];
 	forces[config] -= force_0[config];
 	tmpsum += SQR(forces[config]);
+#if defined DEBUG && defined FORCES
+	fprintf(stderr, "energy: tmpsum=%f energy=%f\n", tmpsum,
+		forces[config]);
+#endif
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -590,6 +598,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* add punishment for out of bounds (mostly for powell_lsq) */
     if (myid == 0) {
       tmpsum += apot_punish(xi_opt);
+#if defined DEBUG && defined FORCES
+      fprintf(stderr, "punishments: tmpsum=%f punish=%f\n", tmpsum,
+	      apot_punish(xi_opt));
+#endif
     }
 #endif
 

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.16 $
-* $Date: 2009/06/03 10:48:00 $
+* $Revision: 1.17 $
+* $Date: 2009/06/16 12:04:39 $
 *****************************************************************/
 
 #ifdef APOT
@@ -59,6 +59,8 @@ int apot_parameters(char *name)
   } else if (strcmp(name, "meopp") == 0) {
     return 7;
   } else if (strcmp(name, "power_decay") == 0) {
+    return 2;
+  } else if (strcmp(name, "exp_decay") == 0) {
     return 2;
   } else if (strcmp(name, "pohlong") == 0) {
     return 2;
@@ -106,6 +108,8 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &meopp_value;
     } else if (strcmp(apt->names[i], "power_decay") == 0) {
       apt->fvalue[i] = &power_decay_value;
+    } else if (strcmp(apt->names[i], "exp_decay") == 0) {
+      apt->fvalue[i] = &exp_decay_value;
     } else if (strcmp(apt->names[i], "pohlong") == 0) {
       apt->fvalue[i] = &pohlong_value;
     } else if (strcmp(apt->names[i], "parabola") == 0) {
@@ -250,6 +254,18 @@ void power_decay_value(real r, real *p, real *f)
 
   *f = p[0] * power;
 }
+
+/******************************************************************************
+*
+* exp_decay potential
+*
+******************************************************************************/
+
+void exp_decay_value(real r, real *p, real *f)
+{
+  *f = p[0] * exp(r / p[1]);
+}
+
 
 /******************************************************************************
 *

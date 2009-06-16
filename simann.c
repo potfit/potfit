@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.38 $
-* $Date: 2009/05/15 16:35:46 $
+* $Revision: 1.39 $
+* $Date: 2009/06/16 12:04:39 $
 *****************************************************************/
 
 #include <math.h>
@@ -289,9 +289,7 @@ void anneal(real *xi)
 //          embed_shift(&opt_pot);
 #endif /* WZERO */
 	  /* wake other threads and sync potentials */
-#ifndef APOT
 	  F = (*calc_forces) (xi, fxi1, 2);
-#endif
 	}
       }
 #endif /* NORESCALE */
@@ -304,10 +302,10 @@ void anneal(real *xi)
     Fvar[k + NEPS] = F;
     loopagain = 0;
     for (n = 1; n <= NEPS; n++) {
-      if (fabs(F - Fvar[k - n + NEPS]) > EPS)
+      if (fabs(F - Fvar[k - n + NEPS]) > (EPS * F * 0.01))
 	loopagain = 1;
     }
-    if (!loopagain && ((F - Fopt) > EPS)) {
+    if (!loopagain && ((F - Fopt) > (EPS * F * 0.01))) {
       for (n = 0; n < ndimtot; n++)
 	xi[n] = xopt[n];
       F = Fopt;
