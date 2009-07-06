@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.14 $
-# $Date: 2009/06/16 12:04:50 $
+# $Revision: 1.15 $
+# $Date: 2009/07/06 07:15:04 $
 ####################################################################
 #
 # Usage: makeapot <options>
@@ -97,7 +97,7 @@ function write_pot(name)
 	print "r_0 2.5 1 5";
     }
     else if (name=="power_decay") {
-	print "a 1 0 10";
+	print "a 1 0.1 10";
 	print "b 2 1 5";
     }
     else if (name=="pohlong") {
