@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.58 $
-* $Date: 2009/06/16 12:04:39 $
+* $Revision: 1.59 $
+* $Date: 2009/07/06 07:14:44 $
 *****************************************************************/
 
 #define MAIN
@@ -242,7 +242,8 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
     if (opt) {
       anneal(opt_pot.table);
-/*      printf("Finished anneal()\n");*/
+      if (anneal_temp != 0)
+	printf("Finished annealing, starting powell minimization.\n");
       powell_lsq(opt_pot.table);
     }
 /*  for (i=0; i<opt_pot.ncols; i++) 
@@ -504,7 +505,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-    printf("\n###### error report #####\n");
+    printf("\n###### error report ######\n");
 #ifndef STRESS
     printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
 	   mdim - 6 * nconf, 3 * natoms, nconf);
@@ -545,7 +546,7 @@ int main(int argc, char **argv)
 #endif
     if ((tot - f_sum - e_sum - s_sum) > 0.01) {
       printf
-	("\n--> Warning: This sum contains some artificial punishments! Check your results.\n");
+	("\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
       printf("sum of punishments = %f\t\t( %.3f%% )\n\n",
 	     tot - f_sum - e_sum - s_sum,
 	     (tot - f_sum - e_sum - s_sum) / tot * 100);

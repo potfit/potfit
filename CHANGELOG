@@ -1,3 +1,10 @@
+CVS-live
++ potfit writes the #C line also for potentials of format 3+4
++ fix element detection for configurations containing only 1 element
++ more fixes for element and configuratiion mismatch detection
++ removed code for increased cutoff completely, cubic cutoff function always cuts at rcut
++ [APOT] fix punishment for "universal"
+
 CVS-20090616
 + new build target FORCES - prints out every force calculated, so be very careful about
   logging, only recommended for runs without optimization

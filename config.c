@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.52 $
-* $Date: 2009/06/16 12:04:38 $
+* $Revision: 1.53 $
+* $Date: 2009/07/06 07:14:43 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -177,6 +177,7 @@ void read_config(char *filename)
   int   sh_dist = 0;		/* short distance flag */
   int   has_name = 0;
   int   cell_scale[3];
+  int   str_len;
   FILE *infile;
   fpos_t fpos;
   char  msg[255], buffer[1024];
@@ -195,7 +196,7 @@ void read_config(char *filename)
   if (NULL == elements)
     error("Cannot allocate memory for element names.");
   for (i = 0; i < ntypes; i++) {
-    elements[i] = (char *)malloc(2 * sizeof(char));
+    elements[i] = (char *)malloc(3 * sizeof(char));
     if (NULL == elements[i]) {
       sprintf(msg, "Cannot allocate memory for element name %d\n", i);
       error(msg);
@@ -309,25 +310,30 @@ void read_config(char *filename)
 	  else
 	    error("Error in energy\n");
 	} else if (res[1] == 'C') {
+	  str_len = strlen(res + 3);
 	  fgetpos(infile, &fpos);
 	  if (!have_elements) {
 	    i = -1;
 	    do {
 	      i++;
-	      sscanf(res + 3 * (i + 1), "%s", elements[i]);
+	      if ((3 * (i + 1) <= str_len) && ((res + 3 * (i + 1)) != NULL))
+		sscanf(res + 3 * (i + 1), "%2s", elements[i]);
 	    } while (elements[i][0] != '#' && i < (ntypes - 1));
 	    have_elements = 1;
 	  } else {
 	    i = -1;
 	    do {
 	      i++;
-	      sscanf(res + 3 * (i + 1), "%s", msg);
+	      if ((3 * (i + 1) <= str_len) && ((res + 3 * (i + 1)) != NULL))
+		sscanf(res + 3 * (i + 1), "%s", msg);
+	      if (strlen(res + 3 * (i + 1)) == 0)
+		break;
 	      if (strcmp(msg, elements[i]) != 0) {
 		if (atoi(elements[i]) == i) {
 		  strcpy(elements[i], msg);
 		} else {
 		  fprintf(stderr,
-			  "\nWARNING: Found element mismatch in configuration file!\n");
+			  " --> Warning <--\nFound element mismatch in configuration file!\n");
 		  if ((ptr = strchr(msg, '\n')) != NULL)
 		    *ptr = '\0';
 		  fprintf(stderr, "Mismatch found in configuration %d.\n",
@@ -342,6 +348,7 @@ void read_config(char *filename)
 	      }
 	    } while (elements[i][0] != '#' && i < (ntypes - 1));
 	  }
+	  fsetpos(infile, &fpos);
 	}
 
 	/* read stress */
@@ -405,14 +412,14 @@ void read_config(char *filename)
     if ((ceil(rcutmax * iheight.x) > 30000) ||
 	(ceil(rcutmax * iheight.y) > 30000) ||
 	(ceil(rcutmax * iheight.z) > 30000))
-      error("Very bizarrly small cell size - aborting");
+      error("Very bizarre small cell size - aborting");
 
     cell_scale[0] = (int)ceil(rcutmax * iheight.x);
     cell_scale[1] = (int)ceil(rcutmax * iheight.y);
     cell_scale[2] = (int)ceil(rcutmax * iheight.z);
 
 #ifdef DEBUG
-    fprintf(stderr, "Periodic cell images:\n");
+    fprintf(stderr, "Checking cell size for configuration %d:\n", nconf + 1);
     fprintf(stderr, "Box dimensions:\n");
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_x.x, box_x.y, box_x.z);
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_y.x, box_y.y, box_y.z);
@@ -428,7 +435,7 @@ void read_config(char *filename)
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n",
 	    1. / iheight.x, 1. / iheight.y, 1. / iheight.z);
     fprintf(stderr, "Potential range:  %f\n", rcutmax);
-    fprintf(stderr, "Periodic images needed: %d %d %d\n",
+    fprintf(stderr, "Periodic images needed: %d %d %d\n\n",
 	    2 * cell_scale[0] + 1, 2 * cell_scale[1] + 1,
 	    2 * cell_scale[2] + 1);
 #endif /* DEBUG */

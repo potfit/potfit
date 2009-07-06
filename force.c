@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.68 $
-* $Date: 2009/06/16 12:04:38 $
+* $Revision: 1.69 $
+* $Date: 2009/07/06 07:14:44 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -644,7 +644,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	forces[mdim - ntypes + g] = 0.;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
 #ifdef APOT
-/*#warning EAM PUNISHMENT DISABLED*/
 	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
 #else
@@ -670,7 +669,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       rho_sum /= (real)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
 #ifdef APOT
-/*#warning EAM PUNISHMENT DISABLED*/
       forces[mdim - ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
       tmpsum += SQR(forces[mdim - ntypes]);
 #else

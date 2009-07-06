@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.68 $
-* $Date: 2009/06/16 12:04:39 $
+* $Revision: 1.69 $
+* $Date: 2009/07/06 07:14:44 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -372,7 +372,6 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 #ifdef APOT
 
 #define APOT_STEPS 200		/* number of sampling points for analytic pot */
-#define CUTOFF_MARGIN 1.4	/* number to multiply cutoff radius with */
 #define APOT_PUNISH 10e10	/* punishment for out of bounds */
 
 int   apot_parameters(char *);

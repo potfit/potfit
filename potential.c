@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.67 $
-* $Date: 2009/06/16 12:04:39 $
+* $Revision: 1.68 $
+* $Date: 2009/07/06 07:14:44 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -104,25 +104,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	error(msg);
       }
     }
-/* maybe used in the future? */
-/* just skip #C lines for now */
-/*    else if (buffer[1] == 'C') {*/
-/*      if (have_format) {*/
-/*        for (i = 0; i < size; i++) {*/
-/*          str = strtok(((i == 0) ? buffer + 2 : NULL), " \t\r\n");*/
-/*          if (str == NULL) {*/
-/*            sprintf(msg, "Not enough items in #I header line.");*/
-/*            error(msg);*/
-/*          } else*/
-/*            ((int *)invar_pot)[i] = atoi(str);*/
-/*        }*/
-/*        have_invar = 1;*/
-/*      } else {*/
-/*        sprintf(msg, "#I needs to be specified after #F in file %s",*/
-/*                filename);*/
-/*        error(msg);*/
-/*      }*/
-/*    }*/
 #ifndef APOT
     else if (buffer[1] == 'G') {
       if (have_format) {
@@ -143,6 +124,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       }
     }
 #endif
+
     /* see if it is the format line */
     else if (buffer[1] == 'F') {
       /* format complete? */
@@ -310,11 +292,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	: j * ntypes + i - ((j * (j + 1)) / 2);
       rmin[i * ntypes + j] = pt->begin[k];
 #ifdef APOT
-      rcut[i * ntypes + j] = pt->end[k] * (do_smooth ? CUTOFF_MARGIN : 1);
       pot_index[k] = MIN(pot_index[k], i * ntypes + j);
-#else
-      rcut[i * ntypes + j] = pt->end[k];
 #endif /* APOT */
+      rcut[i * ntypes + j] = pt->end[k];
     }
 #if defined EAM && defined APOT
   j = 0;
@@ -607,14 +587,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		 || (apt->values[i][j] > apt->pmax[i][j])) {
 	if (!opt) {
 	  if (apt->values[i][j] < apt->pmin[i][j]) {
-	    fprintf(stderr, "\n ############ WARNING ############\n");
+	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,
 		    "Starting value for paramter #%d in potential #%d is smaller than the specified minimum.\nResetting it from %f to pmin (%f)\n",
 		    j + 1, i + 1, apt->values[i][j], apt->pmin[i][j]);
 	    apt->values[i][j] = apt->pmin[i][j];
 	  }
 	  if (apt->values[i][j] > apt->pmax[i][j]) {
-	    fprintf(stderr, "\n ############ WARNING ############\n");
+	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,
 		    "Starting value for paramter #%d in potential #%d is bigger than the specified maximumm.\nResetting it from %f to pmax (%f)\n",
 		    j + 1, i + 1, apt->values[i][j], apt->pmax[i][j]);
@@ -622,7 +602,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  }
 	} else {
 	  apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
-	  fprintf(stderr, "\n ############ WARNING ############\n");
+	  fprintf(stderr, "\n --> Warning <--\n");
 	  if (apt->values[i][j] == 0) {
 	    apt->values[i][j] = apt->pmax[i][j] * 0.25;
 	    fprintf(stderr,
@@ -2012,6 +1992,23 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 
   /* write header */
   fprintf(outfile, "#F 3 %d", pt->ncols);
+  if (have_elements) {
+    fprintf(outfile, "\n#C");
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    fprintf(outfile, "\n##");
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+#ifdef EAM
+    /* transfer functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    /* embedding functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+#endif
+  }
   if (have_invar) {
     fprintf(outfile, "\n#I");
     for (i = 0; i < pt->ncols; i++)
@@ -2084,6 +2081,23 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 
   /* write header */
   fprintf(outfile, "#F 4 %d", pt->ncols);
+  if (have_elements) {
+    fprintf(outfile, "\n#C");
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    fprintf(outfile, "\n##");
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+#ifdef EAM
+    /* transfer functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    /* embedding functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+#endif
+  }
   if (have_invar) {
     fprintf(outfile, "\n#I");
     for (i = 0; i < pt->ncols; i++)

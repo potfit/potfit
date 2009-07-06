@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.17 $
-* $Date: 2009/06/16 12:04:39 $
+* $Revision: 1.18 $
+* $Date: 2009/07/06 07:14:44 $
 *****************************************************************/
 
 #ifdef APOT
@@ -420,20 +420,22 @@ real apot_punish(real *params)
   for (i = 0; i < apot_table.number; i++) {
 
     /* punish eta_2 > eta_1 for eopp potentials */
-    if (strcmp(apot_table.names[i], "eopp") == 0) {
-      x = params[j + 3] - params[j + 1];
-      if (x > 0) {
-	tmpsum += APOT_PUNISH * x * x;
-      }
-    }
+/*    if (strcmp(apot_table.names[i], "eopp") == 0) {*/
+/*      x = params[j + 3] - params[j + 1];*/
+/*      if (x > 0) {*/
+/*        tmpsum += APOT_PUNISH * x * x;*/
+/*      }*/
+/*    }*/
 
+#ifdef EAM
     /* punish m=n for universal embedding function */
     if (strcmp(apot_table.names[i], "universal") == 0) {
       x = params[j + 2] - params[j + 1];
-      if (fabs(x) > 1e-10) {
+      if (fabs(x) < 1e-10) {
 	tmpsum += APOT_PUNISH * x * x;
       }
     }
+#endif
 
     /* jump to next potential */
     j += 2 + apot_table.n_par[i];
