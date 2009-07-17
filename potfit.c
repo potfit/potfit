@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.59 $
-* $Date: 2009/07/06 07:14:44 $
+* $Revision: 1.60 $
+* $Date: 2009/07/17 07:06:33 $
 *****************************************************************/
 
 #define MAIN
@@ -544,7 +544,7 @@ int main(int argc, char **argv)
     printf("sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
 	   s_sum / tot * 100);
 #endif
-    if ((tot - f_sum - e_sum - s_sum) > 0.01) {
+    if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
       printf
 	("\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
       printf("sum of punishments = %f\t\t( %.3f%% )\n\n",

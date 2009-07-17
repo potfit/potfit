@@ -1,4 +1,8 @@
-CVS-live
+CVS-20090717
++ code cleanup in forces.c
++ add punishments to force-array for powell_lsq
+
+CVS-20090706
 + potfit writes the #C line also for potentials of format 3+4
 + fix element detection for configurations containing only 1 element
 + more fixes for element and configuratiion mismatch detection

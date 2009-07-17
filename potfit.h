@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.69 $
-* $Date: 2009/07/06 07:14:44 $
+* $Revision: 1.70 $
+* $Date: 2009/07/17 07:06:33 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -222,6 +222,14 @@ EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
 EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
 EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
 EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
+EXTERN real *forcep INIT(NULL);	/* pointer to forces */
+EXTERN real *energyp INIT(NULL);	/* pointer to energies */
+EXTERN real *stressp INIT(NULL);	/* pointer to stresses */
+EXTERN real *dummyp INIT(NULL);	/* pointer to dummy constraints */
+EXTERN real *limitp INIT(NULL);	/* pointer to limiting constraints */
+#ifdef APOT
+EXTERN real *punishp INIT(NULL);	/* pointer to punish contraints */
+#endif
 EXTERN char startpot[255];	/* file with start potential */
 EXTERN char maxchfile[255];	/* file with maximal changes */
 EXTERN char endpot[255];	/* file for end potential */
@@ -377,7 +385,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(real *);
-real  apot_punish(real *);
+real  apot_punish(real *, real *);
 void  new_slots(int, int);	/* new slots for smooth cutoff */
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);

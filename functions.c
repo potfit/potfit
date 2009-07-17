@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2009/07/06 07:14:44 $
+* $Revision: 1.19 $
+* $Date: 2009/07/17 07:06:33 $
 *****************************************************************/
 
 #ifdef APOT
@@ -396,7 +396,7 @@ int apot_check_params(real *params)
 *
 ******************************************************************************/
 
-real apot_punish(real *params)
+real apot_punish(real *params, real *forces)
 {
   int   i, j;
   real  x, tmpsum = 0;
@@ -408,10 +408,12 @@ real apot_punish(real *params)
 	apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
 	x < 0) {
       tmpsum += APOT_PUNISH * x * x;
+      forces[mdim - ndim + i] = APOT_PUNISH * x * x;
     } else if (x = params[idx[i]] -
 	       apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]],
 	       x > 0) {
       tmpsum += APOT_PUNISH * x * x;
+      forces[mdim - ndim + i] = APOT_PUNISH * x * x;
     }
   }
 
@@ -431,8 +433,9 @@ real apot_punish(real *params)
     /* punish m=n for universal embedding function */
     if (strcmp(apot_table.names[i], "universal") == 0) {
       x = params[j + 2] - params[j + 1];
-      if (fabs(x) < 1e-10) {
-	tmpsum += APOT_PUNISH * x * x;
+      if (fabs(x) < 1e-6) {
+	forces[mdim - 1] = APOT_PUNISH / (x * x);
+	tmpsum += APOT_PUNISH / (x * x);
       }
     }
 #endif

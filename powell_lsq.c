@@ -33,8 +33,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.41 $
-* $Date: 2009/05/15 16:35:47 $
+* $Revision: 1.42 $
+* $Date: 2009/07/17 07:06:33 $
 *****************************************************************/
 
 /******************************************************************************
@@ -235,31 +235,15 @@ void powell_lsq(real *xi)
 #else
 	if ((xi[idx[i]] + delta[idx[i]]) <
 	    apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]]) {
-#ifdef DEBUG
-/*          fprintf(stderr, "Change in parameter %d too small in powell_lsq\n",*/
-/*                  i);*/
-/*          fprintf(stderr, "i %d xi %f delta %f min %f max %f\n",i,xi[idx[i]],delta[idx[i]],apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]]);*/
-#endif
 	  delta[idx[i]] =
 	    apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]] -
 	    xi[idx[i]];
-#ifdef DEBUG
-/*          fprintf(stderr,"-> new delta %f\n",delta[idx[i]]);*/
-#endif
 	}
 	if ((xi[idx[i]] + delta[idx[i]]) >
 	    apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]]) {
-#ifdef DEBUG
-/*          fprintf(stderr, "Change in parameter %d too big in powell_lsq\n",*/
-/*                  i);*/
-/*          fprintf(stderr, "i %d xi %f delta %f min %f max %f\n",i,xi[idx[i]],delta[idx[i]],apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]]);*/
-#endif
 	  delta[idx[i]] =
 	    apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
 	    xi[idx[i]];
-#ifdef DEBUG
-/*          fprintf(stderr,"-> new delta %f\n",delta[idx[i]]);*/
-#endif
 	}
 #endif
       }

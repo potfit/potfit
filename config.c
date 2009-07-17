@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.53 $
-* $Date: 2009/07/06 07:14:43 $
+* $Revision: 1.54 $
+* $Date: 2009/07/17 07:06:33 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -622,6 +622,12 @@ void read_config(char *filename)
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
   mdim += nconf;		/* nconf limiting constraints */
 #endif /* EAM */
+#ifdef APOT
+  mdim += opt_pot.idxlen;	/* 1 slot for each analytic parameter -> punishment */
+#ifdef EAM
+  mdim += 1;			/* 1 slot for eam punishment */
+#endif /* EAM */
+#endif /* APOT */
   /* copy forces into single vector */
   if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
     error("Cannot allocate forces");

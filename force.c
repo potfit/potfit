@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.69 $
-* $Date: 2009/07/06 07:14:44 $
+* $Revision: 1.70 $
+* $Date: 2009/07/17 07:06:33 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -95,6 +95,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   static real rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
 #endif /* EAM */
+#if defined DEBUG && defined FORCES
+  real  store_punish;
+#endif
   switch (format) {
       case 0:
 	xi = calc_pot.table;
@@ -597,10 +600,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
     if (myid == 0) {
-      tmpsum += apot_punish(xi_opt);
+      tmpsum += apot_punish(xi_opt, forces);
 #if defined DEBUG && defined FORCES
-      fprintf(stderr, "punishments: tmpsum=%f punish=%f\n", tmpsum,
-	      apot_punish(xi_opt));
+      fprintf(stderr, "\napot punishments: tmpsum=%f punish=%f\n", tmpsum,
+	      apot_punish(xi_opt, forces));
+      store_punish = tmpsum;
 #endif
     }
 #endif
@@ -643,13 +647,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* clear field */
 	forces[mdim - ntypes + g] = 0.;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
-#ifdef APOT
 	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
-#else
-	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
-	  splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
-#endif
 #else /* NOTHING */
 	forces[mdim - ntypes + g] = 0.;	/* Free end... */
 /* constraints on U`(n) */
@@ -662,19 +661,26 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* Dummy constraints */
 	tmpsum += SQR(forces[mdim - ntypes + g]);
 	tmpsum += SQR(forces[mdim - 2 * ntypes + g]);
+#if defined DEBUG && defined FORCES
+	fprintf(stderr, "dummy constraints on U: tmpsum=%f punish=%f\n", tmpsum,
+		forces[mdim - ntypes + g]);
+	fprintf(stderr, "dummy constraints on U': tmpsum=%f punish=%f\n", tmpsum,
+		forces[mdim - ntypes + g]);
+#endif
+
       }				/* loop over types */
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
       /* Calculate averages */
       rho_sum /= (real)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
-#ifdef APOT
-      forces[mdim - ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
-      tmpsum += SQR(forces[mdim - ntypes]);
-#else
       forces[mdim - ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
       tmpsum += SQR(forces[mdim - ntypes]);
 #endif
+#if defined DEBUG && defined FORCES
+      fprintf(stderr, "limiting constraints: tmpsum=%f punish=%f\n", tmpsum, forces[mdim-ntypes]);
+      fprintf(stderr, "total EAM punishments: tmpsum=%f punish^2=%f\n\n", tmpsum,
+	      tmpsum - store_punish);
 #endif
     }				/* only root process */
 #endif
