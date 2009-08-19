@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.60 $
-* $Date: 2009/07/17 07:06:33 $
+* $Revision: 1.61 $
+* $Date: 2009/08/19 09:12:42 $
 *****************************************************************/
 
 #define MAIN
@@ -241,10 +241,13 @@ int main(int argc, char **argv)
 #endif
   } else {			/* root thread does minimization */
     if (opt) {
+      printf("\nStarting optimization ...\n");
       anneal(opt_pot.table);
       if (anneal_temp != 0)
 	printf("Finished annealing, starting powell minimization.\n");
       powell_lsq(opt_pot.table);
+    } else {
+      printf("\nOptimization disabled. Calculating errors.\n\n");
     }
 /*  for (i=0; i<opt_pot.ncols; i++) 
       spline_ed(opt_pot.step[i],opt_pot.table+opt_pot.first[i],

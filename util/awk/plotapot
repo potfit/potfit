@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.12 $
-# $Date: 2009/07/06 07:15:04 $
+# $Revision: 1.13 $
+# $Date: 2009/08/19 09:12:56 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -214,8 +214,9 @@ END {
     }
     if (eam_count > 0) {
 	print "reset;\n" > "plot_eam";
+	print "set samples 10000;\n" > "plot_eam";
 	print "set grid;\n" > "plot_eam";
-	print "pl [0:2] " > "plot_eam";
+	print "pl [0:2][-10:10] " > "plot_eam";
 	for (i=count;i<(count+eam_count);i++) {
 	    write_pot(i,pot_name[i],params,"plot_eam");
 	    if (i!=(count+eam_count-1))

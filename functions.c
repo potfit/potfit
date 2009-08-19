@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2009/07/17 07:06:33 $
+* $Revision: 1.20 $
+* $Date: 2009/08/19 09:12:42 $
 *****************************************************************/
 
 #ifdef APOT
@@ -463,9 +463,14 @@ void debug_apot()
   fprintf(stderr, "\n\n##############################################\n");
   fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
   fprintf(stderr, "##############################################\n");
+  fprintf(stderr,
+	  "\nThere are %d potentials with a total of %d parameters.\n",
+	  apot_table.number, apot_table.total_par);
   for (i = 0; i < apot_table.number; i++) {
     fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
 	    apot_table.names[i], smooth_pot[i]);
+    fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i],
+	    apot_table.end[i]);
     for (j = 0; j < apot_table.n_par[i]; j++) {
       fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
 	      apot_table.param_name[i][j], apot_table.values[i][j],

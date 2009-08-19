@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.54 $
-* $Date: 2009/07/17 07:06:33 $
+* $Revision: 1.55 $
+* $Date: 2009/08/19 09:12:42 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -62,8 +62,10 @@ void read_config_old(char *filename)
   do {
 
     /* number of atoms in this configuration */
-    if (1 > fscanf(infile, "%d", &count))
-      error("Unexpected end of file");
+    if (1 > fscanf(infile, "%d", &count)) {
+      sprintf(msg, "Unexpected end of file in %s", filename);
+      error(msg);
+    }
 
     /* increase memory for this many additional atoms */
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
@@ -225,8 +227,10 @@ void read_config(char *filename)
   /* read configurations until the end of the file */
   do {
     res = fgets(buffer, 1024, infile);
-    if (NULL == res)
-      error("Unexpected end of file\n");
+    if (NULL == res) {
+      sprintf(msg, "Unexpected end of file in %s", filename);
+      error(msg);
+    }
     if (res[0] == '#') {	/* new file type */
       tag_format = 1;
       h_eng = h_stress = h_boxx = h_boxy = h_boxz = 0;
@@ -239,8 +243,10 @@ void read_config(char *filename)
       /* number of atoms in this configuration */
       tag_format = 0;
       use_force = 1;
-      if (1 > sscanf(buffer, "%d", &count))
-	error("Unexpected end of file");
+      if (1 > sscanf(buffer, "%d", &count)) {
+	sprintf(msg, "Unexpected end of file in %s", filename);
+	error(msg);
+      }
     }
     /* increase memory for this many additional atoms */
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
@@ -743,6 +749,14 @@ void read_config(char *filename)
       calc_pot.begin[k] = mindist[k] * 0.95;
       min = MIN(min, mindist[k]);
     }
+#ifdef EAM
+  for (i = 0; i < ntypes; i++) {
+    j = i + ntypes * (ntypes + 1) / 2;
+    apot_table.begin[j] = min * 0.95;
+    opt_pot.begin[j] = min * 0.95;
+    calc_pot.begin[j] = min * 0.95;
+  }
+#endif
   for (i = 0; i < calc_pot.ncols; i++) {
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;

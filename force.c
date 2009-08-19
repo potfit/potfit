@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.70 $
-* $Date: 2009/07/17 07:06:33 $
+* $Revision: 1.71 $
+* $Date: 2009/08/19 09:12:42 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -662,10 +662,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	tmpsum += SQR(forces[mdim - ntypes + g]);
 	tmpsum += SQR(forces[mdim - 2 * ntypes + g]);
 #if defined DEBUG && defined FORCES
-	fprintf(stderr, "dummy constraints on U: tmpsum=%f punish=%f\n", tmpsum,
-		forces[mdim - ntypes + g]);
-	fprintf(stderr, "dummy constraints on U': tmpsum=%f punish=%f\n", tmpsum,
-		forces[mdim - ntypes + g]);
+	fprintf(stderr, "dummy constraints on U: tmpsum=%f punish=%f\n",
+		tmpsum, forces[mdim - ntypes + g]);
+	fprintf(stderr, "dummy constraints on U': tmpsum=%f punish=%f\n",
+		tmpsum, forces[mdim - ntypes + g]);
 #endif
 
       }				/* loop over types */
@@ -678,9 +678,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       tmpsum += SQR(forces[mdim - ntypes]);
 #endif
 #if defined DEBUG && defined FORCES
-      fprintf(stderr, "limiting constraints: tmpsum=%f punish=%f\n", tmpsum, forces[mdim-ntypes]);
-      fprintf(stderr, "total EAM punishments: tmpsum=%f punish^2=%f\n\n", tmpsum,
-	      tmpsum - store_punish);
+      fprintf(stderr, "limiting constraints: tmpsum=%f punish=%f\n", tmpsum,
+	      forces[mdim - ntypes]);
+      fprintf(stderr, "total EAM punishments: tmpsum=%f punish^2=%f\n\n",
+	      tmpsum, tmpsum - store_punish);
 #endif
     }				/* only root process */
 #endif

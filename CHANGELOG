@@ -1,3 +1,10 @@
+CVS-20090819
++ [APOT] fix severe _sc bug
++ [APOT] override manual input for embedding function cutoff
++ be more precise about unexpected end of files
++ [APOT] fix _sc detection
++ [APOT] adjust imd-output to new cutoff
+
 CVS-20090717
 + code cleanup in forces.c
 + add punishments to force-array for powell_lsq

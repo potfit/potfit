@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.68 $
-* $Date: 2009/07/06 07:14:44 $
+* $Revision: 1.69 $
+* $Date: 2009/08/19 09:12:42 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -484,7 +484,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     /* split name and _sc */
     token = strrchr(name, '_');
     if (token != NULL && strcmp(token + 1, "sc") == 0) {
-      strncpy(buffer, name, strlen(name) - strlen(token));
+      strncpy(buffer, name, strlen(name) - 3);
+      buffer[strlen(name) - 3] = '\0';
       strcpy(name, buffer);
       smooth_pot[i] = 1;
       do_smooth = 1;
@@ -502,19 +503,32 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par += apt->n_par[i];
 
     /* read cutoff */
-    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
-      printf("%s\n", buffer);
-      sprintf(msg,
-	      "Could not read cutoff for potential #%d in file %s\nAborting",
-	      i, filename);
-      error(msg);
+    if (i < (ntypes * (ntypes + 1) / 2 + ntypes)) {
+      if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
+	printf("%s\n", buffer);
+	sprintf(msg,
+		"Could not read cutoff for potential #%d in file %s\nAborting",
+		i, filename);
+	error(msg);
+      }
+      if (strcmp(buffer, "cutoff") != 0) {
+	sprintf(msg,
+		"No cutoff for potential #%d found after \"type\" keyword in file %s\nAborting",
+		i, filename);
+	error(msg);
+      }
+    } else {
+      fgetpos(infile, &fpos);
+      fscanf(infile, "%s", buffer);
+      if (strncmp(buffer, "cutoff", 6) != 0)
+	fsetpos(infile, &fpos);
+#ifdef DEBUG
+      else
+	fprintf(stderr, "Ignoring cutoff for embedding function %d\n", i);
+#endif
+      apt->end[i] = 2;
     }
-    if (strcmp(buffer, "cutoff") != 0) {
-      sprintf(msg,
-	      "No cutoff for potential #%d found after \"type\" keyword in file %s\nAborting",
-	      i, filename);
-      error(msg);
-    }
+
     /* set small begin to prevent division by zero-errors */
     apt->begin[i] = 0.0001;
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
@@ -1396,7 +1410,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		  else
 		    *(xi_calc + k + j) =
 		      params[0] * temp * temp * temp +
-		      temp * temp * params[1] + temp * params[2] + temp;
+		      temp * temp * params[1] + temp * params[2] + params[3];
 		  calc_pot.xcoord[k + j] =
 		    calc_pot.begin[i] + j * calc_pot.step[i];
 		}
@@ -2181,17 +2195,10 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       /* Extrapolation possible  */
 #ifdef APOT
       r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
-      if (!invar_pot[col1] && smooth_pot[col1]) {
-	x0 =
-	  smooth(apot_table.fvalue[col1], apot_table.end[col1],
-		 apot_table.values[col1], params);
-	r2end[col2] = SQR(apot_table.end[col1]);
-      } else
-	r2end[col2] = SQR(pt->end[col1]);
 #else
       r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
-      r2end[col2] = SQR(pt->end[col1]);
 #endif
+      r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n",
 	      r2begin[col2], r2end[col2], r2step[col2]);
@@ -2214,21 +2221,14 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #ifdef NEWSCALE
 	/* Pair potentials corrected so that U'(1)   =0 with NORESCALE */
 	/*                               and U'(n_av)=0 without */
-	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2))
-		+ (sqrt(r2) <=
-		   pt->end[paircol + j] ? lambda[i] * splint_ne(pt,
-								pt->table,
-								paircol
-								+ j,
-								sqrt
-								(r2)) : 0.)
-		+ (sqrt(r2) <=
-		   pt->end[paircol + i] ? lambda[j] * splint_ne(pt,
-								pt->table,
-								paircol
-								+ i,
-								sqrt
-								(r2)) : 0.));
+	fprintf(outfile, "%.16e\n",
+		splint_ne(pt, pt->table, col1,
+			  sqrt(r2)) + (sqrt(r2) <=
+				       pt->end[paircol + j] ? lambda[i] *
+				       splint_ne(pt, pt->table, paircol + j,
+						 sqrt(r2)) : 0.) +
+		(sqrt(r2) <= pt->end[paircol + i] ? lambda[j] *
+		 splint_ne(pt, pt->table, paircol + i, sqrt(r2)) : 0.));
 #else /* NEWSCALE */
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
 #endif /* NEWSCALE */

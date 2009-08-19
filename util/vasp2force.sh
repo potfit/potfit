@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.22 $
-#* $Date: 2009/06/12 09:05:03 $
+#* $Revision: 1.23 $
+#* $Date: 2009/08/19 09:12:53 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -88,7 +88,7 @@ if [ "$outcars" == "" ]; then
     done
     fi
     if [ "$outcars" != "" ]; then
-	echo "Found the following files: $outcars" >&2;
+	echo "Found the following files:$outcars" >&2;
     else
 	echo "Could not find any OUTCAR files in this directory, aborting."
 	break;
@@ -157,6 +157,12 @@ for file in $outcars; do
 		pr_conf="${pr_conf},$i";
 	    done
 	fi
+	if [ ${#name[*]} != ${types} ]; then
+		temp_c=${#name[*]};
+		for (( i=${types};i<$temp_c;i++ )); do
+			unset name[$i];
+		done
+	fi
 	name_array=$( printf "%s," "${name[@]}" )
 	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v saeng="$saeng" -v name="$name_array" -v c_string="$c_string" -v file="$file" -v recursive="$scan_recursive" '  BEGIN {
     OFMT="%11.7g"
@@ -168,9 +174,9 @@ for file in $outcars; do
     n_elements=split(c_string,el_names,",");
     sub(/=./,"",c_string);
     if (n_names>n_elements && c_string != "") {
-	print "\nERROR:";
-        print "There are more elements in the configuration than specified on the command line.";
-	print "Found "n_names" ("name") in "file" but expected only "n_elements" ("c_string").";
+	print "\nERROR:" > "/dev/stderr";
+        print "There are more elements in the configuration than specified on the command line." > "/dev/stderr";
+	print "Found "n_names" ("name") in "file" but expected only "n_elements" ("c_string")." > "/dev/stderr";
 	exit;
     }
     if (c_string != "") {
