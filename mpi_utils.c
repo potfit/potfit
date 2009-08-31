@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.23 $
+* $Date: 2009/08/31 09:21:04 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -50,8 +50,8 @@ void init_mpi(int *argc_pointer, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD, &num_cpus);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
   if (0 == myid) {
-    printf("%s\n", argv[0]);
-    printf("Starting up MPI with %d processes.\n", num_cpus);
+    fprintf(stderr,"%s\n", argv[0]);
+    fprintf(stderr,"Starting up MPI with %d processes.\n", num_cpus);
   }
 }
 

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.28 $
-*  $Date: 2009/05/13 10:11:19 $
+*  $Revision: 1.29 $
+*  $Date: 2009/08/31 09:21:13 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -330,6 +330,10 @@ void read_parameters(int argc, char **argv)
   pf = fopen(argv[1], "r");
   if (NULL == pf) {
     fprintf(stderr, "ERROR: Could not open parameter file %s!\n", argv[1]);
+    fflush(stderr);
+#ifdef MPI
+    MPI_Abort(MPI_COMM_WORLD, 2);
+#endif
     exit(2);
   }
   read_paramfile(pf);

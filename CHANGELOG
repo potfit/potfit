@@ -1,3 +1,6 @@
+CVS-20090831
++ print error messages to stderr (setup)
+
 CVS-20090819
 + [APOT] fix severe _sc bug
 + [APOT] override manual input for embedding function cutoff
