@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.69 $
-* $Date: 2009/08/19 09:12:42 $
+* $Revision: 1.70 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -352,9 +352,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 
 /*****************************************************************************
 *
-*  read potential in analytic format: 
+*  read potential in analytic format:
 *  	for more information an how to specify an analytic potential
-*  	please check the documentation 
+*  	please check the documentation
 *
 ******************************************************************************/
 
@@ -368,11 +368,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   char  name[255];
   char *token;
   real *val, *list, temp;
-  fpos_t fpos;
+  fpos_t filepos;
 
 #ifndef EAM
   /* read cp */
-  fgetpos(infile, &fpos);
+  fgetpos(infile, &filepos);
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++) {
       if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
@@ -395,7 +395,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	error(msg);
       }
     }
-    fgetpos(infile, &fpos);
+    fgetpos(infile, &filepos);
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
       if (strcmp("type", buffer) == 0)
 	compnodes = -1;
@@ -459,14 +459,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (compnodes == -1)
       compnodes = 0;
   }
-  fsetpos(infile, &fpos);
+  fsetpos(infile, &filepos);
 #endif
 
   do {
-    fgetpos(infile, &fpos);
+    fgetpos(infile, &filepos);
     fscanf(infile, "%s", buffer);
   } while (strcmp(buffer, "type") != 0);
-  fsetpos(infile, &fpos);
+  fsetpos(infile, &filepos);
 
   for (i = 0; i < apt->number; i++) {
     /* read type */
@@ -518,10 +518,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	error(msg);
       }
     } else {
-      fgetpos(infile, &fpos);
+      fgetpos(infile, &filepos);
       fscanf(infile, "%s", buffer);
       if (strncmp(buffer, "cutoff", 6) != 0)
-	fsetpos(infile, &fpos);
+	fsetpos(infile, &filepos);
 #ifdef DEBUG
       else
 	fprintf(stderr, "Ignoring cutoff for embedding function %d\n", i);
@@ -716,14 +716,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
 /*****************************************************************************
 *
-*  read potential in third format: 
+*  read potential in third format:
 *
 *  Sampling points are equidistant.
-* 
+*
 *  Header:  one line for each function with
 *           rbegin rstart npoints
 *
-*  Table: Function values at sampling points, 
+*  Table: Function values at sampling points,
 *         functions separated by blank lines
 *
 ******************************************************************************/
@@ -872,15 +872,15 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 
 /*****************************************************************************
 *
-*  read potential in fourth format: 
+*  read potential in fourth format:
 *
 *  Sampling points are NON-equidistant.
-* 
+*
 *  Header:  one line for each function with
 *           npoints
 *
 *  Table: Sampling points, function values
-*            r f(r) 
+*            r f(r)
 *         functions separated by blank lines
 *
 ******************************************************************************/
@@ -1062,18 +1062,18 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 
 /*****************************************************************************
 *
-*  read potential in fifth format: 
+*  read potential in fifth format:
 *
 *  Functions specified by gaussians.
 *
 *  THIS IS BY NO MEANS FINISHED! IT WILL NOT WORK!
-* 
+*
 *  Header:  one line for each function with
 *           rbegin rstart npoints
 *
-*  Table: Center, width, amplitude of Gaussians, 
+*  Table: Center, width, amplitude of Gaussians,
 *         functions separated by blank lines
-*  
+*
 *
 *  d2tab is used to store the width of the Gaussians.
 *
@@ -1255,7 +1255,7 @@ void read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
 *  *  Header:  one line for each function with
 *           rbegin rstart npoints
 *
-*  Table: Center, width, amplitude of Gaussians, 
+*  Table: Center, width, amplitude of Gaussians,
 *         functions separated by blank lines
 *
 ******************************************************************************/
@@ -1377,8 +1377,8 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
   static real *params, *list;
 
   switch (format) {
-      case 0:
 #ifdef APOT
+      case 0:
 	{
 	  cut = apot_table.end;
 	  if (do_smooth && params == NULL)
@@ -1386,6 +1386,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	  val = xi_opt + 2;
 	  list = calc_list + 2;
 	  for (i = 0; i < calc_pot.ncols; i++) {
+	    /* check if something has changed */
 	    change = 0;
 	    for (j = 0; j < apot_table.n_par[i]; j++) {
 	      if (list[j] != val[j]) {
@@ -1420,8 +1421,8 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    list += apot_table.n_par[i] + 2;
 	  }
 	}
-#endif
 	return;
+#endif
       case 3:			/* fall through */
       case 4:{
 	  /* Nothing to do */
@@ -1492,7 +1493,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 #ifdef OLDCODE
 /*****************************************************************************
 *
-*  Evaluate derivative of potential with quadratic interpolation. 
+*  Evaluate derivative of potential with quadratic interpolation.
 *  col is typ1 * ntypes + typ2.
 *
 ******************************************************************************/
@@ -1526,7 +1527,7 @@ real grad2(pot_table_t *pt, real *xi, int col, real r)
 
 /*****************************************************************************
 *
-*  Evaluate derivative of potential with cubic interpolation. 
+*  Evaluate derivative of potential with cubic interpolation.
 *  col is typ1 * ntypes + typ2.
 *
 ******************************************************************************/
@@ -1587,7 +1588,7 @@ real grad3(pot_table_t *pt, real *xi, int col, real r)
 
 /*****************************************************************************
 *
-*  Evaluate potential with quadratic interpolation. 
+*  Evaluate potential with quadratic interpolation.
 *  col is typ1 * ntypes + typ2.
 *
 ******************************************************************************/
@@ -1622,7 +1623,7 @@ real pot2(pot_table_t *pt, int col, real r)
 
 /*****************************************************************************
 *
-*  Evaluate potential with cubic interpolation. 
+*  Evaluate potential with cubic interpolation.
 *  col is typ1 * ntypes + typ2.
 *
 ******************************************************************************/
@@ -1684,7 +1685,7 @@ real pot3(pot_table_t *pt, int col, real r)
 #ifdef PARABEL
 /*****************************************************************************
 *
-*  Evaluate value from parabole through three points. 
+*  Evaluate value from parabole through three points.
 *  Extrapolates for all k.
 *
 ******************************************************************************/
@@ -1716,7 +1717,7 @@ real parab_ed(pot_table_t *pt, real *xi, int col, real r)
 
 /*****************************************************************************
 *
-*  Evaluate value from parabole through three points. 
+*  Evaluate value from parabole through three points.
 *  Extrapolates for all k. Nonequidistant points.
 *
 ******************************************************************************/
@@ -1752,7 +1753,7 @@ real parab_ne(pot_table_t *pt, real *xi, int col, real r)
 
 /*****************************************************************************
 *
-*  Evaluate deritvative from parabole through three points. 
+*  Evaluate deritvative from parabole through three points.
 *  Extrapolates for all k.
 *
 ******************************************************************************/
@@ -1784,7 +1785,7 @@ real parab_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
 /*****************************************************************************
 *
-*  Evaluate deritvative from parabole through three points. 
+*  Evaluate deritvative from parabole through three points.
 *  Extrapolates for all k.
 *
 ******************************************************************************/
@@ -1824,7 +1825,7 @@ real parab_grad_ne(pot_table_t *pt, real *xi, int col, real r)
 
 /*****************************************************************************
 *
-*  Evaluate value and deritvative from parabole through three points. 
+*  Evaluate value and deritvative from parabole through three points.
 *  Extrapolates for all k.
 *
 ******************************************************************************/
@@ -1858,7 +1859,7 @@ real parab_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
 
 /*****************************************************************************
 *
-*  Evaluate value and deritvative from parabole through three points. 
+*  Evaluate value and deritvative from parabole through three points.
 *  Extrapolates for all k.
 *
 ******************************************************************************/
@@ -2586,9 +2587,9 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
 #ifdef PDIST
 /********************************************************************
  *
- * write_pairdist(pot_table_t *pt, char *filename) 
- *    - write distribution function of function access 
- * 
+ * write_pairdist(pot_table_t *pt, char *filename)
+ *    - write distribution function of function access
+ *
  *
  *******************************************************************/
 

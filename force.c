@@ -1,7 +1,7 @@
 /****************************************************************
-* 
-* force.c: Routines used for calculating forces/energies in various 
-*     interpolation schemes. 
+*
+* force.c: Routines used for calculating forces/energies in various
+*     interpolation schemes.
 *
 *****************************************************************/
 /*
@@ -11,7 +11,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.71 $
-* $Date: 2009/08/19 09:12:42 $
+* $Revision: 1.72 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -50,36 +50,36 @@
 * When using the mpi-parallelized version of potfit, all processes but the
 * root process jump into this function immediately after initialization and
 * stay in here for an infinite loop, to exit only when a certain flag value
-* is passed from process 0. When a set of forces needs to be calculated, 
+* is passed from process 0. When a set of forces needs to be calculated,
 * the root process enters the function with a flag value of 0, broadcasts
 * the current potential table xi and the flag value to the other processes,
 * thus initiating a force calculation. Whereas the root process returns with
 * the result, the other processes stay in the loop. If the root process is
-* called with flag value 1, all processes exit the function without 
+* called with flag value 1, all processes exit the function without
 * calculating the forces.
 * If anything changes about the potential beyond the values of the parameters,
 * e.g. the location of the sampling points, these changes have to be broadcast
 * from rank 0 process to the higher ranked processes. This is done when the
 * root process is called with flag value 2. Then a potsync function call is
 * initiated by all processes to get the new potential from root.
-* 
-* xi_opt is the array storing the potential parameters (usually it is the 
+*
+* xi_opt is the array storing the potential parameters (usually it is the
 *     opt_pot.table - part of the struct opt_pot, but it can also be
 *     modified from the current potential.
 *
 * forces is the array storing the deviations from the reference data, not
 *     only for forces, but also for energies, stresses or dummy constraints
-*     (if applicable). 
+*     (if applicable).
 *
-* flag is an integer controlling the behaviour of calc_forces_pair. 
-*    flag == 1 will cause all processes to exit calc_forces_pair after 
+* flag is an integer controlling the behaviour of calc_forces_pair.
+*    flag == 1 will cause all processes to exit calc_forces_pair after
 *             calculation of forces.
 *    flag == 2 will cause all processes to perform a potsync (i.e. broadcast
 *             any changed potential parameters from process 0 to the others)
 *             before calculation of forces
-*    all other values will cause a set of forces to be calculated. The root 
+*    all other values will cause a set of forces to be calculated. The root
 *             process will return with the sum of squares of the forces,
-*             while all other processes remain in the function, waiting for 
+*             while all other processes remain in the function, waiting for
 *             the next communication initiating another force calculation
 *             loop
 *
@@ -135,6 +135,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 #ifdef APOT
+    if (myid == 0)
+      apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
     if (format == 0)
       update_calc_table(xi_opt, xi, 0);
@@ -183,7 +185,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     for (col1 = paircol + ntypes; col1 < paircol + 2 * ntypes; col1++) {
       /* F */
       first = calc_pot.first[col1];
-      /* gradient at left boundary matched to square root function, 
+      /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
       if (format == 3 || format == 0)
 	spline_ed(calc_pot.step[col1], xi + first,
@@ -221,7 +223,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #pragma omp parallel
 #endif
 
-    /* region containing loop over configurations, 
+    /* region containing loop over configurations,
        also OMP-parallelized region */
     {
 
@@ -233,7 +235,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
       int   self;
       vektor tmp_force;
-      int   h, k, i, l, j, typ1, typ2, col, config, stresses, uf, us;
+      int   h, k, i, l, j, typ1, typ2, col, uf, us, stresses;	// config
       real  fnval, grad;
       atom_t *atom;
 
@@ -244,22 +246,22 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
-	config = 3 * natoms + h;	/* slot for energies */
-	stresses = 3 * natoms + nconf + 6 * h;	/* slot for stresses */
+/*        config = 3 * natoms + h;	|+ slot for energies +|*/
+/*        stresses = 3 * natoms + nconf + 6 * h;	|+ slot for stresses +|*/
 	uf = conf_uf[h - firstconf];
 	us = conf_us[h - firstconf];
-	/* reset forces */
-	forces[config] = 0.;
-	for (i = stresses; i < stresses + 6; i++)
-	  forces[i] = 0.;
+	/* reset energies and stresses */
+	forces[energy_p + h] = 0.;
+	for (i = 0; i < 6; i++)
+	  forces[stress_p + 6 * h + i] = 0.;
 
 #ifdef EAM
-	/* set dummy constraints */
-	forces[config + 7 * nconf] = -force_0[config + 7 * nconf];
+	/* set limiting constraints */
+	forces[limit_p + h] = -force_0[limit_p + h];
 #endif
 #if defined APOT && !defined EAM
 	if (!disable_cp) {
-	  forces[config] +=
+	  forces[energy_p + h] +=
 	    chemical_potential(ntypes, na_typ[h], xi_opt + cp_start);
 	}
 #endif
@@ -291,7 +293,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  /* loop over neighbours */
 	  for (j = 0; j < atom->n_neigh; j++) {
 	    neigh = atom->neigh + j;
-	    /* only use neigbours with higher numbers, 
+	    /* only use neigbours with higher numbers,
 	       others are calculated by actio=reactio */
 	    if (neigh->nr >= i + cnfstart[h]) {
 	      /* In small cells, an atom might interact with itself */
@@ -318,7 +320,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  fnval *= 0.5;
 		  grad *= 0.5;
 		}
-		forces[config] += fnval;
+		forces[energy_p + h] += fnval;
 /* not real force: cohesive energy */
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
@@ -345,6 +347,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		    tmp_force.x *= neigh->r;
 		    tmp_force.y *= neigh->r;
 		    tmp_force.z *= neigh->r;
+		    stresses = stress_p + 6 * h;
 		    forces[stresses] -= neigh->dist.x * tmp_force.x;
 		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
 		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
@@ -413,7 +416,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifndef NORESCALE
 	  if (atom->rho > calc_pot.end[col2]) {
 	    /* then punish target function -> bad potential */
-	    forces[config + 7 * nconf] += DUMMY_WEIGHT *
+	    forces[limit_p + h] += DUMMY_WEIGHT *
 	      10. * SQR(atom->rho - calc_pot.end[col2]);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
@@ -423,7 +426,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* then punish target function -> bad potential */
-	    forces[config + 7 * nconf] += DUMMY_WEIGHT *
+	    forces[limit_p + h] += DUMMY_WEIGHT *
 	      10. * SQR(calc_pot.begin[col2] - atom->rho);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
@@ -434,7 +437,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 #ifdef PARABEL
-	  forces[config] +=
+	  forces[energy_p + h] +=
 	    parab_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col2]) {
@@ -442,23 +445,23 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    fnval =
 	      splint_comb(&calc_pot, xi, col2, calc_pot.begin[col2],
 			  &atom->gradF);
-	    forces[config] +=
+	    forces[energy_p + h] +=
 	      fnval + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col2]) {
 	    /* and right */
 	    fnval =
 	      splint_comb(&calc_pot, xi, col2, calc_pot.end[col2],
 			  &atom->gradF);
-	    forces[config] +=
+	    forces[energy_p + h] +=
 	      fnval + (atom->rho - calc_pot.end[col2]) * atom->gradF;
 	  }
 	  /* and in-between */
 	  else {
-	    forces[config] +=
+	    forces[energy_p + h] +=
 	      splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 	  }
 #else
-	  forces[config] +=
+	  forces[energy_p + h] +=
 	    splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 #endif
 	  /* sum up rho */
@@ -491,8 +494,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		    (r < calc_pot.end[col2]) ?
 		    splint_grad_dir(&calc_pot, xi, col2,
 				    neigh->slot[1], neigh->shift[1],
-				    neigh->step[1])
-		    : 0.;
+				    neigh->step[1]) : 0.;
 		  if (typ2 == typ1)	/* use actio = reactio */
 		    grad2 = grad;
 		  else
@@ -535,6 +537,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		    tmp_force.x *= neigh->r;
 		    tmp_force.y *= neigh->r;
 		    tmp_force.z *= neigh->r;
+		    stresses = stress_p + 6 * h;
 		    forces[stresses] -= neigh->dist.x * tmp_force.x;
 		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
 		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
@@ -564,26 +567,26 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* EAM */
 
 	/* energy contributions */
-	forces[config] *= eweight / (real)inconf[h];
-	forces[config] -= force_0[config];
-	tmpsum += SQR(forces[config]);
+	forces[energy_p + h] *= eweight / (real)inconf[h];
+	forces[energy_p + h] -= force_0[energy_p + h];
+	tmpsum += SQR(forces[energy_p + h]);
 #if defined DEBUG && defined FORCES
 	fprintf(stderr, "energy: tmpsum=%f energy=%f\n", tmpsum,
-		forces[config]);
+		forces[energy_p + h]);
 #endif
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
-	  for (i = stresses; i < stresses + 6; i++) {
-	    forces[i] *= sweight / conf_vol[h - firstconf];
-	    forces[i] -= force_0[i];
-	    tmpsum += SQR(forces[i]);
+	  for (i = 0; i < 6; i++) {
+	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
+	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
+	    tmpsum += SQR(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
-	/* dummy constraints per configuration */
+	/* limiting constraints per configuration */
 #ifdef EAM
-	tmpsum += SQR(forces[config + 7 * nconf]);
+	tmpsum += SQR(forces[limit_p + h]);
 #endif
       }				/* loop over configurations */
     }				/* parallel region */
@@ -616,56 +619,53 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* PARABEL, WZERO, NORESC - different behaviour */
 #ifdef PARABEL
 /* constraints on U(n) */
-	forces[mdim - ntypes + g] = DUMMY_WEIGHT *
+	forces[dummy_p + ntypes + g] = DUMMY_WEIGHT *
 	  parab(&calc_pot, xi, paircol + ntypes + g, 0.)
-	  - force_0[mdim - ntypes + g];
+	  - force_0[dummy_p + ntypes + g];
 /* constraints on U`(n) */
-	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
-	  parab_grad(&calc_pot, xi, paircol + ntypes + g,
-		     .5 *
+	forces[dummy_p + g] = DUMMY_WEIGHT *
+	  parab_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
 		     (calc_pot.begin[paircol + ntypes + g] +
-		      calc_pot.end[paircol + ntypes + g]))
-	  - force_0[mdim - 2 * ntypes + g];
+		      calc_pot.end[paircol + ntypes + g])) -
+	  force_0[dummy_p + g];
 #elif defined(WZERO)
 	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
 	  /* 0 in domain of U(n) */
 /* constraints on U(n) */
-	  forces[mdim - ntypes + g] = DUMMY_WEIGHT *
+	  forces[dummy_p + ntypes + g] = DUMMY_WEIGHT *
 	    splint(&calc_pot, xi, paircol + ntypes + g, 0.)
-	    - force_0[mdim - ntypes + g];
+	    - force_0[dummy_p + ntypes + g];
 	else
 	  /* 0 not in domain of U(n) */
-	  forces[mdim - ntypes + g] = 0.;	/* Free end... */
+	  forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
 /* constraints on U`(n) */
-	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
-	  splint_grad(&calc_pot, xi, paircol + ntypes + g,
-		      .5 *
+	forces[dummy_p + g] = DUMMY_WEIGHT *
+	  splint_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
 		      (calc_pot.begin[paircol + ntypes + g] +
 		       calc_pot.end[paircol + ntypes + g]))
-	  - force_0[mdim - 2 * ntypes + g];
+	  - force_0[dummy_p + g];
 #elif defined(NORESCALE)
 	/* clear field */
-	forces[mdim - ntypes + g] = 0.;	/* Free end... */
+	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
-	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
+	forces[dummy_p + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
 #else /* NOTHING */
-	forces[mdim - ntypes + g] = 0.;	/* Free end... */
+	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
 /* constraints on U`(n) */
-	forces[mdim - 2 * ntypes + g] = DUMMY_WEIGHT *
-	  splint_grad(&calc_pot, xi, paircol + ntypes + g,
-		      .5 *
+	forces[dummy_p + g] = DUMMY_WEIGHT *
+	  splint_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
 		      (calc_pot.begin[paircol + ntypes + g] +
 		       calc_pot.end[paircol + ntypes + g]))
-	  - force_0[mdim - 2 * ntypes + g];
+	  - force_0[dummy_p + g];
 #endif /* Dummy constraints */
-	tmpsum += SQR(forces[mdim - ntypes + g]);
-	tmpsum += SQR(forces[mdim - 2 * ntypes + g]);
+	tmpsum += SQR(forces[dummy_p + ntypes + g]);
+	tmpsum += SQR(forces[dummy_p + g]);
 #if defined DEBUG && defined FORCES
 	fprintf(stderr, "dummy constraints on U: tmpsum=%f punish=%f\n",
-		tmpsum, forces[mdim - ntypes + g]);
+		tmpsum, forces[dummy_p + ntypes + g]);
 	fprintf(stderr, "dummy constraints on U': tmpsum=%f punish=%f\n",
-		tmpsum, forces[mdim - ntypes + g]);
+		tmpsum, forces[dummy_p + g]);
 #endif
 
       }				/* loop over types */
@@ -674,12 +674,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       /* Calculate averages */
       rho_sum /= (real)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
-      forces[mdim - ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
-      tmpsum += SQR(forces[mdim - ntypes]);
+      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+      tmpsum += SQR(forces[dummy_p + ntypes]);
 #endif
 #if defined DEBUG && defined FORCES
-      fprintf(stderr, "limiting constraints: tmpsum=%f punish=%f\n", tmpsum,
-	      forces[mdim - ntypes]);
+/*      fprintf(stderr, "limiting constraints: tmpsum=%f punish=%f\n", tmpsum,*/
+/*              forces[limit_p]);*/
       fprintf(stderr, "total EAM punishments: tmpsum=%f punish^2=%f\n\n",
 	      tmpsum, tmpsum - store_punish);
 #endif

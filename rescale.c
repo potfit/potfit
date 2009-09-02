@@ -1,6 +1,6 @@
 /****************************************************************
-* 
-* rescale.c: Routines used to automatically rescale 
+*
+* rescale.c: Routines used to automatically rescale
 *     EAM potential.
 *
 *****************************************************************/
@@ -11,7 +11,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2009/04/14 08:16:23 $
+* $Revision: 1.15 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -42,8 +42,8 @@
 
 
 /****************************************************************
-* 
-* rescale: Routine used to automatically rescale 
+*
+* rescale: Routine used to automatically rescale
 *     EAM potential. Flag indicates whether to force update...
 *     upper is upper limit of electron density.
 *
@@ -425,7 +425,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
 /**********************************************************************
  *
  * embed_shift: Shift embedding function to U(0)=0
- *                   
+ *
  **********************************************************************/
 
 void embed_shift(pot_table_t *pt)

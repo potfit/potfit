@@ -1,5 +1,5 @@
 /****************************************************************
-* 
+*
 *  potfit.c: Contains main potfit programme.
 *
 *****************************************************************/
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.61 $
-* $Date: 2009/08/19 09:12:42 $
+* $Revision: 1.62 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #define MAIN
@@ -186,6 +186,16 @@ int main(int argc, char **argv)
   idx = opt_pot.idx;
 
   force = (real *)malloc((mdim) * sizeof(real));
+  energy_p = 3 * natoms;
+  stress_p = 3 * natoms + nconf;
+#ifdef EAM
+  limit_p = 3 * natoms + 7 * nconf;
+  dummy_p = 3 * natoms + 8 * nconf;
+#endif
+#ifdef APOT
+  punish_par_p = 3 * natoms + 8 * nconf + 2 * ntypes;
+  punish_pot_p = 3 * natoms + 8 * nconf + 2 * ntypes + apot_table.total_par;
+#endif
   rms = (real *)malloc(3 * sizeof(real));
 
 #ifdef APOT
@@ -244,12 +254,13 @@ int main(int argc, char **argv)
       printf("\nStarting optimization ...\n");
       anneal(opt_pot.table);
       if (anneal_temp != 0)
-	printf("Finished annealing, starting powell minimization.\n");
+	printf("Finished annealing, starting powell minimization ...\n");
       powell_lsq(opt_pot.table);
+      printf("\nFinished powell minimization, calculating errors ...\n");
     } else {
       printf("\nOptimization disabled. Calculating errors.\n\n");
     }
-/*  for (i=0; i<opt_pot.ncols; i++) 
+/*  for (i=0; i<opt_pot.ncols; i++)
       spline_ed(opt_pot.step[i],opt_pot.table+opt_pot.first[i],
       opt_pot.last[i]-opt_pot.first[i]+1,
       1e30,0,opt_pot.d2tab+opt_pot.first[i]);*/
@@ -416,22 +427,22 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\t(w*de)^2\te\t\te0\t\tde/e0\n");
 
     for (i = 0; i < nconf; i++) {
-      sqr = SQR(force[3 * natoms + i]);
+      sqr = SQR(force[energy_p + i]);
       e_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
       if (write_output_files) {
 	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\t%f\t%f\n", i, sqr,
-		(force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
-		force_0[3 * natoms + i] / eweight,
-		fabs(force[3 * natoms + i]) / eweight,
-		force[3 * natoms + i] / eweight,
-		force[3 * natoms + i] / force_0[3 * natoms + i]);
+		(force[energy_p + i] + force_0[energy_p + i]) / eweight,
+		force_0[energy_p + i] / eweight,
+		fabs(force[energy_p + i]) / eweight,
+		force[energy_p + i] / eweight,
+		force[energy_p + i] / force_0[energy_p + i]);
       } else
 	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n", i, sqr,
-		(force[3 * natoms + i] + force_0[3 * natoms + i]) / eweight,
-		force_0[3 * natoms + i] / eweight,
-		force[3 * natoms + i] / force_0[3 * natoms + i]);
+		(force[energy_p + i] + force_0[energy_p + i]) / eweight,
+		force_0[energy_p + i] / eweight,
+		force[energy_p + i] / force_0[energy_p + i]);
     }
     if (write_output_files) {
       printf("Energy data written to %s\n", file);
@@ -451,13 +462,13 @@ int main(int argc, char **argv)
       fprintf(outfile, "Stresses on unit cell\n");
     }
     fprintf(outfile, "#\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
-    for (i = 3 * natoms + nconf; i < 3 * natoms + 7 * nconf; i++) {
+    for (i = stress_p; i < limit_p; i++) {
       sqr = SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
       fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n",
-	      (i - (3 * natoms + nconf)) / 6, sqr,
+	      (i - stress_p) / 6, sqr,
 	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
 	      force[i] / force_0[i]);
     }
@@ -475,36 +486,72 @@ int main(int argc, char **argv)
 	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
+      fprintf(outfile, "Limiting constraints\n");
+      fprintf(outfile, "#conf\tp^2\t\tpunishment\n");
     } else {
       outfile = stdout;
       printf("Punishment Constraints\n");
     }
 //    printf("conf dp p p0 dp/p0");
-#ifdef STRESS
-    diff = 6 * nconf;
-#else
-    diff = 0;
-#endif
-    for (i = 3 * natoms + nconf + diff; i < 3 * natoms + 2 * nconf + diff;
-	 i++) {
+/*#ifdef STRESS*/
+/*    diff = 6 * nconf;*/
+/*#else*/
+/*    diff = 0;*/
+/*#endif*/
+    for (i = limit_p; i < dummy_p; i++) {
       sqr = SQR(force[i]);
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      fprintf(outfile, "%d %f %f %f %f\n", i - (3 * natoms + nconf + diff),
-	      sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
-    }
-    fprintf(outfile, "Dummy Constraints\n");
-    for (i = 2 * ntypes; i > 0; i--) {
-      sqr = SQR(force[mdim - i]);
-      max = MAX(max, sqr);
-      min = MIN(min, sqr);
-      fprintf(outfile, "%d %f %f %f %f\n", ntypes - i, sqr,
-	      force[mdim - i] + force_0[mdim - i],
-	      force_0[mdim - i], force[mdim - i] / force_0[mdim - i]);
+      if (write_output_files)
+	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
+		force[i] + force_0[i]);
+      else
+	fprintf(outfile, "%d %f %f %f %f\n", i - limit_p,
+		sqr, force[i] + force_0[i], force_0[i],
+		force[i] / force_0[i]);
     }
     if (write_output_files) {
+      real  zero = 0;
+      fprintf(outfile, "\nDummy Constraints\n");
+      fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
+      for (i = dummy_p; i < dummy_p + ntypes; i++) {
+#ifdef NORESCALE
+	sqr = SQR(force[i]);
+	max = MAX(max, sqr);
+	min = MIN(min, sqr);
+	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], zero,
+		sqr, zero, force[i]);
+#else
+	sqr = SQR(force[i]);
+	max = MAX(max, sqr);
+	min = MIN(min, sqr);
+	sqr = SQR(force[i + ntypes]);
+	max = MAX(max, sqr);
+	min = MIN(min, sqr);
+	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
+		SQR(force[i]), force[i + ntypes], force[i]);
+#endif
+      }
+#ifdef NORESCALE
+      fprintf(outfile, "\nNORESCALE: <n>!=1\n");
+      fprintf(outfile, "<n>=%f\n",
+	      force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
+      fprintf(outfile, "Additional punishment of %f added.\n",
+	      SQR(force[dummy_p + ntypes]));
+#endif
       printf("Punishment constraints data written to %s\n", file);
       fclose(outfile);
+    } else {
+      fprintf(outfile, "Dummy Constraints\n");
+      for (i = dummy_p; i < dummy_p + 2 * ntypes; i++) {
+	sqr = SQR(force[i]);
+	max = MAX(max, sqr);
+	min = MIN(min, sqr);
+	fprintf(outfile, "%d %f %f %f %f\n", i - dummy_p, sqr,
+		force[dummy_p + i] + force_0[dummy_p + i],
+		force_0[dummy_p + i],
+		force[dummy_p + i] / force_0[dummy_p + i]);
+      }
     }
 #endif
 

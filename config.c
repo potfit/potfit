@@ -1,7 +1,7 @@
 /****************************************************************
-* 
+*
 *  config.c: Reads atomic configurations and forces.
-* 
+*
 *****************************************************************/
 /*
 *   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.55 $
-* $Date: 2009/08/19 09:12:42 $
+* $Revision: 1.56 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -181,7 +181,7 @@ void read_config(char *filename)
   int   cell_scale[3];
   int   str_len;
   FILE *infile;
-  fpos_t fpos;
+  fpos_t filepos;
   char  msg[255], buffer[1024];
   char *res, *ptr;
   atom_t *atom;
@@ -317,7 +317,7 @@ void read_config(char *filename)
 	    error("Error in energy\n");
 	} else if (res[1] == 'C') {
 	  str_len = strlen(res + 3);
-	  fgetpos(infile, &fpos);
+	  fgetpos(infile, &filepos);
 	  if (!have_elements) {
 	    i = -1;
 	    do {
@@ -354,7 +354,7 @@ void read_config(char *filename)
 	      }
 	    } while (elements[i][0] != '#' && i < (ntypes - 1));
 	  }
-	  fsetpos(infile, &fpos);
+	  fsetpos(infile, &filepos);
 	}
 
 	/* read stress */
@@ -620,19 +620,17 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
-  mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector 
-					   3*natoms are real forces, 
+  mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector
+					   3*natoms are real forces,
 					   nconf cohesive energies,
 					   6*nconf stress tensor components */
 #ifdef EAM
-  mdim += 2 * ntypes;		/* ntypes dummy constraints */
   mdim += nconf;		/* nconf limiting constraints */
+  mdim += 2 * ntypes;		/* ntypes dummy constraints */
 #endif /* EAM */
 #ifdef APOT
   mdim += opt_pot.idxlen;	/* 1 slot for each analytic parameter -> punishment */
-#ifdef EAM
-  mdim += 1;			/* 1 slot for eam punishment */
-#endif /* EAM */
+  mdim += apot_table.number;	/* 1 slot for each analytic potential -> punishment */
 #endif /* APOT */
   /* copy forces into single vector */
   if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
@@ -758,10 +756,10 @@ void read_config(char *filename)
   }
 #endif
   for (i = 0; i < calc_pot.ncols; i++) {
+    calc_pot.step[i] =
+      (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
-      calc_pot.step[i] =
-	(calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
   }
@@ -825,7 +823,7 @@ void read_config(char *filename)
 
 /*******************************************************************************
  *
- * recalculate the slots of the atoms for tabulated potential 
+ * recalculate the slots of the atoms for tabulated potential
  *
  ******************************************************************************/
 

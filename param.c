@@ -1,7 +1,7 @@
 /******************************************************************************
 *
 *  param.c: Read in parameter files (tag based)
-* 
+*
 ******************************************************************************/
 /*
 *   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.29 $
-*  $Date: 2009/08/31 09:21:13 $
+*  $Revision: 1.30 $
+*  $Date: 2009/09/02 14:16:19 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -75,7 +75,7 @@ int   curline;			/* number of current line */
                   PARAM_STRPTR : String, deklariert als Zeiger auf char*
                   PARAM_INT : Integer-Wert(e)
                   PARAM_DOUBLE : Double-Wert(e)
-                  
+
    pnum_min ..... Minimale Anzahl der einzulesenden Werte
                   (Falls weniger Werte gelesen werden koennen als verlangt,
                   wird ein Fehler gemeldet).

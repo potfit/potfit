@@ -1,3 +1,9 @@
+CVS-20090902
++ [APOT] clean up internal punishments
++ pointers to important positions in force-vector added
++ improved output of punishment constraints
++ [apot] fix eopp parameter check
+
 CVS-20090831
 + print error messages to stderr (setup)
 

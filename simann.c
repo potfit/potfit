@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/~imd/potfit
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.39 $
-* $Date: 2009/06/16 12:04:39 $
+* $Revision: 1.40 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #include <math.h>
@@ -79,7 +79,7 @@ void randomize_parameter(int n, real *xi, real *v)
     if (v[n] > (max - min))
       v[n] = (max - min);
     temp += (rand * v[n]);
-    if (temp >= min && temp <= max)	// && apot_validate(n, temp))
+    if (temp >= min && temp <= max)
       done = 1;
   } while (!done);
   xi[idx[n]] = temp;
@@ -91,7 +91,7 @@ void randomize_parameter(int n, real *xi, real *v)
  *
  *  real normdist(): Returns a normally distributed random variable
  *          Uses random() to generate a random number.
- * 
+ *
  *****************************************************************/
 
 real normdist(void)
@@ -119,10 +119,10 @@ real normdist(void)
 
 /****************************************************************
  *
- *  makebump(*x, width, height, center): Displaces equidistant 
+ *  makebump(*x, width, height, center): Displaces equidistant
  *        sampling points of a function. Displacement is given by
  *        gaussian of given width and height.
- * 
+ *
  *****************************************************************/
 
 void makebump(real *x, real width, real height, int center)
@@ -151,7 +151,7 @@ void makebump(real *x, real width, real height, int center)
  *
  *  anneal(*xi): Anneals x a vector xi to minimize a function F(xi).
  *      Algorithm according to Cordona et al.
- * 
+ *
  *****************************************************************/
 
 void anneal(real *xi)
@@ -170,8 +170,8 @@ void anneal(real *xi)
 #ifndef APOT
   real  p;			/* Probability */
   real  width, height;		/* gaussian bump size */
-#else
-  int   new_pot = 0;
+/*#else*/
+/*  int   new_pot = 0;*/
 #endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
@@ -212,7 +212,7 @@ void anneal(real *xi)
 #ifdef APOT
 	  randomize_parameter(h, xi2, v);
 #else
-	  /* Create a gaussian bump, 
+	  /* Create a gaussian bump,
 	     width & hight distributed normally */
 	  width = fabs(normdist());
 	  height = normdist() * v[h];
@@ -232,7 +232,13 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-		new_pot = 1;
+		for (n = 0; n < ndim; n++)
+		  apot_table.values[apot_table.
+				    idxpot[n]][apot_table.idxparam[n]] =
+		    xopt[idx[n]];
+/*              printf("Writing new potential, F=%f\n", Fopt);*/
+	      write_pot_table(&apot_table, tempfile);
+/*                new_pot = 1;*/
 #endif
 	    }
 	  }
@@ -255,13 +261,9 @@ void anneal(real *xi)
 	naccept[n] = 0;
       }
 #ifdef APOT
-      if (new_pot == 1) {
-	for (n = 0; n < ndim; n++)
-	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
-	    xopt[idx[n]];
-	write_pot_table(&apot_table, tempfile);
-	new_pot = 0;
-      }
+/*      if (new_pot == 1) {*/
+/*        new_pot = 0;*/
+/*      }*/
 #endif
       printf("%d\t%f\t%d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
@@ -269,7 +271,7 @@ void anneal(real *xi)
       ff = fopen(flagfile, "r");
       if (NULL != ff) {
 	printf
-	  ("Annealing terminated in presence of break flagfile %s!\n",
+	  ("Annealing terminated in presence of break flagfile \"%s\"!\n",
 	   flagfile);
 	printf("Temperature was %f, returning optimum configuration\n", T);
 	for (n = 0; n < ndimtot; n++)
@@ -317,17 +319,14 @@ void anneal(real *xi)
   for (n = 0; n < ndimtot; n++)
     xi[n] = xopt[n];
 
-#ifdef APOT
-  for (n = 0; n < ndim; n++)
-    apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
-      xopt[idx[n]];
-#endif
-
   F = Fopt;
 #ifndef APOT
   if (tempfile != "\0")
     write_pot_table(&opt_pot, tempfile);
 #else
+  for (n = 0; n < ndim; n++)
+    apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
+      xopt[idx[n]];
   if (tempfile != "\0")
     write_pot_table(&apot_table, tempfile);
 #endif

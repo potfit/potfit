@@ -1,5 +1,5 @@
 /****************************************************************
-* 
+*
 *  potfit.h: potfit header file
 *
 *****************************************************************/
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.70 $
-* $Date: 2009/07/17 07:06:33 $
+* $Revision: 1.71 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -222,14 +222,19 @@ EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
 EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
 EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
 EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
-EXTERN real *forcep INIT(NULL);	/* pointer to forces */
-EXTERN real *energyp INIT(NULL);	/* pointer to energies */
-EXTERN real *stressp INIT(NULL);	/* pointer to stresses */
-EXTERN real *dummyp INIT(NULL);	/* pointer to dummy constraints */
-EXTERN real *limitp INIT(NULL);	/* pointer to limiting constraints */
-#ifdef APOT
-EXTERN real *punishp INIT(NULL);	/* pointer to punish contraints */
+
+/* pointers for force-vector */
+EXTERN int energy_p INIT(0);	/* pointer to energies */
+EXTERN int stress_p INIT(0);	/* pointer to stresses */
+#ifdef EAM
+EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
+EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
+#ifdef APOT
+EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints */
+EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
+#endif
+
 EXTERN char startpot[255];	/* file with start potential */
 EXTERN char maxchfile[255];	/* file with maximal changes */
 EXTERN char endpot[255];	/* file for end potential */

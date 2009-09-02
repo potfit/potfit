@@ -1,6 +1,6 @@
 /****************************************************************
-* 
-*  brent_r.c: Minmization of a multivariable function according to 
+*
+*  brent_r.c: Minmization of a multivariable function according to
 *      Brent's algorithm.
 *
 * Copyright (C) 1996, 1997, 1998, 1999, 2000 Brian Gough
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.10 $
-* $Date: 2008/09/26 06:49:45 $
+* $Revision: 1.11 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 /**** rewritten for double precision                                      ****

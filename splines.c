@@ -11,7 +11,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.18 $
-* $Date: 2008/09/18 14:34:10 $
+* $Revision: 1.19 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 
@@ -87,8 +87,8 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 
 /******************************************************************************
  *
- * splint_ed: interpolates the function with splines 
- *            (equidistant x[i]) 
+ * splint_ed: interpolates the function with splines
+ *            (equidistant x[i])
  *
  *****************************************************************************/
 
@@ -195,8 +195,8 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
 /******************************************************************************
  *
- * splint_dir: interpolates the function with splines 
- *            (equidistant AND NON-eq.dist x[i]) 
+ * splint_dir: interpolates the function with splines
+ *            (equidistant AND NON-eq.dist x[i])
  *            with known index position
  *
  *****************************************************************************/
@@ -222,7 +222,7 @@ real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
 
 /****************************************************************************
  *
- * splint_comb_dir_ed: calculates spline interpolation of a function 
+ * splint_comb_dir_ed: calculates spline interpolation of a function
  *            (return value)
  *            and its gradiend (grad), equidistant and non-eqd x[i]
  *            with known index position
@@ -250,7 +250,7 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
 
 /******************************************************************************
  *
- * splint_grad_dir: calculates the first derivative 
+ * splint_grad_dir: calculates the first derivative
  *            from spline interpolation (equidistant and NON-eqd. x[i])
  *            with known index position
  *
@@ -328,7 +328,7 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
 
 /******************************************************************************
  *
- * splint_ne: interpolates the function with splines 
+ * splint_ne: interpolates the function with splines
  *            (nonequidistant x[i])
  *
  *****************************************************************************/

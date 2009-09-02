@@ -1,8 +1,8 @@
 /****************************************************************
-* 
-* linmin_r.c: Finds the minimum of a multivariable function along 
+*
+* linmin_r.c: Finds the minimum of a multivariable function along
 *     a certain direction
-* 
+*
 *****************************************************************/
 /*
 *   Copyright 2002-2008 Peter Brommer, Franz G"ahler
@@ -11,7 +11,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2008/09/26 06:09:51 $
+* $Revision: 1.16 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
@@ -49,7 +49,7 @@ real *xicom, *delcom;
 
 real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
 	      real *x2, real *fret1, real *fret2)
-/* takes vector del (direction of search), xi (originating point), 
+/* takes vector del (direction of search), xi (originating point),
    n,m (dimensions),
    x1, x2 (two best locations),
    fret1, fret2 (return vectors) as arguments */

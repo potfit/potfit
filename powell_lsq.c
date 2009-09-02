@@ -1,4 +1,3 @@
-
 /******************************************************************************
 *
 *  PoLSA - Powell Least Square Algorithm
@@ -33,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.42 $
-* $Date: 2009/07/17 07:06:33 $
+* $Revision: 1.43 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 /******************************************************************************
@@ -117,8 +116,6 @@ void powell_lsq(real *xi)
   for (i = 0; i < ndimtot; i++)
     delta[i] = 0.;
 
-/*  fprintf(stderr, "Calculating force in powell_lsq.c\n");*/
-/*  fflush(stderr);*/
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
 #ifndef APOT
@@ -127,9 +124,11 @@ void powell_lsq(real *xi)
   fflush(stdout);
 #endif
 
-  if (F < NOTHING)
+  if (F < NOTHING) {
+    printf("Error already too small to optimize, aborting ...\n");
     return;			/* If F is less than nothing, */
-  /* what is there to do? */
+    /* what is there to do? */
+  }
 
   (void)copy_vector(fxi1, force_xi, mdim);
 #ifdef APOT
@@ -140,8 +139,6 @@ void powell_lsq(real *xi)
     m = 0;
 
     /* Init gamma */
-/*    fprintf(stderr, "Initialising gamma in powell_lsq.c\n");*/
-/*    fflush(stderr);*/
     if (i = gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
 #ifndef NORESCALE
@@ -178,8 +175,6 @@ void powell_lsq(real *xi)
 	break;
       }
     }
-/*    fprintf(stderr, "Initialising lineqsys in powell_lsq.c\n");*/
-/*    fflush(stderr);*/
     (void)lineqsys_init(gamma, lineqsys, fxi1, p, ndim, mdim);	/*init LES */
     F3 = F;
     breakflag = 0;
@@ -190,8 +185,6 @@ void powell_lsq(real *xi)
       j = 1;			/* 1 rhs */
 
       /* Linear Equation Solution (lapack) */
-/*      fprintf(stderr, "Solving lineqsys in powell_lsq.c\n");*/
-/*      fflush(stderr);*/
 #ifdef ACML
       dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
 	     &les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
@@ -205,8 +198,6 @@ void powell_lsq(real *xi)
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2],
 	     q[3], q[4], q[5], q[6], q[7]);
 #endif
-/*      fprintf(stderr, "Done solving lineqsys in powell_lsq.c\n");*/
-/*      fflush(stderr);*/
       if (i > 0 && i <= ndim) {
 	sprintf(errmsg, "Linear equation system singular after step %d i=%d",
 		m, i);
@@ -221,7 +212,7 @@ void powell_lsq(real *xi)
 #ifndef APOT
 	if ((usemaxch) && (maxchange[idx[i]] > 0) &&
 	    (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
-	  /* something seriously went wrong, 
+	  /* something seriously went wrong,
 	     parameter idx[i] out of control */
 	  sprintf(errmsg,
 		  "Direction vector component %d out of range in step %d\n",
@@ -257,6 +248,10 @@ void powell_lsq(real *xi)
       /* (c) minimize F(xi) along vector delta, return new F */
       F = linmin_r(xi, delta, F, ndim, mdim, &xi1, &xi2, fxi1, fxi2);
 
+/*      for (i=0;i<ndim;i++)*/
+/*              printf("%f ",xi[idx[i]]);*/
+/*      printf(" - F=%f\n",F);*/
+
 #ifdef DEBUG
       printf("%f %6g %f %f %d\n", F, cond, ferror, berror, i);
 #endif
@@ -275,7 +270,7 @@ void powell_lsq(real *xi)
 	  temp2 = temp;
 	};
 
-      /* (f) update gamma, but if fn returns 1, matrix will be sigular, 
+      /* (f) update gamma, but if fn returns 1, matrix will be sigular,
          break inner loop and restart with new matrix */
       if (gamma_update
 	  (gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, mdim, ndimtot, F)) {
@@ -318,7 +313,7 @@ void powell_lsq(real *xi)
     ff = fopen(flagfile, "r");
     if (NULL != ff) {
       printf
-	("Fit terminated prematurely in presence of break flagfile %s!\n",
+	("Fit terminated prematurely in presence of break flagfile \"%s\"!\n",
 	 flagfile);
       break;
     }
@@ -350,8 +345,10 @@ void powell_lsq(real *xi)
   } while ((F3 - F > PRECISION / 10.) || (F3 - F < 0));
   /* outer loop */
 
-  if (fabs(F3 - F) < PRECISION)
+  if (fabs(F3 - F) < PRECISION && F3 != F)
     printf("Precision reached: %10g\n", F3 - F);
+  else if (F3 == F)
+    printf("Could not find any further improvements, aborting!\n");
   else
     printf("Precision not reached!\n");
   /* Free memory */
@@ -435,8 +432,8 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 
 /*******************************************************************
 *
-* gamma_update: Update column j of gamma ( to newly calculated 
-*           numerical derivatives (calculated from fa, fb 
+* gamma_update: Update column j of gamma ( to newly calculated
+*           numerical derivatives (calculated from fa, fb
 *           at a,b); normalize new vector.
 *
 *******************************************************************/
@@ -472,7 +469,7 @@ int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
 
 /*******************************************************************
 *
-* lineqsys_init: Initialize LinEqSys matrix, vector p in 
+* lineqsys_init: Initialize LinEqSys matrix, vector p in
 *              lineqsys . q == p
 *
 *******************************************************************/
@@ -582,7 +579,7 @@ void copy_vector(real *a, real *b, int n)
 
 /******************************************************************
 *
-* matdotvec: Calculates the product of matrix a (n x m) with column 
+* matdotvec: Calculates the product of matrix a (n x m) with column
 * vector x (dim m), Result y (dim n). (A . x = m)
 *
 ******************************************************************/

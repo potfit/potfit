@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2009/08/31 09:21:04 $
+* $Revision: 1.24 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -50,8 +50,8 @@ void init_mpi(int *argc_pointer, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD, &num_cpus);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
   if (0 == myid) {
-    fprintf(stderr,"%s\n", argv[0]);
-    fprintf(stderr,"Starting up MPI with %d processes.\n", num_cpus);
+    fprintf(stderr, "%s\n", argv[0]);
+    fprintf(stderr, "Starting up MPI with %d processes.\n", num_cpus);
   }
 }
 
@@ -282,7 +282,7 @@ void broadcast_params()
 #endif
 
   /* Distribute configurations */
-  /* Each node: nconf/num_cpus configurations. 
+  /* Each node: nconf/num_cpus configurations.
      Last nconf%num_cpus nodes: 1 additional config */
   each = (nconf / num_cpus);
   odd = (nconf % num_cpus) - num_cpus;

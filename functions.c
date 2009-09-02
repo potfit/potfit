@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.20 $
-* $Date: 2009/08/19 09:12:42 $
+* $Revision: 1.21 $
+* $Date: 2009/09/02 14:16:19 $
 *****************************************************************/
 
 #ifdef APOT
@@ -330,10 +330,10 @@ void universal_value(real r, real *p, real *f)
 }
 
 /******************************************************************************
-* 
-* template for new potential function called mypotential 
+*
+* template for new potential function called mypotential
 * for further information plase have a look at the online documentation
-* 
+*
 * http://www.itap.physik.uni-stuttgart.de/~imd/potfit/potfit.html
 *
 ******************************************************************************/
@@ -376,11 +376,11 @@ int apot_check_params(real *params)
       k = j + 5;
       if (params[k] > 2 * M_PI)
 	do {
-	  params[k] -= M_PI;
+	  params[k] -= 2 * M_PI;
 	} while (params[k] > 2 * M_PI);
       if (params[k] < 0)
 	do {
-	  params[k] += M_PI;
+	  params[k] += 2 * M_PI;
 	} while (params[k] < 0);
     }
 
@@ -434,7 +434,7 @@ real apot_punish(real *params, real *forces)
     if (strcmp(apot_table.names[i], "universal") == 0) {
       x = params[j + 2] - params[j + 1];
       if (fabs(x) < 1e-6) {
-	forces[mdim - 1] = APOT_PUNISH / (x * x);
+	forces[mdim - apot_table.number + i] = APOT_PUNISH / (x * x);
 	tmpsum += APOT_PUNISH / (x * x);
       }
     }
@@ -460,7 +460,7 @@ void debug_apot()
   int   i, j;
 
   fflush(stdout);
-  fprintf(stderr, "\n\n##############################################\n");
+  fprintf(stderr, "\n##############################################\n");
   fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
   fprintf(stderr, "##############################################\n");
   fprintf(stderr,
@@ -477,6 +477,7 @@ void debug_apot()
 	      apot_table.pmin[i][j], apot_table.pmax[i][j]);
     }
   }
+#ifndef EAM
   if (disable_cp) {
     fprintf(stderr, "\nchemical potentials are DISABLED!\n");
   } else {
@@ -496,6 +497,7 @@ void debug_apot()
       }
     }
   }
+#endif
   exit(2);
 }
 
