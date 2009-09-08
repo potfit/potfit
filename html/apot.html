@@ -24,9 +24,9 @@ chemical potentials or the smooth cutoff.
 Chemical Potentials</a></h2>
 <p>
 For fitting simple pair potentials the use of the chemical potentials will always be
-enabled unless the <b>disable_cp</b> switch in the configuration file is set to 1.<br>
+enabled unless the <b>disable_cp</b> switch in the configuration file is set to 1.<br />
 This option effectively adds another energy term into the calculations, the energy
-will be calculated as <br /><img src="chempot.png" alt="E_tot=\sum_{species}\mu_iN_i+\sum_{pairs}V(r)"><br>
+will be calculated as <br /><img src="chempot.png" alt="E_tot=\sum_{species}\mu_iN_i+\sum_{pairs}V(r)"><br />
 With this feature enabled, the potential file has to be altered, an additional block
 has to be added right after the header.</p>
 <pre>
@@ -39,9 +39,9 @@ cp_Mg -1 -10 0
 cp_Zn -1 -10 0
 </pre>
 <p>There has to be one line per element, starting with cp_, the rest of the name 
-will be replaced by the element name (if the #C line is available) or the element number.<br>
-The following three values are the starting value, the minimum and maximum for that parameter.<br>
-<br>
+will be replaced by the element name (if the #C line is available) or the element number.<br />
+The following three values are the starting value, the minimum and maximum for that parameter.<br />
+<br />
 For EAM-potentials this option is not available and lines beginning with cp_ will be ignored.
 </p>
 

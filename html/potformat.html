@@ -95,6 +95,7 @@ All of the above apply here, except for the G line.</p>
 
 <p>
 Every analytic potential has to be specified as follows:
+</p>
 <pre>
 type identifier
 cutoff value
@@ -103,7 +104,7 @@ p_1 value min max
 p_2 value min max
 ...
 </pre>
-The <b>type</b> keyword has to be followed by the <a href="models.html">unique identifier</a> for
+<p>The <b>type</b> keyword has to be followed by the <a href="models.html">unique identifier</a> for
 your potential. You can also enable the smooth cutoff option by adding a <b>_sc</b> at the end.
 After the <b>cutoff</b> keyword the cutoff radius for this potential has to be given. This is
 independant for every potential and can thus be different for different potentials.
@@ -111,7 +112,7 @@ The next line starting with # is a comment which is written by <em>potfit</em>.
 It indicates the minimum neighbour distance for this interaction.
 Following these lines, the values for the analytic parameters have to be specified.
 Each line starts with an identifier for that parameter followed by the starting value,
-the minimum and maximum value for that parameter. The order of these parameters is fixed, for the implemented analytic functions the order can be found <a href="models.html">here</a>.
+the minimum and maximum value for that parameter. The order of these parameters is fixed, for the implemented analytic functions the order can be found <a href="models.html">here</a>.</p>
 
 <p> A sample format 0 potential file for a binary system with an EAM
 potential is available <a href="sample0.pt.txt">here</a>.
