@@ -1,6 +1,7 @@
 
 <!--#include virtual="potfithead.html" -->
-<!-- Copyright (c)  2005-2008  Peter Brommer, Franz Gaehler, ITAP.         -->
+<!-- Copyright (c)  2005-2009  Peter Brommer, Franz Gaehler, 		   -->
+<!-- Daniel Schopf, ITAP.         					   -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
 <!-- or any later version published by the Free Software Foundation;       -->
@@ -14,10 +15,10 @@
 <h1>Potential File Format</h1>
 
 <p>
-The interactions supported by <em>potfit</em> are defined in terms of
-tabulated functions. Typical such functions are central pair
+The interactions currently supported by <em>potfit</em> are either defined in terms of
+tabulated functions or given by analytic parameters. Typical such functions are central pair
 potentials, which depend on the distance of two atoms and the two atom
-types involved. Such functions are tabulated with steps which are
+types involved. For tabulated potentials such functions are given with steps which are
 equidistant in the <b>distance</b>, which is the fundamental
 difference to <a
 href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a>, where
@@ -25,7 +26,8 @@ those functions are tabulated with steps equidistant in the square of
 the distance. For EAM interactions one also needs functions which
 depend on one atom type and the host electron density at the position
 of that atom. Such functions are tabulated with steps equidistant in
-the electron density.</p>
+the electron density. For analytic potentials only the parameters and the analytic form have
+to be given.</p>
 
 <h2>Potential File Header</h2>
 
@@ -41,6 +43,7 @@ following format:</p>
 <pre>
 ## this is just a comment line
 #F 3 n
+#C Mg Zn
 #I 0 1 .... n entries (this line is optional)
 #G 2 3 .... n entries (this line is optional)
 ## this is another comment line
@@ -50,11 +53,11 @@ following format:</p>
 <p>
 Header lines start with the character '#'. If the second character is
 'F', then the format specifier 3 (to distinguish from IMD potential
-files, format types 1 or 2) and the number n of 
-data columns of the tabulated functions are read from the rest of the 
-line. The very last header line must have a character 'E' at the 
-second position. Header lines with a second character different from 
-'F', 'E' or 'G' are treated as comments, but it is recommended that such 
+files, format types 1 or 2) and the number n of
+data columns of the tabulated functions are read from the rest of the
+line. The very last header line must have a character 'E' at the
+second position. Header lines with a second character different from
+'C', 'F', 'E' or 'G' are treated as comments, but it is recommended that such
 lines start with two '#' characters. </p>
 
 <p> The line I defines whether a whole potential function should be kept
@@ -72,34 +75,47 @@ be n digits in total. The information is bit-coded, '0' declares both
 lower and upper gradient fixed, '1' allows adjusting the gradient at
 the upper end, '2' at the lower end, and '3' at both ends. </p>
 
-<!--
-<h2>Format 0</h>
+<p> The line C specifies the chemical elements the potentials belong to. Currently this line is not
+read for potentials, it is only given in the output to facilitate the handling of potential files.
+In addition there will also be a comment on how the potentials are ordered, for the ternary system
+AlMnPd a header for an EAM-potential could look like the following:</p>
+<pre>
+#F 0 12
+#C Al Mn Pd
+## Al-Al Al-Mn Al-Pd Mn-Mn Mn-Pd Pd-Pd Al Mn Pd Al Mn Pd
+#I 0 0 0 0 0 0 0 0 0 0 0 0
+#E
+</pre>
+
+<h2>Format 0</h2>
 
 <p>
 The potential format 0 is used for analytical potentials exclusively.
 All of the above apply here, except for the G line.</p>
-<p>
-To add chemical potentials to the calculations, just add 
-<pre>
-cp_# value min max
-</pre>
-for every atom type in the simulation. The # can be a number, the element
-or anything else.</p>
 
 <p>
 Every analytic potential has to be specified as follows:
 <pre>
-type mypotential_sc
+type identifier
 cutoff value
+# rmin 1.0
 p_1 value min max
 p_2 value min max
 ...
 </pre>
-The <b>type</b> keyword has to be followed by the unique identifier for
-your potential (in this case <em>mypotential</em>). You can then also
-enable the smooth cutoff option by adding a <b>_sc</b> at the end.
+The <b>type</b> keyword has to be followed by the <a href="models.html">unique identifier</a> for
+your potential. You can also enable the smooth cutoff option by adding a <b>_sc</b> at the end.
+After the <b>cutoff</b> keyword the cutoff radius for this potential has to be given. This is
+independant for every potential and can thus be different for different potentials.
+The next line starting with # is a comment which is written by <em>potfit</em>.
+It indicates the minimum neighbour distance for this interaction.
+Following these lines, the values for the analytic parameters have to be specified.
+Each line starts with an identifier for that parameter followed by the starting value,
+the minimum and maximum value for that parameter. The order of these parameters is fixed, for the implemented analytic functions the order can be found <a href="models.html">here</a>.
 
--->
+<p> A sample format 0 potential file for a binary system with an EAM
+potential is available <a href="sample0.pt.txt">here</a>.
+</p>
 
 <h2>Format 3</h2>
 
@@ -124,7 +140,7 @@ different for the different data columns.</p>
 <pre>
 V_00 V_01 ... V_0N V_11 ... V_1N ... V_NN  (pair interaction)
 rho_0 rho_1 ... rho_N  (EAM electron transfer)
-U_0 U_1 ... U_N        (EAM embedding energy)
+F_0 F_1 ... F_N        (EAM embedding energy)
 </pre>
 
 <p> If the 'G' header line is specified, each data block must be
@@ -145,7 +161,7 @@ potential is available <a href="sample3g.pt.txt">with</a> or
 upper triangle of this matrix is given. </li>
 <li> The transfer function rho_i depends on the type of the donating
 atom only. </li>
-<li> The embedding function U_i depends on the type of the accepting
+<li> The embedding function F_i depends on the type of the accepting
 (embedded) atom only.</li>
 </ul>
 

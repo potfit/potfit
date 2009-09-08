@@ -30,9 +30,11 @@ to vasp POSCAR files.</td></tr>
     <td>Converts various <a
 href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> and
 <em>potfit</em> potential formats.</td></tr>
+<tr><td><a href="#listconfig">list_config.sh</a></td>
+    <td>List all configurations in a configuration file.</td></tr>
 <tr><td><a href="#awk">awk scripts</a></td>
     <td>A series of awk scripts to handle various tasks with potential files,
-    like combining, appending, creating from analytical functions...</td></tr>
+    like combining, appending, creating from analytical functions, generating from scratch, plotting,...</td></tr>
 <tr><td><a href="#potscale">potscale</a></td>
     <td>Performs gauge transformations of <em>potfit</em> EAM
     potentials.</td></tr>
@@ -60,13 +62,15 @@ output to force files.</p>
 <pre>
 Compilation: make vasp2force
 
-Usage: vasp2force [-f] [-s list]
+Usage: vasp2force.sh: [-c list] [-e file] [-f] [-l] [-r] [-s list] &lt;OUTCAR files&gt;
 </pre>
-<p> Reads information from the files POSCAR and OUTCAR in the current
-directory. Requires a file called single_atom_energies in the
-<b>parent</b> directory, containing the energy of a single free atom
+<p> Reads information from all OUTCAR files in the current directory. 
+&lt;OUTCAR files&gt; is an optional list of files, if not given all files 
+matching OUTCAR* will be scanned (it is possible to read gzipped 
+files ending with .gz).<br />
+An optional file can be specified, containing the energy of a single free atom
 calculated by <a href="http://cms.mpi.univie.ac.at/vasp/">vasp</a> in
-a single line in the same order as in the POTCAR file, e.g.:</p>
+a single line in the same order as in the OUTCAR file, e.g.:</p>
 <pre>
 -0.000219 -0.993872 -0.855835
 # Al      Co        Ni
@@ -76,8 +80,17 @@ configuration to standard output. If no options are given, force data is
 generated from each ionic step.</p>
 <p>Options:</p>
 <dl>
+<dt>-c &lt;list&gt;</dt>
+<dd>list of chemical species to use (e.g. "vasp2force.sh -c Al=0,Mn=1,Pd=2")<br />
+This will force all atom types in all configurations to be consistent.</dd>
+<dt>-e &lt;file&gt;</dt>
+<dd>Specify file to read single atom energies from; if not found, "0" will be used for every atom type.</dd>
 <dt>-f</dt>
 <dd>Uses only final configuration of multiple ionic steps.</dd>
+<dt>-l</dt>
+<dd>List all chemical species found in OUTCAR and exit.</dd>
+<dt>-r</dt>
+<dd>Scan recursively for OUTCAR files in every subdirectory.</dd>
 <dt>-s list</dt>
 <dd>List is a comma separated list of ionic steps to use, e.g. "1,4,7,9". The
 sequence of the force data is always the same as in the OUTCAR file,
@@ -122,6 +135,10 @@ files. The order of the different atom types can be changed with the
 <em>potfit</em> to IMD use <em>potfit</em> with <tt>opt 0</tt> in
 parameter file. 
 </p>
+
+
+<h2><a id="listconfig" name="listconfig">list_config.sh</a></h2>
+
 <h2><a id="awk" name="awk">awk scripts</a></h2>
 <p>A series of awk scripts to help with tasks concerning potential files. </p>
 <pre>
@@ -182,6 +199,39 @@ potential.
 <li>f(r)=a<sub>1</sub>*(r-a<sub>2</sub>)^2 + a<sub>3</sub> &ndash; Parabola
 with vertex (a<sub>2</sub>,a<sub>3</sub>).</li>
 </ol>
+
+<h3>makeapot</h3>
+<p>
+Generate analytic potential files for <em>potfit</em> from scratch.
+</p>
+<pre>
+Usage: makeapot [-cp] [-n x identifier]
+</pre>
+<p>
+<tt>makeapot</tt> takes two different types of parameters. For analytic pair potentials
+you can add chemical potentials with the <tt>-cp</tt> switch.<br />
+The second type of parameter is the number and type of a specific potential. The type is the same
+as the <a href="models.html">identifier</a> for the analytic potentials.</p>
+<p>
+The command 
+</p>
+<pre>
+makeapot -n 6 eopp_sc -n 3 csw_sc -n 3 pohlong
+</pre>
+<p>
+will generate a potential file with 6 eopp_sc, 3 csw_sc and 3 pohlong potentials and write
+it to the standard output.
+</p>
+
+<h3>plotapot</h3>
+<p>
+This utility plots an analytic potential with gnuplot. 
+</p>
+<pre>
+Usage: plotapot &lt;potential file&gt; &lt;radial distribution file&gt;
+</pre>
+<p>
+There are no options, you have to give the potential file, the radial distribution file is optional.</p>
 
 <h2><a id="potscale" name="potscale">potscale - not maintained any more.</a></h2>
 <p>potscale performs gauge transformations on EAM potentials. </p>

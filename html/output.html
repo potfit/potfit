@@ -15,7 +15,9 @@
 <h1>Standard Output</h1>
 <p><em>potfit</em> prints information on the minimization progress to
 stdout. Additionally all input and output files used are also written
-to standard output. After optimizing the potential, the local
+to standard output. The output will also be written to standard output unless
+the <a href="params.html"><tt>output_prefix</tt> parameter</a> is set. <br />
+After optimizing the potential, the local
 densities (eam only) are printed, followed by the terms in the sum of
 squares. The latter consist of a number identifying either atom or
 configuration, then the contribution to the sum of squares, the value
@@ -23,7 +25,7 @@ calculated from the potential, the reference value and finally the
 relative deviation of calculated and reference value.</p>
 
 
-<h1>Output Files</h1>
+<h1>Potfit Output Files</h1>
 
 <h2><a id="endpot" name="endpot">Final potential</a></h2>
 
@@ -56,4 +58,35 @@ interpolation internally, the plotted functions are an accurate
 representation of the potentials used.
 </p>
 
+<h2><a id="output" name="output"></a>Output files</h2>
+<p>
+If the <a href="params.html"><tt>output_prefix</tt> parameter</a> is set in the
+configuration file, <em>potfit</em> will write several files, else all information
+will be printed to standard output.<br>
+In detail the files written are:<br></p>
+<table summary="Overview of the output files written by potfit">
+	<tr>
+		<td width=150>.force</td>
+		<td>contains the calculated and reference forces</td>
+	</tr>
+	<tr>
+		<td>.energy</td>
+		<td>contains the calculated and reference energies</td>
+	</tr>
+	<tr>
+		<td>.stress</td>
+		<td>contains the calculated and reference stresses</td>
+	</tr>
+	<tr>
+		<td>.punish</td>
+		<td>contains the different punishments</td>
+	</tr>
+	<tr>
+		<td>.rho_loc</td>
+		<td>local electron density</td>
+	</tr>
+</table><br />
+<p>
+All these files contain header lines, describing the following data.
+</p>
 <!--#include virtual="potfitfoot.html" -->

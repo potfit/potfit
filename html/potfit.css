@@ -31,6 +31,11 @@ p.indented { margin-left: 3%; }
 tr { vertical-align: top; }
 th { text-align: left; }
 
+table.apot { border-width: 2pt; border-spacing: 3pt; }
+th.apot { vertical-align: middle; text-align: center; font-size: 16pt; }
+td.apot { vertical-align: middle; text-align: center; font-size: 14pt; font-family:monospace; }
+tr.apot { height: 70pt; }
+
 div { 
   font-family: serif; 
   /* font-size: 11pt; */ 
@@ -44,9 +49,10 @@ span.sub {
   margin-left: 1.2em;
 }
 
-div.nowrap { whitespace: nowrap; }
+/*div.nowrap { whitespace: nowrap; }*/
 
 .white { color: white; }
 .red   { color: red; }
 .blue  { color: blue; }
+ 
 

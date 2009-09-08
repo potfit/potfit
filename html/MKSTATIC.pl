@@ -9,7 +9,7 @@
 # NOTE: This is a very simple parser.
 #       Server side include commands may
 #       not exceed one line!
-#       They may also not be recursive 
+#       They may also not be recursive
 #       for the moment (i.e. an included
 #       file may not contain SSIs).
 
@@ -22,8 +22,8 @@ opendir D, "." or die "Cannot open \".\". Exiting";
 @all = readdir D;
 closedir D;
 
-@html = grep /.*\.html/, @all;
-@css  = grep /.*\.css/, @all;
+@html = grep /^[^\.].*\.html/, @all;
+@css  = grep /^[^\.].*\.css/, @all;
 @gif  = grep /.*\.gif/, @all;
 @png  = grep /.*\.png/, @all;
 @jpg  = grep /.*\.jpg/, @all;
@@ -35,6 +35,7 @@ closedir D;
 foreach $i ( @cp ) {
   copy $i, "STATIC/$i"  or die "Cannot copy $i to STATIC/. Exiting";
 }
+`cp -r potentials STATIC`;
 
 foreach $i ( @parse ) {
   open IN,  "<$i"         or die "Cannot open $i for reading. Exiting";

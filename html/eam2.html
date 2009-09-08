@@ -55,20 +55,16 @@ Ideas from the Density Functional Theory
 or the Tight Binding formalism may lead to the following form for the 
 total energy:</p>
 
-<p>
-E<sub>tot</sub> = &sum;<sub>i,j</sub><sup>N</sup>
-&Phi;<sub>ij</sub>(r<sub>ij</sub>) + &sum;<sub>i</sub><sup>N</sup>
-F(n<sup>h</sup><sub>i</sub>) <br />
-n<sup>h</sup><sub>i</sub> = &sum;<sub>j</sub>
-&rho;<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) </p>
+<img src="eam1.png" alt="E_{tot}=\frac{1}{2}\sum_{i,j}^N\Phi_{ij}(r_{ij})+\sum_iF_i(n_i)"><br>
+<img src="eam2.png" alt="n_i=\sum_{j\neq i}\rho_j(r_{ij})">
 
 <p>
 While an identification of the  pair potential term  
 &Phi;<sub>ij</sub>(r<sub>ij</sub>) with
 the electrostatic core-core repulsion, and of the cohesive term  
-F(n<sup>h</sup><sub>i</sub>) with the energy the ion core
+F<sub>i</sub>(n<sub>i</sub>) with the energy the ion core
 gets when it is "embedded" in the local electron density
-n<sup>h</sup><sub>i</sub> may be tempting, it is nevertheless
+n<sub>i</sub> may be tempting, it is nevertheless
 without physical justification. Due to invariance properties of the
 EAM potential, a embedding energy term linear in the "electron"
 density can be described by pair interactions, thus shifting
@@ -79,7 +75,7 @@ only lies in the combination of both. </p>
 <p>
 The local electron density  
 is constructed as a superposition of contributions
-&rho;<sup>at</sup><sub>ij</sub>(r<sub>ij</sub>) from neighboring
+&rho;<sub>j</sub>(r<sub>ij</sub>) from neighboring
 atoms. </p>
 
 <p>

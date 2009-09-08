@@ -36,6 +36,7 @@ hash symbol # and has the following format:</p>
 
 <pre>
 #N natoms useforce
+#C type_0 type_1 type_2 ...
 #X boxx.x boxx.y boxx.z
 #Y boxy.x boxy.y boxy.z
 #Z boxz.x boxz.y boxz.z
@@ -45,13 +46,13 @@ hash symbol # and has the following format:</p>
 </pre>
 
 The lines starting with #N, #X, #Y, #Z, #E and #F are mandatory, while the
-line starting with #S is optional. All other lines are ignored.
+lines starting with #C and #S are optional. All other lines are ignored.
 #N must head the first line specifying the number of atoms in the
 configuration and an integer flag to control whether to use or to ignore
 force and stress information in this configuration. #F signifies the last
 header line. 
 
-All parameters are numbers and have the following meaning:
+All parameters except the type_n are numbers and have the following meaning:
 <table summary="entries in configuration file header">
 <tr><td>natoms:</td><td>number of atoms in configuration</td></tr>
 <tr><td>useforce:</td><td>if 0, forces from this configuration are
@@ -60,13 +61,16 @@ ignored</td></tr>
 <tr><td>coh_eng:</td><td>cohesive energy per atom</td></tr>
 <tr><td>stress.ij:</td><td>components of stress tensor</td></tr>
 </table>
+<br>
+The #C line contains information about the chemical elements and the corresponding atom types contained in this configuration. The elements are assigned to the corresponding atom types and have to be consistant throughout the configuration file.
 
 <p>
 Note that:</p>
 <ul>
-<li> In all directions the sample must have a size of at least 
+<li> In all directions the sample should have a size of at least 
      the potential cutoff distance. This distance is measured
-     perpendicular to the corresponding face.</li>
+     perpendicular to the corresponding face. If this is not the case, 
+     additional periodic copes of the sample will be used for the simulation.</li>
 </ul>
 
 <h2><a id="oldheader" name="oldheader">Deprecated header format</a></h2>
