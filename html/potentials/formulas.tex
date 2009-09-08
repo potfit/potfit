@@ -1,0 +1,85 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{amstex}
+
+% latex file for automatic generation of formulas
+% lines beginning with %% will be used for image names
+% put each formula in an extra eqnarray* environement
+% first line contains the actual formulas
+% the second line is for the order of the parameters
+
+\begin{document}
+
+\begin{eqnarray*}
+%% lj
+V(r)=4\epsilon\left[\left(\frac{\sigma}{r}\right)^{12}-\left(\frac{\sigma}{r}\right)^{6}\right]\\
+\epsilon,\sigma
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% morse
+V(r)=D_e ( 1-e^{-a(r-r_e)} )^2 \\
+D_e,a,r_e
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% softshell
+V(r)=\left(\frac{\alpha}{r}\right)^\beta \\
+\alpha,\beta
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% power_decay
+V(r)=\alpha\left(\frac{1}{r}\right)^\beta \\
+\alpha,\beta
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% exp_decay
+V(r)=\alpha \exp\left(-\beta r\right) \\
+\alpha,\beta
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% eopp
+V(r)=\frac{C_1}{r^{\eta_1}}+\frac{C_2}{r^{\eta_2}}\cos\left(kr+\varphi\right) \\
+C_1,\eta_1,C_2,\eta_2,k,\varphi
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% eopp_exp
+V(r)=C_1\exp\left(-\eta_1r\right)+\frac{C_2}{r^{\eta_2}}\cos\left(kr+\varphi\right) \\
+C_1,\eta_1,C_2,\eta_2,k,\varphi
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% meopp
+V(r)=\frac{C_1}{\left(r-r_0\right)^{\eta_1}}+\frac{C_2}{r^{\eta_2}}\cos\left(kr+\varphi\right) \\
+C_1,\eta_1,C_2,\eta_2,k,\varphi, r_0
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% universal
+F(n)=F_0\left[\frac{q}{q-p}n^p-\frac{p}{q-p}n^q\right]+F_1n \\
+F_0,p,q,F_1
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% pohlong
+F(n)=F_0\left[1-\gamma\ln n\right]n^\gamma \\
+F_0,\gamma
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% parabola
+\rho(r)=ar^2+br+c \\
+a,b,c
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% csw
+\rho(r)=\frac{1+a_1\cos\left(\alpha r\right)+a_2\sin\left(\alpha r\right)}{r^\beta} \\
+a_1,a_2,\alpha,\beta
+\end{eqnarray*}
+
+\end{document}

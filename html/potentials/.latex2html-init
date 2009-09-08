@@ -1,0 +1,2 @@
+$EXTRA_IMAGE_SCALE=1.5;
+$DVIPSOPT = ' -E'; # remove -Ppdf flag
