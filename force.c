@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.73 $
-* $Date: 2009/09/11 08:30:19 $
+* $Revision: 1.74 $
+* $Date: 2009/09/11 08:34:06 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -362,14 +362,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      if (typ2 == typ1) {
 /* then transfer(a->b)==transfer(b->a) */
 		if (neigh->r < calc_pot.end[col2]) {
-		  printf("col2=%d slot=%d shift=%f step=%f\n", col2,
-			 neigh->slot[1], neigh->shift[1], neigh->step[1]);
-		  printf("begin=%f r=%f\n", calc_pot.begin[col2], neigh->r);
-		  printf("%d\n", calc_pot.first[col2]);
 		  fnval = splint_dir(&calc_pot, xi, col2,
 				     neigh->slot[1],
 				     neigh->shift[1], neigh->step[1]);
-		  printf("rho=%f\n", fnval);
 		  atom->rho += fnval;
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
