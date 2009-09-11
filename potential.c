@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.70 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.71 $
+* $Date: 2009/09/11 08:30:19 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -200,6 +200,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     error(msg);
   }
 #ifdef APOT
+#ifdef EAM
+  disable_cp = 1;
+#endif
   /* allocate memory for analytic potential table */
   apt->number = size;
   apt->total_par = 0;
@@ -208,6 +211,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   apt->end = (real *)malloc(size * sizeof(real));
   apt->param_name = (char ***)malloc(size * sizeof(char **));
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
+  apt->co_pol = (real **)malloc(size * sizeof(real *));
   if (!disable_cp) {
     apt->values = (real **)malloc((size + 1) * sizeof(real *));
     apt->values[size] = (real *)malloc(ntypes * sizeof(real));
@@ -240,9 +244,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	    filename);
     error(msg);
   }
-#ifdef EAM
-  disable_cp = 1;
-#endif
 #endif
   switch (format) {
 #ifdef APOT
@@ -454,8 +455,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  }
       }
     }
-    printf("Enabled chemical potentials with %d extra composition node(s).\n",
-	   (compnodes == -1 ? 0 : compnodes));
+    if (compnodes != -1)
+      printf
+	("Enabled chemical potentials with %d extra composition node(s).\n",
+	 compnodes);
     if (compnodes == -1)
       compnodes = 0;
   }
@@ -536,6 +539,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->pmin[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->pmax[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
+    if (smooth_pot[i] == 1)
+      apt->co_pol[i] = (real *)malloc(5 * sizeof(real));
 
     if (NULL == apt->values[i] || NULL == apt->pmin[i]
 	|| NULL == apt->pmax[i] || NULL == apt->param_name[i]) {
@@ -544,18 +549,18 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       error(msg);
     }
 
-    /* check for comment */
-
+    /* check for comments */
     do {
       j = fgetc(infile);
     } while (j != 10);
 
+    fgetpos(infile, &filepos);
     fgets(buffer, 255, infile);
-    if (buffer[0] == '#') {
-      comment = 1;
-    } else {
-      comment = 0;
+    while (buffer[0] == '#') {
+      fgetpos(infile, &filepos);
+      fgets(buffer, 255, infile);
     }
+    fsetpos(infile, &filepos);
 
     /* read parameters */
     apt->invar_par[i][apt->n_par[i]] = 0;
@@ -568,14 +573,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
       if (NULL == apt->param_name[i][j])
 	error("Error in allocating memory for parameter name");
-      if ((comment || j != 0) ? 4 >
-	  fscanf(infile, "%s %lf %lf %lf", apt->param_name[i][j],
-		 &apt->values[i][j], &apt->pmin[i][j],
-		 &apt->pmax[i][j]) : 4 > sscanf(buffer, "%s %lf %lf %lf",
-						apt->param_name[i][j],
-						&apt->values[i][j],
-						&apt->pmin[i][j],
-						&apt->pmax[i][j])) {
+      if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[i][j],
+		     &apt->values[i][j], &apt->pmin[i][j],
+		     &apt->pmax[i][j])) {
 	if (strcmp(apt->param_name[i][j], "type") == 0) {
 	  sprintf(msg,
 		  "Not enough parameters for potential #%d in file %s specified.\nYou specified %d parameters, but needed are %d.\nAborting",
@@ -1404,6 +1404,11 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	      } else if (!invar_pot[i] && smooth_pot[i]) {
 		k = i * APOT_STEPS + (i + 1) * 2;
 		x0 = smooth(apot_table.fvalue[i], cut[i], val, params);
+		if (myid == 0) {
+		  apot_table.co_pol[i][0] = x0;
+		  for (j = 0; j < 4; j++)
+		    apot_table.co_pol[i][j + 1] = params[j];
+		}
 		for (j = 0; j < APOT_STEPS; j++) {
 		  temp = j * calc_pot.step[i] + apot_table.begin[i];
 		  if (temp <= x0)
@@ -1943,9 +1948,10 @@ void write_apot_table(apot_table_t *apt, char *filename)
 
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++)
-      fprintf(outfile, "cp_%d %f %f %f\n", i, apt->chempot[i],
+      fprintf(outfile, "cp_%s %f %f %f\n", elements[i], apt->chempot[i],
 	      apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
-    fprintf(outfile, "cn %d\n", compnodes);
+    if (compnodes > 0)
+      fprintf(outfile, "cn %d\n", compnodes);
     for (j = 0; j < compnodes; j++)
       fprintf(outfile, "%f %f %f %f\n", compnodelist[j],
 	      apt->chempot[ntypes + j], apt->pmin[apt->number][ntypes + j],
@@ -1962,6 +1968,12 @@ void write_apot_table(apot_table_t *apt, char *filename)
     }
     fprintf(outfile, "cutoff %f\n", apot_table.end[i]);
     fprintf(outfile, "# rmin %f\n", apt->begin[i]);
+    if (smooth_pot[i]) {
+      fprintf(outfile, "# r_0=%f", apt->co_pol[i][0]);
+      for (j = 1; j < 5; j++)
+	fprintf(outfile, " a_%d=%f", j - 1, apt->co_pol[i][j]);
+      fprintf(outfile, "\n");
+    }
     for (j = 0; j < apt->n_par[i]; j++) {
       fprintf(outfile, "%s %.10f %f %f\n", apt->param_name[i][j],
 	      apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);

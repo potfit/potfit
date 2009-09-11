@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.62 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.63 $
+* $Date: 2009/09/11 08:30:20 $
 *****************************************************************/
 
 #define MAIN
@@ -462,7 +462,7 @@ int main(int argc, char **argv)
       fprintf(outfile, "Stresses on unit cell\n");
     }
     fprintf(outfile, "#\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
-    for (i = stress_p; i < limit_p; i++) {
+    for (i = stress_p; i < stress_p + 6 * nconf; i++) {
       sqr = SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);

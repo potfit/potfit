@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.56 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.57 $
+* $Date: 2009/09/11 08:30:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -602,12 +602,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].step[1] = step;
 #endif
 		}
-#ifdef APOT			/* just for emacs indentation */
 	      }
-#else
-	      }
-#endif
-
 	    }
       }
       maxneigh = MAX(maxneigh, atoms[i].n_neigh);
@@ -758,6 +753,7 @@ void read_config(char *filename)
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] =
       (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
+    calc_pot.invstep[i] = 1. / calc_pot.step[i];
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
@@ -854,6 +850,15 @@ void new_slots(int a1, int force_update)
 	      (rr -
 	       atom->neigh[j].slot[0] * calc_pot.step[col]) *
 	      calc_pot.invstep[col];
+#ifdef EAM
+	    atom->neigh[j].shift[1] = atom->neigh[j].shift[0];
+#warning fix n*(n+1)/2
+	    atom->neigh[j].slot[1] =
+	      atom->neigh[j].slot[0] + calc_pot.first[col +
+						      ntypes * (ntypes +
+								1) / 2];
+	    atom->neigh[j].step[1] = atom->neigh[j].step[0];
+#endif
 	    atom->neigh[j].slot[0] += calc_pot.first[col];
 	    atom->neigh[j].step[0] = calc_pot.step[col];
 	  }

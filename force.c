@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.72 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.73 $
+* $Date: 2009/09/11 08:30:19 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -246,8 +246,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
-/*        config = 3 * natoms + h;	|+ slot for energies +|*/
-/*        stresses = 3 * natoms + nconf + 6 * h;	|+ slot for stresses +|*/
 	uf = conf_uf[h - firstconf];
 	us = conf_us[h - firstconf];
 	/* reset energies and stresses */
@@ -364,9 +362,14 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      if (typ2 == typ1) {
 /* then transfer(a->b)==transfer(b->a) */
 		if (neigh->r < calc_pot.end[col2]) {
+		  printf("col2=%d slot=%d shift=%f step=%f\n", col2,
+			 neigh->slot[1], neigh->shift[1], neigh->step[1]);
+		  printf("begin=%f r=%f\n", calc_pot.begin[col2], neigh->r);
+		  printf("%d\n", calc_pot.first[col2]);
 		  fnval = splint_dir(&calc_pot, xi, col2,
 				     neigh->slot[1],
 				     neigh->shift[1], neigh->step[1]);
+		  printf("rho=%f\n", fnval);
 		  atom->rho += fnval;
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
@@ -449,8 +452,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      fnval + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col2]) {
 	    /* and right */
+#warning VERY UGLY FIX - NEEDS ATTENTION
 	    fnval =
-	      splint_comb(&calc_pot, xi, col2, calc_pot.end[col2],
+	      splint_comb(&calc_pot, xi, col2, calc_pot.end[col2] - 0.001,
 			  &atom->gradF);
 	    forces[energy_p + h] +=
 	      fnval + (atom->rho - calc_pot.end[col2]) * atom->gradF;
@@ -506,9 +510,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 			      conf_atoms[(neigh->nr) - firstatom].gradF);
 #if defined DEBUG && defined FORCES
 		  fprintf(stderr,
-			  "eamforce %f grad %f gradF %f grad2 %f gradF %f\n",
+			  "eamforce %f grad %f gradF %f grad2 %f gradF %f neigh %d first %d r %f\n",
 			  eamforce, grad, atom->gradF, grad2,
-			  conf_atoms[(neigh->nr) - firstatom].gradF);
+			  conf_atoms[(neigh->nr) - firstatom].gradF,
+			  neigh->nr, firstatom, r);
 #endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */

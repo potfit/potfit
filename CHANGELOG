@@ -1,3 +1,13 @@
+CVS-live
++ fix compilation without EAM
++ [APOT] be quiet about compnodes if no cn is found in potential file
++ [APOT] improve cp_ and cn output in potential files
++ [APOT] read arbitrary lines of comments
++ [APOT] write cutoff function to potential file
++ temporary fix for spline extrapolation
++ [APOT] fix invstep for potentials
++ [APOT] fix next severe eam bug, how could this ever work?
+
 CVS-20090902
 + [APOT] clean up internal punishments
 + pointers to important positions in force-vector added

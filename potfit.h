@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.71 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.72 $
+* $Date: 2009/09/11 08:30:20 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -129,6 +129,7 @@ typedef struct {
   char **names;			/* name of analytic potentials */
   char ***param_name;		/* name of parameters */
   real **values;		/* parameter values for analytic potentials */
+  real **co_pol;		/* parameters for cutoff polynomial */
   int **invar_par;		/* parameter values for analytic potentials */
   real *chempot;		/* chemical potentials */
   real *begin;			/* starting position of potential */

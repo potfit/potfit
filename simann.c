@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.40 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.41 $
+* $Date: 2009/09/11 08:30:20 $
 *****************************************************************/
 
 #include <math.h>
@@ -232,13 +232,13 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
+	      /* *INDENT-OFF* */
 		for (n = 0; n < ndim; n++)
 		  apot_table.values[apot_table.
 				    idxpot[n]][apot_table.idxparam[n]] =
 		    xopt[idx[n]];
-/*              printf("Writing new potential, F=%f\n", Fopt);*/
-	      write_pot_table(&apot_table, tempfile);
-/*                new_pot = 1;*/
+	      /* *INDENT-ON* */
+		write_pot_table(&apot_table, tempfile);
 #endif
 	    }
 	  }
@@ -260,11 +260,7 @@ void anneal(real *xi)
 	  v[n] /= (1 + c * (0.4 - (real)naccept[n] / nstep) / 0.4);
 	naccept[n] = 0;
       }
-#ifdef APOT
-/*      if (new_pot == 1) {*/
-/*        new_pot = 0;*/
-/*      }*/
-#endif
+
       printf("%d\t%f\t%d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
       /* End fit if break flagfile exists */

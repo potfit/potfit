@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.19 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.20 $
+* $Date: 2009/09/11 08:30:20 $
 *****************************************************************/
 
 
@@ -213,6 +213,7 @@ real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
   d21 = pt->d2tab[k++];
   p2 = xi[k];
   d22 = pt->d2tab[k];
+  printf("a=%f p1=%f d21=%f p2=%f d22=%f\n", a, p1, d21, p2, d22);
 
 
   return a * p1 + b * p2 +
