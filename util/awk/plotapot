@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.13 $
-# $Date: 2009/08/19 09:12:56 $
+# $Revision: 1.14 $
+# $Date: 2009/09/11 08:30:34 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -155,6 +155,9 @@ BEGIN {
 		    if ($5>maxdist)
 			maxdist=$5;
 		    getline;
+		}
+		while (substr($0,1,1)=="#") {
+			getline;
 		}
 		for (l=1;l<=n_param[i];l++) {
 		    params[i "," l ] = $2;
