@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.63 $
-* $Date: 2009/09/11 08:30:20 $
+* $Revision: 1.64 $
+* $Date: 2009/09/25 07:32:25 $
 *****************************************************************/
 
 #define MAIN
@@ -253,8 +253,6 @@ int main(int argc, char **argv)
     if (opt) {
       printf("\nStarting optimization ...\n");
       anneal(opt_pot.table);
-      if (anneal_temp != 0)
-	printf("Finished annealing, starting powell minimization ...\n");
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
     } else {

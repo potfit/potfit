@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.22 $
+* $Date: 2009/09/25 07:32:24 $
 *****************************************************************/
 
 #ifdef APOT
@@ -408,12 +408,12 @@ real apot_punish(real *params, real *forces)
 	apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
 	x < 0) {
       tmpsum += APOT_PUNISH * x * x;
-      forces[mdim - ndim + i] = APOT_PUNISH * x * x;
+      forces[punish_par_p + i] = APOT_PUNISH * x * x;
     } else if (x = params[idx[i]] -
 	       apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]],
 	       x > 0) {
       tmpsum += APOT_PUNISH * x * x;
-      forces[mdim - ndim + i] = APOT_PUNISH * x * x;
+      forces[punish_par_p + i] = APOT_PUNISH * x * x;
     }
   }
 
@@ -421,23 +421,24 @@ real apot_punish(real *params, real *forces)
   /* loop over potentials */
   for (i = 0; i < apot_table.number; i++) {
 
-    /* punish eta_2 > eta_1 for eopp potentials */
-/*    if (strcmp(apot_table.names[i], "eopp") == 0) {*/
-/*      x = params[j + 3] - params[j + 1];*/
-/*      if (x > 0) {*/
-/*        tmpsum += APOT_PUNISH * x * x;*/
-/*      }*/
-/*    }*/
-
 #ifdef EAM
     /* punish m=n for universal embedding function */
     if (strcmp(apot_table.names[i], "universal") == 0) {
       x = params[j + 2] - params[j + 1];
       if (fabs(x) < 1e-6) {
-	forces[mdim - apot_table.number + i] = APOT_PUNISH / (x * x);
+	forces[punish_pot_p + i] = APOT_PUNISH / (x * x);
 	tmpsum += APOT_PUNISH / (x * x);
       }
     }
+
+    /* punish very small F_0 for universal and pohlong embedding function */
+/*    if (strcmp(apot_table.names[i], "universal") == 0*/
+/*        || strcmp(apot_table.names[i], "pohlong") == 0) {*/
+/*      if (fabs(params[j]) < 1e-2) {*/
+/*        forces[punish_pot_p + i] = APOT_PUNISH / (x * x);*/
+/*        tmpsum += APOT_PUNISH / (x * x);*/
+/*      }*/
+/*    }*/
 #endif
 
     /* jump to next potential */
@@ -445,6 +446,22 @@ real apot_punish(real *params, real *forces)
   }
 
   return tmpsum;
+}
+
+/******************************************************************************
+*
+* calculate gradient for analytic potential
+*
+******************************************************************************/
+
+real apot_grad(real r, real *p, void (*function) (real, real *, real *))
+{
+  real  a, b, h = 0.00001;
+
+  function(r + h, p, &a);
+  function(r - h, p, &b);
+
+  return (a - b) / (2 * h);
 }
 
 /*****************************************************************************
@@ -497,9 +514,10 @@ void debug_apot()
       }
     }
   }
-#endif
+#endif /* EAM */
   exit(2);
 }
 
-#endif
-#endif
+#endif /* DEBUG */
+
+#endif /* APOT */

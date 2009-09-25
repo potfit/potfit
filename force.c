@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.74 $
-* $Date: 2009/09/11 08:34:06 $
+* $Revision: 1.75 $
+* $Date: 2009/09/25 07:32:23 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -91,13 +91,16 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   int   first, col1, i;
   real  grad0, y0, y1, x0, x1;
   real *xi;
+
 #ifdef EAM
   static real rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
 #endif /* EAM */
+
 #if defined DEBUG && defined FORCES
   real  store_punish;
 #endif
+
   switch (format) {
       case 0:
 	xi = calc_pot.table;
@@ -109,16 +112,17 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       case 5:
 	xi = calc_pot.table;	/* we need to update the calc-table */
   }
+
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
 #ifdef EAM
     rho_sum_loc = 0.;
-#endif
+#endif /* EAM */
 #if !defined APOT
     if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
-#endif
+#endif /* APOT */
 
 #if defined APOT && !defined MPI
     if (format == 0) {
@@ -131,7 +135,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* exchange potential and flag value */
 #ifndef APOT
     MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
-#endif
+#endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 #ifdef APOT
@@ -142,7 +146,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       update_calc_table(xi_opt, xi, 0);
     if (flag == 1)
       break;
-#endif
+#endif /* APOT */
 
 #if defined EAM && !defined APOT
     /* if flag==2 then the potential parameters have changed -> sync */
@@ -285,11 +289,17 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 	/* 2nd loop: calculate pair forces and energies, atomic densities. */
 	for (i = 0; i < inconf[h]; i++) {
+#if defined DEBUG && defined FORCES
+	  fprintf(stderr, "\nWorking on atom %d\n", i);
+#endif
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
 	  k = 3 * (cnfstart[h] + i);
 	  /* loop over neighbours */
 	  for (j = 0; j < atom->n_neigh; j++) {
+#if defined DEBUG && defined FORCES
+	    fprintf(stderr, "Working on atom %d neighbour %d\n", i, j);
+#endif
 	    neigh = atom->neigh + j;
 	    /* only use neigbours with higher numbers,
 	       others are calculated by actio=reactio */
@@ -319,20 +329,19 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  grad *= 0.5;
 		}
 		forces[energy_p + h] += fnval;
+#if defined DEBUG && defined FORCES
+		fprintf(stderr, "pair-energy=%f\n", fnval);
+#endif
 /* not real force: cohesive energy */
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;
 		  tmp_force.z = neigh->dist.z * grad;
-#if defined DEBUG && defined FORCES
-		  fprintf(stderr, "k=%d dist %f %f %f grad %f\n", k,
-			  neigh->dist.x, neigh->dist.y, neigh->dist.z, grad);
-#endif
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
 #if defined DEBUG && defined FORCES
-		  fprintf(stderr, "k=%d forces %f %f %f\n", k, forces[k],
+		  fprintf(stderr, "forces %f %f %f\n", k, forces[k],
 			  forces[k + 1], forces[k + 2]);
 #endif
 		  l = 3 * neigh->nr;	/* actio = reactio */
@@ -366,6 +375,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 				     neigh->slot[1],
 				     neigh->shift[1], neigh->step[1]);
 		  atom->rho += fnval;
+#if defined DEBUG && defined FORCES
+		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
+			  fnval, neigh->r);
+#endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
 		  if (!self) {
@@ -378,6 +391,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  atom->rho += splint_dir(&calc_pot, xi, col2,
 					  neigh->slot[1],
 					  neigh->shift[1], neigh->step[1]);
+#if defined DEBUG && defined FORCES
+		  fprintf(stderr, "rho=%f (added %f)\n", atom->rho,
+			  splint_dir(&calc_pot, xi, col2, neigh->slot[1],
+				     neigh->shift[1], neigh->step[1]));
+#endif
 		}
 		/* cannot use slot/shift to access splines */
 		if (neigh->r < calc_pot.end[col])
@@ -388,10 +406,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* EAM */
 	    }			/*  neighbours with bigger atom nr */
 	  }			/* loop over neighbours */
+
 #ifndef EAM
 /*then we can calculate contribution of forces right away */
-
-
 	  if (uf) {
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
@@ -447,9 +464,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      fnval + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col2]) {
 	    /* and right */
-#warning VERY UGLY FIX - NEEDS ATTENTION
 	    fnval =
-	      splint_comb(&calc_pot, xi, col2, calc_pot.end[col2] - 0.001,
+	      splint_comb(&calc_pot, xi, col2,
+			  calc_pot.end[col2] - .5 * calc_pot.step[col2],
 			  &atom->gradF);
 	    forces[energy_p + h] +=
 	      fnval + (atom->rho - calc_pot.end[col2]) * atom->gradF;
@@ -462,6 +479,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #else
 	  forces[energy_p + h] +=
 	    splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
+#endif
+#if defined DEBUG && defined FORCES
+	  fprintf(stderr, "total eam energy: %f (rho=%f)\n",
+		  forces[energy_p + h], atom->rho);
 #endif
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
@@ -505,10 +526,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 			      conf_atoms[(neigh->nr) - firstatom].gradF);
 #if defined DEBUG && defined FORCES
 		  fprintf(stderr,
-			  "eamforce %f grad %f gradF %f grad2 %f gradF %f neigh %d first %d r %f\n",
+			  "eamforce %f grad %f gradF %f grad2 %f gradF %f\n",
 			  eamforce, grad, atom->gradF, grad2,
-			  conf_atoms[(neigh->nr) - firstatom].gradF,
-			  neigh->nr, firstatom, r);
+			  conf_atoms[(neigh->nr) - firstatom].gradF);
 #endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */

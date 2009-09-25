@@ -1,4 +1,9 @@
-CVS-live
+CVS-20090925
++ [APOT] more fixes for EAM
++ [APOT] fix spline calculation
++ minor code cleanups
+
+CVS-20090912
 + fix compilation without EAM
 + [APOT] be quiet about compnodes if no cn is found in potential file
 + [APOT] improve cp_ and cn output in potential files

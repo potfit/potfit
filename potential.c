@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.71 $
-* $Date: 2009/09/11 08:30:19 $
+* $Revision: 1.72 $
+* $Date: 2009/09/25 07:32:25 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -1292,7 +1292,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    error("Cannot allocate info block for calc potential table\n");
 	  for (i = 0; i < size; i++) {
 	    val = apot_table.values[i];
-	    calct->table[i * APOT_STEPS + i * 2] = 1e30;
+	    calct->table[i * APOT_STEPS + i * 2] = 10e30;
 	    calct->table[i * APOT_STEPS + i * 2 + 1] = 0;
 	    calct->first[i] = (x += 2);
 	    calct->last[i] = (x += APOT_STEPS - 1);
@@ -1383,9 +1383,13 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	  cut = apot_table.end;
 	  if (do_smooth && params == NULL)
 	    params = (real *)malloc(4 * sizeof(real));
-	  val = xi_opt + 2;
+	  val = xi_opt;
 	  list = calc_list + 2;
 	  for (i = 0; i < calc_pot.ncols; i++) {
+	    (*val) =
+	      apot_grad(calc_pot.begin[i], apot_table.values[i],
+			apot_table.fvalue[i]);
+	    val += 2;
 	    /* check if something has changed */
 	    change = 0;
 	    for (j = 0; j < apot_table.n_par[i]; j++) {
@@ -1422,7 +1426,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		}
 	      }
 	    }
-	    val += apot_table.n_par[i] + 2;
+	    val += apot_table.n_par[i];
 	    list += apot_table.n_par[i] + 2;
 	  }
 	}

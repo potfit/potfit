@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.41 $
-* $Date: 2009/09/11 08:30:20 $
+* $Revision: 1.42 $
+* $Date: 2009/09/25 07:32:26 $
 *****************************************************************/
 
 #include <math.h>
@@ -314,6 +314,8 @@ void anneal(real *xi)
   } while (k < KMAX && loopagain);
   for (n = 0; n < ndimtot; n++)
     xi[n] = xopt[n];
+
+  printf("Finished annealing, starting powell minimization ...\n");
 
   F = Fopt;
 #ifndef APOT

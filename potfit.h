@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.72 $
-* $Date: 2009/09/11 08:30:20 $
+* $Revision: 1.73 $
+* $Date: 2009/09/25 07:32:25 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -385,35 +385,32 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 #ifdef APOT
 
-#define APOT_STEPS 200		/* number of sampling points for analytic pot */
+#define APOT_STEPS 600		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e10	/* punishment for out of bounds */
 
+/* functions.c */
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(real *);
 real  apot_punish(real *, real *);
+real  apot_grad(real, real *, void (*function) (real, real *, real *));
+
+/* potential.c */
 void  new_slots(int, int);	/* new slots for smooth cutoff */
+
+/* chempot.c */
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
 
-#ifdef DEBUG
-
-void  debug_apot();
-
-#endif
-
-/* global counting variables for misc. purposes */
-
-//int count_1 INIT(0);
-//int count_2 INIT(0);
-
-/* end of counting variables */
-
+/* smooth.c */
 real  smooth(void (*function) (real, real *, real *), real, real *, real *);
 
+#ifdef DEBUG
+void  debug_apot();
+#endif /* DEBUG */
 #ifdef MPI
 void  potsync_apot();
-#endif
+#endif /* MPI */
 
 /* actual functions for different potentials */
 
@@ -437,4 +434,4 @@ void  newpot_value(real, real *, real *);
 
 /* end of template */
 
-#endif
+#endif /* APOT */

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.57 $
-* $Date: 2009/09/11 08:30:19 $
+* $Revision: 1.58 $
+* $Date: 2009/09/25 07:32:22 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -674,18 +674,17 @@ void read_config(char *filename)
 #else
     int   pair_steps = 1000 / 2;
 #endif
-    int   pot_count = ntypes * (ntypes + 1) / 2;
-    real  pair_table[pot_count * pair_steps];
-    real  pair_dist[pot_count];
+    real  pair_table[paircol * pair_steps];
+    real  pair_dist[paircol];
     int   pos, max_count = 0;
 
     strcpy(pairname, config);
     strcat(pairname, ".pair");
     pairfile = fopen(pairname, "w");
     fprintf(pairfile, "# radial distribution file for %d potential(s)\n",
-	    pot_count);
+	    paircol);
 
-    for (i = 0; i < pot_count * pair_steps; i++)
+    for (i = 0; i < paircol * pair_steps; i++)
       pair_table[i] = 0;
 
     for (i = 0; i < ntypes; i++)
@@ -694,7 +693,7 @@ void read_config(char *filename)
 		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes +
 		  i - (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
 
-    for (k = 0; k < pot_count; k++) {
+    for (k = 0; k < paircol; k++) {
       for (i = 0; i < natoms; i++)
 	for (j = 0; j < atoms[i].n_neigh; j++) {
 	  col = (atoms[i].typ <= atoms[i].neigh[j].typ) ?
@@ -718,13 +717,13 @@ void read_config(char *filename)
 	}
     }
 
-    for (k = 0; k < pot_count; k++) {
+    for (k = 0; k < paircol; k++) {
       for (i = 0; i < pair_steps; i++) {
 	pair_table[k * pair_steps + i] /= (max_count * 10 / 6);
 	fprintf(pairfile, "%f %f\n", i * pair_dist[k],
 		pair_table[k * pair_steps + i]);
       }
-      if (k != (pot_count - 1))
+      if (k != (paircol - 1))
 	fprintf(pairfile, "\n\n");
     }
     fclose(pairfile);
@@ -736,6 +735,8 @@ void read_config(char *filename)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
 	((j * (j + 1)) / 2);
+      if (mindist[k] == 99)
+	mindist[k] = 3;
       rmin[i * ntypes + j] = mindist[k];
       apot_table.begin[k] = mindist[k] * 0.95;
       opt_pot.begin[k] = mindist[k] * 0.95;
@@ -776,6 +777,7 @@ void read_config(char *filename)
     }
     printf("\n");
   }
+
   free(mindist);
 
   na_typ = (int **)realloc(na_typ, (nconf + 1) * sizeof(int *));
@@ -805,6 +807,7 @@ void read_config(char *filename)
     if (i != (ntypes - 1))
       printf(", ");
   }
+
   printf(")\nfrom file %s\n", filename);
   if (sh_dist) {
     sprintf(msg,
@@ -825,7 +828,7 @@ void read_config(char *filename)
 
 void new_slots(int a1, int force_update)
 {
-  int   i, j, col, typ1, typ2, a2;
+  int   i, j, col, col2, typ1, typ2, a2;
   real  r, rr;
   atom_t *atom;
 
@@ -846,18 +849,21 @@ void new_slots(int a1, int force_update)
 	  if (r < calc_pot.end[col]) {
 	    rr = r - calc_pot.begin[col];
 	    atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	    atom->neigh[j].step[0] = calc_pot.step[col];
 	    atom->neigh[j].shift[0] =
 	      (rr -
 	       atom->neigh[j].slot[0] * calc_pot.step[col]) *
 	      calc_pot.invstep[col];
 #ifdef EAM
-	    atom->neigh[j].shift[1] = atom->neigh[j].shift[0];
-#warning fix n*(n+1)/2
-	    atom->neigh[j].slot[1] =
-	      atom->neigh[j].slot[0] + calc_pot.first[col +
-						      ntypes * (ntypes +
-								1) / 2];
-	    atom->neigh[j].step[1] = atom->neigh[j].step[0];
+	    col2 = paircol + typ2;
+	    rr = r - calc_pot.begin[col2];
+	    atom->neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
+	    atom->neigh[j].step[1] = calc_pot.step[col2];
+	    atom->neigh[j].shift[1] =
+	      (rr -
+	       atom->neigh[j].slot[1] * calc_pot.step[col2]) *
+	      calc_pot.invstep[col2];
+	    atom->neigh[j].slot[1] += calc_pot.first[col2];
 #endif
 	    atom->neigh[j].slot[0] += calc_pot.first[col];
 	    atom->neigh[j].step[0] = calc_pot.step[col];
