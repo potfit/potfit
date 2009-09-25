@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.72 $
-* $Date: 2009/09/25 07:32:25 $
+* $Revision: 1.73 $
+* $Date: 2009/09/25 11:31:34 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -1387,8 +1387,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	  list = calc_list + 2;
 	  for (i = 0; i < calc_pot.ncols; i++) {
 	    (*val) =
-	      apot_grad(calc_pot.begin[i], apot_table.values[i],
-			apot_table.fvalue[i]);
+	      apot_grad(calc_pot.begin[i], val + 2, apot_table.fvalue[i]);
 	    val += 2;
 	    /* check if something has changed */
 	    change = 0;
@@ -2481,7 +2480,10 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #endif
 #else
   for (i = 0; i < apot_table.number; i++) {
-    r = (plotmin == 0 ? 0.1 : plotmin);
+    if (i < paircol + ntypes)
+      r = (plotmin == 0 ? 0.1 : plotmin);
+    else
+      r = apot_table.begin[i];
     j = i * (i + 1) / 2;
     if (!invar_pot[i] && smooth_pot[i]) {
       x0 =

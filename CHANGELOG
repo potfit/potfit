@@ -2,6 +2,8 @@ CVS-20090925
 + [APOT] more fixes for EAM
 + [APOT] fix spline calculation
 + minor code cleanups
++ [APOT] fix range for embedding function in plot files
++ [APOT] fix mpi with new grad function
 
 CVS-20090912
 + fix compilation without EAM

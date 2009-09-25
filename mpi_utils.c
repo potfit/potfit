@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.25 $
+* $Date: 2009/09/25 11:31:34 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -347,26 +347,4 @@ void potsync()
   /* das war's auch schon... */
 }
 #endif /* EAM */
-
-/***************************************************************************
- *
- * potsync_apot: Broadcast parameters etc to other nodes if we have
- * 		 the _sc option
- *
- **************************************************************************/
-
-#ifdef APOT
-
-void potsync_apot()
-{
-/*   int   length; */
-/*   length = calc_pot.ncols; */
-/*  */
-/*   MPI_Bcast(calc_pot.end, length, REAL, 0, MPI_COMM_WORLD); */
-/*   MPI_Bcast(calc_pot.step, length, REAL, 0, MPI_COMM_WORLD); */
-/*   MPI_Bcast(calc_pot.invstep, length, REAL, 0, MPI_COMM_WORLD); */
-}
-
-#endif /* APOT */
-
 #endif /* MPI */

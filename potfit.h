@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.73 $
-* $Date: 2009/09/25 07:32:25 $
+* $Revision: 1.74 $
+* $Date: 2009/09/25 11:31:34 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -408,9 +408,6 @@ real  smooth(void (*function) (real, real *, real *), real, real *, real *);
 #ifdef DEBUG
 void  debug_apot();
 #endif /* DEBUG */
-#ifdef MPI
-void  potsync_apot();
-#endif /* MPI */
 
 /* actual functions for different potentials */
 
