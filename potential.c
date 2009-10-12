@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.73 $
-* $Date: 2009/09/25 11:31:34 $
+* $Revision: 1.74 $
+* $Date: 2009/10/12 08:04:27 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -387,8 +387,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       /* split cp and _# */
       token = strchr(buffer, '_');
       if (token != NULL) {
-	strncpy(name, buffer, strlen(token));
-	name[strlen(token)] = '\0';
+	strncpy(name, buffer, strlen(buffer) - strlen(token));
+	name[strlen(buffer) - strlen(token)] = '\0';
       }
       if (strcmp("cp", name) != 0) {
 	fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);

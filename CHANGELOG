@@ -1,3 +1,7 @@
+CVS-20091012
++ don't write punishments if opt=0
++ [APOT] fix cp_ detection with element names
+
 CVS-20090925
 + [APOT] more fixes for EAM
 + [APOT] fix spline calculation

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.64 $
-* $Date: 2009/09/25 07:32:25 $
+* $Revision: 1.65 $
+* $Date: 2009/10/12 08:04:27 $
 *****************************************************************/
 
 #define MAIN
@@ -476,79 +476,81 @@ int main(int argc, char **argv)
     }
 #endif
 #ifdef EAM
-    if (write_output_files) {
-      strcpy(file, output_prefix);
-      strcat(file, ".punish");
-      outfile = fopen(file, "w");
-      if (NULL == outfile) {
-	sprintf(msg, "Could not open file %s\n", file);
-	error(msg);
+    if (opt) {
+      if (write_output_files) {
+	strcpy(file, output_prefix);
+	strcat(file, ".punish");
+	outfile = fopen(file, "w");
+	if (NULL == outfile) {
+	  sprintf(msg, "Could not open file %s\n", file);
+	  error(msg);
+	}
+	fprintf(outfile, "Limiting constraints\n");
+	fprintf(outfile, "#conf\tp^2\t\tpunishment\n");
+      } else {
+	outfile = stdout;
+	printf("Punishment Constraints\n");
       }
-      fprintf(outfile, "Limiting constraints\n");
-      fprintf(outfile, "#conf\tp^2\t\tpunishment\n");
-    } else {
-      outfile = stdout;
-      printf("Punishment Constraints\n");
-    }
 //    printf("conf dp p p0 dp/p0");
 /*#ifdef STRESS*/
 /*    diff = 6 * nconf;*/
 /*#else*/
 /*    diff = 0;*/
 /*#endif*/
-    for (i = limit_p; i < dummy_p; i++) {
-      sqr = SQR(force[i]);
-      max = MAX(max, sqr);
-      min = MIN(min, sqr);
-      if (write_output_files)
-	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
-		force[i] + force_0[i]);
-      else
-	fprintf(outfile, "%d %f %f %f %f\n", i - limit_p,
-		sqr, force[i] + force_0[i], force_0[i],
-		force[i] / force_0[i]);
-    }
-    if (write_output_files) {
-      real  zero = 0;
-      fprintf(outfile, "\nDummy Constraints\n");
-      fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
-      for (i = dummy_p; i < dummy_p + ntypes; i++) {
-#ifdef NORESCALE
+      for (i = limit_p; i < dummy_p; i++) {
 	sqr = SQR(force[i]);
 	max = MAX(max, sqr);
 	min = MIN(min, sqr);
-	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], zero,
-		sqr, zero, force[i]);
-#else
-	sqr = SQR(force[i]);
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
-	sqr = SQR(force[i + ntypes]);
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
-	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
-		SQR(force[i]), force[i + ntypes], force[i]);
-#endif
+	if (write_output_files)
+	  fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
+		  force[i] + force_0[i]);
+	else
+	  fprintf(outfile, "%d %f %f %f %f\n", i - limit_p,
+		  sqr, force[i] + force_0[i], force_0[i],
+		  force[i] / force_0[i]);
       }
+      if (write_output_files) {
+	real  zero = 0;
+	fprintf(outfile, "\nDummy Constraints\n");
+	fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
+	for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
-      fprintf(outfile, "\nNORESCALE: <n>!=1\n");
-      fprintf(outfile, "<n>=%f\n",
-	      force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
-      fprintf(outfile, "Additional punishment of %f added.\n",
-	      SQR(force[dummy_p + ntypes]));
+	  sqr = SQR(force[i]);
+	  max = MAX(max, sqr);
+	  min = MIN(min, sqr);
+	  fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p],
+		  zero, sqr, zero, force[i]);
+#else
+	  sqr = SQR(force[i]);
+	  max = MAX(max, sqr);
+	  min = MIN(min, sqr);
+	  sqr = SQR(force[i + ntypes]);
+	  max = MAX(max, sqr);
+	  min = MIN(min, sqr);
+	  fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
+		  SQR(force[i]), force[i + ntypes], force[i]);
 #endif
-      printf("Punishment constraints data written to %s\n", file);
-      fclose(outfile);
-    } else {
-      fprintf(outfile, "Dummy Constraints\n");
-      for (i = dummy_p; i < dummy_p + 2 * ntypes; i++) {
-	sqr = SQR(force[i]);
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
-	fprintf(outfile, "%d %f %f %f %f\n", i - dummy_p, sqr,
-		force[dummy_p + i] + force_0[dummy_p + i],
-		force_0[dummy_p + i],
-		force[dummy_p + i] / force_0[dummy_p + i]);
+	}
+#ifdef NORESCALE
+	fprintf(outfile, "\nNORESCALE: <n>!=1\n");
+	fprintf(outfile, "<n>=%f\n",
+		force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
+	fprintf(outfile, "Additional punishment of %f added.\n",
+		SQR(force[dummy_p + ntypes]));
+#endif
+	printf("Punishment constraints data written to %s\n", file);
+	fclose(outfile);
+      } else {
+	fprintf(outfile, "Dummy Constraints\n");
+	for (i = dummy_p; i < dummy_p + 2 * ntypes; i++) {
+	  sqr = SQR(force[i]);
+	  max = MAX(max, sqr);
+	  min = MIN(min, sqr);
+	  fprintf(outfile, "%d %f %f %f %f\n", i - dummy_p, sqr,
+		  force[dummy_p + i] + force_0[dummy_p + i],
+		  force_0[dummy_p + i],
+		  force[dummy_p + i] / force_0[dummy_p + i]);
+	}
       }
     }
 #endif
@@ -584,7 +586,7 @@ int main(int argc, char **argv)
       rms[2] = 0;
     rms[2] = sqrt(rms[2] / (6 * nconf));
 
-    printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
+    printf("sum of force-errors  = %f\t\t( %.3f%% - av: %f)\n",
 	   f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
     printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
 	   e_sum / tot * 100);

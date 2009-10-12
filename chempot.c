@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2009/05/13 10:11:19 $
+* $Revision: 1.6 $
+* $Date: 2009/10/12 08:04:27 $
 *****************************************************************/
 
 #if defined APOT && !defined EAM
@@ -124,9 +124,14 @@ real chemical_potential_2d(int *n, real *mu)
   return temp * ntot;
 }
 
-real chemical_potential_3d(int *n, real *mu)
+real chemical_potential_3d(int *n, real *mu, int dim)
 {
-  return n[0] * mu[0] + n[1] * mu[1] + n[2] * mu[2];
+  int   i;
+  real  temp = 0;
+
+  for (i = 0; i < dim; i++)
+    temp += n[i] * mu[i];
+  return temp;
 }
 
 void init_chemical_potential(int dim)
@@ -145,7 +150,7 @@ real chemical_potential(int dim, int *n, real *mu)
   if (dim == 2)
     return chemical_potential_2d(n, mu);
   if (dim >= 3)
-    return chemical_potential_3d(n, mu);
+    return chemical_potential_3d(n, mu, dim);
   return 0.;
 }
 
