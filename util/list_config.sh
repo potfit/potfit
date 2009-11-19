@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.2 $
-#* $Date: 2009/06/12 09:10:40 $
+#* $Revision: 1.3 $
+#* $Date: 2009/11/19 07:01:26 $
 #*****************************************************************/
 
 if [ $# -eq 0 ]; then
@@ -40,19 +40,33 @@ fi
 n_conf=`grep -e \#E $1 | wc -l`
 n_names=`grep -e generated $1 | wc -l`
 if [ $n_conf -gt $n_names ]; then
-grep -e generated -e \#E $1 | awk -v file=$1 'BEGIN{i=0}
+grep -n -e \#N -e generated -e \#E $1 | awk -v file=$1 'BEGIN{i=0}
 {
+	gsub(":"," ");
+	line=$1;
+	n_atoms=$3;
+	getline;
+	gsub(":"," ");
 	printf "%d ",i;
-	if ($1=="#E") {
+	if ($2=="#E") {
 		i++;
 		printf "no information found in %s\n",file;
+		printf "\t with %d atoms, starting at line %d\n",n_atoms,line;
 	}
 	else {
-		printf "%s\n",$7;
+		printf "generated from %s\n",$8;
+		printf "\t with %d atoms, starting at line %d\n",n_atoms,line;
 		getline;
 		i++;
 	}
 }'
 else
-grep -e generated $1 | awk 'BEGIN{i=0} {print i" "$7;i++; }'
+grep -n -e \#N -e generated $1 | awk 'BEGIN{i=0} 
+{
+	gsub(":"," ");
+	line=$1;
+	n_atoms=$3;
+	getline;
+	printf i" generated from "$7"\n\t with "n_atoms" atoms, starting at line "line"\n";i++;
+}'
 fi

@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.23 $
-#* $Date: 2009/08/19 09:12:53 $
+#* $Revision: 1.24 $
+#* $Date: 2009/11/19 07:01:26 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -116,7 +116,7 @@ for file in $outcars; do
     if [ $types != "0" ]; then
 	name=(`$mycat $file | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
     	if [ "$list_types" == "1" ]; then
-	    echo "Found $types atom types in $file:";
+	    echo "Found $types atom types in $count configurations in $file:";
 	    for (( i=0; $i<$types; i++ )); do
 		echo ${name[$i]} "= "$i;
 	    done
@@ -126,7 +126,7 @@ for file in $outcars; do
 	if [ $types != "0" ]; then
 	    name=(`$mycat $file | grep TITEL | awk '{print $4; }'`);
     	    if [ "$list_types" == "1" ]; then
-		echo "Found $types atom types in $file:";
+		echo "Found $types atom types in $count configurations in $file:";
 		for (( i=0; $i<$types; i++ )); do
 		    echo ${name[$i]} "= "$i;
 		done
@@ -136,7 +136,7 @@ for file in $outcars; do
 	    types=$(($types/2));
 		name=(`$mycat $file | grep POTCAR | awk '{print $3; }'`);
 		if [ "$list_types" == "1" ]; then
-		echo "Found $types atom types in $file:";
+		echo "Found $types atom types in $count configurations in $file:";
 		for (( i=0; $i<$types; i++ )); do
 		    echo ${name[$i]} "= "$i;
 		done
