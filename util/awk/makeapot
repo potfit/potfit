@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.18 $
-# $Date: 2009/10/12 08:04:42 $
+# $Revision: 1.19 $
+# $Date: 2009/11/19 07:00:52 $
 ####################################################################
 #
 # Usage: makeapot <options>
@@ -113,7 +113,7 @@ function write_pot(name)
 	print "a_1 0.2 -1 1";
 	print "a_2 0.2 -1 1";
 	print "alpha 2 2 5";
-	print "beta 3 1 10";
+	print "beta 3 1 5";
     }
     else if (name=="universal") {
 	print "F_0 -1 -10 10";
