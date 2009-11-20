@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.46 $
-# $Date: 2009/06/03 10:48:00 $
+# $Revision: 1.47 $
+# $Date: 2009/11/20 08:19:00 $
 #
 ############################################################################
 #
@@ -202,7 +202,7 @@ ifeq (x86_64-icc,${IMDSYS})
 # 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
 # intel mkl
   MKLPATH       = ${MKLDIR}/lib/em64t/
-  CINCLUDE        =  -I${MKLDIR}/include/	
+  CINCLUDE        =  -I${MKLDIR}/include/
   LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER
@@ -613,7 +613,7 @@ POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
 		  linmin_r.c force.c \
 		  config.c param.c potential.c potfit.c \
 		  splines.c simann.c rescale.c functions.c smooth.c \
-		  chempot.c
+		  chempot.c diff_evo.c
 MPISRC          = mpi_utils.c
 
 #########################################################
@@ -639,6 +639,11 @@ endif
 # EAM2 or EAM  -  this is now the same
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 CFLAGS  += -DEAM
+endif
+
+# EVO - for differential evolution
+ifneq (,$(findstring evo,${MAKETARGET}))
+CFLAGS += -DEVO
 endif
 
 # APOT - for analytic potentials

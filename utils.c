@@ -1,6 +1,6 @@
 /****************************************************************
 *
-*  utils.c: potfit utilities (vectors etc.)
+*  utils.c: potfit utilities (vectors and memory management)
 *
 *****************************************************************/
 /*
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.4 $
+* $Date: 2009/11/20 08:19:01 $
 *****************************************************************/
 
 #include <stdio.h>
@@ -41,19 +41,24 @@
 
 int  *vect_int(long dim)
 {
-  int  *vect;
+  int  *vect, i;
   vect = (int *)malloc((size_t) (dim * sizeof(int)));
   if (vect == NULL)
     error("Error in integer vector allocation");
+  for (i = 0; i < dim; i++)
+    vect[i] = 0;
   return vect;
 }
 
 real *vect_real(long dim)
 {
   real *vect;
+  int   i;
   vect = (real *)malloc((size_t) (dim * sizeof(real)));
   if (vect == NULL)
     error("Error in real vector allocation");
+  for (i = 0; i < dim; i++)
+    vect[i] = 0.;
   return vect;
 }
 
@@ -93,4 +98,35 @@ void free_mat_real(real **matrix)
 {
   free(matrix[0]);
   free(matrix);
+}
+
+void reg_for_free(void *p, char *name)
+{
+  pointer_names =
+    (char **)realloc(pointer_names, (num_pointers + 1) * sizeof(char *));
+  pointer_names[num_pointers] =
+    (char *)malloc((strlen(name) + 1) * sizeof(char));
+  strcpy(pointer_names[num_pointers], name);
+  all_pointers =
+    (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
+  all_pointers[num_pointers] = p;
+  num_pointers++;
+}
+
+void free_all_pointers()
+{
+  int   i;
+
+  for (i = (num_pointers - 1); i >= 0; i--) {
+#ifdef DEBUG
+    fprintf(stderr, "Freeing %s (%d) ... ", pointer_names[i], i);
+#endif
+    free(all_pointers[i]);
+#ifdef DEBUG
+    fprintf(stderr, "done\n");
+#endif
+    free(pointer_names[i]);
+  }
+  free(all_pointers);
+  free(pointer_names);
 }

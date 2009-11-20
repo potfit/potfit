@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.58 $
-* $Date: 2009/09/25 07:32:22 $
+* $Revision: 1.59 $
+* $Date: 2009/11/20 08:19:00 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -195,10 +195,12 @@ void read_config(char *filename)
   if (NULL == mindist)
     error("Cannot allocate memory for minimal distance.");
   elements = (char **)malloc(ntypes * sizeof(char *));
+  reg_for_free(elements, "elements");
   if (NULL == elements)
     error("Cannot allocate memory for element names.");
   for (i = 0; i < ntypes; i++) {
     elements[i] = (char *)malloc(3 * sizeof(char));
+    reg_for_free(elements[i], "elements[i]");
     if (NULL == elements[i]) {
       sprintf(msg, "Cannot allocate memory for element name %d\n", i);
       error(msg);
@@ -277,6 +279,7 @@ void read_config(char *filename)
     if (NULL == na_typ)
       error("Cannot allocate memory for na_typ");
     na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
+    reg_for_free(na_typ[nconf], "na_typ[nconf]");
     if (NULL == na_typ[nconf])
       error("Cannot allocate memory for na_typ");
 
@@ -335,7 +338,7 @@ void read_config(char *filename)
 	      if (strlen(res + 3 * (i + 1)) == 0)
 		break;
 	      if (strcmp(msg, elements[i]) != 0) {
-		if (atoi(elements[i]) == i) {
+		if (atoi(elements[i]) == i && atoi(elements[i]) != 0) {
 		  strcpy(elements[i], msg);
 		} else {
 		  fprintf(stderr,
@@ -343,12 +346,14 @@ void read_config(char *filename)
 		  if ((ptr = strchr(msg, '\n')) != NULL)
 		    *ptr = '\0';
 		  fprintf(stderr, "Mismatch found in configuration %d.\n",
-			  nconf + 1);
+			  nconf);
 		  strncpy(msg, res + 3 * (i + 1), 2);
 		  msg[2] = '\0';
 		  fprintf(stderr,
-			  "Expected element %s but found element %s.\n",
+			  "Expected element >> %s << but found element >> %s <<.\n",
 			  elements[i], msg);
+		  fprintf(stderr,
+			  "You can use list_config to identify that configuration.\n\n");
 		  error("Please check your configuration files!");
 		}
 	      }
@@ -520,6 +525,7 @@ void read_config(char *filename)
 				       1) * sizeof(int *));
 		    pot_list[col][pot_list_length[col]] =
 		      (int *)malloc(2 * sizeof(int));
+/*                    reg_for_free(pot_list[col][pot_list_length[col]]);*/
 		    pot_list[col][pot_list_length[col]][0] = i;
 		    pot_list[col][pot_list_length[col]][1] = k;
 		    pot_list_length[col]++;
@@ -615,6 +621,15 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
+  reg_for_free(atoms, "atoms");
+  reg_for_free(coheng, "coheng");
+  reg_for_free(volumen, "volumen");
+  reg_for_free(stress, "stress");
+  reg_for_free(inconf, "inconf");
+  reg_for_free(cnfstart, "cnfstart");
+  reg_for_free(useforce, "useforce");
+  reg_for_free(usestress, "usestress");
+
   mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector
 					   3*natoms are real forces,
 					   nconf cohesive energies,
@@ -630,6 +645,7 @@ void read_config(char *filename)
   /* copy forces into single vector */
   if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
     error("Cannot allocate forces");
+  reg_for_free(force_0, "force_0");
   k = 0;
   for (i = 0; i < natoms; i++) {	/* first forces */
     force_0[k++] = atoms[i].force.x;
@@ -781,9 +797,11 @@ void read_config(char *filename)
   free(mindist);
 
   na_typ = (int **)realloc(na_typ, (nconf + 1) * sizeof(int *));
+  reg_for_free(na_typ, "na_typ");
   if (NULL == na_typ)
     error("Cannot allocate memory for na_typ");
   na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
+  reg_for_free(na_typ[nconf], "na_typ[nconf]");
   for (i = 0; i < ntypes; i++)
     na_typ[nconf][i] = 0;
 

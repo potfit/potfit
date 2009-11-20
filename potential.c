@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.74 $
-* $Date: 2009/10/12 08:04:27 $
+* $Revision: 1.75 $
+* $Date: 2009/11/20 08:19:00 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -163,6 +163,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       gradient = (int *)malloc(size * sizeof(int));
       invar_pot = (int *)malloc(size * sizeof(int));
       smooth_pot = (int *)malloc(size * sizeof(int));
+      reg_for_free(gradient, "gradient");
+      reg_for_free(invar_pot, "invar_pot");
+      reg_for_free(smooth_pot, "smooth_pot");
       for (i = 0; i < size; i++) {
 	gradient[i] = 0;
 	invar_pot[i] = 0;
@@ -192,6 +195,12 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   pt->first = (int *)malloc(size * sizeof(int));
   pt->last = (int *)malloc(size * sizeof(int));
   nvals = (int *)malloc(size * sizeof(int));
+  reg_for_free(pt->begin, "pt->begin");
+  reg_for_free(pt->end, "pt->end");
+  reg_for_free(pt->step, "pt->step");
+  reg_for_free(pt->invstep, "pt->invstep");
+  reg_for_free(pt->first, "pt->first");
+  reg_for_free(pt->last, "pt->last");
   if ((pt->begin == NULL) || (pt->end == NULL) || (pt->step == NULL) ||
       (pt->invstep == NULL) || (pt->first == NULL) || (pt->last == NULL) ||
       (nvals == NULL)) {
@@ -212,27 +221,45 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   apt->param_name = (char ***)malloc(size * sizeof(char **));
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
   apt->co_pol = (real **)malloc(size * sizeof(real *));
+  reg_for_free(apt->n_par, "apt->n_par");
+  reg_for_free(apt->begin, "apt->begin");
+  reg_for_free(apt->end, "apt->end");
+  reg_for_free(apt->param_name, "apt->param_name");
+  reg_for_free(apt->fvalue, "apt->fvalue");
+  reg_for_free(apt->co_pol, "apt->co_pol");
   if (!disable_cp) {
     apt->values = (real **)malloc((size + 1) * sizeof(real *));
     apt->values[size] = (real *)malloc(ntypes * sizeof(real));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->chempot = apt->values[size];
+    reg_for_free(apt->chempot, "apt->chempot");
     apt->pmin = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmin[size] = (real *)malloc(ntypes * sizeof(real));
+    reg_for_free(apt->pmin[size], "apt->pmin[size]");
     apt->pmax = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
+    reg_for_free(apt->pmax[size], "apt->pmax[size}");
   } else {
     apt->values = (real **)malloc(size * sizeof(real *));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->pmin = (real **)malloc(size * sizeof(real *));
     apt->pmax = (real **)malloc(size * sizeof(real *));
   }
+  reg_for_free(apt->values, "apt->values");
+  reg_for_free(apt->invar_par, "apt->invar_par");
+  reg_for_free(apt->pmin, "apt->pmin");
+  reg_for_free(apt->pmax, "apt->pmax");
   apt->names = (char **)malloc(size * sizeof(char *));
   pot_list_length = (int *)malloc(size * sizeof(int));
   pot_list = (int ***)malloc(size * sizeof(int **));
+  reg_for_free(apt->names, "apt->names");
+  reg_for_free(pot_list_length, "pot_list_length");
+  reg_for_free(pot_list, "pot_list");
   for (i = 0; i < size; i++) {
     apt->names[i] = (char *)malloc(20 * sizeof(char));
+    reg_for_free(apt->names[i], "apt->names[i]");
     pot_list[i] = (int **)malloc(sizeof(int *));
+    reg_for_free(pot_list[i], "pot_list[i]");
     pot_list_length[i] = 0;
   }
   if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL)
@@ -266,21 +293,25 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 #ifndef POTSCALE		/* not needed in potscale program */
   /* compute rcut and rmin */
   rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
+  reg_for_free(rcut, "rcut");
   if (NULL == rcut)
     error("Cannot allocate rcut");
   rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
+  reg_for_free(rmin, "rmin");
   if (NULL == rmin)
     error("Cannot allocate rmin");
 #ifdef APOT
 #ifdef EAM
   pot_index =
     (int *)malloc(((ntypes * (ntypes + 1) / 2) + ntypes) * sizeof(int));
+  reg_for_free(pot_index, "pot_index");
   if (NULL == pot_index)
     error("Cannot allocate pot_index");
   for (i = 0; i < (ntypes * (ntypes + 1) / 2 + ntypes); i++)
     pot_index[i] = ntypes * ntypes;
 #else /* EAM */
   pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
+  reg_for_free(pot_index, "pot_index");
   if (NULL == pot_index)
     error("Cannot allocate pot_index");
   for (i = 0; i < ntypes * (ntypes + 1) / 2; i++)
@@ -323,6 +354,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 #ifndef APOT
   /* read maximal changes file */
   maxchange = (real *)malloc(pt->len * sizeof(real));
+  reg_for_free(maxchange, "maxchange");
   if (usemaxch) {
     /* open file */
     infile = fopen(maxchfile, "r");
@@ -535,12 +567,18 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     /* set small begin to prevent division by zero-errors */
     apt->begin[i] = 0.0001;
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+    reg_for_free(apt->values[i], "apt->values[i]");
     apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
+    reg_for_free(apt->invar_par[i], "apt->invar_par[i]");
     apt->pmin[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+    reg_for_free(apt->pmin[i], "apt->pmin[i]");
     apt->pmax[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+    reg_for_free(apt->pmax[i], "apt->pmax[i]");
     apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
+    reg_for_free(apt->param_name[i], "apt->param_name[i]");
     if (smooth_pot[i] == 1)
       apt->co_pol[i] = (real *)malloc(5 * sizeof(real));
+    reg_for_free(apt->co_pol[i], "apt->co_pol[i]");
 
     if (NULL == apt->values[i] || NULL == apt->pmin[i]
 	|| NULL == apt->pmax[i] || NULL == apt->param_name[i]) {
@@ -571,6 +609,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
        * the array.
        */
       apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
+      reg_for_free(apt->param_name[i][j], "apt->param_name[i][j]");
       if (NULL == apt->param_name[i][j])
 	error("Error in allocating memory for parameter name");
       if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[i][j],
@@ -662,10 +701,15 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
+  reg_for_free(pt->table, "pt->table");
   calc_list = (real *)malloc(pt->len * sizeof(real));
+  reg_for_free(calc_list, "calc_list");
   pt->idx = (int *)malloc(pt->len * sizeof(int));
+  reg_for_free(pt->idx, "pt->idx");
   apt->idxpot = (int *)malloc(apt->total_par * sizeof(int));
+  reg_for_free(apt->idxpot, "apt->idxpot");
   apt->idxparam = (int *)malloc(apt->total_par * sizeof(int));
+  reg_for_free(apt->idxparam, "apt->idxparam");
   if ((NULL == pt->table) || (NULL == pt->idx) || (apt->idxpot == NULL)
       || (apt->idxparam == NULL)) {
     sprintf(msg, "Cannot allocate memory for potential table.\nAborting");
@@ -755,9 +799,19 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   }
   /* allocate the function table */
   pt->table = (real *)malloc(pt->len * sizeof(real));
+  reg_for_free(pt->table, "pt->table");
   pt->xcoord = (real *)malloc(pt->len * sizeof(real));
+  reg_for_free(pt->xcoord, "pt->xcoord");
   pt->d2tab = (real *)malloc(pt->len * sizeof(real));
+  reg_for_free(pt->d2tab, "pt->d2tab");
   pt->idx = (int *)malloc(pt->len * sizeof(int));
+  reg_for_free(pt->idx, "pt->idx");
+  for (i = 0; i < pt->len; i++) {
+    pt->table[i] = 0.;
+    pt->xcoord[i] = 0.;
+    pt->d2tab[i] = 0.;
+    pt->idx[i] = 0.;
+  }
   if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab)) {
     error("Cannot allocate memory for potential table");
   }
@@ -1278,13 +1332,21 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  calct->begin = optt->begin;
 	  calct->end = optt->end;
 	  calct->first = (int *)malloc(size * sizeof(int));
+	  reg_for_free(calct->first, "calct->first");
 	  calct->last = (int *)malloc(size * sizeof(int));
+	  reg_for_free(calct->last, "calct->last");
 	  calct->step = (real *)malloc(size * sizeof(real));
+	  reg_for_free(calct->step, "calct->step");
 	  calct->invstep = (real *)malloc(size * sizeof(real));
+	  reg_for_free(calct->invstep, "calct->invstep");
 	  calct->xcoord = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->xcoord, "calct->xcoord");
 	  calct->table = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->table, "calct->table");
 	  calct->d2tab = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->d2tab, "calct->d2tab");
 	  calct->idx = (int *)malloc(calct->len * sizeof(int));
+	  reg_for_free(calct->idx, "calct->idx");
 	  if (calct->first == NULL || calct->last == NULL
 	      || calct->step == NULL || calct->invstep == NULL
 	      || calct->xcoord == NULL || calct->table == NULL
@@ -1381,8 +1443,10 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
       case 0:
 	{
 	  cut = apot_table.end;
-	  if (do_smooth && params == NULL)
+	  if (do_smooth && params == NULL) {
 	    params = (real *)malloc(4 * sizeof(real));
+	    reg_for_free(params, "params");
+	  }
 	  val = xi_opt;
 	  list = calc_list + 2;
 	  for (i = 0; i < calc_pot.ncols; i++) {

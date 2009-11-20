@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2009/09/25 07:32:24 $
+* $Revision: 1.23 $
+* $Date: 2009/11/20 08:19:00 $
 *****************************************************************/
 
 #ifdef APOT
@@ -399,19 +399,25 @@ int apot_check_params(real *params)
 real apot_punish(real *params, real *forces)
 {
   int   i, j;
-  real  x, tmpsum = 0;
+  real  x, tmpsum = 0, min, max;
 
   /* loop over parameters */
   for (i = 0; i < ndim; i++) {
+    min = apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]];
+    max = apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]];
     /* punishment for out of bounds */
-    if (x = params[idx[i]] -
-	apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]],
-	x < 0) {
+    if (x = params[idx[i]] - min, x < 0) {
+#ifdef DEBUG
+      fprintf(stderr, "DEBUG - parameter %d out of bounds: %f [%f;%f]\n", i,
+	      params[idx[i]], min, max);
+#endif
       tmpsum += APOT_PUNISH * x * x;
       forces[punish_par_p + i] = APOT_PUNISH * x * x;
-    } else if (x = params[idx[i]] -
-	       apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]],
-	       x > 0) {
+    } else if (x = params[idx[i]] - max, x > 0) {
+#ifdef DEBUG
+      fprintf(stderr, "DEBUG - parameter %d out of bounds: %f [%f;%f]\n", i,
+	      params[idx[i]], min, max);
+#endif
       tmpsum += APOT_PUNISH * x * x;
       forces[punish_par_p + i] = APOT_PUNISH * x * x;
     }

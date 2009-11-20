@@ -1,3 +1,9 @@
+CVS-20091120
++ [APOT] fix punishments for pair potentials
++ fix some memory leaks (experimental, may break mpi)
++ [APOT] add evolutionary algorithm for testing purposes (activate with _evo target)
++ fix uninitialized values
+
 CVS-20091012
 + don't write punishments if opt=0
 + [APOT] fix cp_ detection with element names

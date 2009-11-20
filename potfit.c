@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.65 $
-* $Date: 2009/10/12 08:04:27 $
+* $Revision: 1.66 $
+* $Date: 2009/11/20 08:19:00 $
 *****************************************************************/
 
 #define MAIN
@@ -154,8 +154,11 @@ int main(int argc, char **argv)
     /* set spline density corrections to 0 */
 #ifdef EAM
     lambda = (real *)malloc(ntypes * sizeof(real));
+    reg_for_free(lambda, "lambda");
     totdens = (real *)malloc(ntypes * sizeof(real));
+    reg_for_free(totdens, "totdens");
     ntyp = (int *)malloc(ntypes * sizeof(int));
+    reg_for_free(ntyp, "ntyp");
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
 #ifndef NORESCALE
@@ -186,17 +189,24 @@ int main(int argc, char **argv)
   idx = opt_pot.idx;
 
   force = (real *)malloc((mdim) * sizeof(real));
+  reg_for_free(force, "force");
   energy_p = 3 * natoms;
-  stress_p = 3 * natoms + nconf;
+  stress_p = energy_p + nconf;
 #ifdef EAM
-  limit_p = 3 * natoms + 7 * nconf;
-  dummy_p = 3 * natoms + 8 * nconf;
-#endif
+  limit_p = stress_p + 6 * nconf;
+  dummy_p = limit_p + nconf;
 #ifdef APOT
-  punish_par_p = 3 * natoms + 8 * nconf + 2 * ntypes;
-  punish_pot_p = 3 * natoms + 8 * nconf + 2 * ntypes + apot_table.total_par;
+  punish_par_p = dummy_p + 2 * ntypes;
+  punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
+#else /* EAM */
+#ifdef APOT
+  punish_par_p = stress_p + 6 * nconf;
+  punish_pot_p = punish_par_p + apot_table.total_par;
+#endif
+#endif /* EAM */
   rms = (real *)malloc(3 * sizeof(real));
+  reg_for_free(rms, "rms");
 
 #ifdef APOT
 #ifdef MPI
@@ -252,7 +262,11 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
     if (opt) {
       printf("\nStarting optimization ...\n");
+#if defined EVO
+      diff_evol(opt_pot.table);
+#else
       anneal(opt_pot.table);
+#endif
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
     } else {
@@ -358,7 +372,7 @@ int main(int argc, char **argv)
 
     max = 0.0;
     min = 100000.0;
-    real  f_sum = 0, e_sum = 0, s_sum = 0;
+    real  f_sum = 0., e_sum = 0., s_sum = 0.;
 
     if (write_output_files) {
       strcpy(file, output_prefix);
@@ -612,16 +626,13 @@ int main(int argc, char **argv)
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
-#ifndef APOT
-    free(ntyp);
-    free(totdens);
-#endif
-    free(lambda);
   }
-  free(force);
+  /* do some cleanups before exiting */
 #ifdef MPI
   /* kill MPI */
   shutdown_mpi();
+#else
+  free_all_pointers();
 #endif
   return 0;
 }

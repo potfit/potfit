@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.74 $
-* $Date: 2009/09/25 11:31:34 $
+* $Revision: 1.75 $
+* $Date: 2009/11/20 08:19:00 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -236,6 +236,11 @@ EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints *
 EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
 #endif
 
+/* memory management */
+EXTERN void **all_pointers INIT(NULL);
+EXTERN int num_pointers INIT(0);
+EXTERN char **pointer_names INIT(NULL);
+
 EXTERN char startpot[255];	/* file with start potential */
 EXTERN char maxchfile[255];	/* file with maximal changes */
 EXTERN char endpot[255];	/* file for end potential */
@@ -341,6 +346,11 @@ void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
 void  powell_lsq(real *xi);
 void  anneal(real *xi);
+#if defined EVO && defined APOT
+real *calc_vect(real *x);
+void  init_population(real **pop, real *xi, int size, real scale);
+void  diff_evol(real *xi);
+#endif
 void  spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);

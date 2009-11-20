@@ -29,13 +29,14 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.42 $
-* $Date: 2009/09/25 07:32:26 $
+* $Revision: 1.43 $
+* $Date: 2009/11/20 08:19:01 $
 *****************************************************************/
 
 #include <math.h>
 #include "potfit.h"
 #include "utils.h"
+
 #define RAND_MAX 2147483647
 #define EPS 0.1
 #define NEPS 4
@@ -309,9 +310,11 @@ void anneal(real *xi)
       F = Fopt;
       loopagain = 1;
     }
-
-
+#if defined EVO && defined APOT
+  } while (k < 1);
+#else
   } while (k < KMAX && loopagain);
+#endif
   for (n = 0; n < ndimtot; n++)
     xi[n] = xopt[n];
 
