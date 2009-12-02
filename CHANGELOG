@@ -1,3 +1,8 @@
+CVS-20091202
++ fix more uninitialized values
++ [APOT] fix rare segfault with universal function
++ evolution algorithm polished
+
 CVS-20091120
 + [APOT] fix punishments for pair potentials
 + fix some memory leaks (experimental, may break mpi)

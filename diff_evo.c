@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2009/11/20 08:21:58 $
+* $Revision: 1.2 $
+* $Date: 2009/12/02 11:02:26 $
 *****************************************************************/
 
 #if defined EVO
@@ -51,10 +51,12 @@
 #define CR 0.5			// crossover constant, in [0,1]
 #define F 0.2			// coupling constant with others, in [0,1]
 
-#define KILL_MAX 0		// kill the worst configuration?
 #define MAX_LOOPS 1e6		// max number of loops performed
-#define MAX_UNCHANGED 1000	// abort after number of unchanged steps
+#define MAX_UNCHANGED 100	// abort after number of unchanged steps
 #define RAND_MAX 2147483647
+
+/* untested feature, DO NOT USE */
+#define KILL_MAX 0		// kill the worst configuration?
 
 #ifdef APOT
 
@@ -93,15 +95,24 @@ real *calc_vect(real *x)
   int   i, j, k = 0, n = 0;
   static real *vect;
 
-  if (vect == NULL)
+  if (vect == NULL) {
     vect = (real *)malloc(ndimtot * sizeof(real));
+    for (i = 0; i < ndimtot; i++)
+      vect[i] = 0;
+  }
 
   for (i = 0; i < apot_table.number; i++) {
     vect[k++] = 0;
     vect[k++] = 0;
-    for (j = 0; j < apot_table.n_par[i]; j++) {
+    for (j = 0; j <
+	 (apot_table.n_par[i] - apot_table.invar_par[i][apot_table.n_par[i]]);
+	 j++) {
       vect[k++] = x[n++];
     }
+  }
+  if (!disable_cp) {
+    for (i = 0; i < ntypes; i++)
+      vect[k++] = x[n++];
   }
   return vect;
 }
@@ -142,7 +153,8 @@ void init_population(real **pop, real *xi, int size, real scale)
 
 void diff_evol(real *xi)
 {
-  int   a, b, c, d, e, i, j, k, count = 0, last_changed = 0, n_max;
+  int   a, b, c, d, e, i, j, k, count = 0, last_changed = 0, n_max, finished =
+    0;
   real  force, min = 10e10, max = 0, avg = 0, temp = 0, sum = 0, tmpsum =
     0, pmin = 0, pmax = 0;
   real *cost, *fxi, *trial, *best, *opt;
@@ -163,6 +175,10 @@ void diff_evol(real *xi)
     x2[i] = (real *)malloc(D * sizeof(real));
     if (x1[i] == NULL || x2[i] == NULL)
       error("Could not allocate memory for population vector!\n");
+    for (j = 0; j < D; j++) {
+      x1[i][j] = 0;
+      x2[i][j] = 0;
+    }
   }
 
   if (KILL_MAX)
@@ -186,12 +202,15 @@ void diff_evol(real *xi)
     }
   }
 
+#ifdef DEBUG
   printf("Starting Differential Evolution with the following parameters:\n");
   printf("D=%d, NP=%d, CR=%f, F=%f\n", D, NP, CR, F);
+#endif
+
   printf("Loops\t\tOptimum\t\tAverage cost\n");
   printf("%8d\t%f\n", count, min);
 
-  while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED) {
+  while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished) {
     sum = 0;
     max = 0;
     for (i = 0; i < NP; i++) {
@@ -294,7 +313,7 @@ void diff_evol(real *xi)
     for (i = 0; i < NP; i++)
       avg += cost[i];
 #ifdef APOT
-    printf("%8d\t%f\t%f\t%f\n", count + 1, min, avg / NP, sum / (NP * D));
+    printf("%8d\t%f\t%f\t%e\n", count + 1, min, avg / (NP), sum / (NP * D));
 #else
     printf("%8d\t%f\t%f\n", count + 1, min, avg / NP);
 #endif
@@ -309,6 +328,10 @@ void diff_evol(real *xi)
 	("\nCould not find any improvements in the last %d steps.\n",
 	 MAX_UNCHANGED);
       printf("Aborting evolution algorithm ...\n\n");
+    }
+    if ((avg / (NP) - min) < 1e-10) {
+      printf("Average cost equals minimum cost, nothing more to improve\n");
+      finished = 1;
     }
   }
 
@@ -330,6 +353,7 @@ void diff_evol(real *xi)
   free(trial);
   free(cost);
   free(best);
+  free(fxi);
 }
 
 #endif

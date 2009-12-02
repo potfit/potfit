@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.59 $
-* $Date: 2009/11/20 08:19:00 $
+* $Revision: 1.60 $
+* $Date: 2009/12/02 11:02:26 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -640,7 +640,7 @@ void read_config(char *filename)
 #endif /* EAM */
 #ifdef APOT
   mdim += opt_pot.idxlen;	/* 1 slot for each analytic parameter -> punishment */
-  mdim += apot_table.number;	/* 1 slot for each analytic potential -> punishment */
+  mdim += apot_table.number + 1;	/* 1 slot for each analytic potential -> punishment */
 #endif /* APOT */
   /* copy forces into single vector */
   if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))

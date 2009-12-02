@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.43 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.44 $
+* $Date: 2009/12/02 11:02:27 $
 *****************************************************************/
 
 /******************************************************************************
@@ -351,12 +351,13 @@ void powell_lsq(real *xi)
     printf("Could not find any further improvements, aborting!\n");
   else
     printf("Precision not reached!\n");
-  /* Free memory */
 #ifdef APOT
   for (i = 0; i < ndim; i++)
     apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
       xi[idx[i]];
 #endif
+
+  /* Free memory */
   free_vect_real(delta);
   free_vect_real(fxi1);
   free_vect_real(fxi2);
@@ -388,7 +389,7 @@ void powell_lsq(real *xi)
 
 int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 {
-  real *force;
+  static real *force;
   int   i, j;			/* Auxiliary vars: Counters */
   real  sum, temp, scale, store;	/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
@@ -398,7 +399,15 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
       d[i][j] = (i == j) ? 1. : 0.;
   }
 /* Initialize gamma by calculating numerical derivatives    */
-  force = vect_real(mdim);
+  if (force == NULL) {
+    force = (real *)malloc(mdim * sizeof(real));
+    if (force == NULL)
+      error("Error in real vector allocation");
+    for (i = 0; i < mdim; i++)
+      force[i] = 0;
+    reg_for_free(force, "force from init_gamma");
+  }
+
   for (i = 0; i < ndim; i++) {	/*initialize gamma */
     store = xi[idx[i]];
 #ifdef APOT
@@ -426,7 +435,6 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
     } else
       return i + 1;		/* singular matrix, abort */
   }
-  free_vect_real(force);
   return 0;
 }
 

@@ -1,7 +1,7 @@
 /****************************************************************
 *
 *  potential.c: Routines for reading, writing and interpolating a
-*      potential table in format 3 (potfit format).
+*      potential table
 *
 *****************************************************************/
 /*
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.75 $
-* $Date: 2009/11/20 08:19:00 $
+* $Revision: 1.76 $
+* $Date: 2009/12/02 11:02:26 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -631,7 +631,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       if (apt->pmin[i][j] == apt->pmax[i][j]) {
 	apt->invar_par[i][j] = 1;
 	apt->invar_par[i][apt->n_par[i]]++;
-/*        apt->total_par--;*/
       } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
 	temp = apt->pmin[i][j];
 	apt->pmin[i][j] = apt->pmax[i][j];
@@ -715,6 +714,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     sprintf(msg, "Cannot allocate memory for potential table.\nAborting");
     error(msg);
   }
+  for (i = 0; i < pt->len; i++) {
+    pt->table[i] = 0;
+    calc_list[i] = 0;
+    pt->idx[i] = 0;
+  }
   k = 0;
   l = 0;
   val = pt->table;
@@ -736,8 +740,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	l++;
 
     }
-    if (!invar_pot[i])
+    if (!invar_pot[i]) {
       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
+    }
   }
 #ifndef EAM
   if (!disable_cp) {
