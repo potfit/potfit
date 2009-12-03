@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.1 $
-# $Date: 2009/12/03 07:35:56 $
+# $Revision: 1.2 $
+# $Date: 2009/12/03 07:44:16 $
 ####################################################################
 
 {
@@ -43,7 +43,7 @@
 	for (i=0;i<species;i++) {
 		element[i]=$4;
 		getline;
-		}
+	}
 	# get comment line
 	name[0]=$4;
 	name[1]=$5;
@@ -53,15 +53,15 @@
 	name[5]=$9;
 	getline;
 	for (i=0;i<pairs;i++) {
-	pot_i[i]=$1;
-	pot_j[i]=$2;
-	par_0[i]=$3;
-	par_1[i]=$4;
-	par_2[i]=$5;
-	par_3[i]=$6;
-	par_4[i]=$7;
-	par_5[i]=$8;
-	getline;
+		pot_i[i]=$1;
+		pot_j[i]=$2;
+		par_0[i]=$3;
+		par_1[i]=$4;
+		par_2[i]=$5;
+		par_3[i]=$6;
+		par_4[i]=$7;
+		par_5[i]=$8;
+		getline;
 	}
 }
 
@@ -78,17 +78,17 @@ END {
 	for (i=0;i<pairs;i++)
 		printf " 0"
 	printf "\n#E\n\n";
-	
+
 	for (i=0;i<pairs;i++) {
-	printf "type eopp_sc\n";
-	printf "cutoff 7\n";
-	printf "%s %f %d %d\n",name[0],par_0[i],1,10000;
-	printf "%s %f %d %d\n",name[1],par_1[i],1,20;
-	printf "%s %f %d %d\n",name[2],par_2[i],-100,100;
-	printf "%s %f %d %d\n",name[3],par_3[i],2,20;
-	printf "%s %f %d %d\n",name[4],par_4[i],0,6;
-	printf "%s %f %d %f\n",name[5],par_5[i],0,6.3;
-	if (i!=(pairs-1)) 
-	printf "\n";
-		}
+		printf "type eopp_sc\n";
+		printf "cutoff 7\n";
+		printf "%s %f %d %d\n",name[0],par_0[i],1,10000;
+		printf "%s %f %d %d\n",name[1],par_1[i],1,20;
+		printf "%s %f %d %d\n",name[2],par_2[i],-100,100;
+		printf "%s %f %d %d\n",name[3],par_3[i],2,20;
+		printf "%s %f %d %d\n",name[4],par_4[i],0,6;
+		printf "%s %f %d %f\n",name[5],par_5[i],0,6.3;
+		if (i!=(pairs-1)) 
+			printf "\n";
 	}
+}
