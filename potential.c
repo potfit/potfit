@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.76 $
-* $Date: 2009/12/02 11:02:26 $
+* $Revision: 1.77 $
+* $Date: 2009/12/08 07:19:33 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -1467,13 +1467,12 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	      }
 	    }
 	    if (change || do_all) {
-	      if ((!invar_pot[i] && !smooth_pot[i])
-		  || i >= (ntypes * (ntypes + 1) / 2 + ntypes)) {
+	      if (!smooth_pot[i] || i >= (ntypes * (ntypes + 1) / 2 + ntypes)) {
 		for (j = 0; j < APOT_STEPS; j++) {
 		  k = i * APOT_STEPS + (i + 1) * 2 + j;
 		  apot_table.fvalue[i] (calc_pot.xcoord[k], val, xi_calc + k);
 		}
-	      } else if (!invar_pot[i] && smooth_pot[i]) {
+	      } else if (smooth_pot[i]) {
 		k = i * APOT_STEPS + (i + 1) * 2;
 		x0 = smooth(apot_table.fvalue[i], cut[i], val, params);
 		if (myid == 0) {
@@ -2555,6 +2554,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       r = apot_table.begin[i];
     j = i * (i + 1) / 2;
     if (!invar_pot[i] && smooth_pot[i]) {
+/*    if (smooth_pot[i]) {*/
       x0 =
 	smooth(apot_table.fvalue[i], apot_table.end[i], apot_table.values[i],
 	       params);

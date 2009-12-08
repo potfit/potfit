@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.60 $
-* $Date: 2009/12/02 11:02:26 $
+* $Revision: 1.61 $
+* $Date: 2009/12/08 07:19:33 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -862,7 +862,7 @@ void new_slots(int a1, int force_update)
 	col =
 	  (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-	if ((force_update || smooth_pot[col]) && !invar_pot[col]) {
+	if (force_update || smooth_pot[col]) {
 	  r = atom->neigh[j].r;
 	  if (r < calc_pot.end[col]) {
 	    rr = r - calc_pot.begin[col];

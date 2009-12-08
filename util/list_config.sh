@@ -26,16 +26,21 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.3 $
-#* $Date: 2009/11/19 07:01:26 $
+#* $Revision: 1.4 $
+#* $Date: 2009/12/08 07:19:39 $
 #*****************************************************************/
 
 if [ $# -eq 0 ]; then
-	echo "Usage: get_config FILENAME"
+	echo "Usage: list_config.sh FILENAME"
 	exit
 elif [ $# -ge 2 ]; then
 	echo "More then 1 file given on command line. Only $1 will be interpreted"
 	echo
+fi
+if [ ! -e "$1" ]; then
+	echo "File $1 does not exists, aborting"
+	echo
+	exit 2;
 fi
 n_conf=`grep -e \#E $1 | wc -l`
 n_names=`grep -e generated $1 | wc -l`

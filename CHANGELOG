@@ -1,3 +1,6 @@
+CVS-20091208
++ [APOT] fix invariant potentials
+
 CVS-20091202
 + fix more uninitialized values
 + [APOT] fix rare segfault with universal function
