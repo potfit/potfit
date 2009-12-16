@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.66 $
-* $Date: 2009/11/20 08:19:00 $
+* $Revision: 1.67 $
+* $Date: 2009/12/16 12:10:56 $
 *****************************************************************/
 
 #define MAIN
@@ -387,32 +387,27 @@ int main(int argc, char **argv)
       printf("Forces:\n");
     }
     for (i = 0; i < 3 * natoms; i++) {
-      sqr = SQR(force[i]);
+      sqr = conf_weight[atoms[i / 3].conf] * SQR(force[i]);
       f_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
       if (i == 0)
 	fprintf(outfile,
-		"conf-atom    type\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
-      fprintf(outfile, "%d-%d\t%s\t%f\t%f\t%f\t%f\t%f\n", atoms[i / 3].conf,
-	      i / 3, elements[atoms[i / 3].typ], sqr,
+		"conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+      fprintf(outfile,
+	      "%3d:%5d\t%4s\t%11.8f\t%11.8f\t%11.8f\t%11.8f\t%11.8f\n",
+	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
 	      force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	      force_0[i],
 	      (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
 	      atoms[i / 3].absforce);
 #else /* FWEIGHT */
       if (i == 0)
-	fprintf(outfile, "conf-atom    type\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
-      if (atoms[i / 3].conf > 99 && i / 3 > 999) {
-	fprintf(outfile, "%d-%d\t%s\t%.8f\t%.8f\t%.8f\t%f\n",
-		atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
-		force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
-      } else {
-	fprintf(outfile, "%d-%d\t\t%s\t%.8f\t%.8f\t%.8f\t%f\n",
-		atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
-		force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
-      }
+	fprintf(outfile, "conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
+      fprintf(outfile, "%3d:%5d\t%4s\t%.8f\t%11.8f\t%11.8f\t%11.8f\n",
+	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
+	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
@@ -434,24 +429,29 @@ int main(int argc, char **argv)
     }
 
     if (write_output_files) {
-      fprintf(outfile, "#\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
-    } else
-      fprintf(outfile, "#\t(w*de)^2\te\t\te0\t\tde/e0\n");
+      fprintf(outfile, "# energy weight w is %f\n", eweight);
+      fprintf(outfile,
+	      "# nr.\tconf_w\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+    } else {
+      fprintf(outfile, "# energy weight is %f\n", eweight);
+      fprintf(outfile, "# nr.\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
+    }
 
     for (i = 0; i < nconf; i++) {
-      sqr = SQR(force[energy_p + i]);
+      sqr = conf_weight[i] * SQR(force[energy_p + i]);
       e_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
       if (write_output_files) {
-	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\t%f\t%f\n", i, sqr,
+	fprintf(outfile, "%3d\t%.4f\t%f\t%f\t%f\t%f\t%f\t%f\n", i,
+		conf_weight[i], sqr,
 		(force[energy_p + i] + force_0[energy_p + i]) / eweight,
 		force_0[energy_p + i] / eweight,
 		fabs(force[energy_p + i]) / eweight,
 		force[energy_p + i] / eweight,
 		force[energy_p + i] / force_0[energy_p + i]);
       } else
-	fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n", i, sqr,
+	fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i], sqr,
 		(force[energy_p + i] + force_0[energy_p + i]) / eweight,
 		force_0[energy_p + i] / eweight,
 		force[energy_p + i] / force_0[energy_p + i]);
@@ -473,14 +473,14 @@ int main(int argc, char **argv)
       outfile = stdout;
       fprintf(outfile, "Stresses on unit cell\n");
     }
-    fprintf(outfile, "#\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
+    fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     for (i = stress_p; i < stress_p + 6 * nconf; i++) {
       sqr = SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      fprintf(outfile, "%d\t%f\t%f\t%f\t%f\n",
-	      (i - stress_p) / 6, sqr,
+      fprintf(outfile, "%d\t%f\t%f\t%f\t%f\t%f\n",
+	      (i - stress_p) / 6, conf_weight[i], sqr,
 	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
 	      force[i] / force_0[i]);
     }

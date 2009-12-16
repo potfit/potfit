@@ -1,3 +1,8 @@
+CVS-20091216
++ added option to assign different weights to configurations with #W option
++ fixed stress output
++ last stable version before major changes are commited (new cutoff, adp and maybe meam)
+
 CVS-20091208
 + [APOT] fix invariant potentials
 

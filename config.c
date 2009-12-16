@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.61 $
-* $Date: 2009/12/08 07:19:33 $
+* $Revision: 1.62 $
+* $Date: 2009/12/16 12:10:56 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -257,6 +257,11 @@ void read_config(char *filename)
     coheng = (real *)realloc(coheng, (nconf + 1) * sizeof(real));
     if (NULL == coheng)
       error("Cannot allocate memory for cohesive energy");
+    conf_weight = (real *)realloc(conf_weight, (nconf + 1) * sizeof(real));
+    if (NULL == conf_weight)
+      error("Cannot allocate memory for configuration weights");
+    else
+      conf_weight[nconf] = 1.;
     volumen = (real *)realloc(volumen, (nconf + 1) * sizeof(real));
     if (NULL == volumen)
       error("Cannot allocate memory for volume");
@@ -318,6 +323,9 @@ void read_config(char *filename)
 	    h_eng++;
 	  else
 	    error("Error in energy\n");
+	} else if (res[1] == 'W') {
+	  if (sscanf(res + 3, "%lf\n", &(conf_weight[nconf])) != 1)
+	    error("Error in configuration weight\n");
 	} else if (res[1] == 'C') {
 	  str_len = strlen(res + 3);
 	  fgetpos(infile, &filepos);

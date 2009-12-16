@@ -5,8 +5,8 @@
 # Copyright 2002-2008 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.47 $
-# $Date: 2009/11/20 08:19:00 $
+# $Revision: 1.48 $
+# $Date: 2009/12/16 12:10:56 $
 #
 ############################################################################
 #
@@ -141,7 +141,7 @@ MPI_FLAGS	+= -DMPI
 OMP_FLAGS	+= -DOMP
 OMPI_FLAGS	+= -DMPI -DOMP
 DEBUG_FLAGS	+= -DDEBUG
-MKLDIR          =  /common/linux/paket/intel/mkl91/
+MKLDIR          =  /common/linux/paket/intel/mkl91
 MKLPATH         =  ${MKLDIR}/lib/
 #CINCLUDE        =  -I${MKLDIR}/include/
 

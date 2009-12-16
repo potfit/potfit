@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.21 $
-* $Date: 2009/09/11 08:34:06 $
+* $Revision: 1.22 $
+* $Date: 2009/12/16 12:10:57 $
 *****************************************************************/
 
 
@@ -169,8 +169,9 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0)
+  if (rr < 0) {
     error("short distance! in splint_grad_ed");
+  }
 
   /* indices into potential table */
   istep = pt->invstep[col];

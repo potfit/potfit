@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.75 $
-* $Date: 2009/09/25 07:32:23 $
+* $Revision: 1.76 $
+* $Date: 2009/12/16 12:10:56 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -419,7 +419,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* Returned force is difference between */
 	    /* calculated and input force */
 	    tmpsum +=
-	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
+	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
+				SQR(forces[k + 2]));
 #if defined DEBUG && defined FORCES
 	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
 		    forces[k + 1], forces[k + 2], tmpsum);
@@ -577,7 +578,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* FWEIGHT */
 	    /* sum up forces  */
 	    tmpsum +=
-	      SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]);
+	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
+				SQR(forces[k + 2]));
 #if defined DEBUG && defined FORCES
 	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
 		    forces[k + 1], forces[k + 2], tmpsum);
@@ -589,7 +591,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] *= eweight / (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += SQR(forces[energy_p + h]);
+	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
 #if defined DEBUG && defined FORCES
 	fprintf(stderr, "energy: tmpsum=%f energy=%f\n", tmpsum,
 		forces[energy_p + h]);
@@ -600,13 +602,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += SQR(forces[stress_p + 6 * h + i]);
+	    tmpsum += SQR(conf_weight[h] * forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
 	/* limiting constraints per configuration */
 #ifdef EAM
-	tmpsum += SQR(forces[limit_p + h]);
+	tmpsum += conf_weight[h] * SQR(forces[limit_p + h]);
 #endif
       }				/* loop over configurations */
     }				/* parallel region */

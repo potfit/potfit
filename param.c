@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.30 $
-*  $Date: 2009/09/02 14:16:19 $
+*  $Revision: 1.31 $
+*  $Date: 2009/12/16 12:10:56 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -288,6 +288,10 @@ void read_paramfile(FILE *pf)
     /* starting temperature for annealing */
     else if (strcasecmp(token, "anneal_temp") == 0) {
       getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
+    }
+    /* starting width for normal distribution for evo */
+    else if (strcasecmp(token, "evo_width") == 0) {
+      getparam("evo_width", &evo_width, PARAM_DOUBLE, 1, 1);
     }
     /* Energy Weight */
     else if (strcasecmp(token, "eng_weight") == 0) {

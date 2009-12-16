@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.75 $
-* $Date: 2009/11/20 08:19:00 $
+* $Revision: 1.76 $
+* $Date: 2009/12/16 12:10:56 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -180,8 +180,9 @@ EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
 EXTERN int *smooth_pot INIT(NULL);
 EXTERN int write_pair INIT(0);
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
-EXTERN real *conf_eng INIT(NULL);
+//EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
+EXTERN real *conf_weight INIT(NULL);	/* weight of configuration */
 EXTERN stens *conf_stress INIT(NULL);
 EXTERN int *atom_len;
 EXTERN int *atom_dist;
@@ -223,6 +224,7 @@ EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
 EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
 EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
 EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
+EXTERN real evo_width INIT(1.);
 
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2009/12/08 07:19:33 $
+* $Revision: 1.4 $
+* $Date: 2009/12/16 12:10:56 $
 *****************************************************************/
 
 #if defined EVO
@@ -47,7 +47,7 @@
 #endif
 
 /* parameters for the differential evolution algorithm */
-#define NP 10*D			// number of total population
+#define NP 25*D			// number of total population
 #define CR 0.5			// crossover constant, in [0,1]
 #define F 0.2			// coupling constant with others, in [0,1]
 
@@ -162,6 +162,9 @@ void diff_evol(real *xi)
   real *cost, *fxi, *trial, *best, *opt;
   real **x1, **x2;
 
+  if (evo_width == 0)
+    return;
+
   fxi = vect_real(mdim);
 
   trial = (real *)malloc(D * sizeof(real));
@@ -183,7 +186,7 @@ void diff_evol(real *xi)
     }
   }
 
-  init_population(x1, xi, D, 1);
+  init_population(x1, xi, D, 1. / evo_width);
   for (i = 0; i < NP; i++) {
 #ifdef APOT
     opt = calc_vect(x1[i]);
@@ -302,7 +305,7 @@ void diff_evol(real *xi)
 #ifdef APOT
     printf("%8d\t%f\t%f\t%e\n", count + 1, min, avg / (NP), sum / (NP * D));
 #else
-    printf("%8d\t%f\t%f\n", count + 1, min, avg / NP);
+    printf("%8d\t%f\t%f\n", count + 1, min, avg / (NP));
 #endif
     fflush(stdout);
     for (i = 0; i < NP; i++)
@@ -324,8 +327,8 @@ void diff_evol(real *xi)
       restart++;
       printf("\nCould nor find any improvements in the last %d steps.\n",
 	     MAX_UNCHANGED);
-      printf("Restarting algorithm. (%d tries left)\n\n", 3-restart);
-      init_population(x1, xi, D, log(restart*exp(10)));
+      printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
+      init_population(x1, xi, D, log(restart * exp(10)));
       for (i = 0; i < NP; i++) {
 #ifdef APOT
 	opt = calc_vect(x1[i]);
