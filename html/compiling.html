@@ -108,11 +108,16 @@ density is now mandatory and not optional any more. </p>
 
 
 <p>
-Currently, the following values of the IMDSYS variable are supported
-(though only the AthlonMP and P4 has been thoroughly tested, most have not
-been tested at all):</p>
+Currently, the following values of the IMDSYS variable are supported and properly tested:
+</p>
 
 <table summary="supported IMDSYS values">
+<tr><td>x86_64-gcc    </td><td> All recent 64 bit processors, gcc    </td></tr>
+<tr><td>x86_64-icc    </td><td> All recent 64 bit processors, icc    </td></tr>
+</table>
+<p>
+The following values of the IMDSYS variable are only there for legacy reasons and are mostly untested:</p>
+<table summary"deprecated IMDSYS values">
 <tr><td>AthlonMP-icc  </td><td> Athlon MP or XP, icc                 </td></tr>
 <tr><td>AthlonMP-gcc3 </td><td> Athlon MP or XP, gcc3                </td></tr>
 <tr><td>P4-icc        </td><td> Pentium 4 or Xeon, icc               </td></tr>
