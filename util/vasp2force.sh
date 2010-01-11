@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.24 $
-#* $Date: 2009/11/19 07:01:26 $
+#* $Revision: 1.25 $
+#* $Date: 2010/01/11 09:04:25 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -253,6 +253,7 @@ for file in $outcars; do
                    boxy_v[2]*scale,boxy_v[3]*scale;
        printf "#Z %13.8f %13.8f %13.8f\n",boxz_v[1]*scale,\
                    boxz_v[2]*scale,boxz_v[3]*scale;
+       printf("#W 1\n") ;
        printf("#E %.10f\n",energy) ;
        if ( 1 in stress )
          print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];

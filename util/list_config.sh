@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.4 $
-#* $Date: 2009/12/08 07:19:39 $
+#* $Revision: 1.5 $
+#* $Date: 2010/01/11 09:04:21 $
 #*****************************************************************/
 
 if [ $# -eq 0 ]; then
@@ -44,6 +44,7 @@ if [ ! -e "$1" ]; then
 fi
 n_conf=`grep -e \#E $1 | wc -l`
 n_names=`grep -e generated $1 | wc -l`
+n_weights=`grep -e \#W $1 | wc -l`
 if [ $n_conf -gt $n_names ]; then
 grep -n -e \#N -e generated -e \#E $1 | awk -v file=$1 'BEGIN{i=0}
 {
