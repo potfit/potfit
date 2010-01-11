@@ -30,8 +30,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.19 $
-# $Date: 2009/11/19 07:00:52 $
+# $Revision: 1.20 $
+# $Date: 2010/01/11 09:05:28 $
 ####################################################################
 #
 # Usage: makeapot <options>
@@ -61,6 +61,7 @@ function write_cp(n)
 {
     for (i=0;i<n;i++)
 	printf "cp_%d -1 -10 0\n",i;
+    printf "\n";
 }
 
 function write_cn(n)
@@ -79,15 +80,19 @@ function write_cn(n)
 
 function write_pot(name)
 {
-    printf "\n";
+#    printf "\n";
     print "type "name;
     print "cutoff "co;
-    gsub("_sc$","",name);
+    do_smooth=0;
+    if (match(name,"_sc$",arr)>0) {
+	gsub("_sc$","",name);
+	do_smooth=1;
+    }
     if (name=="eopp") {
 	print "C_1 15 1 10000";
 	print "eta_1 6 1 20";
 	print "C_2 5 -100 100";
-	print "eta_2 3 2 20";
+	print "eta_2 3 1 10";
 	print "k 2.5 0 6";
 	print "phi 3 0 6.3";
     }
@@ -150,7 +155,8 @@ function write_pot(name)
 	print "phi 3 0 6.3";
 	print "r_0 0 -3 3";
     }
-
+    if (do_smooth)
+	print "h 1 0.5 2";
 }
 
 BEGIN{
@@ -181,8 +187,11 @@ BEGIN{
 	if (enable_cn)
 	    write_cn(cn);
     }
-    for (i=0;i<total_pot;i++)
+    for (i=0;i<total_pot;i++) {
 	write_pot(pot[i]);
+	if (i!=(total_pot-1))
+		printf "\n";
+    }
     
 }
 

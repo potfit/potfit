@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.15 $
-# $Date: 2009/12/02 11:04:09 $
+# $Revision: 1.16 $
+# $Date: 2010/01/11 09:05:34 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -50,29 +50,37 @@ function write_pot(i,name,params,file)
 		name = "pohlong";
 		printf "Switched universal to pohlong in limit m->n\n";
 	}
+	if (i==0) {
+	printf "cof(x) = ( x < 0 ) ? x**4/(1+x**4) : 0;\n" > file;
+	printf "pl " > file;}
+	if (do_smooth[i])
+		printf "cof((x-"cutoff[i]")/"params[i","n_param[i]]")*(" > file;
 	if (name == "eopp") {
-		printf "%f/x**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+		printf "%f/x**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
 	} else if (name == "lj") {
-	printf "4*%f*((%f/x)**12-(%f/x)**6) w l",params[i","1],params[i","2],params[i","2] > file;
+	printf "4*%f*((%f/x)**12-(%f/x)**6)",params[i","1],params[i","2],params[i","2] > file;
 } else if (name == "morse") {
-printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f))) w l",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > file;
+printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f)))",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > file;
     } else if (name == "softshell") {
-    printf "(%f/x)**%f w l",params[i","1],params[i","2] > file;
+    printf "(%f/x)**%f",params[i","1],params[i","2] > file;
     } else if (name == "eoppexp") {
-    printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+    printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
     } else if (name == "meopp") {
-    printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f) w l",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+    printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
     } else if (name == "pohlong") {
-    printf "%f*(1-%f*log(x))*(x)**%f w l",params[i","1],params[i","2],params[i","2] > file;
+    printf "%f*(1-%f*log(x))*(x)**%f",params[i","1],params[i","2],params[i","2] > file;
     } else if (name == "power_decay") {
     printf "%f*(1/x)**%f w l",params[i","1],params[i","2] > file;
     } else if (name == "parabola") {
-    printf "%f*x**2+%f*x+%f w l",params[i","1],params[i","2],params[i","3] > file;
+    printf "%f*x**2+%f*x+%f",params[i","1],params[i","2],params[i","3] > file;
     } else if (name == "csw") {
-    printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f w l",params[i","1],params[i","3],params[i","2],params[i","3],params[i","4] > file;
+    printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f",params[i","1],params[i","3],params[i","2],params[i","3],params[i","4] > file;
     } else if (name == "universal") {
-    printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x w l",params[i","1],params[i","3],params[i","3],params[i","2],params[i","2],params[i","2],params[i","3],params[i","2],params[i","3],params[i","4] > file;
+    printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x",params[i","1],params[i","3],params[i","3],params[i","2],params[i","2],params[i","2],params[i","3],params[i","2],params[i","3],params[i","4] > file;
     }
+    if (do_smooth[i])
+	    printf ")" > file;
+    printf " w l" > file;
     if (have_species)
 	    printf " t \"%s\"",elements[i+1] > file;
 }
@@ -148,10 +156,15 @@ BEGIN {
 		for (i=count;i<(count+total_pots);i++){
 			while (substr($0,1,4)!="type") getline;
 			pot_name[i] = $2;
-			if (match(pot_name[i],"_sc$",arr)>0)
+			if (match(pot_name[i],"_sc$",arr)>0) {
 				pot_name[i] = substr(pot_name[i],1,length(pot_name[i])-3);
+				do_smooth[i]=1;
+			}
 			n_param[i]=read_pot(pot_name[i]);
+			if (do_smooth[i]==1)
+				n_param[i]++;
 			getline;
+			cutoff[i]=$2;
 			if ($2>maxdist)
 				maxdist=$2;
 			getline;
@@ -176,29 +189,36 @@ BEGIN {
 }
 
 END {
+	pair_count = count;
 	if (eam && count == 3) {
 		count = count - 1;
 		eam_count = 1;
+		pair_count = 1;
 	}
 	if (count == 7) {
 		count = count - 2;
 		eam_count = 2;
+		pair_count = 3;
 	}
 	if (count == 12) {
 		count = count - 3;
 		eam_count = 3;
+		pair_count = 6;
 	}
 	if (mindist == 10)
 		mindist = 2;
 	if (count != 0) {
 		print "reset;\n" > "plot";
-		print "set samples 10000;\n" > "plot";
+		print "set samples 1000;\n" > "plot";
 		print "set grid;\n" > "plot";
-		print "set arrow 1 from " maxdist ",.1 to " maxdist ",-.1 nohead size 2,15,10 lw 2;\n" > "plot";
-		print "set label \"cutoff\" at " maxdist*0.95 ",-0.13;\n" > "plot";
-		print "pl [" 0.5*mindist ":" maxdist*1.1 "][-.3:.3] " > "plot";
+		print "set xrange [" 0.5*mindist ":" maxdist*1.01 "];\n" > "plot";
+		print "set yrange [-.3:.5];\n" > "plot";
 		for (i=0;i<count;i++) {
 			write_pot(i,pot_name[i],params,"plot");
+			if (i<pair_count)
+				print " ls 1 lc "i > "plot";
+			else
+				print " ls 2 lc "(i-pair_count) > "plot";
 			if (i!=(count-1))
 				print ", " > "plot";
 		}
@@ -217,7 +237,6 @@ END {
 					print ", " > "plot";
 			}
 		}
-		print ";" > "plot";
 		if (eam_count > 0)
 			title = title" pair potential and transfer function";
 		else
@@ -226,11 +245,13 @@ END {
 	}
 	if (eam_count > 0) {
 		print "reset;\n" > "plot_eam";
-		print "set samples 10000;\n" > "plot_eam";
+		print "set samples 1000;\n" > "plot_eam";
 		print "set grid;\n" > "plot_eam";
-		print "pl [0:2][-10:10] " > "plot_eam";
+		print "set xrange [0:2]\n" > "plot_eam";
+		print "pl " > "plot_eam";
 		for (i=count;i<(count+eam_count);i++) {
 			write_pot(i,pot_name[i],params,"plot_eam");
+			print " ls 1 lc "(i-count) > "plot_eam";
 			if (i!=(count+eam_count-1))
 				print ", " > "plot_eam";
 		}
