@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.22 $
-* $Date: 2009/12/16 12:10:57 $
+* $Revision: 1.23 $
+* $Date: 2010/01/11 09:03:08 $
 *****************************************************************/
 
 
@@ -204,7 +204,7 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
 real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
 {
-  real  a, istep, p1, p2, d21, d22;
+  real  a, p1, p2, d21, d22;
 
   /* indices into potential table */
   a = 1.0 - b;
@@ -216,7 +216,6 @@ real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
   return a * p1 + b * p2 +
     ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
 }
-
 
 /****************************************************************************
  *
@@ -230,7 +229,7 @@ real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
 real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
 		     real step, real *grad)
 {
-  real  a, istep, p1, p2, d21, d22;
+  real  a, p1, p2, d21, d22;
 
 
   /* indices into potential table */
@@ -258,7 +257,7 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
 real splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
 		     real step)
 {
-  real  a, istep, p1, p2, d21, d22;
+  real  a, p1, p2, d21, d22;
 
   /* indices into potential table */
   a = 1.0 - b;
@@ -278,9 +277,6 @@ real splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
  *            (nonequidistant x[i])
  *
  *****************************************************************************/
-
-
-
 
 void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
 {
@@ -322,8 +318,6 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
     y2[k] = y2[k] * y2[k + 1] + u[k];
 }
 
-
-
 /******************************************************************************
  *
  * splint_ne: interpolates the function with splines
@@ -331,15 +325,10 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
  *
  *****************************************************************************/
 
-
 real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 {
   int   klo, khi, k;
-  real  h, b, a, rr, d22, d21, p1, p2, x1, x2;
-/*    check for distances shorter than minimal distance in table  */
-  /* not necessary with this routine... */
-/*   rr = r - pt->begin[col]; */
-/*   if (rr < 0) {printf("%f %f %d\n",r,pt->begin[col],col);error("short distance");} */
+  real  h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];
@@ -368,7 +357,6 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 
 }
 
-
 /******************************************************************************
  *
  * splint_comb_ne: calculates spline interpolation of a function (return value)
@@ -379,11 +367,7 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 {
   int   klo, khi, k;
-  real  h, b, a, rr, d22, d21, p1, p2, x1, x2;
-  /* check for distances shorter than minimal distance in table */
-  /* not necessary */
-/*   rr = r - pt->begin[col]; */
-/*   if (rr < 0) error("short distance"); */
+  real  h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];
@@ -425,11 +409,7 @@ real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 real splint_grad_ne(pot_table_t *pt, real *xi, int col, real r)
 {
   int   klo, khi, k;
-  real  h, b, a, rr, d22, d21, p1, p2, x1, x2;
-  /* check for distances shorter than minimal distance in table */
-  /* not necessary */
-/*   rr = r - pt->begin[col]; */
-/*   if (rr < 0) error("short distance"); */
+  real  h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];

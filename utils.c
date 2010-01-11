@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2009/12/08 07:19:33 $
+* $Revision: 1.6 $
+* $Date: 2010/01/11 09:03:08 $
 *****************************************************************/
 
 #include <stdio.h>
@@ -38,6 +38,11 @@
 #include <stdlib.h>
 #include "potfit.h"
 #include "utils.h"
+
+inline real sqrreal(real x)
+{
+  return x * x;
+}
 
 int  *vect_int(long dim)
 {

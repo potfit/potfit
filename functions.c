@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.23 $
-* $Date: 2009/11/20 08:19:00 $
+* $Revision: 1.24 $
+* $Date: 2010/01/11 09:03:07 $
 *****************************************************************/
 
 #ifdef APOT
@@ -367,7 +367,7 @@ void newpot_value(real r, real *p, real *f)
 
 int apot_check_params(real *params)
 {
-  int   i, j = 2, k, l;
+  int   i, j = 2, k;
 
   for (i = 0; i < apot_table.number; i++) {
 
@@ -385,7 +385,7 @@ int apot_check_params(real *params)
     }
 
     /* jump to next potential */
-    j += 2 + apot_table.n_par[i];
+    j += 2 + apot_table.n_par[i] + smooth_pot[i] ? 1 : 0;
   }
   return 0;
 }
@@ -427,6 +427,14 @@ real apot_punish(real *params, real *forces)
   /* loop over potentials */
   for (i = 0; i < apot_table.number; i++) {
 
+    /* punish eta_1 < eta_2 for eopp function */
+    if (strcmp(apot_table.names[i], "eopp") == 0) {
+      x = params[j + 1] - params[j + 3];
+      if (x < 0) {
+	forces[punish_pot_p + i] = APOT_PUNISH * (1 + x) * (1 + x);
+	tmpsum += APOT_PUNISH * (1 + x) * (1 + x);
+      }
+    }
 #ifdef EAM
     /* punish m=n for universal embedding function */
     if (strcmp(apot_table.names[i], "universal") == 0) {
@@ -436,15 +444,6 @@ real apot_punish(real *params, real *forces)
 	tmpsum += APOT_PUNISH / (x * x);
       }
     }
-
-    /* punish very small F_0 for universal and pohlong embedding function */
-/*    if (strcmp(apot_table.names[i], "universal") == 0*/
-/*        || strcmp(apot_table.names[i], "pohlong") == 0) {*/
-/*      if (fabs(params[j]) < 1e-2) {*/
-/*        forces[punish_pot_p + i] = APOT_PUNISH / (x * x);*/
-/*        tmpsum += APOT_PUNISH / (x * x);*/
-/*      }*/
-/*    }*/
 #endif
 
     /* jump to next potential */

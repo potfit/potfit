@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2009/12/16 12:10:56 $
+* $Revision: 1.5 $
+* $Date: 2010/01/11 09:03:07 $
 *****************************************************************/
 
 #if defined EVO
@@ -153,7 +153,7 @@ void init_population(real **pop, real *xi, int size, real scale)
   }
 }
 
-void diff_evol(real *xi)
+void diff_evo(real *xi)
 {
   int   a, b, c, d, e, i, j, k;
   int   count = 0, last_changed = 0, finished = 0, restart = 0;
@@ -200,14 +200,18 @@ void diff_evol(real *xi)
 	best[j] = x1[i][j];
     }
   }
+  avg = 0;
+  for (i = 0; i < NP; i++)
+    avg += cost[i];
 
 #ifdef DEBUG
   printf("Starting Differential Evolution with the following parameters:\n");
   printf("D=%d, NP=%d, CR=%f, F=%f\n", D, NP, CR, F);
 #endif
 
-  printf("Loops\t\tOptimum\t\tAverage cost\n");
-  printf("%8d\t%f\n", count, min);
+  printf("Loops\t\tOptimum\t\tAverage cost\tAverage change\n");
+  printf("%5d\t\t%f\t%f\t0\n", count, min, avg / (NP));
+  fflush(stdout);
 
   while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished
 	 && restart < 4) {
@@ -276,7 +280,7 @@ void diff_evol(real *xi)
 	last_changed = 0;
 	for (j = 0; j < D; j++)
 	  best[j] = trial[j];
-	if (tempfile != "\0") {
+	if (*tempfile != '\0') {
 	  for (j = 0; j < ndim; j++)
 #ifdef APOT
 	    apot_table.values[apot_table.idxpot[j]][apot_table.idxparam[j]] =
@@ -303,9 +307,9 @@ void diff_evol(real *xi)
     for (i = 0; i < NP; i++)
       avg += cost[i];
 #ifdef APOT
-    printf("%8d\t%f\t%f\t%e\n", count + 1, min, avg / (NP), sum / (NP * D));
+    printf("%5d\t\t%f\t%f\t%e\n", count + 1, min, avg / (NP), sum / (NP * D));
 #else
-    printf("%8d\t%f\t%f\n", count + 1, min, avg / (NP));
+    printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
 #endif
     fflush(stdout);
     for (i = 0; i < NP; i++)

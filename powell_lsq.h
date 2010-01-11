@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.14 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.15 $
+* $Date: 2010/01/11 09:03:08 $
 *****************************************************************/
 
 
@@ -65,8 +65,8 @@ void  lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
 void  lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
 		      real *p, int i, int n, int m);
 
-real  linmin_r(real p[], real xi[], real fxi1, int n, int m,
-	       real *x1, real *x2, real *fret1, real *fret2);
+real  linmin_r(real p[], real xi[], real fxi1, real *x1, real *x2,
+	       real *fret1, real *fret2);
 
 void  matdotvec(real **a, real *x, real *y, int n, int m);
 

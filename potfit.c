@@ -29,13 +29,14 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.67 $
-* $Date: 2009/12/16 12:10:56 $
+* $Revision: 1.68 $
+* $Date: 2010/01/11 09:03:07 $
 *****************************************************************/
 
 #define MAIN
 
 #include "potfit.h"
+#include "utils.h"
 
 /******************************************************************************
 *
@@ -45,10 +46,10 @@
 
 void error(char *msg)
 {
-  real *force = NULL;
   fprintf(stderr, "Error: %s\n", msg);
   fflush(stderr);
 #ifdef MPI
+  real *force = NULL;
   calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
   shutdown_mpi();
 #endif
@@ -77,8 +78,8 @@ void warning(char *msg)
 int main(int argc, char **argv)
 {
   real *force;
-  real  tot, min, max, sqr, *totdens;
-  int   i, j, k, diff, *ntyp;
+  real  tot, min, max, sqr, *totdens = NULL;
+  int   i, j, *ntyp = NULL;
   char  msg[255], file[255];
   FILE *outfile;
 
@@ -262,8 +263,8 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
     if (opt) {
       printf("\nStarting optimization ...\n");
-#if defined EVO
-      diff_evol(opt_pot.table);
+#ifdef EVO
+      diff_evo(opt_pot.table);
 #else
       anneal(opt_pot.table);
 #endif
@@ -296,8 +297,6 @@ int main(int argc, char **argv)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
-//    if (plot) write_altplot_pair(&opt_pot, plotfile);
-
 
 #ifdef PDIST
 #ifndef MPI			/* will not work with MPI */
@@ -505,12 +504,6 @@ int main(int argc, char **argv)
 	outfile = stdout;
 	printf("Punishment Constraints\n");
       }
-//    printf("conf dp p p0 dp/p0");
-/*#ifdef STRESS*/
-/*    diff = 6 * nconf;*/
-/*#else*/
-/*    diff = 0;*/
-/*#endif*/
       for (i = limit_p; i < dummy_p; i++) {
 	sqr = SQR(force[i]);
 	max = MAX(max, sqr);

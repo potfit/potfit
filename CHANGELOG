@@ -1,3 +1,9 @@
+CVS-live
++ [APOT] use new cutoff function
++ general code cleanup, hopefully everything still works as expected
++ only compile sources needed for the selected targets
++ make mkl default for x86_64-gcc
+
 CVS-20091216
 + added option to assign different weights to configurations with #W option
 + fixed stress output

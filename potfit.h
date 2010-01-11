@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.76 $
-* $Date: 2009/12/16 12:10:56 $
+* $Revision: 1.77 $
+* $Date: 2010/01/11 09:03:07 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -129,7 +129,6 @@ typedef struct {
   char **names;			/* name of analytic potentials */
   char ***param_name;		/* name of parameters */
   real **values;		/* parameter values for analytic potentials */
-  real **co_pol;		/* parameters for cutoff polynomial */
   int **invar_par;		/* parameter values for analytic potentials */
   real *chempot;		/* chemical potentials */
   real *begin;			/* starting position of potential */
@@ -146,8 +145,8 @@ typedef struct {
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SQR(a)     ((a)*(a))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-static real sqrreal;
-#define SQRREAL(x) ((sqrreal=(x)) == 0.0 ? 0.0 : sqrreal*sqrreal)
+//static real sqrreal;
+//#define SQRREAL(x) ((sqrreal=(x)) == 0.0 ? 0.0 : sqrreal*sqrreal)
 
 /******************************************************************************
 *
@@ -168,7 +167,6 @@ EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
 EXTERN MPI_Datatype MPI_VEKTOR;
 EXTERN MPI_Datatype MPI_STENS;
-//EXTERN MPI_Datatype MPI_POTTABLE;
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
 #endif
@@ -180,7 +178,6 @@ EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
 EXTERN int *smooth_pot INIT(NULL);
 EXTERN int write_pair INIT(0);
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
-//EXTERN real *conf_eng INIT(NULL);
 EXTERN real *conf_vol INIT(NULL);
 EXTERN real *conf_weight INIT(NULL);	/* weight of configuration */
 EXTERN stens *conf_stress INIT(NULL);
@@ -351,7 +348,7 @@ void  anneal(real *xi);
 #if defined EVO && defined APOT
 real *calc_vect(real *x);
 void  init_population(real **pop, real *xi, int size, real scale);
-void  diff_evol(real *xi);
+void  diff_evo(real *xi);
 #endif
 void  spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ed(pot_table_t *pt, real *xi, int col, real r);
@@ -415,7 +412,7 @@ real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
 
 /* smooth.c */
-real  smooth(void (*function) (real, real *, real *), real, real *, real *);
+real  cutoff(real, real, real);
 
 #ifdef DEBUG
 void  debug_apot();

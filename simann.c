@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.43 $
-* $Date: 2009/11/20 08:19:01 $
+* $Revision: 1.44 $
+* $Date: 2010/01/11 09:03:08 $
 *****************************************************************/
 
 #include <math.h>
@@ -45,14 +45,15 @@
 #define NTEMP (3*ndim)
 #define TEMPVAR 0.85
 #define KMAX 1000
-#define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(SQRREAL(a))/2.)))
+#define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(sqrreal(a))/2.)))
 
-int my_rand()
-{
-  int   x;
-  x = random();
-  return x;
-}
+/* FIXME: marked for deletion */
+/*int my_rand()*/
+/*{*/
+/*  int   x;*/
+/*  x = random();*/
+/*  return x;*/
+/*}*/
 
 #ifdef APOT
 
@@ -75,7 +76,7 @@ void randomize_parameter(int n, real *xi, real *v)
 
   do {
     temp = xi[idx[n]];
-    rand = 2.0 * my_rand() / (RAND_MAX + 1.) - 1;
+    rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
     /* this is needed to make the algorithm work with a predefined range */
     if (v[n] > (max - min))
       v[n] = (max - min);
@@ -167,19 +168,17 @@ void anneal(real *xi)
   real *v;			/* step vector */
   real *xopt, *xi2;		/* optimal value */
   real *fxi1;			/* two latest force vectors */
-  real  temp;			/* temporary variable */
 #ifndef APOT
-  real  p;			/* Probability */
   real  width, height;		/* gaussian bump size */
-/*#else*/
-/*  int   new_pot = 0;*/
 #endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
+
   /* init starting temperature for annealing process */
   T = anneal_temp;
   if (T == 0.)
     return;			/* don't anneal if starttemp equal zero */
+
   Fvar = vect_real(KMAX + 5 + NEPS);	//-(NEPS+1); /* Backlog of old F values */
   v = vect_real(ndim);
   xopt = vect_real(ndimtot);
@@ -197,12 +196,13 @@ void anneal(real *xi)
   }
   F = (*calc_forces) (xi, fxi1, 0);
   Fopt = F;
-  printf("k\tT        \tm\tF          \tFopt\n");
-  printf("%d\t%f\t%d\t%f\t%f\n", 0, T, 0, F, Fopt);
+  printf("  k\tT        \t  m\tF          \tFopt\n");
+  printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, Fopt);
   fflush(stdout);
   for (n = 0; n <= NEPS; n++)
     Fvar[n] = F;		//Fvar[-n]=F;
 
+  /* annealing loop */
   do {
     for (m = 0; m < ntemp; m++) {
       for (j = 0; j < nstep; j++) {
@@ -229,22 +229,24 @@ void anneal(real *xi)
 	      for (n = 0; n < ndimtot; n++)
 		xopt[n] = xi2[n];
 	      Fopt = F2;
-	      if (tempfile != "\0")
+	      /* TODO */
+	      if (*tempfile != '\0')
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
 	      /* *INDENT-OFF* */
-		for (n = 0; n < ndim; n++)
+		for (n = 0; n < ndim; n++) {
 		  apot_table.values[apot_table.
 				    idxpot[n]][apot_table.idxparam[n]] =
 		    xopt[idx[n]];
-	      /* *INDENT-ON* */
+		}
+/*               *INDENT-ON**/
 		write_pot_table(&apot_table, tempfile);
 #endif
 	    }
 	  }
 
-	  else if (my_rand() / (RAND_MAX + 1.0) < exp((F - F2) / T)) {
+	  else if ((random() / (RAND_MAX + 1.0)) < exp((F - F2) / T)) {
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
 	    F = F2;
@@ -262,7 +264,7 @@ void anneal(real *xi)
 	naccept[n] = 0;
       }
 
-      printf("%d\t%f\t%d\t%f\t%f\n", k, T, m + 1, F, Fopt);
+      printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
       /* End fit if break flagfile exists */
       ff = fopen(flagfile, "r");
@@ -281,9 +283,8 @@ void anneal(real *xi)
 #ifndef NORESCALE
       /* Check for rescaling... every tenth step */
       if ((m % 10) == 0) {
-	temp = rescale(&opt_pot, 1., 0);
 	/* Was rescaling necessary ? */
-	if (temp != 0.) {
+	if (rescale(&opt_pot, 1., 0) != 0.) {
 #ifdef WZERO
 //          embed_shift(&opt_pot);
 #endif /* WZERO */
@@ -310,25 +311,22 @@ void anneal(real *xi)
       F = Fopt;
       loopagain = 1;
     }
-#if defined EVO && defined APOT
-  } while (k < 1);
-#else
   } while (k < KMAX && loopagain);
-#endif
-  for (n = 0; n < ndimtot; n++)
+  for (n = 0; n < ndimtot; n++) {
     xi[n] = xopt[n];
+  }
 
   printf("Finished annealing, starting powell minimization ...\n");
 
   F = Fopt;
 #ifndef APOT
-  if (tempfile != "\0")
+  if (*tempfile != '\0')
     write_pot_table(&opt_pot, tempfile);
 #else
   for (n = 0; n < ndim; n++)
     apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
       xopt[idx[n]];
-  if (tempfile != "\0")
+  if (*tempfile != '\0')
     write_pot_table(&apot_table, tempfile);
 #endif
   free_vect_real(Fvar);		//-NEPS+1);

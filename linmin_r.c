@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.16 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.17 $
+* $Date: 2010/01/11 09:03:07 $
 *****************************************************************/
 /**** rewritten for double precision and zero-offset vectors and matrices ****
 ***** adapted to Powell requrirements (return vector instead of value)...
@@ -47,15 +47,14 @@
 
 real *xicom, *delcom;
 
-real linmin_r(real xi[], real del[], real fxi1, int n, int m, real *x1,
-	      real *x2, real *fret1, real *fret2)
+real linmin_r(real xi[], real del[], real fxi1, real *x1, real *x2,
+	      real *fret1, real *fret2)
 /* takes vector del (direction of search), xi (originating point),
    n,m (dimensions),
    x1, x2 (two best locations),
    fret1, fret2 (return vectors) as arguments */
 {
   int   j;
-  int   status;
   static real *vecu = NULL;	/* Vector of location u */
   real  xx, fx, fb, bx, ax;
   real  fa = fxi1;

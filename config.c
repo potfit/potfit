@@ -29,95 +29,12 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.62 $
-* $Date: 2009/12/16 12:10:56 $
+* $Revision: 1.63 $
+* $Date: 2010/01/11 09:03:07 $
 *****************************************************************/
 
 #include "potfit.h"
-
-/*****************************************************************************
-*
-*  read the configurations
-*
-******************************************************************************/
-
-void read_config_old(char *filename)
-{
-  FILE *infile;
-  char  msg[255];
-  int   count, i, j, k, maxneigh = 0;
-  atom_t *atom;
-  neigh_t *neigh;
-
-  nconf = 0;
-
-  /* open file */
-  infile = fopen(filename, "r");
-  if (NULL == infile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
-
-  /* read configurations until the end of the file */
-  do {
-
-    /* number of atoms in this configuration */
-    if (1 > fscanf(infile, "%d", &count)) {
-      sprintf(msg, "Unexpected end of file in %s", filename);
-      error(msg);
-    }
-
-    /* increase memory for this many additional atoms */
-    atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
-    if (NULL == atoms)
-      error("Cannot allocate memory for atoms");
-    force_0 = (real *)realloc(force_0, 3 * (natoms + count) * sizeof(real));
-    if (NULL == force_0)
-      error("Cannot allocate memory for forces");
-
-    /* read the atoms */
-    for (i = 0; i < count; i++) {
-
-      k = 3 * (natoms + i);
-      atom = atoms + natoms + i;
-      if (8 > fscanf(infile, "%d %lf %lf %lf %lf %lf %lf %d\n", &(atom->typ),
-		     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z),
-		     force_0 + k, force_0 + k + 1, force_0 + k + 2,
-		     &(atom->n_neigh)))
-	error("Corrupt configuration file");
-
-      /* check if n_neigh < MAXNEIGH */
-      maxneigh = MAX(maxneigh, atom->n_neigh);
-      if (maxneigh >= MAXNEIGH) {
-	sprintf(msg, "%d neighbors, MAXNEIGH is %d!", maxneigh, MAXNEIGH);
-	error(msg);
-      }
-
-      /* read the neighbors */
-      for (j = 0; j < atom->n_neigh; j++) {
-	neigh = atom->neigh + j;
-	if (5 > fscanf(infile, "%d %lf %lf %lf %lf\n",
-		       &(neigh->typ), &(neigh->r),
-		       &(neigh->dist.x), &(neigh->dist.y), &(neigh->dist.z)))
-	  error("Corrupt configuration file");
-      }
-    }
-    mdim = k + 3;		/* mdim is dimension of force vector */
-
-    /* increment natoms and configuration number */
-    natoms += count;
-    nconf++;
-
-  } while (!feof(infile));
-
-  /* print diagnostic message and close file */
-  printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
-	 maxneigh, MAXNEIGH);
-  printf("Read %d configurations with a total of %d atoms\n", nconf, natoms);
-  fclose(infile);
-}
-
-
+#include "utils.h"
 
 /* vector product */
 vektor vec_prod(vektor u, vektor v)
@@ -171,13 +88,15 @@ real make_box(void)
 
 void read_config(char *filename)
 {
-  int   maxneigh = 0, count, index;
+  int   maxneigh = 0, count;
+#ifdef APOT
+  int   index;
+#endif
   int   i, j, k, ix, iy, iz, typ1, typ2, col, slot, klo, khi;
-  int   h_stress, h_eng, h_boxx, h_boxy, h_boxz, use_force;
+  int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
   int   w_force = 0, w_stress = 0;
   int   tag_format = 0;
   int   sh_dist = 0;		/* short distance flag */
-  int   has_name = 0;
   int   cell_scale[3];
   int   str_len;
   FILE *infile;
@@ -185,7 +104,6 @@ void read_config(char *filename)
   char  msg[255], buffer[1024];
   char *res, *ptr;
   atom_t *atom;
-  neigh_t *neigh;
   stens *stresses;
   vektor d, dd, iheight;
   real  r, rr, istep, shift, step;
@@ -736,7 +654,7 @@ void read_config(char *filename)
 #endif
 	    pair_table[k * pair_steps + pos]++;
 	    if (pair_table[k * pair_steps + pos] > max_count)
-	      max_count = pair_table[k * pair_steps + pos];
+	      max_count = (int)pair_table[k * pair_steps + pos];
 	  }
 	}
     }

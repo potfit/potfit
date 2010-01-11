@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.76 $
-* $Date: 2009/12/16 12:10:56 $
+* $Revision: 1.77 $
+* $Date: 2010/01/11 09:03:07 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -89,8 +89,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
   int   first, col1, i;
-  real  grad0, y0, y1, x0, x1;
-  real *xi;
+  real *xi = NULL;
 
 #ifdef EAM
   static real rho_sum_loc, rho_sum;
@@ -232,14 +231,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     {
 
 #ifdef EAM
-      vektor d;
       int   col2;
-      real  gradF, gradF2, grad2, r, eamforce;
-      atom_t *atom2;
+      real  grad2, r, eamforce;
 #endif
       int   self;
       vektor tmp_force;
-      int   h, k, i, l, j, typ1, typ2, col, uf, us, stresses;	// config
+      int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
       real  fnval, grad;
       atom_t *atom;
 
@@ -636,7 +633,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 #ifdef EAM
     if (myid == 0) {
-      int   g, i;
+      int   g;
       for (g = 0; g < ntypes; g++) {
 	/* PARABEL, WZERO, NORESC - different behaviour */
 #ifdef PARABEL

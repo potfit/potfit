@@ -2,11 +2,11 @@
 #
 # potfit -- The ITAP Force Matching Program
 #
-# Copyright 2002-2008 Institute for Theoretical and Applied Physics,
+# Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.48 $
-# $Date: 2009/12/16 12:10:56 $
+# $Revision: 1.49 $
+# $Date: 2010/01/11 09:03:07 $
 #
 ############################################################################
 #
@@ -59,7 +59,7 @@
 # are then selected as a function of this variable. It is also possible
 # to pass the value of IMDSYS on the command line, e.g.:
 #
-#   make IMDSYS=P4-icc potfit_mpi_eam
+#   make IMDSYS=x86_64-icc potfit_mpi_eam
 #
 # Another important ingredient is the parallelization method, which is
 # determined from the make target. The parallelization method is stored
@@ -163,19 +163,19 @@ ifeq (x86_64-gcc,${IMDSYS})
   DEBUG_FLAGS   += -g -O -Wall
   PROF_FLAGS    += -g3 -pg
 #  LFLAGS        +=  -static
-  ACMLPATH      = /common/linux/paket/acml4.2.0/gfortran64_mp
-#  MKLPATH       = ${MKLDIR}/lib/em64t/
-  CINCLUDE     += -I$(ACMLPATH)/include
-#  CINCLUDE      = -I${MKLDIR}/include
-   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
-  export        OMPI_MPICC # MPICH_CLINKER
-  export        LD_LIBRARY_PATH
+#  ACMLPATH      = /common/linux/paket/acml4.2.0/gfortran64_mp
+  MKLPATH       = ${MKLDIR}/lib/em64t/
+#  CINCLUDE     += -I$(ACMLPATH)/include
+  CINCLUDE      = -I${MKLDIR}/include
+#   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
+#  export        OMPI_MPICC # MPICH_CLINKER
+#  export        LD_LIBRARY_PATH
 # acml
-  LIBS		:= $(ACMLPATH)/lib/libacml_mp.a \
+#  LIBS		:= $(ACMLPATH)/lib/libacml_mp.a \
 		   -L${ACMLPATH}/lib -lpthread -lacml_mp -lgfortran
 # intel mkl
-#  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
-#		   -L${MKLPATH} -lguide -lpthread
+  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
+		   -L${MKLPATH} -lguide -lpthread
 endif
 
 # Intel EM64T "AMD inside", icc
@@ -612,8 +612,16 @@ POTFITHDR   	= potfit.h powell_lsq.h utils.h
 POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
 		  linmin_r.c force.c \
 		  config.c param.c potential.c potfit.c \
-		  splines.c simann.c rescale.c functions.c smooth.c \
-		  chempot.c diff_evo.c
+		  splines.c simann.c rescale.c
+
+ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+POTFITSRC      += functions.c smooth.c chempot.c
+endif
+
+ifneq (,$(strip $(findstring evo,${MAKETARGET})))
+POTFITSRC      += diff_evo.c
+endif
+
 MPISRC          = mpi_utils.c
 
 #########################################################
@@ -637,7 +645,7 @@ endif
 
 ########### HERE COMES POTFIT
 # EAM2 or EAM  -  this is now the same
-ifneq (,$(strip $(findstring eam,${MAKETARGET})))
+ifneq (,$(strip $(findstring _eam,${MAKETARGET})))
 CFLAGS  += -DEAM
 endif
 

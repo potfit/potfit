@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.31 $
-*  $Date: 2009/12/16 12:10:56 $
+*  $Revision: 1.32 $
+*  $Date: 2010/01/11 09:03:07 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -102,7 +102,7 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
     str = strtok(NULL, " \t\r\n");
     if (str == NULL) {
       sprintf(errmsg,
-	      "Parameter for %s missing in line %u\nstring expected!\n",
+	      "Parameter for %s missing in line %d\nstring expected!\n",
 	      param_name, curline);
       error(errmsg);
     } else
@@ -112,7 +112,7 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
     str = strtok(NULL, " \t\r\n");
     if (str == NULL) {
       sprintf(errmsg,
-	      "Parameter for %s missing in line %u\nstring expected!\n",
+	      "Parameter for %s missing in line %d\nstring expected!\n",
 	      param_name, curline);
       error(errmsg);
     } else
@@ -122,7 +122,7 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
     for (i = 0; i < pnum_min; i++) {
       str = strtok(NULL, " \t\r\n");
       if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %u!\n",
+	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
 		param_name, curline);
 	sprintf(errmsg + strlen(errmsg),
 		"Integer vector of length %u expected!\n",
@@ -143,7 +143,7 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
     for (i = 0; i < pnum_min; i++) {
       str = strtok(NULL, " \t\r\n");
       if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %u!\n",
+	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
 		param_name, curline);
 	sprintf(errmsg + strlen(errmsg),
 		"Double vector of length %u expected!\n", (unsigned)pnum_min);
@@ -200,18 +200,6 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "endpot") == 0) {
       getparam("endpot", endpot, PARAM_STR, 1, 255);
     }
-/*     file for end force */
-/*    else if (strcasecmp(token, "endforce") == 0) {*/
-/*      getparam("endforce", endforce, PARAM_STR, 1, 255);*/
-/*    }*/
-/*     file for end energy */
-/*    else if (strcasecmp(token, "endenergy") == 0) {*/
-/*      getparam("endenergy", endenergy, PARAM_STR, 1, 255);*/
-/*    }*/
-/*     file for end stress */
-/*    else if (strcasecmp(token, "endstress") == 0) {*/
-/*      getparam("endstress", endstress, PARAM_STR, 1, 255);*/
-/*    }*/
     /* prefix for all output files */
     else if (strcasecmp(token, "output_prefix") == 0) {
       getparam("output_prefix", output_prefix, PARAM_STR, 1, 255);
@@ -253,7 +241,7 @@ void read_paramfile(FILE *pf)
     }
 #endif
 #endif
-    /* Energy Weight */
+    /* how far should the imd pot be extended */
     else if (strcasecmp(token, "extend") == 0) {
       getparam("extend", &extend, PARAM_DOUBLE, 1, 1);
     }

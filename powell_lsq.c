@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.44 $
-* $Date: 2009/12/02 11:02:27 $
+* $Revision: 1.45 $
+* $Date: 2010/01/11 09:03:08 $
 *****************************************************************/
 
 /******************************************************************************
@@ -67,7 +67,7 @@ void powell_lsq(real *xi)
 {
   char  uplo[1] = "U";		/* char used in dsysvx */
   char  fact[1] = "N";		/* char used in dsysvx */
-  int   i, j, k, m = 0, n = 0;	/* Simple counting variables */
+  int   i, j, m = 0, n = 0;	/* Simple counting variables */
   real *force_xi;		/* calculated force, alt */
   real **d;			/* Direction vectors */
   real **gamma;			/* Matrix of derivatives */
@@ -85,10 +85,12 @@ void powell_lsq(real *xi)
   int   breakflag;		/* Breakflag */
   real  cond;			/* Condition number dsysvx */
   real *p, *q;			/* Vectors needed in Powell's algorithm */
-  real  perm_sig;		/* Signature of permutation in LU decomp */
-  real  F, F2, F3, df, xi1, xi2;	/* Fn values, changes, steps ... */
+/*  real  perm_sig;		|+ Signature of permutation in LU decomp +|*/
+  real  F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
   real  temp, temp2;		/* as the name indicates: temporary vars */
+#ifdef APOT
   int   itemp, itemp2;		/* the same for integer */
+#endif
   real  ferror, berror;		/* forward/backward error estimates */
   static char errmsg[256];	/* Error message */
   FILE *ff;			/* Exit flagfile */
@@ -139,7 +141,7 @@ void powell_lsq(real *xi)
     m = 0;
 
     /* Init gamma */
-    if (i = gamma_init(gamma, d, xi, fxi1)) {
+    if ( (i = gamma_init(gamma, d, xi, fxi1)) ) {
 #ifdef EAM
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
@@ -246,7 +248,7 @@ void powell_lsq(real *xi)
       F2 = F;			/*shift F */
 
       /* (c) minimize F(xi) along vector delta, return new F */
-      F = linmin_r(xi, delta, F, ndim, mdim, &xi1, &xi2, fxi1, fxi2);
+      F = linmin_r(xi, delta, F, &xi1, &xi2, fxi1, fxi2);
 
 /*      for (i=0;i<ndim;i++)*/
 /*              printf("%f ",xi[idx[i]]);*/
@@ -331,7 +333,8 @@ void powell_lsq(real *xi)
 #endif /* NORESCALE */
 #endif /* EAM */
     /* write temp file  */
-    if (tempfile != "\0")
+    /* TODO: check if this works properly */
+    if (*tempfile != '\0')
 #ifndef APOT
       write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
 #else

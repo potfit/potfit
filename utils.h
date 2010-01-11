@@ -29,12 +29,13 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2009/11/20 08:19:01 $
+* $Revision: 1.6 $
+* $Date: 2010/01/11 09:03:08 $
 *****************************************************************/
 
 #define ANSI
 
+real  sqrreal(real x);
 int  *vect_int(long dim);
 real *vect_real(long dim);
 real **mat_real(long rowdim, long coldim);
