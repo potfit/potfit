@@ -1,4 +1,4 @@
-CVS-live
+CVS-20100111
 + [APOT] use new cutoff function
 + general code cleanup, hopefully everything still works as expected
 + only compile sources needed for the selected targets
