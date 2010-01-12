@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.77 $
-* $Date: 2010/01/11 09:03:07 $
+* $Revision: 1.78 $
+* $Date: 2010/01/12 06:41:26 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -50,7 +50,6 @@
 #define NRANSI
 #define MAXNEIGH 400
 #ifdef EAM
-
 #define DUMMY_WEIGHT 100.
 #endif
 #define ENG_WEIGHT 10.

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.77 $
-* $Date: 2010/01/11 09:03:07 $
+* $Revision: 1.78 $
+* $Date: 2010/01/12 06:41:26 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -217,6 +217,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     }
 #endif /* PARABEL */
 #endif /* EAM */
+
 
 #ifndef MPI
     myconf = nconf;

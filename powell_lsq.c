@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.45 $
-* $Date: 2010/01/11 09:03:08 $
+* $Revision: 1.46 $
+* $Date: 2010/01/12 06:41:26 $
 *****************************************************************/
 
 /******************************************************************************
@@ -141,7 +141,7 @@ void powell_lsq(real *xi)
     m = 0;
 
     /* Init gamma */
-    if ( (i = gamma_init(gamma, d, xi, fxi1)) ) {
+    if (i = gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
@@ -249,10 +249,6 @@ void powell_lsq(real *xi)
 
       /* (c) minimize F(xi) along vector delta, return new F */
       F = linmin_r(xi, delta, F, &xi1, &xi2, fxi1, fxi2);
-
-/*      for (i=0;i<ndim;i++)*/
-/*              printf("%f ",xi[idx[i]]);*/
-/*      printf(" - F=%f\n",F);*/
 
 #ifdef DEBUG
       printf("%f %6g %f %f %d\n", F, cond, ferror, berror, i);

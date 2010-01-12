@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.68 $
-* $Date: 2010/01/11 09:03:07 $
+* $Revision: 1.69 $
+* $Date: 2010/01/12 06:41:26 $
 *****************************************************************/
 
 #define MAIN
@@ -593,7 +593,7 @@ int main(int argc, char **argv)
       rms[2] = 0;
     rms[2] = sqrt(rms[2] / (6 * nconf));
 
-    printf("sum of force-errors  = %f\t\t( %.3f%% - av: %f)\n",
+    printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
 	   f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
     printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
 	   e_sum / tot * 100);

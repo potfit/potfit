@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.44 $
-* $Date: 2010/01/11 09:03:08 $
+* $Revision: 1.45 $
+* $Date: 2010/01/12 06:41:26 $
 *****************************************************************/
 
 #include <math.h>
@@ -46,14 +46,6 @@
 #define TEMPVAR 0.85
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(sqrreal(a))/2.)))
-
-/* FIXME: marked for deletion */
-/*int my_rand()*/
-/*{*/
-/*  int   x;*/
-/*  x = random();*/
-/*  return x;*/
-/*}*/
 
 #ifdef APOT
 

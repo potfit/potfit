@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.78 $
-* $Date: 2010/01/11 09:03:07 $
+* $Revision: 1.79 $
+* $Date: 2010/01/12 06:41:26 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -752,9 +752,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	l++;
 
     }
-    if (!invar_pot[i]) {
+    if (!invar_pot[i])
       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
-    }
   }
 #ifndef EAM
   if (!disable_cp) {
@@ -1461,8 +1460,8 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
   real  r;
   real *val, *ord;
 #ifdef APOT
-  int change;
-  real f, h = 0;
+  int   change;
+  real  f, h = 0;
   real *list;
 #endif
 
@@ -2468,7 +2467,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifndef APOT
   int   k = 0, l;
 #else
-  real h;
+  real  h;
 #endif
   real  r, r_step, temp;
 

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.63 $
-* $Date: 2010/01/11 09:03:07 $
+* $Revision: 1.64 $
+* $Date: 2010/01/12 06:41:26 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -93,7 +93,8 @@ void read_config(char *filename)
   int   index;
 #endif
   int   i, j, k, ix, iy, iz, typ1, typ2, col, slot, klo, khi;
-  int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
+  int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz =
+    0, use_force;
   int   w_force = 0, w_stress = 0;
   int   tag_format = 0;
   int   sh_dist = 0;		/* short distance flag */
