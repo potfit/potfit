@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.24 $
-* $Date: 2010/01/11 09:03:07 $
+* $Revision: 1.25 $
+* $Date: 2010/01/25 08:36:10 $
 *****************************************************************/
 
 #ifdef APOT
@@ -385,7 +385,7 @@ int apot_check_params(real *params)
     }
 
     /* jump to next potential */
-    j += 2 + apot_table.n_par[i] + smooth_pot[i] ? 1 : 0;
+    j += 2 + apot_table.n_par[i] + (smooth_pot[i] ? 1 : 0);
   }
   return 0;
 }
@@ -431,6 +431,9 @@ real apot_punish(real *params, real *forces)
     if (strcmp(apot_table.names[i], "eopp") == 0) {
       x = params[j + 1] - params[j + 3];
       if (x < 0) {
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG eta_1 < eta_2 found for potential %d\n", i);
+#endif
 	forces[punish_pot_p + i] = APOT_PUNISH * (1 + x) * (1 + x);
 	tmpsum += APOT_PUNISH * (1 + x) * (1 + x);
       }

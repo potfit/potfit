@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2010/01/11 09:03:07 $
+* $Revision: 1.6 $
+* $Date: 2010/01/25 08:36:09 $
 *****************************************************************/
 
 #if defined EVO
@@ -329,7 +329,7 @@ void diff_evo(real *xi)
     }
     if (last_changed == MAX_UNCHANGED && restart < 3) {
       restart++;
-      printf("\nCould nor find any improvements in the last %d steps.\n",
+      printf("\nCould not find any improvements in the last %d steps.\n",
 	     MAX_UNCHANGED);
       printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
       init_population(x1, xi, D, log(restart * exp(10)));

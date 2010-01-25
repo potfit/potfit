@@ -1,3 +1,9 @@
+CVS-live
++ split up force calculation in different files
++ update Makefile for EAM/MEAM and PAIR targets
++ [APOT] make imd potentials more consistant
++ [APOT] fix periodic parameters with smooth cutoff
+
 CVS-20100111
 + [APOT] use new cutoff function
 + general code cleanup, hopefully everything still works as expected

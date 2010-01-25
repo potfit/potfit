@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.78 $
-* $Date: 2010/01/12 06:41:26 $
+* $Revision: 1.79 $
+* $Date: 2010/01/25 08:36:10 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -342,6 +342,7 @@ real  pot3(pot_table_t *, int, real);
 void  read_config(char *);
 void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
+real  calc_forces_eam(real *, real *, int);
 void  powell_lsq(real *xi);
 void  anneal(real *xi);
 #if defined EVO && defined APOT
@@ -393,7 +394,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 #ifdef APOT
 
-#define APOT_STEPS 600		/* number of sampling points for analytic pot */
+#define APOT_STEPS 1000		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e10	/* punishment for out of bounds */
 
 /* functions.c */

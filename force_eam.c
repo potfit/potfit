@@ -1,11 +1,11 @@
 /****************************************************************
 *
-* force.c: Routines used for calculating forces/energies in various
-*     interpolation schemes.
+* force.c: Routine used for calculating eam forces/energies
+* 	in various interpolation schemes.
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,15 +30,16 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.78 $
-* $Date: 2010/01/12 06:41:26 $
+* $Revision: 1.1 $
+* $Date: 2010/01/25 08:36:10 $
 *****************************************************************/
 
+#ifdef EAM
 #include "potfit.h"
 
 /*****************************************************************************
 *
-*  compute forces using pair potentials with spline interpolation
+*  compute forces using eam potentials with spline interpolation
 *
 *  returns sum of squares of differences between calculated and reference
 *     values
@@ -85,16 +86,13 @@
 *
 ******************************************************************************/
 
-real calc_forces_pair(real *xi_opt, real *forces, int flag)
+real calc_forces_eam(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
   int   first, col1, i;
   real *xi = NULL;
-
-#ifdef EAM
   static real rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
-#endif /* EAM */
 
 #if defined DEBUG && defined FORCES
   real  store_punish;
@@ -115,9 +113,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
-#ifdef EAM
     rho_sum_loc = 0.;
-#endif /* EAM */
+
 #if !defined APOT
     if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
@@ -145,17 +142,14 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       update_calc_table(xi_opt, xi, 0);
     if (flag == 1)
       break;
-#endif /* APOT */
-
-#if defined EAM && !defined APOT
+#else
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
       potsync();
     /* non root processes hang on, unless...  */
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
-#endif /* EAM */
-
+#endif /* APOT */
 #endif /* MPI */
 
     /* init second derivatives for splines */
@@ -171,7 +165,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
 
-#ifdef EAM
     for (col1 = paircol; col1 < paircol + ntypes; col1++) {	/* rho */
       first = calc_pot.first[col1];
       if (format == 3 || format == 0)
@@ -216,8 +209,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  calc_pot.d2tab + first);
     }
 #endif /* PARABEL */
-#endif /* EAM */
-
 
 #ifndef MPI
     myconf = nconf;
@@ -231,16 +222,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
        also OMP-parallelized region */
     {
 
-#ifdef EAM
       int   col2;
       real  grad2, r, eamforce;
-#endif
       int   self;
       vektor tmp_force;
       int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
       real  fnval, grad;
       atom_t *atom;
-
       neigh_t *neigh;
 
 #ifdef _OPENMP
@@ -255,16 +243,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	for (i = 0; i < 6; i++)
 	  forces[stress_p + 6 * h + i] = 0.;
 
-#ifdef EAM
 	/* set limiting constraints */
 	forces[limit_p + h] = -force_0[limit_p + h];
-#endif
-#if defined APOT && !defined EAM
-	if (!disable_cp) {
-	  forces[energy_p + h] +=
-	    chemical_potential(ntypes, na_typ[h], xi_opt + cp_start);
-	}
-#endif
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
@@ -278,10 +258,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] = 0.;
 	    forces[k + 2] = 0.;
 	  }
-
-#ifdef EAM
 	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
-#endif
 	}
 	/* end first loop */
 
@@ -310,6 +287,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 	      if (neigh->r < calc_pot.end[col]) {
+#if defined DEBUG && defined FORCES
+		fprintf(stderr, "slot=%d shift=%f step=%f\n", neigh->slot[0],
+			neigh->shift[0], neigh->step[0]);
+		fprintf(stderr, "calc_pot: %f %f\n",
+			calc_pot.table[neigh->slot[0]],
+			calc_pot.table[neigh->slot[0] + 1]);
+#endif
 		/* fn value and grad are calculated in the same step */
 		if (uf)
 		  fnval = splint_comb_dir(&calc_pot, xi, col,
@@ -328,7 +312,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		}
 		forces[energy_p + h] += fnval;
 #if defined DEBUG && defined FORCES
-		fprintf(stderr, "pair-energy=%f\n", fnval);
+		fprintf(stderr, "pair-energy=%f (r=%f)\n", fnval, neigh->r);
+		apot_table.fvalue[col] (neigh->r, apot_table.values[col],
+					&fnval);
+		fprintf(stderr, "analytic value=%f\n", fnval);
 #endif
 /* not real force: cohesive energy */
 		if (uf) {
@@ -363,7 +350,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 		}
 	      }
-#ifdef EAM
+
 	      /* calculate atomic densities */
 	      col2 = paircol + typ2;
 	      if (typ2 == typ1) {
@@ -390,9 +377,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 					  neigh->slot[1],
 					  neigh->shift[1], neigh->step[1]);
 #if defined DEBUG && defined FORCES
-		  fprintf(stderr, "rho=%f (added %f)\n", atom->rho,
+		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
 			  splint_dir(&calc_pot, xi, col2, neigh->slot[1],
-				     neigh->shift[1], neigh->step[1]));
+				     neigh->shift[1], neigh->step[1]),
+			  neigh->r);
 #endif
 		}
 		/* cannot use slot/shift to access splines */
@@ -400,31 +388,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  conf_atoms[neigh->nr - firstatom].rho +=
 		    splint(&calc_pot, xi, col, neigh->r);
 	      }
-
-#endif /* EAM */
 	    }			/*  neighbours with bigger atom nr */
 	  }			/* loop over neighbours */
-
-#ifndef EAM
-/*then we can calculate contribution of forces right away */
-	  if (uf) {
-#ifdef FWEIGHT
-	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
-#endif /* FWEIGHT */
-	    /* Returned force is difference between */
-	    /* calculated and input force */
-	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-				SQR(forces[k + 2]));
-#if defined DEBUG && defined FORCES
-	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
-		    forces[k + 1], forces[k + 2], tmpsum);
-#endif
-	  }
-#else /* EAM */
 
 	  col2 = paircol + ntypes + typ1;	/* column of F */
 #ifndef NORESCALE
@@ -480,15 +445,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 #endif
 #if defined DEBUG && defined FORCES
-	  fprintf(stderr, "total eam energy: %f (rho=%f)\n",
-		  forces[energy_p + h], atom->rho);
+	  fprintf(stderr, "embedding energy: %f at rho=%f\n",
+		  splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF),
+		  atom->rho);
+	  fprintf(stderr, "total eam energy: %f\n", forces[energy_p + h]);
 #endif
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
-#endif /* EAM */
 	}			/* second loop over atoms */
 
-#ifdef EAM			/* if we don't have EAM, we're done */
 	/* 3rd loop over atom: EAM force */
 	if (uf) {		/* only required if we calc forces */
 	  for (i = 0; i < inconf[h]; i++) {
@@ -583,9 +548,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		    forces[k + 1], forces[k + 2], tmpsum);
 #endif
 	  }			/* third loop over atoms */
-	}			/* use forces */
-#endif /* EAM */
+	}
 
+	/* use forces */
 	/* energy contributions */
 	forces[energy_p + h] *= eweight / (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
@@ -605,19 +570,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	}
 #endif /* STRESS */
 	/* limiting constraints per configuration */
-#ifdef EAM
 	tmpsum += conf_weight[h] * SQR(forces[limit_p + h]);
-#endif
       }				/* loop over configurations */
     }				/* parallel region */
-#ifdef EAM
 #ifdef MPI
     /* Reduce rho_sum */
     MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
 #else /* MPI */
     rho_sum = rho_sum_loc;
 #endif /* MPI */
-#endif /* EAM */
 
     /* dummy constraints (global) */
 #ifdef APOT
@@ -632,7 +593,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     }
 #endif
 
-#ifdef EAM
     if (myid == 0) {
       int   g;
       for (g = 0; g < ntypes; g++) {
@@ -687,7 +647,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	fprintf(stderr, "dummy constraints on U': tmpsum=%f punish=%f\n",
 		tmpsum, forces[dummy_p + g]);
 #endif
-
       }				/* loop over types */
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
@@ -704,7 +663,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      tmpsum, tmpsum - store_punish);
 #endif
     }				/* only root process */
-#endif
     sum = tmpsum;		/* global sum = local sum  */
 #ifdef MPI
     /* reduce global sum */
@@ -721,14 +679,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		6 * firstconf, myconf, MPI_STENS,
 		forces + natoms * 3 + nconf,
 		conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
-#ifdef EAM
     /* punishment constraints */
     MPI_Gatherv(forces + natoms * 3 + 7 * nconf +
 		firstconf, myconf, REAL,
 		forces + natoms * 3 + 7 * nconf,
 		conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
-#endif /* EAM */
 #endif /* MPI */
 
     /* root process exits this function now */
@@ -748,3 +704,5 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   /* once a non-root process arrives here, all is done. */
   return -1.;
 }
+
+#endif /* EAM */

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.79 $
-* $Date: 2010/01/12 06:41:26 $
+* $Revision: 1.80 $
+* $Date: 2010/01/25 08:36:10 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -2354,8 +2354,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     for (j = 0; j < ntypes; j++) {
       col1 = (ntypes * (ntypes + 1)) / 2 + j;
       col2 = i * ntypes + j;
+#ifdef APOT
+      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+#else
       /* Extrapolation possible  */
       r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n",
@@ -2394,8 +2398,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write info block */
   for (i = 0; i < ntypes; i++) {
     col1 = (ntypes * (ntypes + 3)) / 2 + i;
+#ifdef APOT
+    r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+#else
     /* pad with zeroes */
     r2begin[i] = pt->begin[col1] - extend * pt->step[col1];
+#endif
     /* extrapolation */
     r2end[i] = pt->end[col1] + extend * pt->step[col1];
     r2step[i] = (r2end[i] - r2begin[i]) / imdpotsteps;

@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.49 $
-# $Date: 2010/01/11 09:03:07 $
+# $Revision: 1.50 $
+# $Date: 2010/01/25 08:36:09 $
 #
 ############################################################################
 #
@@ -610,9 +610,16 @@ endif
 
 POTFITHDR   	= potfit.h powell_lsq.h utils.h
 POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
-		  linmin_r.c force.c \
-		  config.c param.c potential.c potfit.c \
-		  splines.c simann.c rescale.c
+		  linmin_r.c config.c param.c potential.c \
+		  potfit.c splines.c simann.c
+
+ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+POTFITSRC      += force_pair.c
+endif
+
+ifneq (,$(strip $(findstring eam,${MAKETARGET})))
+POTFITSRC      += force_eam.c rescale.c
+endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 POTFITSRC      += functions.c smooth.c chempot.c
@@ -632,21 +639,38 @@ MPISRC          = mpi_utils.c
 
 HEADERS := ${POTFITHDR}
 
-# 3d, serial or mpi
+# serial or mpi
 ifneq (,$(strip $(findstring mpi,${MAKETARGET})))
 SOURCES	:= ${POTFITSRC} ${MPISRC}
 else
 SOURCES	:= ${POTFITSRC}
 endif
 
-###  INTERACTION  #######################################
+###  INTERACTIONS  #######################################
 
+INTERACTION = 0
 
+# PAIR - simple pair potentials
+ifneq (,$(findstring pair,${MAKETARGET}))
+CFLAGS += -DPAIR
+INTERACTION = 1
+endif
 
-########### HERE COMES POTFIT
-# EAM2 or EAM  -  this is now the same
-ifneq (,$(strip $(findstring _eam,${MAKETARGET})))
-CFLAGS  += -DEAM
+# EAM or MEAM
+ifneq (,$(strip $(findstring eam,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+    CFLAGS  += -DMEAM
+  else
+    CFLAGS  += -DEAM
+  endif
+INTERACTION = 1
+endif
+
+ifneq (,$(findstring 0,${INTERACTION}))
+ERROR += No interaction model specified
 endif
 
 # EVO - for differential evolution
@@ -689,7 +713,6 @@ ERROR += "dist is not mpi parallelized -- "
 endif
 endif
 
-
 ifneq (,$(findstring newscale,${MAKETARGET}))
 ifeq (,$(findstring MPI,${PARALLEL}))
 CFLAGS += -DNEWSCALE
@@ -712,7 +735,6 @@ endif
 
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})
-
 
 ###########################################################################
 #
@@ -776,5 +798,5 @@ clean:
 	rm -f *.o *.u *~ \#* *.V *.T *.O *.il
 
 help:
-	@echo "Usage: gmake potfit[_<parallel>][_<option>[_<option>...]]"
+	@echo "Usage: make potfit[_<parallel>][_<option>[_<option>...]]"
 

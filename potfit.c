@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.69 $
-* $Date: 2010/01/12 06:41:26 $
+* $Revision: 1.70 $
+* $Date: 2010/01/25 08:36:10 $
 *****************************************************************/
 
 #define MAIN
@@ -92,7 +92,11 @@ int main(int argc, char **argv)
   random();
   random();
   random();
+#ifdef PAIR
   calc_forces = calc_forces_pair;
+#elif defined EAM
+  calc_forces = calc_forces_eam;
+#endif
   if (myid == 0) {
     read_parameters(argc, argv);
 #ifdef APOT
@@ -263,6 +267,7 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
     if (opt) {
       printf("\nStarting optimization ...\n");
+      fflush(stdout);
 #ifdef EVO
       diff_evo(opt_pot.table);
 #else
