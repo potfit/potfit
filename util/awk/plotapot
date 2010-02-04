@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.17 $
-# $Date: 2010/01/25 08:36:22 $
+# $Revision: 1.18 $
+# $Date: 2010/02/04 14:33:41 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -115,7 +115,7 @@ BEGIN {
 	count=0;
 	mindist=10;
 	maxdist=0;
-	ORS="";
+	#ORS="";
 	eam = 0;
 	for (i=0;i<ARGC;i++) 
 		if (ARGV[i]=="-eam") {
@@ -154,7 +154,16 @@ BEGIN {
 			have_species=1;
 		}
 		for (i=count;i<(count+total_pots);i++){
-			while (substr($0,1,4)!="type") getline;
+			while ( substr($0,1,4)!="type" && substr($0,1,6)!="global" ) getline;
+			if (substr($0,1,6)=="global") {
+				n_glob = $2;
+				getline;
+				for (j=0;j<n_glob;j++) {
+					glob[$1]=$2;
+					getline;
+					}
+				while (substr($0,1,4)!="type") getline;
+			}
 			pot_name[i] = $2;
 			if (match(pot_name[i],"_sc$",arr)>0) {
 				pot_name[i] = substr(pot_name[i],1,length(pot_name[i])-3);
@@ -179,7 +188,11 @@ BEGIN {
 				getline;
 			}
 			for (l=1;l<=n_param[i];l++) {
-				params[i "," l ] = $2;
+				global = match($1,"!",arr);
+				if (global>0)
+					params[i "," l] = glob[substr($1,1,length($1)-1)];
+				else
+					params[i "," l] = $2;
 				if (l<n_param[i])
 				getline;
 			}
@@ -208,55 +221,55 @@ END {
 	if (mindist == 10)
 		mindist = 2;
 	if (count != 0) {
-		print "reset;\n" > "plot";
-		print "set samples 1000;\n" > "plot";
-		print "set grid;\n" > "plot";
-		print "set xrange [" 0.5*mindist ":" maxdist*1.01 "];\n" > "plot";
-		print "set yrange [-.3:.5];\n" > "plot";
+		printf "reset;\n" > "plot";
+		printf "set samples 1000;\n" > "plot";
+		printf "set grid;\n" > "plot";
+		printf "set xrange [" 0.5*mindist ":" maxdist*1.01 "];\n" > "plot";
+		printf "set yrange [-.3:.5];\n" > "plot";
 		for (i=0;i<count;i++) {
 			write_pot(i,pot_name[i],params,"plot");
 			if (i<pair_count)
-				print " ls 1 lc "i > "plot";
+				printf " ls 1 lc "i > "plot";
 			else
-				print " ls 2 lc "(i-pair_count) > "plot";
+				printf " ls 2 lc "(i-pair_count) > "plot";
 			if (i!=(count-1))
-				print ", " > "plot";
+				printf ", " > "plot";
 		}
 		if (dist_file != "") {
-			print ", " > "plot";
+			printf ", " > "plot";
 			for (i=0;i<n_rad;i++) {
 				if (have_species)
 					label = elements[i+1];
 				else 
 					label = "pot "i;
 				if (i==0)
-					print "'" dist_file "' i " i " w lines t \"rad_dist " label "\"" > "plot";
+					printf "'" dist_file "' i " i " w lines t \"rad_dist " label "\"" > "plot";
 				else
-					print "'' i " i " w lines t \"rad_dist " label "\"" > "plot";
+					printf "'' i " i " w lines t \"rad_dist " label "\"" > "plot";
 				if (i!=(n_rad-1))
-					print ", " > "plot";
+					printf ", " > "plot";
 			}
 		}
+	}
+	if (eam_count > 0) {
+		printf "reset;\n" > "plot_eam";
+		printf "set samples 1000;\n" > "plot_eam";
+		printf "set grid;\n" > "plot_eam";
+		printf "set xrange [0:2]\n" > "plot_eam";
+		printf "pl " > "plot_eam";
+		for (i=count;i<(count+eam_count);i++) {
+			write_pot(i,pot_name[i],params,"plot_eam");
+			printf " ls 1 lc "(i-count) > "plot_eam";
+			if (i!=(count+eam_count-1))
+				printf ", " > "plot_eam";
+		}
+		printf ";" > "plot_eam";
+		title = saved_title" embedding function";
+		system("gnuplot -persist -title \""title"\" plot_eam");
+	}
 		if (eam_count > 0)
 			title = title" pair potential and transfer function";
 		else
 			title = saved_title" pair potential";
 		system("gnuplot -persist -title \""title"\" plot");
-	}
-	if (eam_count > 0) {
-		print "reset;\n" > "plot_eam";
-		print "set samples 1000;\n" > "plot_eam";
-		print "set grid;\n" > "plot_eam";
-		print "set xrange [0:2]\n" > "plot_eam";
-		print "pl " > "plot_eam";
-		for (i=count;i<(count+eam_count);i++) {
-			write_pot(i,pot_name[i],params,"plot_eam");
-			print " ls 1 lc "(i-count) > "plot_eam";
-			if (i!=(count+eam_count-1))
-				print ", " > "plot_eam";
-		}
-		print ";" > "plot_eam";
-		title = saved_title" embedding function";
-		system("gnuplot -persist -title \""title"\" plot_eam");
-	}
 }
