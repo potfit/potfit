@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.5 $
-#* $Date: 2010/01/11 09:04:21 $
+#* $Revision: 1.6 $
+#* $Date: 2010/02/04 14:33:31 $
 #*****************************************************************/
 
 if [ $# -eq 0 ]; then
@@ -53,7 +53,7 @@ grep -n -e \#N -e generated -e \#E $1 | awk -v file=$1 'BEGIN{i=0}
 	n_atoms=$3;
 	getline;
 	gsub(":"," ");
-	printf "%d ",i;
+	printf "%3d: ",i;
 	if ($2=="#E") {
 		i++;
 		printf "no information found in %s\n",file;
@@ -73,6 +73,7 @@ grep -n -e \#N -e generated $1 | awk 'BEGIN{i=0}
 	line=$1;
 	n_atoms=$3;
 	getline;
-	printf i" generated from "$7"\n\t with "n_atoms" atoms, starting at line "line"\n";i++;
+	printf "%3d: generated from "$7"\n\t with "n_atoms" atoms, starting at line "line"\n",i;
+	i++;
 }'
 fi

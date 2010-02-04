@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.25 $
-#* $Date: 2010/01/11 09:04:25 $
+#* $Revision: 1.26 $
+#* $Date: 2010/02/04 14:33:31 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -35,7 +35,7 @@ list_types="0";
 new_list="0";
 f_arg="0";
 s_arg="0";
-poscar=`[ -f POSCAR ]`;
+#poscar=`[ -f POSCAR ]`;
 e_file="../single_atom_energies";
 saeng="0 0 0";
 mycat="cat";
@@ -192,11 +192,11 @@ for file in $outcars; do
     for (i in pr_arr) pr_flag[pr_arr[i]]++;
 #pr_flag now is set for the configurations to be printed.
 #    getline saeng < "../single_atom_energies";
-    if (poscar) {
-    getline < "POSCAR"; getline scale < "POSCAR";
-    getline boxx < "POSCAR"; getline boxy < "POSCAR"; getline boxz < "POSCAR";
-    getline < "POSCAR"; ntypes = split($0,a);
-    }
+#    if (poscar) {
+#    getline < "POSCAR"; getline scale < "POSCAR";
+#    getline boxx < "POSCAR"; getline boxy < "POSCAR"; getline boxz < "POSCAR";
+#    getline < "POSCAR"; ntypes = split($0,a);
+#    }
     single_energy=0.;
     split(saeng,sae);
   };
