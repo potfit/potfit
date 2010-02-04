@@ -2,3 +2,5 @@ potfit-1-02 	11.01.2010
 	potfit with eam and apot support
 potfit-1-1 	04.02.2010
 	potfit with eam and apot support, final version before meam introduction
+potfit-2-0 	04.02.2010
+	potfit with pair, eam and meam support, apot is not supported for meam

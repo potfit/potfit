@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.52 $
-# $Date: 2010/02/04 15:15:23 $
+# $Revision: 1.53 $
+# $Date: 2010/02/04 15:18:39 $
 #
 ############################################################################
 #
@@ -666,8 +666,7 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ERROR += More than one potential model specified
   endif
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-    CFLAGS  += -DMEAM
-    CFLAGS  += -DNORESCALE
+    CFLAGS  += -DMEAM -DNORESCALE
   else
     CFLAGS  += -DEAM
   endif
