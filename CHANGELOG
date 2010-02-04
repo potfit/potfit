@@ -1,4 +1,7 @@
 CVS-20100204
++ [MEAM] initial commit
+
+CVS-20100204
 + [APOT] added support for global parameters, beta stage
 + [APOT] write correct embedding function for imd potentials
 + [APOT] fix parameter check

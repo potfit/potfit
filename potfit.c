@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.71 $
-* $Date: 2010/02/04 14:32:39 $
+* $Revision: 1.72 $
+* $Date: 2010/02/04 15:10:45 $
 *****************************************************************/
 
 #define MAIN
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#ifdef EAM
+#if defined EAM || defined MEAM
     lambda = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(lambda, "lambda");
 
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#ifdef EAM
+#if defined EAM || defined MEAM
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#endif /* EAM */
+#endif /* EAM MEAM */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
 
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
       write_pot_table4(&opt_pot, endpot);
       printf("Potential in format 4 written to file %s\n", endpot);
     }
-#ifdef EAM
+#if defined EAM || defined MEAM
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
     if (write_output_files) {
@@ -375,7 +375,7 @@ int main(int argc, char **argv)
       write_pot_table_imd(&opt_pot, imdpot);
 #endif /* NEWSCALE */
 #endif /* MPI */
-#endif /* EAM */
+#endif /* EAM MEAM */
 
     /* prepare for error calculations */
     max = 0.0;
@@ -470,7 +470,6 @@ int main(int argc, char **argv)
       printf("Energy data written to %s\n", file);
       fclose(outfile);
     }
-
 #ifdef STRESS
     /* write stress deviations */
     if (write_output_files) {
@@ -501,7 +500,7 @@ int main(int argc, char **argv)
       fclose(outfile);
     }
 #endif
-#ifdef EAM
+#if defined EAM || defined MEAM
     if (opt) {
       /* write EAM punishments */
       if (write_output_files) {

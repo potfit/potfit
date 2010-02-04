@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2010/02/04 14:32:38 $
+* $Revision: 1.28 $
+* $Date: 2010/02/04 15:10:45 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -149,7 +149,7 @@ void broadcast_params()
   blklens[5] = MAXNEIGH;  typen[5] = MPI_NEIGH;   /* neigh */
   blklens[6] = 1;         typen[6] = MPI_INT;     /* conf */
   size=7;
-#ifdef EAM
+#if defined EAM || defined MEAM
   blklens[7] = 1;         typen[7] = REAL;        /* rho */
   blklens[8] = 1;         typen[8] = REAL;        /* gradF */
   size += 2;
@@ -162,7 +162,7 @@ void broadcast_params()
   MPI_Address(&testatom.absforce, &displs[4]);
   MPI_Address(testatom.neigh, &displs[5]);
   MPI_Address(&testatom.conf, &displs[6]);
-#ifdef EAM
+#if defined EAM || defined MEAM
   MPI_Address(&testatom.rho, &displs[7]);
   MPI_Address(&testatom.gradF, &displs[8]);
 #endif
@@ -354,7 +354,8 @@ void broadcast_params()
  * potsync: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
-#if defined EAM && !defined APOT
+#if defined EAM || defined MEAM
+#if !defined APOT
 
 void potsync()
 {
@@ -371,7 +372,7 @@ void potsync()
   firstval = calc_pot.first[paircol];
   nvals = calc_pot.len - firstval;
   MPI_Bcast(calc_pot.table + firstval, nvals, REAL, 0, MPI_COMM_WORLD);
-  /* das war's auch schon... */
 }
+#endif /* APOT */
 #endif /* EAM */
 #endif /* MPI */

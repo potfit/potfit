@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.50 $
-# $Date: 2010/01/25 08:36:09 $
+# $Revision: 1.51 $
+# $Date: 2010/02/04 15:10:45 $
 #
 ############################################################################
 #
@@ -663,9 +663,11 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
     CFLAGS  += -DMEAM
+    CFLAGS  += -DNORESCALE
   else
     CFLAGS  += -DEAM
   endif
+
 INTERACTION = 1
 endif
 

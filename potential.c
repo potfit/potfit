@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.81 $
-* $Date: 2010/02/04 14:32:38 $
+* $Revision: 1.82 $
+* $Date: 2010/02/04 15:10:45 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -138,6 +138,10 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       if (size == ncols + 2 * ntypes) {
 	printf("Using EAM potential from file %s\n", filename);
       }
+#elif defined MEAM
+      if (size == 2 * ncols + 3 * ntypes) {
+	printf("Using MEAM potential from file %s\n", filename);
+      }
 #else
       if (size == ncols) {
 	printf("Using pair potential from file %s\n", filename);
@@ -148,6 +152,10 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	sprintf(msg,
 		"Wrong number of data columns in file %s,\n should be %d for EAM, but are %d",
 		filename, ncols + 2 * ntypes, size);
+#elif defined MEAM
+	sprintf(msg,
+		"Wrong number of data columns in file %s,\n should be %d for MEAM, but are %d",
+		filename, 2 * ncols + 3 * ntypes, size);
 #else
 	sprintf(msg,
 		"Wrong number of data columns in file %s,\n should be %d (pair potentials), but are %d",
@@ -309,7 +317,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     j += ntypes - i;
   }
 #endif
-#ifdef EAM
+#if defined EAM || defined MEAM
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
       rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j],
@@ -1081,7 +1089,7 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 	l++;
     }
   }
-#ifdef EAM
+#if defined EAM || defined MEAM
   for (i = ncols; i < ncols + ntypes; i++) {	/* read in rho */
     if (have_grad) {		/* read gradient */
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
@@ -1146,7 +1154,73 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 	l++;
     }
   }
+#endif
 
+#ifdef MEAM
+  for (i = ncols + 2 * ntypes; i < 2 * ncols + 2 * ntypes; i++) {	/* read in second pair pot    f */
+    if (have_grad) {		/* read gradient */
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      }
+    } else {
+      *val = 1e30;
+      *(val + 1) = 0.;
+    }
+    val += 2;
+    if ((!invar_pot[i]) && (gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!invar_pot[i]) && (gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    for (j = 0; j < nvals[i]; j++) {	/* read values */
+      if (1 > fscanf(infile, "%lf\n", val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else
+	val++;
+      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
+      if ((!invar_pot[i]) && (j < nvals[i] - 1))
+	pt->idx[k++] = l++;
+      else
+	l++;
+    }
+  }
+  for (i = 2 * ncols + 2 * ntypes; i < 2 * ncols + 3 * ntypes; i++) {	/* read in angl part */
+    if (have_grad) {		/* read gradient */
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      }
+    } else {
+      *val = 0;
+      *(val + 1) = 0;
+    }
+    val += 2;
+    if ((!invar_pot[i]) && (gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!invar_pot[i]) && (gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    for (j = 0; j < nvals[i]; j++) {	/* read values */
+      if (1 > fscanf(infile, "%lf\n", val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else
+	val++;
+      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
+      if (!invar_pot[i])
+	pt->idx[k++] = l++;
+      else
+	l++;
+    }
+  }
 #endif
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
@@ -1763,6 +1837,20 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		      ((calc_pot.end[i] -
 			opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
 #endif /* EAM */
+#ifdef MEAM
+	    if (i >= size - 2 * ntypes - (ntypes * (ntypes + 1) * 0.5)) {	/* Embedding function */
+	      if (i < size - ntypes - (ntypes * (ntypes + 1) * 0.5))	/* Embedding function */
+		for (j = opt_pot.first[i]; j <= opt_pot.last[i]; j++)
+		  *val +=
+		    2 * opt_pot.table[j] * (calc_pot.end[i] -
+					    opt_pot.xcoord[j]) /
+		    sqrreal(opt_pot.d2tab[j]) *
+		    exp(sqrreal
+			((calc_pot.end[i] -
+			  opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
+	    }
+#endif /* MEAM */
+
 	    val += 2;
 	    ord += 2;
 	    /* set values */
@@ -1785,6 +1873,15 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		*val += opt_pot.table[j] *
 		  exp(sqrreal((r - opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
 #endif /* EAM */
+#ifdef MEAM
+	    if (i >= size - 2 * ntypes - (ntypes * (ntypes + 1) * 0.5)) {	/* Embedding function not cut off */
+	      if (i < size - ntypes - (ntypes * (ntypes + 1) * 0.5))	/* Embedding function not cut off */
+		for (j = opt_pot.first[i]; j <= opt_pot.last[i]; j++)
+		  *val += opt_pot.table[j] *
+		    exp(sqrreal((r - opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
+	    }
+#endif /* MEAM */
+
 	  }
 	}
 
@@ -2334,6 +2431,21 @@ void write_pot_table3(pot_table_t *pt, char *filename)
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
 #endif
+#ifdef MEAM
+    /* transfer functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    /* embedding functions */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    /* pre-anglpart */
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+    /* angl part */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+#endif
   }
   if (have_invar) {
     fprintf(outfile, "\n#I");
@@ -2787,6 +2899,45 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     fprintf(outfile, "\n\n\n");
   }
 #endif
+#ifdef MEAM
+  for (i = paircol; i < paircol + ntypes; i++) {
+    r = pt->begin[i];
+    r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
+    for (l = 0; l < NPLOT - 1; l++) {
+      fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
+      r += r_step;
+    }
+    fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+  }
+  for (i = paircol + ntypes; i < paircol + 2 * ntypes; i++) {
+    r = pt->begin[i];
+    r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
+    for (l = 0; l < NPLOT; l++) {
+      temp = splint_ne(pt, pt->table, i, r);
+      fprintf(outfile, "%e %e\n", r, temp);
+      r += r_step;
+    }
+    fprintf(outfile, "\n\n\n");
+  }
+  for (i = paircol + 2 * ntypes; i < 2 * paircol + 2 * ntypes; i++) {
+    r = pt->begin[i];
+    r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
+    for (l = 0; l < NPLOT - 1; l++) {
+      fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
+      r += r_step;
+    }
+    fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+  }
+  for (i = 2 * paircol + 2 * ntypes; i < 2 * paircol + 3 * ntypes; i++) {
+    r = pt->begin[i];
+    r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
+    for (l = 0; l < NPLOT - 1; l++) {
+      fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
+      r += r_step;
+    }
+    fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+  }
+#endif
 #else
   for (i = 0; i < apot_table.number; i++) {
     if (i < (paircol + ntypes))
@@ -2890,6 +3041,28 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
 #ifdef NEWSCALE
       temp -= lambda[i - (j + ntypes)] * r;
 #endif /* NEWSCALE */
+      fprintf(outfile, "%e %e\n", r, temp);
+      r += r_step;
+    }
+    fprintf(outfile, "\n\n\n");
+  }
+#endif
+#ifdef MEAM
+  j = k;
+  for (i = j; i < j + ntypes; i++) {
+    r = rmin;
+    for (l = 0; l < NPLOT - 1; l++) {
+      fprintf(outfile, "%e %e\n", r,
+	      r <= pt->end[i] ? splint_ne(pt, pt->table, i, r) : 0);
+      r += r_step;
+    }
+    fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+  }
+  for (i = j + ntypes; i < j + 2 * ntypes; i++) {
+    r = pt->begin[i];
+    r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
+    for (l = 0; l < NPLOT; l++) {
+      temp = splint_ne(pt, pt->table, i, r);
       fprintf(outfile, "%e %e\n", r, temp);
       r += r_step;
     }

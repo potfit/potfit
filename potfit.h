@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.80 $
-* $Date: 2010/02/04 14:32:39 $
+* $Revision: 1.81 $
+* $Date: 2010/02/04 15:10:45 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -48,8 +48,12 @@
 #define REAL MPI_DOUBLE
 #endif /* MPI */
 #define NRANSI
+#ifndef MEAM
 #define MAXNEIGH 400
-#ifdef EAM
+#else
+#define MAXNEIGH 130
+#endif
+#if defined EAM || defined MEAM
 #define DUMMY_WEIGHT 100.
 #endif
 #define ENG_WEIGHT 10.
@@ -87,6 +91,28 @@ typedef struct {
   real  step[2];
 } neigh_t;
 
+#ifdef MEAM
+typedef struct {
+  int   typ2;
+  int   typ3;
+  int   nr2;
+  int   nr3;
+  real  r2;
+  real  r3;
+  vektor dist_ij;
+  vektor dist_ik;
+  real  cos;
+  real  dcos_ij;		/* deriv on r_ij */
+  real  dcos_ik;		/* deriv on r_ik */
+  real  dcos_jk_x;		/* deriv on x_jk */
+  real  dcos_jk_y;		/* deriv on y_jk */
+  real  dcos_jk_z;		/* deriv on z_jk */
+  real  slot[3];
+  real  shift[3];
+  real  step[3];
+} angl;
+#endif
+
 typedef struct {
   int   typ;
   int   n_neigh;
@@ -95,9 +121,12 @@ typedef struct {
   real  absforce;
   neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
-#ifdef EAM
+#if defined EAM || defined MEAM
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
+#endif
+#ifdef MEAM
+  angl  angl_part[MAXNEIGH * (MAXNEIGH - 1) / 2];
 #endif
 } atom_t;
 
@@ -234,7 +263,7 @@ EXTERN real evo_width INIT(1.);
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#ifdef EAM
+#if defined EAM || defined MEAM
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
