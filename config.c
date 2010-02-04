@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.64 $
-* $Date: 2010/01/12 06:41:26 $
+* $Revision: 1.65 $
+* $Date: 2010/02/04 14:32:38 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -737,7 +737,7 @@ void read_config(char *filename)
       na_typ[nconf][j] += na_typ[i][j];
 
   /* print diagnostic message and close file */
-  printf("Maximal number of neighbors is %d, MAXNEIGH is %d\n",
+  printf("Maximum number of neighbors is %d, MAXNEIGH is %d\n",
 	 maxneigh, MAXNEIGH);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
 	 nconf, w_force, w_stress);

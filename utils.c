@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2010/01/11 09:03:08 $
+* $Revision: 1.7 $
+* $Date: 2010/02/04 14:32:39 $
 *****************************************************************/
 
 #include <stdio.h>
@@ -123,13 +123,13 @@ void free_all_pointers()
   int   i;
 
   for (i = (num_pointers - 1); i >= 0; i--) {
-/*#ifdef DEBUG*/
-/*    fprintf(stderr, "Freeing %s (%d) ... ", pointer_names[i], i);*/
-/*#endif*/
+#if defined DEBUG && defined FORCES
+    fprintf(stderr, "Freeing %s (%d) ... ", pointer_names[i], i);
+#endif
     free(all_pointers[i]);
-/*#ifdef DEBUG*/
-/*    fprintf(stderr, "done\n");*/
-/*#endif*/
+#if defined DEBUG && defined FORCES
+    fprintf(stderr, "done\n");
+#endif
     free(pointer_names[i]);
   }
   free(all_pointers);

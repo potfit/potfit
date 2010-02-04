@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.79 $
-* $Date: 2010/01/25 08:36:10 $
+* $Revision: 1.80 $
+* $Date: 2010/02/04 14:32:39 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -130,6 +130,9 @@ typedef struct {
   real **values;		/* parameter values for analytic potentials */
   int **invar_par;		/* parameter values for analytic potentials */
   real *chempot;		/* chemical potentials */
+  int   globals;		/* number of global parameters */
+  int  *n_glob;			/* number of global parameter usage */
+  int ***global_idx;		/* index of global parameters */
   real *begin;			/* starting position of potential */
   real *end;			/* end position of potential = cutoff radius */
   real **pmin;			/* minimum values for parameters */
@@ -173,8 +176,13 @@ EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int *invar_pot INIT(NULL);
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
+#ifdef APOT
 EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
+EXTERN int have_globals INIT(0);	/* do we have global parameters? */
+EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
+EXTERN int global_idx INIT(0);	/* index for global parameters in opt_pot table */
 EXTERN int *smooth_pot INIT(NULL);
+#endif
 EXTERN int write_pair INIT(0);
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN real *conf_vol INIT(NULL);
@@ -193,7 +201,6 @@ EXTERN int myatoms INIT(0.);
 EXTERN int firstconf INIT(0);
 EXTERN int firstatom INIT(0);
 EXTERN real *rms INIT(NULL);
-EXTERN real pi INIT(0.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
 EXTERN int writeimd INIT(0);
 EXTERN real anneal_temp INIT(1.);
@@ -220,7 +227,9 @@ EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
 EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
 EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
 EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
+#ifdef EVO
 EXTERN real evo_width INIT(1.);
+#endif
 
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
@@ -297,10 +306,6 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 #endif /* PARABEL */
 EXTERN int *idx INIT(NULL);
 EXTERN int init_done INIT(0);
-/* EXTERN real   *dummy_phi INIT(NULL);     /\* Dummy Constraints for PairPot *\/ */
-/* EXTERN real   dummy_rho INIT(1.);        /\* Dummy Constraint for rho *\/ */
-/* EXTERN real   dummy_r  INIT(2.5);        /\* Distance of Dummy Constraints *\/ */
-
 
 /******************************************************************************
 *
@@ -313,13 +318,11 @@ void  warning(char *);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 #ifdef APOT
-void  read_pot_table(pot_table_t *, apot_table_t *, char *, int);
 void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		      FILE *infile);
 void  write_apot_table(apot_table_t *, char *);
-#else
-void  read_pot_table(pot_table_t *, char *, int);
 #endif
+void  read_pot_table(pot_table_t *, char *, int);
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
@@ -360,14 +363,10 @@ real  splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
 		      real step, real *grad);
 real  splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
 		      real step);
-/* real splint_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b); */
-/* real splint_grad_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b); */
-/* real splint_comb_dir_ed(pot_table_t *pt, real *xi, int col, int k, real b, real *grad); */
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ne(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad);
 real  splint_grad_ne(pot_table_t *pt, real *xi, int col, real r);
-
 
 #ifdef PARABEL
 real  parab_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
@@ -407,9 +406,11 @@ real  apot_grad(real, real *, void (*function) (real, real *, real *));
 /* potential.c */
 void  new_slots(int, int);	/* new slots for smooth cutoff */
 
+#ifdef PAIR
 /* chempot.c */
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
+#endif
 
 /* smooth.c */
 real  cutoff(real, real, real);
@@ -437,7 +438,6 @@ void  universal_value(real, real *, real *);
 
 /* newpot potential */
 void  newpot_value(real, real *, real *);
-
 /* end of template */
 
 #endif /* APOT */

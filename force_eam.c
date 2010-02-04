@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2010/01/25 08:36:10 $
+* $Revision: 1.2 $
+* $Date: 2010/02/04 14:32:38 $
 *****************************************************************/
 
 #ifdef EAM
@@ -287,13 +287,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 	      if (neigh->r < calc_pot.end[col]) {
-#if defined DEBUG && defined FORCES
-		fprintf(stderr, "slot=%d shift=%f step=%f\n", neigh->slot[0],
-			neigh->shift[0], neigh->step[0]);
-		fprintf(stderr, "calc_pot: %f %f\n",
-			calc_pot.table[neigh->slot[0]],
-			calc_pot.table[neigh->slot[0] + 1]);
-#endif
 		/* fn value and grad are calculated in the same step */
 		if (uf)
 		  fnval = splint_comb_dir(&calc_pot, xi, col,

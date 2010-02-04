@@ -1,4 +1,10 @@
-CVS-live
+CVS-20100204
++ [APOT] added support for global parameters, beta stage
++ [APOT] write correct embedding function for imd potentials
++ [APOT] fix parameter check
++ [general] more code cleanup, add some comments
+
+CVS-20100125
 + split up force calculation in different files
 + update Makefile for EAM/MEAM and PAIR targets
 + [APOT] make imd potentials more consistant

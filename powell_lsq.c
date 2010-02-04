@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.46 $
-* $Date: 2010/01/12 06:41:26 $
+* $Revision: 1.47 $
+* $Date: 2010/02/04 14:32:39 $
 *****************************************************************/
 
 /******************************************************************************
@@ -151,6 +151,7 @@ void powell_lsq(real *xi)
       rescale(&opt_pot, 1., 1);
       /* wake other threads and sync potentials */
       F = calc_forces(xi, fxi1, 2);
+/*      printf("F=%f\n", F);*/
       i = gamma_init(gamma, d, xi, fxi1);
 #endif /* NORESCALE */
 #endif /* EAM */
@@ -390,7 +391,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 {
   static real *force;
   int   i, j;			/* Auxiliary vars: Counters */
-  real  sum, temp, scale, store;	/* Auxiliary var: Sum */
+  real  sum, temp, scale, store, F;	/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
   /*Initialize direction vectors */
   for (i = 0; i < ndim; i++) {

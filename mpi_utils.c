@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2009/12/16 12:10:56 $
+* $Revision: 1.27 $
+* $Date: 2010/02/04 14:32:38 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -281,6 +281,31 @@ void broadcast_params()
   MPI_Bcast(apot_table.end, apot_table.number, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.begin, apot_table.number, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cp_start, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&have_globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&global_idx, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&apot_table.globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (have_globals) {
+    if (myid > 0) {
+      apot_table.n_glob = (int *)malloc(apot_table.globals * sizeof(int));
+      apot_table.global_idx =
+	(int ***)malloc(apot_table.globals * sizeof(int **));
+      opt_pot.first = (int *)malloc(apot_table.number * sizeof(int));
+    }
+    MPI_Bcast(apot_table.n_glob, apot_table.globals, MPI_INT, 0,
+	      MPI_COMM_WORLD);
+    MPI_Bcast(opt_pot.first, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
+    if (myid > 0) {
+      for (i = 0; i < apot_table.globals; i++)
+	apot_table.global_idx[i] =
+	  (int **)malloc(apot_table.n_glob[i] * sizeof(int *));
+      for (i = 0; i < apot_table.globals; i++)
+	for (j = 0; j < apot_table.n_glob[i]; j++)
+	  apot_table.global_idx[i][j] = (int *)malloc(2 * sizeof(int));
+    }
+    for (i = 0; i < apot_table.globals; i++)
+      for (j = 0; j < apot_table.n_glob[i]; j++)
+	MPI_Bcast(apot_table.global_idx[i][j], 2, MPI_INT, 0, MPI_COMM_WORLD);
+  }
 #endif
 
   /* Distribute configurations */

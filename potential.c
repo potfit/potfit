@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.80 $
-* $Date: 2010/01/25 08:36:10 $
+* $Revision: 1.81 $
+* $Date: 2010/02/04 14:32:38 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -49,18 +49,15 @@
 *
 ******************************************************************************/
 
-#ifdef APOT
-void read_pot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
-		    int ncols)
-#else
 void read_pot_table(pot_table_t *pt, char *filename, int ncols)
-#endif
 {
   FILE *infile;
   char  buffer[1024], msg[255], *res, *str;
   int   have_format = 0, end_header = 0;
   int   size, i, j, k = 0, *nvals;
-#ifndef APOT
+#ifdef APOT
+  apot_table_t *apt = &apot_table;
+#else
   real *val;
 #endif
 
@@ -164,15 +161,16 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	error(msg);
       }
       gradient = (int *)malloc(size * sizeof(int));
-      reg_for_free(gradient, "gradient");
       invar_pot = (int *)malloc(size * sizeof(int));
-      reg_for_free(invar_pot, "invar_pot");
+#ifdef APOT
       smooth_pot = (int *)malloc(size * sizeof(int));
-      reg_for_free(smooth_pot, "smooth_pot");
+#endif
       for (i = 0; i < size; i++) {
 	gradient[i] = 0;
 	invar_pot[i] = 0;
+#ifdef APOT
 	smooth_pot[i] = 0;
+#endif
       }
       have_format = 1;
     }
@@ -192,17 +190,11 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   pt->len = 0;
   pt->ncols = size;
   pt->begin = (real *)malloc(size * sizeof(real));
-  reg_for_free(pt->begin, "pt->begin");
   pt->end = (real *)malloc(size * sizeof(real));
-  reg_for_free(pt->end, "pt->end");
   pt->step = (real *)malloc(size * sizeof(real));
-  reg_for_free(pt->step, "pt->step");
   pt->invstep = (real *)malloc(size * sizeof(real));
-  reg_for_free(pt->invstep, "pt->invstep");
   pt->first = (int *)malloc(size * sizeof(int));
-  reg_for_free(pt->first, "pt->first");
   pt->last = (int *)malloc(size * sizeof(int));
-  reg_for_free(pt->last, "pt->last");
   nvals = (int *)malloc(size * sizeof(int));
   if ((pt->begin == NULL) || (pt->end == NULL) || (pt->step == NULL) ||
       (pt->invstep == NULL) || (pt->first == NULL) || (pt->last == NULL) ||
@@ -212,55 +204,40 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     error(msg);
   }
 #ifdef APOT
-#ifdef EAM
-  disable_cp = 1;
-#endif
   /* allocate memory for analytic potential table */
   apt->number = size;
   apt->total_par = 0;
+
   apt->n_par = (int *)malloc(size * sizeof(int));
-  reg_for_free(apt->n_par, "apt->n_par");
   apt->begin = (real *)malloc(size * sizeof(real));
-  reg_for_free(apt->begin, "apt->begin");
   apt->end = (real *)malloc(size * sizeof(real));
-  reg_for_free(apt->end, "apt->end");
   apt->param_name = (char ***)malloc(size * sizeof(char **));
-  reg_for_free(apt->param_name, "apt->param_name");
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
-  reg_for_free(apt->fvalue, "apt->fvalue");
+#ifdef PAIR
   if (!disable_cp) {
     apt->values = (real **)malloc((size + 1) * sizeof(real *));
     apt->values[size] = (real *)malloc(ntypes * sizeof(real));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->chempot = apt->values[size];
-    reg_for_free(apt->chempot, "apt->chempot");
     apt->pmin = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmin[size] = (real *)malloc(ntypes * sizeof(real));
-    reg_for_free(apt->pmin[size], "apt->pmin[size]");
     apt->pmax = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
-    reg_for_free(apt->pmax[size], "apt->pmax[size}");
   } else {
+#endif
     apt->values = (real **)malloc(size * sizeof(real *));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->pmin = (real **)malloc(size * sizeof(real *));
     apt->pmax = (real **)malloc(size * sizeof(real *));
+#ifdef PAIR
   }
-  reg_for_free(apt->values, "apt->values");
-  reg_for_free(apt->invar_par, "apt->invar_par");
-  reg_for_free(apt->pmin, "apt->pmin");
-  reg_for_free(apt->pmax, "apt->pmax");
+#endif
   apt->names = (char **)malloc(size * sizeof(char *));
-  reg_for_free(apt->names, "apt->names");
   pot_list_length = (int *)malloc(size * sizeof(int));
-  reg_for_free(pot_list_length, "pot_list_length");
   pot_list = (int ***)malloc(size * sizeof(int **));
-  reg_for_free(pot_list, "pot_list");
   for (i = 0; i < size; i++) {
     apt->names[i] = (char *)malloc(20 * sizeof(char));
-    reg_for_free(apt->names[i], "apt->names[i]");
     pot_list[i] = (int **)malloc(sizeof(int *));
-    reg_for_free(pot_list[i], "pot_list[i]");
     pot_list_length[i] = 0;
   }
   if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL)
@@ -294,25 +271,21 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 #ifndef POTSCALE		/* not needed in potscale program */
   /* compute rcut and rmin */
   rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
-  reg_for_free(rcut, "rcut");
   if (NULL == rcut)
     error("Cannot allocate rcut");
   rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
-  reg_for_free(rmin, "rmin");
   if (NULL == rmin)
     error("Cannot allocate rmin");
 #ifdef APOT
 #ifdef EAM
   pot_index =
     (int *)malloc(((ntypes * (ntypes + 1) / 2) + ntypes) * sizeof(int));
-  reg_for_free(pot_index, "pot_index");
   if (NULL == pot_index)
     error("Cannot allocate pot_index");
   for (i = 0; i < (ntypes * (ntypes + 1) / 2 + ntypes); i++)
     pot_index[i] = ntypes * ntypes;
 #else /* EAM */
   pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
-  reg_for_free(pot_index, "pot_index");
   if (NULL == pot_index)
     error("Cannot allocate pot_index");
   for (i = 0; i < ntypes * (ntypes + 1) / 2; i++)
@@ -355,7 +328,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 #ifndef APOT
   /* read maximal changes file */
   maxchange = (real *)malloc(pt->len * sizeof(real));
-  reg_for_free(maxchange, "maxchange");
   if (usemaxch) {
     /* open file */
     infile = fopen(maxchfile, "r");
@@ -380,9 +352,54 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     }
   }
 
+  /* clean up and mark for later */
   free(nvals);
+  reg_for_free(gradient, "gradient");
+  reg_for_free(invar_pot, "invar_pot");
+#ifdef APOT
+  reg_for_free(smooth_pot, "smooth_pot");
+  reg_for_free(apt->n_par, "apt->n_par");
+  reg_for_free(apt->begin, "apt->begin");
+  reg_for_free(apt->end, "apt->end");
+  reg_for_free(apt->param_name, "apt->param_name");
+  reg_for_free(apt->fvalue, "apt->fvalue");
+  reg_for_free(apt->values, "apt->values");
+  reg_for_free(apt->invar_par, "apt->invar_par");
+  reg_for_free(apt->pmin, "apt->pmin");
+  reg_for_free(apt->pmax, "apt->pmax");
+  reg_for_free(apt->names, "apt->names");
+  reg_for_free(pot_list_length, "pot_list_length");
+  reg_for_free(pot_list, "pot_list");
+  for (i = 0; i < size; i++) {
+    reg_for_free(apt->names[i], "apt->names[i]");
+    reg_for_free(pot_list[i], "pot_list[i]");
+  }
+  reg_for_free(pot_index, "pot_index");
+#else /* APOT */
+  reg_for_free(maxchange, "maxchange");
+#endif /* APOT */
+  reg_for_free(pt->begin, "pt->begin");
+  reg_for_free(pt->end, "pt->end");
+  reg_for_free(pt->step, "pt->step");
+  reg_for_free(pt->invstep, "pt->invstep");
+  reg_for_free(pt->first, "pt->first");
+  reg_for_free(pt->last, "pt->last");
+#if defined PAIR && defined APOT
+  if (!disable_cp) {
+    reg_for_free(apt->chempot, "apt->chempot");
+    reg_for_free(apt->pmin[size], "apt->pmin[size]");
+    reg_for_free(apt->pmax[size], "apt->pmax[size}");
+  }
+#endif
+#ifndef POTSCALE
+  reg_for_free(rcut, "rcut");
+  reg_for_free(rmin, "rmin");
+#endif
+
   return;
 }
+
+#ifdef APOT
 
 /*****************************************************************************
 *
@@ -392,7 +409,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 *
 ******************************************************************************/
 
-#ifdef APOT
 void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		     FILE *infile)
 {
@@ -404,7 +420,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   real *val, *list, temp;
   fpos_t filepos;
 
-#ifndef EAM
+#ifdef PAIR
   /* read cp */
   fgetpos(infile, &filepos);
   if (!disable_cp) {
@@ -430,6 +446,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
     }
     fgetpos(infile, &filepos);
+
+    /* read composition nodes */
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
       if (strcmp("type", buffer) == 0)
 	compnodes = -1;
@@ -441,7 +459,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     if (strcmp(buffer, "cn") != 0 && ntypes > 1 && compnodes != -1) {
       sprintf(msg,
-	      "No composition nodes found in %s.\n(cn 0 is also allowed)\n",
+	      "No composition nodes found in %s.\nUse \"cn 0\" for none.\n",
 	      filename);
       error(msg);
     }
@@ -498,15 +516,119 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   fsetpos(infile, &filepos);
 #endif
 
+  /* skip to next type or global section */
   do {
     fgetpos(infile, &filepos);
     fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "type") != 0);
+  } while (strcmp(buffer, "type") != 0 && strcmp(buffer, "global") != 0);
   fsetpos(infile, &filepos);
+
+  /* check for global keyword */
+  if (strcmp(buffer, "global") == 0) {
+    if (2 > fscanf(infile, "%s %d", buffer, &apt->globals)) {
+      sprintf(msg, "Premature end of potential file %s", filename);
+      error(msg);
+    }
+    have_globals = 1;
+    apt->total_par += apt->globals;
+
+    i = apt->number;
+    j = apt->globals;
+    global_pot = apt->number;
+#ifdef PAIR
+    if (!disable_cp)
+      global_pot = apt->number + 1;
+#endif
+
+    /* allocate memory for global parameters */
+    apt->names =
+      (char **)realloc(apt->names, (global_pot + 1) * sizeof(char *));
+    apt->names[global_pot] = (char *)malloc(20 * sizeof(char));
+    strcpy(apt->names[global_pot], "global parameters");
+
+    apt->n_glob = (int *)malloc(apt->globals * sizeof(int));
+    reg_for_free(apt->n_glob, "apt->n_glob");
+
+    apt->global_idx = (int ***)malloc(apt->globals * sizeof(int **));
+    reg_for_free(apt->global_idx, "apt->global_idx");
+
+    apt->values =
+      (real **)realloc(apt->values, (global_pot + 1) * sizeof(real *));
+    apt->values[global_pot] = (real *)malloc(j * sizeof(real));
+    reg_for_free(apt->values[global_pot], "apt->values[global_pot]");
+
+    apt->invar_par =
+      (int **)realloc(apt->invar_par, (global_pot + 1) * sizeof(int *));
+    apt->invar_par[global_pot] = (int *)malloc(j * sizeof(int));
+    reg_for_free(apt->invar_par[global_pot], "apt->invar_par[global_pot]");
+
+    apt->pmin =
+      (real **)realloc(apt->pmin, (global_pot + 1) * sizeof(real *));
+    apt->pmin[global_pot] = (real *)malloc(j * sizeof(real));
+    reg_for_free(apt->pmin[global_pot], "apt->pmin[global_pot]");
+
+    apt->pmax =
+      (real **)realloc(apt->pmax, (global_pot + 1) * sizeof(real *));
+    apt->pmax[global_pot] = (real *)malloc(j * sizeof(real));
+    reg_for_free(apt->pmax[global_pot], "apt->pmax[global_pot]");
+
+    apt->param_name =
+      (char ***)realloc(apt->param_name, (global_pot + 1) * sizeof(char **));
+    apt->param_name[global_pot] = (char **)malloc(j * sizeof(char *));
+    reg_for_free(apt->param_name[global_pot], "apt->param_name[global_pot]");
+
+    pt->first = (int *)realloc(pt->first, (global_pot + 1) * sizeof(int));
+
+    if (NULL == apt->values[global_pot] || NULL == apt->pmin[global_pot]
+	|| NULL == apt->n_glob || NULL == apt->global_idx
+	|| NULL == apt->pmax[global_pot]
+	|| NULL == apt->param_name[global_pot]) {
+      sprintf(msg, "Cannot allocate memory for global paramters.\nAborting");
+      error(msg);
+
+    }
+
+    /* read the global parameters */
+    for (j = 0; j < apt->globals; j++) {
+      apt->param_name[global_pot][j] = (char *)malloc(30 * sizeof(char));
+      reg_for_free(apt->param_name[global_pot][j],
+		   "apt->param_name[global_pot][j]");
+
+      if (NULL == apt->param_name[global_pot][j])
+	error("Error in allocating memory for global parameter name");
+
+      strcpy(apt->param_name[global_pot][j], "\0");
+      ret_val =
+	fscanf(infile, "%s %lf %lf %lf", apt->param_name[global_pot][j],
+	       &apt->values[global_pot][j], &apt->pmin[global_pot][j],
+	       &apt->pmax[global_pot][j]);
+      if (4 > ret_val)
+	if (strcmp(apt->param_name[global_pot][j], "type") == 0) {
+	  sprintf(msg,
+		  "Not enough global parameters!\nYou specified %d parameter(s), but needed are %d.\nAborting",
+		  j, apt->globals);
+	  error(msg);
+	}
+
+      /* check for duplicate names */
+      for (k = j - 1; k >= 0; k--)
+	if (strcmp
+	    (apt->param_name[global_pot][j],
+	     apt->param_name[global_pot][k]) == 0) {
+	  fprintf(stderr, "\nFound duplicate global parameter name!\n");
+	  fprintf(stderr, "Parameter #%d (%s) is the same as #%d (%s)\n",
+		  j + 1, apt->param_name[global_pot][j], k + 1,
+		  apt->param_name[global_pot][k]);
+	  error("Aborting");
+	}
+      apt->n_glob[j] = 0;
+    }
+  }
 
   for (i = 0; i < apt->number; i++) {
     /* read type */
     if (2 > fscanf(infile, "%s %s", buffer, name)) {
+      printf("%s %s\n", buffer, name);
       sprintf(msg, "Premature end of potential file %s", filename);
       error(msg);
     }
@@ -536,6 +658,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
     strcpy(apt->names[i], name);
     apt->n_par[i] = apot_parameters(name);
+
     /* add one parameter for cutoff function if _sc is found */
     if (smooth_pot[i] == 1)
       apt->n_par[i]++;
@@ -570,14 +693,20 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
     /* set small begin to prevent division by zero-errors */
     apt->begin[i] = 0.0001;
+
+    /* allocate memory for this parameter */
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     reg_for_free(apt->values[i], "apt->values[i]");
+
     apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
     reg_for_free(apt->invar_par[i], "apt->invar_par[i]");
+
     apt->pmin[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     reg_for_free(apt->pmin[i], "apt->pmin[i]");
+
     apt->pmax[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
     reg_for_free(apt->pmax[i], "apt->pmax[i]");
+
     apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
     reg_for_free(apt->param_name[i], "apt->param_name[i]");
 
@@ -618,81 +747,135 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       ret_val =
 	fscanf(infile, "%s %lf %lf %lf", apt->param_name[i][j],
 	       &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
-      if (4 > ret_val) {
-	if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
-	  if (strcmp(apt->param_name[i][j], "type") == 0 || feof(infile)) {
-	    sprintf(msg,
-		    "No cutoff parameter given for potential #%d: adding one parameter.",
-		    i);
-	    warning(msg);
-	    strcpy(apt->param_name[i][j], "h");
-	    apt->values[i][j] = 1;
-	    apt->pmin[i][j] = 0;
-	    apt->pmax[i][j] = 5;
-	    fsetpos(infile, &filepos);
-	  }
-	} else {
-	  if (strcmp(apt->param_name[i][j], "type") == 0) {
-	    sprintf(msg,
-		    "Not enough parameters for potential #%d in file %s specified.\nYou specified %d parameters, but needed are %d.\nAborting",
-		    i + 1, filename, j, apt->n_par[i]);
-	    error(msg);
-	  }
-	  sprintf(msg,
-		  "Could not read parameter #%d of potential #%d in file %s",
-		  j + 1, i + 1, filename);
-	  error(msg);
-	  printf("%s\n", apt->param_name[i][0]);
+
+      /* if last char of name is "!" we have a global parameter */
+      if (strrchr(apt->param_name[i][j], '!') != NULL) {
+	apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] = '\0';
+	l = -1;
+	for (k = 0; k < apt->globals; k++) {
+	  if (strcmp(apt->param_name[i][j], apt->param_name[global_pot][k])
+	      == 0)
+	    l = k;
 	}
-      }
-      apt->invar_par[i][j] = 0;
-      if (apt->pmin[i][j] == apt->pmax[i][j]) {
+	if (l == -1) {
+	  fprintf(stderr, "\nCould not find global parameter %s!\n",
+		  apt->param_name[i][j]);
+	  error("Aborting");
+	}
+	sprintf(apt->param_name[i][j], "%s!", apt->param_name[i][j]);
+
+	/* write index array for global parameters */
+	if (++apt->n_glob[l] > 1) {
+	  apt->global_idx[l] =
+	    (int **)realloc(apt->global_idx[l],
+			    apt->n_glob[l] * sizeof(int *));
+	} else {
+	  apt->global_idx[l] = (int **)malloc(1 * sizeof(int *));
+	}
+	apt->global_idx[l][apt->n_glob[l] - 1] =
+	  (int *)malloc(2 * sizeof(int));
+	apt->global_idx[l][apt->n_glob[l] - 1][0] = i;
+	apt->global_idx[l][apt->n_glob[l] - 1][1] = j;
+
+	apt->values[i][j] = apt->values[global_pot][l];
+	apt->pmin[i][j] = apt->pmin[global_pot][l];
+	apt->pmax[i][j] = apt->pmax[global_pot][l];
 	apt->invar_par[i][j] = 1;
 	apt->invar_par[i][apt->n_par[i]]++;
-      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
-	temp = apt->pmin[i][j];
-	apt->pmin[i][j] = apt->pmax[i][j];
-	apt->pmax[i][j] = temp;
-      } else if ((apt->values[i][j] < apt->pmin[i][j])
-		 || (apt->values[i][j] > apt->pmax[i][j])) {
-	if (!opt) {
-	  if (apt->values[i][j] < apt->pmin[i][j]) {
+      } else {
+	/* this is not a global parameter */
+	if (4 > ret_val) {
+	  if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
+	    if (strcmp(apt->param_name[i][j], "type") == 0 || feof(infile)) {
+	      sprintf(msg,
+		      "No cutoff parameter given for potential #%d: adding one parameter.",
+		      i);
+	      warning(msg);
+	      strcpy(apt->param_name[i][j], "h");
+	      apt->values[i][j] = 1;
+	      apt->pmin[i][j] = 0.5;
+	      apt->pmax[i][j] = 2;
+	      fsetpos(infile, &filepos);
+	    }
+	  } else {
+	    if (strcmp(apt->param_name[i][j], "type") == 0) {
+	      sprintf(msg,
+		      "Not enough parameters for potential #%d in file %s!\nYou specified %d parameters, but needed are %d.\nAborting",
+		      i + 1, filename, j, apt->n_par[i]);
+	      error(msg);
+	    }
+	    sprintf(msg,
+		    "Could not read parameter #%d of potential #%d in file %s",
+		    j + 1, i + 1, filename);
+	    error(msg);
+	    printf("%s\n", apt->param_name[i][0]);
+	  }
+	}
+
+	/* check for invariance and proper value (respect boundaries) */
+	/* parameter will not be optimized if min==max */
+	apt->invar_par[i][j] = 0;
+	if (apt->pmin[i][j] == apt->pmax[i][j]) {
+	  apt->invar_par[i][j] = 1;
+	  apt->invar_par[i][apt->n_par[i]]++;
+	} else if (apt->pmin[i][j] > apt->pmax[i][j]) {
+	  temp = apt->pmin[i][j];
+	  apt->pmin[i][j] = apt->pmax[i][j];
+	  apt->pmax[i][j] = temp;
+	} else if ((apt->values[i][j] < apt->pmin[i][j])
+		   || (apt->values[i][j] > apt->pmax[i][j])) {
+	  if (!opt) {
+	    if (apt->values[i][j] < apt->pmin[i][j]) {
+	      fprintf(stderr, "\n --> Warning <--\n");
+	      fprintf(stderr,
+		      "Starting value for paramter #%d in potential #%d is smaller than the specified minimum.\n",
+		      j + 1, i + 1);
+	    }
+	    if (apt->values[i][j] > apt->pmax[i][j]) {
+	      fprintf(stderr, "\n --> Warning <--\n");
+	      fprintf(stderr,
+		      "Starting value for paramter #%d in potential #%d is bigger than the specified maximumm.\n",
+		      j + 1, i + 1);
+	    }
+	  } else {
+	    apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
 	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,
-		    "Starting value for paramter #%d in potential #%d is smaller than the specified minimum.\n",
-		    j + 1, i + 1);
+		    "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAutosetting it to %f ((pmin+pmax)/2)\n",
+		    j + 1, i + 1, apt->values[i][j]);
+	    if (apt->values[i][j] == 0)
+	      fprintf(stderr,
+		      "New value is >> 0 << ! Please be careful about this.\n");
 	  }
-	  if (apt->values[i][j] > apt->pmax[i][j]) {
-	    fprintf(stderr, "\n --> Warning <--\n");
-	    fprintf(stderr,
-		    "Starting value for paramter #%d in potential #%d is bigger than the specified maximumm.\n",
-		    j + 1, i + 1);
-	  }
-	} else {
-	  apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
-	  fprintf(stderr, "\n --> Warning <--\n");
-	  fprintf(stderr,
-		  "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAutosetting it to %f ((pmin+pmax)/2)\n",
-		  j + 1, i + 1, apt->values[i][j]);
-	  if (apt->values[i][j] == 0)
-	    fprintf(stderr,
-		    "New value is 0! Please be careful about this.\n");
 	}
       }
     }
   }
   printf("\n");
 
+  /* if we have global parameters, are they actually used ? */
+  if (have_globals) {
+    j = 0;
+    for (i = 0; i < apt->globals; i++)
+      j += apt->n_glob[i];
+    if (j == 0) {
+      have_globals = 0;
+      printf("You definded global parameters but did not use them.\n");
+      printf("Disabling global parameters.\n\n");
+    }
+  }
+
   /* assign the potential functions to the function pointers */
   if (apot_assign_functions(apt) == -1) {
     sprintf(msg, "Could not assign the function pointers.\nAborting");
     error(msg);
   }
-
+#ifdef PAIR
   if (!disable_cp) {
-    cp_start = apt->total_par + ntypes * (ntypes + 1);
+    cp_start = apt->total_par - apt->globals + ntypes * (ntypes + 1);
     apt->total_par += (ntypes + compnodes);
   }
+#endif
 
   /* initialize function table and write indirect index */
   for (i = 0; i < apt->number; i++) {
@@ -707,20 +890,30 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     pt->last[i] = pt->first[i] + apt->n_par[i] - 1;
   }
   pt->len = pt->first[apt->number - 1] + apt->n_par[apt->number - 1];
+  if (have_globals)
+    pt->len += apt->globals;
+
+#ifdef PAIR
   if (!disable_cp) {
     pt->len += (ntypes + compnodes);
   }
+#endif
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
   reg_for_free(pt->table, "pt->table");
+
   calc_list = (real *)malloc(pt->len * sizeof(real));
   reg_for_free(calc_list, "calc_list");
+
   pt->idx = (int *)malloc(pt->len * sizeof(int));
   reg_for_free(pt->idx, "pt->idx");
+
   apt->idxpot = (int *)malloc(apt->total_par * sizeof(int));
   reg_for_free(apt->idxpot, "apt->idxpot");
+
   apt->idxparam = (int *)malloc(apt->total_par * sizeof(int));
   reg_for_free(apt->idxparam, "apt->idxparam");
+
   if ((NULL == pt->table) || (NULL == pt->idx) || (apt->idxpot == NULL)
       || (apt->idxparam == NULL)) {
     sprintf(msg, "Cannot allocate memory for potential table.\nAborting");
@@ -731,6 +924,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     calc_list[i] = 0;
     pt->idx[i] = 0;
   }
+
+  /* this is the indirect index */
   k = 0;
   l = 0;
   val = pt->table;
@@ -754,20 +949,38 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     if (!invar_pot[i])
       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
+    apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
-#ifndef EAM
+  global_idx = pt->last[apt->number - 1] + 1;
+
+#ifdef PAIR
   if (!disable_cp) {
     init_chemical_potential(ntypes);
     i = apt->number;
     for (j = 0; j < (ntypes + compnodes); j++) {
-      *(val + j) = apt->values[i][j];
+      *val = apt->values[i][j];
       pt->idx[k] = l++;
       apt->idxpot[k] = i;
       apt->idxparam[k++] = j;
+      val++;
     }
     pt->idxlen += (ntypes + compnodes);
+    global_idx += (ntypes + compnodes);
   }
 #endif
+
+  if (have_globals) {
+    for (i = 0; i < apt->globals; i++) {
+      *val = apt->values[global_pot][i];
+      *list = *val;
+      pt->idx[k] = l++;
+      apt->idxpot[k] = global_pot;
+      apt->idxparam[k++] = i;
+      val++;
+      list++;
+    }
+    pt->idxlen += apt->globals;
+  }
 
   init_calc_table(pt, &calc_pot);
   return;
@@ -1344,6 +1557,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 #ifdef APOT
       case 0:
 	{
+	  /* allocate memory for calc_pot potential table */
 	  size = apot_table.number;
 	  calct->len =
 	    size * APOT_STEPS + 2 * optt->ncols + ntypes + compnodes;
@@ -1372,6 +1586,8 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	      || calct->xcoord == NULL || calct->table == NULL
 	      || calct->d2tab == NULL || calct->idx == NULL)
 	    error("Cannot allocate info block for calc potential table\n");
+
+	  /* initialize the calc_pot table */
 	  for (i = 0; i < size; i++) {
 	    val = apot_table.values[i];
 	    h = apot_table.values[i][apot_table.n_par[i] - 1];
@@ -1456,7 +1672,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
-  int   i, j, k, size;
+  int   i, j, k, m, n, size;
   real  r;
   real *val, *ord;
 #ifdef APOT
@@ -1471,6 +1687,16 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	{
 	  val = xi_opt;
 	  list = calc_list + 2;
+	  /* copy global parameters to the right positions */
+	  if (have_globals) {
+	    for (i = 0; i < apot_table.globals; i++) {
+	      for (j = 0; j < apot_table.n_glob[i]; j++) {
+		m = apot_table.global_idx[i][j][0];
+		n = apot_table.global_idx[i][j][1];
+		*(val + opt_pot.first[m] + n) = *(val + global_idx + i);
+	      }
+	    }
+	  }
 	  for (i = 0; i < calc_pot.ncols; i++) {
 	    if (smooth_pot[i])
 	      h = *(val + 1 + apot_table.n_par[i]);
@@ -2009,6 +2235,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
   }
   fprintf(outfile, "\n#E\n\n");
 
+#ifdef PAIR
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, "cp_%s %f %f %f\n", elements[i], apt->chempot[i],
@@ -2021,6 +2248,16 @@ void write_apot_table(apot_table_t *apt, char *filename)
 	      apt->pmax[apt->number][ntypes + j]);
     fprintf(outfile, "\n");
   }
+#endif
+
+  if (have_globals) {
+    fprintf(outfile, "global %d\n", apt->globals);
+    for (i = 0; i < apt->globals; i++)
+      fprintf(outfile, "%s %f %f %f\n", apt->param_name[global_pot][i],
+	      apt->values[global_pot][i], apt->pmin[global_pot][i],
+	      apt->pmax[global_pot][i]);
+    fprintf(outfile, "\n");
+  }
 
   /* write data */
   for (i = 0; i < apt->number; i++) {
@@ -2031,15 +2268,13 @@ void write_apot_table(apot_table_t *apt, char *filename)
     }
     fprintf(outfile, "cutoff %f\n", apot_table.end[i]);
     fprintf(outfile, "# rmin %f\n", apt->begin[i]);
-/*    if (smooth_pot[i]) {*/
-/*      fprintf(outfile, "# r_0=%f", apt->co_pol[i][0]);*/
-/*      for (j = 1; j < 5; j++)*/
-/*        fprintf(outfile, " a_%d=%f", j - 1, apt->co_pol[i][j]);*/
-/*      fprintf(outfile, "\n");*/
-/*    }*/
     for (j = 0; j < apt->n_par[i]; j++) {
-      fprintf(outfile, "%s %.10f %f %f\n", apt->param_name[i][j],
-	      apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
+      if (apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] != '!') {
+	fprintf(outfile, "%s %.10f %f %f\n", apt->param_name[i][j],
+		apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
+      } else {
+	fprintf(outfile, "%s\n", apt->param_name[i][j]);
+      }
     }
     if (i != (apt->number - 1))
       fprintf(outfile, "\n");
@@ -2337,6 +2572,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif
   fclose(outfile);
   printf("IMD pair potential data written to %s\n", filename);
+
 #ifdef EAM
   /* write rho_r2 */
   sprintf(filename, "%s_rho.imd.pt", prefix);
@@ -2375,7 +2611,15 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
+#ifdef APOT
+	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
+	temp = smooth_pot[col1] ? temp *
+	  cutoff(sqrt(r2), apot_table.end[col1],
+		 apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
+#endif
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -2384,6 +2628,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   }
   fclose(outfile);
   printf("IMD electron transfer data written to %s\n", filename);
+
   /* write F_rho */
   sprintf(filename, "%s_F.imd.pt", prefix);
   outfile = fopen(filename, "w");
@@ -2399,13 +2644,14 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   for (i = 0; i < ntypes; i++) {
     col1 = (ntypes * (ntypes + 3)) / 2 + i;
 #ifdef APOT
-    r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+    r2begin[i] = 0;
+    r2end[i] = pt->end[col1];
 #else
     /* pad with zeroes */
     r2begin[i] = pt->begin[col1] - extend * pt->step[col1];
-#endif
     /* extrapolation */
     r2end[i] = pt->end[col1] + extend * pt->step[col1];
+#endif
     r2step[i] = (r2end[i] - r2begin[i]) / imdpotsteps;
     fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[i], r2end[i], r2step[i]);
   }
@@ -2420,6 +2666,9 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     root += (pt->end[col1] < 0) ?
       pt->table[pt->last[col1]] / sqrt(-pt->end[col1]) : 0;
     for (k = 0; k <= imdpotsteps; k++) {
+#ifdef APOT
+      apot_table.fvalue[col1] (r2, apot_table.values[col1], &temp);
+#else
 #ifdef WZERO
       if (r2 < pt->begin[col1] && pt->begin[col1] > 0)
 	if (r2 <= 0)
@@ -2448,6 +2697,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #ifdef NEWSCALE
       temp -= lambda[i] * r2;
 #endif /* NEWSCALE */
+#endif /* APOT */
       fprintf(outfile, "%.16e\n", temp);
       r2 += r2step[i];
     }
@@ -2539,15 +2789,17 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #endif
 #else
   for (i = 0; i < apot_table.number; i++) {
-    if (i < paircol + ntypes)
+    if (i < (paircol + ntypes))
       r = (plotmin == 0 ? 0.1 : plotmin);
     else
-      r = apot_table.begin[i];
+      r = 0;
     r_step = (apot_table.end[i] - r) / (NPLOT - 1);
     h = apot_table.values[i][apot_table.n_par[i] - 1];
     for (j = 0; j < NPLOT; j++) {
       apot_table.fvalue[i] (r, apot_table.values[i], &temp);
       temp = smooth_pot[i] ? temp * cutoff(r, apot_table.end[i], h) : temp;
+      if (isnan(temp))
+	temp = 10e30;
       fprintf(outfile, "%e %e\n", r, temp);
       r += r_step;
     }

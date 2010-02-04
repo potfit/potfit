@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.45 $
-* $Date: 2010/01/12 06:41:26 $
+* $Revision: 1.46 $
+* $Date: 2010/02/04 14:32:39 $
 *****************************************************************/
 
 #include <math.h>
@@ -45,7 +45,7 @@
 #define NTEMP (3*ndim)
 #define TEMPVAR 0.85
 #define KMAX 1000
-#define GAUSS(a) (1.0/sqrt(2*pi)*(exp(-(sqrreal(a))/2.)))
+#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-(sqrreal(a))/2.)))
 
 #ifdef APOT
 
@@ -200,8 +200,9 @@ void anneal(real *xi)
       for (j = 0; j < nstep; j++) {
 	for (h = 0; h < ndim; h++) {
 	  /* Step #1 */
-	  for (n = 0; n < ndimtot; n++)
+	  for (n = 0; n < ndimtot; n++) {
 	    xi2[n] = xi[n];
+	  }
 #ifdef APOT
 	  randomize_parameter(h, xi2, v);
 #else
@@ -213,8 +214,9 @@ void anneal(real *xi)
 #endif
 	  F2 = (*calc_forces) (xi2, fxi1, 0);
 	  if (F2 <= F) {	/* accept new point */
-	    for (n = 0; n < ndimtot; n++)
-	      xi[n] = xi2[n];
+/*            for (n = 0; n < ndimtot; n++)*/
+/*            xi[n] = xi2[n];*/
+	    xi[idx[h]] = xi2[idx[h]];
 	    F = F2;
 	    naccept[h]++;
 	    if (F2 < Fopt) {

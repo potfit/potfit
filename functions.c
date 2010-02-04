@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.25 $
-* $Date: 2010/01/25 08:36:10 $
+* $Revision: 1.26 $
+* $Date: 2010/02/04 14:32:38 $
 *****************************************************************/
 
 #ifdef APOT
@@ -277,9 +277,12 @@ void pohlong_value(real r, real *p, real *f)
 {
   real  power;
 
-  vdPow(1, &r, &p[1], &power);
-
-  *f = p[0] * (1 - p[1] * log(r)) * power;
+  if (r == 0)
+    *f = 0;
+  else {
+    vdPow(1, &r, &p[1], &power);
+    *f = p[0] * (1 - p[1] * log(r)) * power;
+  }
 }
 
 /******************************************************************************
@@ -385,7 +388,7 @@ int apot_check_params(real *params)
     }
 
     /* jump to next potential */
-    j += 2 + apot_table.n_par[i] + (smooth_pot[i] ? 1 : 0);
+    j += 1 + apot_table.n_par[i] + smooth_pot[i];
   }
   return 0;
 }

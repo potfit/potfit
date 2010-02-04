@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2010/01/25 08:36:09 $
+* $Revision: 1.7 $
+* $Date: 2010/02/04 14:32:38 $
 *****************************************************************/
 
 #if defined EVO
@@ -101,21 +101,27 @@ real *calc_vect(real *x)
   for (i = 0; i < apot_table.number; i++) {
     vect[k++] = 0;
     vect[k++] = 0;
-    for (j = 0; j <
-	 (apot_table.n_par[i] - apot_table.invar_par[i][apot_table.n_par[i]]);
-	 j++) {
-      if (!invar_pot[i])
+    for (j = 0; j < apot_table.n_par[i]; j++) {
+      if (!invar_pot[i] && !apot_table.invar_par[i][j])
 	vect[k++] = x[n++];
       else
 	vect[k++] = apot_table.values[i][j];
     }
   }
-#ifndef EAM
+
+#ifdef PAIR
   if (!disable_cp) {
     for (i = 0; i < ntypes; i++)
       vect[k++] = x[n++];
   }
 #endif
+
+  if (have_globals) {
+    for (i = 0; i < apot_table.globals; i++) {
+      vect[k++] = x[n++];
+    }
+  }
+
   return vect;
 }
 

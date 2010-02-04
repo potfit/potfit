@@ -1,5 +1,5 @@
 /****************************************************************
-* 
+*
 *  potscale.c: Potfit rescaling program
 *
 *****************************************************************/
@@ -10,7 +10,7 @@
 *             http://www.itap.physik.uni-stuttgart.de/
 *
 *****************************************************************/
-/*  
+/*
 *   This file is part of potfit.
 *
 *   potfit is free software; you can redistribute it and/or modify
@@ -25,12 +25,12 @@
 *
 *   You should have received a copy of the GNU General Public License
 *   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor, 
+*   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2008/11/13 08:32:21 $
+* $Revision: 1.9 $
+* $Date: 2010/02/04 14:32:39 $
 *****************************************************************/
 
 
@@ -75,7 +75,6 @@ int main(int argc, char **argv)
   real  tot, min, max, sqr;
   int   i;
   int   rescale = 0.;
-  pi = 4.0 * atan(1.);
   read_parameters(argc, argv);
   read_pot_table(&pair_pot, startpot, ntypes * (ntypes + 1) / 2);
   if (dummy_phi != NULL)

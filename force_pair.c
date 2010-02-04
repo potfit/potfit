@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2010/01/25 08:36:10 $
+* $Revision: 1.2 $
+* $Date: 2010/02/04 14:32:38 $
 *****************************************************************/
 
 #ifdef PAIR
@@ -138,7 +138,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       update_calc_table(xi_opt, xi, 0);
     if (flag == 1)
       break;
-#endif /* APOT */
+#else /* APOT */
 
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
@@ -146,6 +146,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* non root processes hang on, unless...  */
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
+#endif /* APOT */
 #endif /* MPI */
 
     /* init second derivatives for splines */

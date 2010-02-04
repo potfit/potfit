@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.32 $
-*  $Date: 2010/01/11 09:03:07 $
+*  $Revision: 1.33 $
+*  $Date: 2010/02/04 14:32:38 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -277,10 +277,12 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "anneal_temp") == 0) {
       getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
     }
+#ifdef EVO
     /* starting width for normal distribution for evo */
     else if (strcasecmp(token, "evo_width") == 0) {
       getparam("evo_width", &evo_width, PARAM_DOUBLE, 1, 1);
     }
+#endif
     /* Energy Weight */
     else if (strcasecmp(token, "eng_weight") == 0) {
       getparam("eng_weight", &eweight, PARAM_DOUBLE, 1, 1);
