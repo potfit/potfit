@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.51 $
-# $Date: 2010/02/04 15:10:45 $
+# $Revision: 1.52 $
+# $Date: 2010/02/04 15:15:23 $
 #
 ############################################################################
 #
@@ -618,7 +618,11 @@ POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-POTFITSRC      += force_eam.c rescale.c
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+    POTFITSRC      += force_meam.c rescale.c
+  else
+    POTFITSRC      += force_eam.c rescale.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))

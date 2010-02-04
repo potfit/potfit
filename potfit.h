@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.81 $
-* $Date: 2010/02/04 15:10:45 $
+* $Revision: 1.82 $
+* $Date: 2010/02/04 15:15:23 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -373,8 +373,13 @@ real  pot2(pot_table_t *, int, real);
 real  pot3(pot_table_t *, int, real);
 void  read_config(char *);
 void  read_config2(char *);
+#ifdef PAIR
 real  calc_forces_pair(real *, real *, int);
+#elif defined EAM
 real  calc_forces_eam(real *, real *, int);
+#elif defined MEAM
+real  calc_forces_meam(real *, real *, int);
+#endif
 void  powell_lsq(real *xi);
 void  anneal(real *xi);
 #if defined EVO && defined APOT
