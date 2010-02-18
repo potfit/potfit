@@ -7,7 +7,7 @@
 *
 ******************************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.47 $
-* $Date: 2010/02/04 14:32:39 $
+* $Revision: 1.48 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 /******************************************************************************
@@ -330,7 +330,6 @@ void powell_lsq(real *xi)
 #endif /* NORESCALE */
 #endif /* EAM */
     /* write temp file  */
-    /* TODO: check if this works properly */
     if (*tempfile != '\0')
 #ifndef APOT
       write_pot_table(&opt_pot, tempfile);	/*emergency writeout */

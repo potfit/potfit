@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2009 Daniel Schopf
+*   Copyright 2009-2010 Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2010/02/04 14:32:38 $
+* $Revision: 1.8 $
+* $Date: 2010/02/18 15:01:07 $
 *****************************************************************/
 
 #if defined APOT && defined PAIR

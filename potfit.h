@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.82 $
-* $Date: 2010/02/04 15:15:23 $
+* $Revision: 1.83 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -56,7 +56,8 @@
 #if defined EAM || defined MEAM
 #define DUMMY_WEIGHT 100.
 #endif
-#define ENG_WEIGHT 10.
+#define FORCE_WEIGHT 1.
+#define ENG_WEIGHT 100.
 #define STRESS_WEIGHT 10.
 #define FORCE_EPS .1
 
@@ -121,7 +122,7 @@ typedef struct {
   real  absforce;
   neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
-#if defined EAM || defined MEAM
+#if defined EAM || defined MEAM || defined ADP2
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
 #endif
@@ -176,8 +177,6 @@ typedef struct {
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SQR(a)     ((a)*(a))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-//static real sqrreal;
-//#define SQRREAL(x) ((sqrreal=(x)) == 0.0 ? 0.0 : sqrreal*sqrreal)
 
 /******************************************************************************
 *
@@ -223,6 +222,7 @@ EXTERN int *conf_len;
 EXTERN int *conf_dist;
 EXTERN int *conf_uf INIT(NULL);
 EXTERN int *conf_us INIT(NULL);
+EXTERN real fweight INIT(FORCE_WEIGHT);
 EXTERN real sweight INIT(STRESS_WEIGHT);
 EXTERN real eweight INIT(ENG_WEIGHT);
 EXTERN int myconf INIT(0.);
@@ -263,7 +263,7 @@ EXTERN real evo_width INIT(1.);
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM || defined MEAM
+#if defined EAM || defined MEAM || defined ADP2
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
@@ -379,10 +379,12 @@ real  calc_forces_pair(real *, real *, int);
 real  calc_forces_eam(real *, real *, int);
 #elif defined MEAM
 real  calc_forces_meam(real *, real *, int);
+#elif defined ADP
+real  calc_forces_adp(real *, real *, int);
 #endif
 void  powell_lsq(real *xi);
 void  anneal(real *xi);
-#if defined EVO && defined APOT
+#if defined EVO
 real *calc_vect(real *x);
 void  init_population(real **pop, real *xi, int size, real scale);
 void  diff_evo(real *xi);
@@ -467,6 +469,10 @@ void  pohlong_value(real, real *, real *);
 void  parabola_value(real, real *, real *);
 void  csw_value(real, real *, real *);
 void  universal_value(real, real *, real *);
+void  const_value(real, real *, real *);
+void  sqrt_value(real, real *, real *);
+void  mexp_decay_value(real, real *, real *);
+void  strmm_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

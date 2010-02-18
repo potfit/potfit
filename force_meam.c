@@ -31,8 +31,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.1 $
-* $Date: 2010/02/04 15:10:45 $
+* $Revision: 1.2 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #ifdef MEAM
@@ -842,21 +842,21 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
     sum = 0.;
     MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,	/* forces */
-		forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,	/* energies */
-		forces
-		+ natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+    /* forces */
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
+		atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+    /* energies */
+    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
+		forces + natoms * 3, conf_len, conf_dist, REAL, 0,
+		MPI_COMM_WORLD);
     /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf +
-		6 * firstconf, myconf, MPI_STENS,
-		forces + natoms * 3 + nconf,
-		conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf,
+		MPI_STENS, forces + natoms * 3 + nconf, conf_len, conf_dist,
+		MPI_STENS, 0, MPI_COMM_WORLD);
     /* punishment constraints */
-    MPI_Gatherv(forces + natoms * 3 + 7 * nconf +
-		firstconf, myconf, REAL,
-		forces + natoms * 3 + 7 * nconf,
-		conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, REAL,
+		forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, REAL, 0,
+		MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
 #endif /* MPI */
 

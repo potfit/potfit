@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.72 $
-* $Date: 2010/02/04 15:10:45 $
+* $Revision: 1.73 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #define MAIN
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#if defined EAM || defined MEAM
+#if defined EAM || defined MEAM || defined ADP2
     lambda = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(lambda, "lambda");
 
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#if defined EAM || defined MEAM
+#if defined EAM || defined MEAM || defined ADP2
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
@@ -300,9 +300,9 @@ int main(int argc, char **argv)
 #endif
       printf("\nPotential in format %d written to file %s\n", format, endpot);
     }
-#ifndef APOT
-    printf("Plotpoint file written to file %s\n", plotpointfile);
-#endif
+/*#ifndef APOT*/
+/*    printf("Plotpoint file written to file %s\n", plotpointfile);*/
+/*#endif*/
     if (writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
@@ -391,6 +391,7 @@ int main(int argc, char **argv)
 	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
+      fprintf(outfile, "# global force weight w is %f\n", fweight);
     } else {
       outfile = stdout;
       printf("Forces:\n");
@@ -403,7 +404,7 @@ int main(int argc, char **argv)
 #ifdef FWEIGHT
       if (i == 0)
 	fprintf(outfile,
-		"conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+		"conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
 	      "%3d:%5d\t%4s\t%11.8f\t%11.8f\t%11.8f\t%11.8f\t%11.8f\n",
 	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
@@ -413,10 +414,11 @@ int main(int argc, char **argv)
 	      atoms[i / 3].absforce);
 #else /* FWEIGHT */
       if (i == 0)
-	fprintf(outfile, "conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
+	fprintf(outfile, "conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
       fprintf(outfile, "%3d:%5d\t%4s\t%.8f\t%11.8f\t%11.8f\t%11.8f\n",
 	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
-	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+	      (force[i] + force_0[i]) / fweight, force_0[i] / fweight,
+	      force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
@@ -439,7 +441,7 @@ int main(int argc, char **argv)
     }
 
     if (write_output_files) {
-      fprintf(outfile, "# energy weight w is %f\n", eweight);
+      fprintf(outfile, "# global energy weight w is %f\n", eweight);
       fprintf(outfile,
 	      "# nr.\tconf_w\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
     } else {
@@ -453,7 +455,7 @@ int main(int argc, char **argv)
       max = MAX(max, sqr);
       min = MIN(min, sqr);
       if (write_output_files) {
-	fprintf(outfile, "%3d\t%.4f\t%f\t%.16f\t%.10f\t%f\t%f\t%f\n", i,
+	fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
 		conf_weight[i], sqr,
 		(force[energy_p + i] + force_0[energy_p + i]) / eweight,
 		force_0[energy_p + i] / eweight,
@@ -480,6 +482,7 @@ int main(int argc, char **argv)
 	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
+      fprintf(outfile, "# global stress weight w is %f\n", sweight);
     } else {
       outfile = stdout;
       fprintf(outfile, "Stresses on unit cell\n");

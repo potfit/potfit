@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2010/02/04 14:32:38 $
+* $Revision: 1.3 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #ifdef PAIR
@@ -214,7 +214,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	}
 	/* end first loop */
 
-	/* 2nd loop: calculate pair forces and energies, atomic densities. */
+	/* 2nd loop: calculate pair forces and energies */
 	for (i = 0; i < inconf[h]; i++) {
 #if defined DEBUG && defined FORCES
 	  fprintf(stderr, "\nWorking on atom %d\n", i);
@@ -257,14 +257,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  grad *= 0.5;
 		}
 		forces[energy_p + h] += fnval;
+
 #if defined DEBUG && defined FORCES
 		fprintf(stderr, "pair-energy=%f\n", fnval);
 #endif
-/* not real force: cohesive energy */
+
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad;
-		  tmp_force.y = neigh->dist.y * grad;
-		  tmp_force.z = neigh->dist.z * grad;
+		  tmp_force.x = fweight * neigh->dist.x * grad;
+		  tmp_force.y = fweight * neigh->dist.y * grad;
+		  tmp_force.z = fweight * neigh->dist.z * grad;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;

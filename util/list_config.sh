@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.6 $
-#* $Date: 2010/02/04 14:33:31 $
+#* $Revision: 1.7 $
+#* $Date: 2010/02/18 15:01:14 $
 #*****************************************************************/
 
 if [ $# -eq 0 ]; then
@@ -42,11 +42,12 @@ if [ ! -e "$1" ]; then
 	echo
 	exit 2;
 fi
-n_conf=`grep -e \#E $1 | wc -l`
-n_names=`grep -e generated $1 | wc -l`
-n_weights=`grep -e \#W $1 | wc -l`
-if [ $n_conf -gt $n_names ]; then
-grep -n -e \#N -e generated -e \#E $1 | awk -v file=$1 'BEGIN{i=0}
+#n_conf=`grep -e \#E $1 | wc -l`
+#n_names=`grep -e generated $1 | wc -l`
+#n_weights=`grep -e \#W $1 | wc -l`
+#echo $n_conf $n_names;
+#if [ $n_conf -gt $n_names ]; then
+grep -n -e \#N -e generated -e \#F -e \#W $1 | awk -v file=$1 'BEGIN{i=0}
 {
 	gsub(":"," ");
 	line=$1;
@@ -54,26 +55,38 @@ grep -n -e \#N -e generated -e \#E $1 | awk -v file=$1 'BEGIN{i=0}
 	getline;
 	gsub(":"," ");
 	printf "%3d: ",i;
-	if ($2=="#E") {
-		i++;
+	if ($2=="#F") {
 		printf "no information found in %s\n",file;
 		printf "\t with %d atoms, starting at line %d\n",n_atoms,line;
+		i++;
 	}
-	else {
+	else if ($2=="#W") {
+		printf "no information found in %s\n",file;
+		printf "\t with %d atoms, weight %d, starting at line %d\n",n_atoms,$3,line;
+		i++;
+                getline;
+	}
+	else if ($2=="##") {
 		printf "generated from %s\n",$8;
-		printf "\t with %d atoms, starting at line %d\n",n_atoms,line;
 		getline;
+		gsub(":"," ");
+		if ($2=="#W") {
+		printf "\t with %d atoms, weight %d, starting at line %d\n",n_atoms,$3,line;
+		getline;
+		}
+		else
+		printf "\t with %d atoms, starting at line %d\n",n_atoms,line;
 		i++;
 	}
 }'
-else
-grep -n -e \#N -e generated $1 | awk 'BEGIN{i=0} 
-{
-	gsub(":"," ");
-	line=$1;
-	n_atoms=$3;
-	getline;
-	printf "%3d: generated from "$7"\n\t with "n_atoms" atoms, starting at line "line"\n",i;
-	i++;
-}'
-fi
+#else
+#grep -n -e \#N -e generated $1 | awk 'BEGIN{i=0} 
+#{
+#        gsub(":"," ");
+#        line=$1;
+#        n_atoms=$3;
+#        getline;
+#        printf "%3d: generated from "$7"\n\t with "n_atoms" atoms, starting at line "line"\n",i;
+#        i++;
+#}'
+#fi

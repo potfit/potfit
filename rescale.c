@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.15 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.16 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -39,7 +39,6 @@
 /* Doesn't make much sense without EAM  */
 
 #if defined EAM && !defined NORESCALE
-
 
 /****************************************************************
 *

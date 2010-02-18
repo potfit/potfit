@@ -4,7 +4,7 @@
  *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/~imd/potfit
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.46 $
-* $Date: 2010/02/04 14:32:39 $
+* $Revision: 1.47 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #include <math.h>
@@ -223,7 +223,6 @@ void anneal(real *xi)
 	      for (n = 0; n < ndimtot; n++)
 		xopt[n] = xi2[n];
 	      Fopt = F2;
-	      /* TODO */
 	      if (*tempfile != '\0')
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);

@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.18 $
-# $Date: 2010/02/04 14:33:41 $
+# $Revision: 1.19 $
+# $Date: 2010/02/18 15:01:17 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -53,30 +53,40 @@ function write_pot(i,name,params,file)
 	if (i==0) {
 	printf "cof(x) = x**4/(1+x**4);\n" > file;
 	printf "pl " > file;}
-	if (do_smooth[i])
-		printf "cof((x-"cutoff[i]")/"params[i","n_param[i]]")*(" > file;
-	if (name == "eopp") {
-		printf "%f/x**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
-	} else if (name == "lj") {
-	printf "4*%f*((%f/x)**12-(%f/x)**6)",params[i","1],params[i","2],params[i","2] > file;
-} else if (name == "morse") {
-printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f)))",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > file;
+    if (do_smooth[i])
+      printf "cof((x-"cutoff[i]")/"params[i","n_param[i]]")*(" > file;
+    if (name == "eopp") {
+      printf "%f/x**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+    } else if (name == "lj") {
+      printf "4*%f*((%f/x)**12-(%f/x)**6)",params[i","1],params[i","2],params[i","2] > file;
+    } else if (name == "morse") {
+      printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f)))",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > file;
     } else if (name == "softshell") {
-    printf "(%f/x)**%f",params[i","1],params[i","2] > file;
-    } else if (name == "eoppexp") {
-    printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+      printf "(%f/x)**%f",params[i","1],params[i","2] > file;
+    } else if (name == "eopp_exp") {
+      printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
     } else if (name == "meopp") {
-    printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
+      printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
     } else if (name == "pohlong") {
-    printf "%f*(1-%f*log(x))*(x)**%f",params[i","1],params[i","2],params[i","2] > file;
+      printf "%f*(1-%f*log(x))*(x)**%f",params[i","1],params[i","2],params[i","2] > file;
     } else if (name == "power_decay") {
-    printf "%f*(1/x)**%f",params[i","1],params[i","2] > file;
+      printf "%f*(1/x)**%f",params[i","1],params[i","2] > file;
     } else if (name == "parabola") {
-    printf "%f*x**2+%f*x+%f",params[i","1],params[i","2],params[i","3] > file;
+      printf "%f*x**2+%f*x+%f",params[i","1],params[i","2],params[i","3] > file;
     } else if (name == "csw") {
-    printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f",params[i","1],params[i","3],params[i","2],params[i","3],params[i","4] > file;
+      printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f",params[i","1],params[i","3],params[i","2],params[i","3],params[i","4] > file;
     } else if (name == "universal") {
-    printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x",params[i","1],params[i","3],params[i","3],params[i","2],params[i","2],params[i","2],params[i","3],params[i","2],params[i","3],params[i","4] > file;
+      printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x",params[i","1],params[i","3],params[i","3],params[i","2],params[i","2],params[i","2],params[i","3],params[i","2],params[i","3],params[i","4] > file;
+    } else if (name == "const") {
+      printf "%f",params[i","1] > file;
+    } else if (name == "sqrt") {
+      printf "%f*sqrt(x/%f)",params[i","1],params[i","2] > file;
+    } else if (name == "exp_decay") {
+      printf "%f*exp(-%f*x)",params[i","1],params[i","2] > file;
+    } else if (name == "mexp_decay") {
+      printf "%f*exp(-%f*(x-%f))",params[i","1],params[i","2],params[i","3] > file;
+    } else if (name == "strmm") {
+    printf "2*%f*exp(-%f/2*(x-%f))-%f*(1+%f*(x-%f))*exp(-%f*(x-%f))",params[i","1],params[i","2],params[i","5],params[i","3],params[i","4],params[i","5],params[i","4],params[i","5] > file;
     }
     if (do_smooth[i])
 	    printf ")" > file;
@@ -109,6 +119,17 @@ function read_pot(name)
 		return 4;
 	else if (name=="universal")
 		return 4;
+	else if (name=="const")
+		return 1;
+	else if (name=="sqrt")
+		return 2;
+	else if (name=="mexp_decay")
+		return 3;
+	else if (name=="exp_decay")
+		return 2;
+	else if (name=="strmm")
+		return 5;
+	return 0;
 }
 
 BEGIN {

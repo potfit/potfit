@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2008-2009 Daniel Schopf
+*   Copyright 2008-2010 Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.26 $
-* $Date: 2010/02/04 14:32:38 $
+* $Revision: 1.27 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #ifdef APOT
@@ -70,6 +70,14 @@ int apot_parameters(char *name)
     return 4;
   } else if (strcmp(name, "universal") == 0) {
     return 4;
+  } else if (strcmp(name, "const") == 0) {
+    return 1;
+  } else if (strcmp(name, "sqrt") == 0) {
+    return 2;
+  } else if (strcmp(name, "mexp_decay") == 0) {
+    return 3;
+  } else if (strcmp(name, "strmm") == 0) {
+    return 5;
   }
 
   /* template for new potential function called newpot */
@@ -118,6 +126,14 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &csw_value;
     } else if (strcmp(apt->names[i], "universal") == 0) {
       apt->fvalue[i] = &universal_value;
+    } else if (strcmp(apt->names[i], "const") == 0) {
+      apt->fvalue[i] = &const_value;
+    } else if (strcmp(apt->names[i], "sqrt") == 0) {
+      apt->fvalue[i] = &sqrt_value;
+    } else if (strcmp(apt->names[i], "mexp_decay") == 0) {
+      apt->fvalue[i] = &mexp_decay_value;
+    } else if (strcmp(apt->names[i], "strmm") == 0) {
+      apt->fvalue[i] = &strmm_value;
     }
 
 /* template for new potential function called newpot */
@@ -263,9 +279,8 @@ void power_decay_value(real r, real *p, real *f)
 
 void exp_decay_value(real r, real *p, real *f)
 {
-  *f = p[0] * exp(r / p[1]);
+  *f = p[0] * exp(-p[1] * r);
 }
-
 
 /******************************************************************************
 *
@@ -330,6 +345,53 @@ void universal_value(real r, real *p, real *f)
   *f =
     p[0] * (p[2] / (p[2] - p[1]) * power[0] -
 	    p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
+}
+
+/******************************************************************************
+*
+* constant function
+*
+******************************************************************************/
+
+void const_value(real r, real *p, real *f)
+{
+  *f = *p;
+}
+
+/******************************************************************************
+*
+* square root function
+*
+******************************************************************************/
+
+void sqrt_value(real r, real *p, real *f)
+{
+  *f = p[0] * sqrt(r / p[1]);
+}
+
+/******************************************************************************
+*
+* mexp_decay potential
+*
+******************************************************************************/
+
+void mexp_decay_value(real r, real *p, real *f)
+{
+  *f = p[0] * exp(-p[1] * (r - p[2]));
+}
+
+/******************************************************************************
+*
+* streitz-mintmire (strmm) potential
+*
+******************************************************************************/
+
+void strmm_value(real r, real *p, real *f)
+{
+  real  r_0 = r - p[4];
+
+  *f = 2 * p[0] * exp(-p[1] / 2 * r_0) -
+    p[2] * (1 + p[3] * r_0) * exp(-p[3] * r_0);
 }
 
 /******************************************************************************

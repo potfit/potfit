@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2008-2009 Daniel Schopf
+*   Copyright 2008-2010 Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2010/01/11 09:03:08 $
+* $Revision: 1.10 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #ifdef APOT

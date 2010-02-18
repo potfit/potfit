@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2009 Daniel Schopf
+*   Copyright 2009-2010 Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2010/02/04 14:32:38 $
+* $Revision: 1.8 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #if defined EVO
@@ -47,7 +47,7 @@
 #endif
 
 /* parameters for the differential evolution algorithm */
-#define NP 25*D			// number of total population
+#define NP 15*D			// number of total population
 #define CR 0.5			// crossover constant, in [0,1]
 #define F 0.2			// coupling constant with others, in [0,1]
 

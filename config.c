@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.66 $
-* $Date: 2010/02/04 15:10:45 $
+* $Revision: 1.67 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -694,28 +694,30 @@ void read_config(char *filename)
   mdim += opt_pot.idxlen;	/* 1 slot for each analytic parameter -> punishment */
   mdim += apot_table.number + 1;	/* 1 slot for each analytic potential -> punishment */
 #endif /* APOT */
+
   /* copy forces into single vector */
   if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
     error("Cannot allocate forces");
   reg_for_free(force_0, "force_0");
+
   k = 0;
   for (i = 0; i < natoms; i++) {	/* first forces */
-    force_0[k++] = atoms[i].force.x;
-    force_0[k++] = atoms[i].force.y;
-    force_0[k++] = atoms[i].force.z;
+    force_0[k++] = fweight * atoms[i].force.x;
+    force_0[k++] = fweight * atoms[i].force.y;
+    force_0[k++] = fweight * atoms[i].force.z;
   }
   for (i = 0; i < nconf; i++) {	/* then cohesive energies */
-    force_0[k++] = coheng[i] * eweight;
+    force_0[k++] = eweight * coheng[i];
   }
 #ifdef STRESS
   for (i = 0; i < nconf; i++) {	/* then stresses */
     if (usestress[i]) {
-      force_0[k++] = stress[i].xx * sweight;
-      force_0[k++] = stress[i].yy * sweight;
-      force_0[k++] = stress[i].zz * sweight;
-      force_0[k++] = stress[i].xy * sweight;
-      force_0[k++] = stress[i].yz * sweight;
-      force_0[k++] = stress[i].zx * sweight;
+      force_0[k++] = sweight * stress[i].xx;
+      force_0[k++] = sweight * stress[i].yy;
+      force_0[k++] = sweight * stress[i].zz;
+      force_0[k++] = sweight * stress[i].xy;
+      force_0[k++] = sweight * stress[i].yz;
+      force_0[k++] = sweight * stress[i].zx;
     } else {
       for (j = 0; j < 6; j++)
 	force_0[k++] = 0.;

@@ -4,7 +4,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2005 Peter Brommer
+*   Copyright 2002-2010 Peter Brommer, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2010/02/04 14:32:39 $
+* $Revision: 1.8 $
+* $Date: 2010/02/18 15:01:09 $
 *****************************************************************/
 
 #include <stdio.h>

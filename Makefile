@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.53 $
-# $Date: 2010/02/04 15:18:39 $
+# $Revision: 1.54 $
+# $Date: 2010/02/18 15:01:07 $
 #
 ############################################################################
 #
@@ -625,6 +625,10 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
 endif
 
+ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+POTFITSRC      += force_adp.c
+endif
+
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 POTFITSRC      += functions.c smooth.c chempot.c
 endif
@@ -667,10 +671,28 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
     CFLAGS  += -DMEAM -DNORESCALE
+    ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+      ERROR += MEAM does not support analytic potentials (yet)
+    endif
   else
     CFLAGS  += -DEAM
   endif
+INTERACTION = 1
+endif
 
+# EAM or MEAM
+ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += ADP does not support tabulated potentials (yet)
+  endif
+  ifneq (,$(strip $(findstring adp2,${MAKETARGET})))
+    CFLAGS  += -DADP -DAPD2
+  else
+    CFLAGS  += -DADP
+  endif
 INTERACTION = 1
 endif
 
@@ -784,7 +806,7 @@ endif
 # An empty MAKETARGET variable would create an infinite recursion, so we check
 STAGE2:
 ifneq (,${ERROR})
-	@echo "${ERROR}"
+	@echo -e "\nError: ${ERROR}\n"
 else
 ifneq (,${MAKETARGET})
 	@echo "${WARNING}"

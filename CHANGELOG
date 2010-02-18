@@ -1,3 +1,8 @@
+CVS-live
++ bump copyright years to 2010
++ add force_weight to global options (works with pair and eam)
++ [APOT] add a few new analytic potential functions
+
 CVS-20100204
 + [MEAM] initial commit
 

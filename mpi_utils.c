@@ -4,7 +4,7 @@
  *
  *******************************************************/
 /*
-*   Copyright 2004-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2004-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.28 $
-* $Date: 2010/02/04 15:10:45 $
+* $Revision: 1.29 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -195,6 +195,7 @@ void broadcast_params()
   MPI_Bcast(conf_weight, nconf, REAL, 0, MPI_COMM_WORLD);
 
   /* Broadcast weights... */
+  MPI_Bcast(&fweight, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&eweight, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&sweight, 1, REAL, 0, MPI_COMM_WORLD);
   /* Broadcast the potential... */

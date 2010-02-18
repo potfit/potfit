@@ -30,15 +30,17 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.2 $
-# $Date: 2009/12/03 07:44:16 $
+# $Revision: 1.3 $
+# $Date: 2010/02/18 15:01:17 $
 ####################################################################
 
 {
 	species = $1
 	pairs = $2
-	if ( (species*(species+1)/2) != pairs )
+	if ( (species*(species+1)/2) != pairs ) {
 		print "Number of pairs is wrong, aborting";
+		exit 2;
+	}
 	getline;
 	for (i=0;i<species;i++) {
 		element[i]=$4;
@@ -80,7 +82,7 @@ END {
 	printf "\n#E\n\n";
 
 	for (i=0;i<pairs;i++) {
-		printf "type eopp_sc\n";
+		printf "type eopp\n";
 		printf "cutoff 7\n";
 		printf "%s %f %d %d\n",name[0],par_0[i],1,10000;
 		printf "%s %f %d %d\n",name[1],par_1[i],1,20;

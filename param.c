@@ -4,7 +4,7 @@
 *
 ******************************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.33 $
-*  $Date: 2010/02/04 14:32:38 $
+*  $Revision: 1.34 $
+*  $Date: 2010/02/18 15:01:08 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -283,6 +283,10 @@ void read_paramfile(FILE *pf)
       getparam("evo_width", &evo_width, PARAM_DOUBLE, 1, 1);
     }
 #endif
+    /* Force Weight */
+    else if (strcasecmp(token, "force_weight") == 0) {
+      getparam("force_weight", &fweight, PARAM_DOUBLE, 1, 1);
+    }
     /* Energy Weight */
     else if (strcasecmp(token, "eng_weight") == 0) {
       getparam("eng_weight", &eweight, PARAM_DOUBLE, 1, 1);
@@ -300,6 +304,9 @@ void read_paramfile(FILE *pf)
     }
   } while (!feof(pf));
   fclose(pf);
+
+  if (ntypes == 0)
+    error("ntypes cannot be 0!");
 
 }
 

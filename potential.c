@@ -5,7 +5,7 @@
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2009 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.82 $
-* $Date: 2010/02/04 15:10:45 $
+* $Revision: 1.83 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -832,20 +832,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  apt->pmax[i][j] = temp;
 	} else if ((apt->values[i][j] < apt->pmin[i][j])
 		   || (apt->values[i][j] > apt->pmax[i][j])) {
-	  if (!opt) {
-	    if (apt->values[i][j] < apt->pmin[i][j]) {
-	      fprintf(stderr, "\n --> Warning <--\n");
-	      fprintf(stderr,
-		      "Starting value for paramter #%d in potential #%d is smaller than the specified minimum.\n",
-		      j + 1, i + 1);
-	    }
-	    if (apt->values[i][j] > apt->pmax[i][j]) {
-	      fprintf(stderr, "\n --> Warning <--\n");
-	      fprintf(stderr,
-		      "Starting value for paramter #%d in potential #%d is bigger than the specified maximumm.\n",
-		      j + 1, i + 1);
-	    }
-	  } else {
+	/* Only print warning if we are optimizing */
+	if (opt) {
 	    apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
 	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,
@@ -2393,7 +2381,6 @@ void write_pot_table3(pot_table_t *pt, char *filename)
   int   i, j, flag = 0;
   real  r;
 
-  /* TODO */
   if (*plotpointfile != '\0')
     flag = 1;
 

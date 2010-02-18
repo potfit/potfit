@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2010/02/04 14:32:38 $
+* $Revision: 1.3 $
+* $Date: 2010/02/18 15:01:08 $
 *****************************************************************/
 
 #ifdef EAM
@@ -312,9 +312,9 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #endif
 /* not real force: cohesive energy */
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad;
-		  tmp_force.y = neigh->dist.y * grad;
-		  tmp_force.z = neigh->dist.z * grad;
+		  tmp_force.x = fweight * neigh->dist.x * grad;
+		  tmp_force.y = fweight * neigh->dist.y * grad;
+		  tmp_force.z = fweight * neigh->dist.z * grad;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
@@ -491,9 +491,9 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		     copy of itself */
 		  if (self)
 		    eamforce *= 0.5;
-		  tmp_force.x = neigh->dist.x * eamforce;
-		  tmp_force.y = neigh->dist.y * eamforce;
-		  tmp_force.z = neigh->dist.z * eamforce;
+		  tmp_force.x = fweight * neigh->dist.x * eamforce;
+		  tmp_force.y = fweight * neigh->dist.y * eamforce;
+		  tmp_force.z = fweight * neigh->dist.z * eamforce;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
