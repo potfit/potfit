@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.83 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.84 $
+* $Date: 2010/02/18 16:12:12 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -430,7 +430,9 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 #ifdef APOT
 
 #define APOT_STEPS 1000		/* number of sampling points for analytic pot */
-#define APOT_PUNISH 10e10	/* punishment for out of bounds */
+#define APOT_PUNISH apot_punish_value	/* punishment for out of bounds */
+
+real apot_punish_value INIT(1.);
 
 /* functions.c */
 int   apot_parameters(char *);

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.34 $
-*  $Date: 2010/02/18 15:01:08 $
+*  $Revision: 1.35 $
+*  $Date: 2010/02/18 16:12:12 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -286,6 +286,10 @@ void read_paramfile(FILE *pf)
     /* Force Weight */
     else if (strcasecmp(token, "force_weight") == 0) {
       getparam("force_weight", &fweight, PARAM_DOUBLE, 1, 1);
+    }
+    /* Force Weight */
+    else if (strcasecmp(token, "apot_punish") == 0) {
+      getparam("apot_punish", &apot_punish_value, PARAM_DOUBLE, 1, 1);
     }
     /* Energy Weight */
     else if (strcasecmp(token, "eng_weight") == 0) {
