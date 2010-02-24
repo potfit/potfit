@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.35 $
-*  $Date: 2010/02/18 16:12:12 $
+*  $Revision: 1.36 $
+*  $Date: 2010/02/24 06:55:40 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -283,17 +283,19 @@ void read_paramfile(FILE *pf)
       getparam("evo_width", &evo_width, PARAM_DOUBLE, 1, 1);
     }
 #endif
-    /* Force Weight */
-    else if (strcasecmp(token, "force_weight") == 0) {
-      getparam("force_weight", &fweight, PARAM_DOUBLE, 1, 1);
-    }
-    /* Force Weight */
+#ifdef APOT
+    /* Scaling Constant for APOT Punishment */
     else if (strcasecmp(token, "apot_punish") == 0) {
       getparam("apot_punish", &apot_punish_value, PARAM_DOUBLE, 1, 1);
     }
+#endif
     /* Energy Weight */
     else if (strcasecmp(token, "eng_weight") == 0) {
       getparam("eng_weight", &eweight, PARAM_DOUBLE, 1, 1);
+    }
+    /* error margin delta epsilon */
+    else if (strcasecmp(token, "d_eps") == 0) {
+      getparam("d_eps", &d_eps, PARAM_DOUBLE, 1, 1);
     }
 #ifdef STRESS
     /* Energy Weight */

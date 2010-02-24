@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.27 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.28 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #ifdef APOT
@@ -472,17 +472,9 @@ real apot_punish(real *params, real *forces)
     max = apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]];
     /* punishment for out of bounds */
     if (x = params[idx[i]] - min, x < 0) {
-#ifdef DEBUG
-      fprintf(stderr, "DEBUG - parameter %d out of bounds: %f [%f;%f]\n", i,
-	      params[idx[i]], min, max);
-#endif
       tmpsum += APOT_PUNISH * x * x;
       forces[punish_par_p + i] = APOT_PUNISH * x * x;
     } else if (x = params[idx[i]] - max, x > 0) {
-#ifdef DEBUG
-      fprintf(stderr, "DEBUG - parameter %d out of bounds: %f [%f;%f]\n", i,
-	      params[idx[i]], min, max);
-#endif
       tmpsum += APOT_PUNISH * x * x;
       forces[punish_par_p + i] = APOT_PUNISH * x * x;
     }
@@ -496,11 +488,8 @@ real apot_punish(real *params, real *forces)
     if (strcmp(apot_table.names[i], "eopp") == 0) {
       x = params[j + 1] - params[j + 3];
       if (x < 0) {
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG eta_1 < eta_2 found for potential %d\n", i);
-#endif
-	forces[punish_pot_p + i] = APOT_PUNISH * (1 + x) * (1 + x);
-	tmpsum += APOT_PUNISH * (1 + x) * (1 + x);
+	forces[punish_pot_p + i] = apot_punish_value * (1 + x) * (1 + x);
+	tmpsum += apot_punish_value * (1 + x) * (1 + x);
       }
     }
 #ifdef EAM
@@ -508,8 +497,8 @@ real apot_punish(real *params, real *forces)
     if (strcmp(apot_table.names[i], "universal") == 0) {
       x = params[j + 2] - params[j + 1];
       if (fabs(x) < 1e-6) {
-	forces[punish_pot_p + i] = APOT_PUNISH / (x * x);
-	tmpsum += APOT_PUNISH / (x * x);
+	forces[punish_pot_p + i] = apot_punish_value / (x * x);
+	tmpsum += apot_punish_value / (x * x);
       }
     }
 #endif

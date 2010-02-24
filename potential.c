@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.83 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.84 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -832,8 +832,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  apt->pmax[i][j] = temp;
 	} else if ((apt->values[i][j] < apt->pmin[i][j])
 		   || (apt->values[i][j] > apt->pmax[i][j])) {
-	/* Only print warning if we are optimizing */
-	if (opt) {
+	  /* Only print warning if we are optimizing */
+	  if (opt) {
 	    apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
 	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,

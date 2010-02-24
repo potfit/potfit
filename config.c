@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.67 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.68 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -702,9 +702,9 @@ void read_config(char *filename)
 
   k = 0;
   for (i = 0; i < natoms; i++) {	/* first forces */
-    force_0[k++] = fweight * atoms[i].force.x;
-    force_0[k++] = fweight * atoms[i].force.y;
-    force_0[k++] = fweight * atoms[i].force.z;
+    force_0[k++] = atoms[i].force.x;
+    force_0[k++] = atoms[i].force.y;
+    force_0[k++] = atoms[i].force.z;
   }
   for (i = 0; i < nconf; i++) {	/* then cohesive energies */
     force_0[k++] = eweight * coheng[i];

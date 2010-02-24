@@ -31,8 +31,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.2 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.3 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #ifdef MEAM
@@ -638,8 +638,8 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 				   f_ij * f_ik * gradmm * (dcos_ij *
 							   n_angl->dist_ij.x +
 							   dcos_ik *
-							   n_angl->
-							   dist_ik.x));
+							   n_angl->dist_ik.
+							   x));
 		  angular_force_y +=
 		    atom->gradF * (gradff * f_ik * m_ijk * n_angl->dist_ij.y +
 				   gradff2 * f_ij * m_ijk *
@@ -647,8 +647,8 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 				   f_ij * f_ik * gradmm * (dcos_ij *
 							   n_angl->dist_ij.y +
 							   dcos_ik *
-							   n_angl->
-							   dist_ik.y));
+							   n_angl->dist_ik.
+							   y));
 		  angular_force_z +=
 		    atom->gradF * (gradff * f_ik * m_ijk * n_angl->dist_ij.z +
 				   gradff2 * f_ij * m_ijk *
@@ -656,8 +656,8 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 				   f_ij * f_ik * gradmm * (dcos_ij *
 							   n_angl->dist_ij.z +
 							   dcos_ik *
-							   n_angl->
-							   dist_ik.z));
+							   n_angl->dist_ik.
+							   z));
 #ifdef STRESS
 /* without angl part */
 #endif

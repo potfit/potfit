@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.84 $
-* $Date: 2010/02/18 16:12:12 $
+* $Revision: 1.85 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -56,7 +56,6 @@
 #if defined EAM || defined MEAM
 #define DUMMY_WEIGHT 100.
 #endif
-#define FORCE_WEIGHT 1.
 #define ENG_WEIGHT 100.
 #define STRESS_WEIGHT 10.
 #define FORCE_EPS .1
@@ -152,23 +151,30 @@ typedef struct {
 typedef void (*fvalue_pointer) (real, real *, real *);
 
 typedef struct {
+  // potentials
   int   number;			/* number of analytic potentials */
-  int   total_par;		/* total number of parameters for all potentials */
-  int  *n_par;			/* number of parameters for analytic potential */
+  int  *idxpot;			/* indirect index for potentials */
   char **names;			/* name of analytic potentials */
+  real *begin;			/* starting position of potential */
+  real *end;			/* end position of potential = cutoff radius */
+  int  *n_par;			/* number of parameters for analytic potential */
+
+  // parameters
+  int   total_par;		/* total number of parameters for all potentials */
+  int  *idxparam;		/* indirect index for potential parameters */
   char ***param_name;		/* name of parameters */
+  real **pmin;			/* minimum values for parameters */
   real **values;		/* parameter values for analytic potentials */
-  int **invar_par;		/* parameter values for analytic potentials */
-  real *chempot;		/* chemical potentials */
+  real **pmax;			/* maximum values for parameters */
+
+  // global parameters
   int   globals;		/* number of global parameters */
   int  *n_glob;			/* number of global parameter usage */
   int ***global_idx;		/* index of global parameters */
-  real *begin;			/* starting position of potential */
-  real *end;			/* end position of potential = cutoff radius */
-  real **pmin;			/* minimum values for parameters */
-  real **pmax;			/* maximum values for parameters */
-  int  *idxpot;			/* indirect index for potentials */
-  int  *idxparam;		/* indirect index for potential parameters */
+
+  int **invar_par;		/* ??? */
+  real *chempot;		/* chemical potentials */
+
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
 #endif
@@ -186,81 +192,130 @@ typedef struct {
 
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
+
 #define EXTERN			/* define Variables in main */
 #define INIT(data) =data	/* initialize data only in main */
 #else
 #define EXTERN extern		/* declare them extern otherwise */
 #define INIT(data)		/* skip initialization otherwise */
 #endif
+
+// system variables
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
 EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
-EXTERN MPI_Datatype MPI_VEKTOR;
-EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+EXTERN MPI_Datatype MPI_STENS;
+EXTERN MPI_Datatype MPI_VEKTOR;
 #endif
-EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
-EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
-EXTERN int *invar_pot INIT(NULL);
-EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
-#ifdef APOT
-EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
-EXTERN int have_globals INIT(0);	/* do we have global parameters? */
-EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
-EXTERN int global_idx INIT(0);	/* index for global parameters in opt_pot table */
-EXTERN int *smooth_pot INIT(NULL);
-#endif
+
+// general settings (from parameter file)
+EXTERN char config[255];	/* file with atom configuration */
+EXTERN char distfile[255];	/* file for distributions */
+EXTERN char endpot[255];	/* file for end potential */
+EXTERN char flagfile[255] INIT("\0");	/* break if file exists */
+EXTERN char imdpot[255];	/* file for IMD potential */
+EXTERN char maxchfile[255];	/* file with maximal changes */
+EXTERN char output_prefix[255] INIT("\0");	/* prefix for all output files */
+EXTERN char plotfile[255];	/* file for plotting */
+EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
+EXTERN char startpot[255];	/* file with start potential */
+EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
+EXTERN int imdpotsteps;		/* resolution of IMD potential */
+EXTERN int ntypes INIT(1);	/* number of atom types */
+EXTERN int opt INIT(0);		/* optimization flag */
+EXTERN int seed INIT(123456);	/* seed for RNG */
+EXTERN int usemaxch INIT(0);	/* use maximal changes file */
+EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
-EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
-EXTERN real *conf_vol INIT(NULL);
-EXTERN real *conf_weight INIT(NULL);	/* weight of configuration */
-EXTERN stens *conf_stress INIT(NULL);
-EXTERN int *atom_len;
-EXTERN int *atom_dist;
-EXTERN int *conf_len;
-EXTERN int *conf_dist;
-EXTERN int *conf_uf INIT(NULL);
-EXTERN int *conf_us INIT(NULL);
-EXTERN real fweight INIT(FORCE_WEIGHT);
-EXTERN real sweight INIT(STRESS_WEIGHT);
-EXTERN real eweight INIT(ENG_WEIGHT);
-EXTERN int myconf INIT(0.);
-EXTERN int myatoms INIT(0.);
-EXTERN int firstconf INIT(0);
-EXTERN int firstatom INIT(0);
-EXTERN real *rms INIT(NULL);
-EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
 EXTERN int writeimd INIT(0);
 EXTERN real anneal_temp INIT(1.);
-EXTERN int seed INIT(123456);	/* seed for RNG */
-EXTERN int fcalls INIT(0);
-EXTERN int ndim INIT(0);
-EXTERN int ndimtot INIT(0);
-EXTERN int mdim INIT(0);
-EXTERN int usemaxch INIT(0);	/* use maximal changes file */
-EXTERN int ntypes INIT(1);	/* number of atom types */
-EXTERN int natoms INIT(0);	/* number of atoms */
-EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
-EXTERN int have_elements INIT(0);	/* do we have the elements ? */
-EXTERN int **na_typ INIT(NULL);	/* number of atoms per type */
-EXTERN int nconf INIT(0);	/* number of configurations */
-EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
-EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
-EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
-EXTERN real *force_0 INIT(NULL);	/* the forces we aim at */
-EXTERN real *coheng INIT(NULL);	/* Cohesive energy for each config */
-EXTERN real *volumen INIT(NULL);	/* Volume of cell */
-EXTERN stens *stress INIT(NULL);	/* Stresses in each config */
-EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
-EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
-EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
-EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
+EXTERN real eweight INIT(ENG_WEIGHT);
+EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
+EXTERN real sweight INIT(STRESS_WEIGHT);
+#ifdef APOT
+EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
+EXTERN int disable_cp INIT(0);	/* switch chemical potential on/off */
+EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
+#endif
 #ifdef EVO
 EXTERN real evo_width INIT(1.);
 #endif
 
-/* pointers for force-vector */
+// configurations
+EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
+EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
+EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
+EXTERN int **na_typ INIT(NULL);	/* number of atoms per type */
+EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
+EXTERN int *conf_uf INIT(NULL);
+EXTERN int *conf_us INIT(NULL);
+EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
+EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
+EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
+EXTERN int have_elements INIT(0);	/* do we have the elements ? */
+EXTERN int natoms INIT(0);	/* number of atoms */
+EXTERN int nconf INIT(0);	/* number of configurations */
+EXTERN real *coheng INIT(NULL);	/* Cohesive energy for each config */
+EXTERN real *conf_vol INIT(NULL);
+EXTERN real *conf_weight INIT(NULL);	/* weight of configuration */
+EXTERN real *force_0 INIT(NULL);	/* the forces we aim at */
+EXTERN real *rcut INIT(NULL);
+EXTERN real *rmin INIT(NULL);
+EXTERN real *volumen INIT(NULL);	/* Volume of cell */
+EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
+EXTERN stens *conf_stress INIT(NULL);
+EXTERN stens *stress INIT(NULL);	/* Stresses in each config */
+EXTERN vektor box_x, box_y, box_z;
+EXTERN vektor tbox_x, tbox_y, tbox_z;
+
+// potential variables
+EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
+EXTERN int *invar_pot INIT(NULL);
+EXTERN int format;		/* format of potential table */
+EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
+EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
+#ifdef APOT
+EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
+EXTERN int *pot_index INIT(NULL);	/* index to access i*n+j from i*(i+1)/2 */
+EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
+EXTERN int *smooth_pot INIT(NULL);
+EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
+EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
+EXTERN int global_idx INIT(0);	/* index for global parameters in opt_pot table */
+EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
+EXTERN int have_globals INIT(0);	/* do we have global parameters? */
+EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
+EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
+#endif
+
+// potential tables
+EXTERN pot_table_t opt_pot;	/* potential in the internal */
+					 /* representation used for  */
+					 /* minimisation */
+EXTERN pot_table_t calc_pot;	/* the potential table used */
+					 /* for force calculations */
+#ifdef APOT
+EXTERN apot_table_t apot_table;	/* potential in analytic form */
+#endif
+
+// optimization variables
+EXTERN int fcalls INIT(0);
+EXTERN int mdim INIT(0);
+EXTERN int ndim INIT(0);
+EXTERN int ndimtot INIT(0);
+EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
+EXTERN real d_eps INIT(0.);
+
+// general variables
+EXTERN int firstatom INIT(0);
+EXTERN int firstconf INIT(0);
+EXTERN int myatoms INIT(0.);
+EXTERN int myconf INIT(0.);
+EXTERN real *rms INIT(NULL);
+
+// pointers for force-vector
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
 #if defined EAM || defined MEAM || defined ADP2
@@ -272,53 +327,32 @@ EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints *
 EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
 #endif
 
-/* memory management */
-EXTERN void **all_pointers INIT(NULL);
-EXTERN int num_pointers INIT(0);
+// memory management
 EXTERN char **pointer_names INIT(NULL);
+EXTERN int num_pointers INIT(0);
+EXTERN void **all_pointers INIT(NULL);
 
-EXTERN char startpot[255];	/* file with start potential */
-EXTERN char maxchfile[255];	/* file with maximal changes */
-EXTERN char endpot[255];	/* file for end potential */
-EXTERN char imdpot[255];	/* file for IMD potential */
-EXTERN char config[255];	/* file with atom configuration */
-EXTERN char plotfile[255];	/* file for plotting */
-EXTERN char distfile[255];	/* file for distributions */
-EXTERN int write_output_files INIT(0);
-EXTERN char output_prefix[255] INIT("");	/* prefix for all output files */
-
-EXTERN char flagfile[255] INIT("potfit.break");
-					 /* break if file exists */
-EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
-EXTERN char plotpointfile[255] INIT("\0");
-					/* write points for plotting */
-EXTERN int imdpotsteps;		/* resolution of IMD potential */
-EXTERN pot_table_t opt_pot;	/* potential in the internal */
-					 /* representation used for  */
-					 /* minimisation */
-EXTERN pot_table_t calc_pot;	/* the potential table used */
-					 /* for force calculations */
-#ifdef APOT
-EXTERN apot_table_t apot_table;	/* potential in analytic form */
-EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
-EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
-EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
-EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
-EXTERN int disable_cp INIT(0);	/* switch chemical potential on/off */
-EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
-EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
-EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
-EXTERN int *pot_index INIT(NULL);	/* index to access i*n+j from i*(i+1)/2 */
+// variables needed for atom distribution with mpi
+#ifdef MPI
+EXTERN int *atom_dist;
+EXTERN int *atom_len;
+EXTERN int *conf_dist;
+EXTERN int *conf_len;
 #endif
-EXTERN int format;		/* format of potential table */
-EXTERN int opt INIT(0);		/* optimization flag */
+
+// misc. stuff - has to belong somewhere
+EXTERN int *idx INIT(NULL);
+EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
-EXTERN vektor box_x, box_y, box_z;
-EXTERN vektor tbox_x, tbox_y, tbox_z;
-EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
-EXTERN real *rcut INIT(NULL);
-EXTERN real *rmin INIT(NULL);
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
+EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
+
+/******************************************************************************
+*
+*  global function pointers
+*
+******************************************************************************/
+
 EXTERN real (*calc_forces) (real *, real *, int);
 EXTERN real (*splint) (pot_table_t *, real *, int, real);
 EXTERN real (*splint_grad) (pot_table_t *, real *, int, real);
@@ -333,8 +367,6 @@ EXTERN real (*parab) (pot_table_t *, real *, int, real);
 EXTERN real (*parab_comb) (pot_table_t *, real *, int, real, real *);
 EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 #endif /* PARABEL */
-EXTERN int *idx INIT(NULL);
-EXTERN int init_done INIT(0);
 
 /******************************************************************************
 *
@@ -427,12 +459,18 @@ void  potsync();
 void  write_pairdist(pot_table_t *pt, char *filename);
 #endif
 
+/******************************************************************************
+*
+*  additional stuff for analytic potentials
+*
+******************************************************************************/
+
 #ifdef APOT
 
 #define APOT_STEPS 1000		/* number of sampling points for analytic pot */
-#define APOT_PUNISH apot_punish_value	/* punishment for out of bounds */
+#define APOT_PUNISH 10e6	/* general value for apot punishments */
 
-real apot_punish_value INIT(1.);
+real apot_punish_value INIT(0.);
 
 /* functions.c */
 int   apot_parameters(char *);

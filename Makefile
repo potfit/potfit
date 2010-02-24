@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.54 $
-# $Date: 2010/02/18 15:01:07 $
+# $Revision: 1.55 $
+# $Date: 2010/02/24 06:55:40 $
 #
 ############################################################################
 #
@@ -680,7 +680,7 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 INTERACTION = 1
 endif
 
-# EAM or MEAM
+# ADP or ADP2
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified

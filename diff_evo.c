@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.8 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.9 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #if defined EVO
@@ -262,9 +262,7 @@ void diff_evo(real *xi)
 	  pmax =
 	    apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
 	  if (temp > pmax || temp < pmin) {
-	    trial[j] =
-/*              pmin + (1. * random() / (RAND_MAX + 1.) * (pmax - pmin));*/
-	      x1[(int)(1. * random() / (RAND_MAX + 1.) * D)][j];
+	    trial[j] = x1[(int)(1. * random() / (RAND_MAX + 1.) * D)][j];
 	  } else
 	    trial[j] = temp;
 #else

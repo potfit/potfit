@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.47 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.48 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #include <math.h>
@@ -260,17 +260,21 @@ void anneal(real *xi)
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
       /* End fit if break flagfile exists */
-      ff = fopen(flagfile, "r");
-      if (NULL != ff) {
-	printf
-	  ("Annealing terminated in presence of break flagfile \"%s\"!\n",
-	   flagfile);
-	printf("Temperature was %f, returning optimum configuration\n", T);
-	for (n = 0; n < ndimtot; n++)
-	  xi[n] = xopt[n];
-	F = Fopt;
-	k = KMAX + 1;
-	break;
+      if (*flagfile != '\0') {
+	ff = fopen(flagfile, "r");
+	if (NULL != ff) {
+	  printf
+	    ("Annealing terminated in presence of break flagfile \"%s\"!\n",
+	     flagfile);
+	  printf("Temperature was %f, returning optimum configuration\n", T);
+	  for (n = 0; n < ndimtot; n++)
+	    xi[n] = xopt[n];
+	  F = Fopt;
+	  k = KMAX + 1;
+	  fclose(ff);
+	  remove(flagfile);
+	  break;
+	}
       }
 #ifdef EAM
 #ifndef NORESCALE

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2009/09/02 14:16:19 $
+* $Revision: 1.7 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -99,11 +99,9 @@ EXTERN char endpot[255];	/* file for end potential */
 EXTERN char imdpot[255];	/* file for IMD potential */
 EXTERN char config[255];	/* file with atom configuration */
 EXTERN char plotfile[255];	/* file for plotting */
-EXTERN char flagfile[255] INIT("potfit.break");
-					 /* break if file exists */
+EXTERN char flagfile[255] INIT("\0");	/* break if file exists */
 EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
-EXTERN char plotpointfile[255] INIT("\0");
-					 /* write points for plotting */
+EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
 EXTERN int imdpotsteps;		/* resolution of IMD potential */
 EXTERN pot_table_t pair_pot;	/* the potential table */
 EXTERN int plot INIT(0);	/* plot output flag */

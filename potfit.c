@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.73 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.74 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #define MAIN
@@ -391,7 +391,6 @@ int main(int argc, char **argv)
 	sprintf(msg, "Could not open file %s\n", file);
 	error(msg);
       }
-      fprintf(outfile, "# global force weight w is %f\n", fweight);
     } else {
       outfile = stdout;
       printf("Forces:\n");
@@ -417,8 +416,7 @@ int main(int argc, char **argv)
 	fprintf(outfile, "conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
       fprintf(outfile, "%3d:%5d\t%4s\t%.8f\t%11.8f\t%11.8f\t%11.8f\n",
 	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
-	      (force[i] + force_0[i]) / fweight, force_0[i] / fweight,
-	      force[i] / force_0[i]);
+	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
@@ -580,6 +578,25 @@ int main(int argc, char **argv)
 
     /* final error report */
     printf("\n###### error report ######\n");
+    if (write_output_files) {
+      strcpy(file, output_prefix);
+      strcat(file, ".error");
+      outfile = fopen(file, "w");
+      if (NULL == outfile) {
+	sprintf(msg, "Could not open file %s\n", file);
+	error(msg);
+      }
+#ifndef STRESS
+      fprintf(outfile,
+	      "total error sum %f, count %d (%d forces, %d energies)\n", tot,
+	      mdim - 6 * nconf, 3 * natoms, nconf);
+#else
+      fprintf
+	(outfile,
+	 "total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
+	 tot, mdim, 3 * natoms, nconf, 6 * nconf);
+#endif
+    }
 #ifndef STRESS
     printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
 	   mdim - 6 * nconf, 3 * natoms, nconf);
@@ -588,6 +605,7 @@ int main(int argc, char **argv)
       ("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
        tot, mdim, 3 * natoms, nconf, 6 * nconf);
 #endif
+
     /* calculate the rms errors for forces, energies, stress */
     rms[0] = 0;			/* rms rms for forces */
     rms[1] = 0;			/* energies */
@@ -613,6 +631,37 @@ int main(int argc, char **argv)
       rms[2] = 0;
     rms[2] = sqrt(rms[2] / (6 * nconf));
 
+    if (write_output_files) {
+      fprintf(outfile, "sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
+	      f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
+      fprintf(outfile, "sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
+	      e_sum / tot * 100);
+#ifdef STRESS
+      fprintf(outfile, "sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
+	      s_sum / tot * 100);
+#endif
+      if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
+	fprintf
+	  (outfile,
+	   "\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
+	fprintf(outfile, "sum of punishments = %f\t\t( %.3f%% )\n\n",
+		tot - f_sum - e_sum - s_sum,
+		(tot - f_sum - e_sum - s_sum) / tot * 100);
+      }
+      fprintf(outfile, "min: %e - max: %e\n", min, max);
+      fprintf(outfile, "rms-errors:\n");
+      fprintf(outfile, "force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
+      fprintf(outfile, "energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
+#ifdef STRESS
+      fprintf(outfile, "stress \t%f\t(%f MPa)\n", rms[2],
+	      rms[2] / 160.2 * 1000);
+#endif
+      fprintf(outfile, "\n");
+      fprintf(outfile, "\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
+      fprintf(outfile, "RMS:\t%f\t%f\t%f\t%f\n", rms[0] * 1000, rms[1] * 1000,
+	      rms[2] / 160.2 * 1000, tot);
+
+    }
     printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
 	   f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
     printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
@@ -635,7 +684,6 @@ int main(int argc, char **argv)
 #ifdef STRESS
     printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif
-
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.3 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.4 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 #ifdef PAIR
@@ -263,9 +263,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 
 		if (uf) {
-		  tmp_force.x = fweight * neigh->dist.x * grad;
-		  tmp_force.y = fweight * neigh->dist.y * grad;
-		  tmp_force.z = fweight * neigh->dist.z * grad;
+		  tmp_force.x = neigh->dist.x * grad;
+		  tmp_force.y = neigh->dist.y * grad;
+		  tmp_force.z = neigh->dist.z * grad;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;

@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.48 $
-* $Date: 2010/02/18 15:01:08 $
+* $Revision: 1.49 $
+* $Date: 2010/02/24 06:55:40 $
 *****************************************************************/
 
 /******************************************************************************
@@ -134,7 +134,8 @@ void powell_lsq(real *xi)
 
   (void)copy_vector(fxi1, force_xi, mdim);
 #ifdef APOT
-  printf("loops\tforce\t\tfunction calls\n");
+  printf("loops\t\terror_sum\tforce calculations\n");
+  printf("%5d\t%17.6f\t%6d\n", m, F, fcalls);
 #endif
 
   do {				/*outer loop, includes recalculating gamma */
@@ -301,7 +302,7 @@ void powell_lsq(real *xi)
     /* Print the steps in current loop, F, a few values of xi, and
        total number of fn calls */
 #ifdef APOT
-    printf("%d\t%f\t%d\n", m, F, fcalls);
+    printf("%5d\t%17.6f\t%6d\n", m, F, fcalls);
 #else
     printf("%d %f %f %f %f %f %f %d\n",
 	   m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
@@ -309,12 +310,16 @@ void powell_lsq(real *xi)
     fflush(stdout);
 
     /* End fit if break flagfile exists */
-    ff = fopen(flagfile, "r");
-    if (NULL != ff) {
-      printf
-	("Fit terminated prematurely in presence of break flagfile \"%s\"!\n",
-	 flagfile);
-      break;
+    if (*flagfile != '\0') {
+      ff = fopen(flagfile, "r");
+      if (NULL != ff) {
+	printf
+	  ("Fit terminated prematurely in presence of break flagfile \"%s\"!\n",
+	   flagfile);
+	fclose(ff);
+	remove(flagfile);
+	break;
+      }
     }
 #ifdef EAM
 #ifndef NORESCALE
@@ -341,13 +346,16 @@ void powell_lsq(real *xi)
 #endif
 
     /*End fit if whole series didn't improve F */
-  } while ((F3 - F > PRECISION / 10.) || (F3 - F < 0));
+  } while (((F3 - F > PRECISION / 10.) || (F3 - F < 0)) && (F3 - F > d_eps));
   /* outer loop */
 
   if (fabs(F3 - F) < PRECISION && F3 != F)
     printf("Precision reached: %10g\n", F3 - F);
   else if (F3 == F)
     printf("Could not find any further improvements, aborting!\n");
+  else if ((fabs(F3 - F) > PRECISION && F3 != F && fabs(F3 - F) < d_eps))
+    printf("Last improvement was smaller than d_eps (%f), aborting!\n",
+	   d_eps);
   else
     printf("Precision not reached!\n");
 #ifdef APOT

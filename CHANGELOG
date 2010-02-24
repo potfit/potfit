@@ -1,6 +1,16 @@
-CVS-live
+CVS-20100224
++ add d_eps parameter as an error margin in powell_lsq, can be set in param file
+	via d_eps
++ write error report to a file (output_prefix.error)
+	grep for "RMS" for force, energy, stress rms-error and total error sum in one line
++ cleaned up header file potfit.h
++ flagfile will be deleted if fit is terminated
++ [APOT] the punishment for bad parameters is controlled via "apot_punish" in parameter file
+	default value is 0
+	This applies only to restrictions, not for parameters out of bounds !
+
+CVS-20100218
 + bump copyright years to 2010
-+ add force_weight to global options (works with pair and eam)
 + [APOT] add a few new analytic potential functions
 
 CVS-20100204
