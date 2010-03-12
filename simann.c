@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.48 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.49 $
+* $Date: 2010/03/12 07:22:00 $
 *****************************************************************/
 
 #include <math.h>
@@ -214,9 +214,12 @@ void anneal(real *xi)
 #endif
 	  F2 = (*calc_forces) (xi2, fxi1, 0);
 	  if (F2 <= F) {	/* accept new point */
-/*            for (n = 0; n < ndimtot; n++)*/
-/*            xi[n] = xi2[n];*/
+#ifdef APOT
 	    xi[idx[h]] = xi2[idx[h]];
+#else
+	    for (n = 0; n < ndimtot; n++)
+	      xi[n] = xi2[n];
+#endif
 	    F = F2;
 	    naccept[h]++;
 	    if (F2 < Fopt) {

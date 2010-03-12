@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.74 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.75 $
+* $Date: 2010/03/12 07:22:00 $
 *****************************************************************/
 
 #define MAIN
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
 #endif
   } else {			/* root thread does minimization */
     if (opt) {
-      printf("\nStarting optimization with %d parameters...\n", ndim);
+      printf("\nStarting optimization with %d parameters ...\n", ndim);
       fflush(stdout);
 #ifdef EVO
       diff_evo(opt_pot.table);
@@ -657,7 +657,8 @@ int main(int argc, char **argv)
 	      rms[2] / 160.2 * 1000);
 #endif
       fprintf(outfile, "\n");
-      fprintf(outfile, "\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
+      fprintf(outfile,
+	      "\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
       fprintf(outfile, "RMS:\t%f\t%f\t%f\t%f\n", rms[0] * 1000, rms[1] * 1000,
 	      rms[2] / 160.2 * 1000, tot);
 

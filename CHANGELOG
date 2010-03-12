@@ -1,3 +1,6 @@
+CVS-20100312
++ fix simann for tabulated potentials
+
 CVS-20100224
 + add d_eps parameter as an error margin in powell_lsq, can be set in param file
 	via d_eps

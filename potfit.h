@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.85 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.86 $
+* $Date: 2010/03/12 07:22:00 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -67,11 +67,13 @@
 ******************************************************************************/
 
 typedef double real;
+
 typedef struct {
   real  x;
   real  y;
   real  z;
 } vektor;
+
 typedef struct {
   real  xx;
   real  yy;
@@ -151,7 +153,7 @@ typedef struct {
 typedef void (*fvalue_pointer) (real, real *, real *);
 
 typedef struct {
-  // potentials
+//   potentials
   int   number;			/* number of analytic potentials */
   int  *idxpot;			/* indirect index for potentials */
   char **names;			/* name of analytic potentials */
@@ -159,7 +161,7 @@ typedef struct {
   real *end;			/* end position of potential = cutoff radius */
   int  *n_par;			/* number of parameters for analytic potential */
 
-  // parameters
+//   parameters
   int   total_par;		/* total number of parameters for all potentials */
   int  *idxparam;		/* indirect index for potential parameters */
   char ***param_name;		/* name of parameters */
@@ -167,7 +169,7 @@ typedef struct {
   real **values;		/* parameter values for analytic potentials */
   real **pmax;			/* maximum values for parameters */
 
-  // global parameters
+//   global parameters
   int   globals;		/* number of global parameters */
   int  *n_glob;			/* number of global parameter usage */
   int ***global_idx;		/* index of global parameters */
