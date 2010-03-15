@@ -26,8 +26,8 @@
 #   Boston, MA  02110-1301  USA
 #
 #/****************************************************************
-#* $Revision: 1.27 $
-#* $Date: 2010/02/18 15:01:14 $
+#* $Revision: 1.28 $
+#* $Date: 2010/03/15 15:18:19 $
 #*****************************************************************/
 
 wdir=`pwd`
@@ -40,7 +40,7 @@ saeng="0 0 0";
 mycat="cat";
 declare -a type_list;
 
-while getopts 'c:e:flrs:?h' OPTION
+while getopts 'c:e:flrs:w:?h' OPTION
 do
     case $OPTION in
 	c) c_string="$OPTARG";
@@ -55,6 +55,8 @@ do
 	    ;;
 	r) scan_recursive="1";
 	    ;;
+	w) weight="$OPTARG";
+	    ;;
 	?) printf "\nUsage: %s: [-c list] [-e file] [-f] [-l] [-r] [-s list] <OUTCAR files>\n" $(basename $0) >&2
             printf "\n <OUTCAR files> is an optional list of files, if not given" >&2
 	    printf "\n all files starting with OUTCAR will be scanned" >&2
@@ -67,6 +69,7 @@ do
 	    printf " -l\t\t\tlist all chemical species found in OUTCAR and exit\n" >&2
 	    printf " -r\t\t\tscan recursively for OUTCAR files\n" >&2
 	    printf " -s <list>\t\tcomma separated list of configurations to use\n" >&2
+	    printf " -w <weight>\t\tchange weight for all configurations to <weight>\n" >&2
 	    exit 2
 	    ;;
     esac
@@ -163,7 +166,7 @@ for file in $outcars; do
 		done
 	fi
 	name_array=$( printf "%s," "${name[@]}" )
-	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v saeng="$saeng" -v name="$name_array" -v c_string="$c_string" -v file="$file" -v recursive="$scan_recursive" '  BEGIN {
+	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v saeng="$saeng" -v name="$name_array" -v c_string="$c_string" -v file="$file" -v recursive="$scan_recursive" -v weight="$weight" '  BEGIN {
     OFMT="%11.7g"
 #Select confs to print
     count=0;
@@ -252,7 +255,7 @@ for file in $outcars; do
                    boxy_v[2]*scale,boxy_v[3]*scale;
        printf "#Z %13.8f %13.8f %13.8f\n",boxz_v[1]*scale,\
                    boxz_v[2]*scale,boxz_v[3]*scale;
-       printf("#W 1\n") ;
+       printf("#W %f\n",weight) ;
        printf("#E %.10f\n",energy) ;
        if ( 1 in stress )
          print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];
