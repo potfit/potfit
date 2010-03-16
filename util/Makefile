@@ -16,7 +16,7 @@ POTSCALEOBJ = $(POTSCALESRC:.c=.o)
 .c.o: ${POTSCALEHDR}
 	$(CC) $(CFLAGS) $(CINCLUDE) -c $<
 
-.PHONY: force2imd
+.PHONY: force2imd vasp2force list_config potfit_setup
 
 clean:
 	rm -f *.o *~
@@ -33,17 +33,17 @@ force2poscar: force2poscar.c
 potscale: ${POTSCALEOBJ} ${POTSCALEHDR}
 	${CC} ${CFLAGS} -o ${BINDIR}/$@ ${POTSCALEOBJ} -lm
 
-vasp2force: vasp2force.sh
-	cp vasp2force.sh ${HOME}/bin/share
+vasp2force:
+	cp vasp2force ${HOME}/bin/share
 
 force2imd:
 	cp force2imd ${HOME}/bin/share
 
-list_config: list_config.sh
-	cp list_config.sh ${HOME}/bin/share
+list_config:
+	cp list_config ${HOME}/bin/share
 
-potfit_setup: potfit_setup.sh
-	cp potfit_setup.sh ${HOME}/bin/share
+potfit_setup:
+	cp potfit_setup ${HOME}/bin/share
 
 awkscripts:
 	cd awk;	cp -pr ${AWKSCRIPTS} ${HOME}/bin/share;	cd -
