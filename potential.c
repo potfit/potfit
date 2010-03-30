@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.84 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.85 $
+* $Date: 2010/03/30 12:24:43 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -142,6 +142,10 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       if (size == 2 * ncols + 3 * ntypes) {
 	printf("Using MEAM potential from file %s\n", filename);
       }
+#elif defined ADP
+      if (size == 3 * ncols) {
+	printf("Using ADP potential from file %s\n", filename);
+      }
 #else
       if (size == ncols) {
 	printf("Using pair potential from file %s\n", filename);
@@ -156,6 +160,10 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	sprintf(msg,
 		"Wrong number of data columns in file %s,\n should be %d for MEAM, but are %d",
 		filename, 2 * ncols + 3 * ntypes, size);
+#elif defined ADP
+	sprintf(msg,
+		"Wrong number of data columns in file %s,\n should be %d for ADP, but are %d",
+		filename, 3 * ncols + 2 * ntypes, size);
 #else
 	sprintf(msg,
 		"Wrong number of data columns in file %s,\n should be %d (pair potentials), but are %d",
@@ -673,7 +681,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par += apt->n_par[i];
 
     /* read cutoff */
-    if (i < (ntypes * (ntypes + 1) / 2 + ntypes)) {
+#if defined EAM || defined ADP
+    if ((i < (ntypes * (ntypes + 1) / 2 + ntypes))
+	|| (i >= (ntypes * (ntypes + 1) / 2 + 2 * ntypes))) {
+#endif
       if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
 	printf("%s\n", buffer);
 	sprintf(msg,
@@ -687,6 +698,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		i, filename);
 	error(msg);
       }
+#if defined EAM || defined ADP
     } else {
       fgetpos(infile, &filepos);
       fscanf(infile, "%s", buffer);
@@ -698,6 +710,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif
       apt->end[i] = 2;
     }
+#endif
 
     /* set small begin to prevent division by zero-errors */
     apt->begin[i] = 0.0001;

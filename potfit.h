@@ -29,36 +29,47 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.86 $
-* $Date: 2010/03/12 07:22:00 $
+* $Revision: 1.87 $
+* $Date: 2010/03/30 12:24:43 $
 *****************************************************************/
+
+#define NRANSI
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-//#include "utils.h"
+
 #ifdef OMP
 #include <omp.h>
 #endif
+
 #ifdef MPI
 #include <mpi.h>
-#endif
-#ifdef MPI
 #define REAL MPI_DOUBLE
-#endif /* MPI */
-#define NRANSI
+#endif
+
 #ifndef MEAM
 #define MAXNEIGH 400
 #else
 #define MAXNEIGH 130
 #endif
-#if defined EAM || defined MEAM
+
+#if defined EAM || defined MEAM || defined ADP
 #define DUMMY_WEIGHT 100.
 #endif
+
 #define ENG_WEIGHT 100.
 #define STRESS_WEIGHT 10.
 #define FORCE_EPS .1
+
+#ifdef PAIR
+#define SLOTS 1
+#elif defined EAM || defined MEAM
+#define SLOTS 2
+#elif defined ADP
+#define SLOTS 4
+#endif
 
 /******************************************************************************
 *
@@ -72,7 +83,7 @@ typedef struct {
   real  x;
   real  y;
   real  z;
-} vektor;
+} vector;
 
 typedef struct {
   real  xx;
@@ -87,10 +98,11 @@ typedef struct {
   int   typ;
   int   nr;
   real  r;
-  vektor dist;
-  int   slot[2];
-  real  shift[2];
-  real  step[2];
+  vector dist;
+  vector sqrdist;
+  int   slot[SLOTS];
+  real  shift[SLOTS];
+  real  step[SLOTS];
 } neigh_t;
 
 #ifdef MEAM
@@ -101,8 +113,8 @@ typedef struct {
   int   nr3;
   real  r2;
   real  r3;
-  vektor dist_ij;
-  vektor dist_ik;
+  vector dist_ij;
+  vector dist_ik;
   real  cos;
   real  dcos_ij;		/* deriv on r_ij */
   real  dcos_ik;		/* deriv on r_ik */
@@ -118,12 +130,12 @@ typedef struct {
 typedef struct {
   int   typ;
   int   n_neigh;
-  vektor pos;
-  vektor force;
+  vector pos;
+  vector force;
   real  absforce;
   neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
-#if defined EAM || defined MEAM || defined ADP2
+#if defined EAM || defined MEAM || defined ADP
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
 #endif
@@ -269,8 +281,8 @@ EXTERN real *volumen INIT(NULL);	/* Volume of cell */
 EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
 EXTERN stens *conf_stress INIT(NULL);
 EXTERN stens *stress INIT(NULL);	/* Stresses in each config */
-EXTERN vektor box_x, box_y, box_z;
-EXTERN vektor tbox_x, tbox_y, tbox_z;
+EXTERN vector box_x, box_y, box_z;
+EXTERN vector tbox_x, tbox_y, tbox_z;
 
 // potential variables
 EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
@@ -320,7 +332,7 @@ EXTERN real *rms INIT(NULL);
 // pointers for force-vector
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM || defined MEAM || defined ADP2
+#if defined EAM || defined MEAM || defined ADP
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.5 $
+* $Date: 2010/03/30 12:24:43 $
 *****************************************************************/
 
 #ifdef PAIR
@@ -150,7 +150,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* MPI */
 
     /* init second derivatives for splines */
-    for (col1 = 0; col1 < paircol; col1++) {	/* just pair potentials */
+    for (col1 = 0; col1 < paircol; col1++) {
       first = calc_pot.first[col1];
       if (format == 3 || format == 0)
 	spline_ed(calc_pot.step[col1], xi + first,
@@ -174,7 +174,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
        also OMP-parallelized region */
     {
       int   self;
-      vektor tmp_force;
+      vector tmp_force;
       int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
       real  fnval, grad;
       atom_t *atom;
@@ -331,7 +331,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += SQR(conf_weight[h] * forces[stress_p + 6 * h + i]);
+	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */

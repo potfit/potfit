@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.9 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.10 $
+* $Date: 2010/03/30 12:24:42 $
 *****************************************************************/
 
 #if defined EVO
@@ -47,7 +47,7 @@
 #endif
 
 /* parameters for the differential evolution algorithm */
-#define NP 15*D			// number of total population
+#define NP 25*D			// number of total population
 #define CR 0.5			// crossover constant, in [0,1]
 #define F 0.2			// coupling constant with others, in [0,1]
 

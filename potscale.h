@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.8 $
+* $Date: 2010/03/30 12:24:43 $
 *****************************************************************/
 
 #include <stdlib.h>
@@ -49,7 +49,7 @@ typedef struct {
   real  x;
   real  y;
   real  z;
-} vektor;
+} vector;
 
 typedef struct {
   real *begin;			/* first value in the table */

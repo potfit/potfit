@@ -29,17 +29,17 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.68 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.69 $
+* $Date: 2010/03/30 12:24:42 $
 *****************************************************************/
 
 #include "potfit.h"
 #include "utils.h"
 
 /* vector product */
-vektor vec_prod(vektor u, vektor v)
+vector vec_prod(vector u, vector v)
 {
-  vektor w;
+  vector w;
   w.x = u.y * v.z - u.z * v.y;
   w.y = u.z * v.x - u.x * v.z;
   w.z = u.x * v.y - u.y * v.x;
@@ -106,14 +106,14 @@ void read_config(char *filename)
   char *res, *ptr;
   atom_t *atom;
   stens *stresses;
-  vektor d, dd, iheight;
+  vector d, dd, iheight;
   real  r, rr, istep, shift, step;
 #ifdef MEAM
   int   slot_ij, slot_ik, ijk;
   int   n_j, n_k, nnn;
   real  rjk, rij, rik, ccos, dccos, dc_ij, dc_ik, shift_ij, shift_ik, step_ij,
     step_ik;
-  vektor rrjk;
+  vector rrjk;
 //  FILE        *ang;
 #endif
 
@@ -425,6 +425,9 @@ void read_config(char *filename)
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
+		atoms[i].neigh[k].sqrdist.x = dd.x * dd.x;
+		atoms[i].neigh[k].sqrdist.y = dd.y * dd.y;
+		atoms[i].neigh[k].sqrdist.z = dd.z * dd.z;
 		atoms[i].n_neigh++;
 		/* Minimal distance check */
 /* 		if (mindist[ntypes*typ1+typ2]>r) */
@@ -499,7 +502,7 @@ void read_config(char *filename)
 #if defined EAM || defined MEAM
 		  /* EAM-MEAM part */
 		  col = paircol + typ2;
-		  if (format == 3) {
+		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
@@ -666,6 +669,7 @@ void read_config(char *filename)
       }
     }
 #endif /* MEAM */
+
 /* increment natoms and configuration number */
     natoms += count;
     nconf++;
@@ -813,12 +817,19 @@ void read_config(char *filename)
       calc_pot.begin[k] = mindist[k] * 0.95;
       min = MIN(min, mindist[k]);
     }
-#ifdef EAM
+#if defined EAM || defined ADP
   for (i = 0; i < ntypes; i++) {
     j = i + ntypes * (ntypes + 1) / 2;
     apot_table.begin[j] = min * 0.95;
     opt_pot.begin[j] = min * 0.95;
     calc_pot.begin[j] = min * 0.95;
+  }
+#endif
+#if defined ADP
+  for (i = calc_pot.ncols - 1; i > calc_pot.ncols - 2 * paircol - 1; i--) {
+    apot_table.begin[i] = min * 0.95;
+    opt_pot.begin[i] = min * 0.95;
+    calc_pot.begin[i] = min * 0.95;
   }
 #endif
   for (i = 0; i < calc_pot.ncols; i++) {
@@ -919,6 +930,7 @@ void new_slots(int a1, int force_update)
 	if (force_update || smooth_pot[col]) {
 	  r = atom->neigh[j].r;
 	  if (r < calc_pot.end[col]) {
+	    /* update slots for pair potential part, slot 0 */
 	    rr = r - calc_pot.begin[col];
 	    atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
 	    atom->neigh[j].step[0] = calc_pot.step[col];
@@ -926,8 +938,9 @@ void new_slots(int a1, int force_update)
 	      (rr -
 	       atom->neigh[j].slot[0] * calc_pot.step[col]) *
 	      calc_pot.invstep[col];
-#ifdef EAM
+#if defined EAM || defined ADP
 	    col2 = paircol + typ2;
+	    /* update slots for eam transfer functions, slot 1 */
 	    rr = r - calc_pot.begin[col2];
 	    atom->neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
 	    atom->neigh[j].step[1] = calc_pot.step[col2];
@@ -936,6 +949,28 @@ void new_slots(int a1, int force_update)
 	       atom->neigh[j].slot[1] * calc_pot.step[col2]) *
 	      calc_pot.invstep[col2];
 	    atom->neigh[j].slot[1] += calc_pot.first[col2];
+#endif
+#if defined ADP
+	    col2 = apot_table.number - 2 * paircol + typ2;
+	    /* update slots for adp dipole functions, slot 2 */
+	    rr = r - calc_pot.begin[col2];
+	    atom->neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col2]);
+	    atom->neigh[j].step[2] = calc_pot.step[col2];
+	    atom->neigh[j].shift[2] =
+	      (rr -
+	       atom->neigh[j].slot[2] * calc_pot.step[col2]) *
+	      calc_pot.invstep[col2];
+	    atom->neigh[j].slot[2] += calc_pot.first[col2];
+	    col2 += paircol;
+	    /* update slots for adp quadrupole functions, slot 3 */
+	    rr = r - calc_pot.begin[col2];
+	    atom->neigh[j].slot[3] = (int)(rr * calc_pot.invstep[col2]);
+	    atom->neigh[j].step[3] = calc_pot.step[col2];
+	    atom->neigh[j].shift[3] =
+	      (rr -
+	       atom->neigh[j].slot[3] * calc_pot.step[col2]) *
+	      calc_pot.invstep[col2];
+	    atom->neigh[j].slot[3] += calc_pot.first[col2];
 #endif
 	    atom->neigh[j].slot[0] += calc_pot.first[col];
 	    atom->neigh[j].step[0] = calc_pot.step[col];

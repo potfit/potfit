@@ -31,8 +31,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.4 $
-* $Date: 2010/03/12 07:22:00 $
+* $Revision: 1.5 $
+* $Date: 2010/03/30 12:24:43 $
 *****************************************************************/
 
 #ifdef MEAM
@@ -239,7 +239,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
       int   col2;
       real  grad2, r, eamforce;
       int   self;
-      vektor tmp_force;
+      vector tmp_force;
       int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
       real  fnval, grad;
       atom_t *atom;

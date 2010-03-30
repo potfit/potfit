@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.55 $
-# $Date: 2010/02/24 06:55:40 $
+# $Revision: 1.56 $
+# $Date: 2010/03/30 12:24:42 $
 #
 ############################################################################
 #
@@ -688,11 +688,7 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += ADP does not support tabulated potentials (yet)
   endif
-  ifneq (,$(strip $(findstring adp2,${MAKETARGET})))
-    CFLAGS  += -DADP -DAPD2
-  else
-    CFLAGS  += -DADP
-  endif
+  CFLAGS  += -DADP
 INTERACTION = 1
 endif
 
