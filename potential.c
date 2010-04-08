@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.85 $
-* $Date: 2010/03/30 12:24:43 $
+* $Revision: 1.86 $
+* $Date: 2010/04/08 07:36:37 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -2368,7 +2368,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     fprintf(outfile, "# rmin %f\n", apt->begin[i]);
     for (j = 0; j < apt->n_par[i]; j++) {
       if (apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] != '!') {
-	fprintf(outfile, "%s %.10f %f %f\n", apt->param_name[i][j],
+	fprintf(outfile, "%s %.10f %.2f %.2f\n", apt->param_name[i][j],
 		apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
       } else {
 	fprintf(outfile, "%s\n", apt->param_name[i][j]);

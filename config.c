@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.69 $
-* $Date: 2010/03/30 12:24:42 $
+* $Revision: 1.70 $
+* $Date: 2010/04/08 07:36:37 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -104,6 +104,7 @@ void read_config(char *filename)
   fpos_t filepos;
   char  msg[255], buffer[1024];
   char *res, *ptr;
+  char *tmp, *res_tmp;
   atom_t *atom;
   stens *stresses;
   vector d, dd, iheight;
@@ -254,45 +255,83 @@ void read_config(char *filename)
 	  if (sscanf(res + 3, "%lf\n", &(conf_weight[nconf])) != 1)
 	    error("Error in configuration weight\n");
 	} else if (res[1] == 'C') {
-	  str_len = strlen(res + 3);
 	  fgetpos(infile, &filepos);
 	  if (!have_elements) {
-	    i = -1;
-	    do {
-	      i++;
-	      if ((3 * (i + 1) <= str_len) && ((res + 3 * (i + 1)) != NULL))
-		sscanf(res + 3 * (i + 1), "%2s", elements[i]);
-	    } while (elements[i][0] != '#' && i < (ntypes - 1));
+	    i = 0;
+	    for (j = 0; j < ntypes; j++) {
+	      res_tmp = res + 3 + i;
+	      if (strchr(res_tmp, ' ') != NULL && strlen(res_tmp) > 0) {
+		tmp = strchr(res_tmp, ' ');
+		str_len = tmp - res_tmp + 1;
+		strncpy(elements[j], res_tmp, str_len - 1);
+		elements[j][str_len - 1] = '\0';
+		i += str_len;
+	      } else if (strlen(res_tmp) > 1) {
+		if ((ptr = strchr(res_tmp, '\n')) != NULL)
+		  *ptr = '\0';
+		strcpy(elements[j], res_tmp);
+		i += strlen(res_tmp);
+	      } else
+		break;
+	    }
 	    have_elements = 1;
 	  } else {
-	    i = -1;
-	    do {
-	      i++;
-	      if ((3 * (i + 1) <= str_len) && ((res + 3 * (i + 1)) != NULL))
-		sscanf(res + 3 * (i + 1), "%s", msg);
-	      if (strlen(res + 3 * (i + 1)) == 0)
-		break;
-	      if (strcmp(msg, elements[i]) != 0) {
-		if (atoi(elements[i]) == i && atoi(elements[i]) != 0) {
-		  strcpy(elements[i], msg);
-		} else {
-		  fprintf(stderr,
-			  " --> Warning <--\nFound element mismatch in configuration file!\n");
-		  if ((ptr = strchr(msg, '\n')) != NULL)
-		    *ptr = '\0';
-		  fprintf(stderr, "Mismatch found in configuration %d.\n",
-			  nconf);
-		  strncpy(msg, res + 3 * (i + 1), 2);
-		  msg[2] = '\0';
-		  fprintf(stderr,
-			  "Expected element >> %s << but found element >> %s <<.\n",
-			  elements[i], msg);
-		  fprintf(stderr,
-			  "You can use list_config to identify that configuration.\n\n");
-		  error("Please check your configuration files!");
+	    i = 0;
+	    for (j = 0; j < ntypes; j++) {
+	      res_tmp = res + 3 + i;
+	      if (strchr(res_tmp, ' ') != NULL && strlen(res_tmp) > 0) {
+		/* more than one element left */
+		tmp = strchr(res_tmp, ' ');
+		str_len = tmp - res_tmp + 1;
+		strncpy(msg, res_tmp, str_len - 1);
+		msg[str_len - 1] = '\0';
+		i += str_len;
+		if (strcmp(msg, elements[j]) != 0) {
+		  if (atoi(elements[j]) == j && j != 0) {
+		    strcpy(elements[j], msg);
+		  } else {
+		    fprintf(stderr,
+			    " --> Warning <--\nFound element mismatch in configuration file!\n");
+		    /* Fix newline at the end of a string */
+		    if ((ptr = strchr(msg, '\n')) != NULL)
+		      *ptr = '\0';
+		    fprintf(stderr, "Mismatch found in configuration %d.\n",
+			    nconf);
+		    fprintf(stderr,
+			    "Expected element >> %s << but found element >> %s <<.\n",
+			    elements[j], msg);
+		    fprintf(stderr,
+			    "You can use list_config to identify that configuration.\n\n");
+		    error("Please check your configuration files!");
+		  }
 		}
-	      }
-	    } while (elements[i][0] != '#' && i < (ntypes - 1));
+	      } else if (strlen(res_tmp) > 1) {
+		strcpy(msg, res_tmp);
+		if ((ptr = strchr(msg, '\n')) != NULL)
+		  *ptr = '\0';
+		i += strlen(msg);
+		if (strcmp(msg, elements[j]) != 0) {
+		  if (atoi(elements[j]) == j) {
+		    strcpy(elements[j], msg);
+		  } else {
+		    fprintf(stderr,
+			    " --> Warning <--\nFound element mismatch in configuration file!\n");
+		    /* Fix newline at the end of a string */
+		    if ((ptr = strchr(msg, '\n')) != NULL)
+		      *ptr = '\0';
+		    fprintf(stderr, "Mismatch found in configuration %d.\n",
+			    nconf);
+		    fprintf(stderr,
+			    "Expected element >> %s << but found element >> %s <<.\n",
+			    elements[j], msg);
+		    fprintf(stderr,
+			    "You can use list_config to identify that configuration.\n\n");
+		    error("Please check your configuration files!");
+		  }
+		}
+	      } else
+		break;
+	    }
 	  }
 	  fsetpos(infile, &filepos);
 	}
@@ -365,7 +404,7 @@ void read_config(char *filename)
     cell_scale[2] = (int)ceil(rcutmax * iheight.z);
 
 #ifdef DEBUG
-    fprintf(stderr, "Checking cell size for configuration %d:\n", nconf + 1);
+    fprintf(stderr, "Checking cell size for configuration %d:\n", nconf);
     fprintf(stderr, "Box dimensions:\n");
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_x.x, box_x.y, box_x.z);
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_y.x, box_y.y, box_y.z);
