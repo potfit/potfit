@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2010/03/30 12:24:43 $
+* $Revision: 1.6 $
+* $Date: 2010/04/14 10:14:16 $
 *****************************************************************/
 
 #ifdef PAIR
@@ -156,7 +156,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	spline_ed(calc_pot.step[col1], xi + first,
 		  calc_pot.last[col1] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-      else			/* format == 4 ! */
+      else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
 		  calc_pot.last[col1] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
@@ -194,7 +194,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  forces[stress_p + 6 * h + i] = 0.;
 
 #ifdef APOT
-	if (!disable_cp)
+	if (enable_cp)
 	  forces[energy_p + h] +=
 	    chemical_potential(ntypes, na_typ[h], xi_opt + cp_start);
 #endif
@@ -253,6 +253,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
+			printf("I AM SELF!\n");
 		  fnval *= 0.5;
 		  grad *= 0.5;
 		}

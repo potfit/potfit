@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.87 $
-* $Date: 2010/03/30 12:24:43 $
+* $Revision: 1.88 $
+* $Date: 2010/04/14 10:14:17 $
 *****************************************************************/
 
 #define NRANSI
@@ -250,7 +250,7 @@ EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
 EXTERN real sweight INIT(STRESS_WEIGHT);
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
-EXTERN int disable_cp INIT(0);	/* switch chemical potential on/off */
+EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
 EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 #endif
 #ifdef EVO
@@ -285,6 +285,7 @@ EXTERN vector box_x, box_y, box_z;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 // potential variables
+EXTERN char interaction[10] INIT("\0");
 EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int *invar_pot INIT(NULL);
 EXTERN int format;		/* format of potential table */
@@ -320,7 +321,7 @@ EXTERN int mdim INIT(0);
 EXTERN int ndim INIT(0);
 EXTERN int ndimtot INIT(0);
 EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
-EXTERN real d_eps INIT(0.);
+EXTERN real d_eps INIT(0);
 
 // general variables
 EXTERN int firstatom INIT(0);

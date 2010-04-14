@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.76 $
-* $Date: 2010/03/30 12:24:43 $
+* $Revision: 1.77 $
+* $Date: 2010/04/14 10:14:17 $
 *****************************************************************/
 
 #define MAIN
@@ -90,12 +90,16 @@ int main(int argc, char **argv)
   /* assign correct force routine */
 #ifdef PAIR
   calc_forces = calc_forces_pair;
+  strcpy(interaction, "PAIR");
 #elif defined EAM
   calc_forces = calc_forces_eam;
+  strcpy(interaction, "EAM");
 #elif defined MEAM
   calc_forces = calc_forces_meam;
+  strcpy(interaction, "MEAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
+  strcpy(interaction, "ADP");
 #endif
 
   /* read the parameters and the potential file */

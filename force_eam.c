@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.5 $
-* $Date: 2010/03/30 12:24:42 $
+* $Revision: 1.6 $
+* $Date: 2010/04/14 10:14:16 $
 *****************************************************************/
 
 #ifdef EAM
@@ -153,19 +153,9 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #endif /* MPI */
 
     /* init second derivatives for splines */
-    for (col1 = 0; col1 < paircol; col1++) {	/* just pair potentials */
-      first = calc_pot.first[col1];
-      if (format == 3 || format == 0)
-	spline_ed(calc_pot.step[col1], xi + first,
-		  calc_pot.last[col1] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-      else			/* format == 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col1] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-    }
 
-    for (col1 = paircol; col1 < paircol + ntypes; col1++) {	/* rho */
+    /* just pair potentials */
+    for (col1 = 0; col1 < paircol; col1++) {
       first = calc_pot.first[col1];
       if (format == 3 || format == 0)
 	spline_ed(calc_pot.step[col1], xi + first,
@@ -176,10 +166,24 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		  calc_pot.last[col1] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
+
+    /* rho */
+    for (col1 = paircol; col1 < paircol + ntypes; col1++) {
+      first = calc_pot.first[col1];
+      if (format == 3 || format == 0)
+	spline_ed(calc_pot.step[col1], xi + first,
+		  calc_pot.last[col1] - first + 1,
+		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+      else			/* format >= 4 ! */
+	spline_ne(calc_pot.xcoord + first, xi + first,
+		  calc_pot.last[col1] - first + 1,
+		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+    }
+
+    /* F */
 #ifndef PARABEL
-/* if we have parabolic interpolation, we don't need that */
+    /* if we have parabolic interpolation, we don't need that */
     for (col1 = paircol + ntypes; col1 < paircol + 2 * ntypes; col1++) {
-      /* F */
       first = calc_pot.first[col1];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
@@ -195,7 +199,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		  *(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
 		  calc_pot.d2tab + first);	/* XXX */
-      else			/* format == 4 ! */
+      else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
 		  calc_pot.last[col1] - first + 1,
 #ifdef WZERO

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.86 $
-* $Date: 2010/04/08 07:36:37 $
+* $Revision: 1.87 $
+* $Date: 2010/04/14 10:14:17 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -85,6 +85,18 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     if (buffer[1] == 'E') {
       end_header = 1;
     }
+    if (buffer[1] == 'T') {
+      if ((str = strchr(buffer + 3, '\n')) != NULL)
+	*str = '\0';
+      if (strcmp(buffer + 3, interaction) != 0) {
+	fprintf(stderr, "\nWrong potential type!\n");
+	fprintf(stderr, "This binary only supports %s-potentials.\n",
+		interaction);
+	fprintf(stderr, "Your potential file contains a %s-potential.\n",
+		buffer + 3);
+	error("Aborting ...");
+      }
+    }
     /* invariant potentials */
     else if (buffer[1] == 'I') {
       if (have_format) {
@@ -92,8 +104,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	for (i = 0; i < size; i++) {
 	  str = strtok(((i == 0) ? buffer + 2 : NULL), " \t\r\n");
 	  if (str == NULL) {
-	    sprintf(msg, "Not enough items in #I header line.");
-	    error(msg);
+	    error("Not enough items in #I header line.");
 	  } else
 	    ((int *)invar_pot)[i] = atoi(str);
 	}
@@ -136,38 +147,26 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       /* right number of columns? */
 #ifdef EAM
       if (size == ncols + 2 * ntypes) {
-	printf("Using EAM potential from file %s\n", filename);
-      }
 #elif defined MEAM
       if (size == 2 * ncols + 3 * ntypes) {
-	printf("Using MEAM potential from file %s\n", filename);
-      }
 #elif defined ADP
-      if (size == 3 * ncols) {
-	printf("Using ADP potential from file %s\n", filename);
-      }
+      if (size == 3 * ncols + 2 * ntypes) {
 #else
       if (size == ncols) {
-	printf("Using pair potential from file %s\n", filename);
-      }
 #endif
-      else {
+	printf("Using %s potential from file %s\n", interaction, filename);
+      } else {
+	fprintf(stderr, "\n");
+	sprintf(msg,
+		"Wrong number of data columns in file %s,\n should be %d for %s, but are %d.",
 #ifdef EAM
-	sprintf(msg,
-		"Wrong number of data columns in file %s,\n should be %d for EAM, but are %d",
-		filename, ncols + 2 * ntypes, size);
+		filename, ncols + 2 * ntypes, interaction, size);
 #elif defined MEAM
-	sprintf(msg,
-		"Wrong number of data columns in file %s,\n should be %d for MEAM, but are %d",
-		filename, 2 * ncols + 3 * ntypes, size);
+		filename, 2 * ncols + 3 * ntypes, interaction, size);
 #elif defined ADP
-	sprintf(msg,
-		"Wrong number of data columns in file %s,\n should be %d for ADP, but are %d",
-		filename, 3 * ncols + 2 * ntypes, size);
+		filename, 3 * ncols + 2 * ntypes, interaction, size);
 #else
-	sprintf(msg,
-		"Wrong number of data columns in file %s,\n should be %d (pair potentials), but are %d",
-		filename, ncols, size);
+		filename, ncols, interaction, size);
 #endif
 	error(msg);
       }
@@ -230,7 +229,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   apt->param_name = (char ***)malloc(size * sizeof(char **));
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
 #ifdef PAIR
-  if (!disable_cp) {
+  if (enable_cp) {
     apt->values = (real **)malloc((size + 1) * sizeof(real *));
     apt->values[size] = (real *)malloc(ntypes * sizeof(real));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
@@ -401,7 +400,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   reg_for_free(pt->first, "pt->first");
   reg_for_free(pt->last, "pt->last");
 #if defined PAIR && defined APOT
-  if (!disable_cp) {
+  if (enable_cp) {
     reg_for_free(apt->chempot, "apt->chempot");
     reg_for_free(apt->pmin[size], "apt->pmin[size]");
     reg_for_free(apt->pmax[size], "apt->pmax[size}");
@@ -439,7 +438,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #ifdef PAIR
   /* read cp */
   fgetpos(infile, &filepos);
-  if (!disable_cp) {
+  if (enable_cp) {
     for (i = 0; i < ntypes; i++) {
       if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
 		     &apt->pmin[apt->number][i],
@@ -461,8 +460,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	error(msg);
       }
     }
+    printf("Enabled chemical potentials.\n");
     fgetpos(infile, &filepos);
 
+#ifdef CN
+    /* disable composition nodes for now */
     /* read composition nodes */
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
       if (strcmp("type", buffer) == 0)
@@ -528,6 +530,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	 compnodes);
     if (compnodes == -1)
       compnodes = 0;
+#endif
   }
   fsetpos(infile, &filepos);
 #endif
@@ -552,7 +555,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     j = apt->globals;
     global_pot = apt->number;
 #ifdef PAIR
-    if (!disable_cp)
+    if (enable_cp)
       global_pot = apt->number + 1;
 #endif
 
@@ -760,9 +763,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
        * the array.
        */
       apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
-      reg_for_free(apt->param_name[i][j], "apt->param_name[i][j]");
       if (NULL == apt->param_name[i][j])
 	error("Error in allocating memory for parameter name");
+      reg_for_free(apt->param_name[i][j], "apt->param_name[i][j]");
       strcpy(apt->param_name[i][j], "\0");
       fgetpos(infile, &filepos);
       ret_val =
@@ -804,7 +807,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	apt->invar_par[i][j] = 1;
 	apt->invar_par[i][apt->n_par[i]]++;
       } else {
-	/* this is not a global parameter */
+	/* this is no global parameter */
 	if (4 > ret_val) {
 	  if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
 	    if (strcmp(apt->param_name[i][j], "type") == 0 || feof(infile)) {
@@ -880,7 +883,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     error(msg);
   }
 #ifdef PAIR
-  if (!disable_cp) {
+  if (enable_cp) {
     cp_start = apt->total_par - apt->globals + ntypes * (ntypes + 1);
     apt->total_par += (ntypes + compnodes);
   }
@@ -903,7 +906,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     pt->len += apt->globals;
 
 #ifdef PAIR
-  if (!disable_cp) {
+  if (enable_cp) {
     pt->len += (ntypes + compnodes);
   }
 #endif
@@ -963,7 +966,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   global_idx = pt->last[apt->number - 1] + 1;
 
 #ifdef PAIR
-  if (!disable_cp) {
+  if (enable_cp) {
     init_chemical_potential(ntypes);
     i = apt->number;
     for (j = 0; j < (ntypes + compnodes); j++) {
@@ -2309,6 +2312,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
 
   /* write header */
   fprintf(outfile, "#F 0 %d", apt->number);
+  fprintf(outfile, "\n#T %s", interaction);
   if (have_elements) {
     fprintf(outfile, "\n#C");
     for (i = 0; i < ntypes; i++)
@@ -2317,13 +2321,21 @@ void write_apot_table(apot_table_t *apt, char *filename)
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
-#ifdef EAM
+#if defined EAM || defined ADP
     /* transfer functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
+#endif
+#ifdef ADP
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
 #endif
   }
   if (have_invar) {
@@ -2334,7 +2346,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
   fprintf(outfile, "\n#E\n\n");
 
 #ifdef PAIR
-  if (!disable_cp) {
+  if (enable_cp) {
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, "cp_%s %f %f %f\n", elements[i], apt->chempot[i],
 	      apt->pmin[apt->number][i], apt->pmax[apt->number][i]);

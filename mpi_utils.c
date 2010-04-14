@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.30 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.31 $
+* $Date: 2010/04/14 10:14:17 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -230,14 +230,14 @@ void broadcast_params()
 
 #ifdef APOT
   MPI_Bcast(&do_smooth, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&disable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&enable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&apot_table.number, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (myid > 0) {
     pot_list_length = (int *)malloc(apot_table.number * sizeof(int));
   }
   MPI_Bcast(pot_list_length, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
-  if (!disable_cp) {
+  if (enable_cp) {
     if (myid > 0) {
       na_typ = (int **)malloc((nconf + 1) * sizeof(int *));
       for (i = 0; i < (nconf + 1); i++)

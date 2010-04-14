@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /**************************************************************************
-*  $Revision: 1.36 $
-*  $Date: 2010/02/24 06:55:40 $
+*  $Revision: 1.37 $
+*  $Date: 2010/04/14 10:14:17 $
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -236,8 +236,8 @@ void read_paramfile(FILE *pf)
     }
 #ifndef EAM
     /* exclude chemical potential from energy calculations */
-    else if (strcasecmp(token, "disable_cp") == 0) {
-      getparam("disable_cp", &disable_cp, PARAM_INT, 1, 1);
+    else if (strcasecmp(token, "enable_cp") == 0) {
+      getparam("enable_cp", &enable_cp, PARAM_INT, 1, 1);
     }
 #endif
 #endif

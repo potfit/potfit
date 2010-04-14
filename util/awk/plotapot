@@ -6,7 +6,7 @@
 #
 ####################################################################
 #
-#   Copyright 2008-2009 Daniel Schopf
+#   Copyright 2008-2010 Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
@@ -31,8 +31,8 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.20 $
-# $Date: 2010/02/24 07:38:54 $
+# $Revision: 1.21 $
+# $Date: 2010/04/14 10:14:51 $
 ####################################################################
 #
 # Usage: plotpot pot_file_1 pot_file_2 ... pair_file
@@ -136,13 +136,7 @@ BEGIN {
 	count=0;
 	mindist=10;
 	maxdist=0;
-	#ORS="";
-	eam = 0;
 	for (i=0;i<ARGC;i++) {
-		if (ARGV[i]=="-eam") {
-			eam = 1;
-			ARGV[i]="";
-		}
 		if (ARGV[i]=="-s") {
 			simple = 1;
 			ARGV[i]="";
@@ -164,10 +158,14 @@ BEGIN {
 		}
 		total_pots=$3;
 		if (int(total_pots)!=total_pots) {
-			print "ERROR - incorrect potential file " ARGV[ARGIND]  "\n" ;
+			print "Error - incorrect potential file " ARGV[ARGIND]  "\n" ;
 			exit 2;
 		}
 		getline;
+		if (substr($0,2,1)=="T") {
+			pot_type = $2;
+			getline;
+		}
 		if (substr($0,2,1)=="C") {
 			title=$0;
 			sub("#C ","",title);
@@ -228,24 +226,16 @@ BEGIN {
 }
 
 END {
-	pair_count = count;
-	if (eam && count == 3) {
-		count = count - 1;
-		eam_count = 1;
-		pair_count = 1;
-	}
-	if (count == 7) {
-		count = count - 2;
-		eam_count = 2;
-		pair_count = 3;
-	}
-	if (count == 12) {
-		count = count - 3;
-		eam_count = 3;
-		pair_count = 6;
-	}
 	if (mindist == 10)
 		mindist = 2;
+	if (pot_type == "PAIR") {
+		pair_count = count;
+	}
+	if (pot_type == "EAM") {
+		ntypes = -2.5 + sqrt(25/4+2*count); 
+		pair_count = ntypes * (ntypes + 1) / 2;
+	}
+
 	if (count != 0) {
 		printf "reset;\n" > "plot";
 		if (simple)
@@ -254,16 +244,22 @@ END {
 		printf "set grid;\n" > "plot";
 		printf "set xrange [" 0.5*mindist ":" maxdist*1.01 "];\n" > "plot";
 		printf "set yrange [-.3:.5];\n" > "plot";
-		for (i=0;i<count;i++) {
+		for (i=0;i<pair_count;i++) {
 			write_pot(i,pot_name[i],params,"plot");
 		if (!simple) {
-			if (i<pair_count)
 				printf " ls 1 lc "i > "plot";
-			else
-				printf " ls 2 lc "(i-pair_count) > "plot";
 		}
-			if (i!=(count-1))
+			if (i!=(pair_count-1) || pot_type == "EAM")
 				printf ", " > "plot";
+		}
+		if (pot_type == "EAM") {
+		for (i=pair_count;i<(pair_count+ntypes);i++) {
+			write_pot(i,pot_name[i],params,"plot");
+			printf " ls 2 lc "(i-pair_count) > "plot";
+			if (i!=(pair_count+ntypes-1))
+				printf ", " > "plot";
+
+			}
 		}
 		if (dist_file != "") {
 			printf ", " > "plot";
@@ -281,7 +277,7 @@ END {
 			}
 		}
 	}
-	if (eam_count > 0) {
+	if (pot_type == "EAM") {
 		printf "reset;\n" > "plot_eam";
 		if (simple)
 			printf "set term x11;\n" > "plot_eam";
@@ -289,12 +285,12 @@ END {
 		printf "set grid;\n" > "plot_eam";
 		printf "set xrange [0:2]\n" > "plot_eam";
 		printf "pl " > "plot_eam";
-		for (i=count;i<(count+eam_count);i++) {
+		for (i=pair_count+ntypes;i<(pair_count+2*ntypes);i++) {
 			write_pot(i,pot_name[i],params,"plot_eam");
 			if (!simple) {
-			printf " ls 1 lc "(i-count) > "plot_eam";
+			printf " ls 1 lc "(i-pair_count-ntypes) > "plot_eam";
 			}
-			if (i!=(count+eam_count-1))
+			if (i!=(pair_count+2*ntypes-1))
 				printf ", " > "plot_eam";
 		}
 		printf ";" > "plot_eam";

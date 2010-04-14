@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.70 $
-* $Date: 2010/04/08 07:36:37 $
+* $Revision: 1.71 $
+* $Date: 2010/04/14 10:14:16 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -100,6 +100,7 @@ void read_config(char *filename)
   int   sh_dist = 0;		/* short distance flag */
   int   cell_scale[3];
   int   str_len;
+  int   max_type = 0;
   FILE *infile;
   fpos_t filepos;
   char  msg[255], buffer[1024];
@@ -387,6 +388,7 @@ void read_config(char *filename)
 //      printf("Atom %d, x %f, y %f, z %f, abs %f\n", natoms+i, atom->force.x, atom->force.y, atom->force.z, atom->absforce);
       atom->conf = nconf;
       na_typ[nconf][atom->typ] += 1;
+      max_type = MAX(max_type, atom->typ);
     }
     /* check cell size */
     /* inverse height in direction */
@@ -716,6 +718,13 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
+  if ((max_type + 1) < ntypes) {
+    fprintf(stderr,
+	    "There are less than %d atom types in your configurations!\n",
+	    ntypes);
+    error("Please adjust \"ntypes\" in your parameter file.");
+  }
+
   reg_for_free(atoms, "atoms");
   reg_for_free(coheng, "coheng");
   reg_for_free(volumen, "volumen");
@@ -897,6 +906,7 @@ void read_config(char *filename)
     }
     printf("\n");
   }
+  printf("\n");
 
   free(mindist);
 
