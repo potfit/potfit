@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.77 $
-* $Date: 2010/04/14 10:14:17 $
+* $Revision: 1.78 $
+* $Date: 2010/04/14 14:59:23 $
 *****************************************************************/
 
 #define MAIN
@@ -100,6 +100,9 @@ int main(int argc, char **argv)
 #elif defined ADP
   calc_forces = calc_forces_adp;
   strcpy(interaction, "ADP");
+#elif defined DIPOLE
+  calc_forces = calc_forces_dipole;
+  strcpy(interaction, "DIPOLE");
 #endif
 
   /* read the parameters and the potential file */
