@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.88 $
-* $Date: 2010/04/14 10:14:17 $
+* $Revision: 1.89 $
+* $Date: 2010/04/14 15:00:08 $
 *****************************************************************/
 
 #define NRANSI
@@ -63,7 +63,11 @@
 #define STRESS_WEIGHT 10.
 #define FORCE_EPS .1
 
-#ifdef PAIR
+#ifdef DIPOLE
+#define EW_KAPPA .1
+#endif 
+
+#if defined PAIR || defined DIPOLE
 #define SLOTS 1
 #elif defined EAM || defined MEAM
 #define SLOTS 2
@@ -362,6 +366,12 @@ EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 
+// variables needed for wolf summation
+#ifdef DIPOLE
+EXTERN real ew_kappa INIT(EW_KAPPA);  /* parameter kappa */
+EXTERN real ew_eps INIT(14.40);       /* this is e^2/(4*pi*epsilon_0) in eV A */
+#endif
+
 /******************************************************************************
 *
 *  global function pointers
@@ -428,6 +438,8 @@ real  calc_forces_eam(real *, real *, int);
 real  calc_forces_meam(real *, real *, int);
 #elif defined ADP
 real  calc_forces_adp(real *, real *, int);
+#elif defined DIPOLE
+real  calc_forces_dipole(real *, real *, int);
 #endif
 void  powell_lsq(real *xi);
 void  anneal(real *xi);
@@ -473,6 +485,10 @@ void  potsync();
 #ifdef PDIST
 void  write_pairdist(pot_table_t *pt, char *filename);
 #endif
+#ifdef DIPOLE
+real erfc(real x);
+#endif
+
 
 /******************************************************************************
 *
@@ -515,6 +531,7 @@ void  debug_apot();
 void  lj_value(real, real *, real *);
 void  eopp_value(real, real *, real *);
 void  morse_value(real, real *, real *);
+void  ms_value(real, real *, real *);
 void  softshell_value(real, real *, real *);
 void  eopp_exp_value(real, real *, real *);
 void  meopp_value(real, real *, real *);
