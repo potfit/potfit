@@ -29,14 +29,18 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.29 $
-* $Date: 2010/04/14 10:14:17 $
+* $Revision: 1.30 $
+* $Date: 2010/04/14 14:55:08 $
 *****************************************************************/
 
 #ifdef APOT
 
 #include "potfit.h"
 #include <mkl_vml.h>
+
+#ifdef DIPOLE
+#include "erfc.h"
+#endif
 
 /*****************************************************************************
 *
@@ -47,11 +51,21 @@
 int apot_parameters(char *name)
 {
   if (strcmp(name, "lj") == 0) {
+#ifdef DIPOLE
+    return 4;
+#else
     return 2;
+#endif
   } else if (strcmp(name, "eopp") == 0) {
     return 6;
   } else if (strcmp(name, "morse") == 0) {
     return 3;
+  } else if (strcmp(name, "ms") == 0) {
+#ifdef DIPOLE
+    return 5;
+#else
+    return 3;
+#endif
   } else if (strcmp(name, "softshell") == 0) {
     return 2;
   } else if (strcmp(name, "eopp_exp") == 0) {
@@ -108,6 +122,8 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &eopp_value;
     } else if (strcmp(apt->names[i], "morse") == 0) {
       apt->fvalue[i] = &morse_value;
+    } else if (strcmp(apt->names[i], "ms") == 0) {
+      apt->fvalue[i] = &ms_value;
     } else if (strcmp(apt->names[i], "softshell") == 0) {
       apt->fvalue[i] = &softshell_value;
     } else if (strcmp(apt->names[i], "eopp_exp") == 0) {
@@ -171,6 +187,10 @@ void lj_value(real r, real *p, real *f)
   sig_d_rad12 = sig_d_rad6 * sig_d_rad6;
 
   *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
+
+#ifdef DIPOLE
+  *f += p[2] * p[3] * ew_eps * erfc(ew_kappa * r) / r;
+#endif
 }
 
 /******************************************************************************
@@ -201,6 +221,25 @@ void eopp_value(real r, real *p, real *f)
 void morse_value(real r, real *p, real *f)
 {
   *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2])));
+}
+
+/******************************************************************************
+*
+* morse-stretch potential
+*
+******************************************************************************/
+
+void ms_value(real r, real *p, real *f)
+{
+  static real x;
+
+  x = 1 - r / p[2];
+
+  *f = p[0] * ( exp(p[1] * x) - 2 * exp( (p[1] * x) / 2) );
+
+#ifdef DIPOLE
+  *f += p[3] * p[4] * ew_eps * erfc(ew_kappa * r) / r;
+#endif
 }
 
 /******************************************************************************
