@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.57 $
-# $Date: 2010/04/14 10:14:16 $
+# $Revision: 1.58 $
+# $Date: 2010/04/14 14:47:58 $
 #
 ############################################################################
 #
@@ -629,6 +629,10 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
 POTFITSRC      += force_adp.c
 endif
 
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+POTFITSRC      += force_dipole.c
+endif
+
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 POTFITSRC      += functions.c smooth.c chempot.c
 endif
@@ -690,6 +694,18 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   endif
   CFLAGS  += -DADP
 INTERACTION = 1
+endif
+
+# DIPOLE
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += DIPOLE does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DDIPOLE
+  INTERACTION = 1
 endif
 
 ifneq (,$(findstring 0,${INTERACTION}))
