@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.6 $
-* $Date: 2010/04/14 10:14:16 $
+* $Revision: 1.7 $
+* $Date: 2010/04/15 06:30:15 $
 *****************************************************************/
 
 #ifdef PAIR
@@ -253,7 +253,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
-			printf("I AM SELF!\n");
 		  fnval *= 0.5;
 		  grad *= 0.5;
 		}
