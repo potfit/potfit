@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.89 $
-* $Date: 2010/04/14 15:00:08 $
+* $Revision: 1.90 $
+* $Date: 2010/04/15 09:27:47 $
 *****************************************************************/
 
 #define NRANSI
@@ -62,10 +62,6 @@
 #define ENG_WEIGHT 100.
 #define STRESS_WEIGHT 10.
 #define FORCE_EPS .1
-
-#ifdef DIPOLE
-#define EW_KAPPA .1
-#endif 
 
 #if defined PAIR || defined DIPOLE
 #define SLOTS 1
@@ -368,7 +364,7 @@ EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 
 // variables needed for wolf summation
 #ifdef DIPOLE
-EXTERN real ew_kappa INIT(EW_KAPPA);  /* parameter kappa */
+EXTERN real ew_kappa INIT(0.10);      /* parameter kappa */
 EXTERN real ew_eps INIT(14.40);       /* this is e^2/(4*pi*epsilon_0) in eV A */
 #endif
 
