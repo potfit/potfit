@@ -1,3 +1,7 @@
+CVS-20100415
+
++ new force-file forces_dipole.c added needed for option DIPOLE
+
 CVS-20100414
 + [APOT] chemical potentials are now disabled by default, can be enabled with
 		 "enable_cp 1" in parameter file

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.90 $
-* $Date: 2010/04/15 09:27:47 $
+* $Revision: 1.91 $
+* $Date: 2010/04/15 10:22:31 $
 *****************************************************************/
 
 #define NRANSI
@@ -481,10 +481,6 @@ void  potsync();
 #ifdef PDIST
 void  write_pairdist(pot_table_t *pt, char *filename);
 #endif
-#ifdef DIPOLE
-real erfc(real x);
-#endif
-
 
 /******************************************************************************
 *
@@ -509,7 +505,7 @@ real  apot_grad(real, real *, void (*function) (real, real *, real *));
 /* potential.c */
 void  new_slots(int, int);	/* new slots for smooth cutoff */
 
-#ifdef PAIR
+#if defined PAIR
 /* chempot.c */
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
