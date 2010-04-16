@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.71 $
-* $Date: 2010/04/14 10:14:16 $
+* $Revision: 1.72 $
+* $Date: 2010/04/16 08:08:23 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -107,7 +107,7 @@ void read_config(char *filename)
   char *res, *ptr;
   char *tmp, *res_tmp;
   atom_t *atom;
-  stens *stresses;
+  sym_tens *stresses;
   vector d, dd, iheight;
   real  r, rr, istep, shift, step;
 #ifdef MEAM
@@ -194,7 +194,7 @@ void read_config(char *filename)
     volumen = (real *)realloc(volumen, (nconf + 1) * sizeof(real));
     if (NULL == volumen)
       error("Cannot allocate memory for volume");
-    stress = (stens *)realloc(stress, (nconf + 1) * sizeof(stens));
+    stress = (sym_tens *) realloc(stress, (nconf + 1) * sizeof(sym_tens));
     if (NULL == stress)
       error("Cannot allocate memory for stress");
     inconf = (int *)realloc(inconf, (nconf + 1) * sizeof(int));
@@ -466,9 +466,17 @@ void read_config(char *filename)
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
-		atoms[i].neigh[k].sqrdist.x = dd.x * dd.x;
-		atoms[i].neigh[k].sqrdist.y = dd.y * dd.y;
-		atoms[i].neigh[k].sqrdist.z = dd.z * dd.z;
+#ifdef ADP
+		atoms[i].neigh[k].rdist.x = dd.x * r;
+		atoms[i].neigh[k].rdist.y = dd.y * r;
+		atoms[i].neigh[k].rdist.z = dd.z * r;
+		atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
+		atoms[i].neigh[k].sqrdist.zz = dd.z * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.yz = dd.y * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
+#endif
 		atoms[i].n_neigh++;
 		/* Minimal distance check */
 /* 		if (mindist[ntypes*typ1+typ2]>r) */

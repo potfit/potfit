@@ -1,11 +1,10 @@
 /****************************************************************
 *
-* force.c: Routine used for calculating eam forces/energies
-* 	in various interpolation schemes.
+* force_adp.c: Routines used for calculating adp forces/energies
 *
 *****************************************************************/
 /*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+*   Copyright 2010 Daniel Schopf
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -30,16 +29,16 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2010/04/16 08:08:24 $
+* $Revision: 1.1 $
+* $Date: 2010/04/16 08:08:23 $
 *****************************************************************/
 
-#ifdef EAM
+#if defined ADP
 #include "potfit.h"
 
 /*****************************************************************************
 *
-*  compute forces using eam potentials with spline interpolation
+*  compute forces using pair potentials with spline interpolation
 *
 *  returns sum of squares of differences between calculated and reference
 *     values
@@ -86,11 +85,12 @@
 *
 ******************************************************************************/
 
-real calc_forces_eam(real *xi_opt, real *forces, int flag)
+real calc_forces_adp(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
-  int   first, col1, i;
+  int   first, col, i;
   real *xi = NULL;
+
   static real rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
 
@@ -150,69 +150,76 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
 #endif /* APOT */
+
 #endif /* MPI */
 
     /* init second derivatives for splines */
 
-    /* just pair potentials */
-    for (col1 = 0; col1 < paircol; col1++) {
-      first = calc_pot.first[col1];
+    /* pair potentials */
+    for (col = 0; col < paircol; col++) {
+      first = calc_pot.first[col];
       if (format == 3 || format == 0)
-	spline_ed(calc_pot.step[col1], xi + first,
-		  calc_pot.last[col1] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	spline_ed(calc_pot.step[col], xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+		  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col1] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+		  calc_pot.d2tab + first);
     }
 
     /* rho */
-    for (col1 = paircol; col1 < paircol + ntypes; col1++) {
-      first = calc_pot.first[col1];
+    for (col = paircol; col < paircol + ntypes; col++) {
+      first = calc_pot.first[col];
       if (format == 3 || format == 0)
-	spline_ed(calc_pot.step[col1], xi + first,
-		  calc_pot.last[col1] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	spline_ed(calc_pot.step[col], xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+		  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col1] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+		  calc_pot.d2tab + first);
     }
 
     /* F */
-#ifndef PARABEL
-    /* if we have parabolic interpolation, we don't need that */
-    for (col1 = paircol + ntypes; col1 < paircol + 2 * ntypes; col1++) {
-      first = calc_pot.first[col1];
-      /* gradient at left boundary matched to square root function,
-         when 0 not in domain(F), else natural spline */
+    for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {
+      first = calc_pot.first[col];
       if (format == 3 || format == 0)
-	spline_ed(calc_pot.step[col1], xi + first,
-		  calc_pot.last[col1] - first + 1,
-#ifdef WZERO
-		  ((calc_pot.begin[col1] <= 0.) ? *(xi + first - 2)
-		   : .5 / xi[first]),
-		  ((calc_pot.end[col1] >= 0.) ? *(xi + first - 1)
-		   : -.5 / xi[calc_pot.last[col1]]),
-#else /* WZERO: F is natural spline in any case */
-		  *(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
-		  calc_pot.d2tab + first);	/* XXX */
+	spline_ed(calc_pot.step[col], xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2),
+		  *(xi + first - 1), calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col1] - first + 1,
-#ifdef WZERO
-		  (calc_pot.begin[col1] <= 0. ? *(xi + first - 2)
-		   : .5 / xi[first]),
-		  (calc_pot.end[col1] >= 0. ? *(xi + first - 1)
-		   : -.5 / xi[calc_pot.last[col1]]),
-#else /* WZERO */
-		  *(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
-		  calc_pot.d2tab + first);
+		  calc_pot.last[col] - first + 1, *(xi + first - 2),
+		  *(xi + first - 1), calc_pot.d2tab + first);
     }
-#endif /* PARABEL */
+
+    /* u */
+    for (col = paircol + 2 * ntypes; col < 2 * paircol + 2 * ntypes; col++) {
+      first = calc_pot.first[col];
+      if (format == 3 || format == 0)
+	spline_ed(calc_pot.step[col], xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2),
+		  *(xi + first - 1), calc_pot.d2tab + first);
+      else			/* format >= 4 ! */
+	spline_ne(calc_pot.xcoord + first, xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2),
+		  *(xi + first - 1), calc_pot.d2tab + first);
+    }
+
+    /* w */
+    for (col = 2 * paircol + 2 * ntypes; col < 3 * paircol + 2 * ntypes;
+	 col++) {
+      first = calc_pot.first[col];
+      if (format == 3 || format == 0)
+	spline_ed(calc_pot.step[col], xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2),
+		  *(xi + first - 1), calc_pot.d2tab + first);
+      else			/* format >= 4 ! */
+	spline_ne(calc_pot.xcoord + first, xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2),
+		  *(xi + first - 1), calc_pot.d2tab + first);
+    }
 
 #ifndef MPI
     myconf = nconf;
@@ -226,12 +233,22 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
        also OMP-parallelized region */
     {
 
-      int   col2;
-      real  grad2, r, eamforce;
-      int   self;
+      int   j, k, l, h;
+      int   uf, us;
+      int   typ1, typ2;
+      /* columns for potentials 0=phi, 1=rho, 2=F, 3=u, 4=w */
+      int   col0, col1, col2, col3, col4;
+      int   self, stresses;
+      real  r;
+      real  phi_val, u_val, w_val;
+      real  phi_grad, u_grad, w_grad;
+      real  tmp, tr;
+
+      /* needed ?? */
+      real  eam_force, u_force, w_force;
+      real  grad2, u_grad2, w_grad2;
+
       vector tmp_force;
-      int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
-      real  fnval, grad;
       atom_t *atom;
       neigh_t *neigh;
 
@@ -249,6 +266,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 	/* set limiting constraints */
 	forces[limit_p + h] = -force_0[limit_p + h];
+
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
@@ -262,7 +280,17 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] = 0.;
 	    forces[k + 2] = 0.;
 	  }
+	  /* reset atomic density and dipole and quadrupol distortions */
 	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].mu.x = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].mu.y = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].mu.z = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].lambda.xx = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].lambda.yy = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].lambda.zz = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].lambda.xy = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].lambda.yz = 0.0;
+	  conf_atoms[cnfstart[h] - firstatom + i].lambda.zx = 0.0;
 	}
 	/* end first loop */
 
@@ -286,39 +314,39 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      /* In small cells, an atom might interact with itself */
 	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 	      typ2 = neigh->typ;
-	      /* find correct column */
-	      col = (typ1 <= typ2) ?
+
+	      /* pair potential part */
+	      col0 = (typ1 <= typ2) ?
 		typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-	      if (neigh->r < calc_pot.end[col]) {
+	      if (neigh->r < calc_pot.end[col0]) {
 		/* fn value and grad are calculated in the same step */
 		if (uf)
-		  fnval = splint_comb_dir(&calc_pot, xi, col,
-					  neigh->slot[0],
-					  neigh->shift[0],
-					  neigh->step[0], &grad);
+		  phi_val =
+		    splint_comb_dir(&calc_pot, xi, col0, neigh->slot[0],
+				    neigh->shift[0], neigh->step[0],
+				    &phi_grad);
 		else
-		  fnval = splint_dir(&calc_pot, xi, col,
-				     neigh->slot[0],
-				     neigh->shift[0], neigh->step[0]);
+		  phi_val =
+		    splint_dir(&calc_pot, xi, col0, neigh->slot[0],
+			       neigh->shift[0], neigh->step[0]);
+
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
-		  fnval *= 0.5;
-		  grad *= 0.5;
+		  phi_val *= 0.5;
+		  phi_grad *= 0.5;
 		}
+
 		/* not real force: cohesive energy */
-		forces[energy_p + h] += fnval;
+		forces[energy_p + h] += phi_val;
 #if defined DEBUG && defined FORCES
-		fprintf(stderr, "pair-energy=%f (r=%f)\n", fnval, neigh->r);
-		apot_table.fvalue[col] (neigh->r, apot_table.values[col],
-					&fnval);
-		fprintf(stderr, "analytic value=%f\n", fnval);
+		fprintf(stderr, "pair-energy=%f\n", phi_val);
 #endif
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad;
-		  tmp_force.y = neigh->dist.y * grad;
-		  tmp_force.z = neigh->dist.z * grad;
+		  tmp_force.x = neigh->dist.x * phi_grad;
+		  tmp_force.y = neigh->dist.y * phi_grad;
+		  tmp_force.z = neigh->dist.z * phi_grad;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
@@ -347,43 +375,89 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 		}
 	      }
+	      /* dipole distortion part */
+	      col3 = col0 + paircol + 2 * ntypes;
+	      if (neigh->r < calc_pot.end[col3]) {
+		u_val =
+		  splint_dir(&calc_pot, xi, col3, neigh->slot[2],
+			     neigh->shift[2], neigh->step[2]);
+		if (self)
+		  u_val *= 0.5;
+		tmp = u_val * neigh->rdist.x;
+		atom->mu.x += tmp;
+		conf_atoms[neigh->nr - firstatom].mu.x -= tmp;
+		tmp = u_val * neigh->rdist.y;
+		atom->mu.y += tmp;
+		conf_atoms[neigh->nr - firstatom].mu.y -= tmp;
+		tmp = u_val * neigh->rdist.z;
+		atom->mu.z += tmp;
+		conf_atoms[neigh->nr - firstatom].mu.z -= tmp;
+	      }
+	      /* quadrupole distortion part */
+	      col4 = col0 + paircol + 3 * ntypes;
+	      if (neigh->r < calc_pot.end[col3]) {
+		w_val =
+		  splint_dir(&calc_pot, xi, col4, neigh->slot[3],
+			     neigh->shift[3], neigh->step[3]);
+		if (self)
+		  w_val *= 0.5;
+		/* diagonal elements */
+		tmp = w_val * neigh->sqrdist.xx;
+		atom->lambda.xx += tmp;
+		conf_atoms[neigh->nr - firstatom].lambda.xx += tmp;
+		tmp = w_val * neigh->sqrdist.yy;
+		atom->lambda.yy += tmp;
+		conf_atoms[neigh->nr - firstatom].lambda.yy += tmp;
+		tmp = w_val * neigh->sqrdist.zz;
+		atom->lambda.zz += tmp;
+		conf_atoms[neigh->nr - firstatom].lambda.zz += tmp;
+		/* offdiagonal elements */
+		tmp = w_val * neigh->sqrdist.yz;
+		atom->lambda.yz += tmp;
+		conf_atoms[neigh->nr - firstatom].lambda.yz += tmp;
+		tmp = w_val * neigh->sqrdist.zx;
+		atom->lambda.zx += tmp;
+		conf_atoms[neigh->nr - firstatom].lambda.zx += tmp;
+		tmp = w_val * neigh->sqrdist.xy;
+		atom->lambda.xy += tmp;
+		conf_atoms[neigh->nr - firstatom].lambda.xy += tmp;
+	      }
 
 	      /* calculate atomic densities */
-	      col2 = paircol + typ2;
+	      col1 = paircol + typ2;
 	      if (typ2 == typ1) {
 /* then transfer(a->b)==transfer(b->a) */
-		if (neigh->r < calc_pot.end[col2]) {
-		  fnval = splint_dir(&calc_pot, xi, col2,
-				     neigh->slot[1],
-				     neigh->shift[1], neigh->step[1]);
-		  atom->rho += fnval;
+		if (neigh->r < calc_pot.end[col1]) {
+		  phi_val = splint_dir(&calc_pot, xi, col1,
+				       neigh->slot[1],
+				       neigh->shift[1], neigh->step[1]);
+		  atom->rho += phi_val;
 #if defined DEBUG && defined FORCES
 		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
-			  fnval, neigh->r);
+			  phi_val, neigh->r);
 #endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
 		  if (!self) {
-		    conf_atoms[neigh->nr - firstatom].rho += fnval;
+		    conf_atoms[neigh->nr - firstatom].rho += phi_val;
 		  }
 		}
 	      } else {		/* transfer(a->b)!=transfer(b->a) */
-		col = paircol + typ1;
-		if (neigh->r < calc_pot.end[col2]) {
-		  atom->rho += splint_dir(&calc_pot, xi, col2,
+		col0 = paircol + typ1;
+		if (neigh->r < calc_pot.end[col1]) {
+		  atom->rho += splint_dir(&calc_pot, xi, col1,
 					  neigh->slot[1],
 					  neigh->shift[1], neigh->step[1]);
 #if defined DEBUG && defined FORCES
-		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
-			  splint_dir(&calc_pot, xi, col2, neigh->slot[1],
-				     neigh->shift[1], neigh->step[1]),
-			  neigh->r);
+		  fprintf(stderr, "rho=%f (added %f)\n", atom->rho,
+			  splint_dir(&calc_pot, xi, col1, neigh->slot[1],
+				     neigh->shift[1], neigh->step[1]));
 #endif
 		}
 		/* cannot use slot/shift to access splines */
-		if (neigh->r < calc_pot.end[col])
+		if (neigh->r < calc_pot.end[col0])
 		  conf_atoms[neigh->nr - firstatom].rho +=
-		    splint(&calc_pot, xi, col, neigh->r);
+		    splint(&calc_pot, xi, col0, neigh->r);
 	      }
 	    }			/*  neighbours with bigger atom nr */
 	  }			/* loop over neighbours */
@@ -418,19 +492,19 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* linear extrapolation left */
-	    fnval =
+	    phi_val =
 	      splint_comb(&calc_pot, xi, col2, calc_pot.begin[col2],
 			  &atom->gradF);
 	    forces[energy_p + h] +=
-	      fnval + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
+	      phi_val + (atom->rho - calc_pot.begin[col2]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col2]) {
 	    /* and right */
-	    fnval =
+	    phi_val =
 	      splint_comb(&calc_pot, xi, col2,
 			  calc_pot.end[col2] - .5 * calc_pot.step[col2],
 			  &atom->gradF);
 	    forces[energy_p + h] +=
-	      fnval + (atom->rho - calc_pot.end[col2]) * atom->gradF;
+	      phi_val + (atom->rho - calc_pot.end[col2]) * atom->gradF;
 	  }
 	  /* and in-between */
 	  else {
@@ -442,13 +516,32 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 #endif
 #if defined DEBUG && defined FORCES
-	  fprintf(stderr, "embedding energy: %f at rho=%f\n",
-		  splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF),
-		  atom->rho);
-	  fprintf(stderr, "total eam energy: %f\n", forces[energy_p + h]);
+	  fprintf(stderr, "total eam energy: %f (rho=%f)\n",
+		  forces[energy_p + h], atom->rho);
 #endif
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
+
+	  /* calculate ADP parameters for atom i */
+	  tmp = atom->mu.x;
+	  forces[energy_p + h] += SQR(tmp);
+	  tmp = atom->mu.y;
+	  forces[energy_p + h] += SQR(tmp);
+	  tmp = atom->mu.z;
+	  forces[energy_p + h] += SQR(tmp);
+	  tr = (atom->lambda.xx + atom->lambda.yy + atom->lambda.zz) / 3.0;
+	  tmp = atom->lambda.xx - tr;
+	  forces[energy_p + h] += SQR(tmp);
+	  tmp = atom->lambda.yy - tr;
+	  forces[energy_p + h] += SQR(tmp);
+	  tmp = atom->lambda.zz - tr;
+	  forces[energy_p + h] += SQR(tmp);
+	  tmp = atom->lambda.yz;
+	  forces[energy_p + h] += SQR(tmp) * 2.0;
+	  tmp = atom->lambda.zx;
+	  forces[energy_p + h] += SQR(tmp) * 2.0;
+	  tmp = atom->lambda.xy;
+	  forces[energy_p + h] += SQR(tmp) * 2.0;
 	}			/* second loop over atoms */
 
 	/* 3rd loop over atom: EAM force */
@@ -457,7 +550,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    typ1 = atom->typ;
 	    k = 3 * (cnfstart[h] + i);
-	    col = paircol + ntypes + typ1;	/* column of F */
+	    col2 = paircol + ntypes + typ1;	/* column of F */
 	    for (j = 0; j < atom->n_neigh; j++) {
 	      /* loop over neighbours */
 	      neigh = atom->neigh + j;
@@ -466,45 +559,45 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		/* In small cells, an atom might interact with itself */
 		self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 		typ2 = neigh->typ;
-		col2 = paircol + typ2;
+		col1 = paircol + typ2;
 		r = neigh->r;
 		/* are we within reach? */
-		if ((r < calc_pot.end[col2])
-		    || (r < calc_pot.end[col - ntypes])) {
-		  grad =
-		    (r < calc_pot.end[col2]) ?
-		    splint_grad_dir(&calc_pot, xi, col2,
+		if ((r < calc_pot.end[col1])
+		    || (r < calc_pot.end[col2 - ntypes])) {
+		  phi_grad =
+		    (r < calc_pot.end[col1]) ?
+		    splint_grad_dir(&calc_pot, xi, col1,
 				    neigh->slot[1], neigh->shift[1],
 				    neigh->step[1]) : 0.;
 		  if (typ2 == typ1)	/* use actio = reactio */
-		    grad2 = grad;
+		    grad2 = phi_grad;
 		  else
-		    grad2 = (r < calc_pot.end[col - ntypes]) ?
-		      splint_grad(&calc_pot, xi, col - ntypes, r) : 0.;
+		    grad2 = (r < calc_pot.end[col2 - ntypes]) ?
+		      splint_grad(&calc_pot, xi, col2 - ntypes, r) : 0.;
 		  /* now we know everything - calculate forces */
-		  eamforce = (grad * atom->gradF +
-			      grad2 *
-			      conf_atoms[(neigh->nr) - firstatom].gradF);
+		  eam_force = (phi_grad * atom->gradF +
+			       grad2 *
+			       conf_atoms[(neigh->nr) - firstatom].gradF);
 #if defined DEBUG && defined FORCES
 		  fprintf(stderr,
-			  "eamforce %f grad %f gradF %f grad2 %f gradF %f\n",
-			  eamforce, grad, atom->gradF, grad2,
+			  "eam_force %f grad %f gradF %f grad2 %f gradF %f\n",
+			  eam_force, phi_grad, atom->gradF, grad2,
 			  conf_atoms[(neigh->nr) - firstatom].gradF);
 #endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
 		  if (self)
-		    eamforce *= 0.5;
-		  tmp_force.x = neigh->dist.x * eamforce;
-		  tmp_force.y = neigh->dist.y * eamforce;
-		  tmp_force.z = neigh->dist.z * eamforce;
+		    eam_force *= 0.5;
+		  tmp_force.x = neigh->dist.x * eam_force;
+		  tmp_force.y = neigh->dist.y * eam_force;
+		  tmp_force.z = neigh->dist.z * eam_force;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
 #if defined DEBUG && defined FORCES
-		  fprintf(stderr, "EAM k=%d dist %f %f %f eamforce %f\n", k,
+		  fprintf(stderr, "EAM k=%d dist %f %f %f eam_force %f\n", k,
 			  neigh->dist.x, neigh->dist.y, neigh->dist.z,
-			  eamforce);
+			  eam_force);
 		  fprintf(stderr, "EAM k=%d forces %f %f %f\n", k, forces[k],
 			  forces[k + 1], forces[k + 2]);
 #endif
@@ -644,6 +737,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	fprintf(stderr, "dummy constraints on U': tmpsum=%f punish=%f\n",
 		tmpsum, forces[dummy_p + g]);
 #endif
+
       }				/* loop over types */
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
@@ -702,4 +796,4 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
   return -1.;
 }
 
-#endif /* EAM */
+#endif /* ADP */

@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.91 $
-* $Date: 2010/04/15 10:22:31 $
+* $Revision: 1.92 $
+* $Date: 2010/04/16 08:08:24 $
 *****************************************************************/
 
 #define NRANSI
@@ -59,8 +59,6 @@
 #define DUMMY_WEIGHT 100.
 #endif
 
-#define ENG_WEIGHT 100.
-#define STRESS_WEIGHT 10.
 #define FORCE_EPS .1
 
 #if defined PAIR || defined DIPOLE
@@ -89,17 +87,20 @@ typedef struct {
   real  xx;
   real  yy;
   real  zz;
-  real  xy;
   real  yz;
   real  zx;
-} stens;
+  real  xy;
+} sym_tens;
 
 typedef struct {
   int   typ;
   int   nr;
   real  r;
-  vector dist;
-  vector sqrdist;
+  vector dist;			/* distance divided by r */
+#ifdef ADP
+  vector rdist;			/* real distance */
+  sym_tens sqrdist;		/* real squared distance */
+#endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
@@ -141,6 +142,10 @@ typedef struct {
 #endif
 #ifdef MEAM
   angl  angl_part[MAXNEIGH * (MAXNEIGH - 1) / 2];
+#endif
+#ifdef ADP
+  vector mu;
+  sym_tens lambda;
 #endif
 } atom_t;
 
@@ -245,9 +250,9 @@ EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
 EXTERN int writeimd INIT(0);
 EXTERN real anneal_temp INIT(1.);
-EXTERN real eweight INIT(ENG_WEIGHT);
+EXTERN real eweight INIT(100.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
-EXTERN real sweight INIT(STRESS_WEIGHT);
+EXTERN real sweight INIT(10.);
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
@@ -279,8 +284,8 @@ EXTERN real *rcut INIT(NULL);
 EXTERN real *rmin INIT(NULL);
 EXTERN real *volumen INIT(NULL);	/* Volume of cell */
 EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
-EXTERN stens *conf_stress INIT(NULL);
-EXTERN stens *stress INIT(NULL);	/* Stresses in each config */
+EXTERN sym_tens *conf_stress INIT(NULL);
+EXTERN sym_tens *stress INIT(NULL);	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
@@ -364,8 +369,8 @@ EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 
 // variables needed for wolf summation
 #ifdef DIPOLE
-EXTERN real ew_kappa INIT(0.10);      /* parameter kappa */
-EXTERN real ew_eps INIT(14.40);       /* this is e^2/(4*pi*epsilon_0) in eV A */
+EXTERN real ew_kappa INIT(0.10);	/* parameter kappa */
+EXTERN real ew_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 #endif
 
 /******************************************************************************

@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.87 $
-* $Date: 2010/04/14 10:14:17 $
+* $Revision: 1.88 $
+* $Date: 2010/04/16 08:08:24 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -697,8 +697,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
       if (strcmp(buffer, "cutoff") != 0) {
 	sprintf(msg,
-		"No cutoff for potential #%d found after \"type\" keyword in file %s\nAborting",
-		i, filename);
+		"No cutoff found for the %d. potential (%s) after \"type\" in file %s.\nAborting",
+		i + 1, apt->names[i], filename);
 	error(msg);
       }
 #if defined EAM || defined ADP

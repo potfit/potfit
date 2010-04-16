@@ -1,5 +1,8 @@
-CVS-20100415
+CVS-20100416
++ import force_adp.c, energy is working, forces are still missing
++ stens -> sym_tens
 
+CVS-20100415
 + new force-file forces_dipole.c added needed for option DIPOLE
 
 CVS-20100414
