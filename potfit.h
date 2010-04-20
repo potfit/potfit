@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.92 $
-* $Date: 2010/04/16 08:08:24 $
+* $Revision: 1.93 $
+* $Date: 2010/04/20 12:31:21 $
 *****************************************************************/
 
 #define NRANSI
@@ -104,6 +104,10 @@ typedef struct {
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
+#ifdef ADP
+  real  u_val, u_grad;
+  real  w_val, w_grad;
+#endif
 } neigh_t;
 
 #ifdef MEAM
@@ -146,6 +150,7 @@ typedef struct {
 #ifdef ADP
   vector mu;
   sym_tens lambda;
+  real  nu;
 #endif
 } atom_t;
 
@@ -181,6 +186,7 @@ typedef struct {
 //   parameters
   int   total_par;		/* total number of parameters for all potentials */
   int  *idxparam;		/* indirect index for potential parameters */
+  int **invar_par;		/* array of invariant parameters */
   char ***param_name;		/* name of parameters */
   real **pmin;			/* minimum values for parameters */
   real **values;		/* parameter values for analytic potentials */
@@ -191,8 +197,9 @@ typedef struct {
   int  *n_glob;			/* number of global parameter usage */
   int ***global_idx;		/* index of global parameters */
 
-  int **invar_par;		/* ??? */
+#ifdef PAIR
   real *chempot;		/* chemical potentials */
+#endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;

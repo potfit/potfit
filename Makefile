@@ -5,8 +5,8 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.58 $
-# $Date: 2010/04/14 14:47:58 $
+# $Revision: 1.59 $
+# $Date: 2010/04/20 12:31:20 $
 #
 ############################################################################
 #
@@ -189,7 +189,7 @@ ifeq (x86_64-icc,${IMDSYS})
   MPI_FLAGS     +=
   OMP_FLAGS     += -openmp
   OMPI_FLAGS    += -openmp
-  DEBUG_FLAGS   += -g  -Wall
+  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
   PROF_FLAGS    += -prof_gen
   RCD_FLAGS     += # -DRCD -rcd
   MPI_LIBS      +=

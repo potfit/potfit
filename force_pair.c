@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2010/04/15 06:30:15 $
+* $Revision: 1.8 $
+* $Date: 2010/04/20 12:31:21 $
 *****************************************************************/
 
 #ifdef PAIR
@@ -91,10 +91,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   real  tmpsum, sum = 0.;
   int   first, col1, i;
   real *xi = NULL;
-
-#if defined DEBUG && defined FORCES
-  real  store_punish;
-#endif
 
   switch (format) {
       case 0:
@@ -216,17 +212,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 	/* 2nd loop: calculate pair forces and energies */
 	for (i = 0; i < inconf[h]; i++) {
-#if defined DEBUG && defined FORCES
-	  fprintf(stderr, "\nWorking on atom %d\n", i);
-#endif
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
 	  k = 3 * (cnfstart[h] + i);
 	  /* loop over neighbours */
 	  for (j = 0; j < atom->n_neigh; j++) {
-#if defined DEBUG && defined FORCES
-	    fprintf(stderr, "Working on atom %d neighbour %d\n", i, j);
-#endif
 	    neigh = atom->neigh + j;
 	    /* only use neigbours with higher numbers,
 	       others are calculated by actio=reactio */
@@ -258,10 +248,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		}
 		forces[energy_p + h] += fnval;
 
-#if defined DEBUG && defined FORCES
-		fprintf(stderr, "pair-energy=%f\n", fnval);
-#endif
-
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;
@@ -269,10 +255,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
-#if defined DEBUG && defined FORCES
-		  fprintf(stderr, "forces %d %f %f %f\n", k, forces[k],
-			  forces[k + 1], forces[k + 2]);
-#endif
 		  l = 3 * neigh->nr;	/* actio = reactio */
 		  forces[l] -= tmp_force.x;
 		  forces[l + 1] -= tmp_force.y;
@@ -310,10 +292,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 				SQR(forces[k + 2]));
-#if defined DEBUG && defined FORCES
-	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
-		    forces[k + 1], forces[k + 2], tmpsum);
-#endif
 	  }
 	}			/* second loop over atoms */
 
@@ -321,10 +299,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	forces[energy_p + h] *= eweight / (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
-#if defined DEBUG && defined FORCES
-	fprintf(stderr, "energy: tmpsum=%f energy=%f\n", tmpsum,
-		forces[energy_p + h]);
-#endif
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -344,11 +318,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* add punishment for out of bounds (mostly for powell_lsq) */
     if (myid == 0) {
       tmpsum += apot_punish(xi_opt, forces);
-#if defined DEBUG && defined FORCES
-      fprintf(stderr, "\napot punishments: tmpsum=%f punish=%f\n", tmpsum,
-	      apot_punish(xi_opt, forces));
-      store_punish = tmpsum;
-#endif
     }
 #endif
 

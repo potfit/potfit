@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.32 $
-* $Date: 2010/04/16 08:08:24 $
+* $Revision: 1.33 $
+* $Date: 2010/04/20 12:31:21 $
 *****************************************************************/
 
 #ifdef APOT
@@ -591,7 +591,7 @@ void debug_apot()
 	      apot_table.pmin[i][j], apot_table.pmax[i][j]);
     }
   }
-#ifndef EAM
+#ifdef PAIR
   if (!enable_cp) {
     fprintf(stderr, "\nchemical potentials are DISABLED!\n");
   } else {
@@ -611,7 +611,7 @@ void debug_apot()
       }
     }
   }
-#endif /* EAM */
+#endif /* PAIR */
   exit(2);
 }
 

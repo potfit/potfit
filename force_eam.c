@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.7 $
-* $Date: 2010/04/16 08:08:24 $
+* $Revision: 1.8 $
+* $Date: 2010/04/20 12:31:21 $
 *****************************************************************/
 
 #ifdef EAM
@@ -93,10 +93,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
   real *xi = NULL;
   static real rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
-
-#if defined DEBUG && defined FORCES
-  real  store_punish;
-#endif
 
   switch (format) {
       case 0:
@@ -268,17 +264,11 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 	/* 2nd loop: calculate pair forces and energies, atomic densities. */
 	for (i = 0; i < inconf[h]; i++) {
-#if defined DEBUG && defined FORCES
-	  fprintf(stderr, "\nWorking on atom %d\n", i);
-#endif
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
 	  k = 3 * (cnfstart[h] + i);
 	  /* loop over neighbours */
 	  for (j = 0; j < atom->n_neigh; j++) {
-#if defined DEBUG && defined FORCES
-	    fprintf(stderr, "Working on atom %d neighbour %d\n", i, j);
-#endif
 	    neigh = atom->neigh + j;
 	    /* only use neigbours with higher numbers,
 	       others are calculated by actio=reactio */
@@ -309,12 +299,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		}
 		/* not real force: cohesive energy */
 		forces[energy_p + h] += fnval;
-#if defined DEBUG && defined FORCES
-		fprintf(stderr, "pair-energy=%f (r=%f)\n", fnval, neigh->r);
-		apot_table.fvalue[col] (neigh->r, apot_table.values[col],
-					&fnval);
-		fprintf(stderr, "analytic value=%f\n", fnval);
-#endif
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;
@@ -322,10 +306,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
-#if defined DEBUG && defined FORCES
-		  fprintf(stderr, "forces %f %f %f\n", k, forces[k],
-			  forces[k + 1], forces[k + 2]);
-#endif
 		  l = 3 * neigh->nr;	/* actio = reactio */
 		  forces[l] -= tmp_force.x;
 		  forces[l + 1] -= tmp_force.y;
@@ -357,10 +337,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 				     neigh->slot[1],
 				     neigh->shift[1], neigh->step[1]);
 		  atom->rho += fnval;
-#if defined DEBUG && defined FORCES
-		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
-			  fnval, neigh->r);
-#endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
 		  if (!self) {
@@ -373,12 +349,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		  atom->rho += splint_dir(&calc_pot, xi, col2,
 					  neigh->slot[1],
 					  neigh->shift[1], neigh->step[1]);
-#if defined DEBUG && defined FORCES
-		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
-			  splint_dir(&calc_pot, xi, col2, neigh->slot[1],
-				     neigh->shift[1], neigh->step[1]),
-			  neigh->r);
-#endif
 		}
 		/* cannot use slot/shift to access splines */
 		if (neigh->r < calc_pot.end[col])
@@ -441,12 +411,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	  forces[energy_p + h] +=
 	    splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 #endif
-#if defined DEBUG && defined FORCES
-	  fprintf(stderr, "embedding energy: %f at rho=%f\n",
-		  splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF),
-		  atom->rho);
-	  fprintf(stderr, "total eam energy: %f\n", forces[energy_p + h]);
-#endif
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
 	}			/* second loop over atoms */
@@ -485,12 +449,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		  eamforce = (grad * atom->gradF +
 			      grad2 *
 			      conf_atoms[(neigh->nr) - firstatom].gradF);
-#if defined DEBUG && defined FORCES
-		  fprintf(stderr,
-			  "eamforce %f grad %f gradF %f grad2 %f gradF %f\n",
-			  eamforce, grad, atom->gradF, grad2,
-			  conf_atoms[(neigh->nr) - firstatom].gradF);
-#endif
 		  /* avoid double counting if atom is interacting with a
 		     copy of itself */
 		  if (self)
@@ -501,13 +459,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
-#if defined DEBUG && defined FORCES
-		  fprintf(stderr, "EAM k=%d dist %f %f %f eamforce %f\n", k,
-			  neigh->dist.x, neigh->dist.y, neigh->dist.z,
-			  eamforce);
-		  fprintf(stderr, "EAM k=%d forces %f %f %f\n", k, forces[k],
-			  forces[k + 1], forces[k + 2]);
-#endif
 		  l = 3 * neigh->nr;
 		  forces[l] -= tmp_force.x;
 		  forces[l + 1] -= tmp_force.y;
@@ -540,10 +491,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 				SQR(forces[k + 2]));
-#if defined DEBUG && defined FORCES
-	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
-		    forces[k + 1], forces[k + 2], tmpsum);
-#endif
 	  }			/* third loop over atoms */
 	}
 
@@ -552,10 +499,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	forces[energy_p + h] *= eweight / (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
-#if defined DEBUG && defined FORCES
-	fprintf(stderr, "energy: tmpsum=%f energy=%f\n", tmpsum,
-		forces[energy_p + h]);
-#endif
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -582,11 +525,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
     /* add punishment for out of bounds (mostly for powell_lsq) */
     if (myid == 0) {
       tmpsum += apot_punish(xi_opt, forces);
-#if defined DEBUG && defined FORCES
-      fprintf(stderr, "\napot punishments: tmpsum=%f punish=%f\n", tmpsum,
-	      apot_punish(xi_opt, forces));
-      store_punish = tmpsum;
-#endif
     }
 #endif
 
@@ -638,12 +576,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #endif /* Dummy constraints */
 	tmpsum += SQR(forces[dummy_p + ntypes + g]);
 	tmpsum += SQR(forces[dummy_p + g]);
-#if defined DEBUG && defined FORCES
-	fprintf(stderr, "dummy constraints on U: tmpsum=%f punish=%f\n",
-		tmpsum, forces[dummy_p + ntypes + g]);
-	fprintf(stderr, "dummy constraints on U': tmpsum=%f punish=%f\n",
-		tmpsum, forces[dummy_p + g]);
-#endif
       }				/* loop over types */
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
@@ -652,12 +584,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       /* ATTN: if there are invariant potentials, things might be problematic */
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
       tmpsum += SQR(forces[dummy_p + ntypes]);
-#endif
-#if defined DEBUG && defined FORCES
-/*      fprintf(stderr, "limiting constraints: tmpsum=%f punish=%f\n", tmpsum,*/
-/*              forces[limit_p]);*/
-      fprintf(stderr, "total EAM punishments: tmpsum=%f punish^2=%f\n\n",
-	      tmpsum, tmpsum - store_punish);
 #endif
     }				/* only root process */
     sum = tmpsum;		/* global sum = local sum  */

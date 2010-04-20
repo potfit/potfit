@@ -32,8 +32,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.49 $
-* $Date: 2010/02/24 06:55:40 $
+* $Revision: 1.50 $
+* $Date: 2010/04/20 12:31:21 $
 *****************************************************************/
 
 /******************************************************************************
@@ -398,7 +398,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 {
   static real *force;
   int   i, j;			/* Auxiliary vars: Counters */
-  real  sum, temp, scale, store, F;	/* Auxiliary var: Sum */
+  real  sum, temp, scale, store;	/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
   /*Initialize direction vectors */
   for (i = 0; i < ndim; i++) {

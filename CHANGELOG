@@ -1,3 +1,7 @@
+CVS-20100420
++ remove DEBUG_FORCES from pair and eam force calculation
++ prepare for release, minor changes
+
 CVS-20100416
 + import force_adp.c, energy is working, forces are still missing
 + stens -> sym_tens

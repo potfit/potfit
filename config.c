@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.72 $
-* $Date: 2010/04/16 08:08:23 $
+* $Revision: 1.73 $
+* $Date: 2010/04/20 12:31:20 $
 *****************************************************************/
 
 #include "potfit.h"
@@ -548,8 +548,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[0] = shift;
 		  atoms[i].neigh[k].slot[0] = slot;
 		  atoms[i].neigh[k].step[0] = step;
-#if defined EAM || defined MEAM
-		  /* EAM-MEAM part */
+#if defined EAM || defined MEAM || defined ADP
 		  col = paircol + typ2;
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
@@ -746,10 +745,10 @@ void read_config(char *filename)
 					   3*natoms are real forces,
 					   nconf cohesive energies,
 					   6*nconf stress tensor components */
-#if defined EAM || defined MEAM
+#if defined EAM || defined MEAM || defined ADP
   mdim += nconf;		/* nconf limiting constraints */
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
-#endif /* EAM MEAM */
+#endif /* EAM MEAM ADP */
 #ifdef APOT
   mdim += opt_pot.idxlen;	/* 1 slot for each analytic parameter -> punishment */
   mdim += apot_table.number + 1;	/* 1 slot for each analytic potential -> punishment */
@@ -787,7 +786,7 @@ void read_config(char *filename)
   for (i = 0; i < 6 * nconf; i++)
     force_0[k++] = 0.;
 #endif /* STRESS */
-#if defined EAM || defined MEAM
+#if defined EAM || defined MEAM || defined ADP
   for (i = 0; i < nconf; i++)
     force_0[k++] = 0.;		/* punishment rho out of bounds */
   for (i = 0; i < 2 * ntypes; i++) {	/* constraint on U(n=0):=0 */
@@ -881,7 +880,7 @@ void read_config(char *filename)
     calc_pot.begin[j] = min * 0.95;
   }
 #endif
-#if defined ADP
+#ifdef ADP
   for (i = calc_pot.ncols - 1; i > calc_pot.ncols - 2 * paircol - 1; i--) {
     apot_table.begin[i] = min * 0.95;
     opt_pot.begin[i] = min * 0.95;
@@ -1007,7 +1006,7 @@ void new_slots(int a1, int force_update)
 	      calc_pot.invstep[col2];
 	    atom->neigh[j].slot[1] += calc_pot.first[col2];
 #endif
-#if defined ADP
+#ifdef ADP
 	    col2 = apot_table.number - 2 * paircol + typ2;
 	    /* update slots for adp dipole functions, slot 2 */
 	    rr = r - calc_pot.begin[col2];
