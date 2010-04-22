@@ -1,5 +1,6 @@
 CVS-20100422
 + final updates
++ remove charge-extension for ms- and lj-potential
 
 CVS-20100420
 + remove DEBUG_FORCES from pair and eam force calculation
@@ -19,7 +20,7 @@ CVS-20100414
 + new information in potential files: #T <interaction>, e.g. #T EAM
 + new potential morse-stretch added
 + charge-extension for ms- and lj-potential
-+ option DIPOLE implemented (including new parameters, new functions erfc and calc_forces_dipole)
++ option DIPOLE implemented (including new parameters, calc_forces_dipole)
 
 CVS-20100408
 + Actually, there are elements with only one letter
