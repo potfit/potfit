@@ -1,7 +1,7 @@
 
 <!--#include virtual="potfithead.html" -->
 
-<!-- Copyright (c)  2008-2009 Daniel Schopf, ITAP. 			   -->
+<!-- Copyright (c)  2008-2010 Daniel Schopf, ITAP. 			   -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
 <!-- or any later version published by the Free Software Foundation;       -->
@@ -16,58 +16,55 @@
 
 <p>
 Analytic pair potentials can be enabled in <em>potfit</em> by compiling it with
-the apot switch. There are some additional options for analytic potentials like the 
+the <b>apot</b> switch. There are some additional options for analytic potentials like the 
 chemical potentials or the smooth cutoff.
 </p>
 
-<h2><a id="chempot" name="chempot">
-Chemical Potentials</a></h2>
+<h2><a id="globals" name="globals">Global parameters</a></h2>
 <p>
-For fitting simple pair potentials the use of the chemical potentials will always be
-enabled unless the <b>disable_cp</b> switch in the configuration file is set to 1.<br />
-This option effectively adds another energy term into the calculations, the energy
-will be calculated as <br /><img src="chempot.png" alt="E_tot=\sum_{species}\mu_iN_i+\sum_{pairs}V(r)" /><br />
-With this feature enabled, the potential file has to be altered, an additional block
-has to be added right after the header.</p>
+<em>potfit</em> supports global parameters, which can occur in different potentials. With this feature it is possible for any potential to "share" parameters with each other.
+To use them, you need a section called "global n" after the header in your potential file, where n is the number of global parameters. The format for the parameters is the same as for normal parameters: name value min max.
+<br>
+If you want to use a global parameter in a potential, use the name of the global parameter and add an exclamation mark.
 <pre>
 #F 0 3
 #C Mg Zn
 #I 0 0 0
 #E
 
-cp_Mg -1 -10 0
-cp_Zn -1 -10 0
+global 2
+glob1 1 0 2
+glob2 2 0 5
+
+type lj
+cutoff 8
+glob1!
+glob2!
+
+type lj
+cutoff 8
+glob2!
+glob1!
 </pre>
-<p>There has to be one line per element, starting with cp_, the rest of the name 
-will be replaced by the element name (if the #C line is available) or the element number.<br />
-The following three values are the starting value, the minimum and maximum for that parameter.<br />
-<br />
-For EAM-potentials this option is not available and lines beginning with cp_ will be ignored.
 </p>
+
 
 <h2><a id="sc" name="sc">
 Smooth Cutoff</a></h2>
 <p>
 The smooth cutoff function is very important for analytic potentials since it ensures that the
 potential and its gradient vanish at the desired cutoff radius.<br />
-Therefor the potential is replaced by a cubic polynomial at a certain range.<br />
+Therefor the potential is replaced by a cutoff function &Psi; at a certain range.<br />
+<img src="cutoff.png" alt="E_tot=\sum_{species}\mu_iN_i+\sum_{pairs}V(r)" /> where <img src="cutoff-order.png" alt="E_tot=\sum_{species}\mu_iN_i+\sum_{pairs}V(r)" /><br />
 To enable the smooth cutoff for a potential, _sc has to be added to the potential identifier.</p>
 <pre>
 type lj_sc
 cutoff 7
-...
+epsilon 0.1 0 1
+sigma 2.5 1 4
+h 1 0 2
 </pre>
-<p>Potentials fitted with the _sc option will have an additional line in the output potential.</p>
-<pre>
-type eopp_sc
-cutoff 7.000000
-# rmin 2.199710
-# r_0=5.950000 a_0=-0.001038 a_1=0.020511 a_2=-0.134513 a_3=0.292712
-...
-</pre>
-<p>This line indicates, that the cutoff function was applied at a range of 5.95 and the cubic
-polynomial was a_0*r^3+a_1*r^2+a_2*r+a_3.
-</p>
+<p>Potentials fitted with the _sc option will have an additional parameter h at the end. If you omit it, it will be kept fix at a value of 1.</p>
 
 
 <h2> Implemented Potential Functions</h2>

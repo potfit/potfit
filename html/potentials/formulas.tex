@@ -18,8 +18,8 @@ V(r)=4\epsilon\left[\left(\frac{\sigma}{r}\right)^{12}-\left(\frac{\sigma}{r}\ri
 
 \begin{eqnarray*}
 %% morse
-V(r)=D_e ( 1-e^{-a(r-r_e)} )^2 \\
-D_e,a,r_e
+V(r)=D_e ( 1-e^{-a(r-r_0)} )^2 \\
+D_e,a,r_0
 \end{eqnarray*}
 
 \begin{eqnarray*}
@@ -80,6 +80,36 @@ a,b,c
 %% csw
 \rho(r)=\frac{1+a_1\cos\left(\alpha r\right)+a_2\sin\left(\alpha r\right)}{r^\beta} \\
 a_1,a_2,\alpha,\beta
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% ms
+V(r)=D_e (e^{a*(1-\frac{r}{r_0})}-2e^{a(1-\frac{r}{r_0})/2}) \\
+D_e,a,r_0
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% const
+V(r)= c \\
+c
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% sqrt
+V(r)= \alpha \sqrt{r/\beta} \\
+\alpha,\beta
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% mexp_decay
+V(r)=\alpha e^{-\beta(r-r_0)} \\
+\alpha,\beta,r_0
+\end{eqnarray*}
+
+\begin{eqnarray*}
+%% strmm
+V(r)= 2\alpha e^{-\beta/2(r-r_0)} - \gamma ( 1+ \delta (r-r_0)e^{-\delta (r-r_0)}) \\
+\alpha,\beta,\gamma,\delta,r_0
 \end{eqnarray*}
 
 \end{document}

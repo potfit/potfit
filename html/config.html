@@ -1,7 +1,7 @@
 
 <!--#include virtual="potfithead.html" -->
 
-<!-- Copyright (c)  2005  Peter Brommer, Franz Gaehler, ITAP.              -->
+<!-- Copyright (c)  2005-2010  Peter Brommer, Franz Gaehler, ITAP.              -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
 <!-- or any later version published by the Free Software Foundation;       -->
@@ -41,24 +41,28 @@ hash symbol # and has the following format:</p>
 #X boxx.x boxx.y boxx.z
 #Y boxy.x boxy.y boxy.z
 #Z boxz.x boxz.y boxz.z
+#W weight
 #E coh_eng
 #S stress_xx stress_yy stress_zz stress_yz stress_zx stress_xy
 #F 
 </pre>
 
 The lines starting with #N, #X, #Y, #Z, #E and #F are mandatory, while the
-lines starting with #C and #S are optional. All other lines are ignored.
+lines starting with #C, #W and #S are optional. All other lines are ignored.
 #N must head the first line specifying the number of atoms in the
 configuration and an integer flag to control whether to use or to ignore
 force and stress information in this configuration. #F signifies the last
 header line. 
 
 All parameters except the type_n are numbers and have the following meaning:
+<br />
+<br />
 <table summary="entries in configuration file header">
-<tr><td>natoms:</td><td>number of atoms in configuration</td></tr>
+<tr><td width=100>natoms:</td><td>number of atoms in configuration</td></tr>
 <tr><td>useforce:</td><td>if 0, forces from this configuration are
 ignored</td></tr> 
 <tr><td>boxi.j:</td><td>components of box vectors of unit cell</td></tr>
+<tr><td>weight:</td><td>all deviations from this configuration will be multiplied with this</td></tr>
 <tr><td>coh_eng:</td><td>cohesive energy per atom</td></tr>
 <tr><td>stress_ij:</td><td>components of stress tensor</td></tr>
 </table>
@@ -66,7 +70,7 @@ ignored</td></tr>
 The #C line contains information about the chemical elements and the corresponding atom types contained in this configuration. The elements are assigned to the corresponding atom types and have to be consistant throughout the configuration file.
 
 <p>
-Note that:</p>
+Please note:</p>
 <ul>
 <li> In all directions the sample should have a size of at least 
      the potential cutoff distance. This distance is measured

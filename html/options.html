@@ -31,12 +31,14 @@ their purpose is and how they are used.</p>
 <td width="120"><a href="#debug">debug</a></td>
 <td width="120"><a href="#dist">dist</a></td>
 <td width="120"><a href="#eam">eam</a></td>
+<td width="120"><a href="#evo">evo</a></td>
 </tr>
 
 <tr align="left">
 <td width="120"><a href="#fweight">fweight</a></td>
 <td width="120"><a href="#newscale">newscale</a></td>
 <td width="120"><a href="#noresc">noresc</a></td>
+<td width="120"><a href="#pair">pair</a></td>
 <td width="120"><a href="#parab">parab</a></td>
 <td width="120"><a href="#stress_tens">stress</a></td>
 </tr>
@@ -84,6 +86,12 @@ parallelization.</p> </dd>
 <a href="eam2.html">Use Embedded Atom Method potentials.</a> </p>
 </dd>
 
+<dt><a id="evo" name="evo"><b>evo</b></a></dt>
+<dd>
+<p>
+Use evolutionary algorithm instead of simmulated annealing.
+</dd>
+
 <dt><a id="fweight" name="fweight"><b>fweight</b></a></dt>
 <dd>
 <p>Use modified weights for the forces. Each force
@@ -111,6 +119,12 @@ configurations). This option is incompatible with mpi parallelization.
 Suppresses rescaling of the potential. Useful if close to the minimum
 and a rescaling would ruin the minimization.
 </p>
+</dd>
+
+<dt><a id="pair" name="pair"><b>pair</b></a></dt>
+<dd>
+<p>
+<a href="pairpot.html">Use pair potentials.</a> </p>
 </dd>
 
 <dt><a id="parab" name="parab"><b>parab</b></a></dt>

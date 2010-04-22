@@ -1,6 +1,6 @@
 
 <!--#include virtual="potfithead.html" -->
-<!-- Copyright (c)  2005-2009  Peter Brommer, Franz Gaehler, 		   -->
+<!-- Copyright (c)  2005-2010  Peter Brommer, Franz Gaehler, 		   -->
 <!-- Daniel Schopf, ITAP.         					   -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
@@ -16,7 +16,7 @@
 
 <p>
 The interactions currently supported by <em>potfit</em> are either defined in terms of
-tabulated functions or given by analytic parameters. Typical such functions are central pair
+tabulated functions or given by analytic parameters. Typical functions are central pair
 potentials, which depend on the distance of two atoms and the two atom
 types involved. For tabulated potentials such functions are given with steps which are
 equidistant in the <b>distance</b>, which is the fundamental
@@ -43,6 +43,7 @@ following format:</p>
 <pre>
 ## this is just a comment line
 #F 3 n
+#T &lt;TYPE&gt;
 #C Mg Zn
 #I 0 1 .... n entries (this line is optional)
 #G 2 3 .... n entries (this line is optional)
@@ -57,8 +58,14 @@ files, format types 1 or 2) and the number n of
 data columns of the tabulated functions are read from the rest of the
 line. The very last header line must have a character 'E' at the
 second position. Header lines with a second character different from
-'C', 'F', 'E' or 'G' are treated as comments, but it is recommended that such
+'C', 'F', 'E', 'T' or 'G' are treated as comments, but it is recommended that such
 lines start with two '#' characters. </p>
+
+<p>
+The line starting with #T specifies the type of potential this file contains. This is very
+helpful if you are dealing with different potentials. 
+&lt;TYPE&gt; can be either PAIR or EAM.
+</p>
 
 <p> The line I defines whether a whole potential function should be kept
 constant during a force matching run. Each digit corresponds to one function

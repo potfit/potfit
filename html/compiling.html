@@ -1,7 +1,7 @@
 
 <!--#include virtual="potfithead.html" -->
 
-<!-- Copyright (c)  2005-2008 						   -->
+<!-- Copyright (c)  2005-2010 						   -->
 <!-- Peter Brommer, Franz Gaehler, Daniel Schopf, ITAP.              	   -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
@@ -74,28 +74,42 @@ If none of these is specified, a serial executable is compiled.
 </p>
 
 <table summary="supported parallalization options">
-<tr><td>mpi        </td> <td>parallelization with MPI            </td></tr>
+<tr><td width=100>mpi        </td> <td>parallelization with MPI            </td></tr>
 <tr><td>omp        </td> <td>parallelization with OpenMP         </td></tr>
 <tr><td>ompi&nbsp; </td> <td>parallelization with MPI and OpenMP </td></tr>
 </table>
 
-<h3>Other options</h3>
+<h3>General options</h3>
 
 <table summary="supported compilation options">
-<tr><td>apot	     </td><td>Use analytic potentials.</td></tr>
-<tr><td>eam          </td><td>Use Embedded Atom Potentials.</td></tr>
+<tr><td width=100>apot	     </td><td>Use analytic potentials.</td></tr>
 <tr><td>stress       </td><td>Include stress in fit.</td></tr>
-<tr><td>parab        </td><td>Use parabolic interpolation for
-embedding function.</td></tr>
 <tr><td>debug        </td><td>Compile with debug support.</td></tr>
-<tr><td>noresc       </td><td>Do NOT rescale the potential if
-necessary.</td></tr>
 <tr><td>fweight      </td><td>Weigh the contribution of the forces.
 according to their magnitude.</td></tr>
 <tr><td>dist         </td><td>Create distribution file, incompatible
 with mpi parallelization.</td></tr>
 <tr><td>newscale     </td><td>Create rescaled IMD and plotfiles, incompatible
 with mpi parallelization.</td></tr>
+</table>
+
+<h3>Potential options</h3>
+
+<table summary="supported compilation options">
+<tr><td width=100>pair        </td><td>Use pair potentials.</td></tr>
+<tr><td>eam         </td><td>Use embedded atom method potentials.</td></tr>
+<!--<tr><td>meam        </td><td>Use modified embedded atom method potentials.</td></tr> -->
+<!--<tr><td>adp        </td><td>Use angular dependant potentials.</td></tr>-->
+<!--<tr><td>dipole        </td><td>Use ??? potentials.</td></tr>-->
+</table>
+
+<h3>Options for tabulated potentials</h3>
+
+<table summary="supported compilation options">
+<tr><td width=100>parab        </td><td>Use parabolic interpolation for
+embedding function.</td></tr>
+<tr><td>noresc       </td><td>Do NOT rescale the potential if
+necessary.</td></tr>
 </table>
 
 <p> Note: The limit compiling options available in earlier versions
@@ -112,13 +126,13 @@ Currently, the following values of the IMDSYS variable are supported and properl
 </p>
 
 <table summary="supported IMDSYS values">
-<tr><td>x86_64-gcc    </td><td> All recent 64 bit processors, gcc    </td></tr>
+<tr><td width=100>x86_64-gcc    </td><td> All recent 64 bit processors, gcc    </td></tr>
 <tr><td>x86_64-icc    </td><td> All recent 64 bit processors, icc    </td></tr>
 </table>
 <p>
 The following values of the IMDSYS variable are only there for legacy reasons and are mostly untested:</p>
 <table summary"deprecated IMDSYS values">
-<tr><td>AthlonMP-icc  </td><td> Athlon MP or XP, icc                 </td></tr>
+<tr><td width=100>AthlonMP-icc  </td><td> Athlon MP or XP, icc                 </td></tr>
 <tr><td>AthlonMP-gcc3 </td><td> Athlon MP or XP, gcc3                </td></tr>
 <tr><td>P4-icc        </td><td> Pentium 4 or Xeon, icc               </td></tr>
 <tr><td>P4-gcc3       </td><td> Pentium 4 or Xeon, gcc3              </td></tr>

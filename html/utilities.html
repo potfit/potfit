@@ -32,6 +32,8 @@ href="http://www.itap.physik.uni-stuttgart.de/~imd/">IMD</a> and
 <em>potfit</em> potential formats.</td></tr>
 <tr><td><a href="#listconfig">list_config.sh</a></td>
     <td>List all configurations in a configuration file.</td></tr>
+<tr><td><a href="#potfit_setup">potfit_setup</a></td>
+    <td>Creates a parameter file for potfit from scratch.</td></tr>
 <tr><td><a href="#awk">awk scripts</a></td>
     <td>A series of awk scripts to handle various tasks with potential files,
     like combining, appending, creating from analytical functions, generating from scratch, plotting,...</td></tr>
@@ -138,6 +140,27 @@ parameter file.
 
 
 <h2><a id="listconfig" name="listconfig">list_config.sh</a></h2>
+<p>Scans a potfit configuration file and lists all configurations found. This includes the
+origin (if comment is found), the starting line, number of atoms and weight of the configuration.
+</p>
+
+
+<h2><a id="potfit_setup" name="potfit_setup">potfit_setup</a></h2>
+<p>
+This utility generates a simple parameter file for potfit.
+</p>
+<pre>
+Usage: potfit_setup: [-c config file] [-p potential file] [-s prefix]
+
+-c &lt;config file&gt;       name of the configuration file
+-p &lt;potential file&gt;    name of the potential file
+                                for analytic potentials this can easily be created with
+                                the makeapot script from the awkscripts
+-s &lt;prefix&gt;            prefix for all files, overrides -c and -p
+                                the following files will be checked:
+                                &lt;prefix&gt;.pot and &lt;prefix&gt;.config
+                                if they are not found, -c and -p will be read
+</pre>
 
 <h2><a id="awk" name="awk">awk scripts</a></h2>
 <p>A series of awk scripts to help with tasks concerning potential files. </p>
@@ -233,6 +256,7 @@ Usage: plotapot &lt;potential file&gt; &lt;radial distribution file&gt;
 </pre>
 <p>
 There are no options, you have to give the potential file, the radial distribution file is optional.</p>
+
 
 <h2><a id="potscale" name="potscale">potscale - not maintained any more.</a></h2>
 <p>potscale performs gauge transformations on EAM potentials. </p>

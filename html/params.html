@@ -1,7 +1,7 @@
 
 <!--#include virtual="potfithead.html" -->
 
-<!-- Copyright (c)  2005-2008  Peter Brommer, Franz Gaehler, ITAP.         -->
+<!-- Copyright (c)  2005-2010  Peter Brommer, Franz Gaehler, ITAP.         -->
 <!-- Permission is granted to copy, distribute and/or modify this document -->
 <!-- under the terms of the GNU Free Documentation License, Version 1.2    -->
 <!-- or any later version published by the Free Software Foundation;       -->
@@ -47,7 +47,7 @@ maxchfile	# file with maximal permissible changes for each parameter
 
 # options only for analytic potentials
 plotmin 	# starting point for plotting potentials
-disable_cp 	# binary, whether or not to include chemical potentials
+enable_cp 	# binary, whether or not to include chemical potentials
 
 # options for output
 imdpotsteps 	# number of points in each function in imd file
@@ -58,6 +58,11 @@ output_prefix  	# prefix for various output files like force, energy and stress
 opt		# binary, whether or not to perform an optimization.
 anneal_temp	# starting temperature for simulated annealing. 
 		# set to zero to skip simulated annealing
+evo_width 	# width of the normal distribution used to initialize the
+		# the starting population for evolutionary algorithm
+		# set to zero to skip evo
+d_eps 		# error margin for powell minimization
+		# if improvement is smaller, optimization is stopped
 eng_weight	# weight of energy in minimization
 stress_weight	# weight of stress in minimiziation
 seed            # seed for random number generator
