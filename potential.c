@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.89 $
-* $Date: 2010/04/22 06:18:35 $
+* $Revision: 1.90 $
+* $Date: 2010/04/22 06:38:57 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -2430,6 +2430,7 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 
   /* write header */
   fprintf(outfile, "#F 3 %d", pt->ncols);
+  fprintf(outfile, "\n#T %s", interaction);
   if (have_elements) {
     fprintf(outfile, "\n#C");
     for (i = 0; i < ntypes; i++)
@@ -2533,6 +2534,7 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 
   /* write header */
   fprintf(outfile, "#F 4 %d", pt->ncols);
+  fprintf(outfile, "\n#T %s", interaction);
   if (have_elements) {
     fprintf(outfile, "\n#C");
     for (i = 0; i < ntypes; i++)
