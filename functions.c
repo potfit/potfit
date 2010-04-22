@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.33 $
-* $Date: 2010/04/20 12:31:21 $
+* $Revision: 1.34 $
+* $Date: 2010/04/22 13:21:12 $
 *****************************************************************/
 
 #ifdef APOT
@@ -47,21 +47,13 @@
 int apot_parameters(char *name)
 {
   if (strcmp(name, "lj") == 0) {
-#ifdef DIPOLE
-    return 4;
-#else
     return 2;
-#endif
   } else if (strcmp(name, "eopp") == 0) {
     return 6;
   } else if (strcmp(name, "morse") == 0) {
     return 3;
   } else if (strcmp(name, "ms") == 0) {
-#ifdef DIPOLE
-    return 5;
-#else
     return 3;
-#endif
   } else if (strcmp(name, "softshell") == 0) {
     return 2;
   } else if (strcmp(name, "eopp_exp") == 0) {
@@ -183,10 +175,6 @@ void lj_value(real r, real *p, real *f)
   sig_d_rad12 = sig_d_rad6 * sig_d_rad6;
 
   *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
-
-#ifdef DIPOLE
-  *f += p[2] * p[3] * ew_eps * erfc(ew_kappa * r) / r;
-#endif
 }
 
 /******************************************************************************
@@ -232,10 +220,6 @@ void ms_value(real r, real *p, real *f)
   x = 1 - r / p[2];
 
   *f = p[0] * (exp(p[1] * x) - 2 * exp((p[1] * x) / 2));
-
-#ifdef DIPOLE
-  *f += p[3] * p[4] * ew_eps * erfc(ew_kappa * r) / r;
-#endif
 }
 
 /******************************************************************************
