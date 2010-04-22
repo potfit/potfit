@@ -30,8 +30,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.88 $
-* $Date: 2010/04/16 08:08:24 $
+* $Revision: 1.89 $
+* $Date: 2010/04/22 06:18:35 $
 *****************************************************************/
 
 #define NPLOT 1000
@@ -850,10 +850,13 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		   || (apt->values[i][j] > apt->pmax[i][j])) {
 	  /* Only print warning if we are optimizing */
 	  if (opt) {
-	    apt->values[i][j] = (apt->pmin[i][j] + apt->pmax[i][j]) / 2.;
+	    if (apt->values[i][j] < apt->pmin[i][j])
+		    apt->values[i][j] = apt->pmin[i][j];
+	    if (apt->values[i][j] > apt->pmax[i][j])
+		    apt->values[i][j] = apt->pmax[i][j];
 	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,
-		    "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nAutosetting it to %f ((pmin+pmax)/2)\n",
+		    "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nResetting it to %f.\n",
 		    j + 1, i + 1, apt->values[i][j]);
 	    if (apt->values[i][j] == 0)
 	      fprintf(stderr,

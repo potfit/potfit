@@ -29,8 +29,8 @@
 *   Boston, MA  02110-1301  USA
 */
 /****************************************************************
-* $Revision: 1.78 $
-* $Date: 2010/04/14 14:59:23 $
+* $Revision: 1.79 $
+* $Date: 2010/04/22 06:18:35 $
 *****************************************************************/
 
 #define MAIN
@@ -649,11 +649,11 @@ int main(int argc, char **argv)
 	fprintf
 	  (outfile,
 	   "\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
-	fprintf(outfile, "sum of punishments = %f\t\t( %.3f%% )\n\n",
+	fprintf(outfile, "Total sum of punishments = %f\t\t( %.3f%% )\n\n",
 		tot - f_sum - e_sum - s_sum,
 		(tot - f_sum - e_sum - s_sum) / tot * 100);
       }
-      fprintf(outfile, "min: %e - max: %e\n", min, max);
+/*      fprintf(outfile, "min: %e - max: %e\n", min, max);*/
       fprintf(outfile, "rms-errors:\n");
       fprintf(outfile, "force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
       fprintf(outfile, "energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
