@@ -131,6 +131,9 @@ typedef struct {
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
 #endif
+#ifdef MEAM
+  angl  angl_part[MAXNEIGH * (MAXNEIGH - 1) / 2];
+#endif
 } atom_t;
 
 typedef struct {

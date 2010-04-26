@@ -615,7 +615,11 @@ POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-POTFITSRC      += force_eam.c rescale.c
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+    POTFITSRC      += force_meam.c rescale.c
+  else
+    POTFITSRC      += force_eam.c rescale.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
@@ -658,9 +662,17 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
-CFLAGS  += -DEAM
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+    CFLAGS  += -DMEAM -DNORESCALE
+    ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+      ERROR += MEAM does not support analytic potentials (yet)
+    endif
+  else
+    CFLAGS  += -DEAM
+  endif
 INTERACTION = 1
 endif
+
 
 ifneq (,$(findstring 0,${INTERACTION}))
 ERROR += No interaction model specified
