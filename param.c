@@ -302,8 +302,12 @@ void read_paramfile(FILE *pf)
 #endif
 #ifdef DIPOLE
     /* parameter kappa */
-    else if (strcasecmp(token, "ew_kappa") == 0) {
-      getparam("ew_kappa", &ew_kappa, PARAM_DOUBLE, 1, 1);
+    else if (strcasecmp(token, "dp_kappa") == 0) {
+      getparam("dp_kappa", &dp_kappa, PARAM_DOUBLE, 1, 1);
+    }
+    /* dipole iteration precision */
+    else if (strcasecmp(token, "dp_tol") == 0) {
+      getparam("dp_tol", &dp_tol, PARAM_DOUBLE, 1, 1);
     }
 #endif
     /* unknown tag */

@@ -1,7 +1,7 @@
 /****************************************************************
 *
-* force.c: Routines used for calculating forces/energies in various
-*     interpolation schemes.
+* force.c: Routines used for calculating pair/monopole/dipole 
+*     forces/energies in various interpolation schemes.
 *
 *********************************************************************************/
 /*
@@ -188,6 +188,10 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
 	  forces[stress_p + 6 * h + i] = 0.;
+
+	apot_table_t *apt = &apot_table;
+	forces[energy_p + h] += apt->charge[0] + apt->dp_alpha[0] * apt->dp_b[0] * apt->dp_c[0];
+	forces[energy_p + h] += apt->charge[1] + apt->dp_alpha[1] * apt->dp_b[1] * apt->dp_c[1];
 
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {

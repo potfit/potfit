@@ -229,11 +229,28 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
   } else {
 #endif
+#ifdef DIPOLE
+  if (1) {
+    apt->values = (real **)malloc((size + 4) * sizeof(real *));
+    apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
+    apt->pmax = (real **)malloc((size + 4) * sizeof(real *));
+    for (i = 0; i < 4; i++) {
+    apt->values[size + i] = (real *)malloc(ntypes * sizeof(real));
+    apt->pmin[size + i] = (real *)malloc(ntypes * sizeof(real));
+    apt->pmax[size + i] = (real *)malloc(ntypes * sizeof(real));
+    }
+    apt->invar_par = (int **)malloc(size * sizeof(int *));
+    apt->charge = apt->values[size];
+    apt->dp_alpha = apt->values[size + 1];
+    apt->dp_b = apt->values[size + 2];
+    apt->dp_c = apt->values[size + 3];
+  } else {
+#endif
     apt->values = (real **)malloc(size * sizeof(real *));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->pmin = (real **)malloc(size * sizeof(real *));
     apt->pmax = (real **)malloc(size * sizeof(real *));
-#ifdef PAIR
+#if defined PAIR || defined DIPOLE
   }
 #endif
   apt->names = (char **)malloc(size * sizeof(char *));
@@ -389,8 +406,22 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   if (enable_cp) {
     reg_for_free(apt->chempot, "apt->chempot");
     reg_for_free(apt->pmin[size], "apt->pmin[size]");
-    reg_for_free(apt->pmax[size], "apt->pmax[size}");
+    reg_for_free(apt->pmax[size], "apt->pmax[size]");
   }
+#endif
+#if defined DIPOLE && defined APOT
+  reg_for_free(apt->charge, "apt->charge");
+  reg_for_free(apt->dp_alpha, "apt->dp_alpha");
+  reg_for_free(apt->dp_b, "apt->dp_b");
+  reg_for_free(apt->dp_c, "apt->dp_c");
+  reg_for_free(apt->pmin[size], "apt->pmin[size]");
+  reg_for_free(apt->pmin[size + 1], "apt->pmin[size + 1]");
+  reg_for_free(apt->pmin[size + 2], "apt->pmin[size + 2]");
+  reg_for_free(apt->pmin[size + 3], "apt->pmin[size + 3]");
+  reg_for_free(apt->pmax[size], "apt->pmax[size]");
+  reg_for_free(apt->pmax[size + 1], "apt->pmax[size + 1]");
+  reg_for_free(apt->pmax[size + 2], "apt->pmax[size + 2]");
+  reg_for_free(apt->pmax[size + 3], "apt->pmax[size + 3]");
 #endif
 #ifndef POTSCALE
   reg_for_free(rcut, "rcut");
@@ -521,6 +552,51 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   fsetpos(infile, &filepos);
 #endif
 
+#ifdef DIPOLE
+  /* skip to dipole section */
+  do {
+    fgetpos(infile, &filepos);
+    fscanf(infile, "%s", buffer);
+  } while (strcmp(buffer, "type") != 0 && strcmp(buffer, "dipole") != 0);
+
+  /* check for dipole keyword */
+ if (strcmp("dipole", buffer) != 0) {
+	sprintf(msg, "No dipole option found in %s.\n", filename);
+	error(msg);
+      }
+
+  /* read dipole parameters */
+    for (i = 0; i < ntypes; i++) {
+      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->charge[i],
+		     &apt->pmin[apt->number][i],
+		     &apt->pmax[apt->number][i])) {
+	sprintf(msg, "Could not read charge for atomtype #%d\n",
+		i);
+	error(msg);
+      }
+      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_alpha[i],
+		     &apt->pmin[apt->number + 1][i],
+		     &apt->pmax[apt->number + 1][i])) {
+	sprintf(msg, "Could not read polarisability for atomtype #%d\n",
+		i);
+	error(msg);
+      }
+      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_b[i],
+		     &apt->pmin[apt->number + 2][i],
+		     &apt->pmax[apt->number + 2][i])) {
+      	sprintf(msg, "Could not read parameter dp_b for atomtype #%d\n",
+      		i);
+      	error(msg);
+      }
+      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_c[i],
+      		     &apt->pmin[apt->number + 3][i],
+		     &apt->pmax[apt->number + 3][i])) {
+      	sprintf(msg, "Could not read parameter dp_c for atomtype #%d\n",
+      		i);
+      	error(msg);
+      }
+    }
+#endif
   /* skip to next type or global section */
   do {
     fgetpos(infile, &filepos);
@@ -877,6 +953,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par += (ntypes + compnodes);
   }
 #endif
+#ifdef DIPOLE
+  apt->total_par += (4 * ntypes);
+#endif
 
   /* initialize function table and write indirect index */
   for (i = 0; i < apt->number; i++) {
@@ -898,6 +977,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   if (enable_cp) {
     pt->len += (ntypes + compnodes);
   }
+#endif
+#ifdef DIPOLE
+  pt->len += (4 * ntypes);
 #endif
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
@@ -968,6 +1050,18 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     pt->idxlen += (ntypes + compnodes);
     global_idx += (ntypes + compnodes);
   }
+#endif
+#ifdef DIPOLE
+   i = apt->number;
+    for (j = 0; j < (4 * ntypes); j++) {
+      *val = apt->values[i][j];
+      pt->idx[k] = l++;
+      apt->idxpot[k] = i;
+      apt->idxparam[k++] = j;
+      val++;
+    }
+    pt->idxlen += (4 * ntypes);
+    global_idx += (4 * ntypes);
 #endif
 
   if (have_globals) {

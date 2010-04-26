@@ -154,6 +154,13 @@ typedef struct {
   real *chempot;		/* chemical potentials */
 #endif
 
+#ifdef DIPOLE
+  real *charge;                 /* charges */
+  real *dp_alpha;               /* polarisability */
+  real *dp_b;                   /* parameter for short-range-dipole-moment */
+  real *dp_c;                   /* parameter for short-range-dipole-moment */
+#endif
+
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
 #endif
@@ -326,6 +333,13 @@ EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
+
+// variables needed for option dipole
+#ifdef DIPOLE
+EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
+EXTERN real dp_tol INIT(1.e-9); /* dipole iteration precision */
+EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
+#endif
 
 /******************************************************************************
 *
