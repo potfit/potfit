@@ -1,9 +1,9 @@
 /****************************************************************
- *
- *  spline.c: Contains all routines used for spline interpolation
- *      with equidistant or non-equidistant sampling points.
- *
- *****************************************************************/
+*
+*  spline.c: Contains all routines used for spline interpolation
+*      with equidistant or non-equidistant sampling points.
+*
+*****************************************************************/
 /*
 *   Copyright 2002-2005 Peter Brommer, Franz G"ahler
 *             Institute for Theoretical and Applied Physics
@@ -28,12 +28,8 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.23 $
-* $Date: 2010/01/11 09:03:08 $
+*
 *****************************************************************/
-
 
 /******************************************************************************
  *
@@ -41,8 +37,6 @@
  *            (equidistant x[i])
  *
  *****************************************************************************/
-
-
 
 #ifndef POTSCALE
 #include "potfit.h"
@@ -91,7 +85,6 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
  *            (equidistant x[i])
  *
  *****************************************************************************/
-
 
 real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 {

@@ -27,10 +27,7 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.79 $
-* $Date: 2010/04/22 06:18:35 $
+*
 *****************************************************************/
 
 #define MAIN
@@ -94,15 +91,6 @@ int main(int argc, char **argv)
 #elif defined EAM
   calc_forces = calc_forces_eam;
   strcpy(interaction, "EAM");
-#elif defined MEAM
-  calc_forces = calc_forces_meam;
-  strcpy(interaction, "MEAM");
-#elif defined ADP
-  calc_forces = calc_forces_adp;
-  strcpy(interaction, "ADP");
-#elif defined DIPOLE
-  calc_forces = calc_forces_dipole;
-  strcpy(interaction, "DIPOLE");
 #endif
 
   /* read the parameters and the potential file */
@@ -161,7 +149,7 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#if defined EAM || defined MEAM || defined ADP
+#if defined EAM
     lambda = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(lambda, "lambda");
 
@@ -212,7 +200,7 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#if defined EAM || defined MEAM || defined ADP
+#if defined EAM
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
@@ -224,7 +212,7 @@ int main(int argc, char **argv)
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#endif /* EAM MEAM */
+#endif /* EAM */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
 
@@ -323,7 +311,7 @@ int main(int argc, char **argv)
       write_pot_table4(&opt_pot, endpot);
       printf("Potential in format 4 written to file %s\n", endpot);
     }
-#if defined EAM || defined MEAM
+#if defined EAM
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
     if (write_output_files) {
@@ -380,7 +368,7 @@ int main(int argc, char **argv)
       write_pot_table_imd(&opt_pot, imdpot);
 #endif /* NEWSCALE */
 #endif /* MPI */
-#endif /* EAM MEAM */
+#endif /* EAM */
 
     /* prepare for error calculations */
     max = 0.0;
@@ -506,7 +494,7 @@ int main(int argc, char **argv)
       fclose(outfile);
     }
 #endif
-#if defined EAM || defined MEAM
+#ifdef EAM
 /*    if (opt) {*/
     /* write EAM punishments */
     if (write_output_files) {

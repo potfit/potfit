@@ -27,10 +27,7 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/**************************************************************************
-*  $Revision: 1.38 $
-*  $Date: 2010/04/14 14:57:10 $
+*
 ***************************************************************************/
 
 #ifndef POTSCALE
@@ -301,12 +298,6 @@ void read_paramfile(FILE *pf)
     /* Energy Weight */
     else if (strcasecmp(token, "stress_weight") == 0) {
       getparam("stress_weight", &sweight, PARAM_DOUBLE, 1, 1);
-    }
-#endif
-#ifdef DIPOLE
-    /* parameter kappa */
-    else if (strcasecmp(token, "ew_kappa") == 0) {
-      getparam("ew_kappa", &ew_kappa, PARAM_DOUBLE, 1, 1);
     }
 #endif
     /* unknown tag */

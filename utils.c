@@ -27,10 +27,7 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.8 $
-* $Date: 2010/02/18 15:01:09 $
+*
 *****************************************************************/
 
 #include <stdio.h>

@@ -1,8 +1,8 @@
 /********************************************************
- *
- *  mpi_utils.c: Contains utilities to be used with MPI
- *
- *******************************************************/
+*
+*  mpi_utils.c: Contains utilities to be used with MPI
+*
+*******************************************************/
 /*
 *   Copyright 2004-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
 *             Institute for Theoretical and Applied Physics
@@ -27,10 +27,7 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.31 $
-* $Date: 2010/04/14 10:14:17 $
+*
 *****************************************************************/
 
 #include "potfit.h"
@@ -149,7 +146,7 @@ void broadcast_params()
   blklens[5] = MAXNEIGH;  typen[5] = MPI_NEIGH;   /* neigh */
   blklens[6] = 1;         typen[6] = MPI_INT;     /* conf */
   size=7;
-#if defined EAM || defined MEAM
+#if defined EAM
   blklens[7] = 1;         typen[7] = REAL;        /* rho */
   blklens[8] = 1;         typen[8] = REAL;        /* gradF */
   size += 2;
@@ -162,7 +159,7 @@ void broadcast_params()
   MPI_Address(&testatom.absforce, &displs[4]);
   MPI_Address(testatom.neigh, &displs[5]);
   MPI_Address(&testatom.conf, &displs[6]);
-#if defined EAM || defined MEAM
+#if defined EAM
   MPI_Address(&testatom.rho, &displs[7]);
   MPI_Address(&testatom.gradF, &displs[8]);
 #endif
@@ -354,8 +351,7 @@ void broadcast_params()
  * potsync: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
-#if defined EAM || defined MEAM
-#if !defined APOT
+#if defined EAM && !defined APOT
 
 void potsync()
 {
@@ -373,6 +369,5 @@ void potsync()
   nvals = calc_pot.len - firstval;
   MPI_Bcast(calc_pot.table + firstval, nvals, REAL, 0, MPI_COMM_WORLD);
 }
-#endif /* APOT */
-#endif /* EAM */
+#endif /* EAM && !APOT */
 #endif /* MPI */

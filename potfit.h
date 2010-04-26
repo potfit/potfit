@@ -27,10 +27,7 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.93 $
-* $Date: 2010/04/20 12:31:21 $
+*
 *****************************************************************/
 
 #define NRANSI
@@ -49,24 +46,18 @@
 #define REAL MPI_DOUBLE
 #endif
 
-#ifndef MEAM
 #define MAXNEIGH 400
-#else
-#define MAXNEIGH 130
-#endif
 
-#if defined EAM || defined MEAM || defined ADP
+#if defined EAM
 #define DUMMY_WEIGHT 100.
 #endif
 
 #define FORCE_EPS .1
 
-#if defined PAIR || defined DIPOLE
+#if defined PAIR
 #define SLOTS 1
-#elif defined EAM || defined MEAM
+#elif defined EAM
 #define SLOTS 2
-#elif defined ADP
-#define SLOTS 4
 #endif
 
 /******************************************************************************
@@ -97,40 +88,10 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
-#ifdef ADP
-  vector rdist;			/* real distance */
-  sym_tens sqrdist;		/* real squared distance */
-#endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
-#ifdef ADP
-  real  u_val, u_grad;
-  real  w_val, w_grad;
-#endif
 } neigh_t;
-
-#ifdef MEAM
-typedef struct {
-  int   typ2;
-  int   typ3;
-  int   nr2;
-  int   nr3;
-  real  r2;
-  real  r3;
-  vector dist_ij;
-  vector dist_ik;
-  real  cos;
-  real  dcos_ij;		/* deriv on r_ij */
-  real  dcos_ik;		/* deriv on r_ik */
-  real  dcos_jk_x;		/* deriv on x_jk */
-  real  dcos_jk_y;		/* deriv on y_jk */
-  real  dcos_jk_z;		/* deriv on z_jk */
-  real  slot[3];
-  real  shift[3];
-  real  step[3];
-} angl;
-#endif
 
 typedef struct {
   int   typ;
@@ -140,17 +101,9 @@ typedef struct {
   real  absforce;
   neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
-#if defined EAM || defined MEAM || defined ADP
+#if defined EAM
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
-#endif
-#ifdef MEAM
-  angl  angl_part[MAXNEIGH * (MAXNEIGH - 1) / 2];
-#endif
-#ifdef ADP
-  vector mu;
-  sym_tens lambda;
-  real  nu;
 #endif
 } atom_t;
 
@@ -345,7 +298,7 @@ EXTERN real *rms INIT(NULL);
 // pointers for force-vector
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM || defined MEAM || defined ADP
+#if defined EAM
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
@@ -373,12 +326,6 @@ EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
-
-// variables needed for wolf summation
-#ifdef DIPOLE
-EXTERN real ew_kappa INIT(0.10);	/* parameter kappa */
-EXTERN real ew_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
-#endif
 
 /******************************************************************************
 *
@@ -421,13 +368,10 @@ void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
-void  read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
-		      char *filename, FILE *infile);
 void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
 void  update_calc_table(real *xi_opt, real *xi_calc, int);
 void  write_pot_table3(pot_table_t *, char *);
 void  write_pot_table4(pot_table_t *, char *);
-void  write_pot_table5(pot_table_t *, char *);
 void  write_pot_table_imd(pot_table_t *, char *);
 void  write_plotpot_pair(pot_table_t *, char *);
 void  write_altplot_pair(pot_table_t *, char *);
@@ -442,12 +386,6 @@ void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
-#elif defined MEAM
-real  calc_forces_meam(real *, real *, int);
-#elif defined ADP
-real  calc_forces_adp(real *, real *, int);
-#elif defined DIPOLE
-real  calc_forces_dipole(real *, real *, int);
 #endif
 void  powell_lsq(real *xi);
 void  anneal(real *xi);

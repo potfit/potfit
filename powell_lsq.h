@@ -27,13 +27,8 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.15 $
-* $Date: 2010/01/11 09:03:08 $
+*
 *****************************************************************/
-
-
 
 #ifdef POWELL
 #define EXPOW			/* define Variables in powell */
@@ -42,7 +37,6 @@
 #define EXPOW extern		/* declare them extern otherwise */
 #define INPOW(data)		/* skip initialization otherwise */
 #endif
-
 
 void  bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 		real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);

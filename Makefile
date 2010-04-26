@@ -5,9 +5,6 @@
 # Copyright 2002-2009 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
-# $Revision: 1.59 $
-# $Date: 2010/04/20 12:31:20 $
-#
 ############################################################################
 #
 #     This file is part of potfit.
@@ -618,23 +615,11 @@ POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-    POTFITSRC      += force_meam.c rescale.c
-  else
-    POTFITSRC      += force_eam.c rescale.c
-  endif
-endif
-
-ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-POTFITSRC      += force_adp.c
-endif
-
-ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-POTFITSRC      += force_dipole.c
+POTFITSRC      += force_eam.c rescale.c
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-POTFITSRC      += functions.c smooth.c chempot.c
+POTFITSRC      += functions.c chempot.c
 endif
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
@@ -673,39 +658,8 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
-  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-    CFLAGS  += -DMEAM -DNORESCALE
-    ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-      ERROR += MEAM does not support analytic potentials (yet)
-    endif
-  else
-    CFLAGS  += -DEAM
-  endif
+CFLAGS  += -DEAM
 INTERACTION = 1
-endif
-
-# ADP
-ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-  ifneq (,$(findstring 1,${INTERACTION}))
-  ERROR += More than one potential model specified
-  endif
-  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
-    ERROR += ADP does not support tabulated potentials (yet)
-  endif
-  CFLAGS  += -DADP
-INTERACTION = 1
-endif
-
-# DIPOLE
-ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-  ifneq (,$(findstring 1,${INTERACTION}))
-  ERROR += More than one potential model specified
-  endif
-  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
-    ERROR += DIPOLE does not support tabulated potentials (yet)
-  endif
-  CFLAGS  += -DDIPOLE
-  INTERACTION = 1
 endif
 
 ifneq (,$(findstring 0,${INTERACTION}))

@@ -1,7 +1,7 @@
 /****************************************************************
- *
- *  simann.c: Contains all routines used for simulated annealing.
- *
+*
+*  simann.c: Contains all routines used for simulated annealing.
+*
 *****************************************************************/
 /*
 *   Copyright 2002-2010 Peter Brommer, Daniel Schopf
@@ -27,10 +27,7 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.49 $
-* $Date: 2010/03/12 07:22:00 $
+*
 *****************************************************************/
 
 #include <math.h>
