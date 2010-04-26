@@ -455,6 +455,17 @@ void read_config(char *filename)
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
+#ifdef ADP
+		atoms[i].neigh[k].rdist.x = dd.x * r;
+		atoms[i].neigh[k].rdist.y = dd.y * r;
+		atoms[i].neigh[k].rdist.z = dd.z * r;
+		atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
+		atoms[i].neigh[k].sqrdist.zz = dd.z * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.yz = dd.y * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
+#endif
 		atoms[i].n_neigh++;
 		/* Minimal distance check */
 /* 		if (mindist[ntypes*typ1+typ2]>r) */
@@ -526,7 +537,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[0] = shift;
 		  atoms[i].neigh[k].slot[0] = slot;
 		  atoms[i].neigh[k].step[0] = step;
-#if defined EAM
+#if defined EAM || defined ADP
 		  col = paircol + typ2;
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
@@ -605,10 +616,10 @@ void read_config(char *filename)
 					   3*natoms are real forces,
 					   nconf cohesive energies,
 					   6*nconf stress tensor components */
-#if defined EAM
+#if defined EAM || defined ADP
   mdim += nconf;		/* nconf limiting constraints */
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
-#endif /* EAM */
+#endif /* EAM ADP */
 #ifdef APOT
   mdim += opt_pot.idxlen;	/* 1 slot for each analytic parameter -> punishment */
   mdim += apot_table.number + 1;	/* 1 slot for each analytic potential -> punishment */
@@ -646,7 +657,7 @@ void read_config(char *filename)
   for (i = 0; i < 6 * nconf; i++)
     force_0[k++] = 0.;
 #endif /* STRESS */
-#if defined EAM
+#if defined EAM || defined ADP
   for (i = 0; i < nconf; i++)
     force_0[k++] = 0.;		/* punishment rho out of bounds */
   for (i = 0; i < 2 * ntypes; i++) {	/* constraint on U(n=0):=0 */
@@ -732,7 +743,7 @@ void read_config(char *filename)
       calc_pot.begin[k] = mindist[k] * 0.95;
       min = MIN(min, mindist[k]);
     }
-#if defined EAM
+#if defined EAM || defined ADP
   for (i = 0; i < ntypes; i++) {
     j = i + ntypes * (ntypes + 1) / 2;
     apot_table.begin[j] = min * 0.95;
@@ -847,7 +858,7 @@ void new_slots(int a1, int force_update)
 	      (rr -
 	       atom->neigh[j].slot[0] * calc_pot.step[col]) *
 	      calc_pot.invstep[col];
-#if defined EAM
+#if defined EAM || defined ADP
 	    col2 = paircol + typ2;
 	    /* update slots for eam transfer functions, slot 1 */
 	    rr = r - calc_pot.begin[col2];
@@ -858,6 +869,28 @@ void new_slots(int a1, int force_update)
 	       atom->neigh[j].slot[1] * calc_pot.step[col2]) *
 	      calc_pot.invstep[col2];
 	    atom->neigh[j].slot[1] += calc_pot.first[col2];
+#endif
+#ifdef ADP
+	    col2 = apot_table.number - 2 * paircol + typ2;
+	    /* update slots for adp dipole functions, slot 2 */
+	    rr = r - calc_pot.begin[col2];
+	    atom->neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col2]);
+	    atom->neigh[j].step[2] = calc_pot.step[col2];
+	    atom->neigh[j].shift[2] =
+	      (rr -
+	       atom->neigh[j].slot[2] * calc_pot.step[col2]) *
+	      calc_pot.invstep[col2];
+	    atom->neigh[j].slot[2] += calc_pot.first[col2];
+	    col2 += paircol;
+	    /* update slots for adp quadrupole functions, slot 3 */
+	    rr = r - calc_pot.begin[col2];
+	    atom->neigh[j].slot[3] = (int)(rr * calc_pot.invstep[col2]);
+	    atom->neigh[j].step[3] = calc_pot.step[col2];
+	    atom->neigh[j].shift[3] =
+	      (rr -
+	       atom->neigh[j].slot[3] * calc_pot.step[col2]) *
+	      calc_pot.invstep[col2];
+	    atom->neigh[j].slot[3] += calc_pot.first[col2];
 #endif
 	    atom->neigh[j].slot[0] += calc_pot.first[col];
 	    atom->neigh[j].step[0] = calc_pot.step[col];

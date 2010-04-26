@@ -48,7 +48,7 @@
 
 #define MAXNEIGH 400
 
-#if defined EAM
+#if defined EAM || defined ADP
 #define DUMMY_WEIGHT 100.
 #endif
 
@@ -58,6 +58,8 @@
 #define SLOTS 1
 #elif defined EAM
 #define SLOTS 2
+#elif defined ADP
+#define SLOTS 4
 #endif
 
 /******************************************************************************
@@ -88,9 +90,17 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
+#ifdef ADP
+  vector rdist;			/* real distance */
+  sym_tens sqrdist;		/* real squared distance */
+#endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
+#ifdef ADP
+  real  u_val, u_grad;
+  real  w_val, w_grad;
+#endif
 } neigh_t;
 
 typedef struct {
@@ -101,9 +111,14 @@ typedef struct {
   real  absforce;
   neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
-#if defined EAM
+#if defined EAM || defined ADP
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
+#endif
+#ifdef ADP
+  vector mu;
+  sym_tens lambda;
+  real  nu;
 #endif
 } atom_t;
 
@@ -298,7 +313,7 @@ EXTERN real *rms INIT(NULL);
 // pointers for force-vector
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM
+#if defined EAM || defined ADP
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
@@ -386,6 +401,8 @@ void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
+#elif defined ADP
+real  calc_forces_adp(real *, real *, int);
 #endif
 void  powell_lsq(real *xi);
 void  anneal(real *xi);

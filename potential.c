@@ -144,6 +144,8 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
       /* right number of columns? */
 #ifdef EAM
       if (size == ncols + 2 * ntypes) {
+#elif defined ADP
+      if (size == 3 * ncols + 2 * ntypes) {
 #else
       if (size == ncols) {
 #endif
@@ -154,6 +156,8 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 		"Wrong number of data columns in file %s,\n should be %d for %s, but are %d.",
 #ifdef EAM
 		filename, ncols + 2 * ntypes, interaction, size);
+#elif defined ADP
+		filename, 3 * ncols + 2 * ntypes, interaction, size);
 #else
 		filename, ncols, interaction, size);
 #endif
@@ -310,7 +314,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     j += ntypes - i;
   }
 #endif
-#if defined EAM
+#if defined EAM || defined ADP
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
       rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j],
@@ -670,7 +674,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par += apt->n_par[i];
 
     /* read cutoff */
-#if defined EAM
+#if defined EAM || defined ADP
     if ((i < (ntypes * (ntypes + 1) / 2 + ntypes))
 	|| (i >= (ntypes * (ntypes + 1) / 2 + 2 * ntypes))) {
 #endif
@@ -687,7 +691,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		i + 1, apt->names[i], filename);
 	error(msg);
       }
-#if defined EAM
+#if defined EAM || defined ADP
     } else {
       fgetpos(infile, &filepos);
       fscanf(infile, "%s", buffer);
@@ -1934,7 +1938,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
-#if defined EAM
+#if defined EAM || defined ADP
     /* transfer functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);

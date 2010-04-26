@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#if defined EAM
+#if defined EAM || defined ADP
     lambda = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(lambda, "lambda");
 
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#if defined EAM
+#if defined EAM || defined ADP
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#endif /* EAM */
+#endif /* EAM ADP */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
 
