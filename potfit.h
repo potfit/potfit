@@ -46,9 +46,13 @@
 #define REAL MPI_DOUBLE
 #endif
 
+#ifndef MEAM
 #define MAXNEIGH 400
+#else
+#define MAXNEIGH 130
+#endif
 
-#if defined EAM
+#if defined EAM || defined MEAM
 #define DUMMY_WEIGHT 100.
 #endif
 
@@ -56,7 +60,7 @@
 
 #if defined PAIR
 #define SLOTS 1
-#elif defined EAM
+#elif defined EAM || defined MEAM
 #define SLOTS 2
 #endif
 
@@ -93,6 +97,28 @@ typedef struct {
   real  step[SLOTS];
 } neigh_t;
 
+#ifdef MEAM
+typedef struct {
+  int   typ2;
+  int   typ3;
+  int   nr2;
+  int   nr3;
+  real  r2;
+  real  r3;
+  vector dist_ij;
+  vector dist_ik;
+  real  cos;
+  real  dcos_ij;		/* deriv on r_ij */
+  real  dcos_ik;		/* deriv on r_ik */
+  real  dcos_jk_x;		/* deriv on x_jk */
+  real  dcos_jk_y;		/* deriv on y_jk */
+  real  dcos_jk_z;		/* deriv on z_jk */
+  real  slot[3];
+  real  shift[3];
+  real  step[3];
+} angl;
+#endif
+
 typedef struct {
   int   typ;
   int   n_neigh;
@@ -101,7 +127,7 @@ typedef struct {
   real  absforce;
   neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
-#if defined EAM
+#if defined EAM || defined MEAM
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
 #endif
@@ -298,7 +324,7 @@ EXTERN real *rms INIT(NULL);
 // pointers for force-vector
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM
+#if defined EAM || defined MEAM
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
@@ -386,6 +412,8 @@ void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
+#elif defined MEAM
+real  calc_forces_meam(real *, real *, int);
 #endif
 void  powell_lsq(real *xi);
 void  anneal(real *xi);

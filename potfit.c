@@ -91,6 +91,9 @@ int main(int argc, char **argv)
 #elif defined EAM
   calc_forces = calc_forces_eam;
   strcpy(interaction, "EAM");
+#elif defined MEAM
+  calc_forces = calc_forces_meam;
+  strcpy(interaction, "MEAM");
 #endif
 
   /* read the parameters and the potential file */
@@ -149,7 +152,7 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#if defined EAM
+#if defined EAM || defined MEAM
     lambda = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(lambda, "lambda");
 
@@ -200,7 +203,7 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#if defined EAM
+#if defined EAM || defined MEAM
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
@@ -212,7 +215,7 @@ int main(int argc, char **argv)
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#endif /* EAM */
+#endif /* EAM MEAM */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
 
@@ -311,7 +314,7 @@ int main(int argc, char **argv)
       write_pot_table4(&opt_pot, endpot);
       printf("Potential in format 4 written to file %s\n", endpot);
     }
-#if defined EAM
+#if defined EAM || defined MEAM
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
     if (write_output_files) {
@@ -368,7 +371,7 @@ int main(int argc, char **argv)
       write_pot_table_imd(&opt_pot, imdpot);
 #endif /* NEWSCALE */
 #endif /* MPI */
-#endif /* EAM */
+#endif /* EAM MEAM */
 
     /* prepare for error calculations */
     max = 0.0;
@@ -494,7 +497,7 @@ int main(int argc, char **argv)
       fclose(outfile);
     }
 #endif
-#ifdef EAM
+#if defined EAM || defined MEAM
 /*    if (opt) {*/
     /* write EAM punishments */
     if (write_output_files) {
