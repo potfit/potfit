@@ -617,6 +617,9 @@ endif
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 POTFITSRC      += force_eam.c rescale.c
 endif
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+POTFITSRC      += force_dipole.c
+endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 POTFITSRC      += functions.c chempot.c
@@ -660,6 +663,18 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
 CFLAGS  += -DEAM
 INTERACTION = 1
+endif
+
+# DIPOLE
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += DIPOLE does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DDIPOLE
+  INTERACTION = 1
 endif
 
 ifneq (,$(findstring 0,${INTERACTION}))

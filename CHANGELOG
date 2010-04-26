@@ -1,4 +1,7 @@
 bzr-20100426
++ re-add DIPOLE part
+
+bzr-20100426
 + start migration to bazaar vcs 
 + prepare trunk: 
 	removed .revisions file

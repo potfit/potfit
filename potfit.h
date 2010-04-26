@@ -54,7 +54,7 @@
 
 #define FORCE_EPS .1
 
-#if defined PAIR
+#if defined PAIR || defined DIPOLE
 #define SLOTS 1
 #elif defined EAM
 #define SLOTS 2
@@ -386,6 +386,8 @@ void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
+#elif defined DIPOLE
+real  calc_forces_dipole(real *, real *, int);
 #endif
 void  powell_lsq(real *xi);
 void  anneal(real *xi);

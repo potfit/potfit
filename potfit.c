@@ -91,6 +91,9 @@ int main(int argc, char **argv)
 #elif defined EAM
   calc_forces = calc_forces_eam;
   strcpy(interaction, "EAM");
+#elif defined DIPOLE
+  calc_forces = calc_forces_dipole;
+  strcpy(interaction, "DIPOLE");
 #endif
 
   /* read the parameters and the potential file */

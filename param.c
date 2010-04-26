@@ -300,6 +300,12 @@ void read_paramfile(FILE *pf)
       getparam("stress_weight", &sweight, PARAM_DOUBLE, 1, 1);
     }
 #endif
+#ifdef DIPOLE
+    /* parameter kappa */
+    else if (strcasecmp(token, "ew_kappa") == 0) {
+      getparam("ew_kappa", &ew_kappa, PARAM_DOUBLE, 1, 1);
+    }
+#endif
     /* unknown tag */
     else {
       fprintf(stderr, "Unknown tag <%s> ignored!\n", token);
