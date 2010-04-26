@@ -368,10 +368,13 @@ void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
+void  read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
+		      char *filename, FILE *infile);
 void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
 void  update_calc_table(real *xi_opt, real *xi_calc, int);
 void  write_pot_table3(pot_table_t *, char *);
 void  write_pot_table4(pot_table_t *, char *);
+void  write_pot_table5(pot_table_t *, char *);
 void  write_pot_table_imd(pot_table_t *, char *);
 void  write_plotpot_pair(pot_table_t *, char *);
 void  write_altplot_pair(pot_table_t *, char *);

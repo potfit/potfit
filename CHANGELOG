@@ -1,4 +1,7 @@
 bzr-20100426
++ re-introduce the format5 specific parts
+
+bzr-20100426
 + start migration to bazaar vcs 
 + prepare trunk: 
 	removed .revisions file

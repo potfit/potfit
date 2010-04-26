@@ -160,7 +160,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	error(msg);
       }
       /* recognized format? */
-      if ((format != 0) && (format != 3) && (format != 4)) {
+      if ((format != 0) && (format != 3) && (format != 4) && (format != 5)) {
 	sprintf(msg, "Unrecognized format specified for file %s", filename);
 	error(msg);
       }
@@ -265,6 +265,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	break;
       case 4:
 	read_pot_table4(pt, size, ncols, nvals, filename, infile);
+	break;
+      case 5:
+	read_pot_table5(pt, size, ncols, nvals, filename, infile);
   }
   fclose(infile);
 
@@ -1346,6 +1349,194 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 
 /*****************************************************************************
 *
+*  read potential in fifth format:
+*
+*  Functions specified by gaussians.
+*
+*  THIS IS BY NO MEANS FINISHED! IT WILL NOT WORK!
+*
+*  Header:  one line for each function with
+*           rbegin rstart npoints
+*
+*  Table: Center, width, amplitude of Gaussians,
+*         functions separated by blank lines
+*
+*
+*  d2tab is used to store the width of the Gaussians.
+*
+******************************************************************************/
+
+void read_pot_table5(pot_table_t *pt, int size, int ncols, int *nvals,
+		     char *filename, FILE *infile)
+{
+  int   i, j, k, l;
+  char  msg[255];
+  real *val, *ord, *width;
+
+  /* THIS FUNCTIONALITY IS NOT YET IMPLEMENTED */
+
+  error("Potential format 5 is not yet implemented");
+
+  /* read the info block of the function table */
+  for (i = 0; i < size; i++) {
+    if (3 >
+	fscanf(infile, "%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i])) {
+      sprintf(msg, "Premature end of potential file %s", filename);
+      error(msg);
+    }
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / (nvals[i] - 1);
+    pt->invstep[i] = 1.0 / pt->step[i];
+    /* in the two slots between last[i-1] and first[i] the gradients
+       of the respective functions are stored */
+    if (i == 0)
+      pt->first[i] = 2;
+    else
+      pt->first[i] = pt->last[i - 1] + 3;
+    pt->last[i] = pt->first[i] + nvals[i] - 1;
+    pt->len = pt->first[i] + nvals[i];
+  }
+  /* allocate the function table */
+  pt->table = (real *)malloc(pt->len * sizeof(real));
+  pt->xcoord = (real *)malloc(pt->len * sizeof(real));
+  pt->d2tab = (real *)malloc(pt->len * sizeof(real));
+  pt->idx = (int *)malloc(pt->len * sizeof(int));
+  if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab)) {
+    error("Cannot allocate memory for potential table");
+  }
+
+  /* input loop */
+  val = pt->table;
+  ord = pt->xcoord;
+  width = pt->d2tab;
+  k = 0;
+  l = 0;
+  for (i = 0; i < ncols; i++) {	/* read in pair pot */
+/*     if (have_grad) { 		/\* read gradient *\/ */
+/*       if (2>fscanf(infile, "%lf %lf\n", val, val+1)){ */
+/*         sprintf(msg, "Premature end of potential file %s", filename); */
+/* 	error(msg); */
+/*       }  */
+/*     } else { */
+    *val = 1e30;
+    *(val + 1) = 0.;
+/*     }  */
+    val += 2;
+    ord += 2;
+    width += 2;
+/*     if (gradient[i]>>1) pt->idx[k++]=l++; else l++; */
+/*     if (gradient[i]% 2) pt->idx[k++]=l++; else l++; */
+    l += 2;
+    for (j = 0; j < nvals[i]; j++) {	/* read values */
+      if (3 > fscanf(infile, "%lf %lf %lf\n", ord, width, val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else {
+	val++;
+	ord++;
+	width++;
+      }
+//      pt->xcoord[l]=pt->begin[i] + j * pt->step[i] ;
+//      if (j<nvals[i]-1) pt->idx[k++] = l++;
+      if (!invar_pot[i])
+	pt->idx[k++] = l++;
+      else
+	l++;
+//    else l++;
+    }
+  }
+#ifdef EAM
+  for (i = ncols; i < ncols + ntypes; i++) {	/* read in rho */
+/*     if (have_grad) { 		/\* read gradient *\/ */
+/*       if (2>fscanf(infile, "%lf %lf\n", val, val+1)){ */
+/*         sprintf(msg, "Premature end of potential file %s", filename); */
+/* 	error(msg); */
+/*       }  */
+/*     } else { */
+    *val = 1e30;
+    *(val + 1) = 0.;
+/*     }  */
+    val += 2;
+    ord += 2;
+    width += 2;
+/*     if (gradient[i]>>1) pt->idx[k++]=l++; else l++; */
+/*     if (gradient[i]% 2) pt->idx[k++]=l++; else l++; */
+    l += 2;
+    for (j = 0; j < nvals[i]; j++) {	/* read values */
+      if (3 > fscanf(infile, "%lf %lf %lf\n", ord, width, val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else {
+	ord++;
+	val++;
+	width++;
+      }
+/*       if ((j>0) && (*(ord-1) <= *(ord-2))) { */
+/* 	sprintf(msg, "Abscissa not monotonous in potential %d.",i); */
+/* 	error(msg); */
+/*       } */
+/*       if (j<nvals[i]-1) pt->idx[k++] = l++; */
+      if (!invar_pot[i])
+	pt->idx[k++] = l++;
+      else
+	l++;
+/*       else l++; */
+    }
+/*     pt->begin[i]=pt->xcoord[pt->first[i]]; */
+/*     pt->end[i]  =pt->xcoord[pt->last[i]]; */
+/*     /\* pt->step is average step length.. *\/ */
+/*     pt->step[i] = (pt->end[i]-pt->begin[i])/((real) nvals[i]-1); */
+/*     pt->invstep[i] = 1./pt->step[i];  */
+
+  }
+  for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {	/* read in F */
+/*     if (have_grad) { 		/\* read gradient *\/ */
+/*       if (2>fscanf(infile, "%lf %lf\n", val, val+1)){ */
+/*         sprintf(msg, "Premature end of potential file %s", filename); */
+/* 	error(msg); */
+/*       }  */
+/*     } else { */
+    *val = 1e30;
+    *(val + 1) = 1.e30;
+/*     }  */
+    val += 2;
+    ord += 2;
+    width += 2;
+/*     if (gradient[i]>>1) pt->idx[k++]=l++; else l++; */
+/*     if (gradient[i]% 2) pt->idx[k++]=l++; else l++; */
+    l += 2;
+    for (j = 0; j < nvals[i]; j++) {	/* read values */
+      if (3 > fscanf(infile, "%lf %lf %lf\n", ord, width, val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else {
+	ord++;
+	val++;
+	width++;
+      }
+/*       if ((j>0) && (*(ord-1) <= *(ord-2))) { */
+/* 	sprintf(msg, "Abscissa not monotonous in potential %d.",i); */
+/* 	error(msg); */
+/*       } */
+      if (!invar_pot[i])
+	pt->idx[k++] = l++;
+      else
+	l++;
+    }
+/*     pt->begin[i]=pt->xcoord[pt->first[i]]; */
+/*     pt->end[i]  =pt->xcoord[pt->last[i]]; */
+/*     /\* pt->step is average step length.. *\/ */
+/*     pt->step[i] = (pt->end[i]-pt->begin[i])/((real) nvals[i]-1); */
+/*     pt->invstep[i] = 1./pt->step[i];  */
+  }
+
+#endif
+  pt->idxlen = k;
+  init_calc_table(pt, &calc_pot);
+  update_calc_table(pt->table, calc_pot.table, 1);
+}
+
+/*****************************************************************************
+*
 *  init_calc_table: Initialize table used for calculation.
 *
 *  *  Header:  one line for each function with
@@ -1440,6 +1631,45 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	calct->table = optt->table;
 	calct->d2tab = optt->d2tab;
 	calct->idx = optt->idx;
+	break;
+      case 5:			/* Here's work to do */
+	size = optt->ncols;
+	sp = (int *)malloc(size * sizeof(int));
+	/* allocate info block of function table */
+	calct->ncols = size;
+	calct->len = 0;
+	calct->begin = (real *)malloc(size * sizeof(real));
+	calct->end = (real *)malloc(size * sizeof(real));
+	calct->step = (real *)malloc(size * sizeof(real));
+	calct->invstep = (real *)malloc(size * sizeof(real));
+	calct->first = (int *)malloc(size * sizeof(int));
+	calct->last = (int *)malloc(size * sizeof(int));
+	if ((calct->begin == NULL) || (calct->end == NULL) ||
+	    (calct->step == NULL) || (calct->invstep == NULL) ||
+	    (calct->first == NULL) || (calct->last == NULL)) {
+	  error("Cannot allocate info block for calc potential table\n");
+	}
+	for (i = 0; i < size; i++) {
+	  calct->begin[i] = optt->begin[i];
+	  calct->end[i] = optt->end[i];
+	  sp[i] = 10 * (optt->last[i] - optt->first[i] + 1);	/* oversample * 10 */
+	  calct->step[i] = (calct->end[i] - calct->begin[i]) / (sp[i] - 1);
+	  calct->invstep[i] = 1. / calct->step[i];
+	  if (i == 0)
+	    calct->first[i] = 2;
+	  else
+	    calct->first[i] = calct->last[i - 1] + 3;
+	  calct->last[i] = calct->first[i] + sp[i] - 1;
+	  calct->len = calct->last[i] + 1;
+	}
+	calct->table = (real *)malloc(calct->len * sizeof(real));
+	calct->xcoord = (real *)malloc(calct->len * sizeof(real));
+	calct->d2tab = (real *)malloc(calct->len * sizeof(real));
+	calct->idx = (int *)malloc(calct->len * sizeof(int));
+	if ((NULL == calct->table) || (NULL == calct->idx) ||
+	    (NULL == calct->d2tab)) {
+	  error("Cannot allocate memory for potential table");
+	}
 #endif
   }
 }
@@ -1502,7 +1732,67 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	return;
 #endif
       case 3:			/* fall through */
-      case 4:
+      case 4:{
+	  /* Nothing to do */
+	  return;
+	}
+
+      case 5:{
+	  error("This potential is not yet implemented");
+	  size = calc_pot.ncols;
+	  /* calculation loop */
+	  val = xi_calc;
+	  ord = calc_pot.xcoord;
+	  k = 0;
+	  for (i = 0; i < size; i++) {	/* Functions */
+	    /* Set gradients */
+	    *val = 0;
+	    *(val + 1) = 0;
+	    for (j = opt_pot.first[i]; j <= opt_pot.last[i]; j++)
+	      *val +=
+		2 * opt_pot.table[j] * (calc_pot.begin[i] -
+					opt_pot.xcoord[j]) /
+		sqrreal(opt_pot.d2tab[j]) *
+		exp(SQR
+		    ((calc_pot.begin[i] -
+		      opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
+#ifdef EAM
+	    if (i >= size - ntypes)	/* Embedding function */
+	      for (j = opt_pot.first[i]; j <= opt_pot.last[i]; j++)
+		*val +=
+		  2 * opt_pot.table[j] * (calc_pot.end[i] -
+					  opt_pot.xcoord[j]) /
+		  sqrreal(opt_pot.d2tab[j]) *
+		  exp(sqrreal
+		      ((calc_pot.end[i] -
+			opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
+#endif /* EAM */
+
+	    val += 2;
+	    ord += 2;
+	    /* set values */
+	    r = calc_pot.begin[i];
+	    for (k = calc_pot.first[i]; k < calc_pot.last[i]; k++) {
+	      *val = 0;
+	      *ord = r;
+	      for (j = opt_pot.first[i]; j <= opt_pot.last[i]; j++)
+		*val += opt_pot.table[j] *
+		  exp(sqrreal((r - opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
+	      val++;
+	      ord++;
+	      r += calc_pot.step[i];
+	    }
+	    *ord = r;
+	    *val = 0;		/* Cut off at r=r_cut */
+#ifdef EAM
+	    if (i >= size - ntypes)	/* Embedding function not cut off */
+	      for (j = opt_pot.first[i]; j <= opt_pot.last[i]; j++)
+		*val += opt_pot.table[j] *
+		  exp(sqrreal((r - opt_pot.xcoord[j]) / opt_pot.d2tab[j]));
+#endif /* EAM */
+	  }
+	}
+
 	return;
   }
 }
@@ -1603,6 +1893,7 @@ real grad3(pot_table_t *pt, real *xi, int col, real r)
   /* return the derivative */
   return istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
 }
+
 
 /*****************************************************************************
 *
