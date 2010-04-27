@@ -338,6 +338,7 @@ EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 #ifdef DIPOLE
 EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
 EXTERN real dp_tol INIT(1.e-9); /* dipole iteration precision */
+EXTERN real dp_cut INIT(0);      /* cutoff-radius for long-range interactions */
 EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 #endif
 
