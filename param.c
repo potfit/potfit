@@ -309,6 +309,10 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "dp_tol") == 0) {
       getparam("dp_tol", &dp_tol, PARAM_DOUBLE, 1, 1);
     }
+    /* cutoff-radius for long-range interactions */
+    else if (strcasecmp(token, "dp_cut") == 0) {
+      getparam("dp_cut", &dp_cut, PARAM_DOUBLE, 1, 1);
+    }
 #endif
     /* unknown tag */
     else {
