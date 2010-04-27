@@ -145,6 +145,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 #endif /* APOT */
 #endif /* MPI */
 
+
     /* init second derivatives for splines */
     for (col1 = 0; col1 < paircol; col1++) {
       first = calc_pot.first[col1];
@@ -172,28 +173,28 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
-      real  fnval, grad;
+      real  fnval, grad, fvnal_tail, grad_tail, eval;
       atom_t *atom;
 
       neigh_t *neigh;
 
+      vector E_stat = {0.0,0.0,0.0};
+
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
 #endif
-      /* loop over configurations */
+
+      /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
 	us = conf_us[h - firstconf];
+
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
 	  forces[stress_p + 6 * h + i] = 0.;
 
-	apot_table_t *apt = &apot_table;
-	forces[energy_p + h] += apt->charge[0] + apt->dp_alpha[0] * apt->dp_b[0] * apt->dp_c[0];
-	forces[energy_p + h] += apt->charge[1] + apt->dp_alpha[1] * apt->dp_b[1] * apt->dp_c[1];
-
-	/* first loop over atoms: reset forces, densities */
+	/* F I R S T LOOP OVER ATOMS: reset forces, dipoles */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
 	    k = 3 * (cnfstart[h] + i);
@@ -206,10 +207,13 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] = 0.;
 	    forces[k + 2] = 0.;
 	  }
+	BLUBB1: Dipol-Variablen resetten
 	}
-	/* end first loop */
+	/* end F I R S T LOOP */
 
-	/* 2nd loop: calculate pair forces and energies */
+
+	/* S E C O N D loop: calculate short-range and monopole forces,
+	   calculate static field- and dipole-contributions */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -227,6 +231,8 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      col = (typ1 <= typ2) ?
 		typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+	   
+	      /* calculate short-range forces */
 	      if (neigh->r < calc_pot.end[col]) {
 		/* fn value and grad are calculated in the same step */
 		if (uf) {
@@ -259,7 +265,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  forces[l + 1] -= tmp_force.y;
 		  forces[l + 2] -= tmp_force.z;
 #ifdef STRESS
-		  /* also calculate pair stresses */
+		  /* calculate pair stresses */
 		  if (us) {
 		    tmp_force.x *= neigh->r;
 		    tmp_force.y *= neigh->r;
@@ -275,31 +281,85 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 		}
 	      }
+
+	      /* long-range cutoff = short-range cutoff */
+	      if (!dp_cut) {
+		dp_cut = calc_pot.end[col];
+	      }
+
+	      /* calculate monopole forces and static field-contributions */
+	      if (neigh->r < dp_cut) {
+		
+	      HIER: Monopol fnval_tail und grad_tail ausrechnen
+
+		  eval = q_j * fnval_tail;
+		  fnval = q_i * eval;
+		  grad = q_i * q_j * grad_tail;
+
+		  if (self) {
+		    fnval *= 0.5;
+		    grad *= 0.5;
+		  }
+		
+		forces[energy_p + h] += fnval;
+		
+		if (uf) {
+		  tmp_force.x = neigh->dist.x * grad;
+		  tmp_force.y = neigh->dist.y * grad;
+		  tmp_force.z = neigh->dist.z * grad;
+		  forces[k] += tmp_force.x;
+		  forces[k + 1] += tmp_force.y;
+		  forces[k + 2] += tmp_force.z;
+		  l = 3 * neigh->nr;	/* actio = reactio */
+		  forces[l] -= tmp_force.x;
+		  forces[l + 1] -= tmp_force.y;
+		  forces[l + 2] -= tmp_force.z;
+
+		  E_stat.x[i] += neigh->dist.x * eval;
+		  E_stat.y[i] += neigh->dist.y * eval;
+		  E_stat.z[i] += neigh->dist.z * eval;
+
+#ifdef STRESS
+		  /* calculate pair stresses */
+		  if (us) {
+		    tmp_force.x *= neigh->r;
+		    tmp_force.y *= neigh->r;
+		    tmp_force.z *= neigh->r;
+		    stresses = stress_p + 6 * h;
+		    forces[stresses] -= neigh->dist.x * tmp_force.x;
+		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		    forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		    forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  }
+#endif /* STRESS */
+		}
+
+		/* calculate short-range dipoles  */
+		p_SR[i] ... q_j ... alpha, b, c ...
+	      }
+
 	    }			/*  neighbours with bigger atom nr */
 	  }			/* loop over neighbours */
 
-/*then we can calculate contribution of forces right away */
+	  /*then we can calculate contribution of forces right away */
 	  if (uf) {
-#ifdef FWEIGHT
-	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
-#endif /* FWEIGHT */
 	    /* Returned force is difference between */
 	    /* calculated and input force */
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 				SQR(forces[k + 2]));
 	  }
-	}			/* second loop over atoms */
+	}			/* end S E C O N D loop over atoms */
 
-	/* energy contributions */
+
+	/* energy contributions from short-range and monopole interactions */
 	forces[energy_p + h] *= eweight / (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
 #ifdef STRESS
-	/* stress contributions */
+	/* stress contributions from short-range and monopole interactions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
@@ -308,9 +368,19 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	  }
 	}
 #endif /* STRESS */
-	/* limiting constraints per configuration */
-      }				/* loop over configurations */
+
+
+	/* T H I R D loop: calculate whole dipole moment for every atom */
+	/* end T H I R D loop over atoms */
+
+
+	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
+	/* end F O U R T H loop over atoms */
+
+
+      }				/* end M A I N loop over configurations */
     }				/* parallel region */
+
 
     /* dummy constraints (global) */
 #ifdef APOT
@@ -321,6 +391,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 #endif
 
     sum = tmpsum;		/* global sum = local sum  */
+
 #ifdef MPI
     /* reduce global sum */
     sum = 0.;
