@@ -735,7 +735,7 @@ OBJECTS := $(subst .c,.o,${SOURCES})
 #
 ###########################################################################
 
-ifeq (Found,$(shell if `which bazr >& /dev/null`; then echo Found; fi))
+ifeq (Found,$(shell if `which bzr >& /dev/null`; then echo Found; fi))
 	BAZAAR = 1
 else
 	BAZAAR = 0
