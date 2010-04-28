@@ -647,13 +647,13 @@ endif
 
 INTERACTION = 0
 
-# PAIR - simple pair potentials
+# PAIR
 ifneq (,$(findstring pair,${MAKETARGET}))
 CFLAGS += -DPAIR
 INTERACTION = 1
 endif
 
-# EAM or MEAM
+# EAM
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
@@ -731,6 +731,18 @@ OBJECTS := $(subst .c,.o,${SOURCES})
 
 ###########################################################################
 #
+# 	Check for bzr binary
+#
+###########################################################################
+
+ifeq (Found,$(shell if `which bzr >& /dev/null`; then echo Found; fi))
+	BAZAAR = 1
+else
+	BAZAAR = 0
+endif
+
+###########################################################################
+#
 #	 Rules
 #
 ###########################################################################
@@ -768,6 +780,10 @@ else
 endif
 endif
 
+potfit:
+	@echo -e "\nError:\tYou cannot compile potfit without any options."
+	@echo -e "\tAt least an interaction is required.\n"
+
 # Second recursion sets MAKETARGET variable and compiles
 # An empty MAKETARGET variable would create an infinite recursion, so we check
 STAGE2:
@@ -776,6 +792,19 @@ ifneq (,${ERROR})
 else
 ifneq (,${MAKETARGET})
 	@echo "${WARNING}"
+ifeq (1,${BAZAAR})
+	@echo Writing bazaar data to version.h
+	@rm -f version.h
+	@bzr version-info --custom \
+	--template="#define VERSION_INFO \"potfit-{branch_nick} (r{revno})\"\n" > version.h
+	@bzr version-info --custom \
+	--template="#define VERSION_DATE \"{build_date}\"\n" >> version.h
+else
+	@echo Writing fake bazaar data to version.h
+	@rm -f version.h
+	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
+	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
+endif
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
 else
 	@echo 'No TARGET specified.'
