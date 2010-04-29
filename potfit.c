@@ -32,6 +32,7 @@
 
 #define MAIN
 
+#include "version.h"
 #include "potfit.h"
 #include "utils.h"
 
@@ -79,6 +80,8 @@ int main(int argc, char **argv)
   int   i, j, *ntyp = NULL;
   char  msg[255], file[255];
   FILE *outfile;
+
+  printf("This is %s compiled on %s.\n",VERSION_INFO,VERSION_DATE);
 
 #ifdef MPI
   init_mpi(&argc, argv);

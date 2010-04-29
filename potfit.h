@@ -505,6 +505,13 @@ void  sqrt_value(real, real *, real *);
 void  mexp_decay_value(real, real *, real *);
 void  strmm_value(real, real *, real *);
 
+#ifdef DIPOLE
+/* functions for dipole calculations  */
+void shortrange_value(real, real *, real *, real *);
+void coulomb_value(real *, real *, real);
+void coulomb_shift(real *, real, real);
+#endif
+
 /* template for new potential function called newpot */
 
 /* newpot potential */

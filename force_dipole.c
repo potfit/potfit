@@ -91,6 +91,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
   real  tmpsum, sum = 0.;
   int   first, col1, i;
   real *xi = NULL;
+  apot_table_t *apt = &apot_table;
 
   switch (format) {
       case 0:
@@ -173,12 +174,10 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
-      real  fnval, grad, fvnal_tail, grad_tail, eval;
+      real  fnval, grad, fvnal_tail, grad_tail, eval, p_stat_tail;
       atom_t *atom;
 
       neigh_t *neigh;
-
-      vector E_stat = {0.0,0.0,0.0};
 
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
@@ -215,6 +214,10 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	/* S E C O N D loop: calculate short-range and monopole forces,
 	   calculate static field- and dipole-contributions */
 	for (i = 0; i < inconf[h]; i++) {
+	  
+	  vector E_stat[inconf[h]] = {0.0,0.0,0.0};
+	  vector p_stat[inconf[h]] = {0.0,0.0,0.0};
+
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
 	  k = 3 * (cnfstart[h] + i);
@@ -288,13 +291,14 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      }
 
 	      /* calculate monopole forces and static field-contributions */
-	      if (neigh->r < dp_cut) {
+	      if ((neigh->r < dp_cut) && (apt->dp_alpha[typ1])) {
 		
-	      HIER: Monopol fnval_tail und grad_tail ausrechnen
+	      HIER: tabelliertes fnval_tail und grad_tail reinbringen;
+		(fnval gibts analytisch und dann analog zu splines beides bereitstellen);
 
-		  eval = q_j * fnval_tail;
-		  fnval = q_i * eval;
-		  grad = q_i * q_j * grad_tail;
+		  eval = apt->charge[typ2] * fnval_tail;
+		  fnval = apt->charge[typ1] * eval;
+		  grad = apt->charge[typ1] * apt->charge[typ2] * grad_tail;
 
 		  if (self) {
 		    fnval *= 0.5;
@@ -337,7 +341,11 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		}
 
 		/* calculate short-range dipoles  */
-		p_SR[i] ... q_j ... alpha, b, c ...
+		p_stat_tail = shortrange_value(neigh->r, apt->dp_alpha[typ1], 
+					       apt->dp_b[typ1], apt->dp_c[typ1]);
+		p_stat.x[i] += apt->charge[typ2] * neigh->dist.x * p_stat_tail;
+		p_stat.y[i] += apt->charge[typ2] * neigh->dist.y * p_stat_tail;
+		p_stat.z[i] += apt->charge[typ2] * neigh->dist.z * p_stat_tail;
 	      }
 
 	    }			/*  neighbours with bigger atom nr */
@@ -369,13 +377,13 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	}
 #endif /* STRESS */
 
-
+	if(apt->dp_alpha[typ1]){
 	/* T H I R D loop: calculate whole dipole moment for every atom */
 	/* end T H I R D loop over atoms */
 
 
 	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
-	/* end F O U R T H loop over atoms */
+	  /* end F O U R T H loop over atoms */}
 
 
       }				/* end M A I N loop over configurations */

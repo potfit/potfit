@@ -617,4 +617,69 @@ void debug_apot()
 
 #endif /* DEBUG */
 
+#ifdef DIPOLE
+
+/******************************************************************************
+*
+* tail of coloumb potential 
+*
+******************************************************************************/
+
+void coulomb_value(real *ftail, real *gtail, real r)
+{
+  static real x[4];
+
+  x[0] = r * r;
+  x[1] = 2 * dp_kappa / sqrt(M_PI);
+  x[2] = dp_kappa * dp_kappa;
+  x[3] = exp(-x[0]*x[2]);
+
+  *ftail = dp_eps * erfc(dp_kappa * r) / r;
+  *gtail = -(*pot + x[1] * x[3])/x[0];
+}
+
+/******************************************************************************
+*
+* shifted tail of coloumb potential
+*
+******************************************************************************/
+
+void coulomb_shift(real *fnval_tail, real r, real dp_kappa)
+{
+  static real ftail, gtail, ftail_cut, gtail_cut;
+
+  coulomb_value(ftail, gtail, r);
+  coulomb_value(ftail_cut, gtail_cut, dp_cut);
+  *fnval_tail = ftail - ftail_cut - r * (r - dp_cut) * gtail_cut;
+}
+
+/******************************************************************************
+*
+* tail of dipole potential (mehr als eins nötig!) 
+*
+******************************************************************************/
+
+
+/******************************************************************************
+*
+* short-range part of dipole moments 
+*
+******************************************************************************/
+
+void shortrange_value(real r, real *a, real *b, real *c)
+{
+  static real x[5], y[2];
+
+  x[0] = b * r;
+  x[1] = x[0] * x[0];
+  x[2] = x[1] * x[0];
+  x[3] = x[1] * x[1];
+  x[4] = 1 + x[0] + x[1]/2 +  x[2]/6 +  x[3]/24;
+  y[0] = r * r;
+  y[1] = (a * c) / (r * y[2]);
+
+  return y[1] * x[4] * exp(-x[0]);
+}
+
+#endif /* DIPOLE */
 #endif /* APOT */
