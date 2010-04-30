@@ -81,11 +81,16 @@ int main(int argc, char **argv)
   char  msg[255], file[255];
   FILE *outfile;
 
-  printf("This is %s compiled on %s.\n",VERSION_INFO,VERSION_DATE);
-
 #ifdef MPI
   init_mpi(&argc, argv);
 #endif
+
+  if (myid == 0) {
+    printf("This is %s compiled on %s.\n", VERSION_INFO, VERSION_DATE);
+#ifdef MPI
+    printf("Starting up MPI with %d processes.\n", num_cpus);
+#endif
+  }
 
   /* assign correct force routine */
 #ifdef PAIR
