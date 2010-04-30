@@ -467,13 +467,11 @@ void read_config(char *filename)
 		/* pre-compute index and shift into potential table */
 		/* pair potential */
 		if (!sh_dist) {
-		  if (format == 3 || format == 0) {
+		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
 			     nconf, i - natoms);
-//                printf("%f %f %f %f %f %f\n", d.x,d.y,d.z,coheng[nconf],stresses->xx,stresses->yz);
-
 		      fflush(stdout);
 		      error("short distance in config.c!");
 		    }
@@ -482,20 +480,7 @@ void read_config(char *filename)
 		    shift = (rr - slot * calc_pot.step[col]) * istep;
 		    slot += calc_pot.first[col];
 		    step = calc_pot.step[col];
-#ifdef APOT
-		    pot_list[col] =
-		      (int **)realloc(pot_list[col],
-				      (pot_list_length[col] +
-				       1) * sizeof(int *));
-		    pot_list[col][pot_list_length[col]] =
-		      (int *)malloc(2 * sizeof(int));
-		    pot_list[col][pot_list_length[col]][0] = i;
-		    pot_list[col][pot_list_length[col]][1] = k;
-		    pot_list_length[col]++;
-#endif
-
 		  } else {	/* format == 4 ! */
-
 		    klo = calc_pot.first[col];
 		    khi = calc_pot.last[col];
 		    /* bisection */
@@ -819,104 +804,44 @@ void read_config(char *filename)
 
 void update_slots()
 {
-  int   i, j, col, col2, typ1, typ2, a2;
+  int   i, j, col, col2, typ1, typ2;
   real  r, rr;
   atom_t *atom;
 
-  printf("ID=%d firstatom=%d\n", myid, firstatom);
-/*  for (i=firstatom;i<(fistatom+myatoms);i++) {*/
-/*  for (a2 = 0; a2 < pot_list_length[a1]; a2++) {*/
-/*    atom = conf_atoms - firstatom;*/
-/*    i = pot_list[a1][a2][0];*/
-/*    j = pot_list[a1][a2][1];*/
-/*    if (i >= firstatom && i < (firstatom + myatoms)) {*/
-/*      atom += i;*/
-/*      if (&atom->typ != NULL) {*/
-/*        typ1 = atom->typ;*/
-/*        typ2 = atom->neigh[j].typ;*/
-/*        col =*/
-/*          (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)*/
-/*          : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);*/
-/*        if (force_update || smooth_pot[col]) {*/
-/*          r = atom->neigh[j].r;*/
-/*          if (r < calc_pot.end[col]) {*/
-  /* update slots for pair potential part, slot 0 */
-/*            rr = r - calc_pot.begin[col];*/
-/*            atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);*/
-/*            atom->neigh[j].step[0] = calc_pot.step[col];*/
-/*            atom->neigh[j].shift[0] =*/
-/*              (rr -*/
-/*               atom->neigh[j].slot[0] * calc_pot.step[col]) **/
-/*              calc_pot.invstep[col];*/
-/*#if defined EAM*/
-/*            col2 = paircol + typ2;*/
-  /* update slots for eam transfer functions, slot 1 */
-/*            rr = r - calc_pot.begin[col2];*/
-/*            atom->neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);*/
-/*            atom->neigh[j].step[1] = calc_pot.step[col2];*/
-/*            atom->neigh[j].shift[1] =*/
-/*              (rr -*/
-/*               atom->neigh[j].slot[1] * calc_pot.step[col2]) **/
-/*              calc_pot.invstep[col2];*/
-/*            atom->neigh[j].slot[1] += calc_pot.first[col2];*/
-/*#endif*/
-/*            atom->neigh[j].slot[0] += calc_pot.first[col];*/
-/*            atom->neigh[j].step[0] = calc_pot.step[col];*/
-/*          }*/
-/*        }*/
-/*      }*/
-/*    }*/
-/*  }*/
+  for (i = firstatom; i < (firstatom + myatoms); i++) {
+    atom = conf_atoms - firstatom + i;
+    typ1 = atom->typ;
+    for (j = 0; j < atom->n_neigh; j++) {
+      typ2 = atom->neigh[j].typ;
+      col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+	: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+      r = atom->neigh[j].r;
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	/* update slots for pair potential part, slot 0 */
+	atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	atom->neigh[j].step[0] = calc_pot.step[col];
+	atom->neigh[j].shift[0] =
+	  (rr -
+	   atom->neigh[j].slot[0] * calc_pot.step[col]) *
+	  calc_pot.invstep[col];
+#if defined EAM
+	col2 = paircol + typ2;
+/*        update slots for eam transfer functions, slot 1*/
+	rr = r - calc_pot.begin[col2];
+	atom->neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
+	atom->neigh[j].step[1] = calc_pot.step[col2];
+	atom->neigh[j].shift[1] =
+	  (rr -
+	   atom->neigh[j].slot[1] * calc_pot.step[col2]) *
+	  calc_pot.invstep[col2];
+	atom->neigh[j].slot[1] += calc_pot.first[col2];
+#endif
+	atom->neigh[j].slot[0] += calc_pot.first[col];
+	atom->neigh[j].step[0] = calc_pot.step[col];
+      }
+    }
+  }
 }
-
-/*void new_slots(int a1, int force_update)*/
-/*{*/
-/*  int   i, j, col, col2, typ1, typ2, a2;*/
-/*  real  r, rr;*/
-/*  atom_t *atom;*/
-
-/*  for (a2 = 0; a2 < pot_list_length[a1]; a2++) {*/
-/*    atom = conf_atoms - firstatom;*/
-/*    i = pot_list[a1][a2][0];*/
-/*    j = pot_list[a1][a2][1];*/
-/*    if (i >= firstatom && i < (firstatom + myatoms)) {*/
-/*      atom += i;*/
-/*      if (&atom->typ != NULL) {*/
-/*        typ1 = atom->typ;*/
-/*        typ2 = atom->neigh[j].typ;*/
-/*        col =*/
-/*          (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)*/
-/*          : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);*/
-/*        if (force_update || smooth_pot[col]) {*/
-/*          r = atom->neigh[j].r;*/
-/*          if (r < calc_pot.end[col]) {*/
-/*             update slots for pair potential part, slot 0*/
-/*            rr = r - calc_pot.begin[col];*/
-/*            atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);*/
-/*            atom->neigh[j].step[0] = calc_pot.step[col];*/
-/*            atom->neigh[j].shift[0] =*/
-/*              (rr -*/
-/*               atom->neigh[j].slot[0] * calc_pot.step[col]) **/
-/*              calc_pot.invstep[col];*/
-/*#if defined EAM*/
-/*            col2 = paircol + typ2;*/
-/*             update slots for eam transfer functions, slot 1*/
-/*            rr = r - calc_pot.begin[col2];*/
-/*            atom->neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);*/
-/*            atom->neigh[j].step[1] = calc_pot.step[col2];*/
-/*            atom->neigh[j].shift[1] =*/
-/*              (rr -*/
-/*               atom->neigh[j].slot[1] * calc_pot.step[col2]) **/
-/*              calc_pot.invstep[col2];*/
-/*            atom->neigh[j].slot[1] += calc_pot.first[col2];*/
-/*#endif*/
-/*            atom->neigh[j].slot[0] += calc_pot.first[col];*/
-/*            atom->neigh[j].step[0] = calc_pot.step[col];*/
-/*          }*/
-/*        }*/
-/*      }*/
-/*    }*/
-/*  }*/
-/*}*/
 
 #endif
