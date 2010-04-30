@@ -215,65 +215,61 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  /* loop over neighbours */
 	  for (j = 0; j < atom->n_neigh; j++) {
 	    neigh = atom->neigh + j;
-	    /* only use neigbours with higher numbers,
-	       others are calculated by actio=reactio */
-	    if (neigh->nr >= i + cnfstart[h]) {
-	      /* In small cells, an atom might interact with itself */
-	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-	      typ2 = neigh->typ;
-	      /* find correct column */
-	      col = (typ1 <= typ2) ?
-		typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-	      if (neigh->r < calc_pot.end[col]) {
-		/* fn value and grad are calculated in the same step */
-		if (uf) {
-		  fnval = splint_comb_dir(&calc_pot, xi, col,
-					  neigh->slot[0],
-					  neigh->shift[0],
-					  neigh->step[0], &grad);
-		} else {
-		  fnval = splint_dir(&calc_pot, xi, col,
-				     neigh->slot[0],
-				     neigh->shift[0], neigh->step[0]);
-		}
-		/* avoid double counting if atom is interacting with a
-		   copy of itself */
-		if (self) {
-		  fnval *= 0.5;
-		  grad *= 0.5;
-		}
-		forces[energy_p + h] += fnval;
-
-		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad;
-		  tmp_force.y = neigh->dist.y * grad;
-		  tmp_force.z = neigh->dist.z * grad;
-		  forces[k] += tmp_force.x;
-		  forces[k + 1] += tmp_force.y;
-		  forces[k + 2] += tmp_force.z;
-		  l = 3 * neigh->nr;	/* actio = reactio */
-		  forces[l] -= tmp_force.x;
-		  forces[l + 1] -= tmp_force.y;
-		  forces[l + 2] -= tmp_force.z;
-#ifdef STRESS
-		  /* also calculate pair stresses */
-		  if (us) {
-		    tmp_force.x *= neigh->r;
-		    tmp_force.y *= neigh->r;
-		    tmp_force.z *= neigh->r;
-		    stresses = stress_p + 6 * h;
-		    forces[stresses] -= neigh->dist.x * tmp_force.x;
-		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		    forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		    forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
-		  }
-#endif /* STRESS */
-		}
+	    /* In small cells, an atom might interact with itself */
+	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+	    typ2 = neigh->typ;
+	    /* find correct column */
+	    col = (typ1 <= typ2) ?
+	      typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+	      : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+	    if (neigh->r < calc_pot.end[col]) {
+	      /* fn value and grad are calculated in the same step */
+	      if (uf) {
+		fnval = splint_comb_dir(&calc_pot, xi, col,
+					neigh->slot[0],
+					neigh->shift[0],
+					neigh->step[0], &grad);
+	      } else {
+		fnval = splint_dir(&calc_pot, xi, col,
+				   neigh->slot[0],
+				   neigh->shift[0], neigh->step[0]);
 	      }
-	    }			/*  neighbours with bigger atom nr */
+	      /* avoid double counting if atom is interacting with a
+	         copy of itself */
+	      if (self) {
+		fnval *= 0.5;
+		grad *= 0.5;
+	      }
+	      forces[energy_p + h] += fnval;
+
+	      if (uf) {
+		tmp_force.x = neigh->dist.x * grad;
+		tmp_force.y = neigh->dist.y * grad;
+		tmp_force.z = neigh->dist.z * grad;
+		forces[k] += tmp_force.x;
+		forces[k + 1] += tmp_force.y;
+		forces[k + 2] += tmp_force.z;
+		l = 3 * neigh->nr;	/* actio = reactio */
+		forces[l] -= tmp_force.x;
+		forces[l + 1] -= tmp_force.y;
+		forces[l + 2] -= tmp_force.z;
+#ifdef STRESS
+		/* also calculate pair stresses */
+		if (us) {
+		  tmp_force.x *= neigh->r;
+		  tmp_force.y *= neigh->r;
+		  tmp_force.z *= neigh->r;
+		  stresses = stress_p + 6 * h;
+		  forces[stresses] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		}
+#endif /* STRESS */
+	      }
+	    }
 	  }			/* loop over neighbours */
 
 /*then we can calculate contribution of forces right away */

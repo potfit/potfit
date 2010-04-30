@@ -417,10 +417,7 @@ void read_config(char *filename)
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
       atoms[i].n_neigh = 0;
-      /* allocate neighbor table */
-      atoms[i].neigh = (neigh_t *)malloc(sizeof(neigh_t));
-
-      for (j = natoms; j < natoms + count; j++) {
+      for (j = i; j < natoms + count; j++) {
 	d.x = atoms[j].pos.x - atoms[i].pos.x;
 	d.y = atoms[j].pos.y - atoms[i].pos.y;
 	d.z = atoms[j].pos.z - atoms[i].pos.z;
