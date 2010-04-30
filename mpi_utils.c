@@ -43,13 +43,10 @@
 void init_mpi(int *argc_pointer, char **argv)
 {
   /* Initialize MPI */
-  MPI_Init(argc_pointer, &argv);
+  if (MPI_Init(argc_pointer, &argv) != MPI_SUCCESS && myid == 0)
+    fprintf(stderr, "MPI_Init failed!\n");
   MPI_Comm_size(MPI_COMM_WORLD, &num_cpus);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-  if (0 == myid) {
-    fprintf(stderr, "%s\n", argv[0]);
-    fprintf(stderr, "Starting up MPI with %d processes.\n", num_cpus);
-  }
 }
 
 
@@ -91,7 +88,7 @@ void dbb(int i)
  *
  **************************************************************************/
   /* 9: number of entries in struct atom_t  */
-#define MAX_MPI_COMPONENTS 9
+#define MAX_MPI_COMPONENTS 8
 
 void broadcast_params()
 {
@@ -117,9 +114,9 @@ void broadcast_params()
   blklens[1] = 1;         typen[1] = MPI_INT;     /* nr */
   blklens[2] = 1;         typen[2] = REAL;        /* r */
   blklens[3] = 1;         typen[3] = MPI_VEKTOR;  /* dist */
-  blklens[4] = 2;         typen[4] = MPI_INT;     /* slot */
-  blklens[5] = 2;         typen[5] = REAL;        /* shift */
-  blklens[6] = 2;         typen[6] = REAL;        /* step */
+  blklens[4] = SLOTS;     typen[4] = MPI_INT;     /* slot */
+  blklens[5] = SLOTS;     typen[5] = REAL;        /* shift */
+  blklens[6] = SLOTS;     typen[6] = REAL;        /* step */
   /* *INDENT-ON* */
   MPI_Address(&testneigh.typ, displs);
   MPI_Address(&testneigh.nr, &displs[1]);
@@ -143,25 +140,25 @@ void broadcast_params()
   blklens[2] = 1;         typen[2] = MPI_VEKTOR;  /* pos */
   blklens[3] = 1;         typen[3] = MPI_VEKTOR;  /* force */
   blklens[4] = 1;         typen[4] = REAL;        /* absforce */
-  blklens[5] = MAXNEIGH;  typen[5] = MPI_NEIGH;   /* neigh */
-  blklens[6] = 1;         typen[6] = MPI_INT;     /* conf */
-  size=7;
+  blklens[5] = 1;         typen[5] = MPI_INT;     /* conf */
+  size=6;
 #if defined EAM
-  blklens[7] = 1;         typen[7] = REAL;        /* rho */
-  blklens[8] = 1;         typen[8] = REAL;        /* gradF */
+  blklens[6] = 1;         typen[6] = REAL;        /* rho */
+  blklens[7] = 1;         typen[7] = REAL;        /* gradF */
   size += 2;
 #endif
+  /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
+
   /* *INDENT-ON* */
   MPI_Address(&testatom.typ, &displs[0]);
   MPI_Address(&testatom.n_neigh, &displs[1]);
   MPI_Address(&testatom.pos, &displs[2]);
   MPI_Address(&testatom.force, &displs[3]);
   MPI_Address(&testatom.absforce, &displs[4]);
-  MPI_Address(testatom.neigh, &displs[5]);
-  MPI_Address(&testatom.conf, &displs[6]);
+  MPI_Address(&testatom.conf, &displs[5]);
 #if defined EAM
-  MPI_Address(&testatom.rho, &displs[7]);
-  MPI_Address(&testatom.gradF, &displs[8]);
+  MPI_Address(&testatom.rho, &displs[6]);
+  MPI_Address(&testatom.gradF, &displs[7]);
 #endif
   for (i = 1; i < size; i++) {
     displs[i] -= displs[0];
@@ -179,7 +176,6 @@ void broadcast_params()
   MPI_Bcast(&anneal_temp, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (myid > 0) {
-/*     na_typ = (int *)malloc(ntypes * sizeof(int)); */
     inconf = (int *)malloc(nconf * sizeof(int));
     cnfstart = (int *)malloc(nconf * sizeof(int));
     force_0 = (real *)malloc(mdim * sizeof(real));
@@ -190,6 +186,8 @@ void broadcast_params()
   MPI_Bcast(cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(force_0, mdim, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(conf_weight, nconf, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&maxneigh, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  printf("ID=%d maxneigh=%d\n", myid, maxneigh);
 
   /* Broadcast weights... */
   MPI_Bcast(&eweight, 1, REAL, 0, MPI_COMM_WORLD);
@@ -197,11 +195,9 @@ void broadcast_params()
   /* Broadcast the potential... */
   MPI_Bcast(&format, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&calc_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-//  MPI_Bcast(&calc_pot.idxlen,1,MPI_INT,0,MPI_COMM_WORLD);
   MPI_Bcast(&calc_pot.ncols, 1, MPI_INT, 0, MPI_COMM_WORLD);
   size = calc_pot.ncols;
   calclen = calc_pot.len;
-  //ndim=calc_pot.idxlen;
   if (myid > 0) {
     calc_pot.begin = (real *)malloc(size * sizeof(real));
     calc_pot.end = (real *)malloc(size * sizeof(real));
@@ -212,7 +208,6 @@ void broadcast_params()
     calc_pot.table = (real *)malloc(calclen * sizeof(real));
     calc_pot.xcoord = (real *)malloc(calclen * sizeof(real));
     calc_pot.d2tab = (real *)malloc(calclen * sizeof(real));
-/*    calc_pot.idx = (int *) malloc(ndim * sizeof(int));*/
   }
   MPI_Bcast(calc_pot.begin, size, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.end, size, REAL, 0, MPI_COMM_WORLD);
@@ -223,7 +218,6 @@ void broadcast_params()
   MPI_Bcast(calc_pot.table, calclen, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.d2tab, calclen, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.xcoord, calclen, REAL, 0, MPI_COMM_WORLD);
-/*  MPI_Bcast(calc_pot.idx,ndim,MPI_INT,0,MPI_COMM_WORLD);*/
 
 #ifdef APOT
   MPI_Bcast(&do_smooth, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -335,6 +329,7 @@ void broadcast_params()
   conf_atoms = (atom_t *)malloc(myatoms * sizeof(atom_t));
   MPI_Scatterv(atoms, atom_len, atom_dist, MPI_ATOM,
 	       conf_atoms, myatoms, MPI_ATOM, 0, MPI_COMM_WORLD);
+  broadcast_neighbors();
   conf_vol = (real *)malloc(myconf * sizeof(real));
   conf_uf = (int *)malloc(myconf * sizeof(real));
   conf_us = (int *)malloc(myconf * sizeof(real));
@@ -348,9 +343,29 @@ void broadcast_params()
 
 /***************************************************************************
  *
+ * scatter dynamic neighbor table
+ *
+ **************************************************************************/
+
+void broadcast_neighbors()
+{
+  int   i, neighs;
+  neigh_t neigh[maxneigh];
+
+  for (i = 0; i < natoms; i++) {
+    if (myid > 0 && i >= firstatom && (i - firstatom) < atom_len[myid]) {
+      printf("ID=%d i=%d - My Atom!\n", myid, i);
+
+    }
+  }
+}
+
+/***************************************************************************
+ *
  * potsync: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
+
 #if defined EAM && !defined APOT
 
 void potsync()

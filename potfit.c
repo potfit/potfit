@@ -81,11 +81,14 @@ int main(int argc, char **argv)
   char  msg[255], file[255];
   FILE *outfile;
 
-  printf("This is %s compiled on %s.\n",VERSION_INFO,VERSION_DATE);
-
 #ifdef MPI
   init_mpi(&argc, argv);
 #endif
+
+  if (myid == 0) {
+    printf("This is %s compiled on %s.\n", VERSION_INFO, VERSION_DATE);
+    printf("Starting up MPI with %d processes.\n", num_cpus);
+  }
 
   /* assign correct force routine */
 #ifdef PAIR
@@ -225,7 +228,7 @@ int main(int argc, char **argv)
 #endif
   update_calc_table(opt_pot.table, calc_pot.table, 1);
   for (i = 0; i < paircol; i++)
-    new_slots(i, 1);
+    update_slots();
 #endif
 
   /* Select correct spline interpolation and other functions */

@@ -46,8 +46,6 @@
 #define REAL MPI_DOUBLE
 #endif
 
-#define MAXNEIGH 400
-
 #if defined EAM
 #define DUMMY_WEIGHT 100.
 #endif
@@ -99,12 +97,12 @@ typedef struct {
   vector pos;
   vector force;
   real  absforce;
-  neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
 #if defined EAM
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
 #endif
+  neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
 typedef struct {
@@ -185,6 +183,7 @@ EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
 EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VEKTOR;
 #endif
@@ -234,6 +233,7 @@ EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
 EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
 EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
 EXTERN int have_elements INIT(0);	/* do we have the elements ? */
+EXTERN int maxneigh INIT(0);	/* maximum number of neighbors */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
 EXTERN real *coheng INIT(NULL);	/* Cohesive energy for each config */
@@ -426,6 +426,7 @@ void  init_mpi(int *argc_pointer, char **argv);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
 void  dbb(int i);
+void  broadcast_neighbors();
 void  potsync();
 #endif
 #ifdef PDIST
@@ -453,7 +454,7 @@ real  apot_punish(real *, real *);
 real  apot_grad(real, real *, void (*function) (real, real *, real *));
 
 /* potential.c */
-void  new_slots(int, int);	/* new slots for smooth cutoff */
+void  update_slots();		/* new slots for smooth cutoff */
 
 #if defined PAIR
 /* chempot.c */
