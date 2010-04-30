@@ -560,42 +560,44 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   } while (strcmp(buffer, "type") != 0 && strcmp(buffer, "dipole") != 0);
 
   /* check for dipole keyword */
- if (strcmp("dipole", buffer) != 0) {
-	sprintf(msg, "No dipole option found in %s.\n", filename);
-	error(msg);
-      }
+  if (strcmp("dipole", buffer) != 0) {
+    sprintf(msg, "No dipole option found in %s.\n", filename);
+    error(msg);
+  }
 
-  /* read dipole parameters */
-    for (i = 0; i < ntypes; i++) {
-      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->charge[i],
-		     &apt->pmin[apt->number][i],
-		     &apt->pmax[apt->number][i])) {
-	sprintf(msg, "Could not read charge for atomtype #%d\n",
-		i);
-	error(msg);
-      }
-      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_alpha[i],
-		     &apt->pmin[apt->number + 1][i],
-		     &apt->pmax[apt->number + 1][i])) {
-	sprintf(msg, "Could not read polarisability for atomtype #%d\n",
-		i);
-	error(msg);
-      }
-      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_b[i],
-		     &apt->pmin[apt->number + 2][i],
-		     &apt->pmax[apt->number + 2][i])) {
-      	sprintf(msg, "Could not read parameter dp_b for atomtype #%d\n",
-      		i);
-      	error(msg);
-      }
-      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_c[i],
-      		     &apt->pmin[apt->number + 3][i],
-		     &apt->pmax[apt->number + 3][i])) {
-      	sprintf(msg, "Could not read parameter dp_c for atomtype #%d\n",
-      		i);
-      	error(msg);
-      }
-    }
+ /* read dipole parameters */
+ for (i = 0; i < ntypes; i++) {
+   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->charge[i],
+		  &apt->pmin[apt->number][i],
+		  &apt->pmax[apt->number][i])) {
+     sprintf(msg, "Could not read charge for atomtype #%d\n",
+	     i);
+     error(msg);
+   }
+   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_alpha[i],
+		  &apt->pmin[apt->number + 1][i],
+		  &apt->pmax[apt->number + 1][i])) {
+     sprintf(msg, "Could not read polarisability for atomtype #%d\n",
+	     i);
+     error(msg);
+   }
+ }
+ for (i = 0; i < apt->number; i++) {
+   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_b[i],
+		  &apt->pmin[apt->number + 2][i],
+		  &apt->pmax[apt->number + 2][i])) {
+     sprintf(msg, "Could not read parameter dp_b for potential #%d\n",
+	     i);
+     error(msg);
+   }
+   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_c[i],
+		  &apt->pmin[apt->number + 3][i],
+		  &apt->pmax[apt->number + 3][i])) {
+     sprintf(msg, "Could not read parameter dp_c for potential #%d\n",
+	     i);
+     error(msg);
+   }
+ }
 #endif
   /* skip to next type or global section */
   do {
@@ -954,7 +956,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 #ifdef DIPOLE
-  apt->total_par += (4 * ntypes);
+  apt->total_par += (2 * ntypes);
+  apt->total_par += (2 * number);
 #endif
 
   /* initialize function table and write indirect index */
@@ -979,7 +982,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 #ifdef DIPOLE
-  pt->len += (4 * ntypes);
+  pt->len += (2 * ntypes);
+  pt->len += (2 * number);
 #endif
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
@@ -1052,16 +1056,26 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 #ifdef DIPOLE
-   i = apt->number;
-    for (j = 0; j < (4 * ntypes); j++) {
-      *val = apt->values[i][j];
-      pt->idx[k] = l++;
-      apt->idxpot[k] = i;
-      apt->idxparam[k++] = j;
-      val++;
-    }
-    pt->idxlen += (4 * ntypes);
-    global_idx += (4 * ntypes);
+  i = apt->number;
+  for (j = 0; j < (2 * ntypes); j++) {
+    *val = apt->values[i][j];
+    pt->idx[k] = l++;
+    apt->idxpot[k] = i;
+    apt->idxparam[k++] = j;
+    val++;
+  }
+  i = apt->number;
+  for (j = 0; j < (2 * number); j++) {
+    *val = apt->values[i][j];
+    pt->idx[k] = l++;
+    apt->idxpot[k] = i;
+    apt->idxparam[k++] = j;
+    val++;
+  }
+  pt->idxlen += (2 * ntypes);
+  pt->idxlen += (2 * number);
+  global_idx += (2 * ntypes);
+  global_idx += (2 * number);
 #endif
 
   if (have_globals) {

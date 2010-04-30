@@ -119,6 +119,9 @@ typedef struct {
   int  *last;			/* index of last entry */
   real *xcoord;			/* the x-coordinates of sampling points */
   real *table;			/* the actual data */
+#ifdef DIPOLE
+  real *table_dipole;           /* static data for tail of coulomb potential */
+#endif 
   real *d2tab;			/* second derivatives of table data for spline int */
   int  *idx;			/* indirect indexing */
 } pot_table_t;

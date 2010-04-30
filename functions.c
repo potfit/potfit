@@ -635,7 +635,7 @@ void coulomb_value(real *ftail, real *gtail, real r)
   x[3] = exp(-x[0]*x[2]);
 
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
-  *gtail = -(*pot + x[1] * x[3])/x[0];
+  *gtail = -(*ftail + x[1] * x[3])/x[0];
 }
 
 /******************************************************************************

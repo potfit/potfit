@@ -91,6 +91,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
   real  tmpsum, sum = 0.;
   int   first, col1, i;
   real *xi = NULL;
+  real *xi_d = NULL;
   apot_table_t *apt = &apot_table;
 
   switch (format) {
@@ -104,6 +105,8 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       case 5:
 	xi = calc_pot.table;	/* we need to update the calc-table */
   }
+
+  xi_d = calc_pot.table_dipole;
 
   /* This is the start of an infinite loop */
   while (1) {
@@ -174,7 +177,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
-      real  fnval, grad, fvnal_tail, grad_tail, eval, p_stat_tail;
+      real  fnval, grad, fnval_tail, grad_tail, eval, p_stat_tail;
       atom_t *atom;
 
       neigh_t *neigh;
@@ -206,7 +209,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] = 0.;
 	    forces[k + 2] = 0.;
 	  }
-	BLUBB1: Dipol-Variablen resetten
+	  /* BLUBB1: Dipol-Variablen resetten */
 	}
 	/* end F I R S T LOOP */
 
@@ -215,8 +218,8 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	   calculate static field- and dipole-contributions */
 	for (i = 0; i < inconf[h]; i++) {
 	  
-	  vector E_stat[inconf[h]] = {0.0,0.0,0.0};
-	  vector p_stat[inconf[h]] = {0.0,0.0,0.0};
+	  vector E_stat[inconf[h]];
+	  vector p_stat[inconf[h]];
 
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -291,10 +294,13 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      }
 
 	      /* calculate monopole forces and static field-contributions */
-	      if ((neigh->r < dp_cut) && (apt->dp_alpha[typ1])) {
+	      if ((neigh->r < dp_cut) && (apt->dp_alpha[typ1])&& 
+		  (apt->dp_b[col]) && (apt->dp_c[col])) {
 		
-	      HIER: tabelliertes fnval_tail und grad_tail reinbringen;
-		(fnval gibts analytisch und dann analog zu splines beides bereitstellen);
+		  fnval_tail = splint_comb_dir(&calc_pot, xi_d, col,
+					  neigh->slot[0],
+					  neigh->shift[0],
+					  neigh->step[0], &grad_tail);
 
 		  eval = apt->charge[typ2] * fnval_tail;
 		  fnval = apt->charge[typ1] * eval;
@@ -321,7 +327,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 		  E_stat.x[i] += neigh->dist.x * eval;
 		  E_stat.y[i] += neigh->dist.y * eval;
-		  E_stat.z[i] += neigh->dist.z * eval;
+		  E_stat.z[i] += neigh->dist.z * eval; 
 
 #ifdef STRESS
 		  /* calculate pair stresses */
