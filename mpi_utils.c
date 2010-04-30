@@ -43,13 +43,10 @@
 void init_mpi(int *argc_pointer, char **argv)
 {
   /* Initialize MPI */
-  MPI_Init(argc_pointer, &argv);
+  if (MPI_Init(argc_pointer, &argv) != MPI_SUCCESS && myid == 0)
+    fprintf(stderr, "MPI_Init failed!\n");
   MPI_Comm_size(MPI_COMM_WORLD, &num_cpus);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-  if (0 == myid) {
-    fprintf(stderr, "%s\n", argv[0]);
-    fprintf(stderr, "Starting up MPI with %d processes.\n", num_cpus);
-  }
 }
 
 
@@ -117,9 +114,9 @@ void broadcast_params()
   blklens[1] = 1;         typen[1] = MPI_INT;     /* nr */
   blklens[2] = 1;         typen[2] = REAL;        /* r */
   blklens[3] = 1;         typen[3] = MPI_VEKTOR;  /* dist */
-  blklens[4] = 2;         typen[4] = MPI_INT;     /* slot */
-  blklens[5] = 2;         typen[5] = REAL;        /* shift */
-  blklens[6] = 2;         typen[6] = REAL;        /* step */
+  blklens[4] = SLOTS;     typen[4] = MPI_INT;     /* slot */
+  blklens[5] = SLOTS;     typen[5] = REAL;        /* shift */
+  blklens[6] = SLOTS;     typen[6] = REAL;        /* step */
   /* *INDENT-ON* */
   MPI_Address(&testneigh.typ, displs);
   MPI_Address(&testneigh.nr, &displs[1]);
@@ -333,8 +330,8 @@ void broadcast_params()
   MPI_Scatter(conf_dist, 1, MPI_INT, &firstconf, 1, MPI_INT, 0,
 	      MPI_COMM_WORLD);
   conf_atoms = (atom_t *)malloc(myatoms * sizeof(atom_t));
-  MPI_Scatterv(atoms, atom_len, atom_dist, MPI_ATOM,
-	       conf_atoms, myatoms, MPI_ATOM, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(atoms, atom_len, atom_dist, MPI_ATOM, conf_atoms, myatoms,
+	       MPI_ATOM, 0, MPI_COMM_WORLD);
   conf_vol = (real *)malloc(myconf * sizeof(real));
   conf_uf = (int *)malloc(myconf * sizeof(real));
   conf_us = (int *)malloc(myconf * sizeof(real));

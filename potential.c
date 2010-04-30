@@ -147,7 +147,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 #else
       if (size == ncols) {
 #endif
-	printf("Using %s potential from file %s\n", interaction, filename);
+	printf("Using %s potentials from file %s\n", interaction, filename);
       } else {
 	fprintf(stderr, "\n");
 	sprintf(msg,
@@ -840,9 +840,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  /* Only print warning if we are optimizing */
 	  if (opt) {
 	    if (apt->values[i][j] < apt->pmin[i][j])
-		    apt->values[i][j] = apt->pmin[i][j];
+	      apt->values[i][j] = apt->pmin[i][j];
 	    if (apt->values[i][j] > apt->pmax[i][j])
-		    apt->values[i][j] = apt->pmax[i][j];
+	      apt->values[i][j] = apt->pmax[i][j];
 	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,
 		    "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nResetting it to %f.\n",
