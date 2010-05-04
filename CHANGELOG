@@ -1,6 +1,13 @@
+devel-live
++ remove pot_list completely
++ change MAXNEIGH to dynamic array, not working for MPI
++ only save new neighbors, may break some other branches
+  but speeds up the optimization significantly
+  calculate forces with actio=reactio
+
 bzr-20100426
-+ start migration to bazaar vcs 
-+ prepare trunk: 
++ start migration to bazaar vcs
++ prepare trunk:
 	removed .revisions file
 	moved potscale to util directory
 	removed html directory

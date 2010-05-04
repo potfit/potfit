@@ -237,18 +237,13 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   }
 #endif
   apt->names = (char **)malloc(size * sizeof(char *));
-  pot_list_length = (int *)malloc(size * sizeof(int));
-  pot_list = (int ***)malloc(size * sizeof(int **));
   for (i = 0; i < size; i++) {
     apt->names[i] = (char *)malloc(20 * sizeof(char));
-    pot_list[i] = (int **)malloc(sizeof(int *));
-    pot_list_length[i] = 0;
   }
   if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL)
       || (apt->fvalue == NULL) || (apt->names == NULL) || (apt->pmin == NULL)
       || (apt->pmax == NULL) || (apt->param_name == NULL)
-      || (apt->values == NULL) || (pot_list_length == NULL)
-      || (pot_list == NULL)) {
+      || (apt->values == NULL)) {
     sprintf(msg, "Cannot allocate info block for analytic potential table %s",
 	    filename);
     error(msg);
@@ -369,11 +364,8 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   reg_for_free(apt->pmin, "apt->pmin");
   reg_for_free(apt->pmax, "apt->pmax");
   reg_for_free(apt->names, "apt->names");
-  reg_for_free(pot_list_length, "pot_list_length");
-  reg_for_free(pot_list, "pot_list");
   for (i = 0; i < size; i++) {
     reg_for_free(apt->names[i], "apt->names[i]");
-    reg_for_free(pot_list[i], "pot_list[i]");
   }
   reg_for_free(pot_index, "pot_index");
 #else /* APOT */

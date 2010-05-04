@@ -172,6 +172,8 @@ void read_config(char *filename)
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
     if (NULL == atoms)
       error("Cannot allocate memory for atoms");
+    for (i = 0; i < count; i++)
+      atoms[natoms + i].neigh = malloc(1 * sizeof(neigh_t));
     coheng = (real *)realloc(coheng, (nconf + 1) * sizeof(real));
     if (NULL == coheng)
       error("Cannot allocate memory for cohesive energy");

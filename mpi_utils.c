@@ -30,9 +30,8 @@
 *
 *****************************************************************/
 
-#include "potfit.h"
-#define N 20
 #ifdef MPI
+#include "potfit.h"
 
 /******************************************************************************
 *
@@ -64,7 +63,7 @@ void shutdown_mpi(void)
   MPI_Finalize();		/* Shutdown */
 }
 
-void dbb(int i)
+void debug_mpi(int i)
 {
 /*   int j,k; */
 /*   MPI_Status status; */
@@ -87,17 +86,17 @@ void dbb(int i)
  * broadcast_param: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
-  /* 9: number of entries in struct atom_t  */
+  /* 8: number of static entries in struct atom_t  */
 #define MAX_MPI_COMPONENTS 8
 
 void broadcast_params()
 {
-  int   ierr, blklens[MAX_MPI_COMPONENTS];
+  int   blklens[MAX_MPI_COMPONENTS];
   MPI_Aint displs[MAX_MPI_COMPONENTS];
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
   atom_t testatom;
-  int   calclen, size, i, j, each, odd, nodeatoms = 0, list_length;
+  int   calclen, size, i, j, each, odd;
 
   /* Define Structures */
   /* first the easy ones: */
@@ -181,17 +180,16 @@ void broadcast_params()
     force_0 = (real *)malloc(mdim * sizeof(real));
     conf_weight = (real *)malloc(nconf * sizeof(real));
   }
-/*   MPI_Bcast(na_typ, ntypes, MPI_INT, 0, MPI_COMM_WORLD); */
   MPI_Bcast(inconf, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(force_0, mdim, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(conf_weight, nconf, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&maxneigh, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  printf("ID=%d maxneigh=%d\n", myid, maxneigh);
 
   /* Broadcast weights... */
   MPI_Bcast(&eweight, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&sweight, 1, REAL, 0, MPI_COMM_WORLD);
+
   /* Broadcast the potential... */
   MPI_Bcast(&format, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&calc_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -224,10 +222,6 @@ void broadcast_params()
   MPI_Bcast(&enable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&apot_table.number, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (myid > 0) {
-    pot_list_length = (int *)malloc(apot_table.number * sizeof(int));
-  }
-  MPI_Bcast(pot_list_length, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   if (enable_cp) {
     if (myid > 0) {
       na_typ = (int **)malloc((nconf + 1) * sizeof(int *));
@@ -249,18 +243,8 @@ void broadcast_params()
     rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
     apot_table.fvalue =
       (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
-    pot_list = (int ***)malloc(apot_table.number * sizeof(int **));
-    for (i = 0; i < apot_table.number; i++) {
-      pot_list[i] = (int **)malloc(pot_list_length[i] * sizeof(int *));
-      for (j = 0; j < pot_list_length[i]; j++)
-	pot_list[i][j] = (int *)malloc(2 * sizeof(int));
-    }
     opt_pot.table = (real *)malloc(opt_pot.len * sizeof(real));
   }
-  for (i = 0; i < apot_table.number; i++)
-    for (j = 0; j < pot_list_length[i]; j++) {
-      MPI_Bcast(pot_list[i][j], 2, MPI_INT, 0, MPI_COMM_WORLD);
-    }
   MPI_Bcast(smooth_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(invar_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_list, opt_pot.len, REAL, 0, MPI_COMM_WORLD);
@@ -349,14 +333,50 @@ void broadcast_params()
 
 void broadcast_neighbors()
 {
-  int   i, neighs;
-  neigh_t neigh[maxneigh];
+  int   i, j, neighs;
+  neigh_t neigh;
+  atom_t *atom;
 
   for (i = 0; i < natoms; i++) {
-    if (myid > 0 && i >= firstatom && (i - firstatom) < atom_len[myid]) {
-      printf("ID=%d i=%d - My Atom!\n", myid, i);
-
+    atom = conf_atoms + i - firstatom;
+    if (myid == 0)
+      neighs = atoms[i].n_neigh;
+    MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (myid == 0)
+      printf("BCast i=%d neighs=%d\n", i, neighs);
+    if (i >= firstatom && i < (firstatom + myatoms)) {
+      atom->neigh = (neigh_t *)malloc(neighs * sizeof(neigh_t));
+      printf("ID=%d adding %d neighs on atom %d\n", myid, neighs, i);
     }
+    for (j = 0; j < neighs; j++) {
+      if (myid == 0)
+	neigh = atoms[i].neigh[j];
+      MPI_Bcast(&neigh, 1, MPI_NEIGH, 0, MPI_COMM_WORLD);
+      if (i >= firstatom && i < (firstatom + myatoms)) {
+	atom->neigh[j] = neigh;
+      }
+    }
+  }
+  printf("ID=%d natoms=%d firstatom=%d myatoms=%d\n", myid, natoms, firstatom,
+	 myatoms);
+  fflush(stdout);
+  for (i = 0; i < natoms; i++) {
+    if (myid == 0)
+      neighs = atoms[i].n_neigh;
+    MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    printf("ID=%d neighs=%d\n", myid, neighs);
+    for (j = 0; j < neighs; j++) {
+      if (myid == 0)
+	printf("atoms[%d]: %d %d %f\n", i, atoms[i].neigh[j].typ,
+	       atoms[i].neigh[j].nr, atoms[i].neigh[j].r);
+      if (i >= firstatom && i < (firstatom + myatoms)) {
+	printf("copies[%d]: %d %d %f\n", i,
+	       conf_atoms[i - firstatom].neigh[j].typ,
+	       conf_atoms[i - firstatom].neigh[j].nr,
+	       conf_atoms[i - firstatom].neigh[j].r);
+      }
+    }
+
   }
 }
 

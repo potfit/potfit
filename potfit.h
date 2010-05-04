@@ -257,9 +257,7 @@ EXTERN int format;		/* format of potential table */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
-EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
 EXTERN int *pot_index INIT(NULL);	/* index to access i*n+j from i*(i+1)/2 */
-EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
 EXTERN int *smooth_pot INIT(NULL);
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
 EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
@@ -425,7 +423,7 @@ void  embed_shift(pot_table_t *pt);
 void  init_mpi(int *argc_pointer, char **argv);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
-void  dbb(int i);
+void  debug_mpi(int i);
 void  broadcast_neighbors();
 void  potsync();
 #endif
