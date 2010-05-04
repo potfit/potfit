@@ -179,7 +179,6 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
       real  fnval, grad, fnval_tail, grad_tail, eval, p_stat_tail;
       atom_t *atom;
-
       neigh_t *neigh;
 
 #ifdef _OPENMP
@@ -218,8 +217,12 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	   calculate static field- and dipole-contributions */
 	for (i = 0; i < inconf[h]; i++) {
 	  
-	  vector E_stat[inconf[h]];
-	  vector p_stat[inconf[h]];
+	  real E_stat_x[inconf[h]];
+	  real E_stat_y[inconf[h]];
+	  real E_stat_z[inconf[h]];
+	  real p_stat_x[inconf[h]];
+	  real p_stat_y[inconf[h]];
+	  real p_stat_z[inconf[h]];
 
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -295,7 +298,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 	      /* calculate monopole forces and static field-contributions */
 	      if ((neigh->r < dp_cut) && (apt->dp_alpha[typ1])&& 
-		  (apt->dp_b[col]) && (apt->dp_c[col])) {
+		  (apt->dp_b[col]) && (apt->dp_c[col]) && (2 > 3)){
 		
 		  fnval_tail = splint_comb_dir(&calc_pot, xi_d, col,
 					  neigh->slot[0],
@@ -325,9 +328,9 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  forces[l + 1] -= tmp_force.y;
 		  forces[l + 2] -= tmp_force.z;
 
-		  E_stat.x[i] += neigh->dist.x * eval;
-		  E_stat.y[i] += neigh->dist.y * eval;
-		  E_stat.z[i] += neigh->dist.z * eval; 
+		  E_stat_x[i] += neigh->dist.x * eval;
+		  E_stat_y[i] += neigh->dist.y * eval;
+		  E_stat_z[i] += neigh->dist.z * eval; 
 
 #ifdef STRESS
 		  /* calculate pair stresses */
@@ -347,11 +350,11 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		}
 
 		/* calculate short-range dipoles  */
-		p_stat_tail = shortrange_value(neigh->r, apt->dp_alpha[typ1], 
-					       apt->dp_b[typ1], apt->dp_c[typ1]);
-		p_stat.x[i] += apt->charge[typ2] * neigh->dist.x * p_stat_tail;
-		p_stat.y[i] += apt->charge[typ2] * neigh->dist.y * p_stat_tail;
-		p_stat.z[i] += apt->charge[typ2] * neigh->dist.z * p_stat_tail;
+		p_stat_tail = shortrange_value(neigh->r, &apt->dp_alpha[typ1], 
+					       &apt->dp_b[col], &apt->dp_c[col]);
+		p_stat_x[i] += apt->charge[typ2] * neigh->dist.x * p_stat_tail;
+		p_stat_y[i] += apt->charge[typ2] * neigh->dist.y * p_stat_tail;
+		p_stat_z[i] += apt->charge[typ2] * neigh->dist.z * p_stat_tail;
 	      }
 
 	    }			/*  neighbours with bigger atom nr */

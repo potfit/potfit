@@ -234,10 +234,15 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     apt->values = (real **)malloc((size + 4) * sizeof(real *));
     apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
     apt->pmax = (real **)malloc((size + 4) * sizeof(real *));
-    for (i = 0; i < 4; i++) {
-    apt->values[size + i] = (real *)malloc(ntypes * sizeof(real));
-    apt->pmin[size + i] = (real *)malloc(ntypes * sizeof(real));
-    apt->pmax[size + i] = (real *)malloc(ntypes * sizeof(real));
+    for (i = 0; i < 2; i++) {
+      apt->values[size + i] = (real *)malloc(ntypes * sizeof(real));
+      apt->pmin[size + i] = (real *)malloc(ntypes * sizeof(real));
+      apt->pmax[size + i] = (real *)malloc(ntypes * sizeof(real));
+    }
+    for (i = 2; i < 4; i++) {
+      apt->values[size + i] = (real *)malloc(size * sizeof(real));
+      apt->pmin[size + i] = (real *)malloc(size * sizeof(real));
+      apt->pmax[size + i] = (real *)malloc(size * sizeof(real));
     }
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->charge = apt->values[size];
@@ -598,7 +603,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
      error(msg);
    }
  }
+
 #endif
+
   /* skip to next type or global section */
   do {
     fgetpos(infile, &filepos);
@@ -957,7 +964,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif
 #ifdef DIPOLE
   apt->total_par += (2 * ntypes);
-  apt->total_par += (2 * number);
+  apt->total_par += (2 * apt->number);
 #endif
 
   /* initialize function table and write indirect index */
@@ -983,7 +990,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif
 #ifdef DIPOLE
   pt->len += (2 * ntypes);
-  pt->len += (2 * number);
+  pt->len += (2 * apt->number);
 #endif
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
@@ -1065,7 +1072,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     val++;
   }
   i = apt->number;
-  for (j = 0; j < (2 * number); j++) {
+  for (j = 0; j < (2 * apt->number); j++) {
     *val = apt->values[i][j];
     pt->idx[k] = l++;
     apt->idxpot[k] = i;
@@ -1073,9 +1080,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     val++;
   }
   pt->idxlen += (2 * ntypes);
-  pt->idxlen += (2 * number);
+  pt->idxlen += (2 * apt->number);
   global_idx += (2 * ntypes);
-  global_idx += (2 * number);
+  global_idx += (2 * apt->number);
 #endif
 
   if (have_globals) {
@@ -1468,7 +1475,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 {
   int   i, size;
 #ifdef APOT
-  real *val, f, h;
+  real *val, f, f_c, h;
   int   j, x = 0, index;
 #else
   int  *sp;
@@ -1498,6 +1505,10 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  reg_for_free(calct->xcoord, "calct->xcoord");
 	  calct->table = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->table, "calct->table");
+#ifdef DIPOLE
+	  calct->table_dipole = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->table_dipole, "calct->table_dipole");
+#endif
 	  calct->d2tab = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->d2tab, "calct->d2tab");
 	  calct->idx = (int *)malloc(calct->len * sizeof(int));
@@ -1527,6 +1538,12 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	      calct->table[index] =
 		smooth_pot[i] ? f * cutoff(calct->xcoord[index],
 					   calct->begin[i], h) : f;
+#ifdef DIPOLE
+	      coulomb_shift(calct->xcoord[index], &f_c);
+	      calct->table_dipole[index] =
+		smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
+					     calct->begin[i], h) : f_c;
+#endif
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
 	  }

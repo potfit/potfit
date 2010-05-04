@@ -625,7 +625,7 @@ void debug_apot()
 *
 ******************************************************************************/
 
-void coulomb_value(real *ftail, real *gtail, real r)
+void coulomb_value(real r, real *ftail, real *gtail)
 {
   static real x[4];
 
@@ -644,12 +644,12 @@ void coulomb_value(real *ftail, real *gtail, real r)
 *
 ******************************************************************************/
 
-void coulomb_shift(real *fnval_tail, real r, real dp_kappa)
+void coulomb_shift(real r, real *fnval_tail)
 {
   static real ftail, gtail, ftail_cut, gtail_cut;
 
-  coulomb_value(ftail, gtail, r);
-  coulomb_value(ftail_cut, gtail_cut, dp_cut);
+  coulomb_value(r, &ftail, &gtail);
+  coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
   *fnval_tail = ftail - ftail_cut - r * (r - dp_cut) * gtail_cut;
 }
 
@@ -666,20 +666,21 @@ void coulomb_shift(real *fnval_tail, real r, real dp_kappa)
 *
 ******************************************************************************/
 
-void shortrange_value(real r, real *a, real *b, real *c)
+real shortrange_value(real r, real *a, real *b, real *c)
 {
-  static real x[5], y[2];
+ static real x[5], y[2];
 
-  x[0] = b * r;
+  x[0] = *b * r;
   x[1] = x[0] * x[0];
   x[2] = x[1] * x[0];
   x[3] = x[1] * x[1];
   x[4] = 1 + x[0] + x[1]/2 +  x[2]/6 +  x[3]/24;
   y[0] = r * r;
-  y[1] = (a * c) / (r * y[2]);
+  y[1] = (*a * *c) / (r * x[2]);
 
   return y[1] * x[4] * exp(-x[0]);
 }
 
 #endif /* DIPOLE */
 #endif /* APOT */
+
