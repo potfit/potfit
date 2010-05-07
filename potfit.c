@@ -82,7 +82,7 @@ int main(int argc, char **argv)
   FILE *outfile;
 
 #ifdef MPI
-  init_mpi(&argc, argv);
+  init_mpi(argc, argv);
 #endif
 
   if (myid == 0) {
@@ -193,7 +193,6 @@ int main(int argc, char **argv)
   conf_vol = volumen;
   conf_uf = useforce;
   conf_us = usestress;
-  myatoms = natoms;
 #endif /* MPI */
   /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
@@ -229,8 +228,6 @@ int main(int argc, char **argv)
   MPI_Bcast(opt_pot.table, ndimtot, REAL, 0, MPI_COMM_WORLD);
 #endif
   update_calc_table(opt_pot.table, calc_pot.table, 1);
-  for (i = 0; i < paircol; i++)
-    update_slots();
 #endif
 
   /* Select correct spline interpolation and other functions */

@@ -39,10 +39,10 @@
 *
 ******************************************************************************/
 
-void init_mpi(int *argc_pointer, char **argv)
+void init_mpi(int argc, char **argv)
 {
   /* Initialize MPI */
-  if (MPI_Init(argc_pointer, &argv) != MPI_SUCCESS && myid == 0)
+  if (MPI_Init(&argc, &argv) != MPI_SUCCESS && myid == 0)
     fprintf(stderr, "MPI_Init failed!\n");
   MPI_Comm_size(MPI_COMM_WORLD, &num_cpus);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
@@ -311,8 +311,14 @@ void broadcast_params()
   MPI_Scatter(conf_dist, 1, MPI_INT, &firstconf, 1, MPI_INT, 0,
 	      MPI_COMM_WORLD);
   conf_atoms = (atom_t *)malloc(myatoms * sizeof(atom_t));
-  MPI_Scatterv(atoms, atom_len, atom_dist, MPI_ATOM,
-	       conf_atoms, myatoms, MPI_ATOM, 0, MPI_COMM_WORLD);
+  for (i = 0; i < natoms; i++) {
+    if (myid == 0)
+      testatom = atoms[i];
+    MPI_Bcast(&testatom, 1, MPI_ATOM, 0, MPI_COMM_WORLD);
+    if (i >= firstatom && i < (firstatom + myatoms)) {
+      conf_atoms[i - firstatom] = testatom;
+    }
+  }
   broadcast_neighbors();
   conf_vol = (real *)malloc(myconf * sizeof(real));
   conf_uf = (int *)malloc(myconf * sizeof(real));
@@ -342,11 +348,8 @@ void broadcast_neighbors()
     if (myid == 0)
       neighs = atoms[i].n_neigh;
     MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (myid == 0)
-      printf("BCast i=%d neighs=%d\n", i, neighs);
     if (i >= firstatom && i < (firstatom + myatoms)) {
       atom->neigh = (neigh_t *)malloc(neighs * sizeof(neigh_t));
-      printf("ID=%d adding %d neighs on atom %d\n", myid, neighs, i);
     }
     for (j = 0; j < neighs; j++) {
       if (myid == 0)
@@ -356,27 +359,6 @@ void broadcast_neighbors()
 	atom->neigh[j] = neigh;
       }
     }
-  }
-  printf("ID=%d natoms=%d firstatom=%d myatoms=%d\n", myid, natoms, firstatom,
-	 myatoms);
-  fflush(stdout);
-  for (i = 0; i < natoms; i++) {
-    if (myid == 0)
-      neighs = atoms[i].n_neigh;
-    MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    printf("ID=%d neighs=%d\n", myid, neighs);
-    for (j = 0; j < neighs; j++) {
-      if (myid == 0)
-	printf("atoms[%d]: %d %d %f\n", i, atoms[i].neigh[j].typ,
-	       atoms[i].neigh[j].nr, atoms[i].neigh[j].r);
-      if (i >= firstatom && i < (firstatom + myatoms)) {
-	printf("copies[%d]: %d %d %f\n", i,
-	       conf_atoms[i - firstatom].neigh[j].typ,
-	       conf_atoms[i - firstatom].neigh[j].nr,
-	       conf_atoms[i - firstatom].neigh[j].r);
-      }
-    }
-
   }
 }
 

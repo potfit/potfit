@@ -1,6 +1,7 @@
 devel-live
++ move update_slots to an earlier point of execution time, only root does it now
 + remove pot_list completely
-+ change MAXNEIGH to dynamic array, not working for MPI
++ change MAXNEIGH to dynamic array
 + only save new neighbors, may break some other branches
   but speeds up the optimization significantly
   calculate forces with actio=reactio

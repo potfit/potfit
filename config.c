@@ -733,9 +733,11 @@ void read_config(char *filename)
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
   }
+
+  update_slots();
 #endif
 
-  printf("Minimal Distances Matrix\n");
+  printf("Minimal Distances Matrix:\n");
   printf("Atom\t");
   for (i = 0; i < ntypes; i++)
     printf("%8s\t", elements[i]);
@@ -768,7 +770,7 @@ void read_config(char *filename)
       na_typ[nconf][j] += na_typ[i][j];
 
   /* print diagnostic message and close file */
-  printf("Maximum number of neighbors is %d\n", maxneigh);
+  printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
 	 nconf, w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
@@ -805,39 +807,38 @@ void update_slots()
 {
   int   i, j, col, col2, typ1, typ2;
   real  r, rr;
-  atom_t *atom;
 
-  for (i = firstatom; i < (firstatom + myatoms); i++) {
-    atom = conf_atoms - firstatom + i;
-    typ1 = atom->typ;
-    for (j = 0; j < atom->n_neigh; j++) {
-      typ2 = atom->neigh[j].typ;
+  for (i = 0; i < natoms; i++) {
+    typ1 = atoms[i].typ;
+    for (j = 0; j < atoms[i].n_neigh; j++) {
+      typ2 = atoms[i].neigh[j].typ;
       col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 	: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-      r = atom->neigh[j].r;
+      r = atoms[i].neigh[j].r;
       if (r < calc_pot.end[col]) {
 	rr = r - calc_pot.begin[col];
 	/* update slots for pair potential part, slot 0 */
-	atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
-	atom->neigh[j].step[0] = calc_pot.step[col];
-	atom->neigh[j].shift[0] =
+	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[0] = calc_pot.step[col];
+	atoms[i].neigh[j].shift[0] =
 	  (rr -
-	   atom->neigh[j].slot[0] * calc_pot.step[col]) *
+	   atoms[i].neigh[j].slot[0] * calc_pot.step[col]) *
 	  calc_pot.invstep[col];
 #if defined EAM
 	col2 = paircol + typ2;
 /*        update slots for eam transfer functions, slot 1*/
 	rr = r - calc_pot.begin[col2];
-	atom->neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
-	atom->neigh[j].step[1] = calc_pot.step[col2];
-	atom->neigh[j].shift[1] =
+	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
+	atoms[i].neigh[j].step[1] = calc_pot.step[col2];
+	atoms[i].neigh[j].shift[1] =
 	  (rr -
-	   atom->neigh[j].slot[1] * calc_pot.step[col2]) *
+	   atoms[i].neigh[j].slot[1] * calc_pot.step[col2]) *
 	  calc_pot.invstep[col2];
-	atom->neigh[j].slot[1] += calc_pot.first[col2];
+	atoms[i].neigh[j].slot[1] += calc_pot.first[col2];
 #endif
-	atom->neigh[j].slot[0] += calc_pot.first[col];
-	atom->neigh[j].step[0] = calc_pot.step[col];
+	/* move slot and step to the right potential */
+	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
+	atoms[i].neigh[j].step[0] = calc_pot.step[col];
       }
     }
   }

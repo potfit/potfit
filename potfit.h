@@ -420,7 +420,7 @@ real  rescale(pot_table_t *pt, real upper, int flag);
 void  embed_shift(pot_table_t *pt);
 #endif
 #ifdef MPI
-void  init_mpi(int *argc_pointer, char **argv);
+void  init_mpi(int argc, char **argv);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
 void  debug_mpi(int i);

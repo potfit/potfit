@@ -324,6 +324,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 	    /* calculate atomic densities */
 	    col2 = paircol + typ2;
+/*            printf("ID=%d i=%d j=%d rho: col2=%d paircol=%d typ2=%d\n", myid,*/
+/*                   i, j, col2, paircol, typ2);*/
 	    if (typ2 == typ1) {
 /* then transfer(a->b)==transfer(b->a) */
 	      if (neigh->r < calc_pot.end[col2]) {
