@@ -30,16 +30,7 @@
 *
 ***************************************************************************/
 
-#ifndef POTSCALE
 #include "potfit.h"
-#else
-#include "potscale.h"
-#endif
-
-
-/* the following are needed for gettimeofday */
-#include <sys/time.h>
-#include <unistd.h>
 
 #if defined(__GNUC__) && defined(__STRICT_ANSI__)
 extern char *strdup(char *);

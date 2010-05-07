@@ -1,4 +1,5 @@
 devel-live
++ remove potscale and oldcode completely
 + move update_slots to an earlier point of execution time, only root does it now
 + remove pot_list completely
 + change MAXNEIGH to dynamic array

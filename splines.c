@@ -38,11 +38,7 @@
  *
  *****************************************************************************/
 
-#ifndef POTSCALE
 #include "potfit.h"
-#else
-#include "potscale.h"
-#endif
 
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 {

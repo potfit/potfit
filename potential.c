@@ -33,11 +33,7 @@
 
 #define NPLOT 1000
 #define REPULSE
-#ifndef POTSCALE
 #include "potfit.h"
-#else
-#include "potscale.h"
-#endif
 #include "utils.h"
 
 /******************************************************************************
@@ -152,11 +148,13 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	fprintf(stderr, "\n");
 	sprintf(msg,
 		"Wrong number of data columns in file %s,\n should be %d for %s, but are %d.",
+		filename,
 #ifdef EAM
-		filename, ncols + 2 * ntypes, interaction, size);
+		ncols + 2 * ntypes
 #else
-		filename, ncols, interaction, size);
+		ncols
 #endif
+		, interaction, size);
 	error(msg);
       }
       /* recognized format? */
@@ -263,8 +261,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   }
   fclose(infile);
 
-
-#ifndef POTSCALE		/* not needed in potscale program */
   /* compute rcut and rmin */
   rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
   if (NULL == rcut)
@@ -319,8 +315,9 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     }
   }
 #endif
-#endif /* POTSCALE */
+
   paircol = (ntypes * (ntypes + 1)) / 2;
+
 #ifndef APOT
   /* read maximal changes file */
   maxchange = (real *)malloc(pt->len * sizeof(real));
@@ -1500,198 +1497,6 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 }
 
 
-#ifndef POTSCALE
-#ifdef OLDCODE
-/*****************************************************************************
-*
-*  Evaluate derivative of potential with quadratic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real grad2(pot_table_t *pt, real *xi, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, dv, d2v;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-
-  /* intermediate values */
-  p0 = (k <= pt->last[col]) ? xi[k++] : 0.0;
-  p1 = (k <= pt->last[col]) ? xi[k++] : 0.0;
-  p2 = (k <= pt->last[col]) ? xi[k++] : 0.0;
-  dv = p1 - p0;
-  d2v = p2 - 2 * p1 + p0;
-
-  /* return the derivative */
-  return istep * (dv + (chi - 0.5) * d2v);
-}
-
-/*****************************************************************************
-*
-*  Evaluate derivative of potential with cubic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real grad3(pot_table_t *pt, real *xi, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, p3;
-  real  dfac0, dfac1, dfac2, dfac3;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  if (k == 0)
-    return grad2(pt, xi, col, r);	/* parabolic fit if on left border */
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-  k--;
-
-  /* intermediate values */
-  if (k <= pt->last[col])
-    p0 = xi[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p1 = xi[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p2 = xi[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p3 = xi[k];
-  else {			/* p2 = 0.0;  dp2 = 0.0; */
-    dfac0 = -0.25 * (3.0 * chi - 1.0) * (chi - 1.0);
-    dfac1 = (3.0 * chi + 1.0) * (chi - 1.0);
-    /* dfac2 = -0.25 * (9.0 * chi + 5.0) * (chi - 1.0); */
-    /* dfac3 =  0.5  * (3.0 * (chi*chi - 1)); */
-    return istep * (dfac0 * p0 + dfac1 * p1);
-  }
-
-  /* factors for the interpolation of the 1. derivative */
-  dfac0 = -(1.0 / 6.0) * ((3.0 * chi - 6.0) * chi + 2.0);
-  dfac1 = 0.5 * ((3.0 * chi - 4.0) * chi - 1.0);
-  dfac2 = -0.5 * ((3.0 * chi - 2.0) * chi - 2.0);
-  dfac3 = 1.0 / 6.0 * (3.0 * chi * chi - 1.0);
-
-  /* return the derivative */
-  return istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
-}
-
-/*****************************************************************************
-*
-*  Evaluate potential with quadratic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real pot2(pot_table_t *pt, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, dv, d2v;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-
-  /* intermediate values */
-  p0 = (k <= pt->last[col]) ? pt->table[k++] : 0.0;
-  p1 = (k <= pt->last[col]) ? pt->table[k++] : 0.0;
-  p2 = (k <= pt->last[col]) ? pt->table[k++] : 0.0;
-  dv = p1 - p0;
-  d2v = p2 - 2 * p1 + p0;
-
-  /* return the potential value */
-  return p0 + chi * dv + 0.5 * chi * (chi - 1) * d2v;
-}
-
-
-/*****************************************************************************
-*
-*  Evaluate potential with cubic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real pot3(pot_table_t *pt, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, p3;
-  real  fac0, fac1, fac2, fac3;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  if (k == 0)
-    return pot2(pt, col, r);	/* parabolic fit if on left border */
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-  k--;
-
-  /* intermediate values */
-  if (k <= pt->last[col])
-    p0 = pt->table[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p1 = pt->table[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p2 = pt->table[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p3 = pt->table[k];
-  else {			/* p2 = 0.0; dp2 = 0.0 */
-    fac0 = -0.25 * chi * SQR(chi - 1.0);
-    fac1 = (chi * chi - 1) * (chi - 1);
-    /* fac2 = -0.25 * chi * (chi + 1) * (3.0*chi - 5.0); */
-    /* fac3 = -0.5  * (chi*chi - 1) * chi;           */
-    return fac0 * p0 + fac1 * p1;
-  }				/* go smoothly: interpolate with f=f'=0 at chi=1. */
-
-  /* factors for the interpolation */
-  fac0 = -(1.0 / 6.0) * chi * (chi - 1.0) * (chi - 2.0);
-  fac1 = 0.5 * (chi * chi - 1.0) * (chi - 2.0);
-  fac2 = -0.5 * chi * (chi + 1.0) * (chi - 2.0);
-  fac3 = (1.0 / 6.0) * chi * (chi * chi - 1.0);
-
-  /* return the potential value */
-  return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
-}
-#endif /* OLDCODE */
-
 #ifdef PARABEL
 /*****************************************************************************
 *
@@ -2164,8 +1969,6 @@ void write_pot_table4(pot_table_t *pt, char *filename)
   if (flag)
     fclose(outfile2);
 }
-
-#endif /* POTSCALE */
 
 /*****************************************************************************
 *
