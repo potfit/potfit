@@ -1,4 +1,7 @@
 devel-live
++ removed some commented code
++ make the order of chemical potentials, globals and other stuff in the potential file
+	arbitrary
 + switch random number generator to double precision Fast Mersenne Twister (dSFMT)
 	this has not been tested on other platforms
 + move normdist to utils.c, it is used in simann.c and diff_evo.c

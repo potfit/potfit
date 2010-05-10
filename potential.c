@@ -42,12 +42,12 @@
 *
 ******************************************************************************/
 
-void read_pot_table(pot_table_t *pt, char *filename, int ncols)
+void read_pot_table(pot_table_t *pt, char *filename)
 {
   FILE *infile;
   char  buffer[1024], msg[255], *res, *str;
   int   have_format = 0, end_header = 0;
-  int   size, i, j, k = 0, *nvals;
+  int   size, i, j, k = 0, *nvals, ncols;
 #ifdef APOT
   apot_table_t *apt = &apot_table;
 #else
@@ -137,6 +137,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	error(msg);
       }
 
+      ncols = ntypes * (ntypes + 1) / 2;
       /* right number of columns? */
 #ifdef EAM
       if (size == ncols + 2 * ntypes) {
@@ -408,17 +409,27 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   char  name[255];
   char *token;
   real *val, *list, temp;
-  fpos_t filepos;
+  fpos_t filepos, startpos;
+
+  /* save starting position */
+  fgetpos(infile, &startpos);
 
 #ifdef PAIR
   /* read cp */
-  fgetpos(infile, &filepos);
   if (enable_cp) {
+
+    /* search for cp */
+    do {
+      fgetpos(infile, &filepos);
+      fscanf(infile, "%s", buffer);
+    } while (strncmp(buffer, "cp", 2) != 0 && !feof(infile));
+    fsetpos(infile, &filepos);
+
     for (i = 0; i < ntypes; i++) {
       if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
 		     &apt->pmin[apt->number][i],
 		     &apt->pmax[apt->number][i])) {
-	sprintf(msg, "Could not read chemical potential for atomtype #%d\n",
+	sprintf(msg, "Could not read chemical potential for atomtype #%d.",
 		i);
 	error(msg);
       }
@@ -436,7 +447,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
     }
     printf("Enabled chemical potentials.\n");
-    fgetpos(infile, &filepos);
 
 #ifdef CN
     /* disable composition nodes for now */
@@ -507,14 +517,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       compnodes = 0;
 #endif
   }
-  fsetpos(infile, &filepos);
 #endif
 
-  /* skip to next type or global section */
+  /* skip to global section */
+  fsetpos(infile, &startpos);
   do {
     fgetpos(infile, &filepos);
     fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "type") != 0 && strcmp(buffer, "global") != 0);
+  } while (strcmp(buffer, "global") != 0 && !feof(infile));
   fsetpos(infile, &filepos);
 
   /* check for global keyword */
@@ -618,6 +628,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       apt->n_glob[j] = 0;
     }
   }
+
+  /* skip to actual potentials */
+  fsetpos(infile, &startpos);
+  do {
+    fgetpos(infile, &filepos);
+    fscanf(infile, "%s", buffer);
+  } while (strcmp(buffer, "type") != 0 && !feof(infile));
+  fsetpos(infile, &filepos);
 
   for (i = 0; i < apt->number; i++) {
     /* read type */

@@ -364,7 +364,7 @@ void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		      FILE *infile);
 void  write_apot_table(apot_table_t *, char *);
 #endif
-void  read_pot_table(pot_table_t *, char *, int);
+void  read_pot_table(pot_table_t *, char *);
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,

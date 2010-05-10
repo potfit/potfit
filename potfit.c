@@ -44,7 +44,7 @@
 
 void error(char *msg)
 {
-  fprintf(stderr, "Error: %s\n", msg);
+  fprintf(stderr, "\nError: %s\n", msg);
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;
@@ -62,7 +62,7 @@ void error(char *msg)
 
 void warning(char *msg)
 {
-  fprintf(stderr, "Warning: %s\n", msg);
+  fprintf(stderr, "\nWarning: %s\n", msg);
   fflush(stderr);
   return;
 }
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   /* read the parameters and the potential file */
   if (myid == 0) {
     read_parameters(argc, argv);
-    read_pot_table(&opt_pot, startpot, ntypes * (ntypes + 1) / 2);
+    read_pot_table(&opt_pot, startpot);
     read_config(config);
     printf("Global energy weight: %f\n", eweight);
 #ifdef STRESS
@@ -113,9 +113,7 @@ int main(int argc, char **argv)
     /* Select correct spline interpolation and other functions */
     if (format == 0) {
 #ifndef APOT
-      sprintf(msg,
-	      "potfit binary compiled without analytic potential support\n");
-      error(msg);
+      error("potfit binary compiled without analytic potential support\n");
 #else
       splint = splint_ed;
       splint_comb = splint_comb_ed;
@@ -124,9 +122,7 @@ int main(int argc, char **argv)
 #endif
     } else if (format == 3) {
 #ifdef APOT
-      sprintf(msg,
-	      "potfit binary compiled without tabulated potential support\n");
-      error(msg);
+      error("potfit binary compiled without tabulated potential support\n");
 #else
       splint = splint_ed;
       splint_comb = splint_comb_ed;
@@ -138,11 +134,9 @@ int main(int argc, char **argv)
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
 #endif /* APOT */
-    } else if (format >= 4) {	/*format == 4 ! */
+    } else if (format >= 4) {	/*format >= 4 ! */
 #ifdef APOT
-      sprintf(msg,
-	      "potfit binary compiled without tabulated potential support\n");
-      error(msg);
+      error("potfit binary compiled without tabulated potential support\n");
 #else
       splint = splint_ne;
       splint_comb = splint_comb_ne;
@@ -171,9 +165,6 @@ int main(int argc, char **argv)
       lambda[i] = 0.;
 #ifndef NORESCALE
     rescale(&opt_pot, 1., 1);	/* rescale now... */
-#ifdef WZERO
-//    embed_shift(&opt_pot);    /* and shift  - diabolical */
-#endif /* WZERO */
 #endif /* NORESCALE */
 #endif /* EAM */
     init_done = 1;
@@ -194,7 +185,6 @@ int main(int argc, char **argv)
   conf_uf = useforce;
   conf_us = usestress;
 #endif /* MPI */
-  /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
   ndimtot = opt_pot.len;
   paircol = (ntypes * (ntypes + 1)) / 2;
@@ -252,7 +242,7 @@ int main(int argc, char **argv)
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
 #endif /* APOT */
-    } else if (format == 4) {	/*format == 4 ! */
+    } else if (format >= 4) {	/*format >= 4 ! */
 #ifndef APOT
       splint = splint_ne;
       splint_comb = splint_comb_ne;
@@ -298,9 +288,6 @@ int main(int argc, char **argv)
 #endif
       printf("\nPotential in format %d written to file %s\n", format, endpot);
     }
-/*#ifndef APOT*/
-/*    printf("Plotpoint file written to file %s\n", plotpointfile);*/
-/*#endif*/
     if (writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
@@ -646,7 +633,6 @@ int main(int argc, char **argv)
 		tot - f_sum - e_sum - s_sum,
 		(tot - f_sum - e_sum - s_sum) / tot * 100);
       }
-/*      fprintf(outfile, "min: %e - max: %e\n", min, max);*/
       fprintf(outfile, "rms-errors:\n");
       fprintf(outfile, "force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
       fprintf(outfile, "energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
@@ -676,7 +662,6 @@ int main(int argc, char **argv)
 	     tot - f_sum - e_sum - s_sum,
 	     (tot - f_sum - e_sum - s_sum) / tot * 100);
     }
-    printf("min: %e - max: %e\n", min, max);
     printf("rms-errors:\n");
     printf("force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
     printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
