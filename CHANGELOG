@@ -1,4 +1,4 @@
-devel-live
+bzr-20100510
 + removed some commented code
 + make the order of chemical potentials, globals and other stuff in the potential file
 	arbitrary
@@ -9,8 +9,7 @@ devel-live
 + move update_slots to an earlier point of execution time, only root does it now
 + remove pot_list completely
 + change MAXNEIGH to dynamic array
-+ only save new neighbors, may break some other branches
-  but speeds up the optimization significantly
++ only save new neighbors, speeds up the optimization significantly
   calculate forces with actio=reactio
 
 bzr-20100426
