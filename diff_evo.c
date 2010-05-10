@@ -54,36 +54,6 @@
 
 #ifdef APOT
 
-/****************************************************************
- *
- *  real normdist(): Returns a normally distributed random variable
- * 	Uses random() to generate a random number.
- *
- *****************************************************************/
-
-real normdist()
-{
-  static int have = 0;
-  static real nd2;
-  real  x1, x2, sqr, cnst;
-
-  if (!(have)) {
-    do {
-      x1 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      x2 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      sqr = x1 * x1 + x2 * x2;
-    } while (!(sqr <= 1.0 && sqr > 0));
-    /* Box Muller Transformation */
-    cnst = sqrt(-2.0 * log(sqr) / sqr);
-    nd2 = x2 * cnst;
-    have = 1;
-    return x1 * cnst;
-  } else {
-    have = 0;
-    return nd2;
-  }
-}
-
 real *calc_vect(real *x)
 {
   int   i, j, k = 0, n = 0;

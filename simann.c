@@ -80,36 +80,6 @@ void randomize_parameter(int n, real *xi, real *v)
 
 /****************************************************************
  *
- *  real normdist(): Returns a normally distributed random variable
- *          Uses random() to generate a random number.
- *
- *****************************************************************/
-
-real normdist(void)
-{
-  static int have = 0;
-  static real nd2;
-  real  x1, x2, sqr, cnst;
-
-  if (!(have)) {
-    do {
-      x1 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      x2 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      sqr = x1 * x1 + x2 * x2;
-    } while (!(sqr <= 1.0 && sqr > 0));
-    /* Box Muller Transformation */
-    cnst = sqrt(-2.0 * log(sqr) / sqr);
-    nd2 = x2 * cnst;
-    have = 1;
-    return x1 * cnst;
-  } else {
-    have = 0;
-    return nd2;
-  }
-}
-
-/****************************************************************
- *
  *  makebump(*x, width, height, center): Displaces equidistant
  *        sampling points of a function. Displacement is given by
  *        gaussian of given width and height.
