@@ -1,6 +1,21 @@
+devel-live
++ removed some commented code
++ make the order of chemical potentials, globals and other stuff in the potential file
+	arbitrary
++ switch random number generator to double precision Fast Mersenne Twister (dSFMT)
+	this has not been tested on other platforms
++ move normdist to utils.c, it is used in simann.c and diff_evo.c
++ remove potscale and oldcode completely
++ move update_slots to an earlier point of execution time, only root does it now
++ remove pot_list completely
++ change MAXNEIGH to dynamic array
++ only save new neighbors, may break some other branches
+  but speeds up the optimization significantly
+  calculate forces with actio=reactio
+
 bzr-20100426
-+ start migration to bazaar vcs 
-+ prepare trunk: 
++ start migration to bazaar vcs
++ prepare trunk:
 	removed .revisions file
 	moved potscale to util directory
 	removed html directory

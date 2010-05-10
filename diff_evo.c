@@ -50,39 +50,8 @@
 
 #define MAX_LOOPS 1e6		// max number of loops performed
 #define MAX_UNCHANGED 100	// abort after number of unchanged steps
-#define RAND_MAX 2147483647
 
 #ifdef APOT
-
-/****************************************************************
- *
- *  real normdist(): Returns a normally distributed random variable
- * 	Uses random() to generate a random number.
- *
- *****************************************************************/
-
-real normdist()
-{
-  static int have = 0;
-  static real nd2;
-  real  x1, x2, sqr, cnst;
-
-  if (!(have)) {
-    do {
-      x1 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      x2 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      sqr = x1 * x1 + x2 * x2;
-    } while (!(sqr <= 1.0 && sqr > 0));
-    /* Box Muller Transformation */
-    cnst = sqrt(-2.0 * log(sqr) / sqr);
-    nd2 = x2 * cnst;
-    have = 1;
-    return x1 * cnst;
-  } else {
-    have = 0;
-    return nd2;
-  }
-}
 
 real *calc_vect(real *x)
 {
@@ -222,23 +191,23 @@ void diff_evo(real *xi)
     for (i = 0; i < NP; i++) {
       tmpsum = 0;
       do
-	a = (int)(1. * rand() / (RAND_MAX + 1.) * NP);
+	a = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (a == i);
       do
-	b = (int)(1. * rand() / (RAND_MAX + 1.) * NP);
+	b = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (b == i || b == a);
       do
-	c = (int)(1. * rand() / (RAND_MAX + 1.) * NP);
+	c = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (c == i || c == a || c == b);
       do
-	d = (int)(1. * rand() / (RAND_MAX + 1.) * NP);
+	d = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (d == i || d == a || d == b || d == c);
       do
-	e = (int)(1. * rand() / (RAND_MAX + 1.) * NP);
+	e = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (e == i || e == a || e == b || e == c || e == d);
-      j = (int)(1. * rand() / (RAND_MAX + 1.) * D);
+      j = (int)(dsfmt_genrand_close_open(&dsfmt) * D);
       for (k = 1; k <= D; k++) {
-	if ((1. * rand() / (RAND_MAX + 1.)) < CR || k == D) {
+	if (dsfmt_genrand_close_open(&dsfmt) < CR || k == D) {
 	  /* DE/rand/1/exp */
 /*          temp = x1[c][j] + F * (x1[a][j] - x1[b][j]);*/
 	  /* DE/best/1/exp */
@@ -259,7 +228,7 @@ void diff_evo(real *xi)
 	  pmax =
 	    apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
 	  if (temp > pmax || temp < pmin) {
-	    trial[j] = x1[(int)(1. * random() / (RAND_MAX + 1.) * D)][j];
+	    trial[j] = x1[(int)(dsfmt_genrand_close_open(&dsfmt) * D)][j];
 	  } else
 	    trial[j] = temp;
 #else

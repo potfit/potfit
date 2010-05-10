@@ -85,7 +85,7 @@ real make_box(void)
 
 void read_config(char *filename)
 {
-  int   maxneigh = 0, count;
+  int   count;
 #ifdef APOT
   int   index;
 #endif
@@ -172,6 +172,8 @@ void read_config(char *filename)
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
     if (NULL == atoms)
       error("Cannot allocate memory for atoms");
+    for (i = 0; i < count; i++)
+      atoms[natoms + i].neigh = malloc(1 * sizeof(neigh_t));
     coheng = (real *)realloc(coheng, (nconf + 1) * sizeof(real));
     if (NULL == coheng)
       error("Cannot allocate memory for cohesive energy");
@@ -373,8 +375,6 @@ void read_config(char *filename)
 	error("Corrupt configuration file: Incorrect atom type");
       atom->absforce = sqrt(SQR(atom->force.x) +
 			    SQR(atom->force.y) + SQR(atom->force.z));
-      /* ++++++++++++++ */
-//      printf("Atom %d, x %f, y %f, z %f, abs %f\n", natoms+i, atom->force.x, atom->force.y, atom->force.z, atom->absforce);
       atom->conf = nconf;
       na_typ[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
@@ -419,7 +419,7 @@ void read_config(char *filename)
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
       atoms[i].n_neigh = 0;
-      for (j = natoms; j < natoms + count; j++) {
+      for (j = i; j < natoms + count; j++) {
 	d.x = atoms[j].pos.x - atoms[i].pos.x;
 	d.y = atoms[j].pos.y - atoms[i].pos.y;
 	d.z = atoms[j].pos.z - atoms[i].pos.z;
@@ -445,8 +445,9 @@ void read_config(char *filename)
 		  fprintf(stderr, "%d (type %d): %f %f %f\n", j - natoms,
 			  typ2, dd.x, dd.y, dd.z);
 		}
-		if (atoms[i].n_neigh == MAXNEIGH)
-		  error("Neighbor table is too small");
+		atoms[i].neigh = (neigh_t *)realloc(atoms[i].neigh,
+						    (atoms[i].n_neigh +
+						     1) * sizeof(neigh_t));
 		dd.x /= r;
 		dd.y /= r;
 		dd.z /= r;
@@ -456,9 +457,6 @@ void read_config(char *filename)
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
 		atoms[i].n_neigh++;
-		/* Minimal distance check */
-/* 		if (mindist[ntypes*typ1+typ2]>r) */
-/* 			printf("new mindist[%d]=%f i=%d k=%d\n",ntypes*typ1+typ2,r,i,k); */
 
 		col = (typ1 <= typ2) ?
 		  typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
@@ -468,13 +466,11 @@ void read_config(char *filename)
 		/* pre-compute index and shift into potential table */
 		/* pair potential */
 		if (!sh_dist) {
-		  if (format == 3 || format == 0) {
+		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
 			     nconf, i - natoms);
-//                printf("%f %f %f %f %f %f\n", d.x,d.y,d.z,coheng[nconf],stresses->xx,stresses->yz);
-
 		      fflush(stdout);
 		      error("short distance in config.c!");
 		    }
@@ -483,21 +479,7 @@ void read_config(char *filename)
 		    shift = (rr - slot * calc_pot.step[col]) * istep;
 		    slot += calc_pot.first[col];
 		    step = calc_pot.step[col];
-#ifdef APOT
-		    pot_list[col] =
-		      (int **)realloc(pot_list[col],
-				      (pot_list_length[col] +
-				       1) * sizeof(int *));
-		    pot_list[col][pot_list_length[col]] =
-		      (int *)malloc(2 * sizeof(int));
-/*                    reg_for_free(pot_list[col][pot_list_length[col]]);*/
-		    pot_list[col][pot_list_length[col]][0] = i;
-		    pot_list[col][pot_list_length[col]][1] = k;
-		    pot_list_length[col]++;
-#endif
-
 		  } else {	/* format == 4 ! */
-
 		    klo = calc_pot.first[col];
 		    khi = calc_pot.last[col];
 		    /* bisection */
@@ -576,6 +558,8 @@ void read_config(char *filename)
 	    }
       }
       maxneigh = MAX(maxneigh, atoms[i].n_neigh);
+      sprintf(msg, "neighbor table atom %d", i);
+      reg_for_free(atoms[i].neigh, msg);
     }
 
 /* increment natoms and configuration number */
@@ -749,9 +733,11 @@ void read_config(char *filename)
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
     }
   }
+
+  update_slots();
 #endif
 
-  printf("Minimal Distances Matrix\n");
+  printf("Minimal Distances Matrix:\n");
   printf("Atom\t");
   for (i = 0; i < ntypes; i++)
     printf("%8s\t", elements[i]);
@@ -784,8 +770,7 @@ void read_config(char *filename)
       na_typ[nconf][j] += na_typ[i][j];
 
   /* print diagnostic message and close file */
-  printf("Maximum number of neighbors is %d, MAXNEIGH is %d\n",
-	 maxneigh, MAXNEIGH);
+  printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
 	 nconf, w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
@@ -818,51 +803,42 @@ void read_config(char *filename)
  *
  ******************************************************************************/
 
-void new_slots(int a1, int force_update)
+void update_slots()
 {
-  int   i, j, col, col2, typ1, typ2, a2;
+  int   i, j, col, col2, typ1, typ2;
   real  r, rr;
-  atom_t *atom;
 
-  for (a2 = 0; a2 < pot_list_length[a1]; a2++) {
-    atom = conf_atoms - firstatom;
-    i = pot_list[a1][a2][0];
-    j = pot_list[a1][a2][1];
-    if (i >= firstatom && i < (firstatom + myatoms)) {
-      atom += i;
-      if (&atom->typ != NULL) {
-	typ1 = atom->typ;
-	typ2 = atom->neigh[j].typ;
-	col =
-	  (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-	if (force_update || smooth_pot[col]) {
-	  r = atom->neigh[j].r;
-	  if (r < calc_pot.end[col]) {
-	    /* update slots for pair potential part, slot 0 */
-	    rr = r - calc_pot.begin[col];
-	    atom->neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
-	    atom->neigh[j].step[0] = calc_pot.step[col];
-	    atom->neigh[j].shift[0] =
-	      (rr -
-	       atom->neigh[j].slot[0] * calc_pot.step[col]) *
-	      calc_pot.invstep[col];
+  for (i = 0; i < natoms; i++) {
+    typ1 = atoms[i].typ;
+    for (j = 0; j < atoms[i].n_neigh; j++) {
+      typ2 = atoms[i].neigh[j].typ;
+      col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+	: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+      r = atoms[i].neigh[j].r;
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	/* update slots for pair potential part, slot 0 */
+	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[0] = calc_pot.step[col];
+	atoms[i].neigh[j].shift[0] =
+	  (rr -
+	   atoms[i].neigh[j].slot[0] * calc_pot.step[col]) *
+	  calc_pot.invstep[col];
 #if defined EAM
-	    col2 = paircol + typ2;
-	    /* update slots for eam transfer functions, slot 1 */
-	    rr = r - calc_pot.begin[col2];
-	    atom->neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
-	    atom->neigh[j].step[1] = calc_pot.step[col2];
-	    atom->neigh[j].shift[1] =
-	      (rr -
-	       atom->neigh[j].slot[1] * calc_pot.step[col2]) *
-	      calc_pot.invstep[col2];
-	    atom->neigh[j].slot[1] += calc_pot.first[col2];
+	col2 = paircol + typ2;
+/*        update slots for eam transfer functions, slot 1*/
+	rr = r - calc_pot.begin[col2];
+	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
+	atoms[i].neigh[j].step[1] = calc_pot.step[col2];
+	atoms[i].neigh[j].shift[1] =
+	  (rr -
+	   atoms[i].neigh[j].slot[1] * calc_pot.step[col2]) *
+	  calc_pot.invstep[col2];
+	atoms[i].neigh[j].slot[1] += calc_pot.first[col2];
 #endif
-	    atom->neigh[j].slot[0] += calc_pot.first[col];
-	    atom->neigh[j].step[0] = calc_pot.step[col];
-	  }
-	}
+	/* move slot and step to the right potential */
+	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
+	atoms[i].neigh[j].step[0] = calc_pot.step[col];
       }
     }
   }
