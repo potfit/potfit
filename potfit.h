@@ -46,6 +46,8 @@
 #define REAL MPI_DOUBLE
 #endif
 
+#include "random.h"
+
 #if defined EAM
 #define DUMMY_WEIGHT 100.
 #endif
@@ -324,6 +326,7 @@ EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
+EXTERN dsfmt_t dsfmt;		/* random number generator */
 
 /******************************************************************************
 *

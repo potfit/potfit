@@ -180,7 +180,7 @@ int main(int argc, char **argv)
   }
 
   /* initialize random number generator */
-  srandom(seed + myid);
+  dsfmt_init_gen_rand(&dsfmt, seed + myid);
 
   /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI

@@ -608,7 +608,7 @@ endif
 POTFITHDR   	= potfit.h powell_lsq.h utils.h
 POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
 		  linmin_r.c config.c param.c potential.c \
-		  potfit.c splines.c simann.c
+		  potfit.c splines.c simann.c random.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += force_pair.c

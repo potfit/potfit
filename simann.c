@@ -31,10 +31,10 @@
 *****************************************************************/
 
 #include <math.h>
+#include "random.h"
 #include "potfit.h"
 #include "utils.h"
 
-#define RAND_MAX 2147483647
 #define EPS 0.1
 #define NEPS 4
 #define NSTEP 20
@@ -65,7 +65,7 @@ void randomize_parameter(int n, real *xi, real *v)
 
   do {
     temp = xi[idx[n]];
-    rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
+    rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
     /* this is needed to make the algorithm work with a predefined range */
     if (v[n] > (max - min))
       v[n] = (max - min);
@@ -209,7 +209,7 @@ void anneal(real *xi)
 	    }
 	  }
 
-	  else if ((random() / (RAND_MAX + 1.0)) < exp((F - F2) / T)) {
+	  else if ((dsfmt_genrand_close_open(&dsfmt)) < exp((F - F2) / T)) {
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
 	    F = F2;

@@ -41,4 +41,4 @@ void  free_vect_int(int *vect);
 void  free_mat_real(real **matrix);
 void  reg_for_free(void *p, char *name);
 void  free_all_pointers();
-real normdist();
+real  normdist();

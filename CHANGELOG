@@ -1,4 +1,6 @@
 devel-live
++ switch random number generator to double precision Fast Mersenne Twister (dSFMT)
+	this has not been tested on other platforms
 + move normdist to utils.c, it is used in simann.c and diff_evo.c
 + remove potscale and oldcode completely
 + move update_slots to an earlier point of execution time, only root does it now
