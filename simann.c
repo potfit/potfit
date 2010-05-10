@@ -56,24 +56,10 @@
 
 void randomize_parameter(int n, real *xi, real *v)
 {
-  real  temp, rand;
-  int   done = 0;
-  real  min, max;
+  real  rand;
 
-  min = apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]];
-  max = apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]];
-
-  do {
-    temp = xi[idx[n]];
-    rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
-    /* this is needed to make the algorithm work with a predefined range */
-    if (v[n] > (max - min))
-      v[n] = (max - min);
-    temp += (rand * v[n]);
-    if (temp >= min && temp <= max)
-      done = 1;
-  } while (!done);
-  xi[idx[n]] = temp;
+  rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
+  xi[idx[n]] += rand * v[n];
 }
 
 #else

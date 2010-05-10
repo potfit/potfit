@@ -1,4 +1,8 @@
 devel-live
++ remove the loop in randomize_parameter that ensures that the new value
+	is inside the predefined range -> now handled by punishments
+
+bzr-20100510
 + removed some commented code
 + make the order of chemical potentials, globals and other stuff in the potential file
 	arbitrary
