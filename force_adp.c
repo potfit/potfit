@@ -327,14 +327,10 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		/* fn value and grad are calculated in the same step */
 		if (uf)
 		  phi_val =
-		    splint_comb_dir(&calc_pot, xi, col0, neigh->slot[0],
-				    neigh->shift[0], neigh->step[0],
-				    &phi_grad);
+		    splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
 		else
 		  phi_val =
-		    splint_dir(&calc_pot, xi, col0, neigh->slot[0],
-			       neigh->shift[0], neigh->step[0]);
-
+		    splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
@@ -383,15 +379,9 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	      col3 = col0 + paircol + 2 * ntypes;
 	      if (neigh->r < calc_pot.end[col3]) {
 		if (uf)
-		  neigh->u_val =
-		    splint_comb_dir(&calc_pot, xi, col3, neigh->slot[2],
-				    neigh->shift[2], neigh->step[2],
-				    &neigh->u_grad);
+		  neigh->u_val = splint_comb_dir(&calc_pot, xi, neigh->slot[2], neigh->shift[2], neigh->step[2], &neigh->u_grad);
 		else
-		  neigh->u_val =
-		    splint_dir(&calc_pot, xi, col3, neigh->slot[2],
-			       neigh->shift[2], neigh->step[2]);
-
+		  neigh->u_val = splint_dir(&calc_pot, xi, neigh->slot[2], neigh->shift[2], neigh->step[2]);
 		if (self)
 		  neigh->u_val *= 0.5;
 		tmp = neigh->u_val * neigh->rdist.x;
@@ -408,14 +398,10 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	      col4 = col0 + paircol + 3 * ntypes;
 	      if (neigh->r < calc_pot.end[col3]) {
 		if (uf)
-		  neigh->w_val =
-		    splint_comb_dir(&calc_pot, xi, col4, neigh->slot[3],
-				    neigh->shift[3], neigh->step[3],
-				    &neigh->w_grad);
+		  neigh->w_val = splint_comb_dir(&calc_pot, xi, neigh->slot[3], neigh->shift[3], neigh->step[3], &neigh->w_grad);
 		else
 		  neigh->w_val =
-		    splint_dir(&calc_pot, xi, col4, neigh->slot[3],
-			       neigh->shift[3], neigh->step[3]);
+		    splint_dir(&calc_pot, xi, neigh->slot[3], neigh->shift[3], neigh->step[3]);
 		if (self)
 		  neigh->w_val *= 0.5;
 		/* diagonal elements */
@@ -445,9 +431,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	      if (typ2 == typ1) {
 /* then transfer(a->b)==transfer(b->a) */
 		if (neigh->r < calc_pot.end[col1]) {
-		  phi_val = splint_dir(&calc_pot, xi, col1,
-				       neigh->slot[1],
-				       neigh->shift[1], neigh->step[1]);
+		  phi_val = splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 		  atom->rho += phi_val;
 #if defined DEBUG && defined FORCES
 		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
@@ -462,13 +446,9 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	      } else {		/* transfer(a->b)!=transfer(b->a) */
 		col0 = paircol + typ1;
 		if (neigh->r < calc_pot.end[col1]) {
-		  atom->rho += splint_dir(&calc_pot, xi, col1,
-					  neigh->slot[1],
-					  neigh->shift[1], neigh->step[1]);
+		  atom->rho += splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 #if defined DEBUG && defined FORCES
-		  fprintf(stderr, "rho=%f (added %f)\n", atom->rho,
-			  splint_dir(&calc_pot, xi, col1, neigh->slot[1],
-				     neigh->shift[1], neigh->step[1]));
+		  fprintf(stderr, "rho=%f (added %f)\n", atom->rho, splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]));
 #endif
 		}
 		/* cannot use slot/shift to access splines */
@@ -578,9 +558,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		    || (r < calc_pot.end[col2 - ntypes])) {
 		  rho_grad =
 		    (r < calc_pot.end[col1]) ?
-		    splint_grad_dir(&calc_pot, xi, col1,
-				    neigh->slot[1], neigh->shift[1],
-				    neigh->step[1]) : 0.;
+		    splint_grad_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.;
 		  if (typ2 == typ1)	/* use actio = reactio */
 		    rho_grad_j = rho_grad;
 		  else

@@ -78,7 +78,7 @@ int main(int argc, char **argv)
   int   i, j;
   real  tot, min, max, sqr;
   real *force;
-#if defined EAM
+#if defined EAM || defined ADP
   int  *ntyp = NULL;
   real *totdens = NULL;
 #endif
