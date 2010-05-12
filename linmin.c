@@ -1,6 +1,6 @@
 /****************************************************************
 *
-* linmin_r.c: Finds the minimum of a multivariable function along
+* linmin.c: Finds the minimum of a multivariable function along
 *     a certain direction
 *
 *****************************************************************/
@@ -39,13 +39,14 @@
 #include <math.h>
 #include "potfit.h"
 #include "utils.h"
+#include "bracket.h"
 #include "powell_lsq.h"
 #define TOL 1.0e-1
 
 real *xicom, *delcom;
 
-real linmin_r(real xi[], real del[], real fxi1, real *x1, real *x2,
-	      real *fret1, real *fret2)
+real linmin(real xi[], real del[], real fxi1, real *x1, real *x2,
+	    real *fret1, real *fret2)
 /* takes vector del (direction of search), xi (originating point),
    n,m (dimensions),
    x1, x2 (two best locations),
@@ -70,9 +71,9 @@ real linmin_r(real xi[], real del[], real fxi1, real *x1, real *x2,
     vecu[j] = xicom[j] + bx * delcom[j];	/*set vecu */
   fb = (*calc_forces) (vecu, fret2, 0);
 
-  bracket_r(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
+  bracket(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
 
-  fx = brent_r(ax, xx, bx, fx, TOL, &xmin, &xmin2, fret1, fret2);
+  fx = brent(ax, xx, bx, fx, TOL, &xmin, &xmin2, fret1, fret2);
   for (j = 0; j < ndimtot; j++) {
     del[j] *= xmin;
     xi[j] += del[j];
