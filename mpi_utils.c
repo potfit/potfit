@@ -368,7 +368,7 @@ void broadcast_neighbors()
  *
  **************************************************************************/
 
-#if defined EAM && !defined APOT
+#ifndef APOT
 
 void potsync()
 {
@@ -386,5 +386,5 @@ void potsync()
   nvals = calc_pot.len - firstval;
   MPI_Bcast(calc_pot.table + firstval, nvals, REAL, 0, MPI_COMM_WORLD);
 }
-#endif /* EAM && !APOT */
+#endif /* !APOT */
 #endif /* MPI */

@@ -137,10 +137,13 @@ void diff_evo(real *xi)
   if (evo_width == 0)
     return;
 
+  /* vector for force calculation */
   fxi = vect_real(mdim);
 
+  /* vector with new configuration */
   trial = (real *)malloc(D * sizeof(real));
 
+  /* all configurations */
   x1 = (real **)malloc(NP * sizeof(real *));
   x2 = (real **)malloc(NP * sizeof(real *));
   cost = (real *)malloc(NP * sizeof(real));
@@ -181,13 +184,15 @@ void diff_evo(real *xi)
   printf("D=%d, NP=%d, CR=%f, F=%f\n", D, NP, CR, F);
 #endif
 
-  printf("Loops\t\tOptimum\t\tAverage cost\tAverage change\n");
-  printf("%5d\t\t%f\t%f\t0\n", count, min, avg / (NP));
+  printf("Loops\t\tOptimum\t\tAverage error sum\n");
+  printf("%5d\t\t%f\t%f\n", count, min, avg / (NP));
   fflush(stdout);
 
+  /* main differential evolution loop */
   while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished
 	 && restart < 4) {
     sum = 0;
+    /* randomly create new populations */
     for (i = 0; i < NP; i++) {
       tmpsum = 0;
       do
@@ -277,7 +282,7 @@ void diff_evo(real *xi)
     for (i = 0; i < NP; i++)
       avg += cost[i];
 #ifdef APOT
-    printf("%5d\t\t%f\t%f\t%e\n", count + 1, min, avg / (NP), sum / (NP * D));
+    printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
 #else
     printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
 #endif

@@ -37,9 +37,11 @@
 vector vec_prod(vector u, vector v)
 {
   vector w;
+
   w.x = u.y * v.z - u.z * v.y;
   w.y = u.z * v.x - u.x * v.z;
   w.z = u.x * v.y - u.y * v.x;
+
   return w;
 }
 
@@ -85,33 +87,37 @@ real make_box(void)
 
 void read_config(char *filename)
 {
-  int   count;
-#ifdef APOT
-  int   index;
-#endif
-  int   i, j, k, ix, iy, iz, typ1, typ2, col, slot, klo, khi;
-  int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz =
-    0, use_force;
-  int   w_force = 0, w_stress = 0;
-  int   tag_format = 0;
-  int   sh_dist = 0;		/* short distance flag */
-  int   cell_scale[3];
-  int   str_len;
-  int   max_type = 0;
-  FILE *infile;
-  fpos_t filepos;
+  atom_t *atom;
   char  msg[255], buffer[1024];
   char *res, *ptr;
   char *tmp, *res_tmp;
-  atom_t *atom;
+  int   count;
+  int   i, j, k, ix, iy, iz;
+  int   typ1, typ2, col, slot, klo, khi;
+  int   cell_scale[3];
+  int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz =
+    0, use_force;
+  int   max_type = 0;
+  int   sh_dist = 0;		/* short distance flag */
+  int   str_len;
+  int   tag_format = 0;
+  int   w_force = 0, w_stress = 0;
+#ifdef APOT
+  int   index;
+#endif
+  FILE *infile;
+  fpos_t filepos;
+  real  r, rr, istep, shift, step;
+  real *mindist;
   sym_tens *stresses;
   vector d, dd, iheight;
-  real  r, rr, istep, shift, step;
 
-  real *mindist;
+  /* initialize minimum distance array */
   mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
   if (NULL == mindist)
     error("Cannot allocate memory for minimal distance.");
+
+  /* initialize elements array */
   elements = (char **)malloc(ntypes * sizeof(char *));
   reg_for_free(elements, "elements");
   if (NULL == elements)
@@ -126,6 +132,7 @@ void read_config(char *filename)
     sprintf(elements[i], "%d", i);
   }
 
+  /* set maximum cutoff distance as starting value for mindist */
   for (i = 0; i < ntypes * ntypes; i++)
     mindist[i] = 99;
   for (i = 0; i < ntypes; i++)
@@ -358,11 +365,14 @@ void read_config(char *filename)
 	error("No stresses given -- old format");
       usestress[nconf] = 1;
     }
+
     if (usestress[nconf])
       w_stress++;
     if (useforce[nconf])
       w_force++;
+
     volumen[nconf] = make_box();
+
     /* read the atoms */
     for (i = 0; i < count; i++) {
       k = 3 * (natoms + i);
@@ -569,6 +579,7 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
+  /* be pedantic about too large ntypes */
   if ((max_type + 1) < ntypes) {
     fprintf(stderr,
 	    "There are less than %d atom types in your configurations!\n",
@@ -639,6 +650,7 @@ void read_config(char *filename)
   }
 #endif
 
+  /* write pair distribution file */
   if (write_pair == 1) {
     char  pairname[255];
     FILE *pairfile;
@@ -667,13 +679,13 @@ void read_config(char *filename)
 		  i - (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
 
     for (k = 0; k < paircol; k++) {
-      for (i = 0; i < natoms; i++)
+      for (i = 0; i < natoms; i++) {
+	typ1 = atoms[i].typ;
 	for (j = 0; j < atoms[i].n_neigh; j++) {
-	  col = (atoms[i].typ <= atoms[i].neigh[j].typ) ?
-	    atoms[i].typ * ntypes + atoms[i].neigh[j].typ -
-	    ((atoms[i].typ * (atoms[i].typ + 1)) / 2)
-	    : atoms[i].neigh[j].typ * ntypes + atoms[i].typ -
-	    ((atoms[i].neigh[j].typ * (atoms[i].neigh[j].typ + 1)) / 2);
+	  typ2 = atoms[i].neigh[j].typ;
+	  col = (typ1 <= typ2) ? typ1 * ntypes + typ2 -
+	    ((typ1 * (typ1 + 1)) / 2) : typ2 * ntypes + typ1 -
+	    ((typ2 * (typ2 + 1)) / 2);
 	  if (col == k) {
 	    pos = (int)(atoms[i].neigh[j].r / pair_dist[k]);
 #ifdef DEBUG
@@ -688,6 +700,7 @@ void read_config(char *filename)
 	      max_count = (int)pair_table[k * pair_steps + pos];
 	  }
 	}
+      }
     }
 
     for (k = 0; k < paircol; k++) {
@@ -701,6 +714,8 @@ void read_config(char *filename)
     }
     fclose(pairfile);
   }
+
+  /* assign correct distances to different tables */
 #ifdef APOT
   real  min = 10.;
 
@@ -724,6 +739,7 @@ void read_config(char *filename)
     calc_pot.begin[j] = min * 0.95;
   }
 #endif
+  /* recalculate step, invstep and xcoord for new tables */
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] =
       (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
@@ -735,8 +751,9 @@ void read_config(char *filename)
   }
 
   update_slots();
-#endif
+#endif /* APOT */
 
+  /* print minimal distance matrix */
   printf("Minimal Distances Matrix:\n");
   printf("Atom\t");
   for (i = 0; i < ntypes; i++)
@@ -756,6 +773,7 @@ void read_config(char *filename)
 
   free(mindist);
 
+  /* calculate the total number of the atom types */
   na_typ = (int **)realloc(na_typ, (nconf + 1) * sizeof(int *));
   reg_for_free(na_typ, "na_typ");
   if (NULL == na_typ)
@@ -805,7 +823,10 @@ void read_config(char *filename)
 
 void update_slots()
 {
-  int   i, j, col, col2, typ1, typ2;
+  int   i, j, col, typ1, typ2;
+#if defined EAM
+  int   col2;
+#endif
   real  r, rr;
 
   for (i = 0; i < natoms; i++) {

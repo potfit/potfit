@@ -1453,9 +1453,8 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
-  int   i, j, k, m, n, size;
-  real  r;
-  real *val, *ord;
+  int   i, j, k, m, n;
+  real *val;
 #ifdef APOT
   int   change;
   real  f, h = 0;
@@ -1996,11 +1995,14 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
-  FILE *outfile;
-  char  msg[255];
-  char  filename[255];
-  real *r2begin, *r2end, *r2step, temp2, r2, temp, root;
   int   i, j, k, m, m2, col1, col2;
+  real  r2, temp;
+  real *r2begin, *r2end, *r2step;
+#if defined EAM
+  real  root, temp2;
+#endif /* EAM */
+  FILE *outfile;
+  char  msg[255], filename[255];
 
   sprintf(filename, "%s_phi.imd.pt", prefix);
   /* allocate memory */
@@ -2350,10 +2352,13 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
 void write_altplot_pair(pot_table_t *pt, char *filename)
 {
-  FILE *outfile;
   char  msg[255];
   int   i, j, k, l;
-  real  r, rmin = 100., rmax = 0., r_step, temp;
+  real  r, rmin = 100., rmax = 0., r_step;
+#if defined EAM
+  real  temp;
+#endif /* EAM */
+  FILE *outfile;
 
   /* open file */
   outfile = fopen(filename, "w");
