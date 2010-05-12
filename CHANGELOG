@@ -1,9 +1,30 @@
+bzr-20100512
++ moved files from *_r.* to *.*, all types are real, include header for bracketing
++ fix warnings when compiling with debug flag
++ simann now counts all new parameters, even if they were out of bounds, as an attempt
++ optimize evo output
++ properly initialize the dSFMT prng
+
+bzr-20100510
++ removed some commented code
++ make the order of chemical potentials, globals and other stuff in the potential file
+	arbitrary
++ switch random number generator to double precision Fast Mersenne Twister (dSFMT)
+	this has not been tested on other platforms
++ move normdist to utils.c, it is used in simann.c and diff_evo.c
++ remove potscale and oldcode completely
++ move update_slots to an earlier point of execution time, only root does it now
++ remove pot_list completely
++ change MAXNEIGH to dynamic array
++ only save new neighbors, speeds up the optimization significantly
+  calculate forces with actio=reactio
+
 bzr-20100426
 + re-introduce the format5 specific parts
 
 bzr-20100426
-+ start migration to bazaar vcs 
-+ prepare trunk: 
++ start migration to bazaar vcs
++ prepare trunk:
 	removed .revisions file
 	moved potscale to util directory
 	removed html directory
