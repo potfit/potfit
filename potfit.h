@@ -160,10 +160,10 @@ typedef struct {
 #endif
 
 #ifdef DIPOLE
-  real *charge;                 /* charges */
-  real *dp_alpha;               /* polarisability */
-  real *dp_b;                   /* parameter for short-range-dipole-moment */
-  real *dp_c;                   /* parameter for short-range-dipole-moment */
+  real *charge;			/* charges */
+  real *dp_alpha;		/* polarisability */
+  real *dp_b;			/* parameter for short-range-dipole-moment */
+  real *dp_c;			/* parameter for short-range-dipole-moment */
 #endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
@@ -343,7 +343,7 @@ EXTERN dsfmt_t dsfmt;		/* random number generator */
 // variables needed for option dipole
 #ifdef DIPOLE
 EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
-EXTERN real dp_tol INIT(1.e-9); /* dipole iteration precision */
+EXTERN real dp_tol INIT(1.e-9);	/* dipole iteration precision */
 EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 #endif
 

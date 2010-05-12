@@ -1,6 +1,6 @@
 /****************************************************************
 *
-* force.c: Routines used for calculating pair/monopole/dipole 
+* force.c: Routines used for calculating pair/monopole/dipole
 *     forces/energies in various interpolation schemes.
 *
 *********************************************************************************/
@@ -190,8 +190,10 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	  forces[stress_p + 6 * h + i] = 0.;
 
 	apot_table_t *apt = &apot_table;
-	forces[energy_p + h] += apt->charge[0] + apt->dp_alpha[0] * apt->dp_b[0] * apt->dp_c[0];
-	forces[energy_p + h] += apt->charge[1] + apt->dp_alpha[1] * apt->dp_b[1] * apt->dp_c[1];
+	forces[energy_p + h] +=
+	  apt->charge[0] + apt->dp_alpha[0] * apt->dp_b[0] * apt->dp_c[0];
+	forces[energy_p + h] +=
+	  apt->charge[1] + apt->dp_alpha[1] * apt->dp_b[1] * apt->dp_c[1];
 
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
@@ -230,14 +232,13 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      if (neigh->r < calc_pot.end[col]) {
 		/* fn value and grad are calculated in the same step */
 		if (uf) {
-		  fnval = splint_comb_dir(&calc_pot, xi, col,
-					  neigh->slot[0],
-					  neigh->shift[0],
-					  neigh->step[0], &grad);
+		  fnval =
+		    splint_comb_dir(&calc_pot, xi, neigh->slot[0],
+				    neigh->shift[0], neigh->step[0], &grad);
 		} else {
-		  fnval = splint_dir(&calc_pot, xi, col,
-				     neigh->slot[0],
-				     neigh->shift[0], neigh->step[0]);
+		  fnval =
+		    splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
+			       neigh->step[0]);
 		}
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
