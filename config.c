@@ -805,7 +805,10 @@ void read_config(char *filename)
 
 void update_slots()
 {
-  int   i, j, col, col2, typ1, typ2;
+  int   i, j, col, typ1, typ2;
+#if defined EAM
+  int   col2;
+#endif
   real  r, rr;
 
   for (i = 0; i < natoms; i++) {

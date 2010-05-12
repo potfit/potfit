@@ -68,6 +68,11 @@
 
 typedef double real;
 
+typedef enum ParamType {
+  PARAM_STR, PARAM_STRPTR,
+  PARAM_INT, PARAM_DOUBLE
+} PARAMTYPE;
+
 typedef struct {
   real  x;
   real  y;
@@ -357,6 +362,7 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 
 void  error(char *);
 void  warning(char *);
+int   getparam(char *, void *, PARAMTYPE, int, int);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 #ifdef APOT
@@ -381,6 +387,8 @@ real  grad2(pot_table_t *, real *, int, real);
 real  grad3(pot_table_t *, real *, int, real);
 real  pot2(pot_table_t *, int, real);
 real  pot3(pot_table_t *, int, real);
+vector vec_prod(vector, vector);
+real  make_box(void);
 void  read_config(char *);
 void  read_config2(char *);
 #ifdef PAIR
@@ -388,8 +396,13 @@ real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
 #endif
-void  powell_lsq(real *xi);
+#ifdef APOT
+int   randomize_parameter(int, real *, real *);
+#else
+void  makebump(real *, real, real, int);
+#endif
 void  anneal(real *xi);
+void  powell_lsq(real *xi);
 #if defined EVO
 real *calc_vect(real *x);
 void  init_population(real **pop, real *xi, int size, real scale);
@@ -399,12 +412,10 @@ void  spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real  splint_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		 real step);
-real  splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		      real step, real *grad);
-real  splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		      real step);
+real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
+real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
+		      real *grad);
+real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ne(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad);
@@ -457,8 +468,13 @@ real  apot_grad(real, real *, void (*function) (real, real *, real *));
 /* potential.c */
 void  update_slots();		/* new slots for smooth cutoff */
 
-#if defined PAIR
+#ifdef PAIR
 /* chempot.c */
+int   swap_chem_pot(int, int);
+int   sort_chem_pot_2d(void);
+real  chemical_potential_1d(int *, real *);
+real  chemical_potential_2d(int *, real *);
+real  chemical_potential_3d(int *, real *, int);
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
 #endif

@@ -75,9 +75,13 @@ void warning(char *msg)
 
 int main(int argc, char **argv)
 {
+  int   i, j;
+  real  tot, min, max, sqr;
   real *force;
-  real  tot, min, max, sqr, *totdens = NULL;
-  int   i, j, *ntyp = NULL;
+#if defined EAM
+  int  *ntyp = NULL;
+  real *totdens = NULL;
+#endif
   char  msg[255], file[255];
   FILE *outfile;
 
@@ -171,7 +175,20 @@ int main(int argc, char **argv)
   }
 
   /* initialize random number generator */
-  dsfmt_init_gen_rand(&dsfmt, seed + myid);
+#define R_SIZE 624
+#define RAND_MAX 2147483647
+  uint32_t *array;
+  array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
+  srandom(seed + myid);
+  for (i = 0; i < R_SIZE; i++)
+    array[i] = random();
+
+  dsfmt_init_by_array(&dsfmt, array, R_SIZE);
+  for (i = 0; i < 10e5; i++)
+    dsfmt_genrand_close_open(&dsfmt);
+  free(array);
+#undef R_SIZE
+#undef RAND_MAX
 
   /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI

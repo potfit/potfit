@@ -1,7 +1,7 @@
 /****************************************************************
 *
-* force.c: Routines used for calculating forces/energies in various
-*     interpolation schemes.
+* force.c: Routines used for calculating pair forces/energies
+* 	in various interpolation schemes.
 *
 *****************************************************************/
 /*
@@ -85,8 +85,8 @@
 
 real calc_forces_pair(real *xi_opt, real *forces, int flag)
 {
-  real  tmpsum, sum = 0.;
   int   first, col1, i;
+  real  tmpsum, sum = 0.;
   real *xi = NULL;
 
   switch (format) {
@@ -166,13 +166,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
-      int   self;
-      vector tmp_force;
-      int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
-      real  fnval, grad;
       atom_t *atom;
-
+      int   h, j, k, l;
+      int   col, self, typ1, typ2, uf;
+#ifdef STRESS
+      int   us, stresses;
+#endif
       neigh_t *neigh;
+      real  fnval, grad;
+      vector tmp_force;
 
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
@@ -180,7 +182,9 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
+#ifdef STRESS
 	us = conf_us[h - firstconf];
+#endif
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
@@ -225,14 +229,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    if (neigh->r < calc_pot.end[col]) {
 	      /* fn value and grad are calculated in the same step */
 	      if (uf) {
-		fnval = splint_comb_dir(&calc_pot, xi, col,
-					neigh->slot[0],
-					neigh->shift[0],
-					neigh->step[0], &grad);
+		fnval =
+		  splint_comb_dir(&calc_pot, xi, neigh->slot[0],
+				  neigh->shift[0], neigh->step[0], &grad);
 	      } else {
-		fnval = splint_dir(&calc_pot, xi, col,
-				   neigh->slot[0],
-				   neigh->shift[0], neigh->step[0]);
+		fnval =
+		  splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
+			     neigh->step[0]);
 	      }
 	      /* avoid double counting if atom is interacting with a
 	         copy of itself */

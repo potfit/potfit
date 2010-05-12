@@ -38,8 +38,8 @@
 #define EPS 0.1
 #define NEPS 4
 #define NSTEP 20
-#define STEPVAR 2.0
 #define NTEMP (3*ndim)
+#define STEPVAR 2.0
 #define TEMPVAR 0.85
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-(sqrreal(a))/2.)))
@@ -54,12 +54,25 @@
 *
 *******************************************************************************/
 
-void randomize_parameter(int n, real *xi, real *v)
+int randomize_parameter(int n, real *xi, real *v)
 {
-  real  rand;
+  real  temp, rand;
+  int   done = 0, count = 0;
+  real  min, max;
 
-  rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
-  xi[idx[n]] += rand * v[n];
+  min = apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]];
+  max = apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]];
+
+  do {
+    temp = xi[idx[n]];
+    rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
+    temp += (rand * v[n]);
+    if (temp >= min && temp <= max)
+      done = 1;
+    count++;
+  } while (!done);
+  xi[idx[n]] = temp;
+  return count - 1;
 }
 
 #else
@@ -104,9 +117,7 @@ void makebump(real *x, real width, real height, int center)
 void anneal(real *xi)
 {
   int   j = 0, m = 0, k = 0, n, h = 0;	/* counters */
-  int   nstep = NSTEP, ntemp = NTEMP;
   int   loopagain;		/* loop flag */
-  real  c = STEPVAR;
   real  T;			/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
@@ -118,6 +129,7 @@ void anneal(real *xi)
 #endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
+  int  *n_tries;		/* number of tries to generate acceptable random number */
 
   /* init starting temperature for annealing process */
   T = anneal_temp;
@@ -130,10 +142,12 @@ void anneal(real *xi)
   xi2 = vect_real(ndimtot);
   fxi1 = vect_real(mdim);
   naccept = vect_int(ndim);
+  n_tries = vect_int(ndim);
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
     v[n] = 1.;
     naccept[n] = 0;
+    n_tries[n] = NSTEP;
   }
   for (n = 0; n < ndimtot; n++) {
     xi2[n] = xi[n];
@@ -149,15 +163,15 @@ void anneal(real *xi)
 
   /* annealing loop */
   do {
-    for (m = 0; m < ntemp; m++) {
-      for (j = 0; j < nstep; j++) {
+    for (m = 0; m < NTEMP; m++) {
+      for (j = 0; j < NSTEP; j++) {
 	for (h = 0; h < ndim; h++) {
 	  /* Step #1 */
 	  for (n = 0; n < ndimtot; n++) {
 	    xi2[n] = xi[n];
 	  }
 #ifdef APOT
-	  randomize_parameter(h, xi2, v);
+	  n_tries[h] += randomize_parameter(h, xi2, v);
 #else
 	  /* Create a gaussian bump,
 	     width & hight distributed normally */
@@ -206,15 +220,17 @@ void anneal(real *xi)
 
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
-	if (naccept[n] > 0.6 * nstep)
-	  v[n] *= (1 + c * ((real)naccept[n] / nstep - 0.6) / 0.4);
-	else if (naccept[n] < 0.4 * nstep)
-	  v[n] /= (1 + c * (0.4 - (real)naccept[n] / nstep) / 0.4);
+	if (naccept[n] > (0.6 * NSTEP))
+	  v[n] *= (1 + STEPVAR * ((real)naccept[n] / n_tries[n] - 0.6) / 0.4);
+	else if (naccept[n] < (0.4 * NSTEP))
+	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / n_tries[n]) / 0.4);
 	naccept[n] = 0;
+	n_tries[n] = NSTEP;
       }
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
+
       /* End fit if break flagfile exists */
       if (*flagfile != '\0') {
 	ff = fopen(flagfile, "r");

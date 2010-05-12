@@ -181,8 +181,8 @@ void diff_evo(real *xi)
   printf("D=%d, NP=%d, CR=%f, F=%f\n", D, NP, CR, F);
 #endif
 
-  printf("Loops\t\tOptimum\t\tAverage cost\tAverage change\n");
-  printf("%5d\t\t%f\t%f\t0\n", count, min, avg / (NP));
+  printf("Loops\t\tOptimum\t\tAverage error sum\n");
+  printf("%5d\t\t%f\t%f\n", count, min, avg / (NP));
   fflush(stdout);
 
   while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished
@@ -277,7 +277,7 @@ void diff_evo(real *xi)
     for (i = 0; i < NP; i++)
       avg += cost[i];
 #ifdef APOT
-    printf("%5d\t\t%f\t%f\t%e\n", count + 1, min, avg / (NP), sum / (NP * D));
+    printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
 #else
     printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
 #endif

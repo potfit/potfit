@@ -85,10 +85,11 @@
 
 real calc_forces_eam(real *xi_opt, real *forces, int flag)
 {
-  real  tmpsum, sum = 0.;
   int   first, col1, i;
+  real  tmpsum, sum = 0.;
   real *xi = NULL;
   static real rho_sum_loc, rho_sum;
+
   rho_sum_loc = rho_sum = 0.;
 
   switch (format) {
@@ -218,15 +219,16 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
-
-      int   col2;
-      real  grad2, r, eamforce;
-      int   self;
-      vector tmp_force;
-      int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
-      real  fnval, grad;
       atom_t *atom;
+      int   h, j, k, l;
+      int   col, col2, self, typ1, typ2, uf;
+#ifdef STRESS
+      int   us, stresses;
+#endif /* STRESS */
       neigh_t *neigh;
+      real  fnval, grad;
+      real  eamforce, grad2, r;
+      vector tmp_force;
 
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
@@ -234,7 +236,9 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
+#ifdef STRESS
 	us = conf_us[h - firstconf];
+#endif /* STRESS */
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
@@ -277,14 +281,13 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    if (neigh->r < calc_pot.end[col]) {
 	      /* fn value and grad are calculated in the same step */
 	      if (uf)
-		fnval = splint_comb_dir(&calc_pot, xi, col,
-					neigh->slot[0],
-					neigh->shift[0],
-					neigh->step[0], &grad);
+		fnval =
+		  splint_comb_dir(&calc_pot, xi, neigh->slot[0],
+				  neigh->shift[0], neigh->step[0], &grad);
 	      else
-		fnval = splint_dir(&calc_pot, xi, col,
-				   neigh->slot[0],
-				   neigh->shift[0], neigh->step[0]);
+		fnval =
+		  splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
+			     neigh->step[0]);
 	      /* avoid double counting if atom is interacting with a
 	         copy of itself */
 	      if (self) {
@@ -329,9 +332,9 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    if (typ2 == typ1) {
 /* then transfer(a->b)==transfer(b->a) */
 	      if (neigh->r < calc_pot.end[col2]) {
-		fnval = splint_dir(&calc_pot, xi, col2,
-				   neigh->slot[1],
-				   neigh->shift[1], neigh->step[1]);
+		fnval =
+		  splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
+			     neigh->step[1]);
 		atom->rho += fnval;
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
@@ -342,9 +345,9 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    } else {		/* transfer(a->b)!=transfer(b->a) */
 	      col = paircol + typ1;
 	      if (neigh->r < calc_pot.end[col2]) {
-		atom->rho += splint_dir(&calc_pot, xi, col2,
-					neigh->slot[1],
-					neigh->shift[1], neigh->step[1]);
+		atom->rho +=
+		  splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
+			     neigh->step[1]);
 	      }
 	      /* cannot use slot/shift to access splines */
 	      if (neigh->r < calc_pot.end[col])
@@ -430,9 +433,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		  || (r < calc_pot.end[col - ntypes])) {
 		grad =
 		  (r < calc_pot.end[col2]) ?
-		  splint_grad_dir(&calc_pot, xi, col2,
-				  neigh->slot[1], neigh->shift[1],
-				  neigh->step[1]) : 0.;
+		  splint_grad_dir(&calc_pot, xi, neigh->slot[1],
+				  neigh->shift[1], neigh->step[1]) : 0.;
 		if (typ2 == typ1)	/* use actio = reactio */
 		  grad2 = grad;
 		else

@@ -40,11 +40,6 @@ extern char *strdup(char *);
 #define strcasecmp strcmpi
 #endif
 
-typedef enum ParamType {
-  PARAM_STR, PARAM_STRPTR,
-  PARAM_INT, PARAM_DOUBLE
-} PARAMTYPE;
-
 int   curline;			/* number of current line */
 
 /******************************************************************************

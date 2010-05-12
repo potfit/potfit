@@ -132,16 +132,14 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	  col2 = paircol + typ2;
 	  if (typ2 == typ1) {
 	    if (neigh->r < pt->end[col2]) {
-	      fnval = splint_dir(pt, xi, col2, neigh->slot[1],
-				 neigh->shift[1], neigh->step[1]);
+	      fnval = splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	      atom->rho += fnval;
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {
 	    col = paircol + typ1;
 	    if (neigh->r < pt->end[col2]) {
-	      atom->rho += splint_dir(pt, xi, col2, neigh->slot[1],
-				      neigh->shift[1], neigh->step[1]);
+	      atom->rho += splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	    }
 	    if (neigh->r < pt->end[col])
 	      atoms[neigh->nr].rho += splint(pt, xi, col, neigh->r);

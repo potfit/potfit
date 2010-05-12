@@ -1,6 +1,9 @@
-devel-live
-+ remove the loop in randomize_parameter that ensures that the new value
-	is inside the predefined range -> now handled by punishments
+devel-20100512
++ moved files from *_r.* to *.*, all types are real, include header for bracketing
++ fix warnings when compiling with debug flag
++ simann now counts all new parameters, even if they were out of bounds, as an attempt
++ optimize evo output
++ properly initialize the dSFMT prng
 
 bzr-20100510
 + removed some commented code

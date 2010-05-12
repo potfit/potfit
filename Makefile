@@ -606,8 +606,8 @@ endif
 ###########################################################################
 
 POTFITHDR   	= potfit.h powell_lsq.h utils.h
-POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
-		  linmin_r.c config.c param.c potential.c \
+POTFITSRC 	= utils.c bracket.c powell_lsq.c brent.c \
+		  linmin.c config.c param.c potential.c \
 		  potfit.c splines.c simann.c random.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
