@@ -310,14 +310,13 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	      if (neigh->r < calc_pot.end[col]) {
 		/* fn value and grad are calculated in the same step */
 		if (uf)
-		  fnval = splint_comb_dir(&calc_pot, xi, col,
-					  neigh->slot[0],
-					  neigh->shift[0],
-					  neigh->step[0], &grad);
+		  fnval =
+		    splint_comb_dir(&calc_pot, xi, neigh->slot[0],
+				    neigh->shift[0], neigh->step[0], &grad);
 		else
-		  fnval = splint_dir(&calc_pot, xi, col,
-				     neigh->slot[0],
-				     neigh->shift[0], neigh->step[0]);
+		  fnval =
+		    splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
+			       neigh->step[0]);
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
@@ -370,9 +369,9 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	      if (typ2 == typ1) {
 /* then transfer(a->b)==transfer(b->a) */
 		if (neigh->r < calc_pot.end[col2]) {
-		  fnval = splint_dir(&calc_pot, xi, col2,
-				     neigh->slot[1],
-				     neigh->shift[1], neigh->step[1]);
+		  fnval =
+		    splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
+			       neigh->step[1]);
 		  atom->rho += fnval;
 #if defined DEBUG && defined FORCES
 		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
@@ -387,9 +386,9 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	      } else {		/* transfer(a->b)!=transfer(b->a) */
 		col = paircol + typ1;
 		if (neigh->r < calc_pot.end[col2]) {
-		  atom->rho += splint_dir(&calc_pot, xi, col2,
-					  neigh->slot[1],
-					  neigh->shift[1], neigh->step[1]);
+		  atom->rho +=
+		    splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
+			       neigh->step[1]);
 #if defined DEBUG && defined FORCES
 		  fprintf(stderr, "rho=%f (added %f) dist=%f\n", atom->rho,
 			  splint_dir(&calc_pot, xi, col2, neigh->slot[1],
@@ -425,15 +424,15 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	    col5 = 2 * paircol + 2 * ntypes + typ1;
 	    if (n_angl->r2 < calc_pot.end[col3]) {
 	      if (n_angl->r3 < calc_pot.end[col4]) {
-		f_ij = splint_dir(&calc_pot, xi, col3,
-				  n_angl->slot[0],
-				  n_angl->shift[0], n_angl->step[0]);
-		f_ik = splint_dir(&calc_pot, xi, col4,
-				  n_angl->slot[1],
-				  n_angl->shift[1], n_angl->step[1]);
-		m_ijk = splint_dir(&calc_pot, xi, col5,
-				   n_angl->slot[2],
-				   n_angl->shift[2], n_angl->step[2]);
+		f_ij =
+		  splint_dir(&calc_pot, xi, n_angl->slot[0], n_angl->shift[0],
+			     n_angl->step[0]);
+		f_ik =
+		  splint_dir(&calc_pot, xi, n_angl->slot[1], n_angl->shift[1],
+			     n_angl->step[1]);
+		m_ijk =
+		  splint_dir(&calc_pot, xi, n_angl->slot[2], n_angl->shift[2],
+			     n_angl->step[2]);
 		atom->rho += f_ij * f_ik * m_ijk;
 	      }
 	    }
@@ -523,9 +522,8 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 		    || (r < calc_pot.end[col - ntypes])) {
 		  grad =
 		    (r < calc_pot.end[col2]) ?
-		    splint_grad_dir(&calc_pot, xi, col2,
-				    neigh->slot[1], neigh->shift[1],
-				    neigh->step[1]) : 0.;
+		    splint_grad_dir(&calc_pot, xi, neigh->slot[1],
+				    neigh->shift[1], neigh->step[1]) : 0.;
 		  if (typ2 == typ1)	/* use actio = reactio */
 		    grad2 = grad;
 		  else
@@ -617,19 +615,23 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	      col5 = 2 * paircol + 2 * ntypes + typ1;
 	      if (n_angl->r2 < calc_pot.end[col3]) {
 		if (n_angl->r3 < calc_pot.end[col4]) {
-		  f_ij = splint_dir(&calc_pot, xi, col3,
-				    n_angl->slot[0],
-				    n_angl->shift[0], n_angl->step[0]);
-		  f_ik = splint_dir(&calc_pot, xi, col4,
-				    n_angl->slot[1],
-				    n_angl->shift[1], n_angl->step[1]);
-		  m_ijk = splint_dir(&calc_pot, xi, col5,
-				     n_angl->slot[2],
-				     n_angl->shift[2], n_angl->step[2]);
-		  gradff = (r_ij < calc_pot.end[col3]) ?
-		    splint_grad(&calc_pot, xi, col3, r_ij) : 0.;
-		  gradff2 = (r_ik < calc_pot.end[col4]) ?
-		    splint_grad(&calc_pot, xi, col4, r_ik) : 0.;
+		  f_ij =
+		    splint_dir(&calc_pot, xi, n_angl->slot[0],
+			       n_angl->shift[0], n_angl->step[0]);
+		  f_ik =
+		    splint_dir(&calc_pot, xi, n_angl->slot[1],
+			       n_angl->shift[1], n_angl->step[1]);
+		  m_ijk =
+		    splint_dir(&calc_pot, xi, n_angl->slot[2],
+			       n_angl->shift[2], n_angl->step[2]);
+		  gradff =
+		    (r_ij < calc_pot.end[col3]) ? splint_grad(&calc_pot, xi,
+							      col3,
+							      r_ij) : 0.;
+		  gradff2 =
+		    (r_ik < calc_pot.end[col4]) ? splint_grad(&calc_pot, xi,
+							      col4,
+							      r_ik) : 0.;
 		  gradmm = splint_grad(&calc_pot, xi, col5, cos);
 /* *INDENT-OFF* */
 		  angular_force_x +=

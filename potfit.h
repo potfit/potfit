@@ -46,11 +46,11 @@
 #define REAL MPI_DOUBLE
 #endif
 
-#ifndef MEAM
-#define MAXNEIGH 400
-#else
+#ifdef MEAM
 #define MAXNEIGH 130
 #endif
+
+#include "random.h"
 
 #if defined EAM || defined MEAM
 #define DUMMY_WEIGHT 100.
@@ -71,6 +71,11 @@
 ******************************************************************************/
 
 typedef double real;
+
+typedef enum ParamType {
+  PARAM_STR, PARAM_STRPTR,
+  PARAM_INT, PARAM_DOUBLE
+} PARAMTYPE;
 
 typedef struct {
   real  x;
@@ -125,7 +130,6 @@ typedef struct {
   vector pos;
   vector force;
   real  absforce;
-  neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
 #if defined EAM || defined MEAM
   real  rho;			/* embedding electron density */
@@ -134,6 +138,7 @@ typedef struct {
 #ifdef MEAM
   angl  angl_part[MAXNEIGH * (MAXNEIGH - 1) / 2];
 #endif
+  neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
 typedef struct {
@@ -214,6 +219,7 @@ EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
 EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VEKTOR;
 #endif
@@ -263,6 +269,7 @@ EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
 EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
 EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
 EXTERN int have_elements INIT(0);	/* do we have the elements ? */
+EXTERN int maxneigh INIT(0);	/* maximum number of neighbors */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
 EXTERN real *coheng INIT(NULL);	/* Cohesive energy for each config */
@@ -286,9 +293,7 @@ EXTERN int format;		/* format of potential table */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
-EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
 EXTERN int *pot_index INIT(NULL);	/* index to access i*n+j from i*(i+1)/2 */
-EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
 EXTERN int *smooth_pot INIT(NULL);
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
 EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
@@ -355,6 +360,7 @@ EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
+EXTERN dsfmt_t dsfmt;		/* random number generator */
 
 /******************************************************************************
 *
@@ -385,6 +391,7 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 
 void  error(char *);
 void  warning(char *);
+int   getparam(char *, void *, PARAMTYPE, int, int);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 #ifdef APOT
@@ -392,7 +399,7 @@ void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		      FILE *infile);
 void  write_apot_table(apot_table_t *, char *);
 #endif
-void  read_pot_table(pot_table_t *, char *, int);
+void  read_pot_table(pot_table_t *, char *);
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		      char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
@@ -409,6 +416,8 @@ real  grad2(pot_table_t *, real *, int, real);
 real  grad3(pot_table_t *, real *, int, real);
 real  pot2(pot_table_t *, int, real);
 real  pot3(pot_table_t *, int, real);
+vector vec_prod(vector, vector);
+real  make_box(void);
 void  read_config(char *);
 void  read_config2(char *);
 #ifdef PAIR
@@ -418,8 +427,13 @@ real  calc_forces_eam(real *, real *, int);
 #elif defined MEAM
 real  calc_forces_meam(real *, real *, int);
 #endif
-void  powell_lsq(real *xi);
+#ifdef APOT
+int   randomize_parameter(int, real *, real *);
+#else
+void  makebump(real *, real, real, int);
+#endif
 void  anneal(real *xi);
+void  powell_lsq(real *xi);
 #if defined EVO
 real *calc_vect(real *x);
 void  init_population(real **pop, real *xi, int size, real scale);
@@ -429,12 +443,10 @@ void  spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real  splint_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		 real step);
-real  splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		      real step, real *grad);
-real  splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		      real step);
+real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
+real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
+		      real *grad);
+real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ne(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad);
@@ -453,10 +465,11 @@ real  rescale(pot_table_t *pt, real upper, int flag);
 void  embed_shift(pot_table_t *pt);
 #endif
 #ifdef MPI
-void  init_mpi(int *argc_pointer, char **argv);
+void  init_mpi(int argc, char **argv);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
-void  dbb(int i);
+void  debug_mpi(int i);
+void  broadcast_neighbors();
 void  potsync();
 #endif
 #ifdef PDIST
@@ -484,10 +497,15 @@ real  apot_punish(real *, real *);
 real  apot_grad(real, real *, void (*function) (real, real *, real *));
 
 /* potential.c */
-void  new_slots(int, int);	/* new slots for smooth cutoff */
+void  update_slots();		/* new slots for smooth cutoff */
 
-#if defined PAIR
+#ifdef PAIR
 /* chempot.c */
+int   swap_chem_pot(int, int);
+int   sort_chem_pot_2d(void);
+real  chemical_potential_1d(int *, real *);
+real  chemical_potential_2d(int *, real *);
+real  chemical_potential_3d(int *, real *, int);
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
 #endif

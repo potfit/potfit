@@ -51,6 +51,7 @@
 #include <math.h>
 #include "potfit.h"
 #include "utils.h"
+#include "bracket.h"
 #include "powell_lsq.h"
 #define EPS .0001
 #define PRECISION 1.E-7
@@ -247,7 +248,7 @@ void powell_lsq(real *xi)
       F2 = F;			/*shift F */
 
       /* (c) minimize F(xi) along vector delta, return new F */
-      F = linmin_r(xi, delta, F, &xi1, &xi2, fxi1, fxi2);
+      F = linmin(xi, delta, F, &xi1, &xi2, fxi1, fxi2);
 
 #ifdef DEBUG
       printf("%f %6g %f %f %d\n", F, cond, ferror, berror, i);

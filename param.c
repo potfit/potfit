@@ -30,16 +30,7 @@
 *
 ***************************************************************************/
 
-#ifndef POTSCALE
 #include "potfit.h"
-#else
-#include "potscale.h"
-#endif
-
-
-/* the following are needed for gettimeofday */
-#include <sys/time.h>
-#include <unistd.h>
 
 #if defined(__GNUC__) && defined(__STRICT_ANSI__)
 extern char *strdup(char *);
@@ -48,11 +39,6 @@ extern char *strdup(char *);
 #ifdef __WATCOMC__
 #define strcasecmp strcmpi
 #endif
-
-typedef enum ParamType {
-  PARAM_STR, PARAM_STRPTR,
-  PARAM_INT, PARAM_DOUBLE
-} PARAMTYPE;
 
 int   curline;			/* number of current line */
 

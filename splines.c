@@ -38,11 +38,7 @@
  *
  *****************************************************************************/
 
-#ifndef POTSCALE
 #include "potfit.h"
-#else
-#include "potscale.h"
-#endif
 
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 {
@@ -195,7 +191,7 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
  *
  *****************************************************************************/
 
-real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
+real splint_dir(pot_table_t *pt, real *xi, int k, real b, real step)
 {
   real  a, p1, p2, d21, d22;
 
@@ -212,15 +208,15 @@ real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
 
 /****************************************************************************
  *
- * splint_comb_dir_ed: calculates spline interpolation of a function
+ * splint_comb_dir: calculates spline interpolation of a function
  *            (return value)
  *            and its gradiend (grad), equidistant and non-eqd x[i]
  *            with known index position
  *
  *****************************************************************************/
 
-real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		     real step, real *grad)
+real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
+		     real *grad)
 {
   real  a, p1, p2, d21, d22;
 
@@ -247,8 +243,7 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
  *****************************************************************************/
 
 
-real splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		     real step)
+real splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step)
 {
   real  a, p1, p2, d21, d22;
 

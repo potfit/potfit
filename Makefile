@@ -606,9 +606,9 @@ endif
 ###########################################################################
 
 POTFITHDR   	= potfit.h powell_lsq.h utils.h
-POTFITSRC 	= utils.c bracket_r.c powell_lsq.c brent_r.c \
-		  linmin_r.c config.c param.c potential.c \
-		  potfit.c splines.c simann.c
+POTFITSRC 	= utils.c bracket.c powell_lsq.c brent.c \
+		  linmin.c config.c param.c potential.c \
+		  potfit.c splines.c simann.c random.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += force_pair.c
@@ -805,14 +805,14 @@ else
 ifneq (,${MAKETARGET})
 	@echo "${WARNING}"
 ifeq (1,${BAZAAR})
-	@echo Writing bazaar data to version.h
+	@echo -e "Writing bazaar data to version.h\n"
 	@rm -f version.h
 	@bzr version-info --custom \
 	--template="#define VERSION_INFO \"potfit-{branch_nick} (r{revno})\"\n" > version.h
 	@bzr version-info --custom \
 	--template="#define VERSION_DATE \"{build_date}\"\n" >> version.h
 else
-	@echo Writing fake bazaar data to version.h
+	@echo -e "Writing fake bazaar data to version.h\n"
 	@rm -f version.h
 	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
 	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h

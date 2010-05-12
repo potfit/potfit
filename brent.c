@@ -1,6 +1,6 @@
 /****************************************************************
 *
-*  brent_r.c: Minmization of a multivariable function according to
+*  brent.c: Minmization of a multivariable function according to
 *      Brent's algorithm.
 *
 * Copyright (C) 1996, 1997, 1998, 1999, 2000 Brian Gough
@@ -43,17 +43,10 @@
 #include <float.h>
 #include "potfit.h"
 #include "utils.h"
-#define CGOLD 0.3819660
+#include "bracket.h"
 
-#define ITMAX 100
-#define ZEPS 1.0e-9
-#define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
-#define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
-
-extern real *xicom, *delcom;
-
-real brent_r(real ax, real bx, real cx, real fbx, real tol,
-	     real *xmin, real *xmin2, real *fxmin, real *fxmin2)
+real brent(real ax, real bx, real cx, real fbx, real tol,
+	   real *xmin, real *xmin2, real *fxmin, real *fxmin2)
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin, fxmin2 */
 {
   int   iter, j;

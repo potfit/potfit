@@ -1,6 +1,6 @@
 /****************************************************************
 *
-*  bracket_r.c: Brackets a minimum of a function.
+*  bracket.c: Brackets a minimum of a function.
 *
 *****************************************************************/
 /* Copyright (C) 1996, 1997, 1998, 1999, 2000 Fabrice Rossi
@@ -34,17 +34,11 @@
 #include <math.h>
 #include "potfit.h"
 #include "utils.h"
+#include "bracket.h"
 
-#define CGOLD 0.3819660
-#define MAX_IT 100
-
-#define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
-
-extern real *xicom, *delcom;
-
-void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
-	       real *f_lower, real *f_minimum, real *f_upper,
-	       real *f_vec1, real *f_vec2)
+void bracket(real *x_lower, real *x_minimum, real *x_upper,
+	     real *f_lower, real *f_minimum, real *f_upper,
+	     real *f_vec1, real *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
