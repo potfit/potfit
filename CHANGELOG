@@ -1,7 +1,10 @@
+adp-live
++ adp forces are now complete
+
 bzr-20100512
 + moved files from *_r.* to *.*, all types are real, include header for bracketing
 + fix warnings when compiling with debug flag
-+ simann now counts all new parameters, even if they were out of bounds, as an attempt
++ simann now counts all new parameters as an attempt, even if they were out of bounds
 + optimize evo output
 + properly initialize the dSFMT prng
 

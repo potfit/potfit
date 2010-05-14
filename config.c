@@ -834,9 +834,13 @@ void read_config(char *filename)
 
 void update_slots()
 {
-  int   i, j, col, typ1, typ2;
-#if defined EAM
-  int   col2;
+  int   i, j, typ1, typ2;
+  int   col0;			// pair potential part
+#if defined EAM || defined ADP
+  int   col1;			// transfer function part
+#endif
+#ifdef ADP
+  int   col3, col4;		// u and w function part
 #endif
   real  r, rr;
 
@@ -844,34 +848,65 @@ void update_slots()
     typ1 = atoms[i].typ;
     for (j = 0; j < atoms[i].n_neigh; j++) {
       typ2 = atoms[i].neigh[j].typ;
-      col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+      col0 = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 	: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
       r = atoms[i].neigh[j].r;
-      if (r < calc_pot.end[col]) {
-	rr = r - calc_pot.begin[col];
+      if (r < calc_pot.end[col0]) {
+	rr = r - calc_pot.begin[col0];
 	/* update slots for pair potential part, slot 0 */
-	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
-	atoms[i].neigh[j].step[0] = calc_pot.step[col];
+	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col0]);
+	atoms[i].neigh[j].step[0] = calc_pot.step[col0];
 	atoms[i].neigh[j].shift[0] =
 	  (rr -
-	   atoms[i].neigh[j].slot[0] * calc_pot.step[col]) *
-	  calc_pot.invstep[col];
-#if defined EAM
-	col2 = paircol + typ2;
-/*        update slots for eam transfer functions, slot 1*/
-	rr = r - calc_pot.begin[col2];
-	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col2]);
-	atoms[i].neigh[j].step[1] = calc_pot.step[col2];
+	   atoms[i].neigh[j].slot[0] * calc_pot.step[col0]) *
+	  calc_pot.invstep[col0];
+	/* move slot to the right potential */
+	atoms[i].neigh[j].slot[0] += calc_pot.first[col0];
+      }
+#if defined EAM || defined ADP
+      col1 = paircol + typ2;
+      if (r < calc_pot.end[col0]) {
+	/* update slots for eam transfer functions, slot 1 */
+	rr = r - calc_pot.begin[col1];
+	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col1]);
+	atoms[i].neigh[j].step[1] = calc_pot.step[col1];
 	atoms[i].neigh[j].shift[1] =
 	  (rr -
-	   atoms[i].neigh[j].slot[1] * calc_pot.step[col2]) *
-	  calc_pot.invstep[col2];
-	atoms[i].neigh[j].slot[1] += calc_pot.first[col2];
-#endif
-	/* move slot and step to the right potential */
-	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
-	atoms[i].neigh[j].step[0] = calc_pot.step[col];
+	   atoms[i].neigh[j].slot[1] * calc_pot.step[col1]) *
+	  calc_pot.invstep[col1];
+	/* move slot to the right potential */
+	atoms[i].neigh[j].slot[1] += calc_pot.first[col1];
       }
+#endif
+#ifdef ADP
+      col3 = paircol + 2 * ntypes + col0;
+      if (r < calc_pot.end[col0]) {
+	/* update slots for adp dipole functions, slot 2 */
+	rr = r - calc_pot.begin[col3];
+	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col3]);
+	atoms[i].neigh[j].step[2] = calc_pot.step[col3];
+	atoms[i].neigh[j].shift[2] =
+	  (rr -
+	   atoms[i].neigh[j].slot[2] * calc_pot.step[col3]) *
+	  calc_pot.invstep[col3];
+	/* move slot to the right potential */
+	atoms[i].neigh[j].slot[2] += calc_pot.first[col3];
+      }
+
+      col4 = col3 + paircol;
+      if (r < calc_pot.end[col0]) {
+	/* update slots for adp quadrupole functions, slot 3 */
+	rr = r - calc_pot.begin[col4];
+	atoms[i].neigh[j].slot[3] = (int)(rr * calc_pot.invstep[col4]);
+	atoms[i].neigh[j].step[3] = calc_pot.step[col4];
+	atoms[i].neigh[j].shift[3] =
+	  (rr -
+	   atoms[i].neigh[j].slot[3] * calc_pot.step[col4]) *
+	  calc_pot.invstep[col4];
+	/* move slot to the right potential */
+	atoms[i].neigh[j].slot[3] += calc_pot.first[col4];
+      }
+#endif
     }
   }
 }

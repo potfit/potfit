@@ -44,7 +44,7 @@
 
 void error(char *msg)
 {
-  fprintf(stderr, "\nError: %s\n", msg);
+  fprintf(stderr, "\nError: %s\n\n", msg);
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;
@@ -103,6 +103,9 @@ int main(int argc, char **argv)
 #elif defined EAM
   calc_forces = calc_forces_eam;
   strcpy(interaction, "EAM");
+#elif defined ADP
+  calc_forces = calc_forces_adp;
+  strcpy(interaction, "ADP");
 #endif
 
   /* read the parameters and the potential file */

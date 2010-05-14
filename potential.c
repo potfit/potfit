@@ -148,7 +148,6 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #endif
 	printf("Using %s potentials from file %s\n", interaction, filename);
       } else {
-	fprintf(stderr, "\n");
 	sprintf(msg,
 		"Wrong number of data columns in file %s,\n should be %d for %s, but are %d.",
 		filename,
@@ -190,7 +189,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
   } else if (format != 0)
     printf("Potential file format %d.\n", format);
   else
-    printf("Potential file format %d (analytical potentials) detected.\n",
+    printf("Potential file format %d (analytic potentials) detected.\n",
 	   format);
 
   /* allocate info block of function table */
@@ -1759,6 +1758,16 @@ void write_apot_table(apot_table_t *apt, char *filename)
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
+#endif
+#if defined ADP
+    /* dipole terms */
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+    /* quadrupole terms */
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
 #endif
   }
   if (have_invar) {
