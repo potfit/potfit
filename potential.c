@@ -33,11 +33,7 @@
 
 #define NPLOT 1000
 #define REPULSE
-#ifndef POTSCALE
 #include "potfit.h"
-#else
-#include "potscale.h"
-#endif
 #include "utils.h"
 
 /******************************************************************************
@@ -46,12 +42,12 @@
 *
 ******************************************************************************/
 
-void read_pot_table(pot_table_t *pt, char *filename, int ncols)
+void read_pot_table(pot_table_t *pt, char *filename)
 {
   FILE *infile;
   char  buffer[1024], msg[255], *res, *str;
   int   have_format = 0, end_header = 0;
-  int   size, i, j, k = 0, *nvals;
+  int   size, i, j, k = 0, *nvals, ncols;
 #ifdef APOT
   apot_table_t *apt = &apot_table;
 #else
@@ -141,22 +137,25 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 	error(msg);
       }
 
+      ncols = ntypes * (ntypes + 1) / 2;
       /* right number of columns? */
 #ifdef EAM
       if (size == ncols + 2 * ntypes) {
 #else
       if (size == ncols) {
 #endif
-	printf("Using %s potential from file %s\n", interaction, filename);
+	printf("Using %s potentials from file %s\n", interaction, filename);
       } else {
 	fprintf(stderr, "\n");
 	sprintf(msg,
 		"Wrong number of data columns in file %s,\n should be %d for %s, but are %d.",
+		filename,
 #ifdef EAM
-		filename, ncols + 2 * ntypes, interaction, size);
+		ncols + 2 * ntypes
 #else
-		filename, ncols, interaction, size);
+		ncols
 #endif
+		, interaction, size);
 	error(msg);
       }
       /* recognized format? */
@@ -228,8 +227,7 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
     apt->pmax = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
   } else {
-#endif
-#ifdef DIPOLE
+#elif defined DIPOLE
   if (1) {
     apt->values = (real **)malloc((size + 4) * sizeof(real *));
     apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
@@ -259,19 +257,16 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   }
 #endif
   apt->names = (char **)malloc(size * sizeof(char *));
-  pot_list_length = (int *)malloc(size * sizeof(int));
-  pot_list = (int ***)malloc(size * sizeof(int **));
   for (i = 0; i < size; i++) {
     apt->names[i] = (char *)malloc(20 * sizeof(char));
-    pot_list[i] = (int **)malloc(sizeof(int *));
-    pot_list_length[i] = 0;
   }
   if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL)
-      || (apt->fvalue == NULL) || (apt->names == NULL) || (apt->pmin == NULL)
+      || (apt->fvalue == NULL) || (apt->names == NULL)
+      || (apt->pmin == NULL)
       || (apt->pmax == NULL) || (apt->param_name == NULL)
-      || (apt->values == NULL) || (pot_list_length == NULL)
-      || (pot_list == NULL)) {
-    sprintf(msg, "Cannot allocate info block for analytic potential table %s",
+      || (apt->values == NULL)) {
+    sprintf(msg,
+	    "Cannot allocate info block for analytic potential table %s",
 	    filename);
     error(msg);
   }
@@ -290,8 +285,6 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   }
   fclose(infile);
 
-
-#ifndef POTSCALE		/* not needed in potscale program */
   /* compute rcut and rmin */
   rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
   if (NULL == rcut)
@@ -341,13 +334,14 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
 				 pt->end[(ntypes * (ntypes + 1)) / 2 + j]);
       rmin[i * ntypes + j] = MIN(rmin[i * ntypes + j],
 				 pt->begin[(ntypes * (ntypes + 1)) / 2 + i]);
-      rmin[i * ntypes + j] = MIN(rmin[i * ntypes + j],
-				 pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
+      rmin[i * ntypes + j] =
+	MIN(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
     }
   }
 #endif
-#endif /* POTSCALE */
+
   paircol = (ntypes * (ntypes + 1)) / 2;
+
 #ifndef APOT
   /* read maximal changes file */
   maxchange = (real *)malloc(pt->len * sizeof(real));
@@ -391,11 +385,8 @@ void read_pot_table(pot_table_t *pt, char *filename, int ncols)
   reg_for_free(apt->pmin, "apt->pmin");
   reg_for_free(apt->pmax, "apt->pmax");
   reg_for_free(apt->names, "apt->names");
-  reg_for_free(pot_list_length, "pot_list_length");
-  reg_for_free(pot_list, "pot_list");
   for (i = 0; i < size; i++) {
     reg_for_free(apt->names[i], "apt->names[i]");
-    reg_for_free(pot_list[i], "pot_list[i]");
   }
   reg_for_free(pot_index, "pot_index");
 #else /* APOT */
@@ -455,17 +446,27 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   char  name[255];
   char *token;
   real *val, *list, temp;
-  fpos_t filepos;
+  fpos_t filepos, startpos;
+
+  /* save starting position */
+  fgetpos(infile, &startpos);
 
 #ifdef PAIR
   /* read cp */
-  fgetpos(infile, &filepos);
   if (enable_cp) {
+
+    /* search for cp */
+    do {
+      fgetpos(infile, &filepos);
+      fscanf(infile, "%s", buffer);
+    } while (strncmp(buffer, "cp", 2) != 0 && !feof(infile));
+    fsetpos(infile, &filepos);
+
     for (i = 0; i < ntypes; i++) {
       if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
 		     &apt->pmin[apt->number][i],
 		     &apt->pmax[apt->number][i])) {
-	sprintf(msg, "Could not read chemical potential for atomtype #%d\n",
+	sprintf(msg, "Could not read chemical potential for atomtype #%d.",
 		i);
 	error(msg);
       }
@@ -483,7 +484,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
     }
     printf("Enabled chemical potentials.\n");
-    fgetpos(infile, &filepos);
 
 #ifdef CN
     /* disable composition nodes for now */
@@ -554,15 +554,15 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       compnodes = 0;
 #endif
   }
-  fsetpos(infile, &filepos);
 #endif
 
 #ifdef DIPOLE
+  fsetpos(infile, &startpos);
   /* skip to dipole section */
   do {
     fgetpos(infile, &filepos);
     fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "type") != 0 && strcmp(buffer, "dipole") != 0);
+  } while (strcmp(buffer, "dipole") != 0 && !feof(infile));
 
   /* check for dipole keyword */
   if (strcmp("dipole", buffer) != 0) {
@@ -606,11 +606,12 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
 #endif
 
-  /* skip to next type or global section */
+  /* skip to global section */
+  fsetpos(infile, &startpos);
   do {
     fgetpos(infile, &filepos);
     fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "type") != 0 && strcmp(buffer, "global") != 0);
+  } while (strcmp(buffer, "global") != 0 && !feof(infile));
   fsetpos(infile, &filepos);
 
   /* check for global keyword */
@@ -714,6 +715,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       apt->n_glob[j] = 0;
     }
   }
+
+  /* skip to actual potentials */
+  fsetpos(infile, &startpos);
+  do {
+    fgetpos(infile, &filepos);
+    fscanf(infile, "%s", buffer);
+  } while (strcmp(buffer, "type") != 0 && !feof(infile));
+  fsetpos(infile, &filepos);
 
   for (i = 0; i < apt->number; i++) {
     /* read type */
@@ -922,9 +931,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  /* Only print warning if we are optimizing */
 	  if (opt) {
 	    if (apt->values[i][j] < apt->pmin[i][j])
-		    apt->values[i][j] = apt->pmin[i][j];
+	      apt->values[i][j] = apt->pmin[i][j];
 	    if (apt->values[i][j] > apt->pmax[i][j])
-		    apt->values[i][j] = apt->pmax[i][j];
+	      apt->values[i][j] = apt->pmax[i][j];
 	    fprintf(stderr, "\n --> Warning <--\n");
 	    fprintf(stderr,
 		    "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nResetting it to %f.\n",
@@ -1571,9 +1580,8 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
-  int   i, j, k, m, n, size;
-  real  r;
-  real *val, *ord;
+  int   i, j, k, m, n;
+  real *val;
 #ifdef APOT
   int   change;
   real  f, h = 0;
@@ -1632,198 +1640,6 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
   }
 }
 
-
-#ifndef POTSCALE
-#ifdef OLDCODE
-/*****************************************************************************
-*
-*  Evaluate derivative of potential with quadratic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real grad2(pot_table_t *pt, real *xi, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, dv, d2v;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-
-  /* intermediate values */
-  p0 = (k <= pt->last[col]) ? xi[k++] : 0.0;
-  p1 = (k <= pt->last[col]) ? xi[k++] : 0.0;
-  p2 = (k <= pt->last[col]) ? xi[k++] : 0.0;
-  dv = p1 - p0;
-  d2v = p2 - 2 * p1 + p0;
-
-  /* return the derivative */
-  return istep * (dv + (chi - 0.5) * d2v);
-}
-
-/*****************************************************************************
-*
-*  Evaluate derivative of potential with cubic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real grad3(pot_table_t *pt, real *xi, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, p3;
-  real  dfac0, dfac1, dfac2, dfac3;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  if (k == 0)
-    return grad2(pt, xi, col, r);	/* parabolic fit if on left border */
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-  k--;
-
-  /* intermediate values */
-  if (k <= pt->last[col])
-    p0 = xi[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p1 = xi[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p2 = xi[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p3 = xi[k];
-  else {			/* p2 = 0.0;  dp2 = 0.0; */
-    dfac0 = -0.25 * (3.0 * chi - 1.0) * (chi - 1.0);
-    dfac1 = (3.0 * chi + 1.0) * (chi - 1.0);
-    /* dfac2 = -0.25 * (9.0 * chi + 5.0) * (chi - 1.0); */
-    /* dfac3 =  0.5  * (3.0 * (chi*chi - 1)); */
-    return istep * (dfac0 * p0 + dfac1 * p1);
-  }
-
-  /* factors for the interpolation of the 1. derivative */
-  dfac0 = -(1.0 / 6.0) * ((3.0 * chi - 6.0) * chi + 2.0);
-  dfac1 = 0.5 * ((3.0 * chi - 4.0) * chi - 1.0);
-  dfac2 = -0.5 * ((3.0 * chi - 2.0) * chi - 2.0);
-  dfac3 = 1.0 / 6.0 * (3.0 * chi * chi - 1.0);
-
-  /* return the derivative */
-  return istep * (dfac0 * p0 + dfac1 * p1 + dfac2 * p2 + dfac3 * p3);
-}
-
-/*****************************************************************************
-*
-*  Evaluate potential with quadratic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real pot2(pot_table_t *pt, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, dv, d2v;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-
-  /* intermediate values */
-  p0 = (k <= pt->last[col]) ? pt->table[k++] : 0.0;
-  p1 = (k <= pt->last[col]) ? pt->table[k++] : 0.0;
-  p2 = (k <= pt->last[col]) ? pt->table[k++] : 0.0;
-  dv = p1 - p0;
-  d2v = p2 - 2 * p1 + p0;
-
-  /* return the potential value */
-  return p0 + chi * dv + 0.5 * chi * (chi - 1) * d2v;
-}
-
-
-/*****************************************************************************
-*
-*  Evaluate potential with cubic interpolation.
-*  col is typ1 * ntypes + typ2.
-*
-******************************************************************************/
-
-real pot3(pot_table_t *pt, int col, real r)
-{
-  real  rr, istep, chi, p0, p1, p2, p3;
-  real  fac0, fac1, fac2, fac3;
-  int   k;
-
-  /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
-  if (rr < 0)
-    error("short distance!");
-
-  /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  if (k == 0)
-    return pot2(pt, col, r);	/* parabolic fit if on left border */
-  chi = (rr - k * pt->step[col]) * istep;
-  k += pt->first[col];
-  k--;
-
-  /* intermediate values */
-  if (k <= pt->last[col])
-    p0 = pt->table[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p1 = pt->table[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p2 = pt->table[k++];
-  else
-    return 0.0;
-  if (k <= pt->last[col])
-    p3 = pt->table[k];
-  else {			/* p2 = 0.0; dp2 = 0.0 */
-    fac0 = -0.25 * chi * SQR(chi - 1.0);
-    fac1 = (chi * chi - 1) * (chi - 1);
-    /* fac2 = -0.25 * chi * (chi + 1) * (3.0*chi - 5.0); */
-    /* fac3 = -0.5  * (chi*chi - 1) * chi;           */
-    return fac0 * p0 + fac1 * p1;
-  }				/* go smoothly: interpolate with f=f'=0 at chi=1. */
-
-  /* factors for the interpolation */
-  fac0 = -(1.0 / 6.0) * chi * (chi - 1.0) * (chi - 2.0);
-  fac1 = 0.5 * (chi * chi - 1.0) * (chi - 2.0);
-  fac2 = -0.5 * chi * (chi + 1.0) * (chi - 2.0);
-  fac3 = (1.0 / 6.0) * chi * (chi * chi - 1.0);
-
-  /* return the potential value */
-  return fac0 * p0 + fac1 * p1 + fac2 * p2 + fac3 * p3;
-}
-#endif /* OLDCODE */
 
 #ifdef PARABEL
 /*****************************************************************************
@@ -2298,8 +2114,6 @@ void write_pot_table4(pot_table_t *pt, char *filename)
     fclose(outfile2);
 }
 
-#endif /* POTSCALE */
-
 /*****************************************************************************
 *
 *  write potential table for IMD (format 2)
@@ -2308,11 +2122,14 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
-  FILE *outfile;
-  char  msg[255];
-  char  filename[255];
-  real *r2begin, *r2end, *r2step, temp2, r2, temp, root;
   int   i, j, k, m, m2, col1, col2;
+  real  r2, temp;
+  real *r2begin, *r2end, *r2step;
+#if defined EAM
+  real  root, temp2;
+#endif /* EAM */
+  FILE *outfile;
+  char  msg[255], filename[255];
 
   sprintf(filename, "%s_phi.imd.pt", prefix);
   /* allocate memory */
@@ -2662,10 +2479,13 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
 void write_altplot_pair(pot_table_t *pt, char *filename)
 {
-  FILE *outfile;
   char  msg[255];
   int   i, j, k, l;
-  real  r, rmin = 100., rmax = 0., r_step, temp;
+  real  r, rmin = 100., rmax = 0., r_step;
+#if defined EAM
+  real  temp;
+#endif /* EAM */
+  FILE *outfile;
 
   /* open file */
   outfile = fopen(filename, "w");

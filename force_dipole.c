@@ -1,6 +1,6 @@
 /****************************************************************
 *
-* force.c: Routines used for calculating pair/monopole/dipole 
+* force.c: Routines used for calculating pair/monopole/dipole
 *     forces/energies in various interpolation schemes.
 *
 *********************************************************************************/
@@ -245,14 +245,13 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      if (neigh->r < calc_pot.end[col]) {
 		/* fn value and grad are calculated in the same step */
 		if (uf) {
-		  fnval = splint_comb_dir(&calc_pot, xi, col,
-					  neigh->slot[0],
-					  neigh->shift[0],
-					  neigh->step[0], &grad);
+		  fnval =
+		    splint_comb_dir(&calc_pot, xi, neigh->slot[0],
+				    neigh->shift[0], neigh->step[0], &grad);
 		} else {
-		  fnval = splint_dir(&calc_pot, xi, col,
-				     neigh->slot[0],
-				     neigh->shift[0], neigh->step[0]);
+		  fnval =
+		    splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
+			       neigh->step[0]);
 		}
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
@@ -362,6 +361,12 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 	  /*then we can calculate contribution of forces right away */
 	  if (uf) {
+#ifdef FWEIGHT
+	    /* Weigh by absolute value of force */
+	    forces[k] /= FORCE_EPS + atom->absforce;
+	    forces[k + 1] /= FORCE_EPS + atom->absforce;
+	    forces[k + 2] /= FORCE_EPS + atom->absforce;
+#endif /* FWEIGHT */
 	    /* Returned force is difference between */
 	    /* calculated and input force */
 	    tmpsum +=

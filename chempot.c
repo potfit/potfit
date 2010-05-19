@@ -79,8 +79,8 @@ real chemical_potential_1d(int *n, real *mu)
 
 real chemical_potential_2d(int *n, real *mu)
 {
+  int   i = 0, ntot;
   real  nfrac;
-  int   ntot;
 
   ntot = n[0] + n[1];
   nfrac = (real)n[1] / ntot;
@@ -89,9 +89,6 @@ real chemical_potential_2d(int *n, real *mu)
     return n[0] * mu[0] + n[1] * mu[1];
   }
 
-  int   i;
-
-  i = 0;
   while (nfrac > compnodelist[i] && i < compnodes) {
     i++;
   }
