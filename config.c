@@ -750,6 +750,16 @@ void read_config(char *filename)
     calc_pot.begin[j] = min * 0.95;
   }
 #endif
+#ifdef ADP
+  for (i = 0; i < paircol; i++) {
+    apot_table.begin[paircol + 2 * ntypes + i] = min * 0.95;
+    apot_table.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
+    opt_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
+    opt_pot.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
+    calc_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
+    calc_pot.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
+  }
+#endif
   /* recalculate step, invstep and xcoord for new tables */
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] =
@@ -880,7 +890,7 @@ void update_slots()
 #endif
 #ifdef ADP
       col3 = paircol + 2 * ntypes + col0;
-      if (r < calc_pot.end[col0]) {
+      if (r < calc_pot.end[col3]) {
 	/* update slots for adp dipole functions, slot 2 */
 	rr = r - calc_pot.begin[col3];
 	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col3]);
@@ -894,7 +904,7 @@ void update_slots()
       }
 
       col4 = col3 + paircol;
-      if (r < calc_pot.end[col0]) {
+      if (r < calc_pot.end[col4]) {
 	/* update slots for adp quadrupole functions, slot 3 */
 	rr = r - calc_pot.begin[col4];
 	atoms[i].neigh[j].slot[3] = (int)(rr * calc_pot.invstep[col4]);

@@ -264,6 +264,9 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 #endif
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
+#if defined DEBUG && defined FORCES
+	fprintf(stderr, "Working on configuration %d\n\n", h);
+#endif
 	uf = conf_uf[h - firstconf];
 #ifdef STRESS
 	us = conf_us[h - firstconf];
@@ -306,15 +309,15 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	/* 2nd loop: calculate pair forces and energies, atomic densities. */
 	for (i = 0; i < inconf[h]; i++) {
 #if defined DEBUG && defined FORCES
-	  fprintf(stderr, "\nWorking on atom %d\n", i);
+	  fprintf(stderr, "Working on atom %d\n", i);
 #endif
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
 	  k = 3 * (cnfstart[h] + i);
-	  /* loop over neighbours */
+	  /* loop over neighbors */
 	  for (j = 0; j < atom->n_neigh; j++) {
 #if defined DEBUG && defined FORCES
-	    fprintf(stderr, "Working on atom %d neighbour %d\n", i, j);
+	    fprintf(stderr, "Working on atom %d neighbor %d\n", i, j);
 #endif
 	    neigh = atom->neigh + j;
 	    /* In small cells, an atom might interact with itself */
@@ -355,7 +358,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
 #if defined DEBUG && defined FORCES
-		fprintf(stderr, "forces %f %f %f\n", k, forces[k],
+		fprintf(stderr, "pair forces %f %f %f\n", forces[k],
 			forces[k + 1], forces[k + 2]);
 #endif
 		l = 3 * neigh->nr;	/* actio = reactio */
@@ -407,7 +410,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    }
 	    /* quadrupole distortion part */
 	    col4 = col3 + paircol;
-	    if (neigh->r < calc_pot.end[col3]) {
+	    if (neigh->r < calc_pot.end[col4]) {
 	      if (uf)
 		neigh->w_val =
 		  splint_comb_dir(&calc_pot, xi, neigh->slot[3],
@@ -469,18 +472,18 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		atom->rho +=
 		  splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
 			     neigh->step[1]);
-#if defined DEBUG && defined FORCES
-		fprintf(stderr, "rho=%f (added %f)\n", atom->rho,
-			splint_dir(&calc_pot, xi, neigh->slot[1],
-				   neigh->shift[1], neigh->step[1]));
-#endif
 	      }
 	      /* cannot use slot/shift to access splines */
 	      if (neigh->r < calc_pot.end[col0])
 		conf_atoms[neigh->nr - firstatom].rho +=
 		  splint(&calc_pot, xi, col0, neigh->r);
 	    }
-	  }			/* loop over neighbours */
+#if defined DEBUG && defined FORCES
+	    fprintf(stderr, "rho=%f (added %f)\n", atom->rho,
+		    splint_dir(&calc_pot, xi, neigh->slot[1],
+			       neigh->shift[1], neigh->step[1]));
+#endif
+	  }			/* loop over neighbors */
 
 	  col2 = paircol + ntypes + typ1;	/* column of F */
 #ifndef NORESCALE
@@ -536,6 +539,8 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF);
 #endif
 #if defined DEBUG && defined FORCES
+	  fprintf(stderr, "embedding energy: %f\n",
+		  splint_comb(&calc_pot, xi, col2, atom->rho, &atom->gradF));
 	  fprintf(stderr, "total eam energy: %f (rho=%f)\n",
 		  forces[energy_p + h], atom->rho);
 #endif
@@ -557,17 +562,30 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	  eng_store += SQR(atom->lambda.xy) * 2.0;
 	  eng_store *= 0.5;
 	  forces[energy_p + h] += eng_store;
+#if defined DEBUG && defined FORCES
+	  fprintf(stderr, "ADP energy: %f\n", eng_store);
+	  fprintf(stderr, "total ADP energy: %f\n\n", forces[energy_p + h]);
+#endif
 	}			/* second loop over atoms */
 
+#if defined DEBUG && defined FORCES
+	fprintf(stderr, "Finished first loop, now eam and adp forces:\n\n");
+#endif
 	/* 3rd loop over atom: ADP force */
 	if (uf) {		/* only required if we calc forces */
 	  for (i = 0; i < inconf[h]; i++) {
+#if defined DEBUG && defined FORCES
+	    fprintf(stderr, "Working on atom %d\n", i);
+#endif
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    typ1 = atom->typ;
 	    k = 3 * (cnfstart[h] + i);
 	    col2 = paircol + ntypes + typ1;	/* column of F */
 	    for (j = 0; j < atom->n_neigh; j++) {
-	      /* loop over neighbours */
+#if defined DEBUG && defined FORCES
+	      fprintf(stderr, "Working on atom %d neighbor %d\n", i, j);
+#endif
+	      /* loop over neighbors */
 	      neigh = atom->neigh + j;
 	      /* In small cells, an atom might interact with itself */
 	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
@@ -592,9 +610,9 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 			     conf_atoms[(neigh->nr) - firstatom].gradF);
 #if defined DEBUG && defined FORCES
 		fprintf(stderr,
-			"eam_force %f grad %f gradF %f grad2 %f gradF %f\n",
-			eam_force, phi_grad, atom->gradF, grad2,
-			conf_atoms[(neigh->nr) - firstatom].gradF);
+			"EAM gradients: F_i %f rho_j %f F_j %f rho_i %f\n",
+			atom->gradF, rho_grad_j,
+			conf_atoms[(neigh->nr) - firstatom].gradF, rho_grad);
 #endif
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
@@ -607,11 +625,11 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
 #if defined DEBUG && defined FORCES
-		fprintf(stderr, "EAM k=%d dist %f %f %f eam_force %f\n", k,
+		fprintf(stderr, "EAM dist %f %f %f eam_force %.10f\n",
 			neigh->dist.x, neigh->dist.y, neigh->dist.z,
 			eam_force);
-		fprintf(stderr, "EAM k=%d forces %f %f %f\n", k, forces[k],
-			forces[k + 1], forces[k + 2]);
+		fprintf(stderr, "EAM forces %f %f %f\n", tmp_force.x,
+			tmp_force.y, tmp_force.z);
 #endif
 		l = 3 * neigh->nr;
 		forces[l] -= tmp_force.x;
@@ -648,10 +666,10 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		  u_force.y *= 0.5;
 		  u_force.z *= 0.5;
 		}
-		tmp = SPROD(u_force, neigh->dist) * neigh->u_grad;
-		tmp_force.x = u_force.x * neigh->u_val + tmp * neigh->rdist.x;
-		tmp_force.y = u_force.y * neigh->u_val + tmp * neigh->rdist.y;
-		tmp_force.z = u_force.z * neigh->u_val + tmp * neigh->rdist.z;
+		tmp = SPROD(u_force, neigh->rdist) * neigh->u_grad;
+		tmp_force.x = u_force.x * neigh->u_val + tmp * neigh->dist.x;
+		tmp_force.y = u_force.y * neigh->u_val + tmp * neigh->dist.y;
+		tmp_force.z = u_force.z * neigh->u_val + tmp * neigh->dist.z;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -659,6 +677,18 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		forces[l] -= tmp_force.x;
 		forces[l + 1] -= tmp_force.y;
 		forces[l + 2] -= tmp_force.z;
+#if defined DEBUG && defined FORCES
+		fprintf(stderr, "ADP rdist %f %f %f\n", neigh->rdist.x,
+			neigh->rdist.y, neigh->rdist.z);
+		fprintf(stderr, "ADP mu_i-mu_j %f %f %f\n", u_force.x,
+			u_force.y, u_force.z);
+		fprintf(stderr, "ADP tmp %f pot %f grad %f\n", tmp,
+			neigh->u_val, neigh->u_grad);
+		fprintf(stderr, "ADP uforces %f %f %f\n", tmp_force.x,
+			tmp_force.y, tmp_force.z);
+		fprintf(stderr, "TOTAL forces %f %f %f\n", forces[k],
+			forces[k + 1], forces[k + 2]);
+#endif
 #ifdef STRESS
 		/* and stresses */
 		if (us) {
@@ -676,7 +706,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 	      }
 	      col4 = col3 + paircol;
-	      if (neigh->r < calc_pot.end[col3]) {
+	      if (neigh->r < calc_pot.end[col4]) {
 		w_force.xx =
 		  (atom->lambda.xx +
 		   conf_atoms[(neigh->nr) - firstatom].lambda.xx);
@@ -707,13 +737,13 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		}
 		tmp_vect.x =
 		  w_force.xx * neigh->rdist.x + w_force.xy * neigh->rdist.y +
-		  w_force.zx * neigh->dist.z;
+		  w_force.zx * neigh->rdist.z;
 		tmp_vect.y =
 		  w_force.xy * neigh->rdist.x + w_force.yy * neigh->rdist.y +
-		  w_force.yz * neigh->dist.z;
+		  w_force.yz * neigh->rdist.z;
 		tmp_vect.z =
 		  w_force.zx * neigh->rdist.x + w_force.yz * neigh->rdist.y +
-		  w_force.zz * neigh->dist.z;
+		  w_force.zz * neigh->rdist.z;
 		nu =
 		  (atom->nu + conf_atoms[(neigh->nr) - firstatom].nu) / 3.0;
 		f1 = 2.0 * neigh->w_val;
@@ -730,6 +760,11 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		forces[l] -= tmp_force.x;
 		forces[l + 1] -= tmp_force.y;
 		forces[l + 2] -= tmp_force.z;
+#if defined DEBUG && defined FORCES
+		fprintf(stderr, "ADP wforces %f %f %f\n", tmp_force.x,
+			tmp_force.y, tmp_force.z);
+		fprintf(stderr, "ADP wgrad %f\n", neigh->w_grad);
+#endif
 #ifdef STRESS
 		/* and stresses */
 		if (us) {
@@ -746,7 +781,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		}
 #endif /* STRESS */
 	      }
-	    }			/* loop over neighbours */
+	    }			/* loop over neighbors */
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
 	    forces[k] /= FORCE_EPS + atom->absforce;
@@ -758,7 +793,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 				SQR(forces[k + 2]));
 #if defined DEBUG && defined FORCES
-	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
+	    fprintf(stderr, "TOTAL forces %f %f %f tmpsum=%f\n\n", forces[k],
 		    forces[k + 1], forces[k + 2], tmpsum);
 #endif
 	  }			/* third loop over atoms */
@@ -770,8 +805,8 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
 #if defined DEBUG && defined FORCES
-	fprintf(stderr, "energy: tmpsum=%f energy=%f\n", tmpsum,
-		forces[energy_p + h]);
+	fprintf(stderr, "energy deviation: energy=%f tmpsum=%f\n",
+		forces[energy_p + h], tmpsum);
 #endif
 #ifdef STRESS
 	/* stress contributions */

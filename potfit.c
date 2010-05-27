@@ -425,7 +425,7 @@ int main(int argc, char **argv)
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
-      printf("Force data written to %s\n", file);
+      printf("Force data written to \t\t\t%s\n", file);
       fclose(outfile);
     }
 
@@ -472,7 +472,7 @@ int main(int argc, char **argv)
 		force[energy_p + i] / force_0[energy_p + i]);
     }
     if (write_output_files) {
-      printf("Energy data written to %s\n", file);
+      printf("Energy data written to \t\t\t%s\n", file);
       fclose(outfile);
     }
 #ifdef STRESS
@@ -502,7 +502,7 @@ int main(int argc, char **argv)
 	      force[i] / force_0[i]);
     }
     if (write_output_files) {
-      printf("Stress data written to %s\n", file);
+      printf("Stress data written to \t\t\t%s\n", file);
       fclose(outfile);
     }
 #endif

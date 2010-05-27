@@ -2011,13 +2011,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   int   i, j, k, m, m2, col1, col2;
   real  r2, temp;
   real *r2begin, *r2end, *r2step;
-#if defined EAM
+#if defined EAM || defined ADP
   real  root, temp2;
 #endif /* EAM */
   FILE *outfile;
   char  msg[255], filename[255];
 
-  sprintf(filename, "%s_phi.imd.pt", prefix);
   /* allocate memory */
   r2begin = (real *)malloc(ntypes * ntypes * sizeof(real));
   r2end = (real *)malloc(ntypes * ntypes * sizeof(real));
@@ -2025,6 +2024,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   if ((r2begin == NULL) || (r2end == NULL) || (r2step == NULL))
     error("Cannot allocate memory in  write_pot_table_imd");
 
+  /* pair potential part (over r^2) */
+  sprintf(filename, "%s_phi.imd.pt", prefix);
   /* open file */
   outfile = fopen(filename, "w");
   if (NULL == outfile) {
@@ -2058,7 +2059,6 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   }
   fprintf(outfile, "\n");
 
-#ifndef APOT
   /* write data */
   m = 0;
   for (i = 0; i < ntypes; i++) {
@@ -2081,7 +2081,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 						 sqrt(r2)) : 0.) +
 		(sqrt(r2) <= pt->end[paircol + i] ? lambda[j] *
 		 splint_ne(pt, pt->table, paircol + i, sqrt(r2)) : 0.));
-#else /* NEWSCALE */
+#else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
 #endif /* NEWSCALE */
 	r2 += r2step[col2];
@@ -2090,35 +2090,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       fprintf(outfile, "\n");
     }
   }
-#else
-  m = 0;
-  for (i = 0; i < ntypes; i++) {
-    m += i;
-    m2 = 0;
-    for (j = 0; j < ntypes; j++) {
-      m2 += j;
-      col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
-      col2 = i * ntypes + j;
-      r2 = r2begin[col2];
-      for (k = 0; k < imdpotsteps; k++) {
-	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
-	temp = smooth_pot[col1] ? temp *
-	  cutoff(sqrt(r2), apot_table.end[col1],
-		 apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
-	fprintf(outfile, "%.16e\n", temp);
-	r2 += r2step[col2];
-      }
-      fprintf(outfile, "%.16e", 0.0);
-      if (!((i == (ntypes - 1)) && (j == (ntypes - 1))))
-	fprintf(outfile, "\n\n\n");
-    }
-  }
-#endif
   fclose(outfile);
-  printf("IMD pair potential data written to %s\n", filename);
+  printf("IMD: pair potential written to \t\t%s\n", filename);
 
-#ifdef EAM
-  /* write rho_r2 */
+#if defined EAM || defined ADP
+  /* write transfer function (over r^2) */
   sprintf(filename, "%s_rho.imd.pt", prefix);
   outfile = fopen(filename, "w");
   if (NULL == outfile) {
@@ -2155,15 +2131,15 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
-#ifdef APOT
-	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
-	temp = smooth_pot[col1] ? temp *
-	  cutoff(sqrt(r2), apot_table.end[col1],
-		 apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
-	fprintf(outfile, "%.16e\n", temp);
-#else
+/*#ifdef APOT*/
+/*        apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);*/
+/*        temp = smooth_pot[col1] ? temp **/
+/*          cutoff(sqrt(r2), apot_table.end[col1],*/
+/*                 apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;*/
+/*        fprintf(outfile, "%.16e\n", temp);*/
+/*#else*/
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
-#endif
+/*#endif*/
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -2171,9 +2147,9 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     }
   }
   fclose(outfile);
-  printf("IMD electron transfer data written to %s\n", filename);
+  printf("IMD: transfer function written to \t%s\n", filename);
 
-  /* write F_rho */
+  /* write embedding function (over r) */
   sprintf(filename, "%s_F.imd.pt", prefix);
   outfile = fopen(filename, "w");
   if (NULL == outfile) {
@@ -2210,9 +2186,6 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     root += (pt->end[col1] < 0) ?
       pt->table[pt->last[col1]] / sqrt(-pt->end[col1]) : 0;
     for (k = 0; k <= imdpotsteps; k++) {
-#ifdef APOT
-      apot_table.fvalue[col1] (r2, apot_table.values[col1], &temp);
-#else
 #ifdef WZERO
       if (r2 < pt->begin[col1] && pt->begin[col1] > 0)
 	if (r2 <= 0)
@@ -2241,15 +2214,131 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #ifdef NEWSCALE
       temp -= lambda[i] * r2;
 #endif /* NEWSCALE */
-#endif /* APOT */
       fprintf(outfile, "%.16e\n", temp);
       r2 += r2step[i];
     }
     fprintf(outfile, "\n");
   }
   fclose(outfile);
-  printf("IMD embedding data written to %s\n", filename);
+  printf("IMD: embedding function written to \t%s\n", filename);
 #endif
+
+#ifdef ADP
+  /* write dipole function (over r^2) */
+  sprintf(filename, "%s_upot.imd.pt", prefix);
+  outfile = fopen(filename, "w");
+  if (NULL == outfile) {
+    sprintf(msg, "Could not open file %s\n", filename);
+    error(msg);
+  }
+
+  /* write header */
+  fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
+
+  /* write info block */
+  m = 0;
+  for (i = 0; i < ntypes; i++) {
+    m += i;
+    m2 = 0;
+    for (j = 0; j < ntypes; j++) {
+      m2 += j;
+      col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col1 += paircol + 2 * ntypes;
+      col2 = i * ntypes + j;
+      /* Extrapolation possible  */
+#ifdef APOT
+      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+#else
+      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif
+      r2end[col2] = SQR(pt->end[col1]);
+      r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
+      fprintf(outfile, "%.16e %.16e %.16e\n",
+	      r2begin[col2], r2end[col2], r2step[col2]);
+    }
+  }
+  fprintf(outfile, "\n");
+
+  /* write data */
+  m = 0;
+  for (i = 0; i < ntypes; i++) {
+    m += i;
+    m2 = 0;
+    for (j = 0; j < ntypes; j++) {
+      m2 += j;
+      col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col1 += paircol + 2 * ntypes;
+      col2 = i * ntypes + j;
+      r2 = r2begin[col2];
+      for (k = 0; k < imdpotsteps; k++) {
+	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
+	r2 += r2step[col2];
+      }
+      fprintf(outfile, "%.16e\n", 0.0);
+      fprintf(outfile, "\n");
+    }
+  }
+  fclose(outfile);
+  printf("IMD: dipole potential written to \t%s\n", filename);
+
+  /* write quadrupole function (over r^2) */
+  sprintf(filename, "%s_wpot.imd.pt", prefix);
+  outfile = fopen(filename, "w");
+  if (NULL == outfile) {
+    sprintf(msg, "Could not open file %s\n", filename);
+    error(msg);
+  }
+
+  /* write header */
+  fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
+
+  /* write info block */
+  m = 0;
+  for (i = 0; i < ntypes; i++) {
+    m += i;
+    m2 = 0;
+    for (j = 0; j < ntypes; j++) {
+      m2 += j;
+      col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col1 += paircol + 3 * ntypes;
+      col2 = i * ntypes + j;
+      /* Extrapolation possible  */
+#ifdef APOT
+      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+#else
+      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif
+      r2end[col2] = SQR(pt->end[col1]);
+      r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
+      fprintf(outfile, "%.16e %.16e %.16e\n",
+	      r2begin[col2], r2end[col2], r2step[col2]);
+    }
+  }
+  fprintf(outfile, "\n");
+
+  /* write data */
+  m = 0;
+  for (i = 0; i < ntypes; i++) {
+    m += i;
+    m2 = 0;
+    for (j = 0; j < ntypes; j++) {
+      m2 += j;
+      col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col1 += paircol + 3 * ntypes;
+      col2 = i * ntypes + j;
+      r2 = r2begin[col2];
+      for (k = 0; k < imdpotsteps; k++) {
+	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
+	r2 += r2step[col2];
+      }
+      fprintf(outfile, "%.16e\n", 0.0);
+      fprintf(outfile, "\n");
+    }
+  }
+  fclose(outfile);
+  printf("IMD: quadrupole potential written to \t%s\n", filename);
+#endif
+
   free(r2begin);
   free(r2end);
   free(r2step);
@@ -2331,12 +2420,12 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     fprintf(outfile, "\n\n\n");
   }
 #endif
-#else
+#else /* APOT */
   for (i = 0; i < apot_table.number; i++) {
     if (i < (paircol + ntypes))
       r = (plotmin == 0 ? 0.1 : plotmin);
     else
-      r = 0;
+      r = 0.001;
     r_step = (apot_table.end[i] - r) / (NPLOT - 1);
     h = apot_table.values[i][apot_table.n_par[i] - 1];
     for (j = 0; j < NPLOT; j++) {
@@ -2351,9 +2440,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       fprintf(outfile, "\n\n");
   }
 
-#endif
+#endif /* APOT */
   fclose(outfile);
-  printf("Potential plotting data written to %s\n", filename);
+  printf("Potential plotting data written to \t%s\n", filename);
 }
 
 /*****************************************************************************

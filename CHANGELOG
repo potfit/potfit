@@ -1,5 +1,5 @@
-adp-live
-+ adp forces are now complete
+adp-20100527
++ adp should now be complete, mpi still missing
 
 bzr-20100512
 + moved files from *_r.* to *.*, all types are real, include header for bracketing
