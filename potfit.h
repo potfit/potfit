@@ -81,13 +81,14 @@ typedef struct {
   real  z;
 } vector;
 
+// This is the order of vasp for stresses
 typedef struct {
   real  xx;
   real  yy;
   real  zz;
+  real  xy;
   real  yz;
   real  zx;
-  real  xy;
 } sym_tens;
 
 typedef struct {
@@ -95,16 +96,15 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
-#ifdef ADP
-  vector rdist;			/* real distance */
-  sym_tens sqrdist;		/* real squared distance */
-#endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
+  int   col[SLOTS];		/* coloumn of interaction for this neighbor */
 #ifdef ADP
-  real  u_val, u_grad;
-  real  w_val, w_grad;
+  vector rdist;			/* real distance */
+  sym_tens sqrdist;		/* real squared distance */
+  real  u_val, u_grad;		/* value and gradient of u(r) */
+  real  w_val, w_grad;		/* value and gradient of w(r) */
 #endif
 } neigh_t;
 
@@ -347,6 +347,9 @@ EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
+#ifdef STRESS
+EXTERN char *stress_comp[6];
+#endif
 
 /******************************************************************************
 *

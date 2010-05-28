@@ -478,6 +478,14 @@ int main(int argc, char **argv)
 #ifdef STRESS
     /* write stress deviations */
     if (write_output_files) {
+      for (i = 0; i < 6; i++)
+	stress_comp[i] = (char *)malloc(2 * sizeof(char));
+      strcpy(stress_comp[0], "xx");
+      strcpy(stress_comp[1], "yy");
+      strcpy(stress_comp[2], "zz");
+      strcpy(stress_comp[3], "xy");
+      strcpy(stress_comp[4], "yz");
+      strcpy(stress_comp[5], "zx");
       strcpy(file, output_prefix);
       strcat(file, ".stress");
       outfile = fopen(file, "w");
@@ -492,12 +500,13 @@ int main(int argc, char **argv)
     }
     fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-      sqr = SQR(force[i]);
+      sqr = conf_weight[(i - stress_p) / 6] * SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      fprintf(outfile, "%d\t%f\t%f\t%f\t%f\t%f\n",
-	      (i - stress_p) / 6, conf_weight[(i - stress_p) / 6], sqr,
+      fprintf(outfile, "%3d-%s\t%f\t%f\t%f\t%f\t%f\n",
+	      (i - stress_p) / 6, stress_comp[(i - stress_p) % 6],
+	      conf_weight[(i - stress_p) / 6], sqr,
 	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
 	      force[i] / force_0[i]);
     }
