@@ -1,6 +1,6 @@
 /****************************************************************
 *
-*  potfit.c: Contains main potfit programme.
+*  potfit.c: Contains main potfit program
 *
 *****************************************************************/
 /*
@@ -489,7 +489,7 @@ int main(int argc, char **argv)
     }
     fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-      sqr = SQR(force[i]);
+      sqr = conf_weight[(i - stress) / 6] * SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);

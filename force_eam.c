@@ -499,7 +499,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += SQR(conf_weight[h] * forces[stress_p + 6 * h + i]);
+	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
