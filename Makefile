@@ -618,6 +618,10 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 POTFITSRC      += force_eam.c rescale.c
 endif
 
+ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+POTFITSRC      += force_adp.c
+endif
+
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 POTFITSRC      += functions.c chempot.c
 endif
@@ -659,6 +663,18 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ERROR += More than one potential model specified
   endif
 CFLAGS  += -DEAM
+INTERACTION = 1
+endif
+
+# ADP
+ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += ADP does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DADP
 INTERACTION = 1
 endif
 
