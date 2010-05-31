@@ -289,7 +289,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 				SQR(forces[k + 2]));
-	  }	/* second loop over atoms */
+	  }			/* second loop over atoms */
 	}
 
 	/* energy contributions */

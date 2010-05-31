@@ -225,7 +225,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
     {
       atom_t *atom;
       int   h, j, k, l;
-      int   self_uf;
+      int   self, uf;
 #ifdef STRESS
       int   us, stresses;
 #endif /* STRESS */
