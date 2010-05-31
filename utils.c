@@ -119,17 +119,17 @@ void free_all_pointers()
 {
   int   i;
 
-#if defined DEBUG && defined FORCES
-  fprintf(stderr, "\n");
-#endif
+/*#if defined DEBUG && defined FORCES*/
+/*  fprintf(stderr, "\n");*/
+/*#endif*/
   for (i = (num_pointers - 1); i >= 0; i--) {
-#if defined DEBUG && defined FORCES
-    fprintf(stderr, "Freeing %s (%d) ... ", pointer_names[i], i);
-#endif
+/*#if defined DEBUG && defined FORCES*/
+/*    fprintf(stderr, "Freeing %s (%d) ... ", pointer_names[i], i);*/
+/*#endif*/
     free(all_pointers[i]);
-#if defined DEBUG && defined FORCES
-    fprintf(stderr, "done\n");
-#endif
+/*#if defined DEBUG && defined FORCES*/
+/*    fprintf(stderr, "done\n");*/
+/*#endif*/
     free(pointer_names[i]);
   }
   free(all_pointers);

@@ -48,7 +48,7 @@
 
 #include "random.h"
 
-#if defined EAM
+#if defined EAM || defined ADP
 #define DUMMY_WEIGHT 100.
 #endif
 
@@ -58,6 +58,8 @@
 #define SLOTS 1
 #elif defined EAM
 #define SLOTS 2
+#elif defined ADP
+#define SLOTS 4
 #endif
 
 /******************************************************************************
@@ -79,13 +81,14 @@ typedef struct {
   real  z;
 } vector;
 
+// This is the order of vasp for stresses
 typedef struct {
   real  xx;
   real  yy;
   real  zz;
+  real  xy;
   real  yz;
   real  zx;
-  real  xy;
 } sym_tens;
 
 typedef struct {
@@ -96,6 +99,13 @@ typedef struct {
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
+  int   col[SLOTS];		/* coloumn of interaction for this neighbor */
+#ifdef ADP
+  vector rdist;			/* real distance */
+  sym_tens sqrdist;		/* real squared distance */
+  real  u_val, u_grad;		/* value and gradient of u(r) */
+  real  w_val, w_grad;		/* value and gradient of w(r) */
+#endif
 } neigh_t;
 
 typedef struct {
@@ -105,9 +115,14 @@ typedef struct {
   vector force;
   real  absforce;
   int   conf;			/* Which configuration... */
-#if defined EAM
+#if defined EAM || defined ADP
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
+#endif
+#ifdef ADP
+  vector mu;
+  sym_tens lambda;
+  real  nu;
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
@@ -126,7 +141,7 @@ typedef struct {
   real *table;			/* the actual data */
 #ifdef DIPOLE
   real *table_dipole;           /* static data for tail of coulomb potential */
-#endif 
+#endif
   real *d2tab;			/* second derivatives of table data for spline int */
   int  *idx;			/* indirect indexing */
 } pot_table_t;
@@ -313,7 +328,7 @@ EXTERN real *rms INIT(NULL);
 // pointers for force-vector
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM
+#if defined EAM || defined ADP
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
@@ -342,6 +357,9 @@ EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
+#ifdef STRESS
+EXTERN char *stress_comp[6];
+#endif
 
 // variables needed for option dipole
 #ifdef DIPOLE
@@ -413,6 +431,8 @@ void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
+#elif defined ADP
+real  calc_forces_adp(real *, real *, int);
 #elif defined DIPOLE
 real  calc_forces_dipole(real *, real *, int);
 #endif
