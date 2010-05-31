@@ -27,10 +27,7 @@
 *   along with potfit; if not, write to the Free Software
 *   Foundation, Inc., 51 Franklin St, Fifth Floor,
 *   Boston, MA  02110-1301  USA
-*/
-/****************************************************************
-* $Revision: 1.2 $
-* $Date: 2010/04/20 12:31:21 $
+*
 *****************************************************************/
 
 #ifdef ADP
@@ -38,7 +35,7 @@
 
 /*****************************************************************************
 *
-*  compute forces using pair potentials with spline interpolation
+*  compute forces using adp potentials with spline interpolation
 *
 *  returns sum of squares of differences between calculated and reference
 *     values
@@ -87,8 +84,8 @@
 
 real calc_forces_adp(real *xi_opt, real *forces, int flag)
 {
-  real  tmpsum = 0, sum = 0;
   int   first, col, i;
+  real  tmpsum = 0., sum = 0.;
   real *xi = NULL;
 
   static real rho_sum_loc, rho_sum;
@@ -145,7 +142,6 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
 #endif /* APOT */
-
 #endif /* MPI */
 
     /* init second derivatives for splines */
@@ -227,30 +223,34 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
-      int   j, k, l, h;
-      int   uf;
-      int   col_F;
-      int   self;
+      atom_t *atom;
+      int   h, j, k, l;
+      int   self_uf;
 #ifdef STRESS
       int   us, stresses;
-#endif
+#endif /* STRESS */
 
+      neigh_t *neigh;
       real  r;
-      real  phi_val;
-      real  phi_grad, rho_grad;
-      real  eam_force;
-      vector u_force;
-      sym_tens w_force;
-      real  nu;
-      real  rho_grad_j;
 
-      real  tmp, trace;
+      /* pair variables */
+      real  phi_val, phi_grad;
+      vector tmp_force;
+
+      /* eam variables */
+      int   col_F;
+      real  eam_force;
+      real  rho_val, rho_grad, rho_grad_j;
+
+      /* adp variables */
       real  eng_store;
       real  f1, f2;
+      real  nu;
+      real  tmp, trace;
+      vector tmp_vect;
+      sym_tens w_force;
+      vector u_force;
 
-      vector tmp_force, tmp_vect;
-      atom_t *atom;
-      neigh_t *neigh;
 
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
@@ -333,7 +333,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
-		/* actio = reaction */
+		/* actio = reactio */
 		l = 3 * neigh->nr;
 		forces[l] -= tmp_force.x;
 		forces[l + 1] -= tmp_force.y;
@@ -421,14 +421,14 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    if (atom->typ == neigh->typ) {
 	      /* then transfer(a->b)==transfer(b->a) */
 	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
-		phi_val =
+		rho_val =
 		  splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
 			     neigh->step[1]);
-		atom->rho += phi_val;
+		atom->rho += rho_val;
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (!self) {
-		  conf_atoms[neigh->nr - firstatom].rho += phi_val;
+		  conf_atoms[neigh->nr - firstatom].rho += rho_val;
 		}
 	      }
 	    } else {
@@ -475,19 +475,19 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* linear extrapolation left */
-	    phi_val =
+	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F],
 			  &atom->gradF);
 	    forces[energy_p + h] +=
-	      phi_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 	    /* and right */
-	    phi_val =
+	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F,
 			  calc_pot.end[col_F] - .5 * calc_pot.step[col_F],
 			  &atom->gradF);
 	    forces[energy_p + h] +=
-	      phi_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
+	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 	  }
 	  /* and in-between */
 	  else {
@@ -543,8 +543,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		  rho_grad_j = (r < calc_pot.end[col_F - ntypes]) ?
 		    splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.;
 		/* now we know everything - calculate forces */
-		eam_force = (rho_grad * atom->gradF +
-			     rho_grad_j *
+		eam_force = (rho_grad * atom->gradF + rho_grad_j *
 			     conf_atoms[(neigh->nr) - firstatom].gradF);
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */

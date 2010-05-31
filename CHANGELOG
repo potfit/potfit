@@ -1,3 +1,10 @@
+trunk-20100531
++ adapt force routines to new col system
+
+trunk-20100525
++ make scripts executable
++ fix conf_weights for stresses
+
 adp-20100528
 + fix conf_weight for stresses
 + adp is now working with mpi
