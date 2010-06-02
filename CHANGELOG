@@ -1,3 +1,7 @@
+trunk
++ revert simann changes from 201005012
++ update plotapot script for adp potentials
+
 trunk-20100531
 + adapt force routines to new col system
 

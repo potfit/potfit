@@ -54,7 +54,7 @@
 *
 *******************************************************************************/
 
-int randomize_parameter(int n, real *xi, real *v)
+void randomize_parameter(int n, real *xi, real *v)
 {
   real  temp, rand;
   int   done = 0, count = 0;
@@ -70,9 +70,12 @@ int randomize_parameter(int n, real *xi, real *v)
     if (temp >= min && temp <= max)
       done = 1;
     count++;
+    /* reset direction vector after 20 tries */
+    if (count > 20) {
+      v[n] = max - min;
+    }
   } while (!done);
   xi[idx[n]] = temp;
-  return count - 1;
 }
 
 #else
@@ -129,7 +132,6 @@ void anneal(real *xi)
 #endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
-  int  *n_tries;		/* number of tries to generate acceptable random number */
 
   /* init starting temperature for annealing process */
   T = anneal_temp;
@@ -142,12 +144,10 @@ void anneal(real *xi)
   xi2 = vect_real(ndimtot);
   fxi1 = vect_real(mdim);
   naccept = vect_int(ndim);
-  n_tries = vect_int(ndim);
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
     v[n] = 1.;
     naccept[n] = 0;
-    n_tries[n] = NSTEP;
   }
   for (n = 0; n < ndimtot; n++) {
     xi2[n] = xi[n];
@@ -171,7 +171,7 @@ void anneal(real *xi)
 	    xi2[n] = xi[n];
 	  }
 #ifdef APOT
-	  n_tries[h] += randomize_parameter(h, xi2, v);
+	  randomize_parameter(h, xi2, v);
 #else
 	  /* Create a gaussian bump,
 	     width & hight distributed normally */
@@ -221,11 +221,10 @@ void anneal(real *xi)
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
 	if (naccept[n] > (0.6 * NSTEP))
-	  v[n] *= (1 + STEPVAR * ((real)naccept[n] / n_tries[n] - 0.6) / 0.4);
+	  v[n] *= (1 + STEPVAR * ((real)naccept[n] / NSTEP - 0.6) / 0.4);
 	else if (naccept[n] < (0.4 * NSTEP))
-	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / n_tries[n]) / 0.4);
+	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / NSTEP) / 0.4);
 	naccept[n] = 0;
-	n_tries[n] = NSTEP;
       }
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
