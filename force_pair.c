@@ -1,35 +1,33 @@
 /****************************************************************
-*
-* force_pair.c: Routines used for calculating pair forces/energies
-* 	in various interpolation schemes.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * force_pair.c: Routines used for calculating pair forces/energies
+ *	in various interpolation schemes.
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #ifdef PAIR
 #include "potfit.h"
@@ -289,7 +287,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 				SQR(forces[k + 2]));
-	  }	/* second loop over atoms */
+	  }			/* second loop over atoms */
 	}
 
 	/* energy contributions */

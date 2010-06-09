@@ -1,34 +1,32 @@
 /****************************************************************
-*
-*  config.c: Reads atomic configurations and forces.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * config.c: Reads atomic configurations and forces.
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #include "potfit.h"
 #include "utils.h"
@@ -192,7 +190,7 @@ void read_config(char *filename)
     volumen = (real *)realloc(volumen, (nconf + 1) * sizeof(real));
     if (NULL == volumen)
       error("Cannot allocate memory for volume");
-    stress = (sym_tens *) realloc(stress, (nconf + 1) * sizeof(sym_tens));
+    stress = (sym_tens *)realloc(stress, (nconf + 1) * sizeof(sym_tens));
     if (NULL == stress)
       error("Cannot allocate memory for stress");
     inconf = (int *)realloc(inconf, (nconf + 1) * sizeof(int));

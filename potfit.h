@@ -1,34 +1,32 @@
 /****************************************************************
-*
-*  potfit.h: potfit header file
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * potfit.h: potfit header file
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #define NRANSI
 
@@ -201,7 +199,6 @@ typedef struct {
 
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
-
 #define EXTERN			/* define Variables in main */
 #define INIT(data) =data	/* initialize data only in main */
 #else
@@ -545,6 +542,9 @@ void  const_value(real, real *, real *);
 void  sqrt_value(real, real *, real *);
 void  mexp_decay_value(real, real *, real *);
 void  strmm_value(real, real *, real *);
+void  double_morse_value(real, real *, real *);
+void  double_exp_value(real, real *, real *);
+void  poly_5_value(real, real *, real *);
 
 #ifdef DIPOLE
 /* functions for dipole calculations  */

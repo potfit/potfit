@@ -1,34 +1,32 @@
 /****************************************************************
-*
-*  simann.c: Contains all routines used for simulated annealing.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/~imd/potfit
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * simann.c: Contains all routines used for simulated annealing.
+ *
+ *****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/~imd/potfit
+ *
+ *****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *****************************************************************/
 
 #include <math.h>
 #include "random.h"
@@ -46,13 +44,13 @@
 
 #ifdef APOT
 
-/*******************************************************************************
-*
-* Function to generate random parameters for analytic potentials.
-* We loop over a new random parameter until we find one inside
-* the predefined range, specified by the user.
-*
-*******************************************************************************/
+/****************************************************************
+ *
+ * Function to generate random parameters for analytic potentials.
+ * We loop over a new random parameter until we find one inside
+ * the predefined range, specified by the user.
+ *
+ ****************************************************************/
 
 int randomize_parameter(int n, real *xi, real *v)
 {
@@ -70,9 +68,13 @@ int randomize_parameter(int n, real *xi, real *v)
     if (temp >= min && temp <= max)
       done = 1;
     count++;
+    /* reset direction vector after 20 tries */
+    if (count > 20) {
+      v[n] = max - min;
+    }
   } while (!done);
   xi[idx[n]] = temp;
-  return count - 1;
+  return count;
 }
 
 #else
@@ -83,7 +85,7 @@ int randomize_parameter(int n, real *xi, real *v)
  *        sampling points of a function. Displacement is given by
  *        gaussian of given width and height.
  *
- *****************************************************************/
+ ****************************************************************/
 
 void makebump(real *x, real width, real height, int center)
 {
@@ -112,12 +114,13 @@ void makebump(real *x, real width, real height, int center)
  *  anneal(*xi): Anneals x a vector xi to minimize a function F(xi).
  *      Algorithm according to Cordona et al.
  *
- *****************************************************************/
+ ****************************************************************/
 
 void anneal(real *xi)
 {
-  int   j = 0, m = 0, k = 0, n, h = 0;	/* counters */
+  int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   loopagain;		/* loop flag */
+  int   total_count;		/* number of random numbers per step */
   real  T;			/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
@@ -129,7 +132,6 @@ void anneal(real *xi)
 #endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
-  int  *n_tries;		/* number of tries to generate acceptable random number */
 
   /* init starting temperature for annealing process */
   T = anneal_temp;
@@ -142,12 +144,10 @@ void anneal(real *xi)
   xi2 = vect_real(ndimtot);
   fxi1 = vect_real(mdim);
   naccept = vect_int(ndim);
-  n_tries = vect_int(ndim);
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
     v[n] = 1.;
     naccept[n] = 0;
-    n_tries[n] = NSTEP;
   }
   for (n = 0; n < ndimtot; n++) {
     xi2[n] = xi[n];
@@ -164,6 +164,7 @@ void anneal(real *xi)
   /* annealing loop */
   do {
     for (m = 0; m < NTEMP; m++) {
+      total_count = 0;
       for (j = 0; j < NSTEP; j++) {
 	for (h = 0; h < ndim; h++) {
 	  /* Step #1 */
@@ -171,7 +172,7 @@ void anneal(real *xi)
 	    xi2[n] = xi[n];
 	  }
 #ifdef APOT
-	  n_tries[h] += randomize_parameter(h, xi2, v);
+	  total_count += randomize_parameter(h, xi2, v);
 #else
 	  /* Create a gaussian bump,
 	     width & hight distributed normally */
@@ -221,14 +222,14 @@ void anneal(real *xi)
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
 	if (naccept[n] > (0.6 * NSTEP))
-	  v[n] *= (1 + STEPVAR * ((real)naccept[n] / n_tries[n] - 0.6) / 0.4);
+	  v[n] *= (1 + STEPVAR * ((real)naccept[n] / NSTEP - 0.6) / 0.4);
 	else if (naccept[n] < (0.4 * NSTEP))
-	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / n_tries[n]) / 0.4);
+	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / NSTEP) / 0.4);
 	naccept[n] = 0;
-	n_tries[n] = NSTEP;
       }
 
-      printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
+      printf("%3d\t%f\t%3d\t%f\t%f\t%f\n", k, T, m + 1, F, Fopt,
+	     (real)total_count / (ndim * NSTEP));
       fflush(stdout);
 
       /* End fit if break flagfile exists */
