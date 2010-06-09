@@ -1,35 +1,33 @@
 /****************************************************************
-*
-*  diff_evo.c: Implementation of the differential evolution
-* 		algorithm for global optimization
-*
-*****************************************************************/
-/*
-*   Copyright 2009-2010 Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * diff_evo.c: Implementation of the differential evolution
+ *	algorithm for global optimization
+ *
+ ****************************************************************
+ *
+ * Copyright 2009-2010 Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #ifdef EVO
 
@@ -137,10 +135,13 @@ void diff_evo(real *xi)
   if (evo_width == 0)
     return;
 
+  /* vector for force calculation */
   fxi = vect_real(mdim);
 
+  /* vector with new configuration */
   trial = (real *)malloc(D * sizeof(real));
 
+  /* all configurations */
   x1 = (real **)malloc(NP * sizeof(real *));
   x2 = (real **)malloc(NP * sizeof(real *));
   cost = (real *)malloc(NP * sizeof(real));
@@ -185,9 +186,11 @@ void diff_evo(real *xi)
   printf("%5d\t\t%f\t%f\n", count, min, avg / (NP));
   fflush(stdout);
 
+  /* main differential evolution loop */
   while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished
 	 && restart < 4) {
     sum = 0;
+    /* randomly create new populations */
     for (i = 0; i < NP; i++) {
       tmpsum = 0;
       do

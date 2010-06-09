@@ -1,34 +1,32 @@
-/********************************************************
-*
-*  mpi_utils.c: Contains utilities to be used with MPI
-*
-*******************************************************/
-/*
-*   Copyright 2004-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+/****************************************************************
+ *
+ * mpi_utils.c: Contains utilities to be used with MPI
+ *
+ ****************************************************************
+ *
+ * Copyright 2004-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #ifdef MPI
 #include "potfit.h"
@@ -86,8 +84,13 @@ void debug_mpi(int i)
  * broadcast_param: Broadcast parameters etc to other nodes
  *
  **************************************************************************/
-  /* 8: number of static entries in struct atom_t  */
+#ifdef PAIR
 #define MAX_MPI_COMPONENTS 8
+#elif defined EAM
+#define MAX_MPI_COMPONENTS 9
+#elif defined ADP
+#define MAX_MPI_COMPONENTS 14
+#endif /* PAIR */
 
 void broadcast_params()
 {
@@ -116,7 +119,19 @@ void broadcast_params()
   blklens[4] = SLOTS;     typen[4] = MPI_INT;     /* slot */
   blklens[5] = SLOTS;     typen[5] = REAL;        /* shift */
   blklens[6] = SLOTS;     typen[6] = REAL;        /* step */
+  blklens[7] = SLOTS;     typen[7] = REAL;        /* step */
+  size = 8;
+#ifdef ADP
+  blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* rdist */
+  blklens[9] = 1;         typen[9] = MPI_STENS;   /* sqrdist */
+  blklens[10] = 1;         typen[10] = REAL;        /* u_val */
+  blklens[11] = 1;        typen[11] = REAL;       /* u_grad */
+  blklens[12] = 1;        typen[12] = REAL;       /* w_val */
+  blklens[13] = 1;        typen[13] = REAL;       /* w_grad */
+  size += 6;
+#endif /* ADP */
   /* *INDENT-ON* */
+
   MPI_Address(&testneigh.typ, displs);
   MPI_Address(&testneigh.nr, &displs[1]);
   MPI_Address(&testneigh.r, &displs[2]);
@@ -124,12 +139,21 @@ void broadcast_params()
   MPI_Address(testneigh.slot, &displs[4]);
   MPI_Address(testneigh.shift, &displs[5]);
   MPI_Address(testneigh.step, &displs[6]);
+  MPI_Address(testneigh.col, &displs[7]);
+#ifdef ADP
+  MPI_Address(&testneigh.rdist, &displs[8]);
+  MPI_Address(&testneigh.sqrdist, &displs[9]);
+  MPI_Address(&testneigh.u_val, &displs[10]);
+  MPI_Address(&testneigh.u_grad, &displs[11]);
+  MPI_Address(&testneigh.w_val, &displs[12]);
+  MPI_Address(&testneigh.w_grad, &displs[13]);
+#endif
 
-  for (i = 1; i < 7; i++) {
+  for (i = 1; i < size; i++) {
     displs[i] -= displs[0];
   }
   displs[0] = 0;		/* set displacements */
-  MPI_Type_struct(7, blklens, displs, typen, &MPI_NEIGH);
+  MPI_Type_struct(size, blklens, displs, typen, &MPI_NEIGH);
   MPI_Type_commit(&MPI_NEIGH);
 
   /* MPI_ATOM */
@@ -141,11 +165,17 @@ void broadcast_params()
   blklens[4] = 1;         typen[4] = REAL;        /* absforce */
   blklens[5] = 1;         typen[5] = MPI_INT;     /* conf */
   size=6;
-#if defined EAM
+#if defined EAM || defined ADP
   blklens[6] = 1;         typen[6] = REAL;        /* rho */
   blklens[7] = 1;         typen[7] = REAL;        /* gradF */
   size += 2;
-#endif
+#endif /* EAM || ADP */
+#ifdef ADP
+  blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* mu */
+  blklens[9] = 1;         typen[9] = MPI_STENS;   /* lambda */
+  blklens[10] = 1;        typen[10] = REAL;       /* nu */
+  size += 3;
+#endif /* ADP */
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
 
   /* *INDENT-ON* */
@@ -155,10 +185,15 @@ void broadcast_params()
   MPI_Address(&testatom.force, &displs[3]);
   MPI_Address(&testatom.absforce, &displs[4]);
   MPI_Address(&testatom.conf, &displs[5]);
-#if defined EAM
+#if defined EAM || defined ADP
   MPI_Address(&testatom.rho, &displs[6]);
   MPI_Address(&testatom.gradF, &displs[7]);
-#endif
+#endif /* EAM || ADP */
+#ifdef ADP
+  MPI_Address(&testatom.mu, &displs[8]);
+  MPI_Address(&testatom.lambda, &displs[9]);
+  MPI_Address(&testatom.nu, &displs[10]);
+#endif /* ADP */
   for (i = 1; i < size; i++) {
     displs[i] -= displs[0];
   }
@@ -310,6 +345,7 @@ void broadcast_params()
   MPI_Scatter(conf_len, 1, MPI_INT, &myconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatter(conf_dist, 1, MPI_INT, &firstconf, 1, MPI_INT, 0,
 	      MPI_COMM_WORLD);
+  /* this broadcasts all atoms */
   conf_atoms = (atom_t *)malloc(myatoms * sizeof(atom_t));
   for (i = 0; i < natoms; i++) {
     if (myid == 0)

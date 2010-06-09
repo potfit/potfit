@@ -1,34 +1,32 @@
 /****************************************************************
-*
-*  potfit.c: Contains main potfit programme.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * potfit.c: Contains main potfit program
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #define MAIN
 
@@ -44,7 +42,7 @@
 
 void error(char *msg)
 {
-  fprintf(stderr, "\nError: %s\n", msg);
+  fprintf(stderr, "\nError: %s\n\n", msg);
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;
@@ -78,7 +76,7 @@ int main(int argc, char **argv)
   int   i, j;
   real  tot, min, max, sqr;
   real *force;
-#if defined EAM
+#if defined EAM || defined ADP
   int  *ntyp = NULL;
   real *totdens = NULL;
 #endif
@@ -103,6 +101,9 @@ int main(int argc, char **argv)
 #elif defined EAM
   calc_forces = calc_forces_eam;
   strcpy(interaction, "EAM");
+#elif defined ADP
+  calc_forces = calc_forces_adp;
+  strcpy(interaction, "ADP");
 #endif
 
   /* read the parameters and the potential file */
@@ -155,7 +156,7 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#if defined EAM
+#if defined EAM || defined ADP
     lambda = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(lambda, "lambda");
 
@@ -214,7 +215,7 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#if defined EAM
+#if defined EAM || defined ADP
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
@@ -226,7 +227,7 @@ int main(int argc, char **argv)
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#endif /* EAM */
+#endif /* EAM ADP */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
 
@@ -422,7 +423,7 @@ int main(int argc, char **argv)
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
-      printf("Force data written to %s\n", file);
+      printf("Force data written to \t\t\t%s\n", file);
       fclose(outfile);
     }
 
@@ -469,12 +470,20 @@ int main(int argc, char **argv)
 		force[energy_p + i] / force_0[energy_p + i]);
     }
     if (write_output_files) {
-      printf("Energy data written to %s\n", file);
+      printf("Energy data written to \t\t\t%s\n", file);
       fclose(outfile);
     }
 #ifdef STRESS
     /* write stress deviations */
     if (write_output_files) {
+      for (i = 0; i < 6; i++)
+	stress_comp[i] = (char *)malloc(2 * sizeof(char));
+      strcpy(stress_comp[0], "xx");
+      strcpy(stress_comp[1], "yy");
+      strcpy(stress_comp[2], "zz");
+      strcpy(stress_comp[3], "xy");
+      strcpy(stress_comp[4], "yz");
+      strcpy(stress_comp[5], "zx");
       strcpy(file, output_prefix);
       strcat(file, ".stress");
       outfile = fopen(file, "w");
@@ -489,17 +498,18 @@ int main(int argc, char **argv)
     }
     fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
     for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-      sqr = SQR(force[i]);
+      sqr = conf_weight[(i - stress_p) / 6] * SQR(force[i]);
       s_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
-      fprintf(outfile, "%d\t%f\t%f\t%f\t%f\t%f\n",
-	      (i - stress_p) / 6, conf_weight[(i - stress_p) / 6], sqr,
+      fprintf(outfile, "%3d-%s\t%f\t%f\t%f\t%f\t%f\n",
+	      (i - stress_p) / 6, stress_comp[(i - stress_p) % 6],
+	      conf_weight[(i - stress_p) / 6], sqr,
 	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
 	      force[i] / force_0[i]);
     }
     if (write_output_files) {
-      printf("Stress data written to %s\n", file);
+      printf("Stress data written to \t\t\t%s\n", file);
       fclose(outfile);
     }
 #endif

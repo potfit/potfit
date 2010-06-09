@@ -1,35 +1,33 @@
 /****************************************************************
-*
-* force.c: Routines used for calculating pair forces/energies
-* 	in various interpolation schemes.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * force_pair.c: Routines used for calculating pair forces/energies
+ *	in various interpolation schemes.
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #ifdef PAIR
 #include "potfit.h"
@@ -85,8 +83,8 @@
 
 real calc_forces_pair(real *xi_opt, real *forces, int flag)
 {
-  int   first, col1, i;
-  real  tmpsum, sum = 0.;
+  int   first, col, i;
+  real  tmpsum = 0., sum = 0.;
   real *xi = NULL;
 
   switch (format) {
@@ -104,6 +102,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
+
 #ifndef APOT
     if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
@@ -127,12 +126,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     if (myid == 0)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
-    if (format == 0)
-      update_calc_table(xi_opt, xi, 0);
+    update_calc_table(xi_opt, xi, 0);
     if (flag == 1)
       break;
 #else /* APOT */
-
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
       potsync();
@@ -143,15 +140,17 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* MPI */
 
     /* init second derivatives for splines */
-    for (col1 = 0; col1 < paircol; col1++) {
-      first = calc_pot.first[col1];
-      if (format == 3 || format == 0)
-	spline_ed(calc_pot.step[col1], xi + first,
-		  calc_pot.last[col1] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+
+    /* pair potentials */
+    for (col = 0; col < paircol; col++) {
+      first = calc_pot.first[col];
+      if (format == 0 || format == 3)
+	spline_ed(calc_pot.step[col], xi + first,
+		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+		  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col1] - first + 1,
+		  calc_pot.last[col] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
 
@@ -168,12 +167,16 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     {
       atom_t *atom;
       int   h, j, k, l;
-      int   col, self, typ1, typ2, uf;
+      int   self, uf;
 #ifdef STRESS
       int   us, stresses;
-#endif
+#endif /* STRESS */
+
       neigh_t *neigh;
-      real  fnval, grad;
+      real  r;
+
+      /* pair variables */
+      real  phi_val, phi_grad;
       vector tmp_force;
 
 #ifdef _OPENMP
@@ -214,45 +217,42 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* 2nd loop: calculate pair forces and energies */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  typ1 = atom->typ;
 	  k = 3 * (cnfstart[h] + i);
-	  /* loop over neighbours */
+	  /* loop over neighbors */
 	  for (j = 0; j < atom->n_neigh; j++) {
 	    neigh = atom->neigh + j;
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-	    typ2 = neigh->typ;
-	    /* find correct column */
-	    col = (typ1 <= typ2) ?
-	      typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-	      : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-	    if (neigh->r < calc_pot.end[col]) {
+
+	    /* pair potential part */
+	    if (neigh->r < calc_pot.end[neigh->col[0]]) {
 	      /* fn value and grad are calculated in the same step */
-	      if (uf) {
-		fnval =
+	      if (uf)
+		phi_val =
 		  splint_comb_dir(&calc_pot, xi, neigh->slot[0],
-				  neigh->shift[0], neigh->step[0], &grad);
-	      } else {
-		fnval =
+				  neigh->shift[0], neigh->step[0], &phi_grad);
+	      else
+		phi_val =
 		  splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
 			     neigh->step[0]);
-	      }
 	      /* avoid double counting if atom is interacting with a
 	         copy of itself */
 	      if (self) {
-		fnval *= 0.5;
-		grad *= 0.5;
+		phi_val *= 0.5;
+		phi_grad *= 0.5;
 	      }
-	      forces[energy_p + h] += fnval;
+	      /* not real force: cohesive energy */
+	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
-		tmp_force.x = neigh->dist.x * grad;
-		tmp_force.y = neigh->dist.y * grad;
-		tmp_force.z = neigh->dist.z * grad;
+		tmp_force.x = neigh->dist.x * phi_grad;
+		tmp_force.y = neigh->dist.y * phi_grad;
+		tmp_force.z = neigh->dist.z * phi_grad;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
-		l = 3 * neigh->nr;	/* actio = reactio */
+		/* actio = reactio */
+		l = 3 * neigh->nr;
 		forces[l] -= tmp_force.x;
 		forces[l + 1] -= tmp_force.y;
 		forces[l + 2] -= tmp_force.z;
@@ -283,13 +283,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] /= FORCE_EPS + atom->absforce;
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
-	    /* Returned force is difference between */
-	    /* calculated and input force */
+	    /* sum up forces */
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 				SQR(forces[k + 2]));
-	  }
-	}			/* second loop over atoms */
+	  }			/* second loop over atoms */
+	}
 
 	/* energy contributions */
 	forces[energy_p + h] *= eweight / (real)inconf[h];
@@ -315,7 +314,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     if (myid == 0) {
       tmpsum += apot_punish(xi_opt, forces);
     }
-#endif
+#endif /* APOT */
 
     sum = tmpsum;		/* global sum = local sum  */
 #ifdef MPI
@@ -323,9 +322,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     sum = 0.;
     MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,	/* forces */
+    /* forces */
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
 		forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,	/* energies */
+    /* energies */
+    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
 		forces
 		+ natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
@@ -341,7 +342,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");
-#endif
+#endif /* DEBUG */
 	return 10e10;
       } else
 	return sum;

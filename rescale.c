@@ -1,35 +1,33 @@
 /****************************************************************
-*
-* rescale.c: Routines used to automatically rescale
-*     EAM potential.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * rescale.c: Routines used to automatically rescale
+ *	EAM potential.
+ *
+ *****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ *****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *****************************************************************/
 
 #include "potfit.h"
 
@@ -132,14 +130,18 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	  col2 = paircol + typ2;
 	  if (typ2 == typ1) {
 	    if (neigh->r < pt->end[col2]) {
-	      fnval = splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
+	      fnval =
+		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
+			   neigh->step[1]);
 	      atom->rho += fnval;
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {
 	    col = paircol + typ1;
 	    if (neigh->r < pt->end[col2]) {
-	      atom->rho += splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
+	      atom->rho +=
+		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
+			   neigh->step[1]);
 	    }
 	    if (neigh->r < pt->end[col])
 	      atoms[neigh->nr].rho += splint(pt, xi, col, neigh->r);
