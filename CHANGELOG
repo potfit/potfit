@@ -1,6 +1,8 @@
-trunk
+trunk-20100609
 + revert simann changes from 201005012
 + update plotapot script for adp potentials
++ update GPL notice
++ add new analytic functions and update old ones
 
 trunk-20100531
 + adapt force routines to new col system
