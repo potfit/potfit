@@ -55,8 +55,13 @@ void init_mpi(int argc, char **argv)
 
 void shutdown_mpi(void)
 {
-  if (!init_done)
+  if (!init_done) {
+    fprintf(stderr,
+	    "MPI will be killed, because the initialization is not yet complete.\n");
+    fprintf(stderr, "This is not a bug!\n\n");
+    fflush(stderr);
     MPI_Abort(MPI_COMM_WORLD, -1);
+  }
   MPI_Barrier(MPI_COMM_WORLD);	/* Wait for all processes to arrive */
   MPI_Finalize();		/* Shutdown */
 }

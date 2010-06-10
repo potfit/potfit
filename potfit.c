@@ -222,12 +222,12 @@ int main(int argc, char **argv)
   punish_par_p = dummy_p + 2 * ntypes;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#else /* EAM */
+#else /* EAM || ADP */
 #ifdef APOT
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#endif /* EAM ADP */
+#endif /* EAM || ADP */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
 

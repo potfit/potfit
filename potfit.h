@@ -414,7 +414,7 @@ real  calc_forces_eam(real *, real *, int);
 real  calc_forces_adp(real *, real *, int);
 #endif
 #ifdef APOT
-int   randomize_parameter(int, real *, real *);
+void  randomize_parameter(int, real *, real *);
 #else
 void  makebump(real *, real, real, int);
 #endif

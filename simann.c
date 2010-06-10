@@ -52,7 +52,7 @@
  *
  ****************************************************************/
 
-int randomize_parameter(int n, real *xi, real *v)
+void randomize_parameter(int n, real *xi, real *v)
 {
   real  temp, rand;
   int   done = 0, count = 0;
@@ -61,6 +61,9 @@ int randomize_parameter(int n, real *xi, real *v)
   min = apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]];
   max = apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]];
 
+  if (v[n] > max - min)
+    v[n] = max - min;
+
   do {
     temp = xi[idx[n]];
     rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
@@ -68,13 +71,8 @@ int randomize_parameter(int n, real *xi, real *v)
     if (temp >= min && temp <= max)
       done = 1;
     count++;
-    /* reset direction vector after 20 tries */
-    if (count > 20) {
-      v[n] = max - min;
-    }
   } while (!done);
   xi[idx[n]] = temp;
-  return count;
 }
 
 #else
@@ -164,7 +162,6 @@ void anneal(real *xi)
   /* annealing loop */
   do {
     for (m = 0; m < NTEMP; m++) {
-      total_count = 0;
       for (j = 0; j < NSTEP; j++) {
 	for (h = 0; h < ndim; h++) {
 	  /* Step #1 */
@@ -172,7 +169,7 @@ void anneal(real *xi)
 	    xi2[n] = xi[n];
 	  }
 #ifdef APOT
-	  total_count += randomize_parameter(h, xi2, v);
+	  randomize_parameter(h, xi2, v);
 #else
 	  /* Create a gaussian bump,
 	     width & hight distributed normally */
@@ -228,8 +225,7 @@ void anneal(real *xi)
 	naccept[n] = 0;
       }
 
-      printf("%3d\t%f\t%3d\t%f\t%f\t%f\n", k, T, m + 1, F, Fopt,
-	     (real)total_count / (ndim * NSTEP));
+      printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
 
       /* End fit if break flagfile exists */
