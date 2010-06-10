@@ -602,7 +602,7 @@ real apot_punish(real *params, real *forces)
 
 real apot_grad(real r, real *p, void (*function) (real, real *, real *))
 {
-  real  a, b, h = 0.00001;
+  real  a, b, h = 0.0001;
 
   function(r + h, p, &a);
   function(r - h, p, &b);

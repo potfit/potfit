@@ -1,7 +1,6 @@
 /****************************************************************
  *
  * force_pair.c: Routines used for calculating pair forces/energies
- *	in various interpolation schemes.
  *
  ****************************************************************
  *
@@ -32,54 +31,54 @@
 #ifdef PAIR
 #include "potfit.h"
 
-/*****************************************************************************
-*
-*  compute forces using pair potentials with spline interpolation
-*
-*  returns sum of squares of differences between calculated and reference
-*     values
-*
-*  arguments: *xi - pointer to potential
-*             *forces - pointer to forces calculated from potential
-*             flag - used for special tasks
-*
-* When using the mpi-parallelized version of potfit, all processes but the
-* root process jump into this function immediately after initialization and
-* stay in here for an infinite loop, to exit only when a certain flag value
-* is passed from process 0. When a set of forces needs to be calculated,
-* the root process enters the function with a flag value of 0, broadcasts
-* the current potential table xi and the flag value to the other processes,
-* thus initiating a force calculation. Whereas the root process returns with
-* the result, the other processes stay in the loop. If the root process is
-* called with flag value 1, all processes exit the function without
-* calculating the forces.
-* If anything changes about the potential beyond the values of the parameters,
-* e.g. the location of the sampling points, these changes have to be broadcast
-* from rank 0 process to the higher ranked processes. This is done when the
-* root process is called with flag value 2. Then a potsync function call is
-* initiated by all processes to get the new potential from root.
-*
-* xi_opt is the array storing the potential parameters (usually it is the
-*     opt_pot.table - part of the struct opt_pot, but it can also be
-*     modified from the current potential.
-*
-* forces is the array storing the deviations from the reference data, not
-*     only for forces, but also for energies, stresses or dummy constraints
-*     (if applicable).
-*
-* flag is an integer controlling the behaviour of calc_forces_pair.
-*    flag == 1 will cause all processes to exit calc_forces_pair after
-*             calculation of forces.
-*    flag == 2 will cause all processes to perform a potsync (i.e. broadcast
-*             any changed potential parameters from process 0 to the others)
-*             before calculation of forces
-*    all other values will cause a set of forces to be calculated. The root
-*             process will return with the sum of squares of the forces,
-*             while all other processes remain in the function, waiting for
-*             the next communication initiating another force calculation
-*             loop
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  compute forces using pair potentials with spline interpolation
+ *
+ *  returns sum of squares of differences between calculated and reference
+ *     values
+ *
+ *  arguments: *xi - pointer to potential
+ *             *forces - pointer to forces calculated from potential
+ *             flag - used for special tasks
+ *
+ * When using the mpi-parallelized version of potfit, all processes but the
+ * root process jump into this function immediately after initialization and
+ * stay in here for an infinite loop, to exit only when a certain flag value
+ * is passed from process 0. When a set of forces needs to be calculated,
+ * the root process enters the function with a flag value of 0, broadcasts
+ * the current potential table xi and the flag value to the other processes,
+ * thus initiating a force calculation. Whereas the root process returns with
+ * the result, the other processes stay in the loop. If the root process is
+ * called with flag value 1, all processes exit the function without
+ * calculating the forces.
+ * If anything changes about the potential beyond the values of the parameters,
+ * e.g. the location of the sampling points, these changes have to be broadcast
+ * from rank 0 process to the higher ranked processes. This is done when the
+ * root process is called with flag value 2. Then a potsync function call is
+ * initiated by all processes to get the new potential from root.
+ *
+ * xi_opt is the array storing the potential parameters (usually it is the
+ *     opt_pot.table - part of the struct opt_pot, but it can also be
+ *     modified from the current potential.
+ *
+ * forces is the array storing the deviations from the reference data, not
+ *     only for forces, but also for energies, stresses or dummy constraints
+ *     (if applicable).
+ *
+ * flag is an integer controlling the behaviour of calc_forces_pair.
+ *    flag == 1 will cause all processes to exit calc_forces_pair after
+ *             calculation of forces.
+ *    flag == 2 will cause all processes to perform a potsync (i.e. broadcast
+ *             any changed potential parameters from process 0 to the others)
+ *             before calculation of forces
+ *    all other values will cause a set of forces to be calculated. The root
+ *             process will return with the sum of squares of the forces,
+ *             while all other processes remain in the function, waiting for
+ *             the next communication initiating another force calculation
+ *             loop
+ *
+ ****************************************************************/
 
 real calc_forces_pair(real *xi_opt, real *forces, int flag)
 {
@@ -116,26 +115,24 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif
 
 #ifdef MPI
-    /* exchange potential and flag value */
 #ifndef APOT
+    /* exchange potential and flag value */
     MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (flag == 1)
+      break;			/* Exception: flag 1 means clean up */
 
 #ifdef APOT
     if (myid == 0)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
-    if (flag == 1)
-      break;
 #else /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
       potsync();
-    /* non root processes hang on, unless...  */
-    if (flag == 1)
-      break;			/* Exception: flag 1 means clean up */
 #endif /* APOT */
 #endif /* MPI */
 
