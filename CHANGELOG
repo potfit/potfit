@@ -1,3 +1,7 @@
+devel-20100610
++ make punishments for apot optional
++ there is now (again) a limit on the size of the directional vectors v in simann
+
 trunk-20100609
 + revert simann changes from 201005012
 + update plotapot script for adp potentials

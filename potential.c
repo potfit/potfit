@@ -185,7 +185,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     sprintf(msg, "Format not specified in header of file %s", filename);
     error(msg);
   } else if (format != 0)
-    printf("Potential file format %d.\n", format);
+    printf("Potential file format %d detected.\n", format);
   else
     printf("Potential file format %d (analytic potentials) detected.\n",
 	   format);
@@ -770,7 +770,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	|| (i >= (ntypes * (ntypes + 1) / 2 + 2 * ntypes))) {
 #endif
       if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
-	printf("%s\n", buffer);
 	sprintf(msg,
 		"Could not read cutoff for potential #%d in file %s\nAborting",
 		i, filename);
@@ -905,15 +904,14 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  } else {
 	    if (strcmp(apt->param_name[i][j], "type") == 0) {
 	      sprintf(msg,
-		      "Not enough parameters for potential #%d in file %s!\nYou specified %d parameters, but needed are %d.\nAborting",
-		      i + 1, filename, j, apt->n_par[i]);
+		      "Not enough parameters for potential #%d (%s) in file %s!\nYou specified %d parameters, but needed are %d.",
+		      i + 1, apt->names[i], filename, j, apt->n_par[i]);
 	      error(msg);
 	    }
 	    sprintf(msg,
 		    "Could not read parameter #%d of potential #%d in file %s",
 		    j + 1, i + 1, filename);
 	    error(msg);
-	    printf("%s\n", apt->param_name[i][0]);
 	  }
 	}
 
@@ -947,7 +945,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
     }
   }
-  printf("\n");
 
   /* if we have global parameters, are they actually used ? */
   if (have_globals) {
@@ -1107,6 +1104,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     pt->idxlen += apt->globals;
   }
+#ifdef NOPUNISH
+  warning("Gauge degrees of freedom are NOT fixed!");
+#endif
 
   init_calc_table(pt, &calc_pot);
   return;

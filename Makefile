@@ -717,6 +717,11 @@ ifneq (,$(findstring stress,${MAKETARGET}))
 CFLAGS += -DSTRESS
 endif
 
+# Disable gauge punishments for EAM/ADP
+ifneq (,$(findstring nopunish,${MAKETARGET}))
+CFLAGS += -DNOPUNISH
+endif
+
 ifneq (,$(findstring limit,${MAKETARGET}))
 WARNING += "limit is now mandatory -- "
 endif

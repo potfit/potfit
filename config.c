@@ -847,7 +847,7 @@ void read_config(char *filename)
 #endif /* APOT */
 
   /* print minimal distance matrix */
-  printf("Minimal Distances Matrix:\n");
+  printf("\nMinimal Distances Matrix:\n");
   printf("Atom\t");
   for (i = 0; i < ntypes; i++)
     printf("%8s\t", elements[i]);
