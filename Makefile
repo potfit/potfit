@@ -622,6 +622,10 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
 endif
 
+ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+POTFITSRC      += force_adp.c
+endif
+
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 POTFITSRC      += functions.c chempot.c
 endif
@@ -673,6 +677,17 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 INTERACTION = 1
 endif
 
+# ADP
+ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += ADP does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DADP
+INTERACTION = 1
+endif
 
 ifneq (,$(findstring 0,${INTERACTION}))
 ERROR += No interaction model specified
@@ -696,6 +711,11 @@ endif
 # Stress
 ifneq (,$(findstring stress,${MAKETARGET}))
 CFLAGS += -DSTRESS
+endif
+
+# Disable gauge punishments for EAM/ADP
+ifneq (,$(findstring nopunish,${MAKETARGET}))
+CFLAGS += -DNOPUNISH
 endif
 
 ifneq (,$(findstring limit,${MAKETARGET}))

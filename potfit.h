@@ -1,34 +1,32 @@
 /****************************************************************
-*
-*  potfit.h: potfit header file
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * potfit.h: potfit header file
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #define NRANSI
 
@@ -52,7 +50,7 @@
 
 #include "random.h"
 
-#if defined EAM || defined MEAM
+#if defined EAM || defined ADP || defined MEAM
 #define DUMMY_WEIGHT 100.
 #endif
 
@@ -62,6 +60,8 @@
 #define SLOTS 1
 #elif defined EAM || defined MEAM
 #define SLOTS 2
+#elif defined ADP
+#define SLOTS 4
 #endif
 
 /******************************************************************************
@@ -83,13 +83,14 @@ typedef struct {
   real  z;
 } vector;
 
+// This is the order of vasp for stresses
 typedef struct {
   real  xx;
   real  yy;
   real  zz;
+  real  xy;
   real  yz;
   real  zx;
-  real  xy;
 } sym_tens;
 
 typedef struct {
@@ -100,6 +101,13 @@ typedef struct {
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
+  int   col[SLOTS];		/* coloumn of interaction for this neighbor */
+#ifdef ADP
+  vector rdist;			/* real distance */
+  sym_tens sqrdist;		/* real squared distance */
+  real  u_val, u_grad;		/* value and gradient of u(r) */
+  real  w_val, w_grad;		/* value and gradient of w(r) */
+#endif
 } neigh_t;
 
 #ifdef MEAM
@@ -131,13 +139,18 @@ typedef struct {
   vector force;
   real  absforce;
   int   conf;			/* Which configuration... */
-#if defined EAM || defined MEAM
+#if defined EAM || defined ADP || defined MEAM
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
-#endif
+#endif /* EAM || ADP || MEAM */
+#ifdef ADP
+  vector mu;
+  sym_tens lambda;
+  real  nu;
+#endif /* ADP */
 #ifdef MEAM
   angl  angl_part[MAXNEIGH * (MAXNEIGH - 1) / 2];
-#endif
+#endif /* MEAM */
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
@@ -205,7 +218,6 @@ typedef struct {
 
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
-
 #define EXTERN			/* define Variables in main */
 #define INIT(data) =data	/* initialize data only in main */
 #else
@@ -332,7 +344,7 @@ EXTERN real *rms INIT(NULL);
 // pointers for force-vector
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM || defined MEAM
+#if defined EAM || defined ADP || defined MEAM
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
@@ -361,6 +373,9 @@ EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
+#ifdef STRESS
+EXTERN char *stress_comp[6];
+#endif
 
 /******************************************************************************
 *
@@ -424,11 +439,13 @@ void  read_config2(char *);
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
+#elif defined ADP
+real  calc_forces_adp(real *, real *, int);
 #elif defined MEAM
 real  calc_forces_meam(real *, real *, int);
 #endif
 #ifdef APOT
-int   randomize_parameter(int, real *, real *);
+void  randomize_parameter(int, real *, real *);
 #else
 void  makebump(real *, real, real, int);
 #endif
@@ -536,6 +553,9 @@ void  const_value(real, real *, real *);
 void  sqrt_value(real, real *, real *);
 void  mexp_decay_value(real, real *, real *);
 void  strmm_value(real, real *, real *);
+void  double_morse_value(real, real *, real *);
+void  double_exp_value(real, real *, real *);
+void  poly_5_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 
