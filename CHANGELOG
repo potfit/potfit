@@ -1,7 +1,32 @@
+devel-20100610
++ make punishments for apot optional
++ there is now (again) a limit on the size of the directional vectors v in simann
+
+trunk-20100609
++ revert simann changes from 201005012
++ update plotapot script for adp potentials
++ update GPL notice
++ add new analytic functions and update old ones
+
+trunk-20100531
++ adapt force routines to new col system
+
+trunk-20100525
++ make scripts executable
++ fix conf_weights for stresses
+
+adp-20100528
++ fix conf_weight for stresses
++ adp is now working with mpi
++ save coloumns for interactions, untested with tabulated potentials for now
+
+adp-20100527
++ adp should now be complete, mpi still missing
+
 bzr-20100512
 + moved files from *_r.* to *.*, all types are real, include header for bracketing
 + fix warnings when compiling with debug flag
-+ simann now counts all new parameters, even if they were out of bounds, as an attempt
++ simann now counts all new parameters as an attempt, even if they were out of bounds
 + optimize evo output
 + properly initialize the dSFMT prng
 

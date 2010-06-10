@@ -1,45 +1,43 @@
 /****************************************************************
-*
-* functions.c: Routines and function calls used for analytic potentials
-*
-*****************************************************************/
-/*
-*   Copyright 2008-2010 Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * functions.c: Routines and function calls used for analytic potentials
+ *
+ ****************************************************************
+ *
+ * Copyright 2008-2010 Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #ifdef APOT
 
 #include "potfit.h"
 #include <mkl_vml.h>
 
-/*****************************************************************************
-*
-* return the number of parameters for a specific analytic potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * return the number of parameters for a specific analytic potential
+ *
+ ****************************************************************/
 
 int apot_parameters(char *name)
 {
@@ -62,7 +60,7 @@ int apot_parameters(char *name)
   } else if (strcmp(name, "exp_decay") == 0) {
     return 2;
   } else if (strcmp(name, "pohlong") == 0) {
-    return 2;
+    return 3;
   } else if (strcmp(name, "parabola") == 0) {
     return 3;
   } else if (strcmp(name, "csw") == 0) {
@@ -77,6 +75,12 @@ int apot_parameters(char *name)
     return 3;
   } else if (strcmp(name, "strmm") == 0) {
     return 5;
+  } else if (strcmp(name, "double_morse") == 0) {
+    return 7;
+  } else if (strcmp(name, "double_exp") == 0) {
+    return 5;
+  } else if (strcmp(name, "poly_5") == 0) {
+    return 5;
   }
 
   /* template for new potential function called newpot */
@@ -90,11 +94,11 @@ int apot_parameters(char *name)
   return -1;
 }
 
-/*****************************************************************************
-*
-* assign function pointers to corresponding functions
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * assign function pointers to corresponding functions
+ *
+ ****************************************************************/
 
 int apot_assign_functions(apot_table_t *apt)
 {
@@ -135,6 +139,12 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &mexp_decay_value;
     } else if (strcmp(apt->names[i], "strmm") == 0) {
       apt->fvalue[i] = &strmm_value;
+    } else if (strcmp(apt->names[i], "double_morse") == 0) {
+      apt->fvalue[i] = &double_morse_value;
+    } else if (strcmp(apt->names[i], "double_exp") == 0) {
+      apt->fvalue[i] = &double_exp_value;
+    } else if (strcmp(apt->names[i], "poly_5") == 0) {
+      apt->fvalue[i] = &poly_5_value;
     }
 
 /* template for new potential function called newpot */
@@ -151,17 +161,17 @@ int apot_assign_functions(apot_table_t *apt)
   return 0;
 }
 
-/*****************************************************************************
-*
-* actual functions representing the analytic potentials
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * actual functions representing the analytic potentials
+ *
+ ****************************************************************/
 
-/******************************************************************************
-*
-* lennard-jones potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * lennard-jones potential
+ *
+ ****************************************************************/
 
 void lj_value(real r, real *p, real *f)
 {
@@ -174,11 +184,11 @@ void lj_value(real r, real *p, real *f)
   *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
 }
 
-/******************************************************************************
-*
-* empirical oscillating pair potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * empirical oscillating pair potential
+ *
+ ****************************************************************/
 
 void eopp_value(real r, real *p, real *f)
 {
@@ -193,22 +203,22 @@ void eopp_value(real r, real *p, real *f)
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
 
-/******************************************************************************
-*
-* morse potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * morse potential
+ *
+ ****************************************************************/
 
 void morse_value(real r, real *p, real *f)
 {
   *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2])));
 }
 
-/******************************************************************************
-*
-* morse-stretch potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * morse-stretch potential
+ *
+ ****************************************************************/
 
 void ms_value(real r, real *p, real *f)
 {
@@ -219,11 +229,11 @@ void ms_value(real r, real *p, real *f)
   *f = p[0] * (exp(p[1] * x) - 2 * exp((p[1] * x) / 2));
 }
 
-/******************************************************************************
-*
-* softshell potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * softshell potential
+ *
+ *****************************************************************/
 
 void softshell_value(real r, real *p, real *f)
 {
@@ -234,11 +244,11 @@ void softshell_value(real r, real *p, real *f)
   vdPow(1, &x, &y, f);
 }
 
-/******************************************************************************
-*
-* eopp_exp potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * eopp_exp potential
+ *
+ ****************************************************************/
 
 void eopp_exp_value(real r, real *p, real *f)
 {
@@ -251,11 +261,11 @@ void eopp_exp_value(real r, real *p, real *f)
   *f = p[0] * exp(-p[1] * r) + (p[2] / power) * cos(p[4] * r + p[5]);
 }
 
-/******************************************************************************
-*
-* meopp potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * meopp potential
+ *
+ ****************************************************************/
 
 void meopp_value(real r, real *p, real *f)
 {
@@ -270,11 +280,11 @@ void meopp_value(real r, real *p, real *f)
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
 
-/******************************************************************************
-*
-* power_decay potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * power_decay potential
+ *
+ ****************************************************************/
 
 void power_decay_value(real r, real *p, real *f)
 {
@@ -287,22 +297,22 @@ void power_decay_value(real r, real *p, real *f)
   *f = p[0] * power;
 }
 
-/******************************************************************************
-*
-* exp_decay potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * exp_decay potential
+ *
+ ****************************************************************/
 
 void exp_decay_value(real r, real *p, real *f)
 {
   *f = p[0] * exp(-p[1] * r);
 }
 
-/******************************************************************************
-*
-* pohlong potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * pohlong potential
+ *
+ ****************************************************************/
 
 void pohlong_value(real r, real *p, real *f)
 {
@@ -312,26 +322,26 @@ void pohlong_value(real r, real *p, real *f)
     *f = 0;
   else {
     vdPow(1, &r, &p[1], &power);
-    *f = p[0] * (1 - p[1] * log(r)) * power;
+    *f = p[0] * (1 - p[1] * log(r)) * power + p[2] * r;
   }
 }
 
-/******************************************************************************
-*
-* parabola potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * parabola potential
+ *
+ ****************************************************************/
 
 void parabola_value(real r, real *p, real *f)
 {
   *f = r * r * p[0] + r * p[1] + p[2];
 }
 
-/******************************************************************************
-*
-* chantasiriwan (csw) and milstein potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * chantasiriwan (csw) and milstein potential
+ *
+ ****************************************************************/
 
 void csw_value(real r, real *p, real *f)
 {
@@ -342,11 +352,11 @@ void csw_value(real r, real *p, real *f)
   *f = (1 + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
 }
 
-/******************************************************************************
-*
-* universal embedding function
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * universal embedding function
+ *
+ ****************************************************************/
 
 void universal_value(real r, real *p, real *f)
 {
@@ -363,44 +373,44 @@ void universal_value(real r, real *p, real *f)
 	    p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
 }
 
-/******************************************************************************
-*
-* constant function
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * constant function
+ *
+ ****************************************************************/
 
 void const_value(real r, real *p, real *f)
 {
   *f = *p;
 }
 
-/******************************************************************************
-*
-* square root function
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * square root function
+ *
+ ****************************************************************/
 
 void sqrt_value(real r, real *p, real *f)
 {
   *f = p[0] * sqrt(r / p[1]);
 }
 
-/******************************************************************************
-*
-* mexp_decay potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * mexp_decay potential
+ *
+ ****************************************************************/
 
 void mexp_decay_value(real r, real *p, real *f)
 {
   *f = p[0] * exp(-p[1] * (r - p[2]));
 }
 
-/******************************************************************************
-*
-* streitz-mintmire (strmm) potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * streitz-mintmire (strmm) potential
+ *
+ ****************************************************************/
 
 void strmm_value(real r, real *p, real *f)
 {
@@ -410,22 +420,61 @@ void strmm_value(real r, real *p, real *f)
     p[2] * (1 + p[3] * r_0) * exp(-p[3] * r_0);
 }
 
-/******************************************************************************
-*
-* template for new potential function called mypotential
-* for further information plase have a look at the online documentation
-*
-* http://www.itap.physik.uni-stuttgart.de/~imd/potfit/potfit.html
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * double morse potential
+ *
+ ****************************************************************/
+
+void double_morse_value(real r, real *p, real *f)
+{
+  *f = (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
+	p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) +
+    p[6];
+}
+
+/****************************************************************
+ *
+ * double exp potential
+ *
+ ****************************************************************/
+
+void double_exp_value(real r, real *p, real *f)
+{
+  *f =
+    (p[0] * exp(-p[1] * (r - p[2]) * (r - p[2])) + exp(-p[3] * (r - p[4])));
+}
+
+/****************************************************************
+ *
+ * poly 5 potential
+ *
+ ****************************************************************/
+
+void poly_5_value(real r, real *p, real *f)
+{
+  real  dr = (r - 1) * (r - 1);
+  *f =
+    p[0] + 0.5 * p[1] * dr + p[2] * (r - 1) * dr + p[3] * dr * dr +
+    p[4] * dr * dr * (r - 1);
+}
+
+/****************************************************************
+ *
+ * template for new potential function called mypotential
+ * for further information plase have a look at the online documentation
+ *
+ * http://www.itap.physik.uni-stuttgart.de/~imd/potfit/potfit.html
+ *
+ ****************************************************************/
 
 /* template for new function */
 
-/******************************************************************************
-*
-* newpot potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * newpot potential
+ *
+ ****************************************************************/
 
 void newpot_value(real r, real *p, real *f)
 {
@@ -434,17 +483,17 @@ void newpot_value(real r, real *p, real *f)
 
 /* end of template */
 
-/******************************************************************************
-*
-* end of analytic potentials
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * end of analytic potentials
+ *
+ ****************************************************************/
 
-/******************************************************************************
-*
-* function for smooth cutoff radius
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * function for smooth cutoff radius
+ *
+ ****************************************************************/
 
 real cutoff(real r, real r0, real h)
 {
@@ -459,11 +508,11 @@ real cutoff(real r, real r0, real h)
   return val / (1 + val);
 }
 
-/*****************************************************************************
-*
-* check analytic parameters for special conditions
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * check analytic parameters for special conditions
+ *
+ ****************************************************************/
 
 int apot_check_params(real *params)
 {
@@ -490,11 +539,11 @@ int apot_check_params(real *params)
   return 0;
 }
 
-/*****************************************************************************
-*
-* punish analytic potential for bad habits
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * punish analytic potential for bad habits
+ *
+ ****************************************************************/
 
 real apot_punish(real *params, real *forces)
 {
@@ -545,15 +594,15 @@ real apot_punish(real *params, real *forces)
   return tmpsum;
 }
 
-/******************************************************************************
-*
-* calculate gradient for analytic potential
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * calculate gradient for analytic potential
+ *
+ ****************************************************************/
 
 real apot_grad(real r, real *p, void (*function) (real, real *, real *))
 {
-  real  a, b, h = 0.00001;
+  real  a, b, h = 0.0001;
 
   function(r + h, p, &a);
   function(r - h, p, &b);
@@ -561,11 +610,11 @@ real apot_grad(real r, real *p, void (*function) (real, real *, real *))
   return (a - b) / (2 * h);
 }
 
-/*****************************************************************************
-*
-*  debug function to print the potentials
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  debug function to print the potentials
+ *
+ ****************************************************************/
 
 #ifdef DEBUG
 
