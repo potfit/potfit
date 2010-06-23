@@ -441,7 +441,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		     FILE *infile)
 {
-  int   i, j, k, l, ret_val;
+  int   i, j, k, l, ret_val, invar_par_dp;
   char  msg[255];
   char  buffer[255];
   char  name[255];
@@ -572,41 +572,59 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
  /* read dipole parameters */
- for (i = 0; i < ntypes; i++) {
-   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->charge[i],
-		  &apt->pmin[apt->number][i],
-		  &apt->pmax[apt->number][i])) {
-     sprintf(msg, "Could not read charge for atomtype #%d\n",
-	     i);
-     error(msg);
-   }
-   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_alpha[i],
-		  &apt->pmin[apt->number + 1][i],
-		  &apt->pmax[apt->number + 1][i])) {
-     sprintf(msg, "Could not read polarisability for atomtype #%d\n",
-	     i);
-     error(msg);
-   }
- }
- for (i = 0; i < apt->number; i++) {
-   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_b[i],
-		  &apt->pmin[apt->number + 2][i],
-		  &apt->pmax[apt->number + 2][i])) {
-     sprintf(msg, "Could not read parameter dp_b for potential #%d\n",
-	     i);
-     error(msg);
-   }
-   if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_c[i],
-		  &apt->pmin[apt->number + 3][i],
-		  &apt->pmax[apt->number + 3][i])) {
-     sprintf(msg, "Could not read parameter dp_c for potential #%d\n",
-	     i);
-     error(msg);
-   }
- }
-
+  invar_par_dp=0;
+  for (i = 0; i < ntypes; i++) {
+    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->charge[i],
+		   &apt->pmin[apt->number][i],
+		   &apt->pmax[apt->number][i])) {
+      sprintf(msg, "Could not read charge for atomtype #%d\n",
+	      i);
+      error(msg);
+    }
+    if (apt->pmin[apt->number][i] == apt->pmax[apt->number][i]){
+      invar_par_dp++;
+	}
+    /* printf("charge %3d: %f\n", i, apt->charge[i]); */
+  }
+  for (i = 0; i < ntypes; i++) {
+    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_alpha[i],
+		   &apt->pmin[apt->number + 1][i],
+		   &apt->pmax[apt->number + 1][i])) {
+      sprintf(msg, "Could not read polarisability for atomtype #%d\n",
+	      i);
+      error(msg);
+    }
+    if (apt->pmin[apt->number + 1][i] == apt->pmax[apt->number + 1][i]){
+       invar_par_dp++;
+    }
+  }
+  for (i = 0; i < apt->number; i++) {
+    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_b[i],
+		   &apt->pmin[apt->number + 2][i],
+		   &apt->pmax[apt->number + 2][i])) {
+      sprintf(msg, "Could not read parameter dp_b for potential #%d\n",
+	      i);
+      error(msg);
+    }
+    if (apt->pmin[apt->number + 2][i] == apt->pmax[apt->number + 2][i]){
+       invar_par_dp++;
+    }
+  }
+  for (i = 0; i < apt->number; i++) {
+    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_c[i],
+		   &apt->pmin[apt->number + 3][i],
+		   &apt->pmax[apt->number + 3][i])) {
+      sprintf(msg, "Could not read parameter dp_c for potential #%d\n",
+	      i);
+      error(msg);
+    }
+    if (apt->pmin[apt->number + 3][i] == apt->pmax[apt->number + 3][i]){
+       invar_par_dp++;
+    }
+  }
+  
 #endif
-
+  
   /* skip to global section */
   fsetpos(infile, &startpos);
   do {
@@ -972,6 +990,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #ifdef DIPOLE
   apt->total_par += (2 * ntypes);
   apt->total_par += (2 * apt->number);
+  apt->total_par -= invar_par_dp;
 #endif
 
   /* initialize function table and write indirect index */
@@ -998,6 +1017,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #ifdef DIPOLE
   pt->len += (2 * ntypes);
   pt->len += (2 * apt->number);
+  pt->len  -= invar_par_dp;
 #endif
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
@@ -1053,7 +1073,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
   global_idx = pt->last[apt->number - 1] + 1;
-
+  
 #ifdef PAIR
   if (enable_cp) {
     init_chemical_potential(ntypes);
@@ -1088,8 +1108,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
   pt->idxlen += (2 * ntypes);
   pt->idxlen += (2 * apt->number);
+  pt->idxlen -= invar_par_dp;
   global_idx += (2 * ntypes);
   global_idx += (2 * apt->number);
+  global_idx -= invar_par_dp;
 #endif
 
   if (have_globals) {

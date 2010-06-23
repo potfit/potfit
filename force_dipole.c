@@ -44,7 +44,7 @@
 *  returns sum of squares of differences between calculated and reference
 *     values
 *
-*  arguments: *xi - pointer to potential
+*  arguments: *xi and *xi_d - pointer to potentials
 *             *forces - pointer to forces calculated from potential
 *             flag - used for special tasks
 *
@@ -176,7 +176,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
     {
       int   self;
       vector tmp_force;
-      int   h, j, k, l, typ1, typ2, col, uf, us, stresses;	// config
+      int   h, j, k, l, typ1, typ2, uf, us, stresses;	// config
       real  fnval, grad, fnval_tail, grad_tail, eval, p_stat_tail;
       atom_t *atom;
       neigh_t *neigh;
@@ -236,13 +236,14 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      /* In small cells, an atom might interact with itself */
 	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 	      typ2 = neigh->typ;
-	      /* find correct column */
+
+	      /* find correct column
 	      col = (typ1 <= typ2) ?
 		typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+		: typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2); */
 	   
 	      /* calculate short-range forces */
-	      if (neigh->r < calc_pot.end[col]) {
+	      if (neigh->r < calc_pot.end[neigh->col[0]]) {
 		/* fn value and grad are calculated in the same step */
 		if (uf) {
 		  fnval =
@@ -292,14 +293,14 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 	      /* long-range cutoff = short-range cutoff */
 	      if (!dp_cut) {
-		dp_cut = calc_pot.end[col];
+		dp_cut = calc_pot.end[neigh->col[0]];
 	      }
 
 	      /* calculate monopole forces and static field-contributions */
 	      if ((neigh->r < dp_cut) && (apt->dp_alpha[typ1])&& 
-		  (apt->dp_b[col]) && (apt->dp_c[col]) && (2 > 3)){
+		  (apt->dp_b[neigh->col[0]]) && (apt->dp_c[neigh->col[0]])){
 		
-		  fnval_tail = splint_comb_dir(&calc_pot, xi_d, col,
+		  fnval_tail = splint_comb_dir(&calc_pot, xi_d, 
 					  neigh->slot[0],
 					  neigh->shift[0],
 					  neigh->step[0], &grad_tail);
@@ -350,7 +351,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 		/* calculate short-range dipoles  */
 		p_stat_tail = shortrange_value(neigh->r, &apt->dp_alpha[typ1], 
-					       &apt->dp_b[col], &apt->dp_c[col]);
+					       &apt->dp_b[neigh->col[0]], &apt->dp_c[neigh->col[0]]);
 		p_stat_x[i] += apt->charge[typ2] * neigh->dist.x * p_stat_tail;
 		p_stat_y[i] += apt->charge[typ2] * neigh->dist.y * p_stat_tail;
 		p_stat_z[i] += apt->charge[typ2] * neigh->dist.z * p_stat_tail;

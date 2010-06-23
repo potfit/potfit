@@ -125,13 +125,13 @@ void powell_lsq(real *xi)
     return;			/* If F is less than nothing, */
     /* what is there to do? */
   }
-
   (void)copy_vector(fxi1, force_xi, mdim);
 #ifdef APOT
   printf("loops\t\terror_sum\tforce calculations\n");
+  /* BLUBB1 */
   printf("%5d\t%17.6f\t%6d\n", m, F, fcalls);
+  /* BLUBB2 */
 #endif
-
   do {				/*outer loop, includes recalculating gamma */
     m = 0;
 
