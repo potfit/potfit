@@ -156,9 +156,10 @@ ifeq (x86_64-gcc,${IMDSYS})
 #  MPICH_CLINKER = gcc
   BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
 #  FFTW_DIR     = /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS     += -O -march=opteron -Wno-unused
+  OPT_FLAGS     += -O -march=native -Wno-unused
   DEBUG_FLAGS   += -g -O -Wall
-  PROF_FLAGS    += -g3 -pg
+  PROF_FLAGS    += -pg -g
+  PROF_LIBS    += -pg -g
 #  LFLAGS        +=  -static
 #  ACMLPATH      = /common/linux/paket/acml4.2.0/gfortran64_mp
   MKLPATH       = ${MKLDIR}/lib/em64t/
@@ -562,10 +563,6 @@ endif
 ifneq (,$(strip $(findstring ompi,${MAKETARGET})))
 PARALLEL = OMPI
 endif
-# PACX
-ifneq (,$(strip $(findstring pacx,${MAKETARGET})))
-PARALLEL = PACX
-endif
 
 
 ###########################################################################
@@ -841,7 +838,13 @@ else
 	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
 	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 endif
+ifeq (,${CC})
+	@echo "There is no compiler defined for this option."
+	@echo -e "Please adjust the Makefile.\n"
+	@exit
+else
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
+endif
 else
 	@echo 'No TARGET specified.'
 endif

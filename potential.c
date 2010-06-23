@@ -34,11 +34,11 @@
 #include "potfit.h"
 #include "utils.h"
 
-/******************************************************************************
-*
-* read potential table
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * read potential table
+ *
+ ****************************************************************/
 
 void read_pot_table(pot_table_t *pt, char *filename)
 {
@@ -325,7 +325,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     pot_index[++k] = pot_index[j];
     j += ntypes - i;
   }
-#endif
+#endif /* EAM && APOT */
 #if defined EAM || defined ADP
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
@@ -339,7 +339,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	MIN(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
     }
   }
-#endif
+#endif /* EAM || ADP */
 
   paircol = (ntypes * (ntypes + 1)) / 2;
 
@@ -363,7 +363,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     }
     fclose(infile);
   }
-#endif
+#endif /* APOT */
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
       rcutmax = MAX(rcutmax, rcut[i + ntypes * j]);
@@ -405,7 +405,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     reg_for_free(apt->pmin[size], "apt->pmin[size]");
     reg_for_free(apt->pmax[size], "apt->pmax[size]");
   }
-#endif
+#endif /* PAIR && APOT */
 #if defined DIPOLE && defined APOT
   reg_for_free(apt->charge, "apt->charge");
   reg_for_free(apt->dp_alpha, "apt->dp_alpha");
@@ -420,23 +420,21 @@ void read_pot_table(pot_table_t *pt, char *filename)
   reg_for_free(apt->pmax[size + 2], "apt->pmax[size + 2]");
   reg_for_free(apt->pmax[size + 3], "apt->pmax[size + 3]");
 #endif
-#ifndef POTSCALE
   reg_for_free(rcut, "rcut");
   reg_for_free(rmin, "rmin");
-#endif
 
   return;
 }
 
 #ifdef APOT
 
-/*****************************************************************************
-*
-*  read potential in analytic format:
-*  	for more information an how to specify an analytic potential
-*  	please check the documentation
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  read potential in analytic format:
+ *  	for more information an how to specify an analytic potential
+ *  	please check the documentation
+ *
+ ****************************************************************/
 
 void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 		     FILE *infile)
@@ -651,7 +649,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
     apt->invar_par =
       (int **)realloc(apt->invar_par, (global_pot + 1) * sizeof(int *));
-    apt->invar_par[global_pot] = (int *)malloc(j * sizeof(int));
+    apt->invar_par[global_pot] = (int *)malloc((j + 1) * sizeof(int));
     reg_for_free(apt->invar_par[global_pot], "apt->invar_par[global_pot]");
 
     apt->pmin =
@@ -714,6 +712,33 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	  error("Aborting");
 	}
       apt->n_glob[j] = 0;
+
+      /* check for invariance and proper value (respect boundaries) */
+      /* parameter will not be optimized if min==max */
+      apt->invar_par[i][j] = 0;
+      if (apt->pmin[i][j] == apt->pmax[i][j]) {
+	apt->invar_par[i][j] = 1;
+	apt->invar_par[i][apt->globals]++;
+      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
+	temp = apt->pmin[i][j];
+	apt->pmin[i][j] = apt->pmax[i][j];
+	apt->pmax[i][j] = temp;
+      } else if ((apt->values[i][j] < apt->pmin[i][j])
+		 || (apt->values[i][j] > apt->pmax[i][j])) {
+	/* Only print warning if we are optimizing */
+	if (opt) {
+	  if (apt->values[i][j] < apt->pmin[i][j])
+	    apt->values[i][j] = apt->pmin[i][j];
+	  if (apt->values[i][j] > apt->pmax[i][j])
+	    apt->values[i][j] = apt->pmax[i][j];
+	  fprintf(stderr, "\n --> Warning <--\n");
+	  fprintf(stderr, "Starting value for gloabl paramter #%d is outside of specified adjustment range.\nResetting it to %f.\n",
+		  j + 1, apt->values[i][j]);
+	  if (apt->values[i][j] == 0)
+	    fprintf(stderr,
+		    "New value is >> 0 << ! Please be careful about this.\n");
+	}
+      }
     }
   }
 
@@ -796,7 +821,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif
 
     /* set small begin to prevent division by zero-errors */
-    apt->begin[i] = 0.0001;
+    apt->begin[i] = 0.001;
 
     /* allocate memory for this parameter */
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
@@ -953,7 +978,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       j += apt->n_glob[i];
     if (j == 0) {
       have_globals = 0;
-      printf("You definded global parameters but did not use them.\n");
+      printf("You defined global parameters but did not use them.\n");
       printf("Disabling global parameters.\n\n");
     }
   }
@@ -1046,18 +1071,34 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	apt->idxparam[k++] = j;
       } else
 	l++;
-
     }
     if (!invar_pot[i])
       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
+  }
+  if (have_globals) {
+    i = apt->number;
+    for (j = 0; j < apt->globals; j++) {
+      *val = apt->values[i][j];
+      *list = apt->values[i][j];
+      val++;
+      list++;
+      if (!apt->invar_par[i][j]) {
+	pt->idx[k] = l++;
+	apt->idxpot[k] = i;
+	apt->idxparam[k++] = j;
+      } else
+	l++;
+    }
+    pt->idxlen += apt->globals - apt->invar_par[i][apt->globals];
+    apt->total_par -= apt->invar_par[i][apt->globals];
   }
   global_idx = pt->last[apt->number - 1] + 1;
 
 #ifdef PAIR
   if (enable_cp) {
     init_chemical_potential(ntypes);
-    i = apt->number;
+    i = apt->number + have_globals;
     for (j = 0; j < (ntypes + compnodes); j++) {
       *val = apt->values[i][j];
       pt->idx[k] = l++;
@@ -1092,18 +1133,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   global_idx += (2 * apt->number);
 #endif
 
-  if (have_globals) {
-    for (i = 0; i < apt->globals; i++) {
-      *val = apt->values[global_pot][i];
-      *list = *val;
-      pt->idx[k] = l++;
-      apt->idxpot[k] = global_pot;
-      apt->idxparam[k++] = i;
-      val++;
-      list++;
-    }
-    pt->idxlen += apt->globals;
-  }
 #ifdef NOPUNISH
   warning("Gauge degrees of freedom are NOT fixed!");
 #endif
@@ -1113,19 +1142,19 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 }
 #endif
 
-/*****************************************************************************
-*
-*  read potential in third format:
-*
-*  Sampling points are equidistant.
-*
-*  Header:  one line for each function with
-*           rbegin rstart npoints
-*
-*  Table: Function values at sampling points,
-*         functions separated by blank lines
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  read potential in third format:
+ *
+ *  Sampling points are equidistant.
+ *
+ *  Header:  one line for each function with
+ *           rbegin rstart npoints
+ *
+ *  Table: Function values at sampling points,
+ *         functions separated by blank lines
+ *
+ ****************************************************************/
 
 void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 		     char *filename, FILE *infile)
@@ -1279,20 +1308,20 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 
 }
 
-/*****************************************************************************
-*
-*  read potential in fourth format:
-*
-*  Sampling points are NON-equidistant.
-*
-*  Header:  one line for each function with
-*           npoints
-*
-*  Table: Sampling points, function values
-*            r f(r)
-*         functions separated by blank lines
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  read potential in fourth format:
+ *
+ *  Sampling points are NON-equidistant.
+ *
+ *  Header:  one line for each function with
+ *           npoints
+ *
+ *  Table: Sampling points, function values
+ *            r f(r)
+ *         functions separated by blank lines
+ *
+ ****************************************************************/
 
 void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 		     char *filename, FILE *infile)
@@ -1469,17 +1498,17 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   init_calc_table(pt, &calc_pot);
 }
 
-/*****************************************************************************
-*
-*  init_calc_table: Initialize table used for calculation.
-*
-*  *  Header:  one line for each function with
-*           rbegin rstart npoints
-*
-*  Table: Center, width, amplitude of Gaussians,
-*         functions separated by blank lines
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  init_calc_table: Initialize table used for calculation.
+ *
+ *  *  Header:  one line for each function with
+ *           rbegin rstart npoints
+ *
+ *  Table: Center, width, amplitude of Gaussians,
+ *         functions separated by blank lines
+ *
+ ****************************************************************/
 
 void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 {
@@ -1643,12 +1672,13 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 
 
 #ifdef PARABEL
-/*****************************************************************************
-*
-*  Evaluate value from parabole through three points.
-*  Extrapolates for all k.
-*
-******************************************************************************/
+
+/****************************************************************
+ *
+ *  Evaluate value from parabole through three points.
+ *  Extrapolates for all k.
+ *
+ ****************************************************************/
 
 real parab_ed(pot_table_t *pt, real *xi, int col, real r)
 {
@@ -1675,12 +1705,12 @@ real parab_ed(pot_table_t *pt, real *xi, int col, real r)
   return p0 + chi * dv + 0.5 * chi * (chi - 1) * d2v;
 }
 
-/*****************************************************************************
-*
-*  Evaluate value from parabole through three points.
-*  Extrapolates for all k. Nonequidistant points.
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  Evaluate value from parabole through three points.
+ *  Extrapolates for all k. Nonequidistant points.
+ *
+ ****************************************************************/
 
 real parab_ne(pot_table_t *pt, real *xi, int col, real r)
 {
@@ -1905,12 +1935,13 @@ void write_apot_table(apot_table_t *apt, char *filename)
 #ifdef PAIR
   if (enable_cp) {
     for (i = 0; i < ntypes; i++)
-      fprintf(outfile, "cp_%s %f %f %f\n", elements[i], apt->chempot[i],
-	      apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
+      fprintf(outfile, "cp_%s %.10f %.2f %.2f\n", elements[i],
+	      apt->chempot[i], apt->pmin[apt->number][i],
+	      apt->pmax[apt->number][i]);
     if (compnodes > 0)
       fprintf(outfile, "cn %d\n", compnodes);
     for (j = 0; j < compnodes; j++)
-      fprintf(outfile, "%f %f %f %f\n", compnodelist[j],
+      fprintf(outfile, "%.2f %.10f %.2f %.2f\n", compnodelist[j],
 	      apt->chempot[ntypes + j], apt->pmin[apt->number][ntypes + j],
 	      apt->pmax[apt->number][ntypes + j]);
     fprintf(outfile, "\n");
@@ -1920,7 +1951,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
   if (have_globals) {
     fprintf(outfile, "global %d\n", apt->globals);
     for (i = 0; i < apt->globals; i++)
-      fprintf(outfile, "%s %f %f %f\n", apt->param_name[global_pot][i],
+      fprintf(outfile, "%s %.10f %.2f %.2f\n", apt->param_name[global_pot][i],
 	      apt->values[global_pot][i], apt->pmin[global_pot][i],
 	      apt->pmax[global_pot][i]);
     fprintf(outfile, "\n");
@@ -2662,13 +2693,12 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
 }
 
 #ifdef PDIST
-/********************************************************************
+/****************************************************************
  *
  * write_pairdist(pot_table_t *pt, char *filename)
  *    - write distribution function of function access
  *
- *
- *******************************************************************/
+ ****************************************************************/
 
 void write_pairdist(pot_table_t *pt, char *filename)
 {

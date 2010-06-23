@@ -66,8 +66,8 @@
  *     only for forces, but also for energies, stresses or dummy constraints
  *     (if applicable).
  *
- * flag is an integer controlling the behaviour of calc_forces_pair.
- *    flag == 1 will cause all processes to exit calc_forces_pair after
+ * flag is an integer controlling the behaviour of calc_forces_eam.
+ *    flag == 1 will cause all processes to exit calc_forces_eam after
  *             calculation of forces.
  *    flag == 2 will cause all processes to perform a potsync (i.e. broadcast
  *             any changed potential parameters from process 0 to the others)

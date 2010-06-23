@@ -1,3 +1,8 @@
+trunk-20100623
++ Makefile: exit if there is no compiler available
++ globals can now also be fixed
++ force data is now separated by 2 blank lines, makes scatterplots for single configs easy
+
 devel-20100610
 + make punishments for apot optional
 + there is now (again) a limit on the size of the directional vectors v in simann

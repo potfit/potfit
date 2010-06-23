@@ -193,7 +193,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef APOT
 	if (enable_cp)
 	  forces[energy_p + h] +=
-	    chemical_potential(ntypes, na_typ[h], xi_opt + cp_start);
+	    chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
 #endif
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
