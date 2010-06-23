@@ -43,11 +43,11 @@ vector vec_prod(vector u, vector v)
   return w;
 }
 
-/******************************************************************************
-*
-*  compute box transformation matrix
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  compute box transformation matrix
+ *
+ ****************************************************************/
 
 real make_box(void)
 {
@@ -77,11 +77,11 @@ real make_box(void)
   return volume;
 }
 
-/*****************************************************************************
-*
-*  read the configurations
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  read the configurations
+ *
+ ****************************************************************/
 
 void read_config(char *filename)
 {
@@ -205,16 +205,16 @@ void read_config(char *filename)
     usestress = (int *)realloc(usestress, (nconf + 1) * sizeof(int));
     if (NULL == useforce)
       error("Cannot allocate memory for usestress");
-    na_typ = (int **)realloc(na_typ, (nconf + 2) * sizeof(int *));
-    if (NULL == na_typ)
-      error("Cannot allocate memory for na_typ");
-    na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
-    reg_for_free(na_typ[nconf], "na_typ[nconf]");
-    if (NULL == na_typ[nconf])
-      error("Cannot allocate memory for na_typ");
+    na_type = (int **)realloc(na_type, (nconf + 2) * sizeof(int *));
+    if (NULL == na_type)
+      error("Cannot allocate memory for na_type");
+    na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
+    reg_for_free(na_type[nconf], "na_type[nconf]");
+    if (NULL == na_type[nconf])
+      error("Cannot allocate memory for na_type");
 
     for (i = 0; i < ntypes; i++)
-      na_typ[nconf][i] = 0;
+      na_type[nconf][i] = 0;
 
     inconf[nconf] = count;
     cnfstart[nconf] = natoms;
@@ -384,7 +384,7 @@ void read_config(char *filename)
       atom->absforce = sqrt(SQR(atom->force.x) +
 			    SQR(atom->force.y) + SQR(atom->force.z));
       atom->conf = nconf;
-      na_typ[nconf][atom->typ] += 1;
+      na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
     }
     /* check cell size */
@@ -867,18 +867,18 @@ void read_config(char *filename)
   free(mindist);
 
   /* calculate the total number of the atom types */
-  na_typ = (int **)realloc(na_typ, (nconf + 1) * sizeof(int *));
-  reg_for_free(na_typ, "na_typ");
-  if (NULL == na_typ)
-    error("Cannot allocate memory for na_typ");
-  na_typ[nconf] = (int *)malloc(ntypes * sizeof(int));
-  reg_for_free(na_typ[nconf], "na_typ[nconf]");
+  na_type = (int **)realloc(na_type, (nconf + 1) * sizeof(int *));
+  reg_for_free(na_type, "na_type");
+  if (NULL == na_type)
+    error("Cannot allocate memory for na_type");
+  na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
+  reg_for_free(na_type[nconf], "na_type[nconf]");
   for (i = 0; i < ntypes; i++)
-    na_typ[nconf][i] = 0;
+    na_type[nconf][i] = 0;
 
   for (i = 0; i < nconf; i++)
     for (j = 0; j < ntypes; j++)
-      na_typ[nconf][j] += na_typ[i][j];
+      na_type[nconf][j] += na_type[i][j];
 
   /* print diagnostic message and close file */
   printf("Maximum number of neighbors is %d.\n", maxneigh);
@@ -887,11 +887,11 @@ void read_config(char *filename)
   printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
-      printf("%d %s (%.2f%%)", na_typ[nconf][i], elements[i],
-	     100. * na_typ[nconf][i] / natoms);
+      printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i],
+	     100. * na_type[nconf][i] / natoms);
     else
-      printf("%d type %d (%.2f%%)", na_typ[nconf][i], i,
-	     100. * na_typ[nconf][i] / natoms);
+      printf("%d type %d (%.2f%%)", na_type[nconf][i], i,
+	     100. * na_type[nconf][i] / natoms);
     if (i != (ntypes - 1))
       printf(", ");
   }
@@ -908,11 +908,11 @@ void read_config(char *filename)
 
 #ifdef APOT
 
-/*******************************************************************************
+/****************************************************************
  *
  * recalculate the slots of the atoms for tabulated potential
  *
- ******************************************************************************/
+ ****************************************************************/
 
 void update_slots()
 {

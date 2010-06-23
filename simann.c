@@ -118,7 +118,6 @@ void anneal(real *xi)
 {
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   loopagain;		/* loop flag */
-  int   total_count;		/* number of random numbers per step */
   real  T;			/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
