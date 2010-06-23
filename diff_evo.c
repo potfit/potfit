@@ -188,7 +188,7 @@ void diff_evo(real *xi)
 
   /* main differential evolution loop */
   while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished
-	 && restart < 4) {
+    && restart < 4) {
     sum = 0;
     /* randomly create new populations */
     for (i = 0; i < NP; i++) {
@@ -293,7 +293,7 @@ void diff_evo(real *xi)
     if (last_changed == MAX_UNCHANGED && restart > 2) {
       printf
 	("\nCould not find any improvements in the last %d steps.\n",
-	 MAX_UNCHANGED);
+	MAX_UNCHANGED);
       printf("Aborting evolution algorithm ...\n\n");
     }
     if ((avg / (NP) - min) < 1e-10) {
@@ -303,7 +303,7 @@ void diff_evo(real *xi)
     if (last_changed == MAX_UNCHANGED && restart < 3) {
       restart++;
       printf("\nCould not find any improvements in the last %d steps.\n",
-	     MAX_UNCHANGED);
+	MAX_UNCHANGED);
       printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
       init_population(x1, xi, D, log(restart * exp(10)));
       for (i = 0; i < NP; i++) {

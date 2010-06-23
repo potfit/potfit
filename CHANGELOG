@@ -1,4 +1,8 @@
 trunk-20100623
++ change indent mode a little bit
+  this changes many lines, so give put it in an extra commit
+
+trunk-20100623
 + Makefile: exit if there is no compiler available
 + globals can now also be fixed
 + force data is now separated by 2 blank lines, makes scatterplots for single configs easy
