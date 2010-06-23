@@ -64,11 +64,11 @@
 #define SLOTS 4
 #endif
 
-/******************************************************************************
-*
-*  type definitions
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  type definitions
+ *
+ ****************************************************************/
 
 typedef double real;
 
@@ -273,7 +273,7 @@ EXTERN real evo_width INIT(1.);
 EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
-EXTERN int **na_typ INIT(NULL);	/* number of atoms per type */
+EXTERN int **na_type INIT(NULL);	/* number of atoms per type */
 EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
 EXTERN int *conf_uf INIT(NULL);
 EXTERN int *conf_us INIT(NULL);

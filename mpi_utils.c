@@ -264,12 +264,12 @@ void broadcast_params()
   MPI_Bcast(&apot_table.number, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (enable_cp) {
     if (myid > 0) {
-      na_typ = (int **)malloc((nconf + 1) * sizeof(int *));
+      na_type = (int **)malloc((nconf + 1) * sizeof(int *));
       for (i = 0; i < (nconf + 1); i++)
-	na_typ[i] = (int *)malloc(ntypes * sizeof(int));
+	na_type[i] = (int *)malloc(ntypes * sizeof(int));
     }
     for (i = 0; i < (nconf + 1); i++)
-      MPI_Bcast(na_typ[i], ntypes, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(na_type[i], ntypes, MPI_INT, 0, MPI_COMM_WORLD);
   }
   if (myid > 0) {
     calc_list = (real *)malloc(opt_pot.len * sizeof(real));

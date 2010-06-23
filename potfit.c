@@ -77,7 +77,6 @@ int main(int argc, char **argv)
   real  tot, min, max, sqr;
   real *force;
 #if defined EAM || defined ADP || defined MEAM
-  int  *ntyp = NULL;
   real *totdens = NULL;
 #endif
   char  msg[255], file[255];
@@ -165,9 +164,6 @@ int main(int argc, char **argv)
 
     totdens = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(totdens, "totdens");
-
-    ntyp = (int *)malloc(ntypes * sizeof(int));
-    reg_for_free(ntyp, "ntyp");
 
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
@@ -341,22 +337,22 @@ int main(int argc, char **argv)
     }
     for (i = 0; i < ntypes; i++) {
       totdens[i] = 0.;
-      ntyp[i] = 0;
     }
     fprintf(outfile, "#    atomtype\trho\n");
     for (i = 0; i < natoms; i++) {
       fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].typ, atoms[i].rho);
       totdens[atoms[i].typ] += atoms[i].rho;
-      ntyp[atoms[i].typ]++;
+    }
+    fprintf(outfile, "\n");
+    for (i = 0; i < ntypes; i++) {
+      totdens[i] /= (real)na_type[nconf][i];
+      fprintf(outfile,
+	      "Average local electron density at atom sites type %d: %f\n", i,
+	      totdens[i]);
     }
     if (write_output_files) {
-      printf("Local electron density data written to %s\n", file);
+      printf("Local electron density data written to \t%s\n", file);
       fclose(outfile);
-    }
-    for (i = 0; i < ntypes; i++) {
-      totdens[i] /= (real)ntyp[i];
-      printf("Average local electron density at atom sites type %d: %f\n",
-	     i, totdens[i]);
     }
 #ifdef NEWSCALE
     for (i = 0; i < ntypes; i++) {
@@ -407,9 +403,11 @@ int main(int argc, char **argv)
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
+      if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
+	fprintf(outfile, "\n\n");
       if (i == 0)
 	fprintf(outfile,
-		"conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+		"#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
 	      "%3d:%5d\t%4s\t%11.8f\t%11.8f\t%11.8f\t%11.8f\t%11.8f\n",
 	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
@@ -418,8 +416,10 @@ int main(int argc, char **argv)
 	      (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
 	      atoms[i / 3].absforce);
 #else /* FWEIGHT */
+      if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
+	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile, "conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
+	fprintf(outfile, "#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
       fprintf(outfile, "%3d:%5d\t%4s\t%.8f\t%11.8f\t%11.8f\t%11.8f\n",
 	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
 	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
@@ -517,7 +517,6 @@ int main(int argc, char **argv)
     }
 #endif
 #if defined EAM || defined MEAM
-/*    if (opt) {*/
     /* write EAM punishments */
     if (write_output_files) {
       strcpy(file, output_prefix);
@@ -574,7 +573,7 @@ int main(int argc, char **argv)
       fprintf(outfile, "Additional punishment of %f added.\n",
 	      SQR(force[dummy_p + ntypes]));
 #endif
-      printf("Punishment constraints data written to %s\n", file);
+      printf("Punishment constraints data written to \t%s\n", file);
       fclose(outfile);
     } else {
       fprintf(outfile, "Dummy Constraints\n");
