@@ -128,13 +128,10 @@ void powell_lsq(real *xi)
   (void)copy_vector(fxi1, force_xi, mdim);
 #ifdef APOT
   printf("loops\t\terror_sum\tforce calculations\n");
-  /* BLUBB1 */
   printf("%5d\t%17.6f\t%6d\n", m, F, fcalls);
-  /* BLUBB2 */
 #endif
   do {				/*outer loop, includes recalculating gamma */
     m = 0;
-
     /* Init gamma */
     if (i = gamma_init(gamma, d, xi, fxi1)) {
 #ifdef EAM
@@ -162,6 +159,7 @@ void powell_lsq(real *xi)
 	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
 	    xi[idx[n]];
 	write_pot_table(&apot_table, tempfile);
+	printf("Punkt 1\n");
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
 	sprintf(errmsg,
@@ -170,6 +168,7 @@ void powell_lsq(real *xi)
 		itemp + 1, apot_table.names[itemp]);
 #endif
 	warning(errmsg);
+	printf("Punkt 2\n");
 	break;
       }
     }
@@ -181,7 +180,6 @@ void powell_lsq(real *xi)
 
       /* All in one driver routine */
       j = 1;			/* 1 rhs */
-
       /* Linear Equation Solution (lapack) */
 #ifdef ACML
       dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
@@ -249,7 +247,6 @@ void powell_lsq(real *xi)
 #ifdef DEBUG
       printf("%f %6g %f %f %d\n", F, cond, ferror, berror, i);
 #endif
-
       /* (d) if error estimate is too high after minimization
          in 5 directions: restart outer loop */
       if (ferror + berror > 1. && m > 5)

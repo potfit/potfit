@@ -1,3 +1,7 @@
+bzr-20100630
++ dipole output
++ energy conserving shift for ms-potential
+
 devel-20100610
 + make punishments for apot optional
 + there is now (again) a limit on the size of the directional vectors v in simann

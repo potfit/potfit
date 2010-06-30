@@ -112,7 +112,11 @@ int apot_assign_functions(apot_table_t *apt)
     } else if (strcmp(apt->names[i], "morse") == 0) {
       apt->fvalue[i] = &morse_value;
     } else if (strcmp(apt->names[i], "ms") == 0) {
+#ifdef DIPOLE
+      apt->fvalue[i] = &ms_shift;
+#else
       apt->fvalue[i] = &ms_value;
+#endif
     } else if (strcmp(apt->names[i], "softshell") == 0) {
       apt->fvalue[i] = &softshell_value;
     } else if (strcmp(apt->names[i], "eopp_exp") == 0) {
@@ -299,7 +303,7 @@ void power_decay_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * exp_decay potential
+e pot * exp_decay potential
  *
  ****************************************************************/
 
@@ -670,6 +674,27 @@ void debug_apot()
 
 /******************************************************************************
 *
+* shifted tail of ms potential
+*
+******************************************************************************/
+
+void ms_shift(real r, real *p, real *f)
+{
+  static real x[2], y[4];
+  static real rcut = 10;
+
+  x[0] = p[1] * (1 - r / p[2]);
+  x[1] = p[0] * (exp(x[0]) + 2 * exp(x[0]/2) );
+  y[0] = p[1] * (1 - rcut / p[2]);
+  y[1] = p[0] * (exp(y[0]) + 2 * exp(y[0]/2) );
+  y[2] = p[1] * (y[1] - p[0] * exp(y[0]/2)) / p[2];
+  y[3] = y[1] + y[2] * rcut;
+
+  *f = x[1] + y[2] * r - y[3];
+}
+
+/******************************************************************************
+*
 * tail of coloumb potential 
 *
 ******************************************************************************/
@@ -699,7 +724,7 @@ void coulomb_shift(real r, real *fnval_tail)
 
   coulomb_value(r, &ftail, &gtail);
   coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
-  *fnval_tail = ftail - ftail_cut - r * (r - dp_cut) * gtail_cut;
+  *fnval_tail = ftail - ftail_cut -  (r - dp_cut) * gtail_cut;
 }
 
 /******************************************************************************

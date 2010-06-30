@@ -231,15 +231,18 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #elif defined DIPOLE
   if (1) {
     apt->values = (real **)malloc((size + 4) * sizeof(real *));
+    apt->param_name = (char ***)malloc((size + 4) * sizeof(char **));
     apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
     apt->pmax = (real **)malloc((size + 4) * sizeof(real *));
     for (i = 0; i < 2; i++) {
       apt->values[size + i] = (real *)malloc(ntypes * sizeof(real));
+      apt->param_name[size + i] = (char **)malloc(ntypes * sizeof(char *));
       apt->pmin[size + i] = (real *)malloc(ntypes * sizeof(real));
       apt->pmax[size + i] = (real *)malloc(ntypes * sizeof(real));
     }
     for (i = 2; i < 4; i++) {
       apt->values[size + i] = (real *)malloc(size * sizeof(real));
+      apt->param_name[size + i] = (char **)malloc(size * sizeof(char *));
       apt->pmin[size + i] = (real *)malloc(size * sizeof(real));
       apt->pmax[size + i] = (real *)malloc(size * sizeof(real));
     }
@@ -574,7 +577,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
  /* read dipole parameters */
   invar_par_dp=0;
   for (i = 0; i < ntypes; i++) {
-    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->charge[i],
+    apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
+    if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i], &apt->charge[i],
 		   &apt->pmin[apt->number][i],
 		   &apt->pmax[apt->number][i])) {
       sprintf(msg, "Could not read charge for atomtype #%d\n",
@@ -583,11 +587,12 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     if (apt->pmin[apt->number][i] == apt->pmax[apt->number][i]){
       invar_par_dp++;
-	}
-    /* printf("charge %3d: %f\n", i, apt->charge[i]); */
+    }
+    reg_for_free(apt->param_name[apt->number][i], "apt->param_name[apt->number][i]");
   }
   for (i = 0; i < ntypes; i++) {
-    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_alpha[i],
+    apt->param_name[apt->number + 1][i] = (char *)malloc(30 * sizeof(char));
+    if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][i], &apt->dp_alpha[i],
 		   &apt->pmin[apt->number + 1][i],
 		   &apt->pmax[apt->number + 1][i])) {
       sprintf(msg, "Could not read polarisability for atomtype #%d\n",
@@ -597,9 +602,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (apt->pmin[apt->number + 1][i] == apt->pmax[apt->number + 1][i]){
        invar_par_dp++;
     }
+    reg_for_free(apt->param_name[apt->number + 1][i], "apt->param_name[apt->number + 1][i]");
   }
   for (i = 0; i < apt->number; i++) {
-    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_b[i],
+   apt->param_name[apt->number + 2][i] = (char *)malloc(30 * sizeof(char));
+   if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 2][i], &apt->dp_b[i],
 		   &apt->pmin[apt->number + 2][i],
 		   &apt->pmax[apt->number + 2][i])) {
       sprintf(msg, "Could not read parameter dp_b for potential #%d\n",
@@ -609,9 +616,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (apt->pmin[apt->number + 2][i] == apt->pmax[apt->number + 2][i]){
        invar_par_dp++;
     }
+    reg_for_free(apt->param_name[apt->number + 2][i], "apt->param_name[apt->number + 2][i]");
   }
   for (i = 0; i < apt->number; i++) {
-    if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->dp_c[i],
+    apt->param_name[apt->number + 3][i] = (char *)malloc(30 * sizeof(char));
+    if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 3][i], &apt->dp_c[i],
 		   &apt->pmin[apt->number + 3][i],
 		   &apt->pmax[apt->number + 3][i])) {
       sprintf(msg, "Could not read parameter dp_c for potential #%d\n",
@@ -621,8 +630,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (apt->pmin[apt->number + 3][i] == apt->pmax[apt->number + 3][i]){
        invar_par_dp++;
     }
+    reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[apt->number + 3][i]");
   }
-  
 #endif
   
   /* skip to global section */
@@ -990,7 +999,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #ifdef DIPOLE
   apt->total_par += (2 * ntypes);
   apt->total_par += (2 * apt->number);
-  apt->total_par -= invar_par_dp;
 #endif
 
   /* initialize function table and write indirect index */
@@ -1017,7 +1025,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #ifdef DIPOLE
   pt->len += (2 * ntypes);
   pt->len += (2 * apt->number);
-  pt->len  -= invar_par_dp;
 #endif
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
@@ -1051,11 +1058,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   l = 0;
   val = pt->table;
   list = calc_list;
-  for (i = 0; i < apt->number; i++) {
+  for (i = 0; i < apt->number; i++) { /* loop over potentials */
     val += 2;
     list += 2;
     l += 2;
-    for (j = 0; j < apt->n_par[i]; j++) {
+    for (j = 0; j < apt->n_par[i]; j++) {  /* loop over parameters */
       *val = apt->values[i][j];
       *list = apt->values[i][j];
       val++;
@@ -1066,14 +1073,18 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	apt->idxparam[k++] = j;
       } else
 	l++;
-
     }
     if (!invar_pot[i])
       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
+#ifdef DIPOLE 
+   apt->total_par -= invar_par_dp;
+   pt->idxlen -= invar_par_dp;
+#endif
+
   global_idx = pt->last[apt->number - 1] + 1;
-  
+
 #ifdef PAIR
   if (enable_cp) {
     init_chemical_potential(ntypes);
@@ -1090,28 +1101,26 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 #ifdef DIPOLE
-  i = apt->number;
-  for (j = 0; j < (2 * ntypes); j++) {
-    *val = apt->values[i][j];
-    pt->idx[k] = l++;
-    apt->idxpot[k] = i;
-    apt->idxparam[k++] = j;
-    val++;
+  for (i = apt->number; i < apt->number + 2; i++) {
+    for (j = 0; j < (ntypes); j++) {
+      *val = apt->values[i][j];
+      pt->idx[k] = l++;
+      apt->idxpot[k] = i;
+      apt->idxparam[k++] = j;
+      val++;
+    }
   }
-  i = apt->number;
-  for (j = 0; j < (2 * apt->number); j++) {
-    *val = apt->values[i][j];
-    pt->idx[k] = l++;
-    apt->idxpot[k] = i;
-    apt->idxparam[k++] = j;
-    val++;
+  for (i = apt->number + 2; i < apt->number + 4; i++) {
+    for (j = 0; j < (apt->number); j++) {
+      *val = apt->values[i][j];
+      pt->idx[k] = l++;
+      apt->idxpot[k] = i;
+      apt->idxparam[k++] = j;
+      val++;
+    }
   }
   pt->idxlen += (2 * ntypes);
   pt->idxlen += (2 * apt->number);
-  pt->idxlen -= invar_par_dp;
-  global_idx += (2 * ntypes);
-  global_idx += (2 * apt->number);
-  global_idx -= invar_par_dp;
 #endif
 
   if (have_globals) {
@@ -1939,6 +1948,25 @@ void write_apot_table(apot_table_t *apt, char *filename)
   }
 #endif
 
+#ifdef DIPOLE
+  fprintf(outfile, "dipole\n");
+  for (i = 0; i < ntypes ; i++) 
+    fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i], apt->charge[i], 
+	    apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
+  for (i = 0; i < ntypes ; i++) 
+    fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][i], apt->dp_alpha[i], 
+	    apt->pmin[apt->number + 1][i], apt->pmax[apt->number + 1][i]);
+  for (i = 0; i < apt->number; i++) {
+    fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i], apt->dp_b[i], 
+	    apt->pmin[apt->number + 2][i], apt->pmax[apt->number + 2][i]);
+  }
+  for (i = 0; i < apt->number; i++) {
+    fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i], apt->dp_c[i], 
+	    apt->pmin[apt->number + 3][i], apt->pmax[apt->number + 3][i]);
+  }
+  fprintf(outfile, "\n");
+#endif
+  
   if (have_globals) {
     fprintf(outfile, "global %d\n", apt->globals);
     for (i = 0; i < apt->globals; i++)
@@ -1955,11 +1983,11 @@ void write_apot_table(apot_table_t *apt, char *filename)
     } else {
       fprintf(outfile, "type %s\n", apt->names[i]);
     }
-    fprintf(outfile, "cutoff %f\n", apot_table.end[i]);
-    fprintf(outfile, "# rmin %f\n", apt->begin[i]);
+    fprintf(outfile, "cutoff\t %f\n", apot_table.end[i]);
+    fprintf(outfile, "# rmin\t %f\n", apt->begin[i]);
     for (j = 0; j < apt->n_par[i]; j++) {
       if (apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] != '!') {
-	fprintf(outfile, "%s %.10f %.2f %.2f\n", apt->param_name[i][j],
+	fprintf(outfile, "%s\t %.10f\t %.2f\t %.2f\n", apt->param_name[i][j],
 		apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
       } else {
 	fprintf(outfile, "%s\n", apt->param_name[i][j]);
