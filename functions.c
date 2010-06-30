@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2008-2010 Daniel Schopf
+ * Copyright 2008-2010 Daniel Schopf, Philipp Beck
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -674,7 +674,7 @@ void debug_apot()
 
 /******************************************************************************
 *
-* shifted tail of ms potential
+* shifted ms potential
 *
 ******************************************************************************/
 

@@ -122,6 +122,10 @@ typedef struct {
   sym_tens lambda;
   real  nu;
 #endif
+#ifdef DIPOLE
+  vector E_stat;                /* static field-contribution */
+  vector p_stat;                /* short-range dipole moment */
+#endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 

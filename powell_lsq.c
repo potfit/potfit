@@ -159,16 +159,21 @@ void powell_lsq(real *xi)
 	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
 	    xi[idx[n]];
 	write_pot_table(&apot_table, tempfile);
-	printf("Punkt 1\n");
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
+#ifdef DIPOLE
+	sprintf(errmsg,
+		"F does not depend on the %d. parameter (%s) of the %d. potential.\nFit impossible!\n",
+		itemp2 + 1, apot_table.param_name[itemp][itemp2],
+		itemp + 1);
+#else
 	sprintf(errmsg,
 		"F does not depend on the %d. parameter (%s) of the %d. potential (%s).\nFit impossible!\n",
 		itemp2 + 1, apot_table.param_name[itemp][itemp2],
 		itemp + 1, apot_table.names[itemp]);
+#endif /* DIPOLE */
 #endif
 	warning(errmsg);
-	printf("Punkt 2\n");
 	break;
       }
     }

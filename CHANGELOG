@@ -1,6 +1,7 @@
 bzr-20100630
 + dipole output
 + energy conserving shift for ms-potential
++ new properties static field and short-range dipole moment added to atom_t
 
 devel-20100610
 + make punishments for apot optional

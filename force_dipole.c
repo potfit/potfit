@@ -3,14 +3,15 @@
 * force.c: Routines used for calculating pair/monopole/dipole
 *     forces/energies in various interpolation schemes.
 *
-*********************************************************************************/
+*****************************************************************/
 /*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf, Philipp Beck
+*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf, 
+                        Philipp Beck
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
 *
-*********************************************************************************/
+*****************************************************************/
 /*
 *   This file is part of potfit.
 *
@@ -177,7 +178,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, uf, us, stresses;	// config
-      real  fnval, grad, fnval_tail, grad_tail, eval, p_stat_tail;
+      real  fnval, grad, fnval_tail, grad_tail, eval_i, eval_j, p_stat_tail;
       atom_t *atom;
       neigh_t *neigh;
 
@@ -216,23 +217,15 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	/* S E C O N D loop: calculate short-range and monopole forces,
 	   calculate static field- and dipole-contributions */
 	for (i = 0; i < inconf[h]; i++) {
-	  
-	  real E_stat_x[inconf[h]];
-	  real E_stat_y[inconf[h]];
-	  real E_stat_z[inconf[h]];
-	  real p_stat_x[inconf[h]];
-	  real p_stat_y[inconf[h]];
-	  real p_stat_z[inconf[h]];
 
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
+
 	  k = 3 * (cnfstart[h] + i);
 	  /* loop over neighbours */
 	  for (j = 0; j < atom->n_neigh; j++) {
 	    neigh = atom->neigh + j;
-	    /* only use neigbours with higher numbers,
-	       others are calculated by actio=reactio */
-	    if (neigh->nr >= i + cnfstart[h]) {
+
 	      /* In small cells, an atom might interact with itself */
 	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 	      typ2 = neigh->typ;
@@ -269,10 +262,12 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
-		  l = 3 * neigh->nr;	/* actio = reactio */
+		  /* actio = reactio */
+		  l = 3 * neigh->nr;
 		  forces[l] -= tmp_force.x;
 		  forces[l + 1] -= tmp_force.y;
 		  forces[l + 2] -= tmp_force.z;
+
 #ifdef STRESS
 		  /* calculate pair stresses */
 		  if (us) {
@@ -296,17 +291,21 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		dp_cut = calc_pot.end[neigh->col[0]];
 	      }
 
-	      /* calculate monopole forces and static field-contributions */
-	      if ((neigh->r < dp_cut) && (apt->dp_alpha[typ1])&& 
-		  (apt->dp_b[neigh->col[0]]) && (apt->dp_c[neigh->col[0]])){
+	      /* calculate monopole forces */
+	      if (neigh->r < dp_cut){ 
 		
 		  fnval_tail = splint_comb_dir(&calc_pot, xi_d, 
 					  neigh->slot[0],
 					  neigh->shift[0],
 					  neigh->step[0], &grad_tail);
 
-		  eval = apt->charge[typ2] * fnval_tail;
-		  fnval = apt->charge[typ1] * eval;
+		  eval_i = apt->charge[typ2] * fnval_tail;
+		  if(typ1 == typ2){
+		    eval_j = eval_i;
+		  } else {
+		    eval_j = apt->charge[typ1] * fnval_tail;
+		  }
+		  fnval = apt->charge[typ1] * eval_i;
 		  grad = apt->charge[typ1] * apt->charge[typ2] * grad_tail;
 
 		  if (self) {
@@ -323,14 +322,11 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
-		  l = 3 * neigh->nr;	/* actio = reactio */
+		  /* actio = reactio */
+		  l = 3 * neigh->nr;
 		  forces[l] -= tmp_force.x;
 		  forces[l + 1] -= tmp_force.y;
 		  forces[l + 2] -= tmp_force.z;
-
-		  E_stat_x[i] += neigh->dist.x * eval;
-		  E_stat_y[i] += neigh->dist.y * eval;
-		  E_stat_z[i] += neigh->dist.z * eval; 
 
 #ifdef STRESS
 		  /* calculate pair stresses */
@@ -349,15 +345,31 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 		}
 
-		/* calculate short-range dipoles  */
+		/* calculate static field-contributions */
+		atom->E_stat.x += neigh->dist.x * eval_i;
+		atom->E_stat.y += neigh->dist.y * eval_i;
+		atom->E_stat.z += neigh->dist.z * eval_i; 
+		atoms[neigh->nr].E_stat.x += neigh->dist.x * eval_j;  
+		atoms[neigh->nr].E_stat.y += neigh->dist.y * eval_j;  
+		atoms[neigh->nr].E_stat.z += neigh->dist.z * eval_j;  
+
+		/* calculate short-range dipoles */
+		if( (apt->dp_alpha[typ1]) && (apt->dp_b[neigh->col[0]]) && (apt->dp_c[neigh->col[0]]) ) {	
 		p_stat_tail = shortrange_value(neigh->r, &apt->dp_alpha[typ1], 
 					       &apt->dp_b[neigh->col[0]], &apt->dp_c[neigh->col[0]]);
-		p_stat_x[i] += apt->charge[typ2] * neigh->dist.x * p_stat_tail;
-		p_stat_y[i] += apt->charge[typ2] * neigh->dist.y * p_stat_tail;
-		p_stat_z[i] += apt->charge[typ2] * neigh->dist.z * p_stat_tail;
-	      }
+		atom->p_stat.x += apt->charge[typ2] * neigh->dist.x * p_stat_tail;
+		atom->p_stat.y += apt->charge[typ2] * neigh->dist.y * p_stat_tail;
+		atom->p_stat.z += apt->charge[typ2] * neigh->dist.z * p_stat_tail;
+		}
+		if( (apt->dp_alpha[typ2]) && (apt->dp_b[neigh->col[0]]) && (apt->dp_c[neigh->col[0]]) ) {
+		  p_stat_tail = shortrange_value(neigh->r, &apt->dp_alpha[typ2], 
+						 &apt->dp_b[neigh->col[0]], &apt->dp_c[neigh->col[0]]);
+		  atoms[neigh->nr].p_stat.x += apt->charge[typ1] * neigh->dist.x * p_stat_tail;
+		  atoms[neigh->nr].p_stat.y += apt->charge[typ1] * neigh->dist.y * p_stat_tail;
+		  atoms[neigh->nr].p_stat.z += apt->charge[typ1] * neigh->dist.z * p_stat_tail;
+		}
 
-	    }			/*  neighbours with bigger atom nr */
+	      }
 	  }			/* loop over neighbours */
 
 	  /*then we can calculate contribution of forces right away */
@@ -392,7 +404,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	}
 #endif /* STRESS */
 
-	if(apt->dp_alpha[typ1]){
+	if(1){
 	/* T H I R D loop: calculate whole dipole moment for every atom */
 	/* end T H I R D loop over atoms */
 

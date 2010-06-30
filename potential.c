@@ -5,7 +5,8 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf,
+ *                     Philipp Beck
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -633,7 +634,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[apt->number + 3][i]");
   }
 #endif
-  
+
   /* skip to global section */
   fsetpos(infile, &startpos);
   do {
