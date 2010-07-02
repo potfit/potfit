@@ -64,7 +64,7 @@ void randomize_parameter(int n, real *xi, real *v)
   if (v[n] > max - min)
     v[n] = max - min;
 
-  do {   
+  do {
     temp = xi[idx[n]];
     rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
     temp += (rand * v[n]);
@@ -118,7 +118,6 @@ void anneal(real *xi)
 {
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   loopagain;		/* loop flag */
-  int   total_count;		/* number of random numbers per step */
   real  T;			/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
@@ -195,14 +194,11 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-	      /* *INDENT-OFF* */
 		for (n = 0; n < ndim; n++) {
-		  apot_table.values[apot_table.
-				    idxpot[n]][apot_table.idxparam[n]] =
-		    xopt[idx[n]];
+		  apot_table.values[apot_table.idxpot[n]][apot_table.
+		    idxparam[n]] = xopt[idx[n]];
 		}
-/*               *INDENT-ON**/
-		write_pot_table(&apot_table, tempfile);
+	      write_pot_table(&apot_table, tempfile);
 #endif
 	    }
 	  }
@@ -215,7 +211,7 @@ void anneal(real *xi)
 	  }
 	}
       }
-  
+
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
 	if (naccept[n] > (0.6 * NSTEP))
@@ -234,7 +230,7 @@ void anneal(real *xi)
 	if (NULL != ff) {
 	  printf
 	    ("Annealing terminated in presence of break flagfile \"%s\"!\n",
-	     flagfile);
+	    flagfile);
 	  printf("Temperature was %f, returning optimum configuration\n", T);
 	  for (n = 0; n < ndimtot; n++)
 	    xi[n] = xopt[n];
