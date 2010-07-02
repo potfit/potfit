@@ -1581,10 +1581,12 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 		smooth_pot[i] ? f * cutoff(calct->xcoord[index],
 					   calct->begin[i], h) : f;
 #ifdef DIPOLE
+	      if(i==0){
 	      coulomb_shift(calct->xcoord[index], &f_c);
 	      calct->table_dipole[index] =
 		smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
 					     calct->begin[i], h) : f_c;
+	      }
 #endif
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }

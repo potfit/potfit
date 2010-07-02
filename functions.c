@@ -724,7 +724,7 @@ void coulomb_shift(real r, real *fnval_tail)
 
   coulomb_value(r, &ftail, &gtail);
   coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
-  *fnval_tail = ftail - ftail_cut -  (r - dp_cut) * gtail_cut;
+  *fnval_tail = ftail - ftail_cut - (r - dp_cut) * gtail_cut;
 }
 
 /******************************************************************************

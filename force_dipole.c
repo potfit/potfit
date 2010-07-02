@@ -247,6 +247,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		    splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
 			       neigh->step[0]);
 		}
+
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
@@ -292,7 +293,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      }
 
 	      /* calculate monopole forces */
-	      if (neigh->r < dp_cut){ 
+	      if (neigh->r < dp_cut) { 
 		
 		  fnval_tail = splint_comb_dir(&calc_pot, xi_d, 
 					  neigh->slot[0],
@@ -300,7 +301,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 					  neigh->step[0], &grad_tail);
 
 		  eval_i = apt->charge[typ2] * fnval_tail;
-		  if(typ1 == typ2){
+		  if(typ1 == typ2) {
 		    eval_j = eval_i;
 		  } else {
 		    eval_j = apt->charge[typ1] * fnval_tail;
@@ -309,16 +310,16 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  grad = apt->charge[typ1] * apt->charge[typ2] * grad_tail;
 
 		  if (self) {
-		    fnval *= 0.5;
-		    grad *= 0.5;
+		    fnval_tail *= 0.5;
+		    grad_tail *= 0.5;
 		  }
 		
-		forces[energy_p + h] += fnval;
-		
+		forces[energy_p + h] += fnval_tail;
+
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad;
-		  tmp_force.y = neigh->dist.y * grad;
-		  tmp_force.z = neigh->dist.z * grad;
+		  tmp_force.x = neigh->dist.x * grad_tail;
+		  tmp_force.y = neigh->dist.y * grad_tail;
+		  tmp_force.z = neigh->dist.z * grad_tail;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
@@ -368,8 +369,9 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  atoms[neigh->nr].p_stat.y += apt->charge[typ1] * neigh->dist.y * p_stat_tail;
 		  atoms[neigh->nr].p_stat.z += apt->charge[typ1] * neigh->dist.z * p_stat_tail;
 		}
-
-	      }
+		
+		}
+	      
 	  }			/* loop over neighbours */
 
 	  /*then we can calculate contribution of forces right away */

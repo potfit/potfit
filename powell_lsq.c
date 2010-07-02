@@ -120,6 +120,14 @@ void powell_lsq(real *xi)
   fflush(stdout);
 #endif
 
+  /* Z U S A T Z
+  for(i=1; i<20; i++) {
+    printf("i=%d: \tidxparam %d  idxpot %d \tliefert\t  %d. parameter of the %d. potential\n",
+	   i, apot_table.idxparam[i], apot_table.idxpot[i], apot_table.idxparam[i - 1] + 1,
+	   apot_table.idxpot[i - 1] + 1);
+  }
+  error("bla"); */
+
   if (F < NOTHING) {
     printf("Error already too small to optimize, aborting ...\n");
     return;			/* If F is less than nothing, */

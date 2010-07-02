@@ -64,7 +64,7 @@ void randomize_parameter(int n, real *xi, real *v)
   if (v[n] > max - min)
     v[n] = max - min;
 
-  do {
+  do {   
     temp = xi[idx[n]];
     rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
     temp += (rand * v[n]);
@@ -215,7 +215,7 @@ void anneal(real *xi)
 	  }
 	}
       }
-
+  
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
 	if (naccept[n] > (0.6 * NSTEP))

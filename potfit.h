@@ -552,7 +552,7 @@ void  poly_5_value(real, real *, real *);
 
 #ifdef DIPOLE
 /* functions for dipole calculations  */
-void ms_shift(real, real*, real*);
+void ms_shift(real, real *, real *);
 real shortrange_value(real, real *, real *, real *);
 void coulomb_value(real, real *, real *);
 void coulomb_shift(real, real*);
