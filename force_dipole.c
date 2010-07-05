@@ -90,7 +90,7 @@
 real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
-  int   first, col1, i;
+  int   first, col, i;
   real *xi = NULL;
   real *xi_d = NULL;
   apot_table_t *apt = &apot_table;
@@ -152,17 +152,21 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 
     /* init second derivatives for splines */
-    for (col1 = 0; col1 < paircol; col1++) {
-      first = calc_pot.first[col1];
+    for (col = 0; col < paircol; col++) {
+      first = calc_pot.first[col];
       if (format == 3 || format == 0)
-	spline_ed(calc_pot.step[col1], xi + first,
-		  calc_pot.last[col1] - first + 1,
+	spline_ed(calc_pot.step[col], xi + first,
+		  calc_pot.last[col] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col1] - first + 1,
+		  calc_pot.last[col] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
+    spline_ed(calc_pot.step[0], xi_d + calc_pot.first[0],
+	      calc_pot.last[0] - calc_pot.first[0] + 1,
+	      *(xi_d + calc_pot.first[0] - 2), 0.0, calc_pot.d2tab_dipole + calc_pot.first[0]);
+    
 
 #ifndef MPI
     myconf = nconf;
@@ -178,13 +182,29 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, uf, us, stresses;	// config
-      real  fnval, grad, fnval_tail, grad_tail, eval_i, eval_j, p_stat_tail;
+      real  fnval_0, grad_0, fnval, grad, fnval_tail, grad_tail, eval_i, eval_j, p_stat_tail;
       atom_t *atom;
       neigh_t *neigh;
 
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
 #endif
+      
+      /* reset dipoles and fields: LOOP Z E R O */
+      
+      /*  int tot_num = 0;       
+	  for (h = firstconf; h < firstconf + myconf; h++) {
+	  tot_num += inconf[h];
+	  } */
+      
+      for (i = 0; i < natoms; i++) {
+	atoms[i].E_stat.x = 0;
+	atoms[i].E_stat.y = 0;
+	atoms[i].E_stat.z = 0;
+	atoms[i].p_stat.x = 0;
+	atoms[i].p_stat.y = 0;
+	atoms[i].p_stat.z = 0;
+      }
 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -209,10 +229,10 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    forces[k + 1] = 0.;
 	    forces[k + 2] = 0.;
 	  }
-	  /* BLUBB1: Dipol-Variablen resetten */
 	}
 	/* end F I R S T LOOP */
 
+	int q=0;
 
 	/* S E C O N D loop: calculate short-range and monopole forces,
 	   calculate static field- and dipole-contributions */
@@ -239,11 +259,11 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      if (neigh->r < calc_pot.end[neigh->col[0]]) {
 		/* fn value and grad are calculated in the same step */
 		if (uf) {
-		  fnval =
+		  fnval_0 =
 		    splint_comb_dir(&calc_pot, xi, neigh->slot[0],
-				    neigh->shift[0], neigh->step[0], &grad);
+				    neigh->shift[0], neigh->step[0], &grad_0);
 		} else {
-		  fnval =
+		  fnval_0 =
 		    splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
 			       neigh->step[0]);
 		}
@@ -251,15 +271,15 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
-		  fnval *= 0.5;
-		  grad *= 0.5;
+		  fnval_0 *= 0.5;
+		  grad_0 *= 0.5;
 		}
-		forces[energy_p + h] += fnval;
+		forces[energy_p + h] += fnval_0;
 
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad;
-		  tmp_force.y = neigh->dist.y * grad;
-		  tmp_force.z = neigh->dist.z * grad;
+		  tmp_force.x = neigh->dist.x * grad_0;
+		  tmp_force.y = neigh->dist.y * grad_0;
+		  tmp_force.z = neigh->dist.z * grad_0;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
@@ -295,11 +315,17 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      /* calculate monopole forces */
 	      if (neigh->r < dp_cut) { 
 		
-		  fnval_tail = splint_comb_dir(&calc_pot, xi_d, 
-					  neigh->slot[0],
+		  fnval_tail = splint_comb_dir_dipole(&calc_pot, xi_d, 
+					  neigh->slot[0] - 1000 * neigh->col[0],
 					  neigh->shift[0],
 					  neigh->step[0], &grad_tail);
 
+		  /*	  if(typ1 == 0 && typ1 == typ2)		
+			  printf("%d\t%lf\t%lf\n",  neigh->col[0], neigh->r, fnval_tail);
+			  q++; 
+			  if(q==1000)
+			  error("Ende");    */        
+		  
 		  eval_i = apt->charge[typ2] * fnval_tail;
 		  if(typ1 == typ2) {
 		    eval_j = eval_i;
@@ -310,16 +336,24 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  grad = apt->charge[typ1] * apt->charge[typ2] * grad_tail;
 
 		  if (self) {
-		    fnval_tail *= 0.5;
-		    grad_tail *= 0.5;
+		    eval_i *= 0.5;
+		    eval_j *= 0.5;  
+		    fnval *= 0.5;
+		    grad *= 0.5;
 		  }
 		
-		forces[energy_p + h] += fnval_tail;
+		forces[energy_p + h] += fnval;
+
+		/*	if(typ1 == 0 && typ1 == typ2)
+		  printf("%d%d\t%lf\t%lf\t%lf\t%lf\n", typ1, typ2, fnval_tail, eval_i, fnval, forces[energy_p + h]);
+		q++; 
+		if(q==1000)
+		error("Ende");   */
 
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad_tail;
-		  tmp_force.y = neigh->dist.y * grad_tail;
-		  tmp_force.z = neigh->dist.z * grad_tail;
+		  tmp_force.x = neigh->dist.x * grad;
+		  tmp_force.y = neigh->dist.y * grad;
+		  tmp_force.z = neigh->dist.z * grad;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;

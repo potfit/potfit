@@ -1547,18 +1547,21 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  reg_for_free(calct->xcoord, "calct->xcoord");
 	  calct->table = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->table, "calct->table");
+	  calct->d2tab = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->d2tab, "calct->d2tab");
 #ifdef DIPOLE
 	  calct->table_dipole = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->table_dipole, "calct->table_dipole");
+	  calct->d2tab_dipole = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->d2tab_dipole, "calct->d2tab_dipole");
 #endif
-	  calct->d2tab = (real *)malloc(calct->len * sizeof(real));
-	  reg_for_free(calct->d2tab, "calct->d2tab");
 	  calct->idx = (int *)malloc(calct->len * sizeof(int));
 	  reg_for_free(calct->idx, "calct->idx");
 	  if (calct->first == NULL || calct->last == NULL
 	      || calct->step == NULL || calct->invstep == NULL
 	      || calct->xcoord == NULL || calct->table == NULL
-	      || calct->d2tab == NULL || calct->idx == NULL)
+	      || calct->table_dipole == NULL || calct->d2tab == NULL
+	      || calct->d2tab_dipole == NULL || calct->idx == NULL)
 	    error("Cannot allocate info block for calc potential table\n");
 
 	  /* initialize the calc_pot table */

@@ -141,10 +141,11 @@ typedef struct {
   int  *last;			/* index of last entry */
   real *xcoord;			/* the x-coordinates of sampling points */
   real *table;			/* the actual data */
+  real *d2tab;			/* second derivatives of table data for spline int */
 #ifdef DIPOLE
   real *table_dipole;           /* static data for tail of coulomb potential */
+  real *d2tab_dipole;	   	/* second derivatives of table data for spline int */
 #endif
-  real *d2tab;			/* second derivatives of table data for spline int */
   int  *idx;			/* indirect indexing */
 } pot_table_t;
 
@@ -456,6 +457,10 @@ real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
 real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
 		      real *grad);
+#ifdef DIPOLE
+real  splint_comb_dir_dipole(pot_table_t *pt, real *xi, int k, real b, real step,
+		      real *grad);
+#endif
 real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ne(pot_table_t *pt, real *xi, int col, real r);
