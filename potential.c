@@ -974,6 +974,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
 
+  apt->total_ne_par = apt->total_par;
+
   /* if we have global parameters, are they actually used ? */
   if (have_globals) {
     j = 0;

@@ -90,7 +90,7 @@
 real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
-  int   first, col, i;
+  int   first, col, ne, i;
   real *xi = NULL;
   real *xi_d = NULL;
   apot_table_t *apt = &apot_table;
@@ -108,6 +108,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
   }
 
   xi_d = calc_pot.table_dipole;
+  ne =  apot_table.total_ne_par;
 
   /* This is the start of an infinite loop */
   while (1) {
@@ -149,7 +150,6 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       break;			/* Exception: flag 1 means clean up */
 #endif /* APOT */
 #endif /* MPI */
-
 
     /* init second derivatives for splines */
     for (col = 0; col < paircol; col++) {
@@ -231,8 +231,6 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	  }
 	}
 	/* end F I R S T LOOP */
-
-	int q=0;
 
 	/* S E C O N D loop: calculate short-range and monopole forces,
 	   calculate static field- and dipole-contributions */
@@ -318,22 +316,16 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  fnval_tail = splint_comb_dir_dipole(&calc_pot, xi_d, 
 					  neigh->slot[0] - 1000 * neigh->col[0],
 					  neigh->shift[0],
-					  neigh->step[0], &grad_tail);
-
-		  /*	  if(typ1 == 0 && typ1 == typ2)		
-			  printf("%d\t%lf\t%lf\n",  neigh->col[0], neigh->r, fnval_tail);
-			  q++; 
-			  if(q==1000)
-			  error("Ende");    */        
+					  neigh->step[0], &grad_tail);	       
 		  
-		  eval_i = apt->charge[typ2] * fnval_tail;
+		  eval_i = xi_opt[idx[ne] + typ2] * fnval_tail;
 		  if(typ1 == typ2) {
 		    eval_j = eval_i;
 		  } else {
-		    eval_j = apt->charge[typ1] * fnval_tail;
+		    eval_j = xi_opt[idx[ne] + typ1] * fnval_tail;
 		  }
-		  fnval = apt->charge[typ1] * eval_i;
-		  grad = apt->charge[typ1] * apt->charge[typ2] * grad_tail;
+		  fnval =  xi_opt[idx[ne] + typ1] * eval_i;
+		  grad =  xi_opt[idx[ne] + typ1] * xi_opt[idx[ne] + typ2] * grad_tail;
 
 		  if (self) {
 		    eval_i *= 0.5;
@@ -345,11 +337,11 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		forces[energy_p + h] += fnval;
 
 		/*	if(typ1 == 0 && typ1 == typ2)
-		  printf("%d%d\t%lf\t%lf\t%lf\t%lf\n", typ1, typ2, fnval_tail, eval_i, fnval, forces[energy_p + h]);
-		q++; 
-		if(q==1000)
-		error("Ende");   */
-
+			printf("%d%d\t%lf\t%lf\t%lf\t%lf\n", typ1, typ2, fnval_tail, eval_i, fnval, forces[energy_p + h]);
+			q++; 
+			if(q==1000)
+			error("Ende");   */
+		
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;

@@ -164,6 +164,9 @@ typedef struct {
 
 //   parameters
   int   total_par;		/* total number of parameters for all potentials */
+#ifdef DIPOLE
+  int total_ne_par;             /* total number of non-electrostatic parameters */
+#endif
   int  *idxparam;		/* indirect index for potential parameters */
   int **invar_par;		/* array of invariant parameters */
   char ***param_name;		/* name of parameters */
