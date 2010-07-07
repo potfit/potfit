@@ -289,13 +289,17 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "dp_kappa") == 0) {
       getparam("dp_kappa", &dp_kappa, PARAM_DOUBLE, 1, 1);
     }
+    /* cutoff-radius for long-range interactions */
+    else if (strcasecmp(token, "dp_cut") == 0) {
+      getparam("dp_cut", &dp_cut, PARAM_DOUBLE, 1, 1);
+    }
     /* dipole iteration precision */
     else if (strcasecmp(token, "dp_tol") == 0) {
       getparam("dp_tol", &dp_tol, PARAM_DOUBLE, 1, 1);
     }
-    /* cutoff-radius for long-range interactions */
-    else if (strcasecmp(token, "dp_cut") == 0) {
-      getparam("dp_cut", &dp_cut, PARAM_DOUBLE, 1, 1);
+    /* mixing parameter for damping dipole iteration loop */
+    else if (strcasecmp(token, "dp_mix") == 0) {
+      getparam("dp_mix", &dp_mix, PARAM_DOUBLE, 1, 1);
     }
 #endif
     /* unknown tag */

@@ -94,6 +94,10 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
+#ifdef DIPOLE
+  real r3;                      /* r^3 */
+  real r5;                      /* r^5 */
+#endif 
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
@@ -124,7 +128,11 @@ typedef struct {
 #endif
 #ifdef DIPOLE
   vector E_stat;                /* static field-contribution */
-  vector p_stat;                /* short-range dipole moment */
+  vector p_sr;                  /* short-range dipole moment */
+  vector E_ind;                 /* induced field-contribution */
+  vector p_ind;                 /* induced dipole moment */
+  vector E_old;                 /* stored old induced field */
+  vector E_temp;                /* temporary induced field */
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
@@ -366,12 +374,13 @@ EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *stress_comp[6];
 #endif
 
-// variables needed for option dipole
 #ifdef DIPOLE
+// variables needed for option dipole
+EXTERN real dp_eps INIT(14.40);	   /* this is e^2/(4*pi*epsilon_0) in eV A */
 EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
-EXTERN real dp_tol INIT(1.e-9); /* dipole iteration precision */
-EXTERN real dp_cut INIT(0);      /* cutoff-radius for long-range interactions */
-EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
+EXTERN real dp_cut INIT(10);      /* cutoff-radius for long-range interactions */
+EXTERN real dp_tol INIT(1.e-7); /* dipole iteration precision */
+EXTERN real dp_mix INIT(0.2);   /* miximg parameter for damping dipole iteration loop */
 #endif
 
 /******************************************************************************
