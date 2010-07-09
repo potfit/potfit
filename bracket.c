@@ -36,8 +36,7 @@
 #include "bracket.h"
 
 void bracket(real *x_lower, real *x_minimum, real *x_upper,
-	     real *f_lower, real *f_minimum, real *f_upper,
-	     real *f_vec1, real *f_vec2)
+  real *f_lower, real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
@@ -122,7 +121,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	/* This means a change from original algorithm */
 #ifdef DEBUG
 	sprintf(errmsg, "Pathological  @%li %f %f %f! center-right!\n",
-		nb_eval, x_left, x_center, x_right);
+	  nb_eval, x_left, x_center, x_right);
 	warning(errmsg);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
@@ -153,7 +152,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	/* between center and left */
 #ifdef DEBUG
 	sprintf(errmsg, "Pathological  @%li %f %f %f! center-left!\n",
-		nb_eval, x_left, x_center, x_right);
+	  nb_eval, x_left, x_center, x_right);
 	warning(errmsg);
 #endif /* DEBUG */
 	x_left = -(x_right - x_left) * CGOLD + x_left;
@@ -183,7 +182,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 #ifdef DEBUG
 
 	  sprintf(errmsg, "Pathological  @%li %f %f %f! Go left!\n",
-		  nb_eval, x_left, x_center, x_right);
+	    nb_eval, x_left, x_center, x_right);
 	  warning(errmsg);
 #endif /* DEBUG */
 	  x_left = -(x_right - x_left) / CGOLD + x_left;
@@ -196,7 +195,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 
 #ifdef DEBUG
 	  sprintf(errmsg, "Pathological @%li %f %f %f! go right!\n",
-		  nb_eval, x_left, x_center, x_right);
+	    nb_eval, x_left, x_center, x_right);
 	  warning(errmsg);
 #endif /* DEBUG */
 	  x_right = (x_right - x_left) / CGOLD + x_right;
@@ -211,8 +210,8 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
   } while (nb_eval < MAX_IT);
 #ifdef DEBUG
   sprintf(errmsg,
-	  "Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.",
-	  nb_eval, x_left, f_left, x_center, f_center, x_right, f_right);
+    "Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.",
+    nb_eval, x_left, f_left, x_center, f_center, x_right, f_right);
   error(errmsg);
 #else /* DEBUG */
   error("Problems with bracketing of minimum, aborting");

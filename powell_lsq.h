@@ -37,10 +37,10 @@
 #endif
 
 void  bracket_r(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
-		real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);
+  real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2);
 
 real  brent_r(real ax, real bx, real cx, real fbx, real tol,
-	      real *xmin, real *xmin2, real *fxmin, real *fxmin2);
+  real *xmin, real *xmin2, real *fxmin, real *fxmin2);
 
 void  copy_matrix(real **a, real **b, int n, int m);
 
@@ -49,16 +49,16 @@ void  copy_vector(real *a, real *b, int n);
 int   gamma_init(real **gamma, real **d, real *xi, real *force_xi);
 
 int   gamma_update(real **gamma, real a, real b, real *fa, real *fb,
-		   real *delta, int j, int m, int n, real fmin);
+  real *delta, int j, int m, int n, real fmin);
 
 void  lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
-		    real *p, int n, int m);
+  real *p, int n, int m);
 
 void  lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
-		      real *p, int i, int n, int m);
+  real *p, int i, int n, int m);
 
 real  linmin_r(real p[], real xi[], real fxi1, real *x1, real *x2,
-	       real *fret1, real *fret2);
+  real *fret1, real *fret2);
 
 void  matdotvec(real **a, real *x, real *y, int n, int m);
 
