@@ -66,8 +66,8 @@
  *     only for forces, but also for energies, stresses or dummy constraints
  *     (if applicable).
  *
- * flag is an integer controlling the behaviour of calc_forces_pair.
- *    flag == 1 will cause all processes to exit calc_forces_pair after
+ * flag is an integer controlling the behaviour of calc_forces_eam.
+ *    flag == 1 will cause all processes to exit calc_forces_eam after
  *             calculation of forces.
  *    flag == 2 will cause all processes to perform a potsync (i.e. broadcast
  *             any changed potential parameters from process 0 to the others)
@@ -147,12 +147,12 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       first = calc_pot.first[col];
       if (format == 0 || format == 3)
 	spline_ed(calc_pot.step[col], xi + first,
-		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-		  calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-		  calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
     }
 
     /* rho */
@@ -160,12 +160,12 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       first = calc_pot.first[col];
       if (format == 0 || format == 3)
 	spline_ed(calc_pot.step[col], xi + first,
-		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-		  calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-		  calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
     }
 
     /* F */
@@ -177,28 +177,26 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
          when 0 not in domain(F), else natural spline */
       if (format == 0 || format == 3)
 	spline_ed(calc_pot.step[col], xi + first,
-		  calc_pot.last[col] - first + 1,
+	  calc_pot.last[col] - first + 1,
 #ifdef WZERO
-		  ((calc_pot.begin[col] <= 0.) ? *(xi + first - 2)
-		   : .5 / xi[first]),
-		  ((calc_pot.end[col] >= 0.) ? *(xi + first - 1)
-		   : -.5 / xi[calc_pot.last[col]]),
+	  ((calc_pot.begin[col] <= 0.) ? *(xi + first - 2)
+	    : .5 / xi[first]), ((calc_pot.end[col] >= 0.) ? *(xi + first - 1)
+	    : -.5 / xi[calc_pot.last[col]]),
 #else /* WZERO: F is natural spline in any case */
-		  *(xi + first - 2), *(xi + first - 1),
+	  *(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
-		  calc_pot.d2tab + first);	/* XXX */
+	  calc_pot.d2tab + first);	/* XXX */
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col] - first + 1,
+	  calc_pot.last[col] - first + 1,
 #ifdef WZERO
-		  (calc_pot.begin[col] <= 0. ? *(xi + first - 2)
-		   : .5 / xi[first]),
-		  (calc_pot.end[col] >= 0. ? *(xi + first - 1)
-		   : -.5 / xi[calc_pot.last[col]]),
+	  (calc_pot.begin[col] <= 0. ? *(xi + first - 2)
+	    : .5 / xi[first]), (calc_pot.end[col] >= 0. ? *(xi + first - 1)
+	    : -.5 / xi[calc_pot.last[col]]),
 #else /* WZERO */
-		  *(xi + first - 2), *(xi + first - 1),
+	  *(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
-		  calc_pot.d2tab + first);
+	  calc_pot.d2tab + first);
     }
 #endif /* PARABEL */
 
@@ -283,11 +281,11 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      if (uf)
 		phi_val =
 		  splint_comb_dir(&calc_pot, xi, neigh->slot[0],
-				  neigh->shift[0], neigh->step[0], &phi_grad);
+		  neigh->shift[0], neigh->step[0], &phi_grad);
 	      else
 		phi_val =
 		  splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
-			     neigh->step[0]);
+		  neigh->step[0]);
 	      /* avoid double counting if atom is interacting with a
 	         copy of itself */
 	      if (self) {
@@ -333,7 +331,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
 		rho_val =
 		  splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
-			     neigh->step[1]);
+		  neigh->step[1]);
 		atom->rho += rho_val;
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
@@ -346,7 +344,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
 		atom->rho +=
 		  splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
-			     neigh->step[1]);
+		  neigh->step[1]);
 	      }
 	      /* cannot use slot/shift to access splines */
 	      if (neigh->r < calc_pot.end[paircol + atom->typ])
@@ -387,15 +385,14 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    /* linear extrapolation left */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F],
-			  &atom->gradF);
+	      &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 	    /* and right */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F,
-			  calc_pot.end[col_F] - .5 * calc_pot.step[col_F],
-			  &atom->gradF);
+	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 	  }
@@ -426,11 +423,11 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      r = neigh->r;
 	      /* are we within reach? */
 	      if ((r < calc_pot.end[neigh->col[1]])
-		  || (r < calc_pot.end[col_F - ntypes])) {
+		|| (r < calc_pot.end[col_F - ntypes])) {
 		rho_grad =
 		  (r < calc_pot.end[neigh->col[1]]) ?
 		  splint_grad_dir(&calc_pot, xi, neigh->slot[1],
-				  neigh->shift[1], neigh->step[1]) : 0.;
+		  neigh->shift[1], neigh->step[1]) : 0.;
 		if (atom->typ == neigh->typ)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
@@ -438,7 +435,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		    splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.;
 		/* now we know everything - calculate forces */
 		eam_force = (rho_grad * atom->gradF + rho_grad_j *
-			     conf_atoms[(neigh->nr) - firstatom].gradF);
+		  conf_atoms[(neigh->nr) - firstatom].gradF);
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self)
@@ -480,7 +477,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    /* sum up forces  */
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-				SQR(forces[k + 2]));
+	      SQR(forces[k + 2]));
 	  }			/* third loop over atoms */
 	}
 
@@ -531,9 +528,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 /* constraints on U`(n) */
 	forces[dummy_p + g] = DUMMY_WEIGHT *
 	  parab_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
-		     (calc_pot.begin[paircol + ntypes + g] +
-		      calc_pot.end[paircol + ntypes + g])) -
-	  force_0[dummy_p + g];
+	  (calc_pot.begin[paircol + ntypes + g] +
+	    calc_pot.end[paircol + ntypes + g])) - force_0[dummy_p + g];
 #elif defined(WZERO)
 	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
 	  /* 0 in domain of U(n) */
@@ -547,8 +543,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 /* constraints on U`(n) */
 	forces[dummy_p + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
-		      (calc_pot.begin[paircol + ntypes + g] +
-		       calc_pot.end[paircol + ntypes + g]))
+	  (calc_pot.begin[paircol + ntypes + g] +
+	    calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #elif defined(NORESCALE)
 	/* clear field */
@@ -561,8 +557,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 /* constraints on U`(n) */
 	forces[dummy_p + g] = DUMMY_WEIGHT *
 	  splint_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
-		      (calc_pot.begin[paircol + ntypes + g] +
-		       calc_pot.end[paircol + ntypes + g]))
+	  (calc_pot.begin[paircol + ntypes + g] +
+	    calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #endif /* Dummy constraints */
 	tmpsum += SQR(forces[dummy_p + ntypes + g]);
@@ -577,7 +573,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       tmpsum += SQR(forces[dummy_p + ntypes]);
 #endif /* NORESCALE */
     }				/* only root process */
-#endif /* NOPUNISH */
+#endif /* !NOPUNISH */
     sum = tmpsum;		/* global sum = local sum  */
 #ifdef MPI
     /* reduce global sum */
@@ -586,21 +582,20 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
     /* gather forces, energies, stresses */
     /* forces */
     MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
-		forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+      forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
-		forces
-		+ natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+      forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
     MPI_Gatherv(forces + natoms * 3 + nconf +
-		6 * firstconf, myconf, MPI_STENS,
-		forces + natoms * 3 + nconf,
-		conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      6 * firstconf, myconf, MPI_STENS,
+      forces + natoms * 3 + nconf,
+      conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
     /* punishment constraints */
     MPI_Gatherv(forces + natoms * 3 + 7 * nconf +
-		firstconf, myconf, REAL,
-		forces + natoms * 3 + 7 * nconf,
-		conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+      firstconf, myconf, REAL,
+      forces + natoms * 3 + 7 * nconf,
+      conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
 #endif /* MPI */
 

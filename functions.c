@@ -374,7 +374,7 @@ void universal_value(real r, real *p, real *f)
 
   *f =
     p[0] * (p[2] / (p[2] - p[1]) * power[0] -
-	    p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
+    p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
 }
 
 /****************************************************************
@@ -433,7 +433,7 @@ void strmm_value(real r, real *p, real *f)
 void double_morse_value(real r, real *p, real *f)
 {
   *f = (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
-	p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) +
+    p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) +
     p[6];
 }
 
@@ -631,17 +631,17 @@ void debug_apot()
   fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
   fprintf(stderr, "##############################################\n");
   fprintf(stderr,
-	  "\nThere are %d potentials with a total of %d parameters.\n",
-	  apot_table.number, apot_table.total_par);
+    "\nThere are %d potentials with a total of %d parameters.\n",
+    apot_table.number, apot_table.total_par);
   for (i = 0; i < apot_table.number; i++) {
     fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
-	    apot_table.names[i], smooth_pot[i]);
+      apot_table.names[i], smooth_pot[i]);
     fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i],
-	    apot_table.end[i]);
+      apot_table.end[i]);
     for (j = 0; j < apot_table.n_par[i]; j++) {
       fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
-	      apot_table.param_name[i][j], apot_table.values[i][j],
-	      apot_table.pmin[i][j], apot_table.pmax[i][j]);
+	apot_table.param_name[i][j], apot_table.values[i][j],
+	apot_table.pmin[i][j], apot_table.pmax[i][j]);
     }
   }
 #ifdef PAIR
@@ -651,16 +651,16 @@ void debug_apot()
     fprintf(stderr, "\nchemical potentials:\n");
     for (i = 0; i < ntypes; i++)
       fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, apot_table.chempot[i],
-	      apot_table.pmin[apot_table.number][i],
-	      apot_table.pmax[apot_table.number][i]);
+	apot_table.pmin[apot_table.number][i],
+	apot_table.pmax[apot_table.number][i]);
     if (compnodes > 0) {
       if (ntypes == 2) {
 	fprintf(stderr, "composition nodes:\n");
 	for (j = 0; j < compnodes; j++)
 	  fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
-		  compnodelist[j], apot_table.chempot[ntypes + j],
-		  apot_table.pmin[apot_table.number][ntypes + j],
-		  apot_table.pmax[apot_table.number][ntypes + j]);
+	    compnodelist[j], apot_table.chempot[ntypes + j],
+	    apot_table.pmin[apot_table.number][ntypes + j],
+	    apot_table.pmax[apot_table.number][ntypes + j]);
       }
     }
   }

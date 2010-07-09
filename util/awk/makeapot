@@ -30,19 +30,12 @@
 #   Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.22 $
-# $Date: 2010/03/16 07:34:40 $
-####################################################################
 #
 # Usage: makeapot <options>
 # 	 -cp # 			enable chemical potential
-# 	 -cn # [file] 		enable composition nodes
-# 				if [file] exists, use compnodes to generate them
 # 	 -co # 			cutoff
 # 	 -n # type 		number of potentials of this type
 # 				(_sc can be used)
-# 		supported types:
-# 		- eopp
 #
 # eg:    makeapot -cp -cn 5 MgZn.config -co 5 -n 3 eopp_sc
 #
@@ -50,8 +43,22 @@
 
 function write_header(n)
 {
+    if (n==1 || n==6)
+	    inter="PAIR";
+    else if (n==7 || n==12)
+	    inter="EAM";
+    else if (n==5 || n==13 || n==24)
+	    inter="ADP";
+    else if (n==3) {
+	print "potential type is not unique for 3 potentials, assuming EAM" > "/dev/stderr";
+	inter="EAM";
+	    }
+    else {
+	printf "Unknown number (%d) of potential functions, aborting.\n",n > "/dev/stderr";
+        exit;
+	    }
     print "#F 0 "n;
-    print "#T EAM";
+    printf "#T %s\n",inter;
     printf "#I";
     for (i=0;i<n;i++)
 	printf " 0";
@@ -115,8 +122,9 @@ function write_pot(name)
 	printf "b %s",valminmax(2,1,5);
     }
     else if (name=="pohlong") {
-	printf "F_e %s",valminmax(-1,-10,0);
+	printf "F_0 %s",valminmax(-1,-10,0);
 	printf "gamma %s",valminmax(2,0.1,2);
+	printf "F_1 %s",valminmax(0,-10,10);
     }
     else if (name=="parabola") {
 	printf "alpha %s",valminmax(1,-10,10);
@@ -124,10 +132,10 @@ function write_pot(name)
 	printf "gamma %s",valminmax(1,-10,10);
     }
     else if (name=="csw") {
-	printf "a_1 %s",valminmax(0.2,-1,1);
-	printf "a_2 %s",valminmax(0.2,-1,1);
-	printf "alpha %s",valminmax(2,2,5);
-	printf "beta %s",valminmax(3,1,5);
+	printf "a_1 %s",valminmax(0.2,-2,2);
+	printf "a_2 %s",valminmax(0.2,-2,2);
+	printf "alpha %s",valminmax(2,1,10);
+	printf "beta %s",valminmax(3,0.5,5);
     }
     else if (name=="universal") {
 	printf "F_0 %s",valminmax(-1,-10,10);
@@ -167,8 +175,34 @@ function write_pot(name)
     else if (name=="const") {
 	printf "c %s",valminmax(1,0,10);
     }
+    else if (name=="poly_5") {
+	printf "F_0 %s",valminmax(1,-100,100);
+	printf "F_1 %s",valminmax(1,-100,100);
+	printf "q_1 %s",valminmax(1,-100,100);
+	printf "q_2 %s",valminmax(1,-100,100);
+	printf "q_3 %s",valminmax(1,-100,100);
+    }
+    else if (name=="double_morse") {
+	printf "E_1 %s",valminmax(1,-10,10);
+	printf "alpha_1 %s",valminmax(1,-10,10);
+	printf "r_0 %s",valminmax(1,-10,10);
+	printf "E_2 %s",valminmax(1,-10,10);
+	printf "alpha_2 %s",valminmax(1,-10,10);
+	printf "r_1 %s",valminmax(1,-10,10);
+	printf "delta %s",valminmax(1,-10,10);
+    }
+    else if (name=="double_exp") {
+	printf "a %s",valminmax(1,-10,10);
+	printf "beta_1 %s",valminmax(1,-10,10);
+	printf "r_0 %s",valminmax(1,-10,10);
+	printf "beta_2 %s",valminmax(1,-10,10);
+	printf "r_1 %s",valminmax(1,-10,10);
+    }
     if (do_smooth)
-	printf "h %s",valminmax(1,0.5,2);
+        if (global_co)
+	    printf "h!\n";
+        else
+	    printf "h %s",valminmax(1,0.5,2);
 }
 
 BEGIN{
@@ -178,6 +212,8 @@ BEGIN{
     for (i=1;i<ARGC;i++) {
 	if (ARGV[i]=="-cp")
 	    enable_cp=1;
+	if (ARGV[i]=="-h")
+	    global_co=1;
 	if (ARGV[i]=="-cn") {
 	    enable_cn=1;
 	    cn=ARGV[i+1];
@@ -202,6 +238,11 @@ BEGIN{
 	if (enable_cn)
 	    write_cn(cn);
     }
+    if (global_co) {
+	printf "global 1\n";
+	printf "h %s",valminmax(1,0.5,2);
+	printf "\n";
+	    }
     for (i=0;i<total_pot;i++) {
 	write_pot(pot[i]);
 	if (i!=(total_pot-1))

@@ -29,12 +29,12 @@
  *
  ****************************************************************/
 
-/******************************************************************************
+/****************************************************************
  *
  * spline_ed: initializes second derivatives used for spline interpolation
  *            (equidistant x[i])
  *
- *****************************************************************************/
+ ****************************************************************/
 
 #include "potfit.h"
 
@@ -214,7 +214,7 @@ real splint_dir(pot_table_t *pt, real *xi, int k, real b, real step)
  *****************************************************************************/
 
 real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
-		     real *grad)
+  real *grad)
 {
   real  a, p1, p2, d21, d22;
 
@@ -316,7 +316,7 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
     y2[i] = (sig - 1.0) / p;
     u[i] =
       (y[i + 1] - y[i]) / (x[i + 1] - x[i]) - (y[i] - y[i - 1]) / (x[i] -
-								   x[i - 1]);
+      x[i - 1]);
     u[i] = (6.0 * u[i] / (x[i + 1] - x[i - 1]) - sig * u[i - 1]) / p;
   }
   if (ypn > 0.99e30)
@@ -325,8 +325,7 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
     qn = 0.5;
     un =
       (3.0 / (x[n - 1] - x[n - 2])) * (ypn -
-				       (y[n - 1] - y[n - 2]) / (x[n - 1] -
-								x[n - 2]));
+      (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]));
   }
   y2[n - 1] = (un - qn * u[n - 2]) / (qn * y2[n - 2] + 1.0);
   for (k = n - 2; k >= 0; k--)

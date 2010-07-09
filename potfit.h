@@ -60,11 +60,11 @@
 #define SLOTS 4
 #endif
 
-/******************************************************************************
-*
-*  type definitions
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  type definitions
+ *
+ ****************************************************************/
 
 typedef double real;
 
@@ -270,7 +270,7 @@ EXTERN real evo_width INIT(1.);
 EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
-EXTERN int **na_typ INIT(NULL);	/* number of atoms per type */
+EXTERN int **na_type INIT(NULL);	/* number of atoms per type */
 EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
 EXTERN int *conf_uf INIT(NULL);
 EXTERN int *conf_us INIT(NULL);
@@ -370,9 +370,7 @@ EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
-#ifdef STRESS
-EXTERN char *stress_comp[6];
-#endif
+EXTERN char *component[6];	/* componentes of vectors and tensors */
 
 #ifdef DIPOLE
 // variables needed for option dipole
@@ -417,14 +415,14 @@ void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 #ifdef APOT
 void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
-		      FILE *infile);
+  FILE *infile);
 void  write_apot_table(apot_table_t *, char *);
 #endif
 void  read_pot_table(pot_table_t *, char *);
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
-		      char *filename, FILE *infile);
+  char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
-		      char *filename, FILE *infile);
+  char *filename, FILE *infile);
 void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
 void  update_calc_table(real *xi_opt, real *xi_calc, int);
 void  write_pot_table3(pot_table_t *, char *);
@@ -511,7 +509,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 #ifdef APOT
 
-#define APOT_STEPS 1000		/* number of sampling points for analytic pot */
+#define APOT_STEPS 200		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
 
 real apot_punish_value INIT(0.);
