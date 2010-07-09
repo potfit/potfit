@@ -31,11 +31,11 @@
 #ifdef MPI
 #include "potfit.h"
 
-/******************************************************************************
-*
-* set up mpi
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * set up mpi
+ *
+ ****************************************************************/
 
 void init_mpi(int argc, char **argv)
 {
@@ -47,17 +47,17 @@ void init_mpi(int argc, char **argv)
 }
 
 
-/******************************************************************************
-*
-* shut down mpi
-*
-******************************************************************************/
+/****************************************************************
+ *
+ * shut down mpi
+ *
+ ****************************************************************/
 
 void shutdown_mpi(void)
 {
   if (!init_done) {
     fprintf(stderr,
-	    "MPI will be killed, because the initialization is not yet complete.\n");
+      "MPI will be killed, because the initialization is not yet complete.\n");
     fprintf(stderr, "This is not a bug!\n\n");
     fflush(stderr);
     MPI_Abort(MPI_COMM_WORLD, -1);
@@ -84,11 +84,12 @@ void debug_mpi(int i)
   fflush(stdout);
 }
 
-/***************************************************************************
+/****************************************************************
  *
  * broadcast_param: Broadcast parameters etc to other nodes
  *
- **************************************************************************/
+ ****************************************************************/
+
 #ifdef PAIR
 #define MAX_MPI_COMPONENTS 8
 #elif defined EAM
@@ -307,7 +308,7 @@ void broadcast_params()
       opt_pot.first = (int *)malloc(apot_table.number * sizeof(int));
     }
     MPI_Bcast(apot_table.n_glob, apot_table.globals, MPI_INT, 0,
-	      MPI_COMM_WORLD);
+      MPI_COMM_WORLD);
     MPI_Bcast(opt_pot.first, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
     if (myid > 0) {
       for (i = 0; i < apot_table.globals; i++)
@@ -346,10 +347,10 @@ void broadcast_params()
   }
   MPI_Scatter(atom_len, 1, MPI_INT, &myatoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatter(atom_dist, 1, MPI_INT, &firstatom, 1, MPI_INT, 0,
-	      MPI_COMM_WORLD);
+    MPI_COMM_WORLD);
   MPI_Scatter(conf_len, 1, MPI_INT, &myconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatter(conf_dist, 1, MPI_INT, &firstconf, 1, MPI_INT, 0,
-	      MPI_COMM_WORLD);
+    MPI_COMM_WORLD);
   /* this broadcasts all atoms */
   conf_atoms = (atom_t *)malloc(myatoms * sizeof(atom_t));
   for (i = 0; i < natoms; i++) {
@@ -365,18 +366,18 @@ void broadcast_params()
   conf_uf = (int *)malloc(myconf * sizeof(real));
   conf_us = (int *)malloc(myconf * sizeof(real));
   MPI_Scatterv(volumen, conf_len, conf_dist, REAL,
-	       conf_vol, myconf, REAL, 0, MPI_COMM_WORLD);
+    conf_vol, myconf, REAL, 0, MPI_COMM_WORLD);
   MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT,
-	       conf_uf, myconf, MPI_INT, 0, MPI_COMM_WORLD);
+    conf_uf, myconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatterv(usestress, conf_len, conf_dist, MPI_INT,
-	       conf_us, myconf, MPI_INT, 0, MPI_COMM_WORLD);
+    conf_us, myconf, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-/***************************************************************************
+/****************************************************************
  *
  * scatter dynamic neighbor table
  *
- **************************************************************************/
+ ****************************************************************/
 
 void broadcast_neighbors()
 {

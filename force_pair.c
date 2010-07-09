@@ -143,12 +143,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       first = calc_pot.first[col];
       if (format == 0 || format == 3)
 	spline_ed(calc_pot.step[col], xi + first,
-		  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-		  calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-		  calc_pot.last[col] - first + 1,
-		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1,
+	  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
 
 #ifndef MPI
@@ -227,11 +227,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      if (uf)
 		phi_val =
 		  splint_comb_dir(&calc_pot, xi, neigh->slot[0],
-				  neigh->shift[0], neigh->step[0], &phi_grad);
+		  neigh->shift[0], neigh->step[0], &phi_grad);
 	      else
 		phi_val =
 		  splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
-			     neigh->step[0]);
+		  neigh->step[0]);
 	      /* avoid double counting if atom is interacting with a
 	         copy of itself */
 	      if (self) {
@@ -283,7 +283,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    /* sum up forces */
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-				SQR(forces[k + 2]));
+	      SQR(forces[k + 2]));
 	  }			/* second loop over atoms */
 	}
 
@@ -321,16 +321,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     /* gather forces, energies, stresses */
     /* forces */
     MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
-		forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+      forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
-		forces
-		+ natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+      forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
     MPI_Gatherv(forces + natoms * 3 + nconf +
-		6 * firstconf, myconf, MPI_STENS,
-		forces + natoms * 3 + nconf,
-		conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      6 * firstconf, myconf, MPI_STENS,
+      forces + natoms * 3 + nconf,
+      conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* MPI */
 
     /* root process exits this function now */
