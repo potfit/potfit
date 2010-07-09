@@ -195,8 +195,10 @@ void anneal(real *xi)
 		write_pot_table(&opt_pot, tempfile);
 #else
 		for (n = 0; n < ndim; n++) {
-		  apot_table.values[apot_table.idxpot[n]][apot_table.
-		    idxparam[n]] = xopt[idx[n]];
+		/* *INDENT-OFF* */
+		  apot_table.values[apot_table.idxpot[n]]
+			  [apot_table.idxparam[n]] = xopt[idx[n]];
+		/* *INDENT-ON* */
 		}
 	      write_pot_table(&apot_table, tempfile);
 #endif

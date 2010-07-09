@@ -344,9 +344,7 @@ EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
-#ifdef STRESS
-EXTERN char *stress_comp[6];
-#endif
+EXTERN char *component[6];	/* componentes of vectors and tensors */
 
 /******************************************************************************
 *
@@ -470,7 +468,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 #ifdef APOT
 
-#define APOT_STEPS 1000		/* number of sampling points for analytic pot */
+#define APOT_STEPS 200		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
 
 real apot_punish_value INIT(0.);

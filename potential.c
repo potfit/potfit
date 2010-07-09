@@ -446,8 +446,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     printf("Enabled chemical potentials.\n");
 
-#ifdef CN
     /* disable composition nodes for now */
+#ifdef CN
     /* read composition nodes */
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
       if (strcmp("type", buffer) == 0)
@@ -538,8 +538,10 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     j = apt->globals;
     global_pot = apt->number;
 #ifdef PAIR
-    if (enable_cp)
+    if (enable_cp) {
       global_pot = apt->number + 1;
+      i = global_pot;
+    }
 #endif
 
     /* allocate memory for global parameters */
@@ -982,7 +984,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
   if (have_globals) {
-    i = apt->number;
+/*    i = apt->number;*/
+    i = global_pot;
     for (j = 0; j < apt->globals; j++) {
       *val = apt->values[i][j];
       *list = apt->values[i][j];
@@ -1003,7 +1006,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 #ifdef PAIR
   if (enable_cp) {
     init_chemical_potential(ntypes);
-    i = apt->number + have_globals;
+    i = apt->number;
     for (j = 0; j < (ntypes + compnodes); j++) {
       *val = apt->values[i][j];
       pt->idx[k] = l++;
@@ -1018,7 +1021,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
 #ifdef NOPUNISH
   warning("Gauge degrees of freedom are NOT fixed!");
-#endif
+#endif /* NOPUNISH */
 
   init_calc_table(pt, &calc_pot);
   return;

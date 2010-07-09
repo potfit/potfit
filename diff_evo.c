@@ -305,7 +305,7 @@ void diff_evo(real *xi)
       printf("\nCould not find any improvements in the last %d steps.\n",
 	MAX_UNCHANGED);
       printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
-      init_population(x1, xi, D, log(restart * exp(10)));
+      init_population(x1, xi, D, log(restart * exp(10)) / evo_width);
       for (i = 0; i < NP; i++) {
 #ifdef APOT
 	opt = calc_vect(x1[i]);

@@ -573,7 +573,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       tmpsum += SQR(forces[dummy_p + ntypes]);
 #endif /* NORESCALE */
     }				/* only root process */
-#endif /* NOPUNISH */
+#endif /* !NOPUNISH */
     sum = tmpsum;		/* global sum = local sum  */
 #ifdef MPI
     /* reduce global sum */
