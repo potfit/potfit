@@ -45,7 +45,7 @@
 real *xicom, *delcom;
 
 real linmin(real xi[], real del[], real fxi1, real *x1, real *x2,
-	    real *fret1, real *fret2)
+  real *fret1, real *fret2)
 /* takes vector del (direction of search), xi (originating point),
    n,m (dimensions),
    x1, x2 (two best locations),

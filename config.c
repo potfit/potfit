@@ -235,19 +235,19 @@ void read_config(char *filename)
 	/* read the box vectors */
 	if (res[1] == 'X') {
 	  if (sscanf(res + 3, "%lf %lf %lf\n",
-		     &box_x.x, &box_x.y, &box_x.z) == 3)
+	      &box_x.x, &box_x.y, &box_x.z) == 3)
 	    h_boxx++;
 	  else
 	    error("Error in box_x vector\n");
 	} else if (res[1] == 'Y') {
 	  if (sscanf(res + 3, "%lf %lf %lf\n",
-		     &box_y.x, &box_y.y, &box_y.z) == 3)
+	      &box_y.x, &box_y.y, &box_y.z) == 3)
 	    h_boxy++;
 	  else
 	    error("Error in box_y vector\n");
 	} else if (res[1] == 'Z') {
 	  if (sscanf(res + 3, "%lf %lf %lf\n",
-		     &box_z.x, &box_z.y, &box_z.z) == 3)
+	      &box_z.x, &box_z.y, &box_z.z) == 3)
 	    h_boxz++;
 	  else
 	    error("Error in box_z vector\n");
@@ -296,17 +296,17 @@ void read_config(char *filename)
 		    strcpy(elements[j], msg);
 		  } else {
 		    fprintf(stderr,
-			    " --> Warning <--\nFound element mismatch in configuration file!\n");
+		      " --> Warning <--\nFound element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';
 		    fprintf(stderr, "Mismatch found in configuration %d.\n",
-			    nconf);
+		      nconf);
 		    fprintf(stderr,
-			    "Expected element >> %s << but found element >> %s <<.\n",
-			    elements[j], msg);
+		      "Expected element >> %s << but found element >> %s <<.\n",
+		      elements[j], msg);
 		    fprintf(stderr,
-			    "You can use list_config to identify that configuration.\n\n");
+		      "You can use list_config to identify that configuration.\n\n");
 		    error("Please check your configuration files!");
 		  }
 		}
@@ -320,17 +320,17 @@ void read_config(char *filename)
 		    strcpy(elements[j], msg);
 		  } else {
 		    fprintf(stderr,
-			    " --> Warning <--\nFound element mismatch in configuration file!\n");
+		      " --> Warning <--\nFound element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';
 		    fprintf(stderr, "Mismatch found in configuration %d.\n",
-			    nconf);
+		      nconf);
 		    fprintf(stderr,
-			    "Expected element >> %s << but found element >> %s <<.\n",
-			    elements[j], msg);
+		      "Expected element >> %s << but found element >> %s <<.\n",
+		      elements[j], msg);
 		    fprintf(stderr,
-			    "You can use list_config to identify that configuration.\n\n");
+		      "You can use list_config to identify that configuration.\n\n");
 		    error("Please check your configuration files!");
 		  }
 		}
@@ -344,8 +344,8 @@ void read_config(char *filename)
 	/* read stress */
 	else if (res[1] == 'S') {
 	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
-		     &(stresses->yy), &(stresses->zz), &(stresses->xy),
-		     &(stresses->yz), &(stresses->zx)) == 6)
+	      &(stresses->yy), &(stresses->zz), &(stresses->xy),
+	      &(stresses->yz), &(stresses->zx)) == 6)
 	    h_stress++;
 	  else
 	    error("Error in stress tensor\n");
@@ -366,8 +366,8 @@ void read_config(char *filename)
 
       /* read stress tensor */
       if (6 != fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
-		      &(stresses->yy), &(stresses->zz), &(stresses->xy),
-		      &(stresses->yz), &(stresses->zx)))
+	  &(stresses->yy), &(stresses->zz), &(stresses->xy),
+	  &(stresses->yz), &(stresses->zx)))
 	error("No stresses given -- old format");
       usestress[nconf] = 1;
     }
@@ -384,13 +384,13 @@ void read_config(char *filename)
       k = 3 * (natoms + i);
       atom = atoms + natoms + i;
       if (7 > fscanf(infile, "%d %lf %lf %lf %lf %lf %lf\n", &(atom->typ),
-		     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z),
-		     &(atom->force.x), &(atom->force.y), &(atom->force.z)))
+	  &(atom->pos.x), &(atom->pos.y), &(atom->pos.z),
+	  &(atom->force.x), &(atom->force.y), &(atom->force.z)))
 	error("Corrupt configuration file");
       if (atom->typ >= ntypes || atom->typ < 0)
 	error("Corrupt configuration file: Incorrect atom type");
       atom->absforce = sqrt(SQR(atom->force.x) +
-			    SQR(atom->force.y) + SQR(atom->force.z));
+	SQR(atom->force.y) + SQR(atom->force.z));
       atom->conf = nconf;
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
@@ -402,8 +402,8 @@ void read_config(char *filename)
     iheight.z = sqrt(SPROD(tbox_z, tbox_z));
 
     if ((ceil(rcutmax * iheight.x) > 30000) ||
-	(ceil(rcutmax * iheight.y) > 30000) ||
-	(ceil(rcutmax * iheight.z) > 30000))
+      (ceil(rcutmax * iheight.y) > 30000) ||
+      (ceil(rcutmax * iheight.z) > 30000))
       error("Very bizarre small cell size - aborting");
 
     cell_scale[0] = (int)ceil(rcutmax * iheight.x);
@@ -418,18 +418,17 @@ void read_config(char *filename)
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_z.x, box_z.y, box_z.z);
     fprintf(stderr, "Box normals:\n");
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_x.x, tbox_x.y,
-	    tbox_x.z);
+      tbox_x.z);
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_y.x, tbox_y.y,
-	    tbox_y.z);
+      tbox_y.z);
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_z.x, tbox_z.y,
-	    tbox_z.z);
+      tbox_z.z);
     fprintf(stderr, "Box heights:\n");
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n",
-	    1. / iheight.x, 1. / iheight.y, 1. / iheight.z);
+      1. / iheight.x, 1. / iheight.y, 1. / iheight.z);
     fprintf(stderr, "Potential range:  %f\n", rcutmax);
     fprintf(stderr, "Periodic images needed: %d %d %d\n\n",
-	    2 * cell_scale[0] + 1, 2 * cell_scale[1] + 1,
-	    2 * cell_scale[2] + 1);
+      2 * cell_scale[0] + 1, 2 * cell_scale[1] + 1, 2 * cell_scale[2] + 1);
 #endif /* DEBUG */
 
     /* compute the neighbor table */
@@ -454,16 +453,14 @@ void read_config(char *filename)
 		if (r <= rmin[typ1 * ntypes + typ2]) {
 		  sh_dist = nconf;
 		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf,
-			  r);
+		    r);
 		  fprintf(stderr, "%d (type %d): %f %f %f\n", i - natoms,
-			  typ1, atoms[i].pos.x, atoms[i].pos.y,
-			  atoms[i].pos.z);
+		    typ1, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
 		  fprintf(stderr, "%d (type %d): %f %f %f\n", j - natoms,
-			  typ2, dd.x, dd.y, dd.z);
+		    typ2, dd.x, dd.y, dd.z);
 		}
 		atoms[i].neigh = (neigh_t *)realloc(atoms[i].neigh,
-						    (atoms[i].n_neigh +
-						     1) * sizeof(neigh_t));
+		  (atoms[i].n_neigh + 1) * sizeof(neigh_t));
 		dd.x /= r;
 		dd.y /= r;
 		dd.z /= r;
@@ -498,7 +495,7 @@ void read_config(char *filename)
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			     nconf, i - natoms);
+			nconf, i - natoms);
 		      fflush(stdout);
 		      error("short distance in config.c!");
 		    }
@@ -538,7 +535,7 @@ void read_config(char *filename)
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			     typ1, typ2);
+			typ1, typ2);
 		      fflush(stdout);
 		      error("short distance in config.c!");
 		    }
@@ -579,7 +576,7 @@ void read_config(char *filename)
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			     typ1, typ2);
+			typ1, typ2);
 		      fflush(stdout);
 		      error("short distance in config.c!");
 		    }
@@ -620,7 +617,7 @@ void read_config(char *filename)
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			     typ1, typ2);
+			typ1, typ2);
 		      fflush(stdout);
 		      error("short distance in config.c!");
 		    }
@@ -691,12 +688,12 @@ void read_config(char *filename)
 	  ccos = (rij * rij + rik * rik - rjk * rjk) / (2 * rij * rik);
 	  dccos =
 	    (rij * rij * rik -
-	     (rik * rik - rjk * rjk) * rik) / (2 * rij * rij * rik * rik);
+	    (rik * rik - rjk * rjk) * rik) / (2 * rij * rij * rik * rik);
 	  atoms[i].angl_part[ijk].cos = ccos;
 	  atoms[i].angl_part[ijk].dcos_ij = dccos;
 	  dccos =
 	    (rik * rik * rij -
-	     (rij * rij - rjk * rjk) * rij) / (2 * rij * rij * rik * rik);
+	    (rij * rij - rjk * rjk) * rij) / (2 * rij * rij * rik * rik);
 	  atoms[i].angl_part[ijk].dcos_ik = dccos;	/* three different angular derivativies are used at calculation of force */
 	  dccos = (rjk) / (rij * rij) * rrjk.x / rjk;
 	  atoms[i].angl_part[ijk].dcos_jk_x = dccos;	/* three different angular derivativies are used at calculation of force */
@@ -710,7 +707,7 @@ void read_config(char *filename)
 	  if (format == 3) {
 	    if (ccos > 1) {
 	      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-		     typ1, typ2);
+		typ1, typ2);
 	      fflush(stdout);
 	      error("wrong cos, it is strange!");
 	    }
@@ -732,7 +729,7 @@ void read_config(char *filename)
 	    rr = rij - calc_pot.begin[col];
 	    if (rr < 0) {
 	      printf("%f %f %d %d %d\n", rij, calc_pot.begin[col], col,
-		     atoms[i].typ, atoms[i].angl_part[ijk].typ2);
+		atoms[i].typ, atoms[i].angl_part[ijk].typ2);
 	      fflush(stdout);
 	      error("short distance in config.c!");
 	    }
@@ -754,7 +751,7 @@ void read_config(char *filename)
 	    rr = rik - calc_pot.begin[col];
 	    if (rr < 0) {
 	      printf("%f %f %d %d %d\n", rik, calc_pot.begin[col], col,
-		     atoms[i].typ, atoms[i].angl_part[ijk].typ3);
+		atoms[i].typ, atoms[i].angl_part[ijk].typ3);
 	      fflush(stdout);
 	      error("short distance in config.c!");
 	    }
@@ -791,8 +788,7 @@ void read_config(char *filename)
   /* be pedantic about too large ntypes */
   if ((max_type + 1) < ntypes) {
     fprintf(stderr,
-	    "There are less than %d atom types in your configurations!\n",
-	    ntypes);
+      "There are less than %d atom types in your configurations!\n", ntypes);
     error("Please adjust \"ntypes\" in your parameter file.");
   }
 
@@ -876,7 +872,7 @@ void read_config(char *filename)
     strcat(pairname, ".pair");
     pairfile = fopen(pairname, "w");
     fprintf(pairfile, "# radial distribution file for %d potential(s)\n",
-	    paircol);
+      paircol);
 
     for (i = 0; i < paircol * pair_steps; i++)
       pair_table[i] = 0;
@@ -884,8 +880,8 @@ void read_config(char *filename)
     for (i = 0; i < ntypes; i++)
       for (k = 0; k < ntypes; k++)
 	pair_dist[(i <=
-		   k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes +
-		  i - (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
+	    k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes +
+	  i - (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
 
     for (k = 0; k < paircol; k++) {
       for (i = 0; i < natoms; i++) {
@@ -900,7 +896,7 @@ void read_config(char *filename)
 #ifdef DEBUG
 	    if (atoms[i].neigh[j].r <= 1) {
 	      fprintf(stderr, "Short distance (%f) found.\n",
-		      atoms[i].neigh[j].r);
+		atoms[i].neigh[j].r);
 	      fprintf(stderr, "\tatom=%d neighbor=%d\n", i, j);
 	    }
 #endif
@@ -916,7 +912,7 @@ void read_config(char *filename)
       for (i = 0; i < pair_steps; i++) {
 	pair_table[k * pair_steps + i] /= (max_count * 10 / 6);
 	fprintf(pairfile, "%f %f\n", i * pair_dist[k],
-		pair_table[k * pair_steps + i]);
+	  pair_table[k * pair_steps + i]);
       }
       if (k != (paircol - 1))
 	fprintf(pairfile, "\n\n");
@@ -1009,15 +1005,15 @@ void read_config(char *filename)
   /* print diagnostic message and close file */
   printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
-	 nconf, w_force, w_stress);
+    nconf, w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
       printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i],
-	     100. * na_type[nconf][i] / natoms);
+	100. * na_type[nconf][i] / natoms);
     else
       printf("%d type %d (%.2f%%)", na_type[nconf][i], i,
-	     100. * na_type[nconf][i] / natoms);
+	100. * na_type[nconf][i] / natoms);
     if (i != (ntypes - 1))
       printf(", ");
   }
@@ -1025,8 +1021,8 @@ void read_config(char *filename)
   printf(")\nfrom file %s\n", filename);
   if (sh_dist) {
     sprintf(msg,
-	    "Distances too short, last occurence conf %d, see above for details",
-	    sh_dist);
+      "Distances too short, last occurence conf %d, see above for details",
+      sh_dist);
     error(msg);
   }
   return;
@@ -1064,7 +1060,7 @@ void update_slots()
 	atoms[i].neigh[j].step[0] = calc_pot.step[col0];
 	atoms[i].neigh[j].shift[0] =
 	  (rr -
-	   atoms[i].neigh[j].slot[0] * calc_pot.step[col0]) *
+	  atoms[i].neigh[j].slot[0] * calc_pot.step[col0]) *
 	  calc_pot.invstep[col0];
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[0] += calc_pot.first[col0];
@@ -1078,7 +1074,7 @@ void update_slots()
 	atoms[i].neigh[j].step[1] = calc_pot.step[col1];
 	atoms[i].neigh[j].shift[1] =
 	  (rr -
-	   atoms[i].neigh[j].slot[1] * calc_pot.step[col1]) *
+	  atoms[i].neigh[j].slot[1] * calc_pot.step[col1]) *
 	  calc_pot.invstep[col1];
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[1] += calc_pot.first[col1];
@@ -1093,7 +1089,7 @@ void update_slots()
 	atoms[i].neigh[j].step[2] = calc_pot.step[col2];
 	atoms[i].neigh[j].shift[2] =
 	  (rr -
-	   atoms[i].neigh[j].slot[2] * calc_pot.step[col2]) *
+	  atoms[i].neigh[j].slot[2] * calc_pot.step[col2]) *
 	  calc_pot.invstep[col2];
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[2] += calc_pot.first[col2];
@@ -1107,7 +1103,7 @@ void update_slots()
 	atoms[i].neigh[j].step[3] = calc_pot.step[col3];
 	atoms[i].neigh[j].shift[3] =
 	  (rr -
-	   atoms[i].neigh[j].slot[3] * calc_pot.step[col3]) *
+	  atoms[i].neigh[j].slot[3] * calc_pot.step[col3]) *
 	  calc_pot.invstep[col3];
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[3] += calc_pot.first[col3];

@@ -43,8 +43,22 @@
 
 function write_header(n)
 {
+    if (n==1 || n==6)
+	    inter="PAIR";
+    else if (n==7 || n==12)
+	    inter="EAM";
+    else if (n==5 || n==13 || n==24)
+	    inter="ADP";
+    else if (n==3) {
+	print "potential type is not unique for 3 potentials, assuming EAM" > "/dev/stderr";
+	inter="EAM";
+	    }
+    else {
+	printf "Unknown number (%d) of potential functions, aborting.\n",n > "/dev/stderr";
+        exit;
+	    }
     print "#F 0 "n;
-    print "#T EAM";
+    printf "#T %s\n",inter;
     printf "#I";
     for (i=0;i<n;i++)
 	printf " 0";
@@ -118,10 +132,10 @@ function write_pot(name)
 	printf "gamma %s",valminmax(1,-10,10);
     }
     else if (name=="csw") {
-	printf "a_1 %s",valminmax(0.2,-1,1);
-	printf "a_2 %s",valminmax(0.2,-1,1);
-	printf "alpha %s",valminmax(2,2,5);
-	printf "beta %s",valminmax(3,1,5);
+	printf "a_1 %s",valminmax(0.2,-2,2);
+	printf "a_2 %s",valminmax(0.2,-2,2);
+	printf "alpha %s",valminmax(2,1,10);
+	printf "beta %s",valminmax(3,0.5,5);
     }
     else if (name=="universal") {
 	printf "F_0 %s",valminmax(-1,-10,10);
@@ -160,6 +174,29 @@ function write_pot(name)
     }
     else if (name=="const") {
 	printf "c %s",valminmax(1,0,10);
+    }
+    else if (name=="poly_5") {
+	printf "F_0 %s",valminmax(1,-100,100);
+	printf "F_1 %s",valminmax(1,-100,100);
+	printf "q_1 %s",valminmax(1,-100,100);
+	printf "q_2 %s",valminmax(1,-100,100);
+	printf "q_3 %s",valminmax(1,-100,100);
+    }
+    else if (name=="double_morse") {
+	printf "E_1 %s",valminmax(1,-10,10);
+	printf "alpha_1 %s",valminmax(1,-10,10);
+	printf "r_0 %s",valminmax(1,-10,10);
+	printf "E_2 %s",valminmax(1,-10,10);
+	printf "alpha_2 %s",valminmax(1,-10,10);
+	printf "r_1 %s",valminmax(1,-10,10);
+	printf "delta %s",valminmax(1,-10,10);
+    }
+    else if (name=="double_exp") {
+	printf "a %s",valminmax(1,-10,10);
+	printf "beta_1 %s",valminmax(1,-10,10);
+	printf "r_0 %s",valminmax(1,-10,10);
+	printf "beta_2 %s",valminmax(1,-10,10);
+	printf "r_1 %s",valminmax(1,-10,10);
     }
     if (do_smooth)
         if (global_co)

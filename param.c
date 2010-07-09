@@ -71,7 +71,7 @@ int   curline;			/* number of current line */
 */
 
 int getparam(char *param_name, void *param, PARAMTYPE ptype,
-	     int pnum_min, int pnum_max)
+  int pnum_min, int pnum_max)
 {
   static char errmsg[256];
   char *str;
@@ -83,8 +83,8 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
     str = strtok(NULL, " \t\r\n");
     if (str == NULL) {
       sprintf(errmsg,
-	      "Parameter for %s missing in line %d\nstring expected!\n",
-	      param_name, curline);
+	"Parameter for %s missing in line %d\nstring expected!\n",
+	param_name, curline);
       error(errmsg);
     } else
       strncpy((char *)param, str, pnum_max);
@@ -93,8 +93,8 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
     str = strtok(NULL, " \t\r\n");
     if (str == NULL) {
       sprintf(errmsg,
-	      "Parameter for %s missing in line %d\nstring expected!\n",
-	      param_name, curline);
+	"Parameter for %s missing in line %d\nstring expected!\n",
+	param_name, curline);
       error(errmsg);
     } else
       *((char **)param) = strdup(str);
@@ -104,10 +104,9 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
       str = strtok(NULL, " \t\r\n");
       if (str == NULL) {
 	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-		param_name, curline);
+	  param_name, curline);
 	sprintf(errmsg + strlen(errmsg),
-		"Integer vector of length %u expected!\n",
-		(unsigned)pnum_min);
+	  "Integer vector of length %u expected!\n", (unsigned)pnum_min);
 	error(errmsg);
       } else
 	((int *)param)[i] = atoi(str);
@@ -125,9 +124,9 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
       str = strtok(NULL, " \t\r\n");
       if (str == NULL) {
 	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-		param_name, curline);
+	  param_name, curline);
 	sprintf(errmsg + strlen(errmsg),
-		"Double vector of length %u expected!\n", (unsigned)pnum_min);
+	  "Double vector of length %u expected!\n", (unsigned)pnum_min);
 	error(errmsg);
       } else
 	((real *)param)[i] = atof(str);
