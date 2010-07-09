@@ -354,9 +354,7 @@ EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
-#ifdef STRESS
-EXTERN char *stress_comp[6];
-#endif
+EXTERN char *component[6];	/* componentes of vectors and tensors */
 
 // variables needed for option dipole
 #ifdef DIPOLE
@@ -400,14 +398,14 @@ void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 #ifdef APOT
 void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
-		      FILE *infile);
+  FILE *infile);
 void  write_apot_table(apot_table_t *, char *);
 #endif
 void  read_pot_table(pot_table_t *, char *);
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
-		      char *filename, FILE *infile);
+  char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
-		      char *filename, FILE *infile);
+  char *filename, FILE *infile);
 void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
 void  update_calc_table(real *xi_opt, real *xi_calc, int);
 void  write_pot_table3(pot_table_t *, char *);
@@ -451,7 +449,7 @@ real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
 real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
-		      real *grad);
+  real *grad);
 real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ne(pot_table_t *pt, real *xi, int col, real r);
@@ -490,7 +488,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 #ifdef APOT
 
-#define APOT_STEPS 1000		/* number of sampling points for analytic pot */
+#define APOT_STEPS 200		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
 
 real apot_punish_value INIT(0.);

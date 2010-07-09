@@ -137,7 +137,7 @@ void free_all_pointers()
 /****************************************************************
  *
  *  real normdist(): Returns a normally distributed random variable
- * 	Uses random() to generate a random number.
+ * 	Uses dsfmt PRNG to generate a random number.
  *
  *****************************************************************/
 

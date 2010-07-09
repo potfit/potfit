@@ -194,14 +194,13 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-	      /* *INDENT-OFF* */
 		for (n = 0; n < ndim; n++) {
-		  apot_table.values[apot_table.
-				    idxpot[n]][apot_table.idxparam[n]] =
-		    xopt[idx[n]];
+		/* *INDENT-OFF* */
+		  apot_table.values[apot_table.idxpot[n]]
+			  [apot_table.idxparam[n]] = xopt[idx[n]];
+		/* *INDENT-ON* */
 		}
-/*               *INDENT-ON**/
-		write_pot_table(&apot_table, tempfile);
+	      write_pot_table(&apot_table, tempfile);
 #endif
 	    }
 	  }
@@ -233,7 +232,7 @@ void anneal(real *xi)
 	if (NULL != ff) {
 	  printf
 	    ("Annealing terminated in presence of break flagfile \"%s\"!\n",
-	     flagfile);
+	    flagfile);
 	  printf("Temperature was %f, returning optimum configuration\n", T);
 	  for (n = 0; n < ndimtot; n++)
 	    xi[n] = xopt[n];
