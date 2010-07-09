@@ -217,7 +217,6 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
 	us = conf_us[h - firstconf];
-
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
@@ -335,7 +334,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		}
 		
 		forces[energy_p + h] += fnval;
-		
+
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad;
 		  tmp_force.y = neigh->dist.y * grad;
@@ -426,24 +425,18 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	}
 #endif /* STRESS */
 
-
 	/* T H I R D loop: calculate whole dipole moment for every atom */
 	real rp, dp_sum;
 	int dp_converged = 0, dp_it = 0;
-	real max_diff = 10.;
+	real max_diff = 100000.;
 
 	while(dp_converged == 0) {
 	  dp_sum = 0;
-	  
 	  for (i = 0; i < inconf[h]; i++) {    //atoms	  
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    typ1 = atom->typ;
 	
 	      if(xi_opt[idx[ne + ntypes] + typ1]) {
-
-		atom->E_ind.x = (1 - dp_mix) * atom->E_temp.x + dp_mix * atom->E_old.x;
-		atom->E_ind.y = (1 - dp_mix) * atom->E_temp.y + dp_mix * atom->E_old.y;
-		atom->E_ind.z = (1 - dp_mix) * atom->E_temp.z + dp_mix * atom->E_old.z;
 
 		atom->p_ind.x = xi_opt[idx[ne + ntypes] + typ1] * (atom->E_stat.x + atom->E_ind.x) + atom->p_sr.x;
 		atom->p_ind.y = xi_opt[idx[ne + ntypes] + typ1] * (atom->E_stat.y + atom->E_ind.y) + atom->p_sr.x;
@@ -486,22 +479,27 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    }
 	  }
 
-
 	  for (i = 0; i < inconf[h]; i++) {    //atoms	  
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
+	    typ1 = atom->typ;
 
 	    if(xi_opt[idx[ne + ntypes] + typ1]) {
-	      dp_sum += SQR(atom->E_old.x - atom->E_temp.x);
-	      dp_sum += SQR(atom->E_old.y - atom->E_temp.y);
-	      dp_sum += SQR(atom->E_old.z - atom->E_temp.z);
+
+	      atom->E_ind.x = (1 - dp_mix) * atom->E_temp.x + dp_mix * atom->E_old.x;
+	      atom->E_ind.y = (1 - dp_mix) * atom->E_temp.y + dp_mix * atom->E_old.y;
+	      atom->E_ind.z = (1 - dp_mix) * atom->E_temp.z + dp_mix * atom->E_old.z;
+	     
+	      dp_sum += SQR(atom->E_old.x - atom->E_ind.x);
+	      dp_sum += SQR(atom->E_old.y - atom->E_ind.y);
+	      dp_sum += SQR(atom->E_old.z - atom->E_ind.z);
 	    }
 	  }
-
-	  dp_sum = sqrt(dp_sum) / natoms;
-
-	  if (dp_it > 1) {
+	  
+	  dp_sum = sqrt(dp_sum);
+	  dp_sum /= inconf[h];
+	  if (dp_it) {
 	    if( (dp_sum > max_diff) || (dp_it > 50) ) {
-	      warning("Convergence error in dipole iteration loop");
+	      //  printf("Convergence error in dipole iteration loop %d\n", dp_it);
 	      dp_converged = 1;
 	      for (i = 0; i < inconf[h]; i++) {    //atoms	  
 		atom = conf_atoms + i + cnfstart[h] - firstatom;
@@ -526,15 +524,53 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	
 	
 
-	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
-          /* end F O U R T H loop over atoms */ 
+	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */     
+	for (i = 0; i < inconf[h]; i++) {    //atoms	  
+	  atom = conf_atoms + i + cnfstart[h] - firstatom;
+	  typ1 = atom->typ;
 
+	  if(xi_opt[idx[ne + ntypes] + typ1]) {
+	   
+	    fnval =  - SPROD(atom->p_ind, atom->E_ind);
+	    forces[energy_p + h] += fnval;
+
+		if (uf) {
+		  tmp_force.x = - atom->E_ind.x;
+		  tmp_force.y = - atom->E_ind.y;
+		  tmp_force.z = - atom->E_ind.z;
+		  forces[k] += tmp_force.x;
+		  forces[k + 1] += tmp_force.y;
+		  forces[k + 2] += tmp_force.z;
+		  /* actio = reactio */
+		  l = 3 * neigh->nr;
+		  forces[l] -= tmp_force.x;
+		  forces[l + 1] -= tmp_force.y;
+		  forces[l + 2] -= tmp_force.z;
+
+#ifdef STRESS
+		  /* calculate pair stresses */
+		  if (us) {
+		    tmp_force.x *= neigh->r;
+		    tmp_force.y *= neigh->r;
+		    tmp_force.z *= neigh->r;
+		    stresses = stress_p + 6 * h;
+		    forces[stresses] -= neigh->dist.x * tmp_force.x;
+		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		    forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		    forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  }
+#endif /* STRESS */
+		}
+ 
+	  }
+	}  /* end F O U R T H loop over atoms */ 
 
 
       }				/* end M A I N loop over configurations */
     }				/* parallel region */
-
-
+ 
     /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
