@@ -695,7 +695,7 @@ void ms_shift(real r, real *p, real *f)
 
 /******************************************************************************
 *
-* tail of coloumb potential 
+* tail of coloumb potential and first derivative
 *
 ******************************************************************************/
 
@@ -704,12 +704,12 @@ void coulomb_value(real r, real *ftail, real *gtail)
   static real x[4];
 
   x[0] = r * r;
-  x[1] = 2 * dp_kappa / sqrt(M_PI);
+  x[1] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
   x[2] = dp_kappa * dp_kappa;
   x[3] = exp(-x[0]*x[2]);
 
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
-  *gtail = -(*ftail + x[1] * x[3])/x[0];
+  *gtail = (-*ftail + x[1] * x[3])/ r;
 }
 
 /******************************************************************************

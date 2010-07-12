@@ -307,12 +307,12 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 		if (uf) {
 		  fnval_tail = splint_comb_dir_dipole(&calc_pot, xi_d, 
-						      neigh->slot[0] - 1000 * neigh->col[0],
+						      neigh->slot[0] - APOT_STEPS * neigh->col[0],
 						      neigh->shift[0],
 						      neigh->step[0], &grad_tail);
 		} else {
 		  fnval_tail = splint_dir(&calc_pot, xi_d, 
-					  neigh->slot[0] - 1000 * neigh->col[0],
+					  neigh->slot[0] - APOT_STEPS * neigh->col[0],
 					  neigh->shift[0],
 					  neigh->step[0]);
 		}	       

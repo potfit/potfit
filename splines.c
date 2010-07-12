@@ -232,6 +232,7 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
     ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
 }
 
+#ifdef DIPOLE
 /****************************************************************************
  *
  * splint_comb_dir_dipole: calculates spline interpolation of a function
@@ -260,6 +261,7 @@ real splint_comb_dir_dipole(pot_table_t *pt, real *xi, int k, real b, real step,
   return a * p1 + b * p2 +
     ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
 }
+#endif
 
 /******************************************************************************
  *

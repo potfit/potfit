@@ -235,19 +235,21 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->param_name = (char ***)malloc((size + 4) * sizeof(char **));
     apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
     apt->pmax = (real **)malloc((size + 4) * sizeof(real *));
+    apt->invar_par = (int **)malloc((size + 4) * sizeof(int *));
     for (i = 0; i < 2; i++) {
       apt->values[size + i] = (real *)malloc(ntypes * sizeof(real));
       apt->param_name[size + i] = (char **)malloc(ntypes * sizeof(char *));
       apt->pmin[size + i] = (real *)malloc(ntypes * sizeof(real));
       apt->pmax[size + i] = (real *)malloc(ntypes * sizeof(real));
+      apt->invar_par[size + i] = (int *)malloc((size + i) * sizeof(int));
     }
     for (i = 2; i < 4; i++) {
       apt->values[size + i] = (real *)malloc(size * sizeof(real));
       apt->param_name[size + i] = (char **)malloc(size * sizeof(char *));
       apt->pmin[size + i] = (real *)malloc(size * sizeof(real));
       apt->pmax[size + i] = (real *)malloc(size * sizeof(real));
+      apt->invar_par[size + i] = (int *)malloc((size + i) * sizeof(int));
     }
-    apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->charge = apt->values[size];
     apt->dp_alpha = apt->values[size + 1];
     apt->dp_b = apt->values[size + 2];
@@ -408,7 +410,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     reg_for_free(apt->pmax[size], "apt->pmax[size]");
   }
 #endif /* PAIR && APOT */
-#if defined DIPOLE && defined APOT
+#if defined DIPOLE
   reg_for_free(apt->charge, "apt->charge");
   reg_for_free(apt->dp_alpha, "apt->dp_alpha");
   reg_for_free(apt->dp_b, "apt->dp_b");
@@ -421,6 +423,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
   reg_for_free(apt->pmax[size + 1], "apt->pmax[size + 1]");
   reg_for_free(apt->pmax[size + 2], "apt->pmax[size + 2]");
   reg_for_free(apt->pmax[size + 3], "apt->pmax[size + 3]");
+  reg_for_free(apt->invar_par[size], "apt->invar_par[size]");
+  reg_for_free(apt->invar_par[size + 1], "apt->invar_par[size + 1]");
+  reg_for_free(apt->invar_par[size + 2], "apt->invar_par[size + 2]");
+  reg_for_free(apt->invar_par[size + 3], "apt->invar_par[size + 3]");
 #endif
   reg_for_free(rcut, "rcut");
   reg_for_free(rmin, "rmin");
@@ -441,7 +447,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   FILE *infile)
 {
-  int   i, j, k, l, ret_val, invar_par_dp;
+  int   i, j, k, l, ret_val;
   char  msg[255];
   char  buffer[255];
   char  name[255];
@@ -571,7 +577,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
  /* read dipole parameters */
-  invar_par_dp=0;
   for (i = 0; i < ntypes; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i], &apt->charge[i],
@@ -581,8 +586,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	      i);
       error(msg);
     }
+    apt->invar_par[apt->number][i] = 0;
     if (apt->pmin[apt->number][i] == apt->pmax[apt->number][i]){
-      invar_par_dp++;
+      apt->invar_par[apt->number][i]++;
     }
     reg_for_free(apt->param_name[apt->number][i], "apt->param_name[apt->number][i]");
   }
@@ -595,8 +601,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	      i);
       error(msg);
     }
+    apt->invar_par[apt->number + 1][i] = 0;
     if (apt->pmin[apt->number + 1][i] == apt->pmax[apt->number + 1][i]){
-       invar_par_dp++;
+      apt->invar_par[apt->number + 1][i]++;
     }
     reg_for_free(apt->param_name[apt->number + 1][i], "apt->param_name[apt->number + 1][i]");
   }
@@ -608,11 +615,12 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       sprintf(msg, "Could not read parameter dp_b for potential #%d\n",
 	      i);
       error(msg);
-    }
-    if (apt->pmin[apt->number + 2][i] == apt->pmax[apt->number + 2][i]){
-       invar_par_dp++;
-    }
-    reg_for_free(apt->param_name[apt->number + 2][i], "apt->param_name[apt->number + 2][i]");
+   }
+   apt->invar_par[apt->number + 2][i] = 0;
+   if (apt->pmin[apt->number + 2][i] == apt->pmax[apt->number + 2][i]){
+     apt->invar_par[apt->number + 2][i]++;
+   }
+   reg_for_free(apt->param_name[apt->number + 2][i], "apt->param_name[apt->number + 2][i]");
   }
   for (i = 0; i < apt->number; i++) {
     apt->param_name[apt->number + 3][i] = (char *)malloc(30 * sizeof(char));
@@ -623,8 +631,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 	      i);
       error(msg);
     }
+    apt->invar_par[apt->number + 3][i] = 0;
     if (apt->pmin[apt->number + 3][i] == apt->pmax[apt->number + 3][i]){
-       invar_par_dp++;
+      apt->invar_par[apt->number + 3][i]++;
     }
     reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[apt->number + 3][i]");
   }
@@ -999,7 +1008,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
 
+#ifdef DIPOLE
   apt->total_ne_par = apt->total_par;
+#endif
 
   /* if we have global parameters, are they actually used ? */
   if (have_globals) {
@@ -1107,11 +1118,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
 
-#ifdef DIPOLE 
-   apt->total_par -= invar_par_dp;
-   pt->idxlen -= invar_par_dp;
-#endif
-
   if (have_globals) {
 /*    i = apt->number;*/
     i = global_pot;
@@ -1152,19 +1158,31 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   for (i = apt->number; i < apt->number + 2; i++) {
     for (j = 0; j < (ntypes); j++) {
       *val = apt->values[i][j];
-      pt->idx[k] = l++;
-      apt->idxpot[k] = i;
-      apt->idxparam[k++] = j;
       val++;
+      if (!apt->invar_par[i][j]) {
+	pt->idx[k] = l++;
+	apt->idxpot[k] = i;
+	apt->idxparam[k++] = j;
+      } else {
+	l++;
+	apt->total_par -= apt->invar_par[i][j];
+	pt->idxlen -= apt->invar_par[i][j];
+      }
     }
   }
   for (i = apt->number + 2; i < apt->number + 4; i++) {
     for (j = 0; j < (apt->number); j++) {
       *val = apt->values[i][j];
-      pt->idx[k] = l++;
-      apt->idxpot[k] = i;
-      apt->idxparam[k++] = j;
       val++;
+      if (!apt->invar_par[i][j]) {
+	pt->idx[k] = l++;
+	apt->idxpot[k] = i;
+	apt->idxparam[k++] = j;
+      } else {
+	l++;
+	apt->total_par -= apt->invar_par[i][j];
+	pt->idxlen -= apt->invar_par[i][j];
+      }
     }
   }
   pt->idxlen += (2 * ntypes);
@@ -1595,9 +1613,13 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  if (calct->first == NULL || calct->last == NULL
 	      || calct->step == NULL || calct->invstep == NULL
 	      || calct->xcoord == NULL || calct->table == NULL
-	      || calct->table_dipole == NULL || calct->d2tab == NULL
-	      || calct->d2tab_dipole == NULL || calct->idx == NULL)
-	    error("Cannot allocate info block for calc potential table\n");
+	      || calct->d2tab == NULL || calct->idx == NULL
+#ifdef DIPOLE
+	      || calct->d2tab_dipole == NULL || calct->table_dipole == NULL)
+#else
+	    )
+#endif
+	  error("Cannot allocate info block for calc potential table\n");
 
 	  /* initialize the calc_pot table */
 	  for (i = 0; i < size; i++) {
