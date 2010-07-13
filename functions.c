@@ -695,7 +695,7 @@ void ms_shift(real r, real *p, real *f)
 
 /******************************************************************************
 *
-* tail of coloumb potential and first derivative
+* tail of coulomb potential and first derivative
 *
 ******************************************************************************/
 
@@ -729,10 +729,34 @@ void coulomb_shift(real r, real *fnval_tail)
 
 /******************************************************************************
 *
-* tail of dipole potential (mehr als eins nötig!) 
+* shifted tail of monopole-dipole potential 
 *
 ******************************************************************************/
 
+void coulomb_dipole_shift(real r, real rc, real *fnval_tail)
+{
+  static real ftail, gtail, ftail_cut, gtail_cut;
+  static real x[3];
+
+  x[0] = r * r;
+  x[1] = rc * rc;
+  x[2] = x[1] * rc;
+
+  coulomb_value(r, &ftail, &gtail);
+  coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
+  *fnval_tail = ftail / x[0] - ftail_cut / x[1] - (r - rc)*(gtail_cut / x[1] - ftail_cut / x[2]); 
+}
+
+/******************************************************************************
+*
+* shifted tail of dipole-dipole potential 
+*
+******************************************************************************/
+
+void dipole_shift(real r, real rc, real *fnval_tail)
+{
+  *fnval_tail = 3;
+}
 
 /******************************************************************************
 *

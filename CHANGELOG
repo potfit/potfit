@@ -1,3 +1,7 @@
+bzr-20100713
++ tail of coloumb-dipole potential
++ full dipole table now initializing 
+
 bzr-20100707
 + third loop in calc_forces_dipole
 

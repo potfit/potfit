@@ -571,6 +571,8 @@ void ms_shift(real, real *, real *);
 real shortrange_value(real, real *, real *, real *);
 void coulomb_value(real, real *, real *);
 void coulomb_shift(real, real*);
+void coulomb_dipole_shift(real, real, real*);
+void dipole_shift(real, real, real*);
 #endif
 
 /* template for new potential function called newpot */
