@@ -6,7 +6,7 @@
 *****************************************************************/
 /*
 *   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf, 
-                        Philipp Beck
+*                       Philipp Beck
 *             Institute for Theoretical and Applied Physics
 *             University of Stuttgart, D-70550 Stuttgart, Germany
 *             http://www.itap.physik.uni-stuttgart.de/
@@ -111,10 +111,6 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
   ne =  apot_table.total_ne_par;
   size = apt->number;
 
-  for(i=0;i<3*APOT_STEPS;i++)
-    printf("%d\t%lf\n", i, xi_d[i]);
-  error("Ajo");
-
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
@@ -168,10 +164,12 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  calc_pot.last[col] - first + 1,
 		  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
-    spline_ed(calc_pot.step[0], xi_d + calc_pot.first[0],
-	      calc_pot.last[0] - calc_pot.first[0] + 1,
-	      *(xi_d + calc_pot.first[0] - 2), 0.0, calc_pot.d2tab_dipole + calc_pot.first[0]);
-    
+    for (col = 0; col < 3; col++) {
+      first = calc_pot.first[col];
+      spline_ed(calc_pot.step[0], xi_d + first,
+		calc_pot.last[0] - first + 1,
+		*(xi_d + first - 2), 0.0, calc_pot.d2tab_dipole + first);
+    }
 
 #ifndef MPI
     myconf = nconf;
@@ -187,7 +185,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, uf, us, stresses;	// config
-      real  fnval, grad, fnval_tail, grad_tail, eval_i, eval_j, p_sr_tail;
+      real  fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
 
@@ -252,6 +250,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    neigh = atom->neigh + j;
 	    typ2 = neigh->typ;
 	    col = neigh->col[0];
+
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 
@@ -267,7 +266,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		    splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
 			       neigh->step[0]);
 		}
-
+	       
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self) {
@@ -312,28 +311,28 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 
 		if (uf) {
 		  fnval_tail = splint_comb_dir_dipole(&calc_pot, xi_d, 
-						      neigh->slot[0] - APOT_STEPS * col,
+						      neigh->slot[0] - (APOT_STEPS + 2) * col,
 						      neigh->shift[0],
 						      neigh->step[0], &grad_tail);
 		} else {
 		  fnval_tail = splint_dir(&calc_pot, xi_d, 
-					  neigh->slot[0] - APOT_STEPS * col,
+					  neigh->slot[0] - (APOT_STEPS + 2) * col,
 					  neigh->shift[0],
 					  neigh->step[0]);
-		}	       
-		
-		eval_i = xi_opt[2*size + ne + typ2] * fnval_tail;
-		if(typ1 == typ2) {
-		  eval_j = eval_i;
-		} else {
-		  eval_j = xi_opt[2*size + ne + typ1] * fnval_tail;
 		}
-		fnval =  xi_opt[2*size + ne + typ1] * eval_i;
-		grad =  xi_opt[2*size + ne + typ1] * xi_opt[2*size + ne + typ2] * grad_tail;
+
+		grad_i = xi_opt[2*size + ne + typ2] * grad_tail;
+		if(typ1 == typ2) {
+		  grad_j = grad_i;
+		} else {
+		  grad_j = xi_opt[2*size + ne + typ1] * grad_tail;
+		}
+		fnval =  xi_opt[2*size + ne + typ1] * xi_opt[2*size + ne + typ2] * fnval_tail;
+		grad =  xi_opt[2*size + ne + typ1] * grad_i;
 		
 		if (self) {
-		  eval_i *= 0.5;
-		  eval_j *= 0.5;  
+		  grad_i *= 0.5;
+		  grad_j *= 0.5;  
 		  fnval *= 0.5;
 		  grad *= 0.5;
 		}
@@ -371,12 +370,12 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		}
 
 		/* calculate static field-contributions */
-		atom->E_stat.x += neigh->dist.x * eval_i;
-		atom->E_stat.y += neigh->dist.y * eval_i;
-		atom->E_stat.z += neigh->dist.z * eval_i; 
-		atoms[neigh->nr].E_stat.x += neigh->dist.x * eval_j;  
-		atoms[neigh->nr].E_stat.y += neigh->dist.y * eval_j;  
-		atoms[neigh->nr].E_stat.z += neigh->dist.z * eval_j;  
+		atom->E_stat.x += neigh->dist.x * grad_i;
+		atom->E_stat.y += neigh->dist.y * grad_i;
+		atom->E_stat.z += neigh->dist.z * grad_i; 
+		atoms[neigh->nr].E_stat.x += neigh->dist.x * grad_j;  
+		atoms[neigh->nr].E_stat.y += neigh->dist.y * grad_j;  
+		atoms[neigh->nr].E_stat.z += neigh->dist.z * grad_j;  
 
 		/* calculate short-range dipoles */
 		if( (xi_opt[2*size + ne + ntypes + typ1]) && (xi_opt[2*size + ne + 2*ntypes + col]) && (xi_opt[3*size + ne + 2*ntypes + col]) ) {	
@@ -394,8 +393,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  atoms[neigh->nr].p_sr.z += xi_opt[2*size + ne + typ1] * neigh->dist.z * p_sr_tail;
 		}
 		
-		}
-	      
+		}	      
 	  }			/* loop over neighbours */
 
 	  /*then we can calculate contribution of forces right away */
@@ -415,25 +413,10 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	}         /* end S E C O N D loop over atoms */
 
 
-	/* energy contributions from short-range and monopole interactions */
-	forces[energy_p + h] *= eweight / (real)inconf[h];
-	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
-#ifdef STRESS
-	/* stress contributions from short-range and monopole interactions */
-	if (uf && us) {
-	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
-	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
-	  }
-	}
-#endif /* STRESS */
-
 	/* T H I R D loop: calculate whole dipole moment for every atom */
 	real rp, dp_sum;
 	int dp_converged = 0, dp_it = 0;
-	real max_diff = 100000.;
+	real max_diff = 1000.;
 
 	while(dp_converged == 0) {
 	  dp_sum = 0;
@@ -471,15 +454,15 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      if (neigh->r < dp_cut) { 
 		if(xi_opt[2*size + ne + ntypes + typ1]) {
 		  rp = SPROD(atoms[neigh->nr].p_ind, neigh->dist);	      
-		  atom->E_temp.x += dp_eps * ( 3 * rp * neigh->dist.x / neigh->r5 - atoms[neigh->nr].p_ind.x / neigh->r3);
-		  atom->E_temp.y += dp_eps * ( 3 * rp * neigh->dist.y / neigh->r5 - atoms[neigh->nr].p_ind.y / neigh->r3);
-		  atom->E_temp.z += dp_eps * ( 3 * rp * neigh->dist.z / neigh->r5 - atoms[neigh->nr].p_ind.z / neigh->r3);
+		  atom->E_temp.x += dp_eps * ( 3 * rp * neigh->dist.x  - atoms[neigh->nr].p_ind.x ) / neigh->r3;
+		  atom->E_temp.y += dp_eps * ( 3 * rp * neigh->dist.y  - atoms[neigh->nr].p_ind.y ) / neigh->r3;
+		  atom->E_temp.z += dp_eps * ( 3 * rp * neigh->dist.z  - atoms[neigh->nr].p_ind.z ) / neigh->r3;
 		}
 		if(xi_opt[2*size + ne + ntypes + typ2] && !self) {
 		  rp = SPROD(atom->p_ind, neigh->dist);
-		  atoms[neigh->nr].E_temp.x += dp_eps * ( 3 * rp * neigh->dist.x / neigh->r5 - atom->p_ind.x / neigh->r3);
-		  atoms[neigh->nr].E_temp.y += dp_eps * ( 3 * rp * neigh->dist.y / neigh->r5 - atom->p_ind.y / neigh->r3);
-		  atoms[neigh->nr].E_temp.z += dp_eps * ( 3 * rp * neigh->dist.z / neigh->r5 - atom->p_ind.z / neigh->r3);
+		  atoms[neigh->nr].E_temp.x += dp_eps * ( 3 * rp * neigh->dist.x - atom->p_ind.x ) / neigh->r3;
+		  atoms[neigh->nr].E_temp.y += dp_eps * ( 3 * rp * neigh->dist.y - atom->p_ind.y ) / neigh->r3;
+		  atoms[neigh->nr].E_temp.z += dp_eps * ( 3 * rp * neigh->dist.z - atom->p_ind.z ) / neigh->r3;
 		}
 	      }
 	    }
@@ -503,9 +486,13 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	  
 	  dp_sum = sqrt(dp_sum);
 	  dp_sum /= inconf[h];
+	
 	  if (dp_it) {
 	    if( (dp_sum > max_diff) || (dp_it > 50) ) {
-	      printf("Convergence error in dipole iteration loop %d\n", dp_it);
+	      // if(dp_sum > max_diff)
+	      // printf("Too large error (%lf) in dipole iteration loop %d\n", dp_sum, dp_it);
+	      // if(dp_it > 50)
+	      // printf("Convergence error: dp_sum = %lf after 50 loops\n", dp_sum);
 	      dp_converged = 1;
 	      for (i = 0; i < inconf[h]; i++) {    //atoms	  
 		atom = conf_atoms + i + cnfstart[h] - firstatom;
@@ -519,7 +506,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  atom->E_ind.z = atom->E_stat.z;
 		}
 	      }
-	    }
+	    } 	    
 	  } 
 
 	  if (dp_sum < dp_tol)
@@ -575,9 +562,25 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  }
 #endif /* STRESS */
 		}
- 
+		
 	  }
 	}  /* end F O U R T H loop over atoms */ 
+	
+
+	/* energy contributions */
+	forces[energy_p + h] *= eweight / (real)inconf[h];
+	forces[energy_p + h] -= force_0[energy_p + h];
+	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
+#ifdef STRESS
+	/* stress contributions */
+	if (uf && us) {
+	  for (i = 0; i < 6; i++) {
+	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
+	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
+	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
+	  }
+	}
+#endif /* STRESS */	
 
 
       }				/* end M A I N loop over configurations */

@@ -774,7 +774,7 @@ real shortrange_value(real r, real *a, real *b, real *c)
   x[3] = x[1] * x[1];
   x[4] = 1 + x[0] + x[1]/2 +  x[2]/6 +  x[3]/24;
   y[0] = r * r;
-  y[1] = (*a * *c) / (r * y[0]);
+  y[1] = (*a * *c) / y[0];
 
   return y[1] * x[4] * exp(-x[0]);
 }

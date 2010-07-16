@@ -1575,6 +1575,9 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 #else
   int  *sp;
 #endif
+#ifdef DIPOLE
+  int k;
+#endif
 
   switch (format) {
 #ifdef APOT
@@ -1622,7 +1625,12 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  error("Cannot allocate info block for calc potential table\n");
 
 	  /* initialize the calc_pot table */
+#ifdef DIPOLE
+	  k = 3 > size ? 3 : size;
+	  for (i = 0; i < k; i++) {
+#else
 	  for (i = 0; i < size; i++) {
+#endif
 	    val = apot_table.values[i];
 	    h = apot_table.values[i][apot_table.n_par[i] - 1];
 	    calct->table[i * APOT_STEPS + i * 2] = 10e30;
@@ -1636,67 +1644,59 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    for (j = 0; j < APOT_STEPS; j++) {
 	      index = i * APOT_STEPS + (i + 1) * 2 + j;
 	      calct->xcoord[index] = calct->begin[i] + j * calct->step[i];
+#ifdef DIPOLE	   
+	      if (i < size) {
+		apot_table.fvalue[i] (calct->xcoord[index], val, &f);
+		calct->table[index] =
+		  smooth_pot[i] ? f * cutoff(calct->xcoord[index],
+					     calct->begin[i], h) : f;
+	      }
+	      if (i == 0) {
+		coulomb_shift(calct->xcoord[index], &f_c);
+		calct->table_dipole[index] =
+		  smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
+					       calct->begin[i], h) : f_c;
+	      }
+	      if (i == 1) {
+		coulomb_dipole_shift(calct->xcoord[index], dp_cut, &f_c);
+		calct->table_dipole[index] =
+		  smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
+					       calct->begin[i], h) : f_c;
+	      }
+	      if (i == 2) {
+		dipole_shift(calct->xcoord[index], dp_cut, &f_c);
+		calct->table_dipole[index] =
+		  smooth_pot[2] ? f_c * cutoff(calct->xcoord[index],
+					       calct->begin[2], h) : f_c;
+	      }
+#else
 	      apot_table.fvalue[i] (calct->xcoord[index], val, &f);
 	      calct->table[index] =
 		smooth_pot[i] ? f * cutoff(calct->xcoord[index],
 					   calct->begin[i], h) : f;
+#endif
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
 	  }
-#ifdef DIPOLE
-	  for (i = 0; i < 3; i++) {
-	    val = apot_table.values[i];
-	    h = apot_table.values[i][apot_table.n_par[i] - 1];
-	    calct->first[i] = (x += 2);
-	    calct->last[i] = (x += APOT_STEPS - 1);
-	    x++;
-	    calct->step[i] =
-	      (calct->end[i] - calct->begin[i]) / (APOT_STEPS - 1);
-	    calct->invstep[i] = 1. / calct->step[i];
-	  }
-	  for (j = 0; j < APOT_STEPS; j++) {
-	    index = 2 + j;
-	    calct->xcoord[index] = calct->begin[0] + j * calct->step[0];
-	    coulomb_shift(calct->xcoord[index], &f_c);
-	    calct->table_dipole[index] =
-	      smooth_pot[0] ? f_c * cutoff(calct->xcoord[index],
-					   calct->begin[0], h) : f_c;
-	  }
-	  for (j = 0; j < APOT_STEPS; j++) {
-	    index = APOT_STEPS + 4 + j;
-	    calct->xcoord[index] = calct->begin[1] + j * calct->step[1];
-	    coulomb_dipole_shift(calct->xcoord[index], dp_cut, &f_c);
-	    calct->table_dipole[index] =
-	      smooth_pot[1] ? f_c * cutoff(calct->xcoord[index],
-					   calct->begin[1], h) : f_c;
-	  }
-	  for (j = 0; j < APOT_STEPS; j++) {
-	    index = 2 * APOT_STEPS + 6 + j;
-	    calct->xcoord[index] = calct->begin[2] + j * calct->step[2];
-	    dipole_shift(calct->xcoord[index], dp_cut, &f_c);
-	    calct->table_dipole[index] =
-	      smooth_pot[2] ? f_c * cutoff(calct->xcoord[index],
-					   calct->begin[2], h) : f_c;
-	  }
-#endif
+	 
 	}
 	break;
 #else
-      case 3:			/* fall through */
-      case 4:
-	calct->len = optt->len;
-	calct->idxlen = optt->idxlen;
-	calct->ncols = optt->ncols;
-	calct->begin = optt->begin;
-	calct->end = optt->end;
-	calct->step = optt->step;
-	calct->invstep = optt->invstep;
-	calct->first = optt->first;
-	calct->last = optt->last;
-	calct->xcoord = optt->xcoord;
-	calct->table = optt->table;
-	calct->d2tab = optt->d2tab;
-	calct->idx = optt->idx;
+  case 3:			/* fall through */
+  case 4:
+    calct->len = optt->len;
+    calct->idxlen = optt->idxlen;
+    calct->ncols = optt->ncols;
+    calct->begin = optt->begin;
+    calct->end = optt->end;
+    calct->step = optt->step;
+    calct->invstep = optt->invstep;
+    calct->first = optt->first;
+    calct->last = optt->last;
+    calct->xcoord = optt->xcoord;
+    calct->table = optt->table;
+    calct->d2tab = optt->d2tab;
+    calct->idx = optt->idx;
 #endif
   }
 }

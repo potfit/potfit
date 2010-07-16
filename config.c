@@ -463,7 +463,6 @@ void read_config(char *filename)
 		atoms[i].neigh[k].dist = dd;
 #ifdef DIPOLE
 	atoms[i].neigh[k].r3 = r*r*r;
-	atoms[i].neigh[k].r5 = r*r*atoms[i].neigh[k].r3;
 #endif
 #ifdef ADP
 		atoms[i].neigh[k].rdist.x = dd.x * r;
