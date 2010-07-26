@@ -1,4 +1,8 @@
-trunk-live
+trunk-20100726
++ [ADP] fix? force calculation
++ [APOT] fix punishments with invariant potentials
+
+trunk-20100709
 + [APOT] reduce number of sampling points for analytic potentials
 + [APOT] makeapot now writes the correct potential type
 + [APOT] fixed a bug with cp and globals

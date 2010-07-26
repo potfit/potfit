@@ -91,13 +91,20 @@ void read_pot_table(pot_table_t *pt, char *filename)
     /* invariant potentials */
     else if (buffer[1] == 'I') {
       if (have_format) {
+#ifdef APOT
+	apot_table.invar_pots = 0;
+#endif /* APOT */
 	/* gradient complete */
 	for (i = 0; i < size; i++) {
 	  str = strtok(((i == 0) ? buffer + 2 : NULL), " \t\r\n");
 	  if (str == NULL) {
 	    error("Not enough items in #I header line.");
-	  } else
+	  } else {
 	    ((int *)invar_pot)[i] = atoi(str);
+#ifdef APOT
+	    apot_table.invar_pots++;
+#endif /* APOT */
+	  }
 	}
 	have_invar = 1;
       } else {
