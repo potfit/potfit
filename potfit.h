@@ -148,6 +148,7 @@ typedef void (*fvalue_pointer) (real, real *, real *);
 typedef struct {
 //   potentials
   int   number;			/* number of analytic potentials */
+  int   invar_pots;		/* number of invariant analytic potentials */
   int  *idxpot;			/* indirect index for potentials */
   char **names;			/* name of analytic potentials */
   real *begin;			/* starting position of potential */

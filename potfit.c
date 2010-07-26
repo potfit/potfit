@@ -216,7 +216,7 @@ int main(int argc, char **argv)
   dummy_p = limit_p + nconf;
 #ifdef APOT
   punish_par_p = dummy_p + 2 * ntypes;
-  punish_pot_p = punish_par_p + apot_table.total_par;
+  punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
 #endif
 #else /* EAM || ADP */
 #ifdef APOT
@@ -300,7 +300,8 @@ int main(int argc, char **argv)
     if (opt) {
       write_pot_table(&apot_table, endpot);
 #endif
-      printf("\nPotential in format %d written to file %s\n", format, endpot);
+      printf("\nPotential in format %d written to file \t%s\n", format,
+	endpot);
     }
     if (writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
@@ -673,7 +674,7 @@ int main(int argc, char **argv)
       if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
 	fprintf
 	  (outfile,
-	  "\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
+	  "\n --> Warning <--\nThis sum contains punishments! Please check your results.\n");
 	fprintf(outfile, "Total sum of punishments = %f\t\t( %.3f%% )\n\n",
 	  tot - f_sum - e_sum - s_sum,
 	  (tot - f_sum - e_sum - s_sum) / tot * 100);

@@ -2,27 +2,25 @@
 #
 # potfit -- The ITAP Force Matching Program
 #
-# Copyright 2002-2009 Institute for Theoretical and Applied Physics,
+# Copyright 2002-2010 Institute for Theoretical and Applied Physics,
 # University of Stuttgart, D-70550 Stuttgart
 #
 ############################################################################
 #
-#     This file is part of potfit.
+#   This file is part of potfit.
 #
-#     potfit is free software; you can redistribute it and/or modify
-#     it under the terms of the GNU General Public License as published by
-#     the Free Software Foundation; either version 2 of the License, or
-#     (at your option) any later version.
+#   potfit is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
 #
-#     potfit is distributed in the hope that it will be useful,
-#     but WITHOUT ANY WARRANTY; without even the implied warranty of
-#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#     GNU General Public License for more details.
+#   potfit is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
 #
-#     You should have received a copy of the GNU General Public License
-#     along with potfit; if not, write to the Free Software
-#     Foundation, Inc., 51 Franklin St, Fifth Floor,
-#     Boston, MA 02110-1301, USA
+#   You should have received a copy of the GNU General Public License
+#   along with potfit; if not, see http://www.gnu.org/licenses/.
 #
 ############################################################################
 #
@@ -107,7 +105,6 @@
 #   CC_OMP		= OpenMP-compiler
 #   CC_MPI		= MPI-compiler
 #   CC_OMPI		= OpenMP+MPI-compiler
-#   BIN_DIR		= ${HOME}/bin
 #   OPT_FLAGS		+= generic flags for optimization
 #   OPT_MPI_FLAGS	+= MPI-specific flags for optimization
 #                          similar variables for other parallelizations
@@ -125,6 +122,24 @@
 #
 # Variables remaining empty need not be mentioned.
 
+###########################################################################
+#
+#  Adjust these variables to your system
+#
+###########################################################################
+
+# Currently the following systems are available:
+# x86_64-icc  	64bit Intel Compiler
+# x86_64-gcc    64bit GNU Compiler
+# i386-icc 	32bit Intel Compiler
+# i386-icc  	32bit GNU Compiler
+SYSTEM 		= x86_64-icc
+
+# This is the directory where the potfit binary will be moved to
+BIN_DIR 	= ${HOME}/bin
+
+# Base directory of your installation of the MKL
+MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
 
 ###########################################################################
 #
@@ -132,31 +147,57 @@
 #
 ###########################################################################
 
-MV		= mv      # program to move imd binary to ${BIN_DIR}
+MV		= $(shell basename `which mv`)
+STRIP 		= $(shell basename `which strip`)
 LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 OMP_FLAGS	+= -DOMP
 OMPI_FLAGS	+= -DMPI -DOMP
 DEBUG_FLAGS	+= -DDEBUG
-MKLDIR          =  /common/linux/paket/intel/mkl91
-MKLPATH         =  ${MKLDIR}/lib/
-#CINCLUDE        =  -I${MKLDIR}/include/
+MKLPATH         = ${MKLDIR}/lib
 
 ###########################################################################
 #
-#  flags for 64bit-Linux
+#  flags for 64bit
 #
 ###########################################################################
 
-# AMD Opteron, gcc3
-ifeq (x86_64-gcc,${IMDSYS})
+ifeq (x86_64-icc,${SYSTEM})
+  CC_SERIAL     = icc
+  CC_MPI        = mpicc
+  CC_OMP        = mpicc
+  CC_OMPI       = mpicc
+  MPICH_CC      = icc
+  MPICH_CLINKER = icc
+  OPT_FLAGS     += -fast
+  MPI_FLAGS     +=
+  OMP_FLAGS     += -openmp
+  OMPI_FLAGS    += -openmp
+  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
+  PROF_FLAGS    += -prof_gen
+  MPI_LIBS      +=
+  LFLAGS        += -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a -Wl,--start-group 
+  LFLAGS 	+= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
+# acml
+#   ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
+#   CINCLUDE     += -I$(ACMLPATH)/include
+#   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
+#   LIBS		:= $(ACMLPATH)/lib/libacml.a \
+# 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
+# intel mkl
+  MKLPATH       = ${MKLDIR}/lib/em64t/
+  CINCLUDE      =  -I${MKLDIR}/include/
+  export        MPICH_CC MPICH_CLINKER
+endif
+
+
+ifeq (x86_64-gcc,${SYSTEM})
   CC_SERIAL     = gcc
   CC_MPI        = mpicc
-  OMPI_MPICC      = gcc
-#  MPICH_CLINKER = gcc
-  BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
-#  FFTW_DIR     = /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS     += -O -march=native -Wno-unused
+  CC_OMPI       = mpicc
+  OMPI_CC 	= gcc
+  MPICH_CLINKER = gcc
+  OPT_FLAGS     += -O3 -march=native -Wno-unused -pipe
   DEBUG_FLAGS   += -g -O -Wall
   PROF_FLAGS    += -pg -g
   PROF_LIBS    += -pg -g
@@ -172,374 +213,48 @@ ifeq (x86_64-gcc,${IMDSYS})
 #  LIBS		:= $(ACMLPATH)/lib/libacml_mp.a \
 		   -L${ACMLPATH}/lib -lpthread -lacml_mp -lgfortran
 # intel mkl
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
+   LFLAGS        += -L${MKLPATH} ${MKLPATH}/libmkl_solver_ilp64_sequential.a -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
+  #LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
 		   -L${MKLPATH} -lguide -lpthread
+  export        OMPI_CC MPICH_CLINKER
 endif
 
-# Intel EM64T "AMD inside", icc
-ifeq (x86_64-icc,${IMDSYS})
-  CC_SERIAL     = icc
-  CC_MPI        = mpicc
-  MPICH_CC      = icc
-  MPICH_CLINKER = icc
-  BIN_DIR       = ${HOME}/bin/${HOSTTYPE}
-  OPT_FLAGS     += -O3 -ip # -fno-builtin # -axP # remove -axP for Opteron
-  MPI_FLAGS     +=
-  OMP_FLAGS     += -openmp
-  OMPI_FLAGS    += -openmp
-  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
-  PROF_FLAGS    += -prof_gen
-  RCD_FLAGS     += # -DRCD -rcd
-  MPI_LIBS      +=
-  LFLAGS        += -i-static -openmp
-# acml
-#   ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
-#   CINCLUDE     += -I$(ACMLPATH)/include
-#   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
-#   LIBS		:= $(ACMLPATH)/lib/libacml.a \
-# 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
-# intel mkl
-  MKLPATH       = ${MKLDIR}/lib/em64t/
-  CINCLUDE        =  -I${MKLDIR}/include/
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a  ${MKLPATH}/libmkl_em64t.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        MPICH_CC MPICH_CLINKER
-endif
 
-# Athlon MP or XP, icc
-ifeq (AthlonMP-icc,${IMDSYS})
+###########################################################################
+#
+#  flags for 32bit
+#
+###########################################################################
+
+ifeq (i386-icc,${SYSTEM})
   CC_SERIAL	= icc
   CC_OMP	= icc
   CC_MPI	= mpicc
   CC_OMPI	= mpicc
   MPICH_CC      = icc
   MPICH_CLINKER = icc
-  BIN_DIR	= ${HOME}/bin/${HOSTTYPE}
-  FFTW_DIR 	= /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS	+= -O -ip -tpp6 -axK #-static
-  OMP_FLAGS	+= -openmp
-  OMPI_FLAGS	+= -openmp
-  DEBUG_FLAGS	+= -g
-  PROF_FLAGS	+= -prof_gen
-  RCD_FLAGS	+= -DRCD -rcd
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-
-  export MPICH_CC MPICH_CLINKER
-endif
-
-# Athlon MP or XP, gcc3
-ifeq (AthlonMP-gcc3,${IMDSYS})
-  CC_SERIAL	= gcc
-  CC_MPI	= mpicc
-  MPICH_CC      = gcc
-  MPICH_CLINKER = gcc
-  BIN_DIR	= ${HOME}/bin/${HOSTTYPE}
-  FFTW_DIR 	= /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS	+= -O -march=athlon-mp # -static
-  DEBUG_FLAGS	+= -g
-  PROF_FLAGS	+= -g3 -pg
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        MPICH_CC #MPICH_CLINKER
-endif
-
-# Pentium 4 or Xeon, icc
-ifeq (P4-icc,${IMDSYS})
-  CC_SERIAL	= icc
-  CC_OMP	= icc
-  CC_MPI	= mpicc
-  CC_OMPI	= mpicc
-  MPICH_CC      = icc
-  MPICH_CLINKER = icc
-  BIN_DIR	= ${HOME}/bin/${HOSTTYPE}
-  FFTW_DIR 	= /common/linux/paket/fftw-3.0.1
   OPT_FLAGS	+= -O -ip -tpp7 # -static
   OMP_FLAGS	+= -openmp
   OMPI_FLAGS	+= -openmp
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -prof_gen
-  RCD_FLAGS	+= -DRCD -rcd
   LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
 		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC MPICH_CLINKER
 endif
 
-# Pentium 4 or Xeon, gcc3
-ifeq (P4-gcc3,${IMDSYS})
+
+ifeq (i386-gcc3,${SYSTEM})
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
   MPICH_CC      = gcc
   MPICH_CLINKER = gcc
-  BIN_DIR	= ${HOME}/bin/${HOSTTYPE}
-  FFTW_DIR 	= /common/linux/paket/fftw-3.0.1
   OPT_FLAGS	+= -O -march=pentium4 # -static
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
   LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
 		   -L${MKLPATH} -lguide -lpthread
   export        MPICH_CC # MPICH_CLINKER
-endif
-
-# Pentium III, icc
-ifeq (P3-icc,${IMDSYS})
-  CC_SERIAL	= icc
-  CC_OMP	= icc
-  CC_MPI	= mpicc
-  CC_OMPI	= mpicc
-  MPICH_CC      = icc
-  MPICH_CLINKER = icc
-  BIN_DIR	= ${HOME}/bin/${HOSTTYPE}
-  FFTW_DIR 	= /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS	+= -O -ip -tpp6 -axK # -static
-  OMP_FLAGS	+= -openmp
-  OMPI_FLAGS	+= -openmp
-  DEBUG_FLAGS	+= -g
-  PROF_FLAGS	+= -prof_gen
-  RCD_FLAGS	+= -DRCD -rcd
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        MPICH_CC MPICH_CLINKER
-endif
-
-# Pentium III, gcc3
-ifeq (P3-gcc3,${IMDSYS})
-  CC_SERIAL	= gcc
-  CC_MPI	= mpicc
-  MPICH_CC      = gcc
-  MPICH_CLINKER = gcc
-  BIN_DIR	= ${HOME}/bin/${HOSTTYPE}
-  FFTW_DIR 	= /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS	+= -O -march=pentium3 # -static
-  DEBUG_FLAGS	+= -g
-  PROF_FLAGS	+= -g3 -pg
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        MPICH_CC # MPICH_CLINKER
-endif
-
-# generic ia32 CPU, gcc 2.95 - slow!
-ifeq (ia32-gcc2,${IMDSYS})
-  CC_SERIAL	= gcc
-  CC_MPI	= mpicc
-  MPICH_CC      = gcc
-  MPICH_CLINKER = gcc
-  BIN_DIR	= ${HOME}/bin/${HOSTTYPE}
-  FFTW_DIR 	= /common/linux/paket/fftw-3.0.1
-  OPT_FLAGS	+= -O3
-  DEBUG_FLAGS	+= -g
-  PROF_FLAGS	+= -g3 -pg
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        MPICH_CC MPICH_CLINKER
-endif
-
-###########################################################################
-#
-#  flags for IA64-Linux
-#
-###########################################################################
-
-# Itanium 2, ecc
-ifeq (ia64-ecc,${IMDSYS})
-  CC_SERIAL	= ecc
-  CC_OMP	= ecc
-  CC_MPI	= mpicc
-  CC_OMPI	= mpicc
-  BIN_DIR	= ${HOME}/bin/ia64
-  OPT_FLAGS	+= -O -ipo #-static
-  OMP_FLAGS	+= -openmp
-  OMPI_FLAGS	+= -openmp
-  PROF_FLAGS	+= -prof_gen
-  DEBUG_FLAGS	+= -g
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-###########################################################################
-#
-#  flags for alpha
-#
-###########################################################################
-
-# alpha ev56 or higher, cc
-ifeq (alpha-cc,${IMDSYS})
-  CC_SERIAL	= cc
-  CC_OMP	= cc
-  BIN_DIR	= ${HOME}/bin/alpha
-  OPT_FLAGS	+= -DALPHA -O3 -float -fp_reorder -arch ev56 -tune host
-  OMP_FLAGS	+= -mp
-  OMPI_FLAGS	+= -mp
-  PROF_FLAGS	+= -prof_gen
-  DEBUG_FLAGS	+= -g3 -pg
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-# alpha, gcc2 - slow!
-ifeq (alpha-gcc2,${IMDSYS})
-  CC_SERIAL	= gcc
-  BIN_DIR	= ${HOME}/bin/$alpha
-  OPT_FLAGS	+= -DALPHA -O3
-  PROF_FLAGS	+= -g3 -pg
-  DEBUG_FLAGS	+= -g
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-###########################################################################
-#
-#  flags for IRIX
-#
-###########################################################################
-
-# irix-mips3, cc
-ifeq (irix-cc,${IMDSYS})
-  CC_SERIAL	= cc
-  CC_OMP	= cc
-  BIN_DIR	= ${HOME}/bin/iris4d
-  OPT_FLAGS	+= -Dsgi -O3 -n32 -mips3 -xansi -woff 1174
-  OMP_FLAGS	+= -mp
-  OMPI_FLAGS	+= -mp
-  PROF_FLAGS	+= -g3
-  DEBUG_FLAGS	+= -Dsgi -g  -n32 -mips3 -xansi -woff 1174
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-# irix, gcc2 - slow!
-ifeq (irix-gcc2,${IMDSYS})
-  CC_SERIAL	= gcc
-  BIN_DIR	= ${HOME}/bin/iris4d
-  OPT_FLAGS	+= -Dsgi -O3
-  PROF_FLAGS	+= -g3 -pg
-  DEBUG_FLAGS	+= -Dsgi -g
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-###########################################################################
-#
-#  flags for sparc
-#
-###########################################################################
-
-# UltraSparc III, cc
-ifeq (USparc3-cc,${IMDSYS})
-  CC_SERIAL	= cc
-  CC_OMP	= cc
-  CC_MPI	= mpcc
-  BIN_DIR	= ${HOME}/bin/sparc
-  MPI_LIBS	+= -lmpi
-  OPT_FLAGS	+= -fast -xtarget=ultra3 -xarch=v9b
-  OMP_FLAGS	+= -xopenmp
-  OMPI_FLAGS	+= -xopenmp
-  PROF_FLAGS	+= -p
-  DEBUG_FLAGS	+= -g -xO3
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-# sparc, gcc2 - slow!
-ifeq (sparc-gcc2,${IMDSYS})
-  CC_SERIAL	= gcc
-  BIN_DIR	= ${HOME}/bin/sparc
-  OPT_FLAGS	+= -O3
-  PROF_FLAGS	+= -g3 -pg
-  DEBUG_FLAGS	+= -g
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-###########################################################################
-#
-#  flags for T3E
-#
-###########################################################################
-
-# Cray T3E, cc
-ifeq (T3E-cc,${IMDSYS})
-  CC_MPI	= cc
-  CC_PACX	= cc
-  BIN_DIR	= ${HOME}/bin/t3e
-  MPI_LIBS	+= -lmpi
-  PROF_LIBS	+= -lapp
-  OPT_FLAGS	+= -Dt3e -O3 -htolerant,aggress,report=isf
-  PROF_FLAGS	+= -Gf -happrentice
-  DEBUG_FLAGS	+= -Dt3e -g
-  PACX_DIR	= ${HOME}/WORK/PACX
-  PACX_LIBS	+= -L ${PACX_DIR}/lib -lpacx -llzo -lmpi
-  PACX_FLAGS	+= -I${PACX_DIR}/include
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-###########################################################################
-#
-#  flags for Hitachi SR8000
-#
-###########################################################################
-
-# Hitachi sr8k, cc
-ifeq (sr8k-cc,${IMDSYS})
-  CC_MPI		= mpicc
-  CC_OMP		= cc
-  CC_OMPI		= mpicc
-  BIN_DIR		= ${HOME}/bin/SR8000
-  OPT_FLAGS		+= -O4 +Op -msg=e
-  OPT_MPI_FLAGS		+= -noparallel
-  OPT_OMP_FLAGS		+= -omp -par
-  OPT_OMPI_FLAGS	+= -omp -par
-  DEBUG_FLAGS		+= -g
-  DEBUG_OMP_FLAGS	+= -omp -par=1 -O2
-  DEBUG_OMPI_FLAGS	+= -omp -par   -O2
-  PROF_FLAGS		+= -Xfuncmonitor
-  PROF_LIBS		+= -lpl
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-# Hitachi sr8k, xcc cross compiler
-ifeq (sr8k-xcc,${IMDSYS})
-  CC_MPI		= xmpicc
-  CC_OMP		= xcc
-  CC_OMPI		= xmpicc
-  BIN_DIR		= hwwfs1:sr8k/bin/SR8000
-  MV			= scp   # we move binary to different machine
-  OPT_FLAGS		+= -O4 +Op -msg=e
-  OPT_MPI_FLAGS		+= -noparallel
-  OPT_OMP_FLAGS		+= -omp -par
-  OPT_OMPI_FLAGS	+= -omp -par
-  DEBUG_FLAGS		+= -g
-  DEBUG_OMP_FLAGS	+= -omp -par=1 -O2
-  DEBUG_OMPI_FLAGS	+= -omp -par   -O2
-  PROF_FLAGS		+= -Xfuncmonitor
-  PROF_LIBS		+= -lpl
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-endif
-
-###########################################################################
-#
-#  flags for IBM SP
-#
-###########################################################################
-
-# Power4 regatta
-ifeq (Power4-cc,${IMDSYS})
-  CC_SERIAL	= xlc
-  CC_MPI	= mpcc
-  CC_OMP	= xlc_r
-  CC_OMPI	= mpcc_r
-  BIN_DIR	= ${HOME}/bin/powerpc
-  OPT_FLAGS	+= -O4 -w
-  OMP_FLAGS	+= -DUSE_WALLTIME -qsmp=omp
-  OMPI_FLAGS	+= -qsmp=omp
-  DEBUG_FLAGS	+= -g
-  PROF_FLAGS	+= -p
-  PROF_LIBS	+= -lpl
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
 endif
 
 
@@ -784,6 +499,11 @@ functions.o: functions.c
 # How to link
 ${MAKETARGET}: ${OBJECTS}
 	${CC} ${LFLAGS} -o $@ ${OBJECTS} ${LIBS}
+ifneq (,${STRIP})
+ifeq (,$(findstring debug,${MAKETARGET}))
+	${STRIP} --strip-unneeded $@
+endif
+endif
 	${MV} $@ ${BIN_DIR}; rm -f $@
 
 # First recursion only set the MAKETARGET Variable
@@ -791,11 +511,9 @@ ${MAKETARGET}: ${OBJECTS}
 ifneq (,${CC})
 	${MAKE} MAKETARGET='$@' STAGE2
 else
-ifneq (,${IMDSYS})
-	@echo "IMDSYS variable ${IMDSYS} is not recognized"
-else
-	@echo "IMDSYS variable is not set"
-endif
+	@echo "There is no compiler defined for this option."
+	@echo -e "Please adjust the Makefile.\n"
+	@exit
 endif
 
 potfit:
@@ -823,13 +541,7 @@ else
 	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
 	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 endif
-ifeq (,${CC})
-	@echo "There is no compiler defined for this option."
-	@echo -e "Please adjust the Makefile.\n"
-	@exit
-else
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
-endif
 else
 	@echo 'No TARGET specified.'
 endif
