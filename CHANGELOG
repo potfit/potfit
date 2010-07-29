@@ -1,3 +1,6 @@
+bzr-20100729
++ tail of dipole potential -> all electrostatic potential-tails (five) implemented
+
 bzr-20100713
 + tail of coloumb-dipole potential
 + full dipole table now initializing 

@@ -243,7 +243,7 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
  *
  *****************************************************************************/
 
-real splint_comb_dir_dipole(pot_table_t *pt, real *xi, int k, real b, real step,
+real splint_comb_dir_c(pot_table_t *pt, real *xi, int k, real b, real step,
 		     real *grad)
 {
   real  a, p1, p2, d21, d22;
@@ -253,9 +253,67 @@ real splint_comb_dir_dipole(pot_table_t *pt, real *xi, int k, real b, real step,
 
   a = 1.0 - b;
   p1 = xi[k];
-  d21 = pt->d2tab_dipole[k++];
+  d21 = pt->d2tab_c[k++];
   p2 = xi[k];
-  d22 = pt->d2tab_dipole[k];
+  d22 = pt->d2tab_c[k];
+  *grad = (p2 - p1) / step +
+    ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
+  return a * p1 + b * p2 +
+    ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
+}
+
+/****************************************************************************
+ *
+ * splint_comb_dir_dipole: calculates spline interpolation of a function
+ *            (return value)
+ *            and its gradiend (grad), equidistant and non-eqd x[i]
+ *            with known index position 
+ *            for coulomb interaction
+ *
+ *****************************************************************************/
+
+real splint_comb_dir_cd(pot_table_t *pt, real *xi, int k, real b, real step,
+		     real *grad)
+{
+  real  a, p1, p2, d21, d22;
+
+
+  /* indices into potential table */
+
+  a = 1.0 - b;
+  p1 = xi[k];
+  d21 = pt->d2tab_cd[k++];
+  p2 = xi[k];
+  d22 = pt->d2tab_cd[k];
+  *grad = (p2 - p1) / step +
+    ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
+  return a * p1 + b * p2 +
+    ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
+}
+
+/****************************************************************************
+ *
+ * splint_comb_dir_dipole: calculates spline interpolation of a function
+ *            (return value)
+ *            and its gradiend (grad), equidistant and non-eqd x[i]
+ *            with known index position 
+ *            for coulomb interaction
+ *
+ *****************************************************************************/
+
+real splint_comb_dir_d(pot_table_t *pt, real *xi, int k, real b, real step,
+		     real *grad)
+{
+  real  a, p1, p2, d21, d22;
+
+
+  /* indices into potential table */
+
+  a = 1.0 - b;
+  p1 = xi[k];
+  d21 = pt->d2tab_d[k++];
+  p2 = xi[k];
+  d22 = pt->d2tab_d[k];
   *grad = (p2 - p1) / step +
     ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
   return a * p1 + b * p2 +

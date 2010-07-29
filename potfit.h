@@ -150,8 +150,12 @@ typedef struct {
   real *table;			/* the actual data */
   real *d2tab;			/* second derivatives of table data for spline int */
 #ifdef DIPOLE
-  real *table_dipole;           /* static data for tail of coulomb potential */
-  real *d2tab_dipole;	   	/* second derivatives of table data for spline int */
+  real *table_c;                /* static data for tail of coulomb potential */
+  real *d2tab_c;	   
+  real *table_cd;               /* static data for tail of coulomb-dipole potential */
+  real *d2tab_cd;	   
+  real *table_d;                /* static data for tail of dipole potential */
+  real *d2tab_d;	   
 #endif
   int  *idx;			/* indirect indexing */
 } pot_table_t;
@@ -467,7 +471,11 @@ real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
 		      real *grad);
 #ifdef DIPOLE
-real  splint_comb_dir_dipole(pot_table_t *pt, real *xi, int k, real b, real step,
+real  splint_comb_dir_c(pot_table_t *pt, real *xi, int k, real b, real step,
+		      real *grad);
+real  splint_comb_dir_cd(pot_table_t *pt, real *xi, int k, real b, real step,
+		      real *grad);
+real  splint_comb_dir_d(pot_table_t *pt, real *xi, int k, real b, real step,
 		      real *grad);
 #endif
 real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
@@ -567,11 +575,11 @@ void  poly_5_value(real, real *, real *);
 #ifdef DIPOLE
 /* functions for dipole calculations  */
 void ms_shift(real, real *, real *);
-real shortrange_value(real, real *, real *, real *);
 void coulomb_value(real, real *, real *);
 void coulomb_shift(real, real*);
-void coulomb_dipole_shift(real, real, real*);
-void dipole_shift(real, real, real*);
+void coulomb_dipole_shift(real, real*);
+void dipole_shift(real, real*);
+real shortrange_value(real, real *, real *, real *);
 #endif
 
 /* template for new potential function called newpot */

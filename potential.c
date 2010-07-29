@@ -1570,13 +1570,13 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 {
   int   i, size;
 #ifdef APOT
-  real *val, f, f_c, h;
+  real *val, f, h;
   int   j, x = 0, index;
 #else
   int  *sp;
 #endif
 #ifdef DIPOLE
-  int k;
+  real f_c, f_cd, f_d;
 #endif
 
   switch (format) {
@@ -1606,10 +1606,18 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  calct->d2tab = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->d2tab, "calct->d2tab");
 #ifdef DIPOLE
-	  calct->table_dipole = (real *)malloc(calct->len * sizeof(real));
-	  reg_for_free(calct->table_dipole, "calct->table_dipole");
-	  calct->d2tab_dipole = (real *)malloc(calct->len * sizeof(real));
-	  reg_for_free(calct->d2tab_dipole, "calct->d2tab_dipole");
+	  calct->table_c = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->table_c, "calct->table_c");
+	  calct->d2tab_c = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->d2tab_c, "calct->d2tab_c");
+	  calct->table_cd = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->table_cd, "calct->table_cd");
+	  calct->d2tab_cd = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->d2tab_cd, "calct->d2tab_cd");
+	  calct->table_d = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->table_d, "calct->table_d");
+	  calct->d2tab_d = (real *)malloc(calct->len * sizeof(real));
+	  reg_for_free(calct->d2tab_d, "calct->d2tab_d");
 #endif
 	  calct->idx = (int *)malloc(calct->len * sizeof(int));
 	  reg_for_free(calct->idx, "calct->idx");
@@ -1618,23 +1626,27 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	      || calct->xcoord == NULL || calct->table == NULL
 	      || calct->d2tab == NULL || calct->idx == NULL
 #ifdef DIPOLE
-	      || calct->d2tab_dipole == NULL || calct->table_dipole == NULL)
-#else
-	    )
+	      || calct->d2tab_c == NULL || calct->table_c == NULL
+	      || calct->d2tab_cd == NULL || calct->table_cd == NULL
+	      || calct->d2tab_d == NULL || calct->table_d == NULL
 #endif
+	      )
 	  error("Cannot allocate info block for calc potential table\n");
 
 	  /* initialize the calc_pot table */
-#ifdef DIPOLE
-	  k = 3 > size ? 3 : size;
-	  for (i = 0; i < k; i++) {
-#else
 	  for (i = 0; i < size; i++) {
-#endif
 	    val = apot_table.values[i];
 	    h = apot_table.values[i][apot_table.n_par[i] - 1];
 	    calct->table[i * APOT_STEPS + i * 2] = 10e30;
 	    calct->table[i * APOT_STEPS + i * 2 + 1] = 0;
+#ifdef DIPOLE	    
+	    calct->table_c[i * APOT_STEPS + i * 2] = 10e30;
+	    calct->table_c[i * APOT_STEPS + i * 2 + 1] = 0;
+	    calct->table_cd[i * APOT_STEPS + i * 2] = 10e30;
+	    calct->table_cd[i * APOT_STEPS + i * 2 + 1] = 0;
+	    calct->table_d[i * APOT_STEPS + i * 2] = 10e30;
+	    calct->table_d[i * APOT_STEPS + i * 2 + 1] = 0;
+#endif
 	    calct->first[i] = (x += 2);
 	    calct->last[i] = (x += APOT_STEPS - 1);
 	    x++;
@@ -1644,36 +1656,24 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    for (j = 0; j < APOT_STEPS; j++) {
 	      index = i * APOT_STEPS + (i + 1) * 2 + j;
 	      calct->xcoord[index] = calct->begin[i] + j * calct->step[i];
-#ifdef DIPOLE	   
-	      if (i < size) {
-		apot_table.fvalue[i] (calct->xcoord[index], val, &f);
-		calct->table[index] =
-		  smooth_pot[i] ? f * cutoff(calct->xcoord[index],
-					     calct->begin[i], h) : f;
-	      }
-	      if (i == 0) {
-		coulomb_shift(calct->xcoord[index], &f_c);
-		calct->table_dipole[index] =
-		  smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
-					       calct->begin[i], h) : f_c;
-	      }
-	      if (i == 1) {
-		coulomb_dipole_shift(calct->xcoord[index], dp_cut, &f_c);
-		calct->table_dipole[index] =
-		  smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
-					       calct->begin[i], h) : f_c;
-	      }
-	      if (i == 2) {
-		dipole_shift(calct->xcoord[index], dp_cut, &f_c);
-		calct->table_dipole[index] =
-		  smooth_pot[2] ? f_c * cutoff(calct->xcoord[index],
-					       calct->begin[2], h) : f_c;
-	      }
-#else
+
 	      apot_table.fvalue[i] (calct->xcoord[index], val, &f);
 	      calct->table[index] =
 		smooth_pot[i] ? f * cutoff(calct->xcoord[index],
-					   calct->begin[i], h) : f;
+					   calct->begin[i], h) : f;	      
+#ifdef DIPOLE	   
+	      coulomb_shift(calct->xcoord[index], &f_c);
+	      calct->table_c[index] =
+		smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
+					     calct->begin[i], h) : f_c;	      	    
+	      coulomb_dipole_shift(calct->xcoord[index], &f_cd);
+	      calct->table_cd[index] =
+		smooth_pot[i] ? f_cd * cutoff(calct->xcoord[index],
+					     calct->begin[i], h) : f_cd;	    
+	      dipole_shift(calct->xcoord[index], &f_d);
+	      calct->table_d[index] =
+		smooth_pot[i] ? f_d * cutoff(calct->xcoord[index],
+					     calct->begin[i], h) : f_d;
 #endif
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }

@@ -681,14 +681,13 @@ void debug_apot()
 void ms_shift(real r, real *p, real *f)
 {
   static real x[2], y[4];
-  static real rcut = 10;
 
   x[0] = p[1] * (1 - r / p[2]);
   x[1] = p[0] * (exp(x[0]) + 2 * exp(x[0]/2) );
-  y[0] = p[1] * (1 - rcut / p[2]);
+  y[0] = p[1] * (1 - dp_cut / p[2]);
   y[1] = p[0] * (exp(y[0]) + 2 * exp(y[0]/2) );
   y[2] = p[1] * (y[1] - p[0] * exp(y[0]/2)) / p[2];
-  y[3] = y[1] + y[2] * rcut;
+  y[3] = y[1] + y[2] * dp_cut;
 
   *f = x[1] + y[2] * r - y[3];
 }
@@ -733,18 +732,23 @@ void coulomb_shift(real r, real *fnval_tail)
 *
 ******************************************************************************/
 
-void coulomb_dipole_shift(real r, real rc, real *fnval_tail)
+void coulomb_dipole_shift(real r, real *fnval_tail)
 {
   static real ftail, gtail, ftail_cut, gtail_cut;
-  static real x[3];
+  static real x[5], y;
 
-  x[0] = r * r;
-  x[1] = rc * rc;
-  x[2] = x[1] * rc;
+  x[0] = dp_cut * dp_cut;
+  x[1] = dp_kappa * dp_kappa;
+  x[2] = 2 * dp_kappa * dp_eps / sqrt(M_PI);
+  x[3] = 2 * x[1] * dp_cut - 1 / dp_cut;
+  x[4] = exp(- x[0] * x[1]);
 
   coulomb_value(r, &ftail, &gtail);
   coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
-  *fnval_tail = ftail / x[0] - ftail_cut / x[1] - (r - rc)*(gtail_cut / x[1] - ftail_cut / x[2]); 
+
+  y = gtail_cut / dp_cut + x[2] * x[3] * x[4];
+
+  *fnval_tail = gtail_cut - gtail - (r - dp_cut) * y;
 }
 
 /******************************************************************************
@@ -753,9 +757,26 @@ void coulomb_dipole_shift(real r, real rc, real *fnval_tail)
 *
 ******************************************************************************/
 
-void dipole_shift(real r, real rc, real *fnval_tail)
+void dipole_shift(real r, real *fnval_tail)
 {
-  *fnval_tail = 3;
+  static real ftail, gtail, ftail_cut, gtail_cut;
+  static real x[7], y[2];
+
+  x[0] = r * r;
+  x[1] = dp_cut * dp_cut;
+  x[2] = dp_kappa * dp_kappa;
+  x[3] = 2 * dp_kappa * x[2] * dp_eps / sqrt(M_PI);
+  x[4] = x[2] * dp_cut + 1 / dp_cut;
+  x[5] = exp(- x[0] * x[2]);
+  x[6] = exp(- x[1] * x[2]);
+
+  coulomb_value(r, &ftail, &gtail);
+  coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
+
+  y[0]= gtail_cut / dp_cut - gtail / r + x[3] * (x[6] - x[5]);
+  y[1] = 3 * gtail_cut / x[1] + 2 * x[3] * x[4] * x[6];
+
+  *fnval_tail = y[0] + (dp_cut - r) * y[1];
 }
 
 /******************************************************************************
