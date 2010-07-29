@@ -96,6 +96,7 @@ typedef struct {
   vector dist;			/* distance divided by r */
 #ifdef DIPOLE
   real r3;                      /* r^3 */
+  real r2;                      /* r^2 */
 #endif 
   int   slot[SLOTS];
   real  shift[SLOTS];
