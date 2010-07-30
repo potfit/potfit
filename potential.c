@@ -1601,7 +1601,7 @@ real parab_ne(pot_table_t *pt, real *xi, int col, real r)
   int   k;
 
   /* renorm to beginning of table */
-//  rr = r - pt->begin[col];
+  /* rr = r - pt->begin[col]; */
   k = pt->first[col];
   x0 = pt->xcoord[k];
   p0 = xi[k++];
@@ -1616,8 +1616,8 @@ real parab_ne(pot_table_t *pt, real *xi, int col, real r)
   chi2 = (r - x2) / (x1 - x0);
 
   /* intermediate values */
-//  dv  = p1 - p0;
-//  d2v = p2 - 2 * p1 + p0;
+  /* dv  = p1 - p0; */
+  /* d2v = p2 - 2 * p1 + p0; */
 
   /* return the potential value */
   return chi1 * chi2 * p0 - chi0 * chi2 * p1 + chi0 * chi1 * p2;

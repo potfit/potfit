@@ -79,7 +79,7 @@ typedef struct {
   real  z;
 } vector;
 
-// This is the order of vasp for stresses
+/* This is the order of vasp for stresses */
 typedef struct {
   real  xx;
   real  yy;
@@ -146,7 +146,7 @@ typedef struct {
 typedef void (*fvalue_pointer) (real, real *, real *);
 
 typedef struct {
-//   potentials
+  /* potentials */
   int   number;			/* number of analytic potentials */
   int   invar_pots;		/* number of invariant analytic potentials */
   int  *idxpot;			/* indirect index for potentials */
@@ -155,7 +155,7 @@ typedef struct {
   real *end;			/* end position of potential = cutoff radius */
   int  *n_par;			/* number of parameters for analytic potential */
 
-//   parameters
+  /* parameters */
   int   total_par;		/* total number of parameters for all potentials */
   int  *idxparam;		/* indirect index for potential parameters */
   int **invar_par;		/* array of invariant parameters */
@@ -164,7 +164,7 @@ typedef struct {
   real **values;		/* parameter values for analytic potentials */
   real **pmax;			/* maximum values for parameters */
 
-//   global parameters
+  /* global parameters */
   int   globals;		/* number of global parameters */
   int  *n_glob;			/* number of global parameter usage */
   int ***global_idx;		/* index of global parameters */
@@ -197,7 +197,7 @@ typedef struct {
 #define INIT(data)		/* skip initialization otherwise */
 #endif
 
-// system variables
+/* system variables */
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
 EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
@@ -208,7 +208,7 @@ EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VEKTOR;
 #endif
 
-// general settings (from parameter file)
+/* general settings (from parameter file) */
 EXTERN char config[255];	/* file with atom configuration */
 EXTERN char distfile[255];	/* file for distributions */
 EXTERN char endpot[255];	/* file for end potential */
@@ -241,7 +241,7 @@ EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 EXTERN real evo_width INIT(1.);
 #endif
 
-// configurations
+/* configurations */
 EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
@@ -269,7 +269,7 @@ EXTERN sym_tens *stress INIT(NULL);	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
-// potential variables
+/* potential variables */
 EXTERN char interaction[10] INIT("\0");
 EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int *invar_pot INIT(NULL);
@@ -288,7 +288,7 @@ EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc tabl
 EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
 #endif
 
-// potential tables
+/* potential tables */
 EXTERN pot_table_t opt_pot;	/* potential in the internal */
 					 /* representation used for  */
 					 /* minimisation */
@@ -298,7 +298,7 @@ EXTERN pot_table_t calc_pot;	/* the potential table used */
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
 #endif
 
-// optimization variables
+/* optimization variables */
 EXTERN int fcalls INIT(0);
 EXTERN int mdim INIT(0);
 EXTERN int ndim INIT(0);
@@ -306,14 +306,14 @@ EXTERN int ndimtot INIT(0);
 EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
 EXTERN real d_eps INIT(0);
 
-// general variables
+/* general variables */
 EXTERN int firstatom INIT(0);
 EXTERN int firstconf INIT(0);
 EXTERN int myatoms INIT(0.);
 EXTERN int myconf INIT(0.);
 EXTERN real *rms INIT(NULL);
 
-// pointers for force-vector
+/* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
 #if defined EAM || defined ADP
@@ -325,12 +325,12 @@ EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints *
 EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
 #endif
 
-// memory management
+/* memory management */
 EXTERN char **pointer_names INIT(NULL);
 EXTERN int num_pointers INIT(0);
 EXTERN void **all_pointers INIT(NULL);
 
-// variables needed for atom distribution with mpi
+/* variables needed for atom distribution with mpi */
 #ifdef MPI
 EXTERN int *atom_dist;
 EXTERN int *atom_len;
@@ -338,7 +338,7 @@ EXTERN int *conf_dist;
 EXTERN int *conf_len;
 #endif
 
-// misc. stuff - has to belong somewhere
+/* misc. stuff - has to belong somewhere */
 EXTERN int *idx INIT(NULL);
 EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */

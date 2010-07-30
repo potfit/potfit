@@ -30,9 +30,9 @@
 
 #define MAIN
 
-#include "version.h"
 #include "potfit.h"
 #include "utils.h"
+#include "version.h"
 
 /******************************************************************************
 *
@@ -171,14 +171,14 @@ int main(int argc, char **argv)
     init_done = 1;
   }
 
-  /* initialize random number generator */
+  /* properly initialize random number generator */
 #define R_SIZE 624
 #define RAND_MAX 2147483647
   uint32_t *array;
   array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-  srandom(seed + myid);
+  srand(seed + myid);
   for (i = 0; i < R_SIZE; i++)
-    array[i] = random();
+    array[i] = rand();
 
   dsfmt_init_by_array(&dsfmt, array, R_SIZE);
   for (i = 0; i < 10e5; i++)

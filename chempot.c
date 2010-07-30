@@ -146,4 +146,4 @@ real chemical_potential(int dim, int *n, real *mu)
   return 0.;
 }
 
-#endif
+#endif /* APOT && PAIR */

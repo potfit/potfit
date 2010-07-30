@@ -1,9 +1,11 @@
 ############################################################################
 #
 # potfit -- The ITAP Force Matching Program
+# 	Copyright 2002-2010 
 #
-# Copyright 2002-2010 Institute for Theoretical and Applied Physics,
-# University of Stuttgart, D-70550 Stuttgart
+# 	Institute for Theoretical and Applied Physics,
+# 	University of Stuttgart, D-70550 Stuttgart, Germany
+# 	http://www.itap.physik.uni-stuttgart.de/
 #
 ############################################################################
 #
@@ -20,7 +22,7 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, see http://www.gnu.org/licenses/.
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 #
 ############################################################################
 #
@@ -32,11 +34,9 @@
 #
 #    potfit[_<parallel>][_<option>[_<option>...]]
 #
-# The parallelization method <parallel> can be one of:
+# The parallelization method <parallel> can be:
 #
 #    mpi   compile for parallel execution, using MPI
-#    omp   compile for parallel execution, using OpenMP
-#    ompi  compile for parallel execution, using OpenMP and MPI
 #
 ###########################################################################
 #
@@ -48,25 +48,20 @@
 # customize these setttings. Before you can do that, we have to explain
 # a bit how the compilation process works.
 #
-# The compilation process requires the environment variable IMDSYS to
-# be set to a recognized value. It specifies what system you have, and
+# The compilation process requires the SYSTEM variable in the Makefile to be 
+# set to any of the predefined values. It specifies what system you have, and
 # what compiler you are using. The flags for the compiler and the linker
-# are then selected as a function of this variable. It is also possible
-# to pass the value of IMDSYS on the command line, e.g.:
-#
-#   make IMDSYS=x86_64-icc potfit_mpi_eam
+# are then selected as a function of this variable.
 #
 # Another important ingredient is the parallelization method, which is
 # determined from the make target. The parallelization method is stored
-# in the variable PARALLEL, which takes as value one of SERIAL, MPI,
-# OMP, OMPI, or PACX.
+# in the variable PARALLEL, which takes as value SERIAL or MPI.
 #
-# Depending on the value of ${IMDSYS}, a number of variables must be
+# Depending on the value of ${SYSTEM}, a number of variables must be
 # set, from which everything else is constructed.
 #
-# CC_${PARALLEL} defines the compiler to be used for parallelization
-# method ${PARALLEL}. If not defined, the parallelization method
-# ${PARALLEL} is not available.
+# CC_SERIAL defines the compiler for serial compilation, CC_MPI the one
+# to be used for parallelization
 #
 # BIN_DIR defines the directory where the potfit binary is put. Note that
 # this directory must exist.
@@ -76,8 +71,7 @@
 #
 # The compilation options are stored in the variable CFLAGS.
 # The initial value of CFLAGS is set to the variable FLAGS,
-# which can be given on the command line as explained above for
-# IMDSYS, although this is usually not necessary.
+# which can be given on the command line.
 #
 # If the option debug was specified, ${DEBUG_FLAGS} is then appended
 # to ${CFLAGS}, otherwise ${OPT_FLAGS}. If the option prof was specified
@@ -96,28 +90,22 @@
 # to which ${${PARALLEL}_LIBS} and possibly ${PROF_LIBS} (for profiling)
 # is appended.
 #
-# You may have to change the setting for an existing value of IMDSYS.
-# or you have to add support for a new value of IMDSYS. The latter is
-# best done by using the folloing template for IMDSYS=sys-cc:
+# You may have to change the setting for an existing value of SYSTEM.
+# or you have to add support for a new value of SYSTEM. The latter is
+# best done by using the folloing template for SYSTEM=custom:
 #
-# ifeq (sys-cc,${IMDSYS})
+# ifeq (custom,${SYSTEM})
 #   CC_SERIAL		= serial-compiler
-#   CC_OMP		= OpenMP-compiler
 #   CC_MPI		= MPI-compiler
-#   CC_OMPI		= OpenMP+MPI-compiler
+#   OMPI_CC      	= compiler for mpicc
+#   OMPI_CLINKER 	= linker for mpicc
 #   OPT_FLAGS		+= generic flags for optimization
-#   OPT_MPI_FLAGS	+= MPI-specific flags for optimization
-#                          similar variables for other parallelizations
-#   MPI_FLAGS		+= MPI-specific flags
-#                          similar variables for other parallelizations
 #   DEBUG_FLAGS		+= generic flags for debugging
-#   DEBUG_MPI_FLAGS	+= MPI-specific flags for debugging
-#                          similar variables for other parallelizations
 #   PROF_FLAGS		+= flags for profiling
-#   LIBS		+= generically needed libraries
-#   MPI_LIBS		+= MPI-specific libraries
-#                          similar variables for other parallelizations
 #   PROF_LIBS		+= libraries for profiling
+#   LFLAGS_SERIAL 	+= flags for serial linking
+#   LFLAGS_MPI 		+= flags for MPI linking
+#   export        MPICH_CC MPICH_CLINKER
 # endif
 #
 # Variables remaining empty need not be mentioned.
@@ -138,8 +126,9 @@ SYSTEM 		= x86_64-icc
 # This is the directory where the potfit binary will be moved to
 BIN_DIR 	= ${HOME}/bin
 
-# Base directory of your installation of the MKL
+# Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
+ACMLDIR  	= /common/linux/paket/acml4.4.0/ifort64
 
 ###########################################################################
 #
@@ -151,8 +140,6 @@ MV		= $(shell basename `which mv`)
 STRIP 		= $(shell basename `which strip`)
 LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
-OMP_FLAGS	+= -DOMP
-OMPI_FLAGS	+= -DMPI -DOMP
 DEBUG_FLAGS	+= -DDEBUG
 MKLPATH         = ${MKLDIR}/lib
 
@@ -163,60 +150,71 @@ MKLPATH         = ${MKLDIR}/lib
 ###########################################################################
 
 ifeq (x86_64-icc,${SYSTEM})
+# compiler
   CC_SERIAL     = icc
   CC_MPI        = mpicc
-  CC_OMP        = mpicc
-  CC_OMPI       = mpicc
-  MPICH_CC      = icc
-  MPICH_CLINKER = icc
-  OPT_FLAGS     += -fast
-  MPI_FLAGS     +=
-  OMP_FLAGS     += -openmp
-  OMPI_FLAGS    += -openmp
-  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
-  PROF_FLAGS    += -prof_gen
-  MPI_LIBS      +=
-  LFLAGS        += -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a -Wl,--start-group 
-  LFLAGS 	+= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
-# acml
-#   ACMLPATH      = /common/linux/paket/acml3.5.0/gnu64
-#   CINCLUDE     += -I$(ACMLPATH)/include
-#   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
-#   LIBS		:= $(ACMLPATH)/lib/libacml.a \
-# 		   -L${ACMLPATH}/lib -lpthread -lacml -lg2c
-# intel mkl
-  MKLPATH       = ${MKLDIR}/lib/em64t/
-  CINCLUDE      =  -I${MKLDIR}/include/
-  export        MPICH_CC MPICH_CLINKER
+
+# general optimization flags
+  OPT_FLAGS     += -fast -xHost -multiple-processes
+
+  OMPI_CC      = icc
+  OMPI_CLINKER = icc
+
+# debug flags
+  PROF_FLAGS    += -prof-gen
+  PROF_LIBS 	+= -prof-gen
+  DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
+
+# Intel Math Kernel Library
+ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+  MKLPATH       = ${MKLDIR}/lib/em64t
+  CINCLUDE 	+= -I${MKLDIR}/include
+  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
+		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
+		   -lmkl_core -Wl,--end-group -lpthread
 endif
 
+# AMD Core Math Library
+ifneq (,$(strip $(findstring acml,${MAKETARGET})))
+   ACMLPATH 	= ${ACMLDIR}/lib
+   CINCLUDE     += -I$(ACMLDIR)/include
+   LD_LIBRARY_PATH +=':$(ACMLPATH):'
+   LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+endif
+
+ export        MPICH_CC MPICH_CLINKER
+endif
 
 ifeq (x86_64-gcc,${SYSTEM})
+# compiler
   CC_SERIAL     = gcc
   CC_MPI        = mpicc
-  CC_OMPI       = mpicc
-  OMPI_CC 	= gcc
-  MPICH_CLINKER = gcc
-  OPT_FLAGS     += -O3 -march=native -Wno-unused -pipe
-  DEBUG_FLAGS   += -g -O -Wall
-  PROF_FLAGS    += -pg -g
-  PROF_LIBS    += -pg -g
-#  LFLAGS        +=  -static
-#  ACMLPATH      = /common/linux/paket/acml4.2.0/gfortran64_mp
+
+# general optimization flags
+  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused
+
+# debug flags
+  PROF_FLAGS    += -pg
+  DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
+
+# Intel Math Kernel Library
+ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/em64t/
-#  CINCLUDE     += -I$(ACMLPATH)/include
   CINCLUDE      = -I${MKLDIR}/include
-#   LD_LIBRARY_PATH +=':$(ACMLPATH)/lib:'
-#  export        OMPI_MPICC # MPICH_CLINKER
-#  export        LD_LIBRARY_PATH
-# acml
-#  LIBS		:= $(ACMLPATH)/lib/libacml_mp.a \
-		   -L${ACMLPATH}/lib -lpthread -lacml_mp -lgfortran
-# intel mkl
-   LFLAGS        += -L${MKLPATH} ${MKLPATH}/libmkl_solver_ilp64_sequential.a -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -Wl,--end-group -lpthread
-  #LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_em64t.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        OMPI_CC MPICH_CLINKER
+  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
+		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+		   -Wl,--end-group -lpthread
+endif
+
+# AMD Core Math Library
+ifneq (,$(strip $(findstring acml,${MAKETARGET})))
+  ACMLPATH      = ${ACMLDIR}/lib
+  CINCLUDE     += -I$(ACMLDIR)/include
+  LD_LIBRARY_PATH +=':$(ACMLPATH):'
+  LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+endif
+
+ export        OMPI_CC OMPI_CLINKER
 endif
 
 
@@ -228,33 +226,61 @@ endif
 
 ifeq (i386-icc,${SYSTEM})
   CC_SERIAL	= icc
-  CC_OMP	= icc
   CC_MPI	= mpicc
-  CC_OMPI	= mpicc
-  MPICH_CC      = icc
-  MPICH_CLINKER = icc
-  OPT_FLAGS	+= -O -ip -tpp7 # -static
-  OMP_FLAGS	+= -openmp
-  OMPI_FLAGS	+= -openmp
+  OMPI_CC       = icc
+  OMPI_CLINKER  = icc
+  OPT_FLAGS	+= -fast -xHost -multiple-processes
   DEBUG_FLAGS	+= -g
-  PROF_FLAGS	+= -prof_gen
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        MPICH_CC MPICH_CLINKER
+  PROF_FLAGS	+= -prof-gen
+  PROF_LIBS 	+= -prof-gen
+
+# Intel Math Kernel Library
+ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+  MKLPATH       = ${MKLDIR}/lib/32
+  CINCLUDE      = -I${MKLDIR}/include
+  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
+		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
+		   -Wl,--end-group -lpthread
 endif
 
+# AMD Core Math Library
+ifneq (,$(strip $(findstring acml,${MAKETARGET})))
+  ACMLPATH      = ${ACMLDIR}/lib
+  CINCLUDE     += -I$(ACMLDIR)/include
+  LD_LIBRARY_PATH +=':$(ACMLPATH):'
+  LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+endif
 
-ifeq (i386-gcc3,${SYSTEM})
+  export        OMPI_CC OMPI_CLINKER
+endif
+
+ifeq (i386-gcc,${SYSTEM})
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
-  MPICH_CC      = gcc
-  MPICH_CLINKER = gcc
-  OPT_FLAGS	+= -O -march=pentium4 # -static
+  OMPI_CC     	 = gcc
+  OMPI_CLINKER 	= gcc
+  OPT_FLAGS	+= -O3 -march=native
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
-  LIBS		+= ${MKLPATH}/libmkl_lapack.a ${MKLPATH}/libmkl_ia32.a \
-		   -L${MKLPATH} -lguide -lpthread
-  export        MPICH_CC # MPICH_CLINKER
+ 
+# Intel Math Kernel Library
+ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+  MKLPATH       = ${MKLDIR}/lib/32
+  CINCLUDE      = -I${MKLDIR}/include
+  LIBS		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
+		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
+		   -Wl,--end-group -lpthread
+endif
+
+# AMD Core Math Library
+ifneq (,$(strip $(findstring acml,${MAKETARGET})))
+  ACMLPATH      = ${ACMLDIR}/lib
+  CINCLUDE     += -I$(ACMLDIR)/include
+  LD_LIBRARY_PATH +=':$(ACMLPATH):'
+  LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+endif
+
+  export        OMPI_CC OMPI_CLINKER
 endif
 
 
@@ -269,14 +295,6 @@ PARALLEL = SERIAL
 # MPI
 ifneq (,$(strip $(findstring mpi,${MAKETARGET})))
 PARALLEL = MPI
-endif
-# OpenMP
-ifneq (,$(strip $(findstring omp,${MAKETARGET})))
-PARALLEL = OMP
-endif
-# MPI + OpenMP
-ifneq (,$(strip $(findstring ompi,${MAKETARGET})))
-PARALLEL = OMPI
 endif
 
 
@@ -317,10 +335,11 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= potfit.h powell_lsq.h utils.h
-POTFITSRC 	= utils.c bracket.c powell_lsq.c brent.c \
-		  linmin.c config.c param.c potential.c \
-		  potfit.c splines.c simann.c random.c
+POTFITHDR   	= bracket.h  potfit.h  powell_lsq.h  \
+		  random-params.h  random.h  utils.h
+POTFITSRC 	= bracket.c brent.c config.c linmin.c \
+		  param.c potential.c potfit.c powell_lsq.c \
+		  random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += force_pair.c
@@ -331,7 +350,7 @@ POTFITSRC      += force_eam.c rescale.c
 endif
 
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-POTFITSRC      += force_adp.c
+POTFITSRC      += force_adp.c rescale.c
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
@@ -483,6 +502,7 @@ endif
 # all objects depend on headers
 ${OBJECTS}: ${HEADERS}
 
+
 # How to compile *.c files
 # special rules for force computation
 powell_lsq.o: powell_lsq.c
@@ -494,11 +514,20 @@ functions.o: functions.c
 
 # generic compilation rule
 .c.o:
+ifeq (,$@)
+ifeq (,${MAKETARGET})
+	@echo -e "Usage:"
+	@echo -e "  make potfit_[interaction]_[options]\n"
+	@echo "For more details on compiling potfit please look at the Makefile"
+	@exit
+endif
+else
 	${CC} ${CFLAGS} -c $<
+endif
 
 # How to link
 ${MAKETARGET}: ${OBJECTS}
-	${CC} ${LFLAGS} -o $@ ${OBJECTS} ${LIBS}
+	${CC} ${LIBS} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS}
 ifneq (,${STRIP})
 ifeq (,$(findstring debug,${MAKETARGET}))
 	${STRIP} --strip-unneeded $@
