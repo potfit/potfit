@@ -97,6 +97,12 @@ typedef struct {
 #ifdef DIPOLE
   real r3;                      /* r^3 */
   real r2;                      /* r^2 */
+  real fnval_c;                 /* stores potential for monopole calculation */
+  real grad_c;                  /* stores derivative of potential for monopole calculation */
+  real fnval_cd;                /* stores potential for monopole-dipole calculation */
+  real grad_cd;                 /* stores derivative of potential for monopole-dipole calculation */
+  real fnval_d;                 /* stores potential for dipole calculation */
+  real grad_d;                  /* stores derivative of potential for dipole calculation */
 #endif 
   int   slot[SLOTS];
   real  shift[SLOTS];
@@ -383,6 +389,7 @@ EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
 EXTERN real dp_cut INIT(10);      /* cutoff-radius for long-range interactions */
 EXTERN real dp_tol INIT(1.e-7); /* dipole iteration precision */
 EXTERN real dp_mix INIT(0.2);   /* miximg parameter for damping dipole iteration loop */
+EXTERN int cs INIT(0);         /* counter for second derivatives */
 #endif
 
 /******************************************************************************

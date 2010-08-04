@@ -1,3 +1,9 @@
+bzr-20100804
++ Self energy terms added
++ all splines for electrostatic tail-functions are now evaluated once only
++ shifts changed from (r-r_cut) to 1/2*(r^2 - r_cut^2) (adapted to IMD)
++ output-file Dipol_Konvergenz_Verlauf is now available
+
 bzr-20100729
 + last loop added for dipole calculation
 

@@ -686,10 +686,10 @@ void ms_shift(real r, real *p, real *f)
   x[1] = p[0] * (exp(x[0]) + 2 * exp(x[0]/2) );
   y[0] = p[1] * (1 - dp_cut / p[2]);
   y[1] = p[0] * (exp(y[0]) + 2 * exp(y[0]/2) );
-  y[2] = p[1] * (y[1] - p[0] * exp(y[0]/2)) / p[2];
-  y[3] = y[1] + y[2] * dp_cut;
+  y[2] = p[1] * (y[1] + p[0] * exp(y[0]/2)) / p[2];
+  y[3] = y[1] + y[2] * dp_cut * dp_cut / 2;
 
-  *f = x[1] + y[2] * r - y[3];
+  *f = x[1] - y[3] + y[2] * r * r / 2;
 }
 
 /******************************************************************************
@@ -708,7 +708,7 @@ void coulomb_value(real r, real *ftail, real *gtail)
   x[3] = exp(-x[0]*x[2]);
 
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
-  *gtail = (-*ftail + x[1] * x[3])/ r;
+  *gtail = - (*ftail + x[1] * x[3])/ r;
 }
 
 /******************************************************************************
@@ -721,9 +721,14 @@ void coulomb_shift(real r, real *fnval_tail)
 {
   static real ftail, gtail, ftail_cut, gtail_cut;
 
+  static real x[2];
+
+  x[0] = r * r;
+  x[1] = dp_cut * dp_cut;
+
   coulomb_value(r, &ftail, &gtail);
   coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
-  *fnval_tail = ftail - ftail_cut - (r - dp_cut) * gtail_cut;
+  *fnval_tail = ftail - ftail_cut - (x[0] - x[1]) * gtail_cut / 2;
 }
 
 /******************************************************************************
@@ -735,20 +740,21 @@ void coulomb_shift(real r, real *fnval_tail)
 void coulomb_dipole_shift(real r, real *fnval_tail)
 {
   static real ftail, gtail, ftail_cut, gtail_cut;
-  static real x[5], y;
+  static real x[6], y;
 
   x[0] = dp_cut * dp_cut;
   x[1] = dp_kappa * dp_kappa;
   x[2] = 2 * dp_kappa * dp_eps / sqrt(M_PI);
-  x[3] = 2 * x[1] * dp_cut - 1 / dp_cut;
+  x[3] = - 2 * x[1] * dp_cut + 1 / dp_cut;
   x[4] = exp(- x[0] * x[1]);
+  x[5] = r * r;
 
   coulomb_value(r, &ftail, &gtail);
   coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
 
   y = gtail_cut / dp_cut + x[2] * x[3] * x[4];
 
-  *fnval_tail = gtail_cut - gtail - (r - dp_cut) * y;
+  *fnval_tail = gtail_cut - gtail - (x[5] - x[0]) * y / 2;
 }
 
 /******************************************************************************
@@ -773,10 +779,10 @@ void dipole_shift(real r, real *fnval_tail)
   coulomb_value(r, &ftail, &gtail);
   coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
 
-  y[0]= gtail_cut / dp_cut - gtail / r + x[3] * (x[6] - x[5]);
-  y[1] = 3 * gtail_cut / x[1] + 2 * x[3] * x[4] * x[6];
+  y[0]= gtail_cut / dp_cut - gtail / r + x[3] * (x[5] - x[6]);
+  y[1] = 3 * gtail_cut / x[1] - 2 * x[3] * x[4] * x[6];
 
-  *fnval_tail = y[0] + (dp_cut - r) * y[1];
+  *fnval_tail = y[0] - (x[0] - x[1]) * y[1] / 2;
 }
 
 /******************************************************************************
