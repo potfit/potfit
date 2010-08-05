@@ -440,21 +440,6 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		
 		}	      
 	  }			/* loop over neighbours */
-
-	  /*then we can calculate contribution of forces right away */
-	  if (uf) {
-#ifdef FWEIGHT
-	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
-#endif /* FWEIGHT */
-	    /* Returned force is difference between */
-	    /* calculated and input force */
-	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-				SQR(forces[k + 2]));
-	  }
 	}         /* end S E C O N D loop over atoms */
 
 
@@ -571,6 +556,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	for (i = 0; i < inconf[h]; i++) {    //atoms	  
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
+	  k = 3 * (cnfstart[h] + i);
 	  for (j = 0; j < atom->n_neigh; j++) {  //neighbors
 	    neigh = atom->neigh + j;
 	    typ2 = neigh->typ;
@@ -750,11 +736,14 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	}               /* end F O U R T H loop over atoms */ 
 	
 
- 	/* F I F T H  loop: self energy contributions */ 
+ 	/* F I F T H  loop: self energy contributions and sum-up force contributions */ 
 	real qq, pp; 
  	for (i = 0; i < inconf[h]; i++) {    //atoms	  
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
+	  k = 3 * (cnfstart[h] + i);
+	
+	  /* self energy contributions */
 	  if (xi_opt[2*size + ne + typ1]) {
 	    qq = xi_opt[2*size + ne + typ1] * xi_opt[2*size + ne + typ1];
 	    fnval = dp_eps * dp_kappa * qq / sqrt(M_PI);
@@ -765,26 +754,41 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    fnval = pp / (2 * xi_opt[2*size + ne + ntypes + typ1]);
 	    forces[energy_p + h] += fnval;
 	  }
-	}	/* end F I F T H loop */  
+
+	  /* sum-up: whole force contributions flow into tmpsum */
+	  if (uf) {
+#ifdef FWEIGHT
+	    /* Weigh by absolute value of force */
+	    forces[k] /= FORCE_EPS + atom->absforce;
+	    forces[k + 1] /= FORCE_EPS + atom->absforce;
+	    forces[k + 2] /= FORCE_EPS + atom->absforce;
+#endif 
+	    tmpsum +=
+	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
+				SQR(forces[k + 2]));
+	  }
+ 
+	}	/* end F I F T H loop over atoms */  
 	
 
-	/* energy contributions */
+	/* whole energy contributions flow into tmpsum */
 	forces[energy_p + h] *= eweight / (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
-#ifdef STRESS
-	/* stress contributions */
-	if (uf && us) {
-	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
-	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
-	  }
-	}
-#endif /* STRESS */	
+	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]); 
 
+#ifdef STRESS
+	  /* whole stress contributions flow into tmpsum */
+	  if (uf && us) {
+	    for (i = 0; i < 6; i++) {
+	      forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
+	      forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
+	      tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
+	    }
+	  }
+#endif	
 
       }				/* end M A I N loop over configurations */
+
 
       /* output for "Dipol_Konvergenz_Verlauf" */
       sum_t = sum_c / h;
