@@ -112,7 +112,7 @@ int apot_assign_functions(apot_table_t *apt)
     } else if (strcmp(apt->names[i], "morse") == 0) {
       apt->fvalue[i] = &morse_value;
     } else if (strcmp(apt->names[i], "ms") == 0) {
-#ifdef DIPOLE
+#ifdef MONOPOLE
       apt->fvalue[i] = &ms_shift;
 #else
       apt->fvalue[i] = &ms_value;
@@ -670,7 +670,7 @@ void debug_apot()
 
 #endif /* DEBUG */
 
-#ifdef DIPOLE
+#ifdef MONOPOLE
 
 /******************************************************************************
 *
@@ -687,28 +687,29 @@ void ms_shift(real r, real *p, real *f)
   y[0] = p[1] * (1 - dp_cut / p[2]);
   y[1] = p[0] * (exp(y[0]) + 2 * exp(y[0]/2) );
   y[2] = p[1] * (y[1] + p[0] * exp(y[0]/2)) / p[2];
-  y[3] = y[1] + y[2] * dp_cut * dp_cut / 2;
+  y[3] = y[1] + y[2] * dp_cut;
 
-  *f = x[1] - y[3] + y[2] * r * r / 2;
+  *f = x[1] - y[3] + y[2] * r;
 }
 
 /******************************************************************************
 *
-* tail of coulomb potential and first derivative
+* tail of electrostatic potential and first two derivatives
 *
 ******************************************************************************/
 
-void coulomb_value(real r, real *ftail, real *gtail)
+void elstat_value(real r, real *ftail, real *gtail, real *ggtail)
 {
   static real x[4];
 
   x[0] = r * r;
-  x[1] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
-  x[2] = dp_kappa * dp_kappa;
-  x[3] = exp(-x[0]*x[2]);
+  x[1] = dp_kappa * dp_kappa;
+  x[2] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
+  x[3] = exp(-x[0]*x[1]);
 
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
-  *gtail = - (*ftail + x[1] * x[3])/ r;
+  *gtail = - (*ftail + x[2] * x[3])/ r;
+  *ggtail = 2 * (x[1] * x[2] * x[3] - *gtail / r);
 }
 
 /******************************************************************************
@@ -717,73 +718,25 @@ void coulomb_value(real r, real *ftail, real *gtail)
 *
 ******************************************************************************/
 
-void coulomb_shift(real r, real *fnval_tail)
+void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 {
-  static real ftail, gtail, ftail_cut, gtail_cut;
+  static real ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
 
-  static real x[2];
+  elstat_value(r, &ftail, &gtail, &ggtail);
+  elstat_value(dp_cut, &ftail_cut, &gtail_cut, &ggtail_cut);
 
-  x[0] = r * r;
-  x[1] = dp_cut * dp_cut;
-
-  coulomb_value(r, &ftail, &gtail);
-  coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
-  *fnval_tail = ftail - ftail_cut - (x[0] - x[1]) * gtail_cut / 2;
+  *fnval_tail = ftail - ftail_cut - (r - dp_cut) * gtail_cut;
+  *grad_tail = gtail - gtail_cut;
+  *ggrad_tail = 0.;
+#ifdef DIPOLE
+  *fnval_tail -= (r - dp_cut) * (r - dp_cut) * ggtail_cut / 2;
+  *grad_tail -= (r - dp_cut) * ggtail_cut;
+  *ggrad_tail = ggtail - ggtail_cut;
+#endif
 }
 
-/******************************************************************************
-*
-* shifted tail of monopole-dipole potential 
-*
-******************************************************************************/
-
-void coulomb_dipole_shift(real r, real *fnval_tail)
-{
-  static real ftail, gtail, ftail_cut, gtail_cut;
-  static real x[6], y;
-
-  x[0] = dp_cut * dp_cut;
-  x[1] = dp_kappa * dp_kappa;
-  x[2] = 2 * dp_kappa * dp_eps / sqrt(M_PI);
-  x[3] = - 2 * x[1] * dp_cut + 1 / dp_cut;
-  x[4] = exp(- x[0] * x[1]);
-  x[5] = r * r;
-
-  coulomb_value(r, &ftail, &gtail);
-  coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
-
-  y = gtail_cut / dp_cut + x[2] * x[3] * x[4];
-
-  *fnval_tail = gtail_cut - gtail - (x[5] - x[0]) * y / 2;
-}
-
-/******************************************************************************
-*
-* shifted tail of dipole-dipole potential 
-*
-******************************************************************************/
-
-void dipole_shift(real r, real *fnval_tail)
-{
-  static real ftail, gtail, ftail_cut, gtail_cut;
-  static real x[7], y[2];
-
-  x[0] = r * r;
-  x[1] = dp_cut * dp_cut;
-  x[2] = dp_kappa * dp_kappa;
-  x[3] = 2 * dp_kappa * x[2] * dp_eps / sqrt(M_PI);
-  x[4] = x[2] * dp_cut + 1 / dp_cut;
-  x[5] = exp(- x[0] * x[2]);
-  x[6] = exp(- x[1] * x[2]);
-
-  coulomb_value(r, &ftail, &gtail);
-  coulomb_value(dp_cut, &ftail_cut, &gtail_cut);
-
-  y[0]= gtail_cut / dp_cut - gtail / r + x[3] * (x[5] - x[6]);
-  y[1] = 3 * gtail_cut / x[1] - 2 * x[3] * x[4] * x[6];
-
-  *fnval_tail = y[0] - (x[0] - x[1]) * y[1] / 2;
-}
+#endif /* MONOPOLE */
+#ifdef DIPOLE
 
 /******************************************************************************
 *

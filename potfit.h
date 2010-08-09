@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef OMP
 #include <omp.h>
@@ -52,7 +53,7 @@
 
 #define FORCE_EPS .1
 
-#if defined PAIR || defined DIPOLE
+#if defined PAIR || defined MONOPOLE
 #define SLOTS 1
 #elif defined EAM
 #define SLOTS 2
@@ -94,15 +95,12 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
-#ifdef DIPOLE
+#ifdef MONOPOLE
   real r3;                      /* r^3 */
   real r2;                      /* r^2 */
-  real fnval_c;                 /* stores potential for monopole calculation */
-  real grad_c;                  /* stores derivative of potential for monopole calculation */
-  real fnval_cd;                /* stores potential for monopole-dipole calculation */
-  real grad_cd;                 /* stores derivative of potential for monopole-dipole calculation */
-  real fnval_d;                 /* stores potential for dipole calculation */
-  real grad_d;                  /* stores derivative of potential for dipole calculation */
+  real fnval_el;                 /* stores tail of electrostatic potential */
+  real grad_el;                  /* stores tail of first derivative of electrostatic potential */
+  real ggrad_el;                 /* stores tail of second derivative of electrostatic potential */
 #endif 
   int   slot[SLOTS];
   real  shift[SLOTS];
@@ -156,7 +154,7 @@ typedef struct {
   real *xcoord;			/* the x-coordinates of sampling points */
   real *table;			/* the actual data */
   real *d2tab;			/* second derivatives of table data for spline int */
-#ifdef DIPOLE
+#ifdef MONOPOLE
   real *table_c;                /* static data for tail of coulomb potential */
   real *d2tab_c;	   
   real *table_cd;               /* static data for tail of coulomb-dipole potential */
@@ -182,7 +180,7 @@ typedef struct {
 
 //   parameters
   int   total_par;		/* total number of parameters for all potentials */
-#ifdef DIPOLE
+#ifdef MONOPOLE
   int total_ne_par;             /* total number of non-electrostatic parameters */
 #endif
   int  *idxparam;		/* indirect index for potential parameters */
@@ -201,8 +199,10 @@ typedef struct {
   real *chempot;		/* chemical potentials */
 #endif
 
-#ifdef DIPOLE
+#ifdef MONOPOLE
   real *charge;			/* charges */
+#endif
+#ifdef DIPOLE
   real *dp_alpha;		/* polarisability */
   real *dp_b;			/* parameter for short-range-dipole-moment */
   real *dp_c;			/* parameter for short-range-dipole-moment */
@@ -382,14 +382,16 @@ EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
 
-#ifdef DIPOLE
-// variables needed for option dipole
+// variables needed for electrostatic options
+#ifdef MONOPOLE
 EXTERN real dp_eps INIT(14.40);	   /* this is e^2/(4*pi*epsilon_0) in eV A */
 EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
 EXTERN real dp_cut INIT(10);      /* cutoff-radius for long-range interactions */
+EXTERN int cs INIT(0);         /* counter for second derivatives */
+#endif
+#ifdef DIPOLE
 EXTERN real dp_tol INIT(1.e-7); /* dipole iteration precision */
 EXTERN real dp_mix INIT(0.2);   /* miximg parameter for damping dipole iteration loop */
-EXTERN int cs INIT(0);         /* counter for second derivatives */
 #endif
 
 /******************************************************************************
@@ -456,8 +458,8 @@ real  calc_forces_pair(real *, real *, int);
 real  calc_forces_eam(real *, real *, int);
 #elif defined ADP
 real  calc_forces_adp(real *, real *, int);
-#elif defined DIPOLE
-real  calc_forces_dipole(real *, real *, int);
+#elif defined MONOPOLE
+real  calc_forces_elstat(real *, real *, int);
 #endif
 #ifdef APOT
 void  randomize_parameter(int, real *, real *);
@@ -478,7 +480,7 @@ real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
 real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
 		      real *grad);
-#ifdef DIPOLE
+#ifdef MONOPOLE
 real  splint_comb_dir_c(pot_table_t *pt, real *xi, int k, real b, real step,
 		      real *grad);
 real  splint_comb_dir_cd(pot_table_t *pt, real *xi, int k, real b, real step,
@@ -580,13 +582,13 @@ void  double_morse_value(real, real *, real *);
 void  double_exp_value(real, real *, real *);
 void  poly_5_value(real, real *, real *);
 
-#ifdef DIPOLE
-/* functions for dipole calculations  */
+/* functions for electrostatic calculations  */
+#ifdef MONOPOLE
 void ms_shift(real, real *, real *);
-void coulomb_value(real, real *, real *);
-void coulomb_shift(real, real*);
-void coulomb_dipole_shift(real, real*);
-void dipole_shift(real, real*);
+void elstat_value(real, real *, real *, real *);
+void elstat_shift(real, real *, real *, real *);
+#endif
+#ifdef DIPOLE
 real shortrange_value(real, real *, real *, real *);
 #endif
 

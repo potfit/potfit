@@ -35,7 +35,7 @@
 * $Date: 2010/04/22 13:29:40 $
 *****************************************************************/
 
-#ifdef DIPOLE
+#ifdef MONOPOLE
 #include "potfit.h"
 
 /*****************************************************************************
@@ -88,14 +88,14 @@
 *
 ******************************************************************************/
 
-real calc_forces_dipole(real *xi_opt, real *forces, int flag)
+real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 {
   real  tmpsum, sum = 0.;
   int   first, col, ne, size, i;
   real *xi = NULL;
-  real *xi_c = NULL;
-  real *xi_cd = NULL;
-  real *xi_d = NULL;
+  //real *xi_c = NULL;
+  //real *xi_cd = NULL;
+  //real *xi_d = NULL;
   apot_table_t *apt = &apot_table;
   FILE *outfile2;
   char *filename2 = "Dipol_Konvergenz_Verlauf";
@@ -114,9 +114,9 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	xi = calc_pot.table;	/* we need to update the calc-table */
   }
 
-  xi_c = calc_pot.table_c;
-  xi_cd = calc_pot.table_cd;
-  xi_d = calc_pot.table_d;
+  //xi_c = calc_pot.table_c;
+  //xi_cd = calc_pot.table_cd;
+  //xi_d = calc_pot.table_d;
   ne =  apot_table.total_ne_par;
   size = apt->number;
 
@@ -174,7 +174,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		    *(xi + first - 2), 0.0, calc_pot.d2tab + first);
 	}
       }
-      if(!cs) {
+      /* if(!cs) {
 	for (col = 0; col < paircol; col++) {
 	  first = calc_pot.first[col];
 	  spline_ed(calc_pot.step[col], xi_c + first,
@@ -188,23 +188,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		    *(xi_d + first - 2), 0.0, calc_pot.d2tab_d + first);
 	}
 	cs++;
-      }
-
-      /* write potential and d2 tables:
-       for(i=0;i<200;i++)
-	 printf("%d\t%lf\n", i, xi_c[i]);
-       for(i=0;i<200;i++)
-	 printf("%d\t%lf\n", i + 200, xi_cd[i]);
-       for(i=0;i<200;i++)
-	 printf("%d\t%lf\n", i + 400, xi_d[i]);
-       for(i=0;i<200;i++)
-	 printf("%d\t%lf\n", i + 600, calc_pot.d2tab_c[i]);
-       for(i=0;i<200;i++)
-	 printf("%d\t%lf\n", i + 800, calc_pot.d2tab_cd[i]);
-       for(i=0;i<200;i++)
-	 printf("%d\t%lf\n", i + 1000, calc_pot.d2tab_d[i]);
-	 error(""); */
-       
+	} */
 
 #ifndef MPI
     myconf = nconf;
@@ -227,9 +211,9 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 #ifdef _OPENMP
 #pragma omp for reduction(+:tmpsum,rho_sum_loc)
 #endif
-      
    
       for (i = 0; i < natoms; i++) {
+#ifdef DIPOLE
 	/* reset dipoles and fields: LOOP Z E R O */
 	atoms[i].E_stat.x = 0;
 	atoms[i].E_stat.y = 0;
@@ -249,19 +233,24 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	atoms[i].E_temp.x = 0;
 	atoms[i].E_temp.y = 0;
 	atoms[i].E_temp.z = 0;
-	/* initialize neighbour-counter for potential calculation */
-	if(cs == 1) {
+#endif
+	/* calculate and store tail functions */
+	if(cs == 0) {
 	  for (j = 0; j < atoms[i].n_neigh; j++) {
-	    atoms[i].neigh[j].fnval_c = 0.;
-	    atoms[i].neigh[j].grad_c = 0.;
-	    atoms[i].neigh[j].fnval_cd = 0.;
-	    atoms[i].neigh[j].grad_cd = 0.;
-	    atoms[i].neigh[j].fnval_d = 0.;
-	    atoms[i].neigh[j].grad_d = 0.;
+	    elstat_shift(atoms[i].neigh[j].r, &atoms[i].neigh[j].fnval_el, 
+			 &atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
 	  }
 	}
       }
       cs++;
+
+      /*  for (i = 0; i < natoms; i++) {
+	  for (j = 0; j < atoms[i].n_neigh; j++) {
+	  printf("%lf\t%lf\t%lf\t%lf\n", atoms[i].neigh[j].r, atoms[i].neigh[j].fnval_el, 
+	  atoms[i].neigh[j].grad_el, atoms[i].neigh[j].ggrad_el);
+	  }
+	  }
+	  error("");*/
 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -357,14 +346,14 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	      /* calculate monopole forces */
 	      if (neigh->r < dp_cut && (xi_opt[2*size + ne + typ1] || xi_opt[2*size + ne + typ2])) { 
 		
-		if (cs == 2) {
+		/*if (cs == 2) {
 		  neigh->fnval_c = splint_comb_dir_c(&calc_pot, xi_c, 
 						     neigh->slot[0],
 						     neigh->shift[0],
 						     neigh->step[0], &neigh->grad_c);
-		}
-		fnval_tail = neigh->fnval_c;
-		grad_tail = neigh->grad_c;
+						     }*/
+		fnval_tail = neigh->fnval_el;
+		grad_tail = neigh->grad_el;
 
 		grad_i = xi_opt[2*size + ne + typ2] * grad_tail;
 		if(typ1 == typ2) {
@@ -414,6 +403,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 		}
 
+#ifdef DIPOLE
 		/* calculate static field-contributions */
 		atom->E_stat.x += neigh->dist.x * grad_i;
 		atom->E_stat.y += neigh->dist.y * grad_i;
@@ -437,12 +427,14 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 		  atoms[neigh->nr].p_sr.y += xi_opt[2*size + ne + typ1] * neigh->dist.y * p_sr_tail;
 		  atoms[neigh->nr].p_sr.z += xi_opt[2*size + ne + typ1] * neigh->dist.z * p_sr_tail;
 		}
+#endif /* DIPOLE */
 		
 		}	      
 	  }			/* loop over neighbours */
 	}         /* end S E C O N D loop over atoms */
 
 
+#ifdef DIPOLE
 	/* T H I R D loop: calculate whole dipole moment for every atom */
 	real rp, dp_sum;
 	int dp_converged = 0, dp_it = 0;
@@ -543,7 +535,7 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	  if (dp_sum < dp_tol) {
 	    dp_converged = 1;
 	    sum_c += dp_it;
-	    //printf("Converged after %d loops\n", dp_it);
+	    // printf("Converged after %d loops\n", dp_it);
 	  }
 	  
 	  dp_it++;
@@ -564,176 +556,170 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 	    if (neigh->r < dp_cut && (xi_opt[2*size + ne + ntypes + typ1] || xi_opt[2*size + ne + ntypes + typ2]) ) { 
-
-	      if(cs == 2) {
+	      
+	      /*if(cs == 2) {
 		neigh->fnval_cd = splint_comb_dir_cd(&calc_pot, xi_cd, 
-						neigh->slot[0],
-						neigh->shift[0],
-						neigh->step[0], &neigh->grad_cd);
-	      }
-	      fnval_tail = neigh->fnval_cd;
-	      grad_tail = neigh->grad_cd;
-
-	  /* monopole-dipole contributions */
-	  if(xi_opt[2*size + ne + typ1] && xi_opt[2*size + ne + ntypes + typ2]) {
-	    rp_j = SPROD(atoms[neigh->nr].p_ind, neigh->dist);	      	
-	    if (self) {  
-	      fnval_tail *= 0.5;
-	      grad_tail *= 0.5;
-	    }
-
-	    fnval = xi_opt[2*size + ne + typ1] * rp * fnval_tail;
-	    grad_1 = xi_opt[2*size + ne + typ1] * rp * grad_tail;
-	    grad_2 = xi_opt[2*size + ne + typ1] * fnval_tail;
-
-	    forces[energy_p + h] += fnval;
-	    
-	    if (uf) {
-	      tmp_force.x = neigh->dist.x * grad_1 + atoms[neigh->nr].p_ind.x * grad_2;
-	      tmp_force.y = neigh->dist.y * grad_1 + atoms[neigh->nr].p_ind.y * grad_2;
-	      tmp_force.z = neigh->dist.z * grad_1 + atoms[neigh->nr].p_ind.z * grad_2;
-	      forces[k] += tmp_force.x;
-	      forces[k + 1] += tmp_force.y;
-	      forces[k + 2] += tmp_force.z;
-	      /* actio = reactio */
-	      l = 3 * neigh->nr;
-	      forces[l] -= tmp_force.x;
-	      forces[l + 1] -= tmp_force.y;
-	      forces[l + 2] -= tmp_force.z;
+		neigh->slot[0],
+		neigh->shift[0],
+		neigh->step[0], &neigh->grad_cd);
+		} */
 	      
-#ifdef STRESS
-	      /* calculate stresses */
-	      if (us) {
-		tmp_force.x *= neigh->r;
-		tmp_force.y *= neigh->r;
-		tmp_force.z *= neigh->r;
-		stresses = stress_p + 6 * h;
-		forces[stresses] -= neigh->dist.x * tmp_force.x;
-		forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
-	      }
-#endif /* STRESS */
-	    }
-	  }
-
-
-	  /* dipole-monopole contributions */
-	  if(xi_opt[2*size + ne + ntypes + typ1] && xi_opt[2*size + ne + typ2]) {
-	    rp_i = SPROD(atom->p_ind, neigh->dist);
-	    if (self && !(xi_opt[2*size + ne + typ1] && xi_opt[2*size + ne + ntypes + typ2])) {  
-	      fnval_tail *= 0.5;
-	      grad_tail *= 0.5;
-	    }
-	    
-	    fnval = xi_opt[2*size + ne + typ2] * rp * fnval_tail;
-	    grad_1 = xi_opt[2*size + ne + typ2] * rp * grad_tail;
-	    grad_2 = xi_opt[2*size + ne + typ2] * fnval_tail;
-	    	 	    
-	    forces[energy_p + h] += fnval;
-	    
-	    if (uf) {
-	      tmp_force.x = neigh->dist.x * grad_1 + atoms[neigh->nr].p_ind.x * grad_2;
-	      tmp_force.y = neigh->dist.y * grad_1 + atoms[neigh->nr].p_ind.y * grad_2;
-	      tmp_force.z = neigh->dist.z * grad_1 + atoms[neigh->nr].p_ind.z * grad_2;
-	      forces[k] += tmp_force.x;
-	      forces[k + 1] += tmp_force.y;
-	      forces[k + 2] += tmp_force.z;
-	      /* actio = reactio */
-	      l = 3 * neigh->nr;
-	      forces[l] -= tmp_force.x;
-	      forces[l + 1] -= tmp_force.y;
-	      forces[l + 2] -= tmp_force.z;
+	      fnval_tail = - neigh->grad_el;
+	      grad_tail = - neigh->ggrad_el / 2;
 	      
-#ifdef STRESS
-	      /* calculate stresses */
-	      if (us) {
-		tmp_force.x *= neigh->r;
-		tmp_force.y *= neigh->r;
-		tmp_force.z *= neigh->r;
-		stresses = stress_p + 6 * h;
-		forces[stresses] -= neigh->dist.x * tmp_force.x;
-		forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+	      if (self) {  
+		fnval_tail *= 0.5;
+		grad_tail *= 0.5;
 	      }
+
+	      /* monopole-dipole contributions */
+	      if(xi_opt[2*size + ne + typ1] && xi_opt[2*size + ne + ntypes + typ2]) {
+		rp_j = SPROD(atoms[neigh->nr].p_ind, neigh->dist);	      	
+		
+		fnval = xi_opt[2*size + ne + typ1] * rp * fnval_tail;
+		grad_1 = xi_opt[2*size + ne + typ1] * rp * grad_tail;
+		grad_2 = xi_opt[2*size + ne + typ1] * fnval_tail;
+		
+		forces[energy_p + h] += fnval;
+		
+		if (uf) {
+		  tmp_force.x = neigh->dist.x * grad_1 + atoms[neigh->nr].p_ind.x * grad_2;
+		  tmp_force.y = neigh->dist.y * grad_1 + atoms[neigh->nr].p_ind.y * grad_2;
+		  tmp_force.z = neigh->dist.z * grad_1 + atoms[neigh->nr].p_ind.z * grad_2;
+		  forces[k] += tmp_force.x;
+		  forces[k + 1] += tmp_force.y;
+		  forces[k + 2] += tmp_force.z;
+		  /* actio = reactio */
+		  l = 3 * neigh->nr;
+		  forces[l] -= tmp_force.x;
+		  forces[l + 1] -= tmp_force.y;
+		  forces[l + 2] -= tmp_force.z;
+		  
+#ifdef STRESS
+		  /* calculate stresses */
+		  if (us) {
+		    tmp_force.x *= neigh->r;
+		    tmp_force.y *= neigh->r;
+		    tmp_force.z *= neigh->r;
+		    stresses = stress_p + 6 * h;
+		    forces[stresses] -= neigh->dist.x * tmp_force.x;
+		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		    forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		    forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  }
 #endif /* STRESS */
-	    }
-	  }
-
-
-	  /* dipole-dipole contributions */
-	  if(xi_opt[2*size + ne + ntypes + typ1] && xi_opt[2*size + ne + ntypes + typ2]) {
-	    
-	    if(cs == 2) {
-	    neigh->fnval_d = splint_comb_dir_d(&calc_pot, xi_d, 
-					    neigh->slot[0],
-					    neigh->shift[0],
-					    neigh->step[0], &neigh->grad_d);
-	    }
-
-	    fnval_tail = neigh->fnval_d;
-	    grad_tail = neigh->grad_d;
-
-	    if (self) {  
-	      fnval_tail *= 0.5;
-	      grad_tail *= 0.5;
-	    }
-	    
-	    rp_i = SPROD(atom->p_ind, neigh->dist);
-	    rp_j = SPROD(atoms[neigh->nr].p_ind, neigh->dist);
-	    pp_ij = SPROD(atom->p_ind, atoms[neigh->nr].p_ind);
-	    tmp = 3 * rp_i * rp_j / neigh->r2;
-
-	    fnval = (tmp - pp_ij) * fnval_tail;
-	    grad_1 = (tmp - pp_ij) * grad_tail;
-	    grad_2 = 3 * fnval_tail / neigh->r2;
-	    grad_3 = 2 * tmp * fnval_tail/ neigh->r2;
-
-	    forces[energy_p + h] += fnval;
-	    
-	    if (uf) {
-	      tmp_force.x = neigh->dist.x * (grad_1 - grad_3)
-		+ (rp_i * atoms[neigh->nr].p_ind.x + rp_j * atom->p_ind.x) * grad_2;
-	      tmp_force.y = neigh->dist.y * (grad_1 - grad_3)
-		+ (rp_i * atoms[neigh->nr].p_ind.y + rp_j * atom->p_ind.y) * grad_2;
-	      tmp_force.z = neigh->dist.z * (grad_1 - grad_3)
-		+ (rp_i * atoms[neigh->nr].p_ind.z + rp_j * atom->p_ind.z) * grad_2;
-	      forces[k] += tmp_force.x;
-	      forces[k + 1] += tmp_force.y;
-	      forces[k + 2] += tmp_force.z;
-	      /* actio = reactio */
-	      l = 3 * neigh->nr;
-	      forces[l] -= tmp_force.x;
-	      forces[l + 1] -= tmp_force.y;
-	      forces[l + 2] -= tmp_force.z;
+		}
+	      }
 	      
+	      
+	      /* dipole-monopole contributions */
+	      if(xi_opt[2*size + ne + ntypes + typ1] && xi_opt[2*size + ne + typ2]) {
+		rp_i = SPROD(atom->p_ind, neigh->dist);
+		
+		fnval = xi_opt[2*size + ne + typ2] * rp * fnval_tail;
+		grad_1 = xi_opt[2*size + ne + typ2] * rp * grad_tail;
+		grad_2 = xi_opt[2*size + ne + typ2] * fnval_tail;
+		
+		forces[energy_p + h] += fnval;
+		
+		if (uf) {
+		  tmp_force.x = neigh->dist.x * grad_1 + atoms[neigh->nr].p_ind.x * grad_2;
+		  tmp_force.y = neigh->dist.y * grad_1 + atoms[neigh->nr].p_ind.y * grad_2;
+		  tmp_force.z = neigh->dist.z * grad_1 + atoms[neigh->nr].p_ind.z * grad_2;
+		  forces[k] += tmp_force.x;
+		  forces[k + 1] += tmp_force.y;
+		  forces[k + 2] += tmp_force.z;
+		  /* actio = reactio */
+		  l = 3 * neigh->nr;
+		  forces[l] -= tmp_force.x;
+		  forces[l + 1] -= tmp_force.y;
+		  forces[l + 2] -= tmp_force.z;
+		  
 #ifdef STRESS
-	      /* calculate stresses */
-	      if (us) {
-		tmp_force.x *= neigh->r;
-		tmp_force.y *= neigh->r;
-		tmp_force.z *= neigh->r;
-		stresses = stress_p + 6 * h;
-		forces[stresses] -= neigh->dist.x * tmp_force.x;
-		forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
-	      }
+		  /* calculate stresses */
+		  if (us) {
+		    tmp_force.x *= neigh->r;
+		    tmp_force.y *= neigh->r;
+		    tmp_force.z *= neigh->r;
+		    stresses = stress_p + 6 * h;
+		    forces[stresses] -= neigh->dist.x * tmp_force.x;
+		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		    forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		    forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  }
 #endif /* STRESS */
-	    }
-	  }
-
-
+		}
+	      }
+	      
+	      
+	      /* dipole-dipole contributions */
+	      if(xi_opt[2*size + ne + ntypes + typ1] && xi_opt[2*size + ne + ntypes + typ2]) {
+		
+		/*if(cs == 2) {
+		  neigh->fnval_d = splint_comb_dir_d(&calc_pot, xi_d, 
+		  neigh->slot[0],
+		  neigh->shift[0],
+		  neigh->step[0], &neigh->grad_d);
+		  }
+		  
+		  fnval_tail = neigh->fnval_d;
+		  grad_tail = neigh->grad_d; */
+		
+		rp_i = SPROD(atom->p_ind, neigh->dist);
+		rp_j = SPROD(atoms[neigh->nr].p_ind, neigh->dist);
+		pp_ij = SPROD(atom->p_ind, atoms[neigh->nr].p_ind);
+		tmp = 3 * rp_i * rp_j / neigh->r2;
+		
+		fnval = (tmp - pp_ij) * fnval_tail;
+		grad_1 = (tmp - pp_ij) * grad_tail;
+		grad_2 = 3 * fnval_tail / neigh->r2;
+		grad_3 = 2 * tmp * fnval_tail/ neigh->r2;
+		
+		forces[energy_p + h] += fnval;
+		
+		if (uf) {
+		  tmp_force.x = neigh->dist.x * (grad_1 - grad_3)
+		    + (rp_i * atoms[neigh->nr].p_ind.x + rp_j * atom->p_ind.x) * grad_2;
+		  tmp_force.y = neigh->dist.y * (grad_1 - grad_3)
+		    + (rp_i * atoms[neigh->nr].p_ind.y + rp_j * atom->p_ind.y) * grad_2;
+		  tmp_force.z = neigh->dist.z * (grad_1 - grad_3)
+		    + (rp_i * atoms[neigh->nr].p_ind.z + rp_j * atom->p_ind.z) * grad_2;
+		  forces[k] += tmp_force.x;
+		  forces[k + 1] += tmp_force.y;
+		  forces[k + 2] += tmp_force.z;
+		  /* actio = reactio */
+		  l = 3 * neigh->nr;
+		  forces[l] -= tmp_force.x;
+		  forces[l + 1] -= tmp_force.y;
+		  forces[l + 2] -= tmp_force.z;
+		  
+#ifdef STRESS
+		  /* calculate stresses */
+		  if (us) {
+		    tmp_force.x *= neigh->r;
+		    tmp_force.y *= neigh->r;
+		    tmp_force.z *= neigh->r;
+		    stresses = stress_p + 6 * h;
+		    forces[stresses] -= neigh->dist.x * tmp_force.x;
+		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		    forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		    forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  }
+#endif /* STRESS */
+		}
+	      }
+	      
+	      
 	    }
 	  }       	/* loop over neighbours */
 	}               /* end F O U R T H loop over atoms */ 
+#endif /* DIPOLE */
 	
 
  	/* F I F T H  loop: self energy contributions and sum-up force contributions */ 
@@ -749,11 +735,14 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
 	    fnval = dp_eps * dp_kappa * qq / sqrt(M_PI);
 	    forces[energy_p + h] -= fnval;
 	  }
+#ifdef DIPOLE
 	  if (xi_opt[2*size + ne + ntypes + typ1]) {
 	    pp = SPROD(atom->p_ind, atom->p_ind);
 	    fnval = pp / (2 * xi_opt[2*size + ne + ntypes + typ1]);
 	    forces[energy_p + h] += fnval;
 	  }
+#endif
+
 
 	  /* sum-up: whole force contributions flow into tmpsum */
 	  if (uf) {
@@ -790,11 +779,13 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
       }				/* end M A I N loop over configurations */
 
 
+#ifdef DIPOLE
       /* output for "Dipol_Konvergenz_Verlauf" */
       sum_t = sum_c / h;
       outfile2 = fopen(filename2, "a");
       fprintf(outfile2, "%d\n", sum_t);
       fclose(outfile2);	
+#endif
      
     }				/* parallel region */
     
@@ -843,4 +834,4 @@ real calc_forces_dipole(real *xi_opt, real *forces, int flag)
   return -1.;
 }
 
-#endif /* DIPOLE */
+#endif /* MONOPOLE */

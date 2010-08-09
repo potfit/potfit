@@ -82,6 +82,12 @@ int main(int argc, char **argv)
   char  msg[255], file[255];
   FILE *outfile;
 
+#ifdef MONOPOLE
+  time_t t_begin, t_end;
+  double t_dif;
+  time(&t_begin);
+#endif
+
 #ifdef MPI
   init_mpi(argc, argv);
 #endif
@@ -103,9 +109,9 @@ int main(int argc, char **argv)
 #elif defined ADP
   calc_forces = calc_forces_adp;
   strcpy(interaction, "ADP");
-#elif defined DIPOLE
-  calc_forces = calc_forces_dipole;
-  strcpy(interaction, "DIPOLE");
+#elif defined MONOPOLE
+  calc_forces = calc_forces_elstat;
+  strcpy(interaction, "ELSTAT");
 #endif
 
   /* read the parameters and the potential file */
@@ -733,5 +739,12 @@ int main(int argc, char **argv)
 #else
   free_all_pointers();
 #endif
+
+#ifdef MONOPOLE
+  time(&t_end);
+  t_dif = difftime(t_end, t_begin);
+  printf("\nRuntime: %lf s\n", t_dif);
+#endif
+
   return 0;
 }

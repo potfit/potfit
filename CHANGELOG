@@ -1,3 +1,10 @@
+bzr-20100809
++ split option DIPOLE in MONOPOLE and DIPOLE, thereby MONOPOLE is implied by DIPOLE
++ uf (use forces) can now be used in connection with electrostatic forces
++ option FWEIGHT now works with options MONOPOLE and DIPOLE
++ all tail-functions are now evaluated without splines in order to have
+  accurate derivations
+
 bzr-20100804
 + Self energy terms added
 + all splines for electrostatic tail-functions are now evaluated once only

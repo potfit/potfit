@@ -229,7 +229,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->pmax = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
   } else {
-#elif defined DIPOLE
+#elif defined MONOPOLE
   if (1) {
     apt->values = (real **)malloc((size + 4) * sizeof(real *));
     apt->param_name = (char ***)malloc((size + 4) * sizeof(char **));
@@ -251,16 +251,18 @@ void read_pot_table(pot_table_t *pt, char *filename)
       apt->invar_par[size + i] = (int *)malloc((size + i) * sizeof(int));
     }
     apt->charge = apt->values[size];
+#ifdef DIPOLE
     apt->dp_alpha = apt->values[size + 1];
     apt->dp_b = apt->values[size + 2];
     apt->dp_c = apt->values[size + 3];
-  } else {
 #endif
+  } else {
+#endif /* MONOPOLE */
     apt->values = (real **)malloc(size * sizeof(real *));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->pmin = (real **)malloc(size * sizeof(real *));
     apt->pmax = (real **)malloc(size * sizeof(real *));
-#if defined PAIR || defined DIPOLE
+#if defined PAIR || defined MONOPOLE
   }
 #endif
   apt->names = (char **)malloc(size * sizeof(char *));
@@ -410,11 +412,8 @@ void read_pot_table(pot_table_t *pt, char *filename)
     reg_for_free(apt->pmax[size], "apt->pmax[size]");
   }
 #endif /* PAIR && APOT */
-#if defined DIPOLE
+#if defined MONOPOLE
   reg_for_free(apt->charge, "apt->charge");
-  reg_for_free(apt->dp_alpha, "apt->dp_alpha");
-  reg_for_free(apt->dp_b, "apt->dp_b");
-  reg_for_free(apt->dp_c, "apt->dp_c");
   reg_for_free(apt->pmin[size], "apt->pmin[size]");
   reg_for_free(apt->pmin[size + 1], "apt->pmin[size + 1]");
   reg_for_free(apt->pmin[size + 2], "apt->pmin[size + 2]");
@@ -427,6 +426,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
   reg_for_free(apt->invar_par[size + 1], "apt->invar_par[size + 1]");
   reg_for_free(apt->invar_par[size + 2], "apt->invar_par[size + 2]");
   reg_for_free(apt->invar_par[size + 3], "apt->invar_par[size + 3]");
+#endif
+#ifdef DIPOLE
+  reg_for_free(apt->dp_alpha, "apt->dp_alpha");
+  reg_for_free(apt->dp_b, "apt->dp_b");
+  reg_for_free(apt->dp_c, "apt->dp_c");
 #endif
   reg_for_free(rcut, "rcut");
   reg_for_free(rmin, "rmin");
@@ -562,21 +566,21 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 
-#ifdef DIPOLE
+#ifdef MONOPOLE
   fsetpos(infile, &startpos);
-  /* skip to dipole section */
+  /* skip to electrostatic section */
   do {
     fgetpos(infile, &filepos);
     fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "dipole") != 0 && !feof(infile));
+  } while (strcmp(buffer, "elstat") != 0 && !feof(infile));
 
-  /* check for dipole keyword */
-  if (strcmp("dipole", buffer) != 0) {
-    sprintf(msg, "No dipole option found in %s.\n", filename);
+  /* check for elstat keyword */
+  if (strcmp("elstat", buffer) != 0) {
+    sprintf(msg, "No elstat option found in %s.\n", filename);
     error(msg);
   }
 
- /* read dipole parameters */
+ /* read electrostatic parameters */
   for (i = 0; i < ntypes; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i], &apt->charge[i],
@@ -592,6 +596,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     reg_for_free(apt->param_name[apt->number][i], "apt->param_name[apt->number][i]");
   }
+#endif
+#ifdef DIPOLE
   for (i = 0; i < ntypes; i++) {
     apt->param_name[apt->number + 1][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][i], &apt->dp_alpha[i],
@@ -1008,7 +1014,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
 
-#ifdef DIPOLE
+#ifdef MONOPOLE
   apt->total_ne_par = apt->total_par;
 #endif
 
@@ -1035,8 +1041,12 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par += (ntypes + compnodes);
   }
 #endif
+
+#ifdef MONOPOLE
+  apt->total_par += ntypes;
+#endif
 #ifdef DIPOLE
-  apt->total_par += (2 * ntypes);
+  apt->total_par += ntypes;
   apt->total_par += (2 * apt->number);
 #endif
 
@@ -1061,8 +1071,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     pt->len += (ntypes + compnodes);
   }
 #endif
+#ifdef MONOPOLE
+  pt->len += ntypes;
+#endif
 #ifdef DIPOLE
-  pt->len += (2 * ntypes);
+  pt->len += ntypes;
   pt->len += (2 * apt->number);
 #endif
 
@@ -1154,8 +1167,26 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     global_idx += (ntypes + compnodes);
   }
 #endif
+#ifdef MONOPOLE
+  for (i = apt->number; i < apt->number + 1; i++) {
+    for (j = 0; j < (ntypes); j++) {
+      *val = apt->values[i][j];
+      val++;
+      if (!apt->invar_par[i][j]) {
+	pt->idx[k] = l++;
+	apt->idxpot[k] = i;
+	apt->idxparam[k++] = j;
+      } else {
+	l++;
+	apt->total_par -= apt->invar_par[i][j];
+	pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += ntypes;
+#endif
 #ifdef DIPOLE
-  for (i = apt->number; i < apt->number + 2; i++) {
+  for (i = apt->number + 1; i < apt->number + 2; i++) {
     for (j = 0; j < (ntypes); j++) {
       *val = apt->values[i][j];
       val++;
@@ -1185,7 +1216,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
     }
   }
-  pt->idxlen += (2 * ntypes);
+  pt->idxlen += ntypes;
   pt->idxlen += (2 * apt->number);
 #endif
 
@@ -1575,9 +1606,9 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 #else
   int  *sp;
 #endif
-#ifdef DIPOLE
-  real f_c, f_cd, f_d;
-#endif
+  //#ifdef MONOPOLE
+  //real f_c, f_cd, f_d;
+  //#endif
 
   switch (format) {
 #ifdef APOT
@@ -1605,7 +1636,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  reg_for_free(calct->table, "calct->table");
 	  calct->d2tab = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->d2tab, "calct->d2tab");
-#ifdef DIPOLE
+	  /* #ifdef MONOPOLE
 	  calct->table_c = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->table_c, "calct->table_c");
 	  calct->d2tab_c = (real *)malloc(calct->len * sizeof(real));
@@ -1618,18 +1649,18 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  reg_for_free(calct->table_d, "calct->table_d");
 	  calct->d2tab_d = (real *)malloc(calct->len * sizeof(real));
 	  reg_for_free(calct->d2tab_d, "calct->d2tab_d");
-#endif
+	  #endif */
 	  calct->idx = (int *)malloc(calct->len * sizeof(int));
 	  reg_for_free(calct->idx, "calct->idx");
 	  if (calct->first == NULL || calct->last == NULL
 	      || calct->step == NULL || calct->invstep == NULL
 	      || calct->xcoord == NULL || calct->table == NULL
 	      || calct->d2tab == NULL || calct->idx == NULL
-#ifdef DIPOLE
+	      /* #ifdef MONOPOLE
 	      || calct->d2tab_c == NULL || calct->table_c == NULL
 	      || calct->d2tab_cd == NULL || calct->table_cd == NULL
 	      || calct->d2tab_d == NULL || calct->table_d == NULL
-#endif
+	      #endif */
 	      )
 	  error("Cannot allocate info block for calc potential table\n");
 
@@ -1639,14 +1670,14 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    h = apot_table.values[i][apot_table.n_par[i] - 1];
 	    calct->table[i * APOT_STEPS + i * 2] = 10e30;
 	    calct->table[i * APOT_STEPS + i * 2 + 1] = 0;
-#ifdef DIPOLE	    
+	    /* #ifdef MONOPOLE    
 	    calct->table_c[i * APOT_STEPS + i * 2] = 10e30;
 	    calct->table_c[i * APOT_STEPS + i * 2 + 1] = 0;
 	    calct->table_cd[i * APOT_STEPS + i * 2] = 10e30;
 	    calct->table_cd[i * APOT_STEPS + i * 2 + 1] = 0;
 	    calct->table_d[i * APOT_STEPS + i * 2] = 10e30;
 	    calct->table_d[i * APOT_STEPS + i * 2 + 1] = 0;
-#endif
+	    #endif */
 	    calct->first[i] = (x += 2);
 	    calct->last[i] = (x += APOT_STEPS - 1);
 	    x++;
@@ -1661,7 +1692,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	      calct->table[index] =
 		smooth_pot[i] ? f * cutoff(calct->xcoord[index],
 					   calct->begin[i], h) : f;	      
-#ifdef DIPOLE	   
+	      /* #ifdef MONOPOLE	   
 	      coulomb_shift(calct->xcoord[index], &f_c);
 	      calct->table_c[index] =
 		smooth_pot[i] ? f_c * cutoff(calct->xcoord[index],
@@ -1674,7 +1705,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	      calct->table_d[index] =
 		smooth_pot[i] ? f_d * cutoff(calct->xcoord[index],
 					     calct->begin[i], h) : f_d;
-#endif
+					     #endif */
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
 	  }
@@ -2041,11 +2072,12 @@ void write_apot_table(apot_table_t *apt, char *filename)
   }
 #endif
 
-#ifdef DIPOLE
-  fprintf(outfile, "dipole\n");
+#ifdef MONOPOLE
+  fprintf(outfile, "elstat\n");
   for (i = 0; i < ntypes ; i++) 
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i], apt->charge[i], 
 	    apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
+#ifdef DIPOLE
   for (i = 0; i < ntypes ; i++) 
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][i], apt->dp_alpha[i], 
 	    apt->pmin[apt->number + 1][i], apt->pmax[apt->number + 1][i]);
@@ -2057,6 +2089,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i], apt->dp_c[i], 
 	    apt->pmin[apt->number + 3][i], apt->pmax[apt->number + 3][i]);
   }
+#endif
   fprintf(outfile, "\n");
 #endif
   
