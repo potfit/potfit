@@ -212,10 +212,6 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
     myconf = nconf;
 #endif
 
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
@@ -248,9 +244,6 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
       vector u_force;
 
 
-#ifdef _OPENMP
-#pragma omp for reduction(+:tmpsum,rho_sum_loc)
-#endif /* _OPENMP */
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];

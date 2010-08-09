@@ -204,10 +204,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
     myconf = nconf;
 #endif
 
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
@@ -230,9 +226,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       real  eam_force;
       real  rho_val, rho_grad, rho_grad_j;
 
-#ifdef _OPENMP
-#pragma omp for reduction(+:tmpsum,rho_sum_loc)
-#endif /* _OPENMP */
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
