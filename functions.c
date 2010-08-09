@@ -354,7 +354,6 @@ void pohlong_value(real r, real *p, real *f)
 #else
     power = fastpow(r, p[1]);
 #endif
-  fprintf(stderr, "power %f\n",power);
 
     *f = p[0] * (1 - p[1] * log(r)) * power + p[2] * r;
   }

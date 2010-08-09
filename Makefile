@@ -182,7 +182,7 @@ ifneq (,$(strip $(findstring acml,${MAKETARGET})))
    LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
 endif
 
- export        MPICH_CC MPICH_CLINKER
+ export        OMPI_CC OMPI_CLINKER
 endif
 
 ifeq (x86_64-gcc,${SYSTEM})
@@ -192,6 +192,9 @@ ifeq (x86_64-gcc,${SYSTEM})
 
 # general optimization flags
   OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused
+
+  OMPI_CC      	= gcc
+  OMPI_CLINKER 	= gcc
 
 # debug flags
   PROF_FLAGS    += -pg
@@ -203,15 +206,15 @@ ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      = -I${MKLDIR}/include
   LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
 		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
-		   -Wl,--end-group -lpthread
+		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml,${MAKETARGET})))
   ACMLPATH      = ${ACMLDIR}/lib
-  CINCLUDE     += -I$(ACMLDIR)/include
+  CINCLUDE     	+= -I$(ACMLDIR)/include
   LD_LIBRARY_PATH +=':$(ACMLPATH):'
-  LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+  LIBS		+= -L${ACMLPATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
 endif
 
  export        OMPI_CC OMPI_CLINKER
@@ -246,9 +249,9 @@ endif
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml,${MAKETARGET})))
   ACMLPATH      = ${ACMLDIR}/lib
-  CINCLUDE     += -I$(ACMLDIR)/include
+  CINCLUDE     	+= -I$(ACMLDIR)/include
   LD_LIBRARY_PATH +=':$(ACMLPATH):'
-  LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+  LIBS		+= -L${ACMLPATH} -lpthread -lacml -lacml_mv
 endif
 
   export        OMPI_CC OMPI_CLINKER
@@ -257,7 +260,7 @@ endif
 ifeq (i386-gcc,${SYSTEM})
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
-  OMPI_CC     	 = gcc
+  OMPI_CC     	= gcc
   OMPI_CLINKER 	= gcc
   OPT_FLAGS	+= -O3 -march=native
   DEBUG_FLAGS	+= -g
@@ -269,15 +272,15 @@ ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      = -I${MKLDIR}/include
   LIBS		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
 		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
-		   -Wl,--end-group -lpthread
+		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml,${MAKETARGET})))
   ACMLPATH      = ${ACMLDIR}/lib
-  CINCLUDE     += -I$(ACMLDIR)/include
+  CINCLUDE     	+= -I$(ACMLDIR)/include
   LD_LIBRARY_PATH +=':$(ACMLPATH):'
-  LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+  LIBS		+= -L${ACMLPATH} -lpthread -lacml -lacml_mv -Wl,--as-needed 
 endif
 
   export        OMPI_CC OMPI_CLINKER

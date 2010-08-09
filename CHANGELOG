@@ -1,3 +1,8 @@
+devel-20100908
++ final commit before next release
++ evolutionary algorithm now restarts if average==best
++ fix Makefile for gcc profiles
+
 devel-20100730
 + more optimization flags for icc and gcc
 + adjust comments to c-style

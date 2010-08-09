@@ -298,7 +298,26 @@ void diff_evo(real *xi)
     }
     if ((avg / (NP) - min) < 1e-10) {
       printf("Average cost equals minimum cost, nothing more to improve\n");
-      finished = 1;
+      if (restart < 3) {
+	printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
+	restart++;
+	init_population(x1, xi, D, log(restart * exp(10)) / evo_width);
+	for (i = 0; i < NP; i++) {
+#ifdef APOT
+	  opt = calc_vect(x1[i]);
+#else
+	  opt = x1[i];
+#endif /* APOT */
+	  cost[i] = (*calc_forces) (opt, fxi, 0);
+	  if (cost[i] < min) {
+	    min = cost[i];
+	    for (j = 0; j < D; j++)
+	      best[j] = x1[i][j];
+	  }
+	}
+	last_changed = 0;
+      } else
+	finished = 1;
     }
     if (last_changed == MAX_UNCHANGED && restart < 3) {
       restart++;
