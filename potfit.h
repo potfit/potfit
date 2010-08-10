@@ -149,14 +149,6 @@ typedef struct {
   real *xcoord;			/* the x-coordinates of sampling points */
   real *table;			/* the actual data */
   real *d2tab;			/* second derivatives of table data for spline int */
-#ifdef MONOPOLE
-  real *table_c;		/* static data for tail of coulomb potential */
-  real *d2tab_c;
-  real *table_cd;		/* static data for tail of coulomb-dipole potential */
-  real *d2tab_cd;
-  real *table_d;		/* static data for tail of dipole potential */
-  real *d2tab_d;
-#endif
   int  *idx;			/* indirect indexing */
 } pot_table_t;
 
