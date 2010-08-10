@@ -725,10 +725,10 @@ void ms_shift(real r, real *p, real *f)
   static real x[2], y[4];
 
   x[0] = p[1] * (1 - r / p[2]);
-  x[1] = p[0] * (exp(x[0]) + 2 * exp(x[0]/2) );
+  x[1] = p[0] * (exp(x[0]) + 2 * exp(x[0] / 2));
   y[0] = p[1] * (1 - dp_cut / p[2]);
-  y[1] = p[0] * (exp(y[0]) + 2 * exp(y[0]/2) );
-  y[2] = p[1] * (y[1] + p[0] * exp(y[0]/2)) / p[2];
+  y[1] = p[0] * (exp(y[0]) + 2 * exp(y[0] / 2));
+  y[2] = p[1] * (y[1] + p[0] * exp(y[0] / 2)) / p[2];
   y[3] = y[1] + y[2] * dp_cut;
 
   *f = x[1] - y[3] + y[2] * r;
@@ -747,10 +747,10 @@ void elstat_value(real r, real *ftail, real *gtail, real *ggtail)
   x[0] = r * r;
   x[1] = dp_kappa * dp_kappa;
   x[2] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
-  x[3] = exp(-x[0]*x[1]);
+  x[3] = exp(-x[0] * x[1]);
 
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
-  *gtail = - (*ftail + x[2] * x[3])/ r;
+  *gtail = -(*ftail + x[2] * x[3]) / r;
   *ggtail = 2 * (x[1] * x[2] * x[3] - *gtail / r);
 }
 
@@ -788,13 +788,13 @@ void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 
 real shortrange_value(real r, real *a, real *b, real *c)
 {
- static real x[5], y[2];
+  static real x[5], y[2];
 
   x[0] = *b * r;
   x[1] = x[0] * x[0];
   x[2] = x[1] * x[0];
   x[3] = x[1] * x[1];
-  x[4] = 1 + x[0] + x[1]/2 +  x[2]/6 +  x[3]/24;
+  x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
   y[0] = r * r;
   y[1] = (*a * *c) / y[0];
 
@@ -803,4 +803,3 @@ real shortrange_value(real r, real *a, real *b, real *c)
 
 #endif /* DIPOLE */
 #endif /* APOT */
-

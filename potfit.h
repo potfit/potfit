@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <time.h>
 
 #ifdef OMP
 #include <omp.h>
@@ -96,12 +95,12 @@ typedef struct {
   real  r;
   vector dist;			/* distance divided by r */
 #ifdef MONOPOLE
-  real r3;                      /* r^3 */
-  real r2;                      /* r^2 */
-  real fnval_el;                 /* stores tail of electrostatic potential */
-  real grad_el;                  /* stores tail of first derivative of electrostatic potential */
-  real ggrad_el;                 /* stores tail of second derivative of electrostatic potential */
-#endif 
+  real  r3;			/* r^3 */
+  real  r2;			/* r^2 */
+  real  fnval_el;		/* stores tail of electrostatic potential */
+  real  grad_el;		/* stores tail of first derivative of electrostatic potential */
+  real  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
+#endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
@@ -131,12 +130,12 @@ typedef struct {
   real  nu;
 #endif
 #ifdef DIPOLE
-  vector E_stat;                /* static field-contribution */
-  vector p_sr;                  /* short-range dipole moment */
-  vector E_ind;                 /* induced field-contribution */
-  vector p_ind;                 /* induced dipole moment */
-  vector E_old;                 /* stored old induced field */
-  vector E_temp;                /* temporary induced field */
+  vector E_stat;		/* static field-contribution */
+  vector p_sr;			/* short-range dipole moment */
+  vector E_ind;			/* induced field-contribution */
+  vector p_ind;			/* induced dipole moment */
+  vector E_old;			/* stored old induced field */
+  vector E_temp;		/* temporary induced field */
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
@@ -155,12 +154,12 @@ typedef struct {
   real *table;			/* the actual data */
   real *d2tab;			/* second derivatives of table data for spline int */
 #ifdef MONOPOLE
-  real *table_c;                /* static data for tail of coulomb potential */
-  real *d2tab_c;	   
-  real *table_cd;               /* static data for tail of coulomb-dipole potential */
-  real *d2tab_cd;	   
-  real *table_d;                /* static data for tail of dipole potential */
-  real *d2tab_d;	   
+  real *table_c;		/* static data for tail of coulomb potential */
+  real *d2tab_c;
+  real *table_cd;		/* static data for tail of coulomb-dipole potential */
+  real *d2tab_cd;
+  real *table_d;		/* static data for tail of dipole potential */
+  real *d2tab_d;
 #endif
   int  *idx;			/* indirect indexing */
 } pot_table_t;
@@ -182,7 +181,7 @@ typedef struct {
   /* parameters */
   int   total_par;		/* total number of parameters for all potentials */
 #ifdef MONOPOLE
-  int total_ne_par;             /* total number of non-electrostatic parameters */
+  int   total_ne_par;		/* total number of non-electrostatic parameters */
 #endif
   int  *idxparam;		/* indirect index for potential parameters */
   int **invar_par;		/* array of invariant parameters */
@@ -383,16 +382,16 @@ EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
 
-// variables needed for electrostatic options
+/* variables needed for electrostatic options */
 #ifdef MONOPOLE
-EXTERN real dp_eps INIT(14.40);	   /* this is e^2/(4*pi*epsilon_0) in eV A */
+EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
-EXTERN real dp_cut INIT(10);      /* cutoff-radius for long-range interactions */
-EXTERN int cs INIT(0);         /* counter for second derivatives */
+EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
+EXTERN int cs INIT(0);		/* counter for second derivatives */
 #endif
 #ifdef DIPOLE
-EXTERN real dp_tol INIT(1.e-7); /* dipole iteration precision */
-EXTERN real dp_mix INIT(0.2);   /* miximg parameter for damping dipole iteration loop */
+EXTERN real dp_tol INIT(1.e-7);	/* dipole iteration precision */
+EXTERN real dp_mix INIT(0.2);	/* miximg parameter for damping dipole iteration loop */
 #endif
 
 /******************************************************************************
@@ -480,14 +479,14 @@ real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
 real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
-		      real *grad);
+  real *grad);
 #ifdef MONOPOLE
 real  splint_comb_dir_c(pot_table_t *pt, real *xi, int k, real b, real step,
-		      real *grad);
+  real *grad);
 real  splint_comb_dir_cd(pot_table_t *pt, real *xi, int k, real b, real step,
-		      real *grad);
+  real *grad);
 real  splint_comb_dir_d(pot_table_t *pt, real *xi, int k, real b, real step,
-		      real *grad);
+  real *grad);
 #endif
 real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
@@ -585,12 +584,12 @@ void  poly_5_value(real, real *, real *);
 
 /* functions for electrostatic calculations  */
 #ifdef MONOPOLE
-void ms_shift(real, real *, real *);
-void elstat_value(real, real *, real *, real *);
-void elstat_shift(real, real *, real *, real *);
+void  ms_shift(real, real *, real *);
+void  elstat_value(real, real *, real *, real *);
+void  elstat_shift(real, real *, real *, real *);
 #endif
 #ifdef DIPOLE
-real shortrange_value(real, real *, real *, real *);
+real  shortrange_value(real, real *, real *, real *);
 #endif
 
 /* template for new potential function called newpot */

@@ -30,6 +30,7 @@
 
 #define MAIN
 
+#include <time.h>
 #include "potfit.h"
 #include "utils.h"
 #include "version.h"
