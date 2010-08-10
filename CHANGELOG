@@ -1,46 +1,70 @@
-bzr-20100809
+trunk-20100910
++ strip even more (comments)
+
+dipole-20100809
 + split option DIPOLE in MONOPOLE and DIPOLE, thereby MONOPOLE is implied by DIPOLE
 + uf (use forces) can now be used in connection with electrostatic forces
 + option FWEIGHT now works with options MONOPOLE and DIPOLE
 + all tail-functions are now evaluated without splines in order to have
   accurate derivations
 
-bzr-20100804
+devel-20100908
++ final commit before next release
++ evolutionary algorithm now restarts if average==best
++ fix Makefile for gcc profiles
+
+dipole-20100804
 + Self energy terms added
 + all splines for electrostatic tail-functions are now evaluated once only
 + shifts changed from (r-r_cut) to 1/2*(r^2 - r_cut^2) (adapted to IMD)
 + output-file Dipol_Konvergenz_Verlauf is now available
 
-bzr-20100729
+devel-20100730
++ more optimization flags for icc and gcc
++ adjust comments to c-style
++ remove openmp
++ Makefile updated
++ [APOT] add support for ACML for analytic functions
+
+dipole-20100729
 + last loop added for dipole calculation
 
-bzr-20100729
+dipole-20100729
 + tail of dipole potential -> all electrostatic potential-tails (five) implemented
 
-bzr-20100713
+devel-20100726
++ strip binaries
++ clean up Makefile, many old targets removed, 4 targets remaining
++ IMDSYS has been removed, set your system in the Makefile
+
+trunk-20100726
++ [ADP] fix? force calculation
++ [APOT] fix punishments with invariant potentials
+
+dipole-20100713
 + tail of coloumb-dipole potential
-+ full dipole table now initializing 
++ full dipole table now initializing
 
-bzr-20100707
-+ third loop in calc_forces_dipole
-
-bzr-20100705
-+ splines for tail of coulomb-potential
-
-bzr-20100702
-+ monopole enhancement done
-
-bzr-20100630
-+ dipole output
-+ energy conserving shift for ms-potential
-+ new properties static field and short-range dipole moment added to atom_t
-
-trunk-live
+trunk-20100709
 + [APOT] reduce number of sampling points for analytic potentials
 + [APOT] makeapot now writes the correct potential type
 + [APOT] fixed a bug with cp and globals
 + don't write errors if the weight is 0 for energy or stress
 + [APOT] update NOPUNISH target a little bit
+
+dipole-20100707
++ third loop in calc_forces_dipole
+
+dipole-20100705
++ splines for tail of coulomb-potential
+
+dipole-20100702
++ monopole enhancement done
+
+dipole-20100630
++ dipole output
++ energy conserving shift for ms-potential
++ new properties static field and short-range dipole moment added to atom_t
 
 trunk-20100623
 + change indent mode a little bit

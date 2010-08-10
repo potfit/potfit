@@ -39,15 +39,15 @@
 #define D ndim
 #else
 #define D ndimtot
-#endif
+#endif /* APOT */
 
 /* parameters for the differential evolution algorithm */
-#define NP 25*D			// number of total population
-#define CR 0.5			// crossover constant, in [0,1]
-#define F 0.2			// coupling constant with others, in [0,1]
+#define NP 25*D			/* number of total population */
+#define CR 0.5			/* crossover constant, in [0,1] */
+#define F 0.2			/* coupling constant with others, in [0,1] */
 
-#define MAX_LOOPS 1e6		// max number of loops performed
-#define MAX_UNCHANGED 100	// abort after number of unchanged steps
+#define MAX_LOOPS 1e6		/* max number of loops performed */
+#define MAX_UNCHANGED 100	/* abort after number of unchanged steps */
 
 #ifdef APOT
 
@@ -78,7 +78,7 @@ real *calc_vect(real *x)
     for (i = 0; i < ntypes; i++)
       vect[k++] = x[n++];
   }
-#endif
+#endif /* PAIR */
 
   if (have_globals) {
     for (i = 0; i < apot_table.globals; i++) {
@@ -89,7 +89,7 @@ real *calc_vect(real *x)
   return vect;
 }
 
-#endif
+#endif /* APOT */
 
 void init_population(real **pop, real *xi, int size, real scale)
 {
@@ -101,7 +101,7 @@ void init_population(real **pop, real *xi, int size, real scale)
     pop[0][i] = xi[idx[i]];
 #else
     pop[0][i] = xi[i];
-#endif
+#endif /* APOT */
   for (i = 1; i < NP; i++) {
     for (j = 0; j < size; j++) {
 #ifdef APOT
@@ -112,7 +112,7 @@ void init_population(real **pop, real *xi, int size, real scale)
       val = xi[j];
       min = .9 * val;
       max = 1.1 * val;
-#endif
+#endif /* APOT */
       /* force normal distribution to [-1:1] or less */
       temp = normdist() / (3 * scale);
       if (temp > 0)
@@ -165,7 +165,7 @@ void diff_evo(real *xi)
     opt = calc_vect(x1[i]);
 #else
     opt = x1[i];
-#endif
+#endif /* APOT */
     cost[i] = (*calc_forces) (opt, fxi, 0);
     if (cost[i] < min) {
       min = cost[i];
@@ -180,7 +180,7 @@ void diff_evo(real *xi)
 #ifdef DEBUG
   printf("Starting Differential Evolution with the following parameters:\n");
   printf("D=%d, NP=%d, CR=%f, F=%f\n", D, NP, CR, F);
-#endif
+#endif /* DEBUG */
 
   printf("Loops\t\tOptimum\t\tAverage error sum\n");
   printf("%5d\t\t%f\t%f\n", count, min, avg / (NP));
@@ -236,7 +236,7 @@ void diff_evo(real *xi)
 	    trial[j] = temp;
 #else
 	  trial[j] = temp;
-#endif
+#endif /* APOT */
 	  tmpsum += fabs(x1[i][j] - temp);
 	} else {
 	  trial[j] = x1[i][j];
@@ -247,7 +247,7 @@ void diff_evo(real *xi)
       opt = calc_vect(trial);
 #else
       opt = trial;
-#endif
+#endif /* APOT */
       force = (*calc_forces) (opt, fxi, 0);
       if (force < min) {
 	last_changed = 0;
@@ -262,7 +262,7 @@ void diff_evo(real *xi)
 #else
 	    xi[j] = trial[j];
 	  write_pot_table(&opt_pot, tempfile);
-#endif
+#endif /* APOT */
 	}
 	min = force;
       }
@@ -283,7 +283,7 @@ void diff_evo(real *xi)
     printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
 #else
     printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
-#endif
+#endif /* APOT */
     fflush(stdout);
     for (i = 0; i < NP; i++)
       for (j = 0; j < D; j++)
@@ -298,7 +298,26 @@ void diff_evo(real *xi)
     }
     if ((avg / (NP) - min) < 1e-10) {
       printf("Average cost equals minimum cost, nothing more to improve\n");
-      finished = 1;
+      if (restart < 3) {
+	printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
+	restart++;
+	init_population(x1, xi, D, log(restart * exp(10)) / evo_width);
+	for (i = 0; i < NP; i++) {
+#ifdef APOT
+	  opt = calc_vect(x1[i]);
+#else
+	  opt = x1[i];
+#endif /* APOT */
+	  cost[i] = (*calc_forces) (opt, fxi, 0);
+	  if (cost[i] < min) {
+	    min = cost[i];
+	    for (j = 0; j < D; j++)
+	      best[j] = x1[i][j];
+	  }
+	}
+	last_changed = 0;
+      } else
+	finished = 1;
     }
     if (last_changed == MAX_UNCHANGED && restart < 3) {
       restart++;
@@ -311,7 +330,7 @@ void diff_evo(real *xi)
 	opt = calc_vect(x1[i]);
 #else
 	opt = x1[i];
-#endif
+#endif /* APOT */
 	cost[i] = (*calc_forces) (opt, fxi, 0);
 	if (cost[i] < min) {
 	  min = cost[i];
@@ -326,7 +345,7 @@ void diff_evo(real *xi)
   opt = calc_vect(best);
 #else
   opt = best;
-#endif
+#endif /* APOT */
   for (j = 0; j < ndimtot; j++)
     xi[j] = opt[j];
 
@@ -343,4 +362,4 @@ void diff_evo(real *xi)
   free(fxi);
 }
 
-#endif
+#endif /* EVO */

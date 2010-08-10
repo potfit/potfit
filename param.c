@@ -28,6 +28,7 @@
  *
  ****************************************************************/
 
+#include <strings.h>
 #include "potfit.h"
 
 #if defined(__GNUC__) && defined(__STRICT_ANSI__)
