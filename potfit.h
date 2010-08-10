@@ -35,10 +35,6 @@
 #include <math.h>
 #include <string.h>
 
-#ifdef OMP
-#include <omp.h>
-#endif
-
 #ifdef MPI
 #include <mpi.h>
 #define REAL MPI_DOUBLE
