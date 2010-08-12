@@ -31,7 +31,6 @@
 
 #ifdef EVO
 
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
 
@@ -42,9 +41,9 @@
 #endif /* APOT */
 
 /* parameters for the differential evolution algorithm */
-#define NP 25*D			/* number of total population */
-#define CR 0.5			/* crossover constant, in [0,1] */
-#define F 0.2			/* coupling constant with others, in [0,1] */
+#define NP 50*D			/* number of total population */
+#define CR 0.6			/* crossover constant, in [0,1] */
+#define F 0.25			/* coupling constant with others, in [0,1] */
 
 #define MAX_LOOPS 1e6		/* max number of loops performed */
 #define MAX_UNCHANGED 100	/* abort after number of unchanged steps */
@@ -125,12 +124,28 @@ void init_population(real **pop, real *xi, int size, real scale)
 
 void diff_evo(real *xi)
 {
-  int   a, b, c, d, e, i, j, k;
-  int   count = 0, last_changed = 0, finished = 0, restart = 0;
-  real  force, min = 10e10, avg = 0, temp = 0, sum = 0, tmpsum = 0, pmin =
-    0, pmax = 0;
-  real *cost, *fxi, *trial, *best, *opt;
-  real **x1, **x2;
+  int   a, b, c, d, e;		/* store randomly picked numbers */
+  int   count = 0;		/* counter for loops */
+  int   finished = 0;		/* run finished ? */
+  int   i, j, k;		/* counters */
+  int   last_changed = 0;	/* loops run since last change */
+  int   restart = 0;		/* counts the times the algorithm was restarted */
+  real  avg = 0.;		/* average sum of squares for all configurations */
+  real  force = 0.;		/* holds the current sum of squares */
+  real  min = 10e10;		/* current minimum for all configurations */
+  real  temp = 0.;		/* temp storage */
+#ifdef APOT
+  real  pmin = 0.;		/* lower bound for parameter */
+  real  pmax = 0.;		/* upper bound for parameter */
+#endif
+  real *best;			/* best configuration */
+  real *cost;			/* cost values for all configurations */
+  real *fxi;			/* force vector */
+  real *opt;			/* used for force calculation */
+  real *trial;			/* current trial configuration */
+  real **x1;			/* current population */
+  real **x2;			/* next generation */
+  FILE *ff;			/* exit flagfile */
 
   if (evo_width == 0)
     return;
@@ -144,8 +159,8 @@ void diff_evo(real *xi)
   /* all configurations */
   x1 = (real **)malloc(NP * sizeof(real *));
   x2 = (real **)malloc(NP * sizeof(real *));
-  cost = (real *)malloc(NP * sizeof(real));
   best = (real *)malloc(NP * sizeof(real));
+  cost = (real *)malloc(NP * sizeof(real));
   if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL)
     error("Could not allocate memory for population vector!\n");
   for (i = 0; i < NP; i++) {
@@ -189,10 +204,8 @@ void diff_evo(real *xi)
   /* main differential evolution loop */
   while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished
     && restart < 4) {
-    sum = 0;
     /* randomly create new populations */
     for (i = 0; i < NP; i++) {
-      tmpsum = 0;
       do
 	a = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (a == i);
@@ -237,7 +250,6 @@ void diff_evo(real *xi)
 #else
 	  trial[j] = temp;
 #endif /* APOT */
-	  tmpsum += fabs(x1[i][j] - temp);
 	} else {
 	  trial[j] = x1[i][j];
 	}
@@ -267,8 +279,6 @@ void diff_evo(real *xi)
 	min = force;
       }
       if (force <= cost[i]) {
-	if (force < cost[i])
-	  sum += tmpsum;
 	for (j = 0; j < D; j++)
 	  x2[i][j] = trial[j];
 	cost[i] = force;
@@ -290,6 +300,19 @@ void diff_evo(real *xi)
 	x1[i][j] = x2[i][j];
     count++;
     last_changed++;
+
+    /* End optimization if break flagfile exists */
+    if (*flagfile != '\0') {
+      ff = fopen(flagfile, "r");
+      if (NULL != ff) {
+	printf("\nEvolutionary algorithm terminated ");
+	printf("in presence of break flagfile \"%s\"!\n\n", flagfile);
+	fclose(ff);
+	remove(flagfile);
+	break;
+      }
+    }
+
     if (last_changed == MAX_UNCHANGED && restart > 2) {
       printf
 	("\nCould not find any improvements in the last %d steps.\n",
