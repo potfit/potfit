@@ -91,8 +91,8 @@ typedef struct {
   real  r;
   vector dist;			/* distance divided by r */
 #ifdef MONOPOLE
-  real  r3;			/* r^3 */
   real  r2;			/* r^2 */
+  real  r3;			/* r^3 */
   real  fnval_el;		/* stores tail of electrostatic potential */
   real  grad_el;		/* stores tail of first derivative of electrostatic potential */
   real  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
@@ -375,7 +375,6 @@ EXTERN char *component[6];	/* componentes of vectors and tensors */
 EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
 EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
-EXTERN int cs INIT(0);		/* counter for second derivatives */
 #endif
 #ifdef DIPOLE
 EXTERN real dp_tol INIT(1.e-7);	/* dipole iteration precision */
@@ -467,15 +466,7 @@ real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
 real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
-  real *grad);
-#ifdef MONOPOLE
-real  splint_comb_dir_c(pot_table_t *pt, real *xi, int k, real b, real step,
-  real *grad);
-real  splint_comb_dir_cd(pot_table_t *pt, real *xi, int k, real b, real step,
-  real *grad);
-real  splint_comb_dir_d(pot_table_t *pt, real *xi, int k, real b, real step,
-  real *grad);
-#endif
+		      real *grad);
 real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ne(pot_table_t *pt, real *xi, int col, real r);

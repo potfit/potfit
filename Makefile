@@ -124,7 +124,7 @@
 SYSTEM 		= x86_64-icc
 
 # This is the directory where the potfit binary will be moved to
-BIN_DIR 	= ${HOME}/bin
+BIN_DIR 	= ${HOME}/bin/i386-linux
 
 # Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl

@@ -1,3 +1,6 @@
+dipole-20100812
++ MONOPOLE and DIPOLE are now working with MPI
+
 trunk-20100910
 + strip even more (comments)
 

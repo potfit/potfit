@@ -96,6 +96,8 @@ void debug_mpi(int i)
 #define MAX_MPI_COMPONENTS 9
 #elif defined ADP
 #define MAX_MPI_COMPONENTS 14
+#elif defined MONOPOLE
+#define MAX_MPI_COMPONENTS 13
 #endif /* PAIR */
 
 void broadcast_params()
@@ -130,14 +132,22 @@ void broadcast_params()
 #ifdef ADP
   blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* rdist */
   blklens[9] = 1;         typen[9] = MPI_STENS;   /* sqrdist */
-  blklens[10] = 1;         typen[10] = REAL;        /* u_val */
+  blklens[10] = 1;        typen[10] = REAL;        /* u_val */
   blklens[11] = 1;        typen[11] = REAL;       /* u_grad */
   blklens[12] = 1;        typen[12] = REAL;       /* w_val */
   blklens[13] = 1;        typen[13] = REAL;       /* w_grad */
   size += 6;
 #endif /* ADP */
-  /* *INDENT-ON* */
-
+#ifdef MONOPOLE
+  blklens[8] = 1;         typen[8] = REAL;        /* r^2 */
+  blklens[9] = 1;         typen[9] = REAL;        /* r^3 */
+  blklens[10] = 1;        typen[10] = REAL;       /* fnval_el */
+  blklens[11] = 1;        typen[11] = REAL;       /* grad_el */
+  blklens[12] = 1;        typen[12] = REAL;       /* ggrad_el */
+  size += 5;
+#endif /* MONOPOLE */
+ 
+ /* *INDENT-ON* */
   MPI_Address(&testneigh.typ, displs);
   MPI_Address(&testneigh.nr, &displs[1]);
   MPI_Address(&testneigh.r, &displs[2]);
@@ -153,6 +163,13 @@ void broadcast_params()
   MPI_Address(&testneigh.u_grad, &displs[11]);
   MPI_Address(&testneigh.w_val, &displs[12]);
   MPI_Address(&testneigh.w_grad, &displs[13]);
+#endif
+#ifdef MONOPOLE
+  MPI_Address(&testneigh.r2, &displs[8]);
+  MPI_Address(&testneigh.r3, &displs[9]);
+  MPI_Address(&testneigh.fnval_el, &displs[10]);
+  MPI_Address(&testneigh.grad_el, &displs[11]);
+  MPI_Address(&testneigh.ggrad_el, &displs[12]);
 #endif
 
   for (i = 1; i < size; i++) {
@@ -182,6 +199,15 @@ void broadcast_params()
   blklens[10] = 1;        typen[10] = REAL;       /* nu */
   size += 3;
 #endif /* ADP */
+#ifdef DIPOLE
+  blklens[8] = 1;         typen[8] = MPI_VEKTOR;    /* E_stat */
+  blklens[9] = 1;         typen[9] =  MPI_VEKTOR;   /* p_sr */
+  blklens[10] = 1;        typen[10] =  MPI_VEKTOR;  /* E_ind */
+  blklens[11] = 1;        typen[11] =  MPI_VEKTOR;  /* p_ind */
+  blklens[12] = 1;        typen[12] =  MPI_VEKTOR;  /* E_old */
+  blklens[13] = 1;        typen[13] =  MPI_VEKTOR;  /* E_temp */
+  size += 6;
+#endif /* DIPOLE */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
 
@@ -201,6 +227,15 @@ void broadcast_params()
   MPI_Address(&testatom.lambda, &displs[9]);
   MPI_Address(&testatom.nu, &displs[10]);
 #endif /* ADP */
+#ifdef MONOPOLE
+ MPI_Address(&testatom.E_stat, &displs[6]);
+ MPI_Address(&testatom.p_sr, &displs[7]);
+ MPI_Address(&testatom.E_ind, &displs[8]);
+ MPI_Address(&testatom.p_ind, &displs[9]);
+ MPI_Address(&testatom.E_old, &displs[10]);
+ MPI_Address(&testatom.E_temp, &displs[11]);
+#endif
+
   for (i = 1; i < size; i++) {
     displs[i] -= displs[0];
   }
@@ -216,6 +251,14 @@ void broadcast_params()
   MPI_Bcast(&nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&anneal_temp, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef MONOPOLE
+  MPI_Bcast(&dp_kappa, 1, MPI_REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dp_cut, 1, MPI_REAL, 0, MPI_COMM_WORLD);
+#endif
+#ifdef DIPOLE
+  MPI_Bcast(&dp_tol, 1, MPI_REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dp_mix, 1, MPI_REAL, 0, MPI_COMM_WORLD);
+#endif
   if (myid > 0) {
     inconf = (int *)malloc(nconf * sizeof(int));
     cnfstart = (int *)malloc(nconf * sizeof(int));
