@@ -150,7 +150,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
     }
   }
   for (i = 0; i < ntypes; i++) {
-    //printf("maxrho[%d]=%f\tminrho[%d]=%f\n",i,maxrho[i],i,minrho[i]);
+    /* printf("maxrho[%d]=%f\tminrho[%d]=%f\n",i,maxrho[i],i,minrho[i]); */
     if (maxrho[i] > max) {
       max = maxrho[i];
       maxcol = i;

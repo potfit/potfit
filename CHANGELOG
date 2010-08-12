@@ -1,4 +1,38 @@
-trunk-live
+trunk-20100812
++ make endpot optional, is set to ${startpot}_end it not given
++ change i386 profile to i586
++ remove a few commented lines that are not necessary any more
++ set reasonable inital values for starting parameters
++ [APOT] add cbb potential to potfit and makeapot
++ add flagfile interruption to evo and remove unneeded variables
++ remove unneeded header files as well
++ adjust diff_evo parameters
+
+trunk-20100810
++ strip even more (comments)
+
+devel-20100809
++ final commit before next release
++ evolutionary algorithm now restarts if average==best
++ fix Makefile for gcc profiles
+
+devel-20100730
++ more optimization flags for icc and gcc
++ adjust comments to c-style
++ remove openmp
++ Makefile updated
++ [APOT] add support for ACML for analytic functions
+
+devel-20100726
++ strip binaries
++ clean up Makefile, many old targets removed, 4 targets remaining
++ IMDSYS has been removed, set your system in the Makefile
+
+trunk-20100726
++ [ADP] fix? force calculation
++ [APOT] fix punishments with invariant potentials
+
+trunk-20100709
 + [APOT] reduce number of sampling points for analytic potentials
 + [APOT] makeapot now writes the correct potential type
 + [APOT] fixed a bug with cp and globals

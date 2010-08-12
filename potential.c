@@ -91,13 +91,20 @@ void read_pot_table(pot_table_t *pt, char *filename)
     /* invariant potentials */
     else if (buffer[1] == 'I') {
       if (have_format) {
+#ifdef APOT
+	apot_table.invar_pots = 0;
+#endif /* APOT */
 	/* gradient complete */
 	for (i = 0; i < size; i++) {
 	  str = strtok(((i == 0) ? buffer + 2 : NULL), " \t\r\n");
 	  if (str == NULL) {
 	    error("Not enough items in #I header line.");
-	  } else
+	  } else {
 	    ((int *)invar_pot)[i] = atoi(str);
+#ifdef APOT
+	    apot_table.invar_pots++;
+#endif /* APOT */
+	  }
 	}
 	have_invar = 1;
       } else {
@@ -1664,7 +1671,7 @@ real parab_ne(pot_table_t *pt, real *xi, int col, real r)
   int   k;
 
   /* renorm to beginning of table */
-//  rr = r - pt->begin[col];
+  /* rr = r - pt->begin[col]; */
   k = pt->first[col];
   x0 = pt->xcoord[k];
   p0 = xi[k++];
@@ -1679,8 +1686,8 @@ real parab_ne(pot_table_t *pt, real *xi, int col, real r)
   chi2 = (r - x2) / (x1 - x0);
 
   /* intermediate values */
-//  dv  = p1 - p0;
-//  d2v = p2 - 2 * p1 + p0;
+  /* dv  = p1 - p0; */
+  /* d2v = p2 - 2 * p1 + p0; */
 
   /* return the potential value */
   return chi1 * chi2 * p0 - chi0 * chi2 * p1 + chi0 * chi1 * p2;
@@ -2248,15 +2255,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
-/*#ifdef APOT*/
-/*        apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);*/
-/*        temp = smooth_pot[col1] ? temp **/
-/*          cutoff(sqrt(r2), apot_table.end[col1],*/
-/*                 apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;*/
-/*        fprintf(outfile, "%.16e\n", temp);*/
-/*#else*/
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
-/*#endif*/
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);

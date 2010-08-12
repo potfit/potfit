@@ -42,13 +42,11 @@
 #else /* ACML */
 #include <mkl_lapack.h>
 #endif /* ACML */
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
 #include "bracket.h"
 #include "powell_lsq.h"
+
 #define EPS .0001
 #define PRECISION 1.E-7
 /* Well, almost nothing */
@@ -79,7 +77,6 @@ void powell_lsq(real *xi)
   int   breakflag;		/* Breakflag */
   real  cond;			/* Condition number dsysvx */
   real *p, *q;			/* Vectors needed in Powell's algorithm */
-/*  real  perm_sig;		|+ Signature of permutation in LU decomp +|*/
   real  F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
   real  temp, temp2;		/* as the name indicates: temporary vars */
 #ifdef APOT
@@ -522,15 +519,9 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
   real *p, int i, int n, int m)
 {
   int   k;
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
   {
 /*     int j,k; */
 /*     real temp; */
-#ifdef _OPENMP
-#pragma omp for
-#endif
     for (k = 0; k < n; k++) {
       int   j;
 /*       real  temp; */

@@ -212,10 +212,6 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
     myconf = nconf;
 #endif
 
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
@@ -248,9 +244,6 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
       vector u_force;
 
 
-#ifdef _OPENMP
-#pragma omp for reduction(+:tmpsum,rho_sum_loc)
-#endif /* _OPENMP */
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
@@ -654,7 +647,8 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 		f1 = 2.0 * neigh->w_val;
 		f2 =
 		  (SPROD(tmp_vect, neigh->rdist) -
-		  nu * neigh->r) * neigh->w_grad - nu * f1;
+		  nu * neigh->r * neigh->r) * neigh->w_grad -
+		  nu * f1 * neigh->r;
 		tmp_force.x = f1 * tmp_vect.x + f2 * neigh->dist.x;
 		tmp_force.y = f1 * tmp_vect.y + f2 * neigh->dist.y;
 		tmp_force.z = f1 * tmp_vect.z + f2 * neigh->dist.z;

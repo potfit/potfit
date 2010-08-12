@@ -30,7 +30,6 @@
  *
  ****************************************************************/
 
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
 #include "bracket.h"

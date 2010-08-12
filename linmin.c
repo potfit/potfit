@@ -35,7 +35,6 @@
 /*** by Peter Brommer, ITAP, 2002-10-10 					***/
 
 
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
 #include "bracket.h"

@@ -31,7 +31,6 @@
 
 #ifdef EVO
 
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
 
@@ -39,15 +38,15 @@
 #define D ndim
 #else
 #define D ndimtot
-#endif
+#endif /* APOT */
 
 /* parameters for the differential evolution algorithm */
-#define NP 25*D			// number of total population
-#define CR 0.5			// crossover constant, in [0,1]
-#define F 0.2			// coupling constant with others, in [0,1]
+#define NP 50*D			/* number of total population */
+#define CR 0.6			/* crossover constant, in [0,1] */
+#define F 0.25			/* coupling constant with others, in [0,1] */
 
-#define MAX_LOOPS 1e6		// max number of loops performed
-#define MAX_UNCHANGED 100	// abort after number of unchanged steps
+#define MAX_LOOPS 1e6		/* max number of loops performed */
+#define MAX_UNCHANGED 100	/* abort after number of unchanged steps */
 
 #ifdef APOT
 
@@ -78,7 +77,7 @@ real *calc_vect(real *x)
     for (i = 0; i < ntypes; i++)
       vect[k++] = x[n++];
   }
-#endif
+#endif /* PAIR */
 
   if (have_globals) {
     for (i = 0; i < apot_table.globals; i++) {
@@ -89,7 +88,7 @@ real *calc_vect(real *x)
   return vect;
 }
 
-#endif
+#endif /* APOT */
 
 void init_population(real **pop, real *xi, int size, real scale)
 {
@@ -101,7 +100,7 @@ void init_population(real **pop, real *xi, int size, real scale)
     pop[0][i] = xi[idx[i]];
 #else
     pop[0][i] = xi[i];
-#endif
+#endif /* APOT */
   for (i = 1; i < NP; i++) {
     for (j = 0; j < size; j++) {
 #ifdef APOT
@@ -112,7 +111,7 @@ void init_population(real **pop, real *xi, int size, real scale)
       val = xi[j];
       min = .9 * val;
       max = 1.1 * val;
-#endif
+#endif /* APOT */
       /* force normal distribution to [-1:1] or less */
       temp = normdist() / (3 * scale);
       if (temp > 0)
@@ -125,12 +124,28 @@ void init_population(real **pop, real *xi, int size, real scale)
 
 void diff_evo(real *xi)
 {
-  int   a, b, c, d, e, i, j, k;
-  int   count = 0, last_changed = 0, finished = 0, restart = 0;
-  real  force, min = 10e10, avg = 0, temp = 0, sum = 0, tmpsum = 0, pmin =
-    0, pmax = 0;
-  real *cost, *fxi, *trial, *best, *opt;
-  real **x1, **x2;
+  int   a, b, c, d, e;		/* store randomly picked numbers */
+  int   count = 0;		/* counter for loops */
+  int   finished = 0;		/* run finished ? */
+  int   i, j, k;		/* counters */
+  int   last_changed = 0;	/* loops run since last change */
+  int   restart = 0;		/* counts the times the algorithm was restarted */
+  real  avg = 0.;		/* average sum of squares for all configurations */
+  real  force = 0.;		/* holds the current sum of squares */
+  real  min = 10e10;		/* current minimum for all configurations */
+  real  temp = 0.;		/* temp storage */
+#ifdef APOT
+  real  pmin = 0.;		/* lower bound for parameter */
+  real  pmax = 0.;		/* upper bound for parameter */
+#endif
+  real *best;			/* best configuration */
+  real *cost;			/* cost values for all configurations */
+  real *fxi;			/* force vector */
+  real *opt;			/* used for force calculation */
+  real *trial;			/* current trial configuration */
+  real **x1;			/* current population */
+  real **x2;			/* next generation */
+  FILE *ff;			/* exit flagfile */
 
   if (evo_width == 0)
     return;
@@ -144,8 +159,8 @@ void diff_evo(real *xi)
   /* all configurations */
   x1 = (real **)malloc(NP * sizeof(real *));
   x2 = (real **)malloc(NP * sizeof(real *));
-  cost = (real *)malloc(NP * sizeof(real));
   best = (real *)malloc(NP * sizeof(real));
+  cost = (real *)malloc(NP * sizeof(real));
   if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL)
     error("Could not allocate memory for population vector!\n");
   for (i = 0; i < NP; i++) {
@@ -165,7 +180,7 @@ void diff_evo(real *xi)
     opt = calc_vect(x1[i]);
 #else
     opt = x1[i];
-#endif
+#endif /* APOT */
     cost[i] = (*calc_forces) (opt, fxi, 0);
     if (cost[i] < min) {
       min = cost[i];
@@ -180,7 +195,7 @@ void diff_evo(real *xi)
 #ifdef DEBUG
   printf("Starting Differential Evolution with the following parameters:\n");
   printf("D=%d, NP=%d, CR=%f, F=%f\n", D, NP, CR, F);
-#endif
+#endif /* DEBUG */
 
   printf("Loops\t\tOptimum\t\tAverage error sum\n");
   printf("%5d\t\t%f\t%f\n", count, min, avg / (NP));
@@ -189,10 +204,8 @@ void diff_evo(real *xi)
   /* main differential evolution loop */
   while (count < MAX_LOOPS && last_changed < MAX_UNCHANGED && !finished
     && restart < 4) {
-    sum = 0;
     /* randomly create new populations */
     for (i = 0; i < NP; i++) {
-      tmpsum = 0;
       do
 	a = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (a == i);
@@ -236,8 +249,7 @@ void diff_evo(real *xi)
 	    trial[j] = temp;
 #else
 	  trial[j] = temp;
-#endif
-	  tmpsum += fabs(x1[i][j] - temp);
+#endif /* APOT */
 	} else {
 	  trial[j] = x1[i][j];
 	}
@@ -247,7 +259,7 @@ void diff_evo(real *xi)
       opt = calc_vect(trial);
 #else
       opt = trial;
-#endif
+#endif /* APOT */
       force = (*calc_forces) (opt, fxi, 0);
       if (force < min) {
 	last_changed = 0;
@@ -262,13 +274,11 @@ void diff_evo(real *xi)
 #else
 	    xi[j] = trial[j];
 	  write_pot_table(&opt_pot, tempfile);
-#endif
+#endif /* APOT */
 	}
 	min = force;
       }
       if (force <= cost[i]) {
-	if (force < cost[i])
-	  sum += tmpsum;
 	for (j = 0; j < D; j++)
 	  x2[i][j] = trial[j];
 	cost[i] = force;
@@ -283,13 +293,26 @@ void diff_evo(real *xi)
     printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
 #else
     printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
-#endif
+#endif /* APOT */
     fflush(stdout);
     for (i = 0; i < NP; i++)
       for (j = 0; j < D; j++)
 	x1[i][j] = x2[i][j];
     count++;
     last_changed++;
+
+    /* End optimization if break flagfile exists */
+    if (*flagfile != '\0') {
+      ff = fopen(flagfile, "r");
+      if (NULL != ff) {
+	printf("\nEvolutionary algorithm terminated ");
+	printf("in presence of break flagfile \"%s\"!\n\n", flagfile);
+	fclose(ff);
+	remove(flagfile);
+	break;
+      }
+    }
+
     if (last_changed == MAX_UNCHANGED && restart > 2) {
       printf
 	("\nCould not find any improvements in the last %d steps.\n",
@@ -298,7 +321,26 @@ void diff_evo(real *xi)
     }
     if ((avg / (NP) - min) < 1e-10) {
       printf("Average cost equals minimum cost, nothing more to improve\n");
-      finished = 1;
+      if (restart < 3) {
+	printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
+	restart++;
+	init_population(x1, xi, D, log(restart * exp(10)) / evo_width);
+	for (i = 0; i < NP; i++) {
+#ifdef APOT
+	  opt = calc_vect(x1[i]);
+#else
+	  opt = x1[i];
+#endif /* APOT */
+	  cost[i] = (*calc_forces) (opt, fxi, 0);
+	  if (cost[i] < min) {
+	    min = cost[i];
+	    for (j = 0; j < D; j++)
+	      best[j] = x1[i][j];
+	  }
+	}
+	last_changed = 0;
+      } else
+	finished = 1;
     }
     if (last_changed == MAX_UNCHANGED && restart < 3) {
       restart++;
@@ -311,7 +353,7 @@ void diff_evo(real *xi)
 	opt = calc_vect(x1[i]);
 #else
 	opt = x1[i];
-#endif
+#endif /* APOT */
 	cost[i] = (*calc_forces) (opt, fxi, 0);
 	if (cost[i] < min) {
 	  min = cost[i];
@@ -326,7 +368,7 @@ void diff_evo(real *xi)
   opt = calc_vect(best);
 #else
   opt = best;
-#endif
+#endif /* APOT */
   for (j = 0; j < ndimtot; j++)
     xi[j] = opt[j];
 
@@ -343,4 +385,4 @@ void diff_evo(real *xi)
   free(fxi);
 }
 
-#endif
+#endif /* EVO */
