@@ -1,7 +1,7 @@
 ############################################################################
 #
 # potfit -- The ITAP Force Matching Program
-# 	Copyright 2002-2010 
+# 	Copyright 2002-2010
 #
 # 	Institute for Theoretical and Applied Physics,
 # 	University of Stuttgart, D-70550 Stuttgart, Germany
@@ -119,8 +119,8 @@
 # Currently the following systems are available:
 # x86_64-icc  	64bit Intel Compiler
 # x86_64-gcc    64bit GNU Compiler
-# i386-icc 	32bit Intel Compiler
-# i386-icc  	32bit GNU Compiler
+# i586-icc 	32bit Intel Compiler
+# i586-gcc  	32bit GNU Compiler
 SYSTEM 		= x86_64-icc
 
 # This is the directory where the potfit binary will be moved to
@@ -227,7 +227,7 @@ endif
 #
 ###########################################################################
 
-ifeq (i386-icc,${SYSTEM})
+ifeq (i586-icc,${SYSTEM})
   CC_SERIAL	= icc
   CC_MPI	= mpicc
   OMPI_CC       = icc
@@ -257,7 +257,7 @@ endif
   export        OMPI_CC OMPI_CLINKER
 endif
 
-ifeq (i386-gcc,${SYSTEM})
+ifeq (i586-gcc,${SYSTEM})
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
   OMPI_CC     	= gcc
@@ -265,7 +265,7 @@ ifeq (i386-gcc,${SYSTEM})
   OPT_FLAGS	+= -O3 -march=native
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -g3 -pg
- 
+
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/32
@@ -426,11 +426,6 @@ ifneq (,$(findstring apot,${MAKETARGET}))
 CFLAGS += -DAPOT -DNORESCALE
 endif
 
-# Forces (only used for debugging)
-ifneq (,$(findstring forces,${MAKETARGET}))
-CFLAGS += -DFORCES
-endif
-
 # Stress
 ifneq (,$(findstring stress,${MAKETARGET}))
 CFLAGS += -DSTRESS
@@ -533,7 +528,7 @@ ${MAKETARGET}: ${OBJECTS}
 	${CC} ${LIBS} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS}
 ifneq (,${STRIP})
 ifeq (,$(findstring debug,${MAKETARGET}))
-	${STRIP} --strip-unneeded $@
+	${STRIP} --strip-unneeded -R .comment $@
 endif
 endif
 	${MV} $@ ${BIN_DIR}; rm -f $@

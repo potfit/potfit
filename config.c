@@ -7,7 +7,7 @@
  * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/~imd/potfit/
+ *	http://www.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *

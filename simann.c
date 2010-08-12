@@ -28,8 +28,6 @@
  *
  *****************************************************************/
 
-#include <math.h>
-#include "random.h"
 #include "potfit.h"
 #include "utils.h"
 
@@ -226,7 +224,7 @@ void anneal(real *xi)
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
 
-      /* End fit if break flagfile exists */
+      /* End annealing if break flagfile exists */
       if (*flagfile != '\0') {
 	ff = fopen(flagfile, "r");
 	if (NULL != ff) {
