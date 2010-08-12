@@ -119,9 +119,9 @@
 # Currently the following systems are available:
 # x86_64-icc  	64bit Intel Compiler
 # x86_64-gcc    64bit GNU Compiler
-# i386-icc 	32bit Intel Compiler
-# i386-gcc  	32bit GNU Compiler
-SYSTEM 		= x86_64-icc
+# i586-icc 	32bit Intel Compiler
+# i586-gcc  	32bit GNU Compiler
+SYSTEM 		= x86_64-gcc
 
 # This is the directory where the potfit binary will be moved to
 BIN_DIR 	= ${HOME}/bin
@@ -227,7 +227,7 @@ endif
 #
 ###########################################################################
 
-ifeq (i386-icc,${SYSTEM})
+ifeq (i586-icc,${SYSTEM})
   CC_SERIAL	= icc
   CC_MPI	= mpicc
   OMPI_CC       = icc
@@ -257,7 +257,7 @@ endif
   export        OMPI_CC OMPI_CLINKER
 endif
 
-ifeq (i386-gcc,${SYSTEM})
+ifeq (i586-gcc,${SYSTEM})
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
   OMPI_CC     	= gcc
@@ -424,11 +424,6 @@ endif
 # APOT - for analytic potentials
 ifneq (,$(findstring apot,${MAKETARGET}))
 CFLAGS += -DAPOT -DNORESCALE
-endif
-
-# Forces (only used for debugging)
-ifneq (,$(findstring forces,${MAKETARGET}))
-CFLAGS += -DFORCES
 endif
 
 # Stress

@@ -205,21 +205,21 @@ EXTERN MPI_Datatype MPI_VEKTOR;
 #endif
 
 /* general settings (from parameter file) */
-EXTERN char config[255];	/* file with atom configuration */
-EXTERN char distfile[255];	/* file for distributions */
-EXTERN char endpot[255];	/* file for end potential */
+EXTERN char config[255] INIT("\0");	/* file with atom configuration */
+EXTERN char distfile[255] INIT("\0");	/* file for distributions */
+EXTERN char endpot[255] INIT("\0");	/* file for end potential */
 EXTERN char flagfile[255] INIT("\0");	/* break if file exists */
-EXTERN char imdpot[255];	/* file for IMD potential */
-EXTERN char maxchfile[255];	/* file with maximal changes */
+EXTERN char imdpot[255] INIT("\0");	/* file for IMD potential */
+EXTERN char maxchfile[255] INIT("\0");	/* file with maximal changes */
 EXTERN char output_prefix[255] INIT("\0");	/* prefix for all output files */
-EXTERN char plotfile[255];	/* file for plotting */
+EXTERN char plotfile[255] INIT("\0");	/* file for plotting */
 EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
-EXTERN char startpot[255];	/* file with start potential */
+EXTERN char startpot[255] INIT("\0");	/* file with start potential */
 EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
-EXTERN int imdpotsteps;		/* resolution of IMD potential */
+EXTERN int imdpotsteps INIT(1000);	/* resolution of IMD potential */
 EXTERN int ntypes INIT(1);	/* number of atom types */
 EXTERN int opt INIT(0);		/* optimization flag */
-EXTERN int seed INIT(123456);	/* seed for RNG */
+EXTERN int seed INIT(4);	/* seed for RNG */
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
@@ -269,7 +269,7 @@ EXTERN vector tbox_x, tbox_y, tbox_z;
 EXTERN char interaction[10] INIT("\0");
 EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int *invar_pot INIT(NULL);
-EXTERN int format;		/* format of potential table */
+EXTERN int format INIT(-1);	/* format of potential table */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
@@ -300,7 +300,7 @@ EXTERN int mdim INIT(0);
 EXTERN int ndim INIT(0);
 EXTERN int ndimtot INIT(0);
 EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
-EXTERN real d_eps INIT(0);
+EXTERN real d_eps INIT(0.);
 
 /* general variables */
 EXTERN int firstatom INIT(0);
@@ -328,10 +328,10 @@ EXTERN void **all_pointers INIT(NULL);
 
 /* variables needed for atom distribution with mpi */
 #ifdef MPI
-EXTERN int *atom_dist;
-EXTERN int *atom_len;
-EXTERN int *conf_dist;
-EXTERN int *conf_len;
+EXTERN int *atom_dist INIT(NULL);
+EXTERN int *atom_len INIT(NULL);
+EXTERN int *conf_dist INIT(NULL);
+EXTERN int *conf_len INIT(NULL);
 #endif
 
 /* misc. stuff - has to belong somewhere */
@@ -520,6 +520,7 @@ void  strmm_value(real, real *, real *);
 void  double_morse_value(real, real *, real *);
 void  double_exp_value(real, real *, real *);
 void  poly_5_value(real, real *, real *);
+void  cbb_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

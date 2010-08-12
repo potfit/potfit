@@ -295,6 +295,8 @@ void read_paramfile(FILE *pf)
   if (ntypes == 0)
     error("ntypes cannot be 0!");
 
+  if (strcmp(endpot, "\0") == 0)
+    sprintf(endpot, "%s_end", startpot);
 }
 
 /******************************************************************************

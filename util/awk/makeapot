@@ -198,6 +198,16 @@ function write_pot(name)
 	printf "beta_2 %s",valminmax(1,-10,10);
 	printf "r_1 %s",valminmax(1,-10,10);
     }
+    else if (name=="cbb") {
+        printf "z %s",valminmax(3,-6,6);
+	printf "f0b %s",valminmax(1.5,0,3);
+	printf "a %s",valminmax(3,2,4);
+	printf "b %s",valminmax(0.5,0,1);
+	printf "c %s",valminmax(300,200,400);
+	printf "f0d %s",valminmax(50,40,60);
+	printf "beta %s",valminmax(1.6,1.4,1.8);
+	printf "r_0 %s",valminmax(2.5,2.25,2.75);
+    }
     if (do_smooth)
         if (global_co)
 	    printf "h!\n";
