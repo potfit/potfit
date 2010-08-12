@@ -121,7 +121,7 @@
 # x86_64-gcc    64bit GNU Compiler
 # i586-icc 	32bit Intel Compiler
 # i586-gcc  	32bit GNU Compiler
-SYSTEM 		= x86_64-gcc
+SYSTEM 		= x86_64-icc
 
 # This is the directory where the potfit binary will be moved to
 BIN_DIR 	= ${HOME}/bin
