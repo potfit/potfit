@@ -1,34 +1,32 @@
 /****************************************************************
-*
-*  potfit.h: potfit header file
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * potfit.h: potfit header file
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #define NRANSI
 
@@ -37,18 +35,14 @@
 #include <math.h>
 #include <string.h>
 
-#ifdef OMP
-#include <omp.h>
-#endif
-
 #ifdef MPI
 #include <mpi.h>
 #define REAL MPI_DOUBLE
 #endif
 
-#define MAXNEIGH 400
+#include "random.h"
 
-#if defined EAM
+#if defined EAM || defined ADP
 #define DUMMY_WEIGHT 100.
 #endif
 
@@ -58,15 +52,22 @@
 #define SLOTS 1
 #elif defined EAM
 #define SLOTS 2
+#elif defined ADP
+#define SLOTS 4
 #endif
 
-/******************************************************************************
-*
-*  type definitions
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  type definitions
+ *
+ ****************************************************************/
 
 typedef double real;
+
+typedef enum ParamType {
+  PARAM_STR, PARAM_STRPTR,
+  PARAM_INT, PARAM_DOUBLE
+} PARAMTYPE;
 
 typedef struct {
   real  x;
@@ -74,13 +75,14 @@ typedef struct {
   real  z;
 } vector;
 
+/* This is the order of vasp for stresses */
 typedef struct {
   real  xx;
   real  yy;
   real  zz;
+  real  xy;
   real  yz;
   real  zx;
-  real  xy;
 } sym_tens;
 
 typedef struct {
@@ -91,6 +93,13 @@ typedef struct {
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
+  int   col[SLOTS];		/* coloumn of interaction for this neighbor */
+#ifdef ADP
+  vector rdist;			/* real distance */
+  sym_tens sqrdist;		/* real squared distance */
+  real  u_val, u_grad;		/* value and gradient of u(r) */
+  real  w_val, w_grad;		/* value and gradient of w(r) */
+#endif
 } neigh_t;
 
 typedef struct {
@@ -99,12 +108,17 @@ typedef struct {
   vector pos;
   vector force;
   real  absforce;
-  neigh_t neigh[MAXNEIGH];
   int   conf;			/* Which configuration... */
-#if defined EAM
+#if defined EAM || defined ADP
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
 #endif
+#ifdef ADP
+  vector mu;
+  sym_tens lambda;
+  real  nu;
+#endif
+  neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
 typedef struct {
@@ -128,15 +142,16 @@ typedef struct {
 typedef void (*fvalue_pointer) (real, real *, real *);
 
 typedef struct {
-//   potentials
+  /* potentials */
   int   number;			/* number of analytic potentials */
+  int   invar_pots;		/* number of invariant analytic potentials */
   int  *idxpot;			/* indirect index for potentials */
   char **names;			/* name of analytic potentials */
   real *begin;			/* starting position of potential */
   real *end;			/* end position of potential = cutoff radius */
   int  *n_par;			/* number of parameters for analytic potential */
 
-//   parameters
+  /* parameters */
   int   total_par;		/* total number of parameters for all potentials */
   int  *idxparam;		/* indirect index for potential parameters */
   int **invar_par;		/* array of invariant parameters */
@@ -145,7 +160,7 @@ typedef struct {
   real **values;		/* parameter values for analytic potentials */
   real **pmax;			/* maximum values for parameters */
 
-//   global parameters
+  /* global parameters */
   int   globals;		/* number of global parameters */
   int  *n_glob;			/* number of global parameter usage */
   int ***global_idx;		/* index of global parameters */
@@ -171,7 +186,6 @@ typedef struct {
 
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
-
 #define EXTERN			/* define Variables in main */
 #define INIT(data) =data	/* initialize data only in main */
 #else
@@ -179,32 +193,33 @@ typedef struct {
 #define INIT(data)		/* skip initialization otherwise */
 #endif
 
-// system variables
+/* system variables */
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
 EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
 EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VEKTOR;
 #endif
 
-// general settings (from parameter file)
-EXTERN char config[255];	/* file with atom configuration */
-EXTERN char distfile[255];	/* file for distributions */
-EXTERN char endpot[255];	/* file for end potential */
+/* general settings (from parameter file) */
+EXTERN char config[255] INIT("\0");	/* file with atom configuration */
+EXTERN char distfile[255] INIT("\0");	/* file for distributions */
+EXTERN char endpot[255] INIT("\0");	/* file for end potential */
 EXTERN char flagfile[255] INIT("\0");	/* break if file exists */
-EXTERN char imdpot[255];	/* file for IMD potential */
-EXTERN char maxchfile[255];	/* file with maximal changes */
+EXTERN char imdpot[255] INIT("\0");	/* file for IMD potential */
+EXTERN char maxchfile[255] INIT("\0");	/* file with maximal changes */
 EXTERN char output_prefix[255] INIT("\0");	/* prefix for all output files */
-EXTERN char plotfile[255];	/* file for plotting */
+EXTERN char plotfile[255] INIT("\0");	/* file for plotting */
 EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
-EXTERN char startpot[255];	/* file with start potential */
+EXTERN char startpot[255] INIT("\0");	/* file with start potential */
 EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
-EXTERN int imdpotsteps;		/* resolution of IMD potential */
+EXTERN int imdpotsteps INIT(1000);	/* resolution of IMD potential */
 EXTERN int ntypes INIT(1);	/* number of atom types */
 EXTERN int opt INIT(0);		/* optimization flag */
-EXTERN int seed INIT(123456);	/* seed for RNG */
+EXTERN int seed INIT(4);	/* seed for RNG */
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
@@ -222,11 +237,11 @@ EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 EXTERN real evo_width INIT(1.);
 #endif
 
-// configurations
+/* configurations */
 EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
 EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
 EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
-EXTERN int **na_typ INIT(NULL);	/* number of atoms per type */
+EXTERN int **na_type INIT(NULL);	/* number of atoms per type */
 EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
 EXTERN int *conf_uf INIT(NULL);
 EXTERN int *conf_us INIT(NULL);
@@ -234,6 +249,7 @@ EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
 EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
 EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
 EXTERN int have_elements INIT(0);	/* do we have the elements ? */
+EXTERN int maxneigh INIT(0);	/* maximum number of neighbors */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
 EXTERN real *coheng INIT(NULL);	/* Cohesive energy for each config */
@@ -249,17 +265,15 @@ EXTERN sym_tens *stress INIT(NULL);	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
-// potential variables
+/* potential variables */
 EXTERN char interaction[10] INIT("\0");
 EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
 EXTERN int *invar_pot INIT(NULL);
-EXTERN int format;		/* format of potential table */
+EXTERN int format INIT(-1);	/* format of potential table */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
-EXTERN int ***pot_list INIT(NULL);	/* list for pairs in potential */
 EXTERN int *pot_index INIT(NULL);	/* index to access i*n+j from i*(i+1)/2 */
-EXTERN int *pot_list_length INIT(NULL);	/* length of pot_list */
 EXTERN int *smooth_pot INIT(NULL);
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
 EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
@@ -270,7 +284,7 @@ EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc tabl
 EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
 #endif
 
-// potential tables
+/* potential tables */
 EXTERN pot_table_t opt_pot;	/* potential in the internal */
 					 /* representation used for  */
 					 /* minimisation */
@@ -280,25 +294,25 @@ EXTERN pot_table_t calc_pot;	/* the potential table used */
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
 #endif
 
-// optimization variables
+/* optimization variables */
 EXTERN int fcalls INIT(0);
 EXTERN int mdim INIT(0);
 EXTERN int ndim INIT(0);
 EXTERN int ndimtot INIT(0);
 EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
-EXTERN real d_eps INIT(0);
+EXTERN real d_eps INIT(0.);
 
-// general variables
+/* general variables */
 EXTERN int firstatom INIT(0);
 EXTERN int firstconf INIT(0);
 EXTERN int myatoms INIT(0.);
 EXTERN int myconf INIT(0.);
 EXTERN real *rms INIT(NULL);
 
-// pointers for force-vector
+/* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM
+#if defined EAM || defined ADP
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
 #endif
@@ -307,25 +321,27 @@ EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints *
 EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
 #endif
 
-// memory management
+/* memory management */
 EXTERN char **pointer_names INIT(NULL);
 EXTERN int num_pointers INIT(0);
 EXTERN void **all_pointers INIT(NULL);
 
-// variables needed for atom distribution with mpi
+/* variables needed for atom distribution with mpi */
 #ifdef MPI
-EXTERN int *atom_dist;
-EXTERN int *atom_len;
-EXTERN int *conf_dist;
-EXTERN int *conf_len;
+EXTERN int *atom_dist INIT(NULL);
+EXTERN int *atom_len INIT(NULL);
+EXTERN int *conf_dist INIT(NULL);
+EXTERN int *conf_len INIT(NULL);
 #endif
 
-// misc. stuff - has to belong somewhere
+/* misc. stuff - has to belong somewhere */
 EXTERN int *idx INIT(NULL);
 EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
 EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
+EXTERN dsfmt_t dsfmt;		/* random number generator */
+EXTERN char *component[6];	/* componentes of vectors and tensors */
 
 /******************************************************************************
 *
@@ -356,18 +372,19 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 
 void  error(char *);
 void  warning(char *);
+int   getparam(char *, void *, PARAMTYPE, int, int);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 #ifdef APOT
 void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
-		      FILE *infile);
+  FILE *infile);
 void  write_apot_table(apot_table_t *, char *);
 #endif
-void  read_pot_table(pot_table_t *, char *, int);
+void  read_pot_table(pot_table_t *, char *);
 void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
-		      char *filename, FILE *infile);
+  char *filename, FILE *infile);
 void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
-		      char *filename, FILE *infile);
+  char *filename, FILE *infile);
 void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
 void  update_calc_table(real *xi_opt, real *xi_calc, int);
 void  write_pot_table3(pot_table_t *, char *);
@@ -380,15 +397,24 @@ real  grad2(pot_table_t *, real *, int, real);
 real  grad3(pot_table_t *, real *, int, real);
 real  pot2(pot_table_t *, int, real);
 real  pot3(pot_table_t *, int, real);
+vector vec_prod(vector, vector);
+real  make_box(void);
 void  read_config(char *);
 void  read_config2(char *);
 #ifdef PAIR
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
+#elif defined ADP
+real  calc_forces_adp(real *, real *, int);
 #endif
-void  powell_lsq(real *xi);
+#ifdef APOT
+void  randomize_parameter(int, real *, real *);
+#else
+void  makebump(real *, real, real, int);
+#endif
 void  anneal(real *xi);
+void  powell_lsq(real *xi);
 #if defined EVO
 real *calc_vect(real *x);
 void  init_population(real **pop, real *xi, int size, real scale);
@@ -398,12 +424,10 @@ void  spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real  splint_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		 real step);
-real  splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		      real step, real *grad);
-real  splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		      real step);
+real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
+real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
+  real *grad);
+real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
 void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
 real  splint_ne(pot_table_t *pt, real *xi, int col, real r);
 real  splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad);
@@ -422,10 +446,11 @@ real  rescale(pot_table_t *pt, real upper, int flag);
 void  embed_shift(pot_table_t *pt);
 #endif
 #ifdef MPI
-void  init_mpi(int *argc_pointer, char **argv);
+void  init_mpi(int argc, char **argv);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
-void  dbb(int i);
+void  debug_mpi(int i);
+void  broadcast_neighbors();
 void  potsync();
 #endif
 #ifdef PDIST
@@ -440,7 +465,7 @@ void  write_pairdist(pot_table_t *pt, char *filename);
 
 #ifdef APOT
 
-#define APOT_STEPS 1000		/* number of sampling points for analytic pot */
+#define APOT_STEPS 200		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
 
 real apot_punish_value INIT(0.);
@@ -453,10 +478,15 @@ real  apot_punish(real *, real *);
 real  apot_grad(real, real *, void (*function) (real, real *, real *));
 
 /* potential.c */
-void  new_slots(int, int);	/* new slots for smooth cutoff */
+void  update_slots();		/* new slots for smooth cutoff */
 
-#if defined PAIR
+#ifdef PAIR
 /* chempot.c */
+int   swap_chem_pot(int, int);
+int   sort_chem_pot_2d(void);
+real  chemical_potential_1d(int *, real *);
+real  chemical_potential_2d(int *, real *);
+real  chemical_potential_3d(int *, real *, int);
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
 #endif
@@ -487,6 +517,10 @@ void  const_value(real, real *, real *);
 void  sqrt_value(real, real *, real *);
 void  mexp_decay_value(real, real *, real *);
 void  strmm_value(real, real *, real *);
+void  double_morse_value(real, real *, real *);
+void  double_exp_value(real, real *, real *);
+void  poly_5_value(real, real *, real *);
+void  cbb_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

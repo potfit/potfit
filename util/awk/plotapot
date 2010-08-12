@@ -6,300 +6,400 @@
 #
 ####################################################################
 #
-#   Copyright 2008-2010 Daniel Schopf
-#             Institute for Theoretical and Applied Physics
-#             University of Stuttgart, D-70550 Stuttgart, Germany
-#             http://www.itap.physik.uni-stuttgart.de/
+# Copyright 2008-2010 Daniel Schopf
+# 	Institute for Theoretical and Applied Physics
+# 	University of Stuttgart, D-70550 Stuttgart, Germany
+# 	http://www.itap.physik.uni-stuttgart.de/
 #
 ####################################################################
 #
-#   This file is part of potfit.
+# This file is part of potfit.
 #
-#   potfit is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
+# potfit is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-#   potfit is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
+# potfit is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor,
-#   Boston, MA  02110-1301  USA
+# You should have received a copy of the GNU General Public License
+# along with potfit; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor,
+# Boston, MA  02110-1301  USA
 #
 ####################################################################
-# $Revision: 1.21 $
-# $Date: 2010/04/14 10:14:51 $
-####################################################################
 #
-# Usage: plotpot pot_file_1 pot_file_2 ... pair_file
+# Usage: plotpot pot_file pair_file
 #
 ####################################################################
 
 function abs(x)
 {
-	return x<0 ? -x : x
+return x < 0 ? -x : x
 }
 
-function write_pot(i,name,params,file)
+function write_pot(i, name, params, file)
 {
-	if (name == "universal" && abs(params[i","2]-params[i","3])<10e-6) {
-		name = "pohlong";
-		printf "Switched universal to pohlong in limit m->n\n";
-	}
-	if (i==0) {
-	printf "cof(x) = x**4/(1+x**4);\n" > file;
-	printf "pl " > file;}
-    if (do_smooth[i])
-      printf "cof((x-"cutoff[i]")/"params[i","n_param[i]]")*(" > file;
-    if (name == "eopp") {
-      printf "%f/x**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
-    } else if (name == "lj") {
-      printf "4*%f*((%f/x)**12-(%f/x)**6)",params[i","1],params[i","2],params[i","2] > file;
-    } else if (name == "morse") {
-      printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f)))",params[i","1],params[i","2],params[i","3],params[i","2],params[i","3] > file;
-    } else if (name == "softshell") {
-      printf "(%f/x)**%f",params[i","1],params[i","2] > file;
-    } else if (name == "eopp_exp") {
-      printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
-    } else if (name == "meopp") {
-      printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f)",params[i","1],params[i","7],params[i","2],params[i","3],params[i","4],params[i","5],params[i","6] > file;
-    } else if (name == "pohlong") {
-      printf "%f*(1-%f*log(x))*(x)**%f",params[i","1],params[i","2],params[i","2] > file;
-    } else if (name == "power_decay") {
-      printf "%f*(1/x)**%f",params[i","1],params[i","2] > file;
-    } else if (name == "parabola") {
-      printf "%f*x**2+%f*x+%f",params[i","1],params[i","2],params[i","3] > file;
-    } else if (name == "csw") {
-      printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f",params[i","1],params[i","3],params[i","2],params[i","3],params[i","4] > file;
-    } else if (name == "universal") {
-      printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x",params[i","1],params[i","3],params[i","3],params[i","2],params[i","2],params[i","2],params[i","3],params[i","2],params[i","3],params[i","4] > file;
-    } else if (name == "const") {
-      printf "%f",params[i","1] > file;
-    } else if (name == "sqrt") {
-      printf "%f*sqrt(x/%f)",params[i","1],params[i","2] > file;
-    } else if (name == "exp_decay") {
-      printf "%f*exp(-%f*x)",params[i","1],params[i","2] > file;
-    } else if (name == "mexp_decay") {
-      printf "%f*exp(-%f*(x-%f))",params[i","1],params[i","2],params[i","3] > file;
-    } else if (name == "strmm") {
-    printf "2*%f*exp(-%f/2*(x-%f))-%f*(1+%f*(x-%f))*exp(-%f*(x-%f))",params[i","1],params[i","2],params[i","5],params[i","3],params[i","4],params[i","5],params[i","4],params[i","5] > file;
-    }
-    if (do_smooth[i])
-	    printf ")" > file;
-    printf " w l" > file;
-    if (have_species)
-	    printf " t \"%s\"",elements[i+1] > file;
+  if (name == "universal" && abs(params[i "," 2] - params[i "," 3]) < 10e-6) {
+    name = "pohlong";
+    printf "Switched universal to pohlong in limit m->n\n";
+  }
+  if (i == 0) {
+    printf "pl " > file;
+  }
+  if (do_smooth[i])
+    printf "cof((x-" cutoff[i] ")/" params[i "," n_param[i]] ")*(" > file;
+  if (name == "eopp") {
+    printf "%f/x**%f+%f/x**%f*cos(%f*x+%f)", params[i "," 1],
+      params[i "," 2], params[i "," 3], params[i "," 4], params[i "," 5],
+      params[i "," 6] > file;
+  } else if (name == "lj") {
+    printf "4*%f*((%f/x)**12-(%f/x)**6)", params[i "," 1], params[i "," 2],
+      params[i "," 2] > file;
+  } else if (name == "morse") {
+    printf "%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f)))", params[i "," 1],
+      params[i "," 2], params[i "," 3], params[i "," 2],
+      params[i "," 3] > file;
+  } else if (name == "softshell") {
+    printf "(%f/x)**%f", params[i "," 1], params[i "," 2] > file;
+  } else if (name == "eopp_exp") {
+    printf "%f*exp(-%f*x)+%f/x**%f*cos(%f*x+%f)", params[i "," 1],
+      params[i "," 2], params[i "," 3], params[i "," 4], params[i "," 5],
+      params[i "," 6] > file;
+  } else if (name == "meopp") {
+    printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f)", params[i "," 1],
+      params[i "," 7], params[i "," 2], params[i "," 3], params[i "," 4],
+      params[i "," 5], params[i "," 6] > file;
+  } else if (name == "pohlong") {
+    printf "%f*(1-%f*log(x))*(x)**%f+%f*x", params[i "," 1], params[i "," 2],
+      params[i "," 2],params[i "," 3] > file;
+  } else if (name == "power_decay") {
+    printf "%f*(1/x)**%f", params[i "," 1], params[i "," 2] > file;
+  } else if (name == "parabola") {
+    printf "%f*x**2+%f*x+%f", params[i "," 1], params[i "," 2],
+      params[i "," 3] > file;
+  } else if (name == "csw") {
+    printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f", params[i "," 1],
+      params[i "," 3], params[i "," 2], params[i "," 3],
+      params[i "," 4] > file;
+  } else if (name == "universal") {
+    printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x", params[i "," 1],
+      params[i "," 3], params[i "," 3], params[i "," 2], params[i "," 2],
+      params[i "," 2], params[i "," 3], params[i "," 2], params[i "," 3],
+      params[i "," 4] > file;
+  } else if (name == "const") {
+    printf "%f", params[i "," 1] > file;
+  } else if (name == "sqrt") {
+    printf "%f*sqrt(x/%f)", params[i "," 1], params[i "," 2] > file;
+  } else if (name == "exp_decay") {
+    printf "%f*exp(-%f*x)", params[i "," 1], params[i "," 2] > file;
+  } else if (name == "mexp_decay") {
+    printf "%f*exp(-%f*(x-%f))", params[i "," 1], params[i "," 2],
+      params[i "," 3] > file;
+  } else if (name == "strmm") {
+    printf "2*%f*exp(-%f/2*(x-%f))-%f*(1+%f*(x-%f))*exp(-%f*(x-%f))",
+      params[i "," 1], params[i "," 2], params[i "," 5], params[i "," 3],
+      params[i "," 4], params[i "," 5], params[i "," 4],
+      params[i "," 5] > file;
+  } else if (name == "double_morse") {
+    printf "(%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f)))+%f*(exp(-2*%f*(x-%f))-2*exp(-%f*(x-%f)))+%f)",
+      params[i "," 1], params[i "," 2], params[i "," 3], params[i "," 2],
+      params[i "," 3], params[i "," 4], params[i "," 5],
+      params[i "," 6], params[i "," 5], params[i "," 6], params[i "," 7] > file;
+  } else if (name == "double_exp") {
+    printf "(%f*exp(-%f*(x-%f)**2)+exp(-%f*(x-%f)))",
+      params[i "," 1], params[i "," 2], params[i "," 3],
+      params[i "," 4], params[i "," 5] > file;
+  } else if (name == "poly_5") {
+    printf "%f+0.5*%f*(x-1)**2+%f*(x-1)**3+%f*(x-1)**4+%f*(x-1)**5",
+      params[i "," 1], params[i "," 2], params[i "," 3],
+      params[i "," 4], params[i "," 5] > file;
+  }
+  else {
+    print "potential function "name" unknown";
+    exit;
+  }
+  if (do_smooth[i])
+    printf ")" > file;
+  printf " w l" > file;
+  if (have_species)
+    printf " t \"%s\"", elements[i + 1] > file;
 }
 
 function read_pot(name)
 {
-	if (name=="eopp")
-		return 6;
-	else if (name=="lj")
-		return 2;
-	else if (name=="morse")
-		return 3;
-	else if (name=="softshell")
-		return 2;
-	else if (name=="eoppexp")
-		return 6;
-	else if (name=="meopp")
-		return 7;
-	else if (name=="power_decay")
-		return 2;
-	else if (name=="pohlong")
-		return 2;
-	else if (name=="parabola")
-		return 3;
-	else if (name=="csw")
-		return 4;
-	else if (name=="universal")
-		return 4;
-	else if (name=="const")
-		return 1;
-	else if (name=="sqrt")
-		return 2;
-	else if (name=="mexp_decay")
-		return 3;
-	else if (name=="exp_decay")
-		return 2;
-	else if (name=="strmm")
-		return 5;
-	return 0;
+  if (name == "eopp")
+    return 6;
+  else if (name == "lj")
+    return 2;
+  else if (name == "morse")
+    return 3;
+  else if (name == "softshell")
+    return 2;
+  else if (name == "eoppexp")
+    return 6;
+  else if (name == "meopp")
+    return 7;
+  else if (name == "power_decay")
+    return 2;
+  else if (name == "pohlong")
+    return 3;
+  else if (name == "parabola")
+    return 3;
+  else if (name == "csw")
+    return 4;
+  else if (name == "universal")
+    return 4;
+  else if (name == "const")
+    return 1;
+  else if (name == "sqrt")
+    return 2;
+  else if (name == "mexp_decay")
+    return 3;
+  else if (name == "exp_decay")
+    return 2;
+  else if (name == "strmm")
+    return 5;
+  else if (name == "double_morse")
+    return 7;
+  else if (name == "double_exp")
+    return 5;
+  else if (name == "poly_5")
+    return 5;
+  else {
+    print "potential function "name" unknown"
+    exit
+  }
+  return 0;
 }
 
 BEGIN {
-	count=0;
-	mindist=10;
-	maxdist=0;
-	for (i=0;i<ARGC;i++) {
-		if (ARGV[i]=="-s") {
-			simple = 1;
-			ARGV[i]="";
-		}
-	}
+  count = 0;
+  mindist = 10;
+  maxdist = 0;
+  for (i = 0; i < ARGC; i++) {
+    if (ARGV[i] == "-s") {
+      simple = 1;
+      ARGV[i] = "";
+    }
+  }
 }
 
-	{
-		if (substr($0,3,6)=="radial") {
-			n_rad = $6;
-			dist_file = ARGV[ARGIND];
-			nextfile;
-		}
-		else {
-			while (substr($0,2,1)!="F") getline;
-		if ($2 != 0) {
-			print "Error - wrong potential format of " ARGV[ARGIND] "\n" ;
-			exit 2;
-		}
-		total_pots=$3;
-		if (int(total_pots)!=total_pots) {
-			print "Error - incorrect potential file " ARGV[ARGIND]  "\n" ;
-			exit 2;
-		}
-		getline;
-		if (substr($0,2,1)=="T") {
-			pot_type = $2;
-			getline;
-		}
-		if (substr($0,2,1)=="C") {
-			title=$0;
-			sub("#C ","",title);
-			gsub(" ","-",title);
-			saved_title=title;
-			getline;
-			chem_species=$0;
-			sub("## ","",chem_species);
-			split(chem_species,elements," ");
-			have_species=1;
-		}
-		for (i=count;i<(count+total_pots);i++){
-			while ( substr($0,1,4)!="type" && substr($0,1,6)!="global" ) getline;
-			if (substr($0,1,6)=="global") {
-				n_glob = $2;
-				getline;
-				for (j=0;j<n_glob;j++) {
-					glob[$1]=$2;
-					getline;
-					}
-				while (substr($0,1,4)!="type") getline;
-			}
-			pot_name[i] = $2;
-			if (match(pot_name[i],"_sc$",arr)>0) {
-				pot_name[i] = substr(pot_name[i],1,length(pot_name[i])-3);
-				do_smooth[i]=1;
-			}
-			n_param[i]=read_pot(pot_name[i]);
-			if (do_smooth[i]==1)
-				n_param[i]++;
-			getline;
-			cutoff[i]=$2;
-			if ($2>maxdist)
-				maxdist=$2;
-			getline;
-			if (substr($0,1,1)=="#") {
-				if ($3<mindist)
-					mindist=$3;
-				if ($5>maxdist)
-					maxdist=$5;
-				getline;
-			}
-			while (substr($0,1,1)=="#") {
-				getline;
-			}
-			for (l=1;l<=n_param[i];l++) {
-				global = match($1,"!",arr);
-				if (global>0)
-					params[i "," l] = glob[substr($1,1,length($1)-1)];
-				else
-					params[i "," l] = $2;
-				if (l<n_param[i])
-				getline;
-			}
-		}
-		count = count + total_pots;
+{
+  if (substr($0, 3, 6) == "radial") {
+    n_rad = $6;
+    dist_file = ARGV[ARGIND];
+    nextfile;
+  } else {
+    while (substr($0, 2, 1) != "F")
+      getline;
+    if ($2 != 0) {
+      print "Error - wrong potential format of " ARGV[ARGIND] "\n";
+      exit 2;
+    }
+    total_pots = $3;
+    if (int (total_pots) != total_pots) {
+      print "Error - incorrect potential file " ARGV[ARGIND] "\n";
+      exit 2;
+    }
+    getline;
+    if (substr($0, 2, 1) == "T") {
+      pot_type = $2;
+      getline;
+    }
+    if (substr($0, 2, 1) == "C") {
+      title = $0;
+      sub("#C ", "", title);
+      gsub(" ", "-", title);
+      saved_title = title;
+      getline;
+      chem_species = $0;
+      sub("## ", "", chem_species);
+      split(chem_species, elements, " ");
+      have_species = 1;
+    }
+    for (i = count; i < (count + total_pots); i++) {
+      while (substr($0, 1, 4) != "type" && substr($0, 1, 6) != "global")
+	getline;
+      if (substr($0, 1, 6) == "global") {
+	n_glob = $2;
+	getline;
+	for (j = 0; j < n_glob; j++) {
+	  glob[$1] = $2;
+	  getline;
 	}
+	while (substr($0, 1, 4) != "type")
+	  getline;
+      }
+      pot_name[i] = $2;
+      if (match(pot_name[i], "_sc$", arr) > 0) {
+	pot_name[i] = substr(pot_name[i], 1, length(pot_name[i]) - 3);
+	do_smooth[i] = 1;
+      }
+      n_param[i] = read_pot(pot_name[i]);
+      if (do_smooth[i] == 1)
+	n_param[i]++;
+      getline;
+      cutoff[i] = $2;
+      if ($2 > maxdist)
+	maxdist = $2;
+      getline;
+      if (substr($0, 1, 1) == "#") {
+	if ($3 < mindist && $3 != 0.000100)
+	  mindist = $3;
+	getline;
+      }
+      while (substr($0, 1, 1) == "#") {
+	getline;
+      }
+      for (l = 1; l <= n_param[i]; l++) {
+	global = match($1, "!", arr);
+	if (global > 0)
+	  params[i","l] = glob[substr($1, 1, length($1) - 1)];
+	else
+	  params[i","l] = $2;
+	if (l < n_param[i])
+	  getline;
+      }
+    }
+    count = count + total_pots;
+  }
 }
 
 END {
-	if (mindist == 10)
-		mindist = 2;
-	if (pot_type == "PAIR") {
-		pair_count = count;
-	}
-	if (pot_type == "EAM") {
-		ntypes = -2.5 + sqrt(25/4+2*count); 
-		pair_count = ntypes * (ntypes + 1) / 2;
-	}
+  if (mindist == 10)
+    mindist = 2;
+  if (pot_type == "PAIR") {
+    pair_count = count;
+    eam_count = 0;
+    adp_count = 0;
+  }
+  if (pot_type == "EAM") {
+    ntypes = -2.5 + sqrt(25 / 4 + 2 * count);
+    pair_count = ntypes * (ntypes + 1) / 2;
+    eam_count = 2 * ntypes;
+    adp_count = 0;
+  }
+  if (pot_type == "ADP") {
+    ntypes = (-7/2 + sqrt(49 / 4 + 6 * count))/3;
+    pair_count = ntypes * (ntypes + 1) / 2;
+    eam_count = 2 * ntypes;
+    adp_count = 2 * pair_count;
+  }
 
-	if (count != 0) {
-		printf "reset;\n" > "plot";
-		if (simple)
-			printf "set term x11;\n" > "plot";
-		printf "set samples 1000;\n" > "plot";
-		printf "set grid;\n" > "plot";
-		printf "set xrange [" 0.5*mindist ":" maxdist*1.01 "];\n" > "plot";
-		printf "set yrange [-.3:.5];\n" > "plot";
-		for (i=0;i<pair_count;i++) {
-			write_pot(i,pot_name[i],params,"plot");
-		if (!simple) {
-				printf " ls 1 lc "i > "plot";
-		}
-			if (i!=(pair_count-1) || pot_type == "EAM")
-				printf ", " > "plot";
-		}
-		if (pot_type == "EAM") {
-		for (i=pair_count;i<(pair_count+ntypes);i++) {
-			write_pot(i,pot_name[i],params,"plot");
-			printf " ls 2 lc "(i-pair_count) > "plot";
-			if (i!=(pair_count+ntypes-1))
-				printf ", " > "plot";
+  if (count != 0) {
+    printf "reset;\n" > "plot";
+    if (simple)
+      printf "set term x11;\n" > "plot";
+    printf "set samples 1000;\n" > "plot";
+    printf "set grid;\n" > "plot";
+    printf "set xrange [" 0.5 * mindist ":" maxdist * 1.05 "];\n" > "plot";
+    printf "set yrange [-.3:.5];\n" > "plot";
+    printf "set title 'pair potentials" > "plot";
+    if (eam_count != 0)
+	    printf " and transfer functions'\n" > "plot";
+    else
+	    printf "'\n" > "plot";
+    printf "cof(x) = x**4/(1+x**4);\n" > "plot";
+    for (i = 0; i < pair_count; i++) {
+      write_pot(i, pot_name[i], params, "plot");
+      if (!simple) {
+	printf " ls 1 lc " i > "plot";
+      }
+      if (i != (pair_count - 1) || eam_count != 0)
+	printf ", " > "plot";
+    }
+    if (eam_count != 0) {
+      for (i = pair_count; i < (pair_count + ntypes); i++) {
+	write_pot(i, pot_name[i], params, "plot");
+	printf " ls 2 lc "(i - pair_count) > "plot";
+	if (i != (pair_count + ntypes - 1))
+	  printf ", " > "plot";
 
-			}
-		}
-		if (dist_file != "") {
-			printf ", " > "plot";
-			for (i=0;i<n_rad;i++) {
-				if (have_species)
-					label = elements[i+1];
-				else 
-					label = "pot "i;
-				if (i==0)
-					printf "'" dist_file "' i " i " w lines t \"rad_dist " label "\"" > "plot";
-				else
-					printf "'' i " i " w lines t \"rad_dist " label "\"" > "plot";
-				if (i!=(n_rad-1))
-					printf ", " > "plot";
-			}
-		}
-	}
-	if (pot_type == "EAM") {
-		printf "reset;\n" > "plot_eam";
-		if (simple)
-			printf "set term x11;\n" > "plot_eam";
-		printf "set samples 1000;\n" > "plot_eam";
-		printf "set grid;\n" > "plot_eam";
-		printf "set xrange [0:2]\n" > "plot_eam";
-		printf "pl " > "plot_eam";
-		for (i=pair_count+ntypes;i<(pair_count+2*ntypes);i++) {
-			write_pot(i,pot_name[i],params,"plot_eam");
-			if (!simple) {
-			printf " ls 1 lc "(i-pair_count-ntypes) > "plot_eam";
-			}
-			if (i!=(pair_count+2*ntypes-1))
-				printf ", " > "plot_eam";
-		}
-		printf ";" > "plot_eam";
-		title = saved_title" embedding function";
-		system("gnuplot -persist -title \""title"\" plot_eam");
-	}
-		if (eam_count > 0)
-			title = title" pair potential and transfer function";
-		else
-			title = saved_title" pair potential";
-		system("gnuplot -persist -title \""title"\" plot");
+      }
+    }
+    if (dist_file != "") {
+      printf ", " > "plot";
+      for (i = 0; i < n_rad; i++) {
+	if (have_species)
+	  label = elements[i + 1];
+	else
+	  label = "pot " i;
+	if (i == 0)
+	  printf "'" dist_file "' i " i " w lines t \"rad\\\\_dist " label "\"" > "plot";
+	else
+	  printf "'' i " i " w lines t \"rad\\\\_dist " label "\"" > "plot";
+	if (i != (n_rad - 1))
+	  printf ", " > "plot";
+      }
+    }
+  }
+  if (eam_count != 0) {
+    printf "reset;\n" > "plot_eam";
+    if (simple)
+      printf "set term x11;\n" > "plot_eam";
+    printf "set samples 1000;\n" > "plot_eam";
+    printf "set grid;\n" > "plot_eam";
+    printf "set xrange [0:2]\n" > "plot_eam";
+    printf "set title 'embedding potentials'\n" > "plot_eam";
+    printf "pl " > "plot_eam";
+    for (i = pair_count + ntypes; i < (pair_count + 2 * ntypes); i++) {
+      write_pot(i, pot_name[i], params, "plot_eam");
+      if (!simple) {
+	printf " ls 1 lc "(i - pair_count - ntypes) > "plot_eam";
+      }
+      if (i != (pair_count + 2 * ntypes - 1))
+	printf ", " > "plot_eam";
+    }
+    printf ";" > "plot_eam";
+    system("gnuplot -persist plot_eam");
+  }
+  if (adp_count != 0) {
+    # adp dipole functions
+    printf "reset;\n" > "plot_adp_u";
+    if (simple)
+      printf "set term x11;\n" > "plot_adp_u";
+    printf "set samples 1000;\n" > "plot_adp_u";
+    printf "set grid;\n" > "plot_adp_u";
+    printf "set xrange [" 0.5 * mindist ":" maxdist * 1.05 "];\n" > "plot_adp_u";
+    printf "set yrange [-.3:.5];\n" > "plot_adp_u";
+    printf "set title 'adp dipole potentials'\n" > "plot_adp_u";
+    printf "cof(x) = x**4/(1+x**4);\n" > "plot_adp_u";
+    printf "pl " > "plot_adp_u";
+    for (i = (pair_count + 2 * ntypes); i < (2 * pair_count + 2 * ntypes); i++) {
+      write_pot(i, pot_name[i], params, "plot_adp_u");
+      if (!simple) {
+	printf " ls 1 lc "(i - pair_count - ntypes) > "plot_adp_u";
+      }
+      if (i != (2 * pair_count + 2 * ntypes - 1))
+	printf ", " > "plot_adp_u";
+    }
+    printf ";" > "plot_adp_u";
+    system("gnuplot -persist plot_adp_u");
+
+    printf "reset;\n" > "plot_adp_w";
+    if (simple)
+      printf "set term x11;\n" > "plot_adp_w";
+    printf "set samples 1000;\n" > "plot_adp_w";
+    printf "set grid;\n" > "plot_adp_w";
+    printf "set xrange [" 0.5 * mindist ":" maxdist * 1.05 "];\n" > "plot_adp_w";
+    printf "set yrange [-.3:.5];\n" > "plot_adp_w";
+    printf "set title 'adp quadrupole potentials'\n" > "plot_adp_w";
+    printf "cof(x) = x**4/(1+x**4);\n" > "plot_adp_w";
+    printf "pl " > "plot_adp_w";
+    for (i = 2 * pair_count + 2 * ntypes; i < (3 * pair_count + 2 * ntypes); i++) {
+      write_pot(i, pot_name[i], params, "plot_adp_w");
+      if (!simple) {
+	printf " ls 1 lc "(i - pair_count - ntypes) > "plot_adp_w";
+      }
+      if (i != (3 * pair_count + 2 * ntypes - 1))
+	printf ", " > "plot_adp_w";
+    }
+    printf ";" > "plot_adp_w";
+    system("gnuplot -persist plot_adp_w");
+  }
+  system("gnuplot -persist plot");
 }

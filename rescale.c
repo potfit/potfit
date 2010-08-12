@@ -1,35 +1,33 @@
 /****************************************************************
-*
-* rescale.c: Routines used to automatically rescale
-*     EAM potential.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * rescale.c: Routines used to automatically rescale
+ *	EAM potential.
+ *
+ *****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ *****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *****************************************************************/
 
 #include "potfit.h"
 
@@ -76,22 +74,21 @@ real rescale(pot_table_t *pt, real upper, int flag)
     first = pt->first[col];
     if (format == 3 || format == 0)
       spline_ed(pt->step[col], pt->table + first,
-		pt->last[col] - first + 1,
-		*(pt->table + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1,
+	*(pt->table + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, pt->table + first,
-		pt->last[col] - first + 1,
-		*(pt->table + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1,
+	*(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
   for (col = paircol; col < paircol + ntypes; col++) {	/* rho */
     first = pt->first[col];
     if (format == 3)
       spline_ed(pt->step[col], xi + first,
-		pt->last[col] - first + 1,
-		*(xi + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1, *(xi + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
-		*(xi + first - 2), 0.0, pt->d2tab + first);
+	*(xi + first - 2), 0.0, pt->d2tab + first);
   }
   for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {	/* F */
     first = pt->first[col];
@@ -99,23 +96,21 @@ real rescale(pot_table_t *pt, real upper, int flag)
     if (format == 3)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
 #ifdef WZERO
-		((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-		((pt->end[col] >=
-		  0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
+	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
+	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
 #else /* WZERO : natural spline */
-		*(xi + first - 2), *(xi + first - 1),
+	*(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
-		pt->d2tab + first);
+	pt->d2tab + first);
     else			/* format == 4 */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
 #ifdef WZERO
-		((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-		((pt->end[col] >=
-		  0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
+	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
+	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
 #else /* WZERO */
-		*(xi + first - 2), *(xi + first - 1),
+	*(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
-		pt->d2tab + first);
+	pt->d2tab + first);
   }
 
   /* re-calculate atom_rho (might be a waste...) */
@@ -132,16 +127,18 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	  col2 = paircol + typ2;
 	  if (typ2 == typ1) {
 	    if (neigh->r < pt->end[col2]) {
-	      fnval = splint_dir(pt, xi, col2, neigh->slot[1],
-				 neigh->shift[1], neigh->step[1]);
+	      fnval =
+		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
+		neigh->step[1]);
 	      atom->rho += fnval;
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {
 	    col = paircol + typ1;
 	    if (neigh->r < pt->end[col2]) {
-	      atom->rho += splint_dir(pt, xi, col2, neigh->slot[1],
-				      neigh->shift[1], neigh->step[1]);
+	      atom->rho +=
+		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
+		neigh->step[1]);
 	    }
 	    if (neigh->r < pt->end[col])
 	      atoms[neigh->nr].rho += splint(pt, xi, col, neigh->r);
@@ -153,7 +150,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
     }
   }
   for (i = 0; i < ntypes; i++) {
-    //printf("maxrho[%d]=%f\tminrho[%d]=%f\n",i,maxrho[i],i,minrho[i]);
+    /* printf("maxrho[%d]=%f\tminrho[%d]=%f\n",i,maxrho[i],i,minrho[i]); */
     if (maxrho[i] > max) {
       max = maxrho[i];
       maxcol = i;
@@ -174,10 +171,10 @@ real rescale(pot_table_t *pt, real upper, int flag)
     right[i] = maxrho[i] + 0.3 * pt->step[j];
     /* is expansion necessary? */
     if (flag ||
-	minrho[i] - pt->begin[j] < 0. ||
-	minrho[i] - pt->begin[j] > .95 * pt->step[j] ||
-	maxrho[i] - pt->end[j] > 0 ||
-	maxrho[i] - pt->end[j] < -.95 * pt->step[j])
+      minrho[i] - pt->begin[j] < 0. ||
+      minrho[i] - pt->begin[j] > .95 * pt->step[j] ||
+      maxrho[i] - pt->end[j] > 0 ||
+      maxrho[i] - pt->end[j] < -.95 * pt->step[j])
       flag = 1;
   }
 
@@ -300,11 +297,10 @@ real rescale(pot_table_t *pt, real upper, int flag)
     first = pt->first[col];
     if (format == 3)
       spline_ed(pt->step[col], xi + first,
-		pt->last[col] - first + 1,
-		*(xi + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1, *(xi + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
-		*(xi + first - 2), 0.0, pt->d2tab + first);
+	*(xi + first - 2), 0.0, pt->d2tab + first);
   }
 
   for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {	/* F */
@@ -313,31 +309,29 @@ real rescale(pot_table_t *pt, real upper, int flag)
     if (format == 3)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
 #ifdef WZERO
-		((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-		((pt->end[col] >=
-		  0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
+	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
+	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
 #else /* WZERO */
-		*(xi + first - 2), *(xi + first - 1),
+	*(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
-		pt->d2tab + first);
+	pt->d2tab + first);
     else			/* format == 4 */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
 #ifdef WZERO
-		((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-		((pt->end[col] >=
-		  0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
+	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
+	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
 #else /* WZERO */
-		*(xi + first - 2), *(xi + first - 1),
+	*(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
-		pt->d2tab + first);
+	pt->d2tab + first);
   }
 
 
   /* correct gauge: U'(n_mean)=0 */
   for (i = 0; i < ntypes; i++) {
     lambda[i] = splint_grad(&opt_pot, pt->table, paircol + ntypes + i,
-			    0.5 * (pt->begin[paircol + ntypes + i] +
-				   pt->end[paircol + ntypes + i]));
+      0.5 * (pt->begin[paircol + ntypes + i] +
+	pt->end[paircol + ntypes + i]));
   }
   for (i = 0; i < ntypes; i++)
     printf("lambda[%d] = %f\n", i, lambda[i]);
@@ -347,42 +341,37 @@ real rescale(pot_table_t *pt, real upper, int flag)
     for (col2 = col; col2 < ntypes; col2++) {
       for (j = pt->first[i]; j <= pt->last[i]; j++)
 	pt->table[j] += (pt->xcoord[j] < pt->end[paircol + col2]
-			 ? lambda[col] *
-			 splint_ne(pt, pt->table, paircol + col2,
-				   pt->xcoord[j])
-			 : 0.)
+	  ? lambda[col] *
+	  splint_ne(pt, pt->table, paircol + col2, pt->xcoord[j])
+	  : 0.)
 	  + (pt->xcoord[j] < pt->end[paircol + col]
-	     ? lambda[col2] *
-	     splint_ne(pt, pt->table, paircol + col, pt->xcoord[j])
-	     : 0.);
+	  ? lambda[col2] *
+	  splint_ne(pt, pt->table, paircol + col, pt->xcoord[j])
+	  : 0.);
       /* Gradient */
       if (pt->table[pt->first[i] - 2] < 1e29)	/* natural spline */
 	pt->table[pt->first[i] - 2] += (pt->begin[i] < pt->end[paircol + col2]
-					? lambda[col] *
-					splint_grad(pt, pt->table,
-						    paircol + col2,
-						    pt->begin[i])
-					: 0.)
+	  ? lambda[col] *
+	  splint_grad(pt, pt->table, paircol + col2, pt->begin[i])
+	  : 0.)
 	  + (pt->begin[i] < pt->end[paircol + col]
-	     ? lambda[col2] *
-	     splint_grad(pt, pt->table, paircol + col, pt->begin[i])
-	     : 0.);
+	  ? lambda[col2] *
+	  splint_grad(pt, pt->table, paircol + col, pt->begin[i])
+	  : 0.);
       if (pt->table[pt->first[i] - 1] < 1e29)	/* natural spline */
 	pt->table[pt->first[i] - 1] += (pt->end[i] < pt->end[paircol + col2]
-					? lambda[col] *
-					splint_grad(pt, pt->table,
-						    paircol + col2,
-						    pt->end[i])
-					: 0.)
+	  ? lambda[col] *
+	  splint_grad(pt, pt->table, paircol + col2, pt->end[i])
+	  : 0.)
 	  + (pt->end[i] < pt->end[paircol + col]
-	     ? lambda[col2] *
-	     splint_grad(pt, pt->table, paircol + col, pt->end[i])
-	     : 0.);
+	  ? lambda[col2] *
+	  splint_grad(pt, pt->table, paircol + col, pt->end[i])
+	  : 0.);
       i++;
     }
   for (i = 0; i < ntypes; i++) {
     for (j = pt->first[paircol + ntypes + i];
-	 j <= pt->last[paircol + ntypes + i]; j++)
+      j <= pt->last[paircol + ntypes + i]; j++)
       pt->table[j] -= pt->xcoord[j] * lambda[i];
     /* Gradients */
     if (pt->table[pt->first[paircol + ntypes + i] - 2] < 1e29)	/* natural spline */
@@ -397,12 +386,12 @@ real rescale(pot_table_t *pt, real upper, int flag)
     first = pt->first[col];
     if (format == 3)
       spline_ed(pt->step[col], pt->table + first,
-		pt->last[col] - first + 1,
-		*(pt->table + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1,
+	*(pt->table + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, pt->table + first,
-		pt->last[col] - first + 1,
-		*(pt->table + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1,
+	*(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
 
 
@@ -439,10 +428,10 @@ void embed_shift(pot_table_t *pt)
     if (pt->begin[i] <= 0) {	/* 0 in domain of U(n) */
       if (format == 3)
 	spline_ed(pt->step[i], xi + first, pt->last[i] - first + 1,
-		  *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
+	  *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
       else			/* format == 4 ! */
 	spline_ne(pt->xcoord + first, xi + first, pt->last[i] - first + 1,
-		  *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
+	  *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
       shift = splint(pt, xi, i, 0.);
 #ifdef DEBUG
       printf("shifting by %f\n", shift);

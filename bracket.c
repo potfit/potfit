@@ -1,50 +1,41 @@
 /****************************************************************
-*
-*  bracket_r.c: Brackets a minimum of a function.
-*
-*****************************************************************/
-/* Copyright (C) 1996, 1997, 1998, 1999, 2000 Fabrice Rossi
-*                 (gsl/min/bracketing.c)
-*            2005-2008 Peter Brommer
-*            Institute for Theoretical and Applied Physics
-*            University of Stuttgart, D-70550 Stuttgart, Germany
-*            http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*/
-/****************************************************************/
+ *
+ * bracket.c: Brackets a minimum of a function.
+ *
+ ****************************************************************
+ *
+ * Copyright (C) 1996, 1997, 1998, 1999, 2000 Fabrice Rossi
+ * 		(gsl/min/bracketing.c)
+ * 	2005-2008 Peter Brommer
+ * 	Institute for Theoretical and Applied Physics
+ * 	University of Stuttgart, D-70550 Stuttgart, Germany
+ * 	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
+#include "bracket.h"
 
-#define CGOLD 0.3819660
-#define MAX_IT 100
-
-#define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
-
-extern real *xicom, *delcom;
-
-void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
-	       real *f_lower, real *f_minimum, real *f_upper,
-	       real *f_vec1, real *f_vec2)
+void bracket(real *x_lower, real *x_minimum, real *x_upper,
+  real *f_lower, real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
@@ -129,7 +120,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 	/* This means a change from original algorithm */
 #ifdef DEBUG
 	sprintf(errmsg, "Pathological  @%li %f %f %f! center-right!\n",
-		nb_eval, x_left, x_center, x_right);
+	  nb_eval, x_left, x_center, x_right);
 	warning(errmsg);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
@@ -160,7 +151,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 	/* between center and left */
 #ifdef DEBUG
 	sprintf(errmsg, "Pathological  @%li %f %f %f! center-left!\n",
-		nb_eval, x_left, x_center, x_right);
+	  nb_eval, x_left, x_center, x_right);
 	warning(errmsg);
 #endif /* DEBUG */
 	x_left = -(x_right - x_left) * CGOLD + x_left;
@@ -190,7 +181,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 #ifdef DEBUG
 
 	  sprintf(errmsg, "Pathological  @%li %f %f %f! Go left!\n",
-		  nb_eval, x_left, x_center, x_right);
+	    nb_eval, x_left, x_center, x_right);
 	  warning(errmsg);
 #endif /* DEBUG */
 	  x_left = -(x_right - x_left) / CGOLD + x_left;
@@ -203,7 +194,7 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
 
 #ifdef DEBUG
 	  sprintf(errmsg, "Pathological @%li %f %f %f! go right!\n",
-		  nb_eval, x_left, x_center, x_right);
+	    nb_eval, x_left, x_center, x_right);
 	  warning(errmsg);
 #endif /* DEBUG */
 	  x_right = (x_right - x_left) / CGOLD + x_right;
@@ -218,8 +209,8 @@ void bracket_r(real *x_lower, real *x_minimum, real *x_upper,
   } while (nb_eval < MAX_IT);
 #ifdef DEBUG
   sprintf(errmsg,
-	  "Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.",
-	  nb_eval, x_left, f_left, x_center, f_center, x_right, f_right);
+    "Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.",
+    nb_eval, x_left, f_left, x_center, f_center, x_right, f_right);
   error(errmsg);
 #else /* DEBUG */
   error("Problems with bracketing of minimum, aborting");

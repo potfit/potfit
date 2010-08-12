@@ -1,48 +1,42 @@
 /****************************************************************
-*
-*  spline.c: Contains all routines used for spline interpolation
-*      with equidistant or non-equidistant sampling points.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2005 Peter Brommer, Franz G"ahler
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * spline.c: Contains all routines used for spline interpolation
+ *	with equidistant or non-equidistant sampling points.
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2005 Peter Brommer, Franz G"ahler
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
-/******************************************************************************
+/****************************************************************
  *
  * spline_ed: initializes second derivatives used for spline interpolation
  *            (equidistant x[i])
  *
- *****************************************************************************/
+ ****************************************************************/
 
-#ifndef POTSCALE
 #include "potfit.h"
-#else
-#include "potscale.h"
-#endif
 
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 {
@@ -195,7 +189,7 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
  *
  *****************************************************************************/
 
-real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
+real splint_dir(pot_table_t *pt, real *xi, int k, real b, real step)
 {
   real  a, p1, p2, d21, d22;
 
@@ -212,15 +206,15 @@ real splint_dir(pot_table_t *pt, real *xi, int col, int k, real b, real step)
 
 /****************************************************************************
  *
- * splint_comb_dir_ed: calculates spline interpolation of a function
+ * splint_comb_dir: calculates spline interpolation of a function
  *            (return value)
  *            and its gradiend (grad), equidistant and non-eqd x[i]
  *            with known index position
  *
  *****************************************************************************/
 
-real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		     real step, real *grad)
+real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
+  real *grad)
 {
   real  a, p1, p2, d21, d22;
 
@@ -247,8 +241,7 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int col, int k, real b,
  *****************************************************************************/
 
 
-real splint_grad_dir(pot_table_t *pt, real *xi, int col, int k, real b,
-		     real step)
+real splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step)
 {
   real  a, p1, p2, d21, d22;
 
@@ -294,7 +287,7 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
     y2[i] = (sig - 1.0) / p;
     u[i] =
       (y[i + 1] - y[i]) / (x[i + 1] - x[i]) - (y[i] - y[i - 1]) / (x[i] -
-								   x[i - 1]);
+      x[i - 1]);
     u[i] = (6.0 * u[i] / (x[i + 1] - x[i - 1]) - sig * u[i - 1]) / p;
   }
   if (ypn > 0.99e30)
@@ -303,8 +296,7 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
     qn = 0.5;
     un =
       (3.0 / (x[n - 1] - x[n - 2])) * (ypn -
-				       (y[n - 1] - y[n - 2]) / (x[n - 1] -
-								x[n - 2]));
+      (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]));
   }
   y2[n - 1] = (un - qn * u[n - 2]) / (qn * y2[n - 2] + 1.0);
   for (k = n - 2; k >= 0; k--)

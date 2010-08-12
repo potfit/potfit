@@ -1,59 +1,49 @@
 /****************************************************************
-*
-*  brent_r.c: Minmization of a multivariable function according to
-*      Brent's algorithm.
-*
-* Copyright (C) 1996, 1997, 1998, 1999, 2000 Brian Gough
-*        2005 Peter Brommer
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * brent.c: Minmization of a multivariable function according to
+ *	Brent's algorithm.
+ *
+ ****************************************************************
+ *
+ * Copyright (C) 1996, 1997, 1998, 1999, 2000 Brian Gough
+ *	2005 Peter Brommer
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
-/**** rewritten for double precision                                      ****
-***** by Peter Brommer, ITAP, 2002-10-10                                  ***/
-/**** Adapted to Powell requirements 2002-10-11 			  ***/
-/**** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24   ***/
-/**** Switched to GSL Implementation, put routine under GSL protection ****/
+/*** rewritten for double precision 					***/
+/*** by Peter Brommer, ITAP, 2002-10-10 				***/
+/*** Adapted to Powell requirements 2002-10-11 				***/
+/*** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24 	***/
+/*** Switched to GSL Implementation, put routine under GSL protection 	***/
 
 #include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 #include <float.h>
 #include "potfit.h"
 #include "utils.h"
-#define CGOLD 0.3819660
+#include "bracket.h"
 
-#define ITMAX 100
-#define ZEPS 1.0e-9
-#define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
-#define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
-
-extern real *xicom, *delcom;
-
-real brent_r(real ax, real bx, real cx, real fbx, real tol,
-	     real *xmin, real *xmin2, real *fxmin, real *fxmin2)
+real brent(real ax, real bx, real cx, real fbx, real tol,
+  real *xmin, real *xmin2, real *fxmin, real *fxmin2)
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin, fxmin2 */
 {
   int   iter, j;

@@ -1,77 +1,74 @@
 /****************************************************************
-*
-*  simann.c: Contains all routines used for simulated annealing.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/~imd/potfit
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * simann.c: Contains all routines used for simulated annealing.
+ *
+ *****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ *****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ *****************************************************************/
 
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
 
-#define RAND_MAX 2147483647
 #define EPS 0.1
 #define NEPS 4
 #define NSTEP 20
-#define STEPVAR 2.0
 #define NTEMP (3*ndim)
+#define STEPVAR 2.0
 #define TEMPVAR 0.85
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-(sqrreal(a))/2.)))
 
 #ifdef APOT
 
-/*******************************************************************************
-*
-* Function to generate random parameters for analytic potentials.
-* We loop over a new random parameter until we find one inside
-* the predefined range, specified by the user.
-*
-*******************************************************************************/
+/****************************************************************
+ *
+ * Function to generate random parameters for analytic potentials.
+ * We loop over a new random parameter until we find one inside
+ * the predefined range, specified by the user.
+ *
+ ****************************************************************/
 
 void randomize_parameter(int n, real *xi, real *v)
 {
   real  temp, rand;
-  int   done = 0;
+  int   done = 0, count = 0;
   real  min, max;
 
   min = apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]];
   max = apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]];
 
+  if (v[n] > max - min)
+    v[n] = max - min;
+
   do {
     temp = xi[idx[n]];
-    rand = 2.0 * random() / (RAND_MAX + 1.) - 1;
-    /* this is needed to make the algorithm work with a predefined range */
-    if (v[n] > (max - min))
-      v[n] = (max - min);
+    rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
     temp += (rand * v[n]);
     if (temp >= min && temp <= max)
       done = 1;
+    count++;
   } while (!done);
   xi[idx[n]] = temp;
 }
@@ -80,41 +77,11 @@ void randomize_parameter(int n, real *xi, real *v)
 
 /****************************************************************
  *
- *  real normdist(): Returns a normally distributed random variable
- *          Uses random() to generate a random number.
- *
- *****************************************************************/
-
-real normdist(void)
-{
-  static int have = 0;
-  static real nd2;
-  real  x1, x2, sqr, cnst;
-
-  if (!(have)) {
-    do {
-      x1 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      x2 = 2.0 * random() / (RAND_MAX + 1.0) - 1.0;
-      sqr = x1 * x1 + x2 * x2;
-    } while (!(sqr <= 1.0 && sqr > 0));
-    /* Box Muller Transformation */
-    cnst = sqrt(-2.0 * log(sqr) / sqr);
-    nd2 = x2 * cnst;
-    have = 1;
-    return x1 * cnst;
-  } else {
-    have = 0;
-    return nd2;
-  }
-}
-
-/****************************************************************
- *
  *  makebump(*x, width, height, center): Displaces equidistant
  *        sampling points of a function. Displacement is given by
  *        gaussian of given width and height.
  *
- *****************************************************************/
+ ****************************************************************/
 
 void makebump(real *x, real width, real height, int center)
 {
@@ -143,14 +110,12 @@ void makebump(real *x, real width, real height, int center)
  *  anneal(*xi): Anneals x a vector xi to minimize a function F(xi).
  *      Algorithm according to Cordona et al.
  *
- *****************************************************************/
+ ****************************************************************/
 
 void anneal(real *xi)
 {
-  int   j = 0, m = 0, k = 0, n, h = 0;	/* counters */
-  int   nstep = NSTEP, ntemp = NTEMP;
+  int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   loopagain;		/* loop flag */
-  real  c = STEPVAR;
   real  T;			/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
@@ -168,7 +133,7 @@ void anneal(real *xi)
   if (T == 0.)
     return;			/* don't anneal if starttemp equal zero */
 
-  Fvar = vect_real(KMAX + 5 + NEPS);	//-(NEPS+1); /* Backlog of old F values */
+  Fvar = vect_real(KMAX + 5 + NEPS);	/* Backlog of old F values */
   v = vect_real(ndim);
   xopt = vect_real(ndimtot);
   xi2 = vect_real(ndimtot);
@@ -189,12 +154,12 @@ void anneal(real *xi)
   printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, Fopt);
   fflush(stdout);
   for (n = 0; n <= NEPS; n++)
-    Fvar[n] = F;		//Fvar[-n]=F;
+    Fvar[n] = F;
 
   /* annealing loop */
   do {
-    for (m = 0; m < ntemp; m++) {
-      for (j = 0; j < nstep; j++) {
+    for (m = 0; m < NTEMP; m++) {
+      for (j = 0; j < NSTEP; j++) {
 	for (h = 0; h < ndim; h++) {
 	  /* Step #1 */
 	  for (n = 0; n < ndimtot; n++) {
@@ -227,19 +192,18 @@ void anneal(real *xi)
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-	      /* *INDENT-OFF* */
 		for (n = 0; n < ndim; n++) {
-		  apot_table.values[apot_table.
-				    idxpot[n]][apot_table.idxparam[n]] =
-		    xopt[idx[n]];
+		/* *INDENT-OFF* */
+		  apot_table.values[apot_table.idxpot[n]]
+			  [apot_table.idxparam[n]] = xopt[idx[n]];
+		/* *INDENT-ON* */
 		}
-/*               *INDENT-ON**/
-		write_pot_table(&apot_table, tempfile);
+	      write_pot_table(&apot_table, tempfile);
 #endif
 	    }
 	  }
 
-	  else if ((random() / (RAND_MAX + 1.0)) < exp((F - F2) / T)) {
+	  else if ((dsfmt_genrand_close_open(&dsfmt)) < exp((F - F2) / T)) {
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
 	    F = F2;
@@ -250,22 +214,23 @@ void anneal(real *xi)
 
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
-	if (naccept[n] > 0.6 * nstep)
-	  v[n] *= (1 + c * ((real)naccept[n] / nstep - 0.6) / 0.4);
-	else if (naccept[n] < 0.4 * nstep)
-	  v[n] /= (1 + c * (0.4 - (real)naccept[n] / nstep) / 0.4);
+	if (naccept[n] > (0.6 * NSTEP))
+	  v[n] *= (1 + STEPVAR * ((real)naccept[n] / NSTEP - 0.6) / 0.4);
+	else if (naccept[n] < (0.4 * NSTEP))
+	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / NSTEP) / 0.4);
 	naccept[n] = 0;
       }
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
-      /* End fit if break flagfile exists */
+
+      /* End annealing if break flagfile exists */
       if (*flagfile != '\0') {
 	ff = fopen(flagfile, "r");
 	if (NULL != ff) {
 	  printf
 	    ("Annealing terminated in presence of break flagfile \"%s\"!\n",
-	     flagfile);
+	    flagfile);
 	  printf("Temperature was %f, returning optimum configuration\n", T);
 	  for (n = 0; n < ndimtot; n++)
 	    xi[n] = xopt[n];
@@ -283,7 +248,7 @@ void anneal(real *xi)
 	/* Was rescaling necessary ? */
 	if (rescale(&opt_pot, 1., 0) != 0.) {
 #ifdef WZERO
-//          embed_shift(&opt_pot);
+	  /* embed_shift(&opt_pot); */
 #endif /* WZERO */
 	  /* wake other threads and sync potentials */
 	  F = (*calc_forces) (xi, fxi1, 2);
@@ -326,7 +291,7 @@ void anneal(real *xi)
   if (*tempfile != '\0')
     write_pot_table(&apot_table, tempfile);
 #endif
-  free_vect_real(Fvar);		//-NEPS+1);
+  free_vect_real(Fvar);
   free_vect_real(v);
   free_vect_real(xopt);
   free_vect_int(naccept);

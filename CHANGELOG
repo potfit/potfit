@@ -1,6 +1,105 @@
+trunk-20100812
++ make endpot optional, is set to ${startpot}_end it not given
++ change i386 profile to i586
++ remove a few commented lines that are not necessary any more
++ set reasonable inital values for starting parameters
++ [APOT] add cbb potential to potfit and makeapot
++ add flagfile interruption to evo and remove unneeded variables
++ remove unneeded header files as well
++ adjust diff_evo parameters
+
+trunk-20100810
++ strip even more (comments)
+
+devel-20100809
++ final commit before next release
++ evolutionary algorithm now restarts if average==best
++ fix Makefile for gcc profiles
+
+devel-20100730
++ more optimization flags for icc and gcc
++ adjust comments to c-style
++ remove openmp
++ Makefile updated
++ [APOT] add support for ACML for analytic functions
+
+devel-20100726
++ strip binaries
++ clean up Makefile, many old targets removed, 4 targets remaining
++ IMDSYS has been removed, set your system in the Makefile
+
+trunk-20100726
++ [ADP] fix? force calculation
++ [APOT] fix punishments with invariant potentials
+
+trunk-20100709
++ [APOT] reduce number of sampling points for analytic potentials
++ [APOT] makeapot now writes the correct potential type
++ [APOT] fixed a bug with cp and globals
++ don't write errors if the weight is 0 for energy or stress
++ [APOT] update NOPUNISH target a little bit
+
+trunk-20100623
++ change indent mode a little bit
+  this changes many lines, so put it in an extra commit
+
+trunk-20100623
++ Makefile: exit if there is no compiler available
++ [APOT] globals can now also be fixed
++ force data is now separated by 2 blank lines, makes scatterplots for single configs easy
+
+devel-20100610
++ [APOT] make punishments for apot optional
++ there is now (again) a limit on the size of the directional vectors v in simann
+
+trunk-20100609
++ revert simann changes from 201005012
++ update plotapot script for adp potentials
++ update GPL notice
++ add new analytic functions and update old ones
+
+trunk-20100531
++ adapt force routines to new col system
+
+trunk-20100525
++ make scripts executable
++ fix conf_weights for stresses
+
+adp-20100528
++ fix conf_weight for stresses
++ adp is now working with mpi
++ save coloumns for interactions, untested with tabulated potentials for now
+
+adp-20100527
++ adp should now be complete, mpi still missing
+
+bzr-20100512
++ moved files from *_r.* to *.*, all types are real, include header for bracketing
++ fix warnings when compiling with debug flag
++ simann now counts all new parameters as an attempt, even if they were out of bounds
++ optimize evo output
++ properly initialize the dSFMT prng
+
+bzr-20100510
++ removed some commented code
++ make the order of chemical potentials, globals and other stuff in the potential file
+	arbitrary
++ switch random number generator to double precision Fast Mersenne Twister (dSFMT)
+	this has not been tested on other platforms
++ move normdist to utils.c, it is used in simann.c and diff_evo.c
++ remove potscale and oldcode completely
++ move update_slots to an earlier point of execution time, only root does it now
++ remove pot_list completely
++ change MAXNEIGH to dynamic array
++ only save new neighbors, speeds up the optimization significantly
+  calculate forces with actio=reactio
+
 bzr-20100426
-+ start migration to bazaar vcs 
-+ prepare trunk: 
++ re-add ADP part
+
+bzr-20100426
++ start migration to bazaar vcs
++ prepare trunk:
 	removed .revisions file
 	moved potscale to util directory
 	removed html directory

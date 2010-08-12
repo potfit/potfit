@@ -1,40 +1,38 @@
 /****************************************************************
-*
-*  potfit.c: Contains main potfit programme.
-*
-*****************************************************************/
-/*
-*   Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
-*             Institute for Theoretical and Applied Physics
-*             University of Stuttgart, D-70550 Stuttgart, Germany
-*             http://www.itap.physik.uni-stuttgart.de/
-*
-*****************************************************************/
-/*
-*   This file is part of potfit.
-*
-*   potfit is free software; you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation; either version 2 of the License, or
-*   (at your option) any later version.
-*
-*   potfit is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-*
-*   You should have received a copy of the GNU General Public License
-*   along with potfit; if not, write to the Free Software
-*   Foundation, Inc., 51 Franklin St, Fifth Floor,
-*   Boston, MA  02110-1301  USA
-*
-*****************************************************************/
+ *
+ * potfit.c: Contains main potfit program
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://www.itap.physik.uni-stuttgart.de/
+ *
+ ****************************************************************
+ *
+ *   This file is part of potfit.
+ *
+ *   potfit is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   potfit is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #define MAIN
 
-#include "version.h"
 #include "potfit.h"
 #include "utils.h"
+#include "version.h"
 
 /******************************************************************************
 *
@@ -44,7 +42,7 @@
 
 void error(char *msg)
 {
-  fprintf(stderr, "Error: %s\n", msg);
+  fprintf(stderr, "\nError: %s\n\n", msg);
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;
@@ -62,7 +60,7 @@ void error(char *msg)
 
 void warning(char *msg)
 {
-  fprintf(stderr, "Warning: %s\n", msg);
+  fprintf(stderr, "\nWarning: %s\n", msg);
   fflush(stderr);
   return;
 }
@@ -75,14 +73,17 @@ void warning(char *msg)
 
 int main(int argc, char **argv)
 {
+  int   i, j;
+  real  tot, min, max, sqr;
   real *force;
-  real  tot, min, max, sqr, *totdens = NULL;
-  int   i, j, *ntyp = NULL;
+#if defined EAM || defined ADP
+  real *totdens = NULL;
+#endif
   char  msg[255], file[255];
   FILE *outfile;
 
 #ifdef MPI
-  init_mpi(&argc, argv);
+  init_mpi(argc, argv);
 #endif
 
   if (myid == 0) {
@@ -99,12 +100,15 @@ int main(int argc, char **argv)
 #elif defined EAM
   calc_forces = calc_forces_eam;
   strcpy(interaction, "EAM");
+#elif defined ADP
+  calc_forces = calc_forces_adp;
+  strcpy(interaction, "ADP");
 #endif
 
   /* read the parameters and the potential file */
   if (myid == 0) {
     read_parameters(argc, argv);
-    read_pot_table(&opt_pot, startpot, ntypes * (ntypes + 1) / 2);
+    read_pot_table(&opt_pot, startpot);
     read_config(config);
     printf("Global energy weight: %f\n", eweight);
 #ifdef STRESS
@@ -113,9 +117,7 @@ int main(int argc, char **argv)
     /* Select correct spline interpolation and other functions */
     if (format == 0) {
 #ifndef APOT
-      sprintf(msg,
-	      "potfit binary compiled without analytic potential support\n");
-      error(msg);
+      error("potfit binary compiled without analytic potential support\n");
 #else
       splint = splint_ed;
       splint_comb = splint_comb_ed;
@@ -124,9 +126,7 @@ int main(int argc, char **argv)
 #endif
     } else if (format == 3) {
 #ifdef APOT
-      sprintf(msg,
-	      "potfit binary compiled without tabulated potential support\n");
-      error(msg);
+      error("potfit binary compiled without tabulated potential support\n");
 #else
       splint = splint_ed;
       splint_comb = splint_comb_ed;
@@ -138,11 +138,9 @@ int main(int argc, char **argv)
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
 #endif /* APOT */
-    } else if (format >= 4) {	/*format == 4 ! */
+    } else if (format >= 4) {	/*format >= 4 ! */
 #ifdef APOT
-      sprintf(msg,
-	      "potfit binary compiled without tabulated potential support\n");
-      error(msg);
+      error("potfit binary compiled without tabulated potential support\n");
 #else
       splint = splint_ne;
       splint_comb = splint_comb_ne;
@@ -157,30 +155,37 @@ int main(int argc, char **argv)
     }
 
     /* set spline density corrections to 0 */
-#if defined EAM
+#if defined EAM || defined ADP
     lambda = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(lambda, "lambda");
 
     totdens = (real *)malloc(ntypes * sizeof(real));
     reg_for_free(totdens, "totdens");
 
-    ntyp = (int *)malloc(ntypes * sizeof(int));
-    reg_for_free(ntyp, "ntyp");
-
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
 #ifndef NORESCALE
     rescale(&opt_pot, 1., 1);	/* rescale now... */
-#ifdef WZERO
-//    embed_shift(&opt_pot);    /* and shift  - diabolical */
-#endif /* WZERO */
 #endif /* NORESCALE */
 #endif /* EAM */
     init_done = 1;
   }
 
-  /* initialize random number generator */
-  srandom(seed + myid);
+  /* properly initialize random number generator */
+#define R_SIZE 624
+#define RAND_MAX 2147483647
+  uint32_t *array;
+  array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
+  srand(seed + myid);
+  for (i = 0; i < R_SIZE; i++)
+    array[i] = rand();
+
+  dsfmt_init_by_array(&dsfmt, array, R_SIZE);
+  for (i = 0; i < 10e5; i++)
+    dsfmt_genrand_close_open(&dsfmt);
+  free(array);
+#undef R_SIZE
+#undef RAND_MAX
 
   /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI
@@ -193,9 +198,7 @@ int main(int argc, char **argv)
   conf_vol = volumen;
   conf_uf = useforce;
   conf_us = usestress;
-  myatoms = natoms;
 #endif /* MPI */
-  /*   mdim=3*natoms+nconf; */
   ndim = opt_pot.idxlen;
   ndimtot = opt_pot.len;
   paircol = (ntypes * (ntypes + 1)) / 2;
@@ -208,19 +211,19 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#if defined EAM
+#if defined EAM || defined ADP
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
   punish_par_p = dummy_p + 2 * ntypes;
-  punish_pot_p = punish_par_p + apot_table.total_par;
+  punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
 #endif
-#else /* EAM */
+#else /* EAM || ADP */
 #ifdef APOT
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif
-#endif /* EAM */
+#endif /* EAM || ADP */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
 
@@ -229,8 +232,6 @@ int main(int argc, char **argv)
   MPI_Bcast(opt_pot.table, ndimtot, REAL, 0, MPI_COMM_WORLD);
 #endif
   update_calc_table(opt_pot.table, calc_pot.table, 1);
-  for (i = 0; i < paircol; i++)
-    new_slots(i, 1);
 #endif
 
   /* Select correct spline interpolation and other functions */
@@ -255,7 +256,7 @@ int main(int argc, char **argv)
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
 #endif /* APOT */
-    } else if (format == 4) {	/*format == 4 ! */
+    } else if (format >= 4) {	/*format >= 4 ! */
 #ifndef APOT
       splint = splint_ne;
       splint_comb = splint_comb_ne;
@@ -299,11 +300,9 @@ int main(int argc, char **argv)
     if (opt) {
       write_pot_table(&apot_table, endpot);
 #endif
-      printf("\nPotential in format %d written to file %s\n", format, endpot);
+      printf("\nPotential in format %d written to file \t%s\n", format,
+	endpot);
     }
-/*#ifndef APOT*/
-/*    printf("Plotpoint file written to file %s\n", plotpointfile);*/
-/*#endif*/
     if (writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
@@ -319,7 +318,7 @@ int main(int argc, char **argv)
       write_pot_table4(&opt_pot, endpot);
       printf("Potential in format 4 written to file %s\n", endpot);
     }
-#if defined EAM
+#if defined EAM || defined ADP
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
     if (write_output_files) {
@@ -336,33 +335,33 @@ int main(int argc, char **argv)
     }
     for (i = 0; i < ntypes; i++) {
       totdens[i] = 0.;
-      ntyp[i] = 0;
     }
     fprintf(outfile, "#    atomtype\trho\n");
     for (i = 0; i < natoms; i++) {
       fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].typ, atoms[i].rho);
       totdens[atoms[i].typ] += atoms[i].rho;
-      ntyp[atoms[i].typ]++;
+    }
+    fprintf(outfile, "\n");
+    for (i = 0; i < ntypes; i++) {
+      totdens[i] /= (real)na_type[nconf][i];
+      fprintf(outfile,
+	"Average local electron density at atom sites type %d: %f\n", i,
+	totdens[i]);
     }
     if (write_output_files) {
-      printf("Local electron density data written to %s\n", file);
+      printf("Local electron density data written to \t%s\n", file);
       fclose(outfile);
-    }
-    for (i = 0; i < ntypes; i++) {
-      totdens[i] /= (real)ntyp[i];
-      printf("Average local electron density at atom sites type %d: %f\n",
-	     i, totdens[i]);
     }
 #ifdef NEWSCALE
     for (i = 0; i < ntypes; i++) {
 #ifdef NORESCALE
       /* U'(1.) = 0. */
       lambda[i] = splint_grad(&calc_pot, calc_pot.table,
-			      paircol + ntypes + i, 1.0);
+	paircol + ntypes + i, 1.0);
 #else /* NORESCALE */
       /* U'(<n>)=0; */
       lambda[i] = splint_grad(&calc_pot, calc_pot.table,
-			      paircol + ntypes + i, totdens[i]);
+	paircol + ntypes + i, totdens[i]);
 #endif /* NORESCALE */
       printf("lambda[%d] = %f \n", i, lambda[i]);
     }
@@ -376,7 +375,7 @@ int main(int argc, char **argv)
       write_pot_table_imd(&opt_pot, imdpot);
 #endif /* NEWSCALE */
 #endif /* MPI */
-#endif /* EAM */
+#endif /* EAM || ADP */
 
     /* prepare for error calculations */
     max = 0.0;
@@ -396,114 +395,141 @@ int main(int argc, char **argv)
       outfile = stdout;
       printf("Forces:\n");
     }
+    for (i = 0; i < 6; i++)
+      component[i] = (char *)malloc(2 * sizeof(char));
+    strcpy(component[0], "x");
+    strcpy(component[1], "y");
+    strcpy(component[2], "z");
     for (i = 0; i < 3 * natoms; i++) {
       sqr = conf_weight[atoms[i / 3].conf] * SQR(force[i]);
       f_sum += sqr;
       max = MAX(max, sqr);
       min = MIN(min, sqr);
 #ifdef FWEIGHT
+      if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
+	fprintf(outfile, "\n\n");
       if (i == 0)
 	fprintf(outfile,
-		"conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+	  "#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
-	      "%3d:%5d\t%4s\t%11.8f\t%11.8f\t%11.8f\t%11.8f\t%11.8f\n",
-	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
-	      force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
-	      force_0[i],
-	      (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
-	      atoms[i / 3].absforce);
+	"%3d:%5d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
+	atoms[i / 3].conf, i / 3, component[i % 3],
+	elements[atoms[i / 3].typ], sqr,
+	force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
+	force_0[i],
+	(force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
+	atoms[i / 3].absforce);
 #else /* FWEIGHT */
+      if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
+	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile, "conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%3d:%5d\t%4s\t%.8f\t%11.8f\t%11.8f\t%11.8f\n",
-	      atoms[i / 3].conf, i / 3, elements[atoms[i / 3].typ], sqr,
-	      force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+	fprintf(outfile, "#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
+      fprintf(outfile, "%3d:%5d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
+	atoms[i / 3].conf, i / 3, component[i % 3],
+	elements[atoms[i / 3].typ], sqr, force[i] + force_0[i], force_0[i],
+	force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
-      printf("Force data written to %s\n", file);
+      printf("Force data written to \t\t\t%s\n", file);
       fclose(outfile);
     }
 
     /* write energy deviations */
-    if (write_output_files) {
-      strcpy(file, output_prefix);
-      strcat(file, ".energy");
-      outfile = fopen(file, "w");
-      if (NULL == outfile) {
-	sprintf(msg, "Could not open file %s\n", file);
-	error(msg);
+    if (eweight != 0) {
+      if (write_output_files) {
+	strcpy(file, output_prefix);
+	strcat(file, ".energy");
+	outfile = fopen(file, "w");
+	if (NULL == outfile) {
+	  sprintf(msg, "Could not open file %s\n", file);
+	  error(msg);
+	}
+      } else {
+	outfile = stdout;
+	printf("Cohesive Energies\n");
+      }
+
+      if (write_output_files) {
+	fprintf(outfile, "# global energy weight w is %f\n", eweight);
+	fprintf(outfile,
+	  "# nr.\tconf_w\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+      } else {
+	fprintf(outfile, "energy weight is %f\n", eweight);
+	fprintf(outfile, "conf\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
+      }
+
+      for (i = 0; i < nconf; i++) {
+	sqr = conf_weight[i] * SQR(force[energy_p + i]);
+	e_sum += sqr;
+	max = MAX(max, sqr);
+	min = MIN(min, sqr);
+	if (write_output_files) {
+	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
+	    conf_weight[i], sqr,
+	    (force[energy_p + i] + force_0[energy_p + i]) / eweight,
+	    force_0[energy_p + i] / eweight,
+	    fabs(force[energy_p + i]) / eweight,
+	    force[energy_p + i] / eweight,
+	    force[energy_p + i] / force_0[energy_p + i]);
+	} else
+	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i],
+	    sqr, (force[energy_p + i] + force_0[energy_p + i]) / eweight,
+	    force_0[energy_p + i] / eweight,
+	    force[energy_p + i] / force_0[energy_p + i]);
+      }
+      if (write_output_files) {
+	printf("Energy data written to \t\t\t%s\n", file);
+	fclose(outfile);
       }
     } else {
-      outfile = stdout;
-      printf("Cohesive Energies\n");
-    }
-
-    if (write_output_files) {
-      fprintf(outfile, "# global energy weight w is %f\n", eweight);
-      fprintf(outfile,
-	      "# nr.\tconf_w\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
-    } else {
-      fprintf(outfile, "energy weight is %f\n", eweight);
-      fprintf(outfile, "conf\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
-    }
-
-    for (i = 0; i < nconf; i++) {
-      sqr = conf_weight[i] * SQR(force[energy_p + i]);
-      e_sum += sqr;
-      max = MAX(max, sqr);
-      min = MIN(min, sqr);
-      if (write_output_files) {
-	fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
-		conf_weight[i], sqr,
-		(force[energy_p + i] + force_0[energy_p + i]) / eweight,
-		force_0[energy_p + i] / eweight,
-		fabs(force[energy_p + i]) / eweight,
-		force[energy_p + i] / eweight,
-		force[energy_p + i] / force_0[energy_p + i]);
-      } else
-	fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i], sqr,
-		(force[energy_p + i] + force_0[energy_p + i]) / eweight,
-		force_0[energy_p + i] / eweight,
-		force[energy_p + i] / force_0[energy_p + i]);
-    }
-    if (write_output_files) {
-      printf("Energy data written to %s\n", file);
-      fclose(outfile);
+      printf("Energy data not written (energy weight was 0).\n");
     }
 #ifdef STRESS
     /* write stress deviations */
-    if (write_output_files) {
-      strcpy(file, output_prefix);
-      strcat(file, ".stress");
-      outfile = fopen(file, "w");
-      if (NULL == outfile) {
-	sprintf(msg, "Could not open file %s\n", file);
-	error(msg);
+    if (sweight != 0) {
+      if (write_output_files) {
+	strcpy(file, output_prefix);
+	strcat(file, ".stress");
+	outfile = fopen(file, "w");
+	if (NULL == outfile) {
+	  sprintf(msg, "Could not open file %s\n", file);
+	  error(msg);
+	}
+	fprintf(outfile, "# global stress weight w is %f\n", sweight);
+      } else {
+	outfile = stdout;
+	fprintf(outfile, "Stresses on unit cell\n");
       }
-      fprintf(outfile, "# global stress weight w is %f\n", sweight);
+      strcpy(component[0], "xx");
+      strcpy(component[1], "yy");
+      strcpy(component[2], "zz");
+      strcpy(component[3], "xy");
+      strcpy(component[4], "yz");
+      strcpy(component[5], "zx");
+
+      fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\t\ts\t\ts0\t\tds/s0\n");
+
+      for (i = stress_p; i < stress_p + 6 * nconf; i++) {
+	sqr = conf_weight[(i - stress_p) / 6] * SQR(force[i]);
+	s_sum += sqr;
+	max = MAX(max, sqr);
+	min = MIN(min, sqr);
+	fprintf(outfile, "%3d-%s\t%10.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
+	  (i - stress_p) / 6, component[(i - stress_p) % 6],
+	  conf_weight[(i - stress_p) / 6], sqr,
+	  (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
+	  force[i] / force_0[i]);
+      }
+      if (write_output_files) {
+	printf("Stress data written to \t\t\t%s\n", file);
+	fclose(outfile);
+      }
     } else {
-      outfile = stdout;
-      fprintf(outfile, "Stresses on unit cell\n");
-    }
-    fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\ts\t\ts0\t\tds/s0\n");
-    for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-      sqr = SQR(force[i]);
-      s_sum += sqr;
-      max = MAX(max, sqr);
-      min = MIN(min, sqr);
-      fprintf(outfile, "%d\t%f\t%f\t%f\t%f\t%f\n",
-	      (i - stress_p) / 6, conf_weight[(i - stress_p) / 6], sqr,
-	      (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
-	      force[i] / force_0[i]);
-    }
-    if (write_output_files) {
-      printf("Stress data written to %s\n", file);
-      fclose(outfile);
+      printf("Stress data not written (stress weight was 0).\n");
     }
 #endif
-#ifdef EAM
-/*    if (opt) {*/
+#if ( defined EAM || defined ADP ) && !defined NOPUNISH
     /* write EAM punishments */
     if (write_output_files) {
       strcpy(file, output_prefix);
@@ -525,11 +551,10 @@ int main(int argc, char **argv)
       min = MIN(min, sqr);
       if (write_output_files)
 	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
-		force[i] + force_0[i]);
+	  force[i] + force_0[i]);
       else
 	fprintf(outfile, "%d %f %f %f %f\n", i - limit_p,
-		sqr, force[i] + force_0[i], force_0[i],
-		force[i] / force_0[i]);
+	  sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
     }
     if (write_output_files) {
       real  zero = 0;
@@ -541,7 +566,7 @@ int main(int argc, char **argv)
 	max = MAX(max, sqr);
 	min = MIN(min, sqr);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p],
-		zero, sqr, zero, force[i]);
+	  zero, sqr, zero, force[i]);
 #else
 	sqr = SQR(force[i]);
 	max = MAX(max, sqr);
@@ -550,17 +575,17 @@ int main(int argc, char **argv)
 	max = MAX(max, sqr);
 	min = MIN(min, sqr);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
-		SQR(force[i]), force[i + ntypes], force[i]);
+	  SQR(force[i]), force[i + ntypes], force[i]);
 #endif
       }
 #ifdef NORESCALE
       fprintf(outfile, "\nNORESCALE: <n>!=1\n");
       fprintf(outfile, "<n>=%f\n",
-	      force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
+	force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
       fprintf(outfile, "Additional punishment of %f added.\n",
-	      SQR(force[dummy_p + ntypes]));
+	SQR(force[dummy_p + ntypes]));
 #endif
-      printf("Punishment constraints data written to %s\n", file);
+      printf("Punishment constraints data written to \t%s\n", file);
       fclose(outfile);
     } else {
       fprintf(outfile, "Dummy Constraints\n");
@@ -569,13 +594,12 @@ int main(int argc, char **argv)
 	max = MAX(max, sqr);
 	min = MIN(min, sqr);
 	fprintf(outfile, "%d %f %f %f %f\n", i - dummy_p, sqr,
-		force[dummy_p + i] + force_0[dummy_p + i],
-		force_0[dummy_p + i],
-		force[dummy_p + i] / force_0[dummy_p + i]);
+	  force[dummy_p + i] + force_0[dummy_p + i],
+	  force_0[dummy_p + i], force[dummy_p + i] / force_0[dummy_p + i]);
       }
     }
 /*    }*/
-#endif
+#endif /* (EAM || ADP) && !NOPUNISH */
 
     /* final error report */
     printf("\n###### error report ######\n");
@@ -589,22 +613,22 @@ int main(int argc, char **argv)
       }
 #ifndef STRESS
       fprintf(outfile,
-	      "total error sum %f, count %d (%d forces, %d energies)\n", tot,
-	      mdim - 6 * nconf, 3 * natoms, nconf);
+	"total error sum %f, count %d (%d forces, %d energies)\n", tot,
+	mdim - 6 * nconf, 3 * natoms, nconf);
 #else
       fprintf
 	(outfile,
-	 "total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
-	 tot, mdim, 3 * natoms, nconf, 6 * nconf);
+	"total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
+	tot, mdim, 3 * natoms, nconf, 6 * nconf);
 #endif
     }
 #ifndef STRESS
     printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
-	   mdim - 6 * nconf, 3 * natoms, nconf);
+      mdim - 6 * nconf, 3 * natoms, nconf);
 #else
     printf
       ("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
-       tot, mdim, 3 * natoms, nconf, 6 * nconf);
+      tot, mdim, 3 * natoms, nconf, 6 * nconf);
 #endif
 
     /* calculate the rms errors for forces, energies, stress */
@@ -618,73 +642,83 @@ int main(int argc, char **argv)
     rms[0] = sqrt(rms[0] / natoms);
 
     /* energies */
-    for (i = 0; i < nconf; i++)
-      rms[1] += SQR(force[3 * natoms + i] / eweight);
-    if (isnan(rms[1]))
-      rms[1] = 0;
-    rms[1] = sqrt(rms[1] / nconf);
+    if (eweight != 0) {
+      for (i = 0; i < nconf; i++)
+	rms[1] += SQR(force[3 * natoms + i] / eweight);
+      if (isnan(rms[1]))
+	rms[1] = 0;
+      rms[1] = sqrt(rms[1] / nconf);
+    }
 
     /* stresses */
-    for (i = 0; i < nconf; i++)
-      for (j = 0; j < 6; j++)
-	rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j] / sweight);
-    if (isnan(rms[2]))
-      rms[2] = 0;
-    rms[2] = sqrt(rms[2] / (6 * nconf));
+    if (sweight != 0) {
+      for (i = 0; i < nconf; i++)
+	for (j = 0; j < 6; j++)
+	  rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j] / sweight);
+      if (isnan(rms[2]))
+	rms[2] = 0;
+      rms[2] = sqrt(rms[2] / (6 * nconf));
+    }
 
     if (write_output_files) {
       fprintf(outfile, "sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
-	      f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
-      fprintf(outfile, "sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
-	      e_sum / tot * 100);
+	f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
+      if (eweight != 0)
+	fprintf(outfile, "sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
+	  e_sum / tot * 100);
 #ifdef STRESS
-      fprintf(outfile, "sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
-	      s_sum / tot * 100);
+      if (sweight != 0)
+	fprintf(outfile, "sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
+	  s_sum / tot * 100);
 #endif
       if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
 	fprintf
 	  (outfile,
-	   "\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
+	  "\n --> Warning <--\nThis sum contains punishments! Please check your results.\n");
 	fprintf(outfile, "Total sum of punishments = %f\t\t( %.3f%% )\n\n",
-		tot - f_sum - e_sum - s_sum,
-		(tot - f_sum - e_sum - s_sum) / tot * 100);
+	  tot - f_sum - e_sum - s_sum,
+	  (tot - f_sum - e_sum - s_sum) / tot * 100);
       }
-/*      fprintf(outfile, "min: %e - max: %e\n", min, max);*/
       fprintf(outfile, "rms-errors:\n");
       fprintf(outfile, "force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
-      fprintf(outfile, "energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
+      if (eweight != 0)
+	fprintf(outfile, "energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
 #ifdef STRESS
-      fprintf(outfile, "stress \t%f\t(%f MPa)\n", rms[2],
-	      rms[2] / 160.2 * 1000);
+      if (sweight != 0)
+	fprintf(outfile, "stress \t%f\t(%f MPa)\n", rms[2],
+	  rms[2] / 160.2 * 1000);
 #endif
       fprintf(outfile, "\n");
       fprintf(outfile,
-	      "\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
+	"\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
       fprintf(outfile, "RMS:\t%f\t%f\t%f\t%f\n", rms[0] * 1000, rms[1] * 1000,
-	      rms[2] / 160.2 * 1000, tot);
+	rms[2] / 160.2 * 1000, tot);
 
     }
     printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
-	   f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
-    printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
-	   e_sum / tot * 100);
+      f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
+    if (eweight != 0)
+      printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
+	e_sum / tot * 100);
 #ifdef STRESS
-    printf("sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
-	   s_sum / tot * 100);
+    if (sweight != 0)
+      printf("sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
+	s_sum / tot * 100);
 #endif
     if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
       printf
 	("\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
       printf("sum of punishments = %f\t\t( %.3f%% )\n\n",
-	     tot - f_sum - e_sum - s_sum,
-	     (tot - f_sum - e_sum - s_sum) / tot * 100);
+	tot - f_sum - e_sum - s_sum,
+	(tot - f_sum - e_sum - s_sum) / tot * 100);
     }
-    printf("min: %e - max: %e\n", min, max);
     printf("rms-errors:\n");
     printf("force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
-    printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
+    if (eweight != 0)
+      printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
 #ifdef STRESS
-    printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
+    if (sweight != 0)
+      printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */

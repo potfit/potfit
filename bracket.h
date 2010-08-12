@@ -1,13 +1,13 @@
 /****************************************************************
  *
- * utils.h: potfit utilities header file
+ * bracket.h: header file for bracketing and brent minimization
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Daniel Schopf
- *	Institute for Theoretical and Applied Physics
- *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ * Copyright 2010 Daniel Schopf
+ * 	Institute for Theoretical and Applied Physics
+ * 	University of Stuttgart, D-70550 Stuttgart, Germany
+ * 	http://www.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -26,17 +26,22 @@
  *   You should have received a copy of the GNU General Public License
  *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
- *****************************************************************/
+ ****************************************************************/
 
-#define ANSI
+/* for bracket.c */
+#define CGOLD 0.3819660
+#define MAX_IT 100
 
-real  sqrreal(real x);
-int  *vect_int(long dim);
-real *vect_real(long dim);
-real **mat_real(long rowdim, long coldim);
-void  free_vect_real(real *vect);
-void  free_vect_int(int *vect);
-void  free_mat_real(real **matrix);
-void  reg_for_free(void *p, char *name);
-void  free_all_pointers();
-real  normdist();
+/* for brent.c */
+#define ITMAX 100
+#define ZEPS 1.0e-9
+#define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
+
+#define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
+
+extern real *xicom, *delcom;
+
+void  bracket(real *, real *, real *, real *, real *, real *, real *, real *);
+real  brent(real, real, real, real, real, real *, real *, real *, real *);
+
+real  linmin(real *, real *, real, real *, real *, real *, real *);
