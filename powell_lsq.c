@@ -42,9 +42,6 @@
 #else /* ACML */
 #include <mkl_lapack.h>
 #endif /* ACML */
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 #include "potfit.h"
 #include "utils.h"
 #include "bracket.h"

@@ -2408,15 +2408,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
-/*#ifdef APOT*/
-/*        apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);*/
-/*        temp = smooth_pot[col1] ? temp **/
-/*          cutoff(sqrt(r2), apot_table.end[col1],*/
-/*                 apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;*/
-/*        fprintf(outfile, "%.16e\n", temp);*/
-/*#else*/
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
-/*#endif*/
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);

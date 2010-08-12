@@ -89,6 +89,8 @@ int apot_parameters(char *name)
     return 5;
   } else if (strcmp(name, "poly_5") == 0) {
     return 5;
+  } else if (strcmp(name, "cbb") == 0) {
+    return 8;
   }
 
   /* template for new potential function called newpot */
@@ -157,6 +159,8 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &double_exp_value;
     } else if (strcmp(apt->names[i], "poly_5") == 0) {
       apt->fvalue[i] = &poly_5_value;
+    } else if (strcmp(apt->names[i], "cbb") == 0) {
+      apt->fvalue[i] = &cbb_value;
     }
 
 /* template for new potential function called newpot */
@@ -503,6 +507,23 @@ void poly_5_value(real r, real *p, real *f)
   *f =
     p[0] + 0.5 * p[1] * dr + p[2] * (r - 1) * dr + p[3] * dr * dr +
     p[4] * dr * dr * (r - 1);
+}
+
+/****************************************************************
+ *
+ * cbb potential, from C. B. Basak
+ *
+ * see http://dx.doi.org/10.1016/S0925-8388(03)00350-5
+ *
+ ****************************************************************/
+
+void cbb_value(real r, real *p, real *f)
+{
+  real  r6 = r * r * r;
+  r6 *= r6;
+
+  *f = p[0] / r + p[1] * p[3] * exp((p[2] - r) / p[3]) - p[4] / r6 + p[5] *
+    (exp(-2 * p[6] * (r - p[7])) - 2 * exp(-p[6] * (r - p[7])));
 }
 
 /****************************************************************
