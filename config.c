@@ -102,7 +102,7 @@ void read_config(char *filename)
   int   w_force = 0, w_stress = 0;
 #ifdef APOT
   int   index;
-#endif
+#endif /* APOT */
   FILE *infile;
   fpos_t filepos;
   real  r, rr, istep, shift, step;
@@ -471,7 +471,7 @@ void read_config(char *filename)
 		atoms[i].neigh[k].sqrdist.yz = dd.y * dd.z * r * r;
 		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
 		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
-#endif
+#endif /* ADP */
 		atoms[i].n_neigh++;
 
 		col = (typ1 <= typ2) ?
@@ -521,6 +521,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].slot[0] = slot;
 		  atoms[i].neigh[k].step[0] = step;
 #if defined EAM || defined ADP
+		  /* transfer function */
 		  col = paircol + typ2;
 		  atoms[i].neigh[k].col[1] = col;
 		  if (format == 0 || format == 3) {
@@ -562,6 +563,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].step[1] = step;
 #endif /* EAM || ADP */
 #ifdef ADP
+		  /* dipole part */
 		  col = paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
 		  atoms[i].neigh[k].col[2] = col;
 		  if (format == 0 || format == 3) {
@@ -642,7 +644,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[3] = shift;
 		  atoms[i].neigh[k].slot[3] = slot;
 		  atoms[i].neigh[k].step[3] = step;
-#endif
+#endif /* ADP */
 		}
 	      }
 	    }
@@ -727,7 +729,7 @@ void read_config(char *filename)
     /* XXX and U'(n_mean)=0  */
     force_0[k++] = 0.;
   }
-#endif
+#endif /* EAM || ADP */
 
   /* write pair distribution file */
   if (write_pair == 1) {
@@ -737,7 +739,7 @@ void read_config(char *filename)
     int   pair_steps = APOT_STEPS / 2;
 #else
     int   pair_steps = 1000 / 2;
-#endif
+#endif /* APOT */
     real  pair_table[paircol * pair_steps];
     real  pair_dist[paircol];
     int   pos, max_count = 0;
@@ -773,7 +775,7 @@ void read_config(char *filename)
 		atoms[i].neigh[j].r);
 	      fprintf(stderr, "\tatom=%d neighbor=%d\n", i, j);
 	    }
-#endif
+#endif /* DEBUG */
 	    pair_table[k * pair_steps + pos]++;
 	    if (pair_table[k * pair_steps + pos] > max_count)
 	      max_count = (int)pair_table[k * pair_steps + pos];
@@ -817,7 +819,7 @@ void read_config(char *filename)
     opt_pot.begin[j] = min * 0.95;
     calc_pot.begin[j] = min * 0.95;
   }
-#endif
+#endif /* EAM || ADP */
 #ifdef ADP
   for (i = 0; i < paircol; i++) {
     apot_table.begin[paircol + 2 * ntypes + i] = min * 0.95;
@@ -827,7 +829,7 @@ void read_config(char *filename)
     calc_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
     calc_pot.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
   }
-#endif
+#endif /* ADP */
   /* recalculate step, invstep and xcoord for new tables */
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] =
@@ -913,12 +915,12 @@ void read_config(char *filename)
 void update_slots()
 {
   int   i, j;
-  int   col0;			// pair potential part
+  int   col0;			/* pair potential part */
 #if defined EAM || defined ADP
-  int   col1;			// transfer function part
+  int   col1;			/* transfer function part */
 #endif /* EAM || ADP */
 #ifdef ADP
-  int   col2, col3;		// u and w function part
+  int   col2, col3;		/* u and w function part */
 #endif /* ADP */
   real  r, rr;
 

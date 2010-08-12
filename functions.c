@@ -31,7 +31,15 @@
 #ifdef APOT
 
 #include "potfit.h"
+#ifndef ACML
 #include <mkl_vml.h>
+#else
+#include <acml_mv.h>
+#endif
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
 
 /****************************************************************
  *
@@ -81,6 +89,8 @@ int apot_parameters(char *name)
     return 5;
   } else if (strcmp(name, "poly_5") == 0) {
     return 5;
+  } else if (strcmp(name, "cbb") == 0) {
+    return 8;
   }
 
   /* template for new potential function called newpot */
@@ -145,6 +155,8 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &double_exp_value;
     } else if (strcmp(apt->names[i], "poly_5") == 0) {
       apt->fvalue[i] = &poly_5_value;
+    } else if (strcmp(apt->names[i], "cbb") == 0) {
+      apt->fvalue[i] = &cbb_value;
     }
 
 /* template for new potential function called newpot */
@@ -198,7 +210,12 @@ void eopp_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[3];
+#ifndef ACML
   vdPow(2, x, y, power);
+#else
+  power[0] = fastpow(x[0], y[0]);
+  power[1] = fastpow(x[1], y[1]);
+#endif
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
@@ -241,7 +258,11 @@ void softshell_value(real r, real *p, real *f)
 
   x = p[0] / r;
   y = p[1];
+#ifndef ACML
   vdPow(1, &x, &y, f);
+#else
+  *f = fastpow(x, y);
+#endif
 }
 
 /****************************************************************
@@ -252,11 +273,13 @@ void softshell_value(real r, real *p, real *f)
 
 void eopp_exp_value(real r, real *p, real *f)
 {
-  static real x, y, power;
+  static real power;
 
-  x = r;
-  y = p[3];
-  vdPow(2, &x, &y, &power);
+#ifndef ACML
+  vdPow(1, &r, &p[3], &power);
+#else
+  power = fastpow(r, p[3]);
+#endif
 
   *f = p[0] * exp(-p[1] * r) + (p[2] / power) * cos(p[4] * r + p[5]);
 }
@@ -275,7 +298,12 @@ void meopp_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[3];
+#ifndef ACML
   vdPow(2, x, y, power);
+#else
+  power[0] = fastpow(x[0], y[0]);
+  power[1] = fastpow(x[1], y[1]);
+#endif
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
@@ -292,7 +320,11 @@ void power_decay_value(real r, real *p, real *f)
 
   x = 1. / r;
   y = p[1];
+#ifndef ACML
   vdPow(1, &x, &y, &power);
+#else
+  power = fastpow(x, y);
+#endif
 
   *f = p[0] * power;
 }
@@ -321,7 +353,12 @@ void pohlong_value(real r, real *p, real *f)
   if (r == 0)
     *f = 0;
   else {
+#ifndef ACML
     vdPow(1, &r, &p[1], &power);
+#else
+    power = fastpow(r, p[1]);
+#endif
+
     *f = p[0] * (1 - p[1] * log(r)) * power + p[2] * r;
   }
 }
@@ -347,7 +384,11 @@ void csw_value(real r, real *p, real *f)
 {
   real  power;
 
+#ifndef ACML
   vdPow(1, &r, &p[3], &power);
+#else
+  power = fastpow(r, p[3]);
+#endif
 
   *f = (1 + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
 }
@@ -366,7 +407,12 @@ void universal_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[2];
+#ifndef ACML
   vdPow(2, x, y, power);
+#else
+  power[0] = fastpow(x[0], y[0]);
+  power[1] = fastpow(x[1], y[1]);
+#endif
 
   *f =
     p[0] * (p[2] / (p[2] - p[1]) * power[0] -
@@ -461,6 +507,23 @@ void poly_5_value(real r, real *p, real *f)
 
 /****************************************************************
  *
+ * cbb potential, from C. B. Basak
+ *
+ * see http://dx.doi.org/10.1016/S0925-8388(03)00350-5
+ *
+ ****************************************************************/
+
+void cbb_value(real r, real *p, real *f)
+{
+  real  r6 = r * r * r;
+  r6 *= r6;
+
+  *f = p[0] / r + p[1] * p[3] * exp((p[2] - r) / p[3]) - p[4] / r6 + p[5] *
+    (exp(-2 * p[6] * (r - p[7])) - 2 * exp(-p[6] * (r - p[7])));
+}
+
+/****************************************************************
+ *
  * template for new potential function called mypotential
  * for further information plase have a look at the online documentation
  *
@@ -505,7 +568,7 @@ real cutoff(real r, real r0, real h)
   val *= val;
   val *= val;
 
-  return val / (1 + val);
+  return val / (1. + val);
 }
 
 /****************************************************************

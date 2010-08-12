@@ -182,6 +182,7 @@ void broadcast_params()
   blklens[10] = 1;        typen[10] = REAL;       /* nu */
   size += 3;
 #endif /* ADP */
+
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
 
   /* *INDENT-ON* */

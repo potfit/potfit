@@ -7,7 +7,7 @@
  * Copyright 2002-2010 Peter Brommer, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/~imd/potfit
+ *	http://www.itap.physik.uni-stuttgart.de/
  *
  *****************************************************************
  *
@@ -28,8 +28,6 @@
  *
  *****************************************************************/
 
-#include <math.h>
-#include "random.h"
 #include "potfit.h"
 #include "utils.h"
 
@@ -135,7 +133,7 @@ void anneal(real *xi)
   if (T == 0.)
     return;			/* don't anneal if starttemp equal zero */
 
-  Fvar = vect_real(KMAX + 5 + NEPS);	//-(NEPS+1); /* Backlog of old F values */
+  Fvar = vect_real(KMAX + 5 + NEPS);	/* Backlog of old F values */
   v = vect_real(ndim);
   xopt = vect_real(ndimtot);
   xi2 = vect_real(ndimtot);
@@ -156,7 +154,7 @@ void anneal(real *xi)
   printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, Fopt);
   fflush(stdout);
   for (n = 0; n <= NEPS; n++)
-    Fvar[n] = F;		//Fvar[-n]=F;
+    Fvar[n] = F;
 
   /* annealing loop */
   do {
@@ -226,7 +224,7 @@ void anneal(real *xi)
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
 
-      /* End fit if break flagfile exists */
+      /* End annealing if break flagfile exists */
       if (*flagfile != '\0') {
 	ff = fopen(flagfile, "r");
 	if (NULL != ff) {
@@ -250,7 +248,7 @@ void anneal(real *xi)
 	/* Was rescaling necessary ? */
 	if (rescale(&opt_pot, 1., 0) != 0.) {
 #ifdef WZERO
-//          embed_shift(&opt_pot);
+	  /* embed_shift(&opt_pot); */
 #endif /* WZERO */
 	  /* wake other threads and sync potentials */
 	  F = (*calc_forces) (xi, fxi1, 2);
@@ -293,7 +291,7 @@ void anneal(real *xi)
   if (*tempfile != '\0')
     write_pot_table(&apot_table, tempfile);
 #endif
-  free_vect_real(Fvar);		//-NEPS+1);
+  free_vect_real(Fvar);
   free_vect_real(v);
   free_vect_real(xopt);
   free_vect_int(naccept);
