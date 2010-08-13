@@ -200,12 +200,12 @@ void broadcast_params()
   size += 3;
 #endif /* ADP */
 #ifdef DIPOLE
-  blklens[8] = 1;         typen[8] = MPI_VEKTOR;    /* E_stat */
-  blklens[9] = 1;         typen[9] =  MPI_VEKTOR;   /* p_sr */
-  blklens[10] = 1;        typen[10] =  MPI_VEKTOR;  /* E_ind */
-  blklens[11] = 1;        typen[11] =  MPI_VEKTOR;  /* p_ind */
-  blklens[12] = 1;        typen[12] =  MPI_VEKTOR;  /* E_old */
-  blklens[13] = 1;        typen[13] =  MPI_VEKTOR;  /* E_temp */
+  blklens[6] = 1;         typen[6] = MPI_VEKTOR;     /* E_stat */
+  blklens[7] = 1;         typen[7] =  MPI_VEKTOR;    /* p_sr */
+  blklens[8] = 1;         typen[8] =  MPI_VEKTOR;   /* E_ind */
+  blklens[9] = 1;         typen[9] =  MPI_VEKTOR;   /* p_ind */
+  blklens[10] = 1;        typen[10] =  MPI_VEKTOR;   /* E_old */
+  blklens[11] = 1;        typen[11] =  MPI_VEKTOR;   /* E_temp */
   size += 6;
 #endif /* DIPOLE */
 
@@ -227,7 +227,7 @@ void broadcast_params()
   MPI_Address(&testatom.lambda, &displs[9]);
   MPI_Address(&testatom.nu, &displs[10]);
 #endif /* ADP */
-#ifdef MONOPOLE
+#ifdef DIPOLE
  MPI_Address(&testatom.E_stat, &displs[6]);
  MPI_Address(&testatom.p_sr, &displs[7]);
  MPI_Address(&testatom.E_ind, &displs[8]);

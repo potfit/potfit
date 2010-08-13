@@ -5,8 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf,
- *		       Philipp Beck
+ * Copyright 2002-2010 Philipp Beck
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -89,7 +88,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   int   first, col, ne, size, i;
   real *xi = NULL;
   apot_table_t *apt = &apot_table;
-#if defined DIPOLE && !defined MPI
+#ifdef DIPOLE
   FILE *outfile2;
   char *filename2 = "Dipol_Konvergenz_Verlauf";
   int   sum_c = 0;
@@ -170,10 +169,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     myconf = nconf;
 #endif
 
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
@@ -183,10 +178,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       real  fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
-
-#ifdef _OPENMP
-#pragma omp for reduction(+:tmpsum,rho_sum_loc)
-#endif
 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -775,12 +766,14 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       }				/* end M A I N loop over configurations */
 
 
-#if defined DIPOLE && !defined MPI
+#if defined DIPOLE
       /* output for "Dipol_Konvergenz_Verlauf" */
-      sum_t = sum_c / h;
-      outfile2 = fopen(filename2, "a");
-      fprintf(outfile2, "%d\n", sum_t);
-      fclose(outfile2);
+      if (myid == 0) {
+	sum_t = sum_c / h;
+	outfile2 = fopen(filename2, "a");
+	fprintf(outfile2, "%d\n", sum_t);
+	fclose(outfile2);
+      }
 #endif
 
     }				/* parallel region */
