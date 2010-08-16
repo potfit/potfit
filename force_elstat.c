@@ -29,7 +29,7 @@
  *
  ****************************************************************/
 
-#ifdef MONOPOLE
+#ifdef COULOMB
 #include "potfit.h"
 
 /****************************************************************
@@ -88,9 +88,11 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   int   first, col, ne, size, i;
   real *xi = NULL;
   apot_table_t *apt = &apot_table;
+  real charges[ntypes];
+  real sum_charges;
 #ifdef DIPOLE
   FILE *outfile2;
-  char *filename2 = "Dipol_Konvergenz_Verlauf";
+  char *filename2 = "Dipole.convergency";
   int   sum_c = 0;
   int   sum_t = 0;
 #endif
@@ -150,6 +152,18 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       break;			/* Exception: flag 1 means clean up */
 #endif /* APOT */
 #endif /* MPI */
+
+    sum_charges = 0;
+    for (i = 0; i < ntypes - 1; i++) {
+      if(xi_opt[2*size + ne + i]) {
+      charges[i] = xi_opt[2*size + ne + i];
+      sum_charges += apt->ratio[i] * charges[i];
+      } else {
+	charges[i] = 0.;
+      }
+    } 
+    apt->last_charge = - sum_charges / apt->ratio[ntypes - 1]; 
+    charges[ntypes - 1] = apt->last_charge;
 
     /* init second derivatives for splines */
     for (col = 0; col < paircol; col++) {
@@ -227,8 +241,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  }
 	}			/* end F I R S T LOOP */
 
-				   /* S E C O N D loop: calculate short-range and monopole forces,
-				   calculate static field- and dipole-contributions */
+	/* S E C O N D loop: calculate short-range and monopole forces,
+	   calculate static field- and dipole-contributions */
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -295,22 +309,20 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    }
 
 	    /* calculate monopole forces */
-	    if (neigh->r < dp_cut && (xi_opt[2 * size + ne + typ1]
-		|| xi_opt[2 * size + ne + typ2])) {
+	    if (neigh->r < dp_cut && (charges[typ1]
+		|| charges[typ2])) {
 
 	      fnval_tail = neigh->fnval_el;
 	      grad_tail = neigh->grad_el;
 
-	      grad_i = xi_opt[2 * size + ne + typ2] * grad_tail;
+	      grad_i = charges[typ2] * grad_tail;
 	      if (typ1 == typ2) {
 		grad_j = grad_i;
 	      } else {
-		grad_j = xi_opt[2 * size + ne + typ1] * grad_tail;
+		grad_j = charges[typ1] * grad_tail;
 	      }
-	      fnval =
-		xi_opt[2 * size + ne + typ1] * xi_opt[2 * size + ne +
-		typ2] * fnval_tail;
-	      grad = xi_opt[2 * size + ne + typ1] * grad_i;
+	      fnval = charges[typ1] * charges[typ2] * fnval_tail;
+	      grad = charges[typ1] * grad_i;
 
 	      if (self) {
 		grad_i *= 0.5;
@@ -368,12 +380,9 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		  &xi_opt[2 * size + ne + ntypes + typ1],
 		  &xi_opt[2 * size + ne + 2 * ntypes + col],
 		  &xi_opt[3 * size + ne + 2 * ntypes + col]);
-		atom->p_sr.x +=
-		  xi_opt[2 * size + ne + typ2] * neigh->dist.x * p_sr_tail;
-		atom->p_sr.y +=
-		  xi_opt[2 * size + ne + typ2] * neigh->dist.y * p_sr_tail;
-		atom->p_sr.z +=
-		  xi_opt[2 * size + ne + typ2] * neigh->dist.z * p_sr_tail;
+		atom->p_sr.x += charges[typ2] * neigh->dist.x * p_sr_tail;
+		atom->p_sr.y += charges[typ2] * neigh->dist.y * p_sr_tail;
+		atom->p_sr.z += charges[typ2] * neigh->dist.z * p_sr_tail;
 	      }
 	      if ((xi_opt[2 * size + ne + ntypes + typ2])
 		&& (xi_opt[2 * size + ne + 2 * ntypes + col])
@@ -383,16 +392,14 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		  &xi_opt[2 * size + ne + ntypes + typ2],
 		  &xi_opt[2 * size + ne + 2 * ntypes + col],
 		  &xi_opt[3 * size + ne + 2 * ntypes + col]);
-		atoms[neigh->nr].p_sr.x +=
-		  xi_opt[2 * size + ne + typ1] * neigh->dist.x * p_sr_tail;
-		atoms[neigh->nr].p_sr.y +=
-		  xi_opt[2 * size + ne + typ1] * neigh->dist.y * p_sr_tail;
-		atoms[neigh->nr].p_sr.z +=
-		  xi_opt[2 * size + ne + typ1] * neigh->dist.z * p_sr_tail;
+		atoms[neigh->nr].p_sr.x += charges[typ1] * neigh->dist.x * p_sr_tail;
+		atoms[neigh->nr].p_sr.y += charges[typ1] * neigh->dist.y * p_sr_tail;
+		atoms[neigh->nr].p_sr.z += charges[typ1] * neigh->dist.z * p_sr_tail;
 	      }
 #endif /* DIPOLE */
 
 	    }
+
 	  }			/* loop over neighbours */
 	}			/* end S E C O N D loop over atoms */
 
@@ -552,13 +559,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      }
 
 	      /* monopole-dipole contributions */
-	      if (xi_opt[2 * size + ne + typ1]
-		&& xi_opt[2 * size + ne + ntypes + typ2]) {
+	      if (charges[typ1] && xi_opt[2 * size + ne + ntypes + typ2]) {
 		rp_j = SPROD(atoms[neigh->nr].p_ind, neigh->dist) * neigh->r;
 
-		fnval = xi_opt[2 * size + ne + typ1] * rp * fnval_tail;
-		grad_1 = xi_opt[2 * size + ne + typ1] * rp * grad_tail;
-		grad_2 = xi_opt[2 * size + ne + typ1] * fnval_tail * neigh->r;
+		fnval = charges[typ1] * rp * fnval_tail;
+		grad_1 = charges[typ1] * rp * grad_tail;
+		grad_2 = charges[typ1] * fnval_tail * neigh->r;
 
 		forces[energy_p + h] += fnval;
 
@@ -602,12 +608,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      /* dipole-monopole contributions */
 	      if (xi_opt[2 * size + ne + ntypes + typ1]
-		&& xi_opt[2 * size + ne + typ2]) {
+		&& charges[typ2]) {
 		rp_i = SPROD(atom->p_ind, neigh->dist) * neigh->r;
 
-		fnval = xi_opt[2 * size + ne + typ2] * rp * fnval_tail;
-		grad_1 = xi_opt[2 * size + ne + typ2] * rp * grad_tail;
-		grad_2 = xi_opt[2 * size + ne + typ2] * fnval_tail * neigh->r;
+		fnval = charges[typ2] * rp * fnval_tail;
+		grad_1 = charges[typ2] * rp * grad_tail;
+		grad_2 = charges[typ2] * fnval_tail * neigh->r;
 
 		forces[energy_p + h] += fnval;
 
@@ -702,7 +708,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		}
 	      }
 
-
 	    }
 	  }			/* loop over neighbours */
 	}			/* end F O U R T H loop over atoms */
@@ -717,8 +722,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  k = 3 * (cnfstart[h] + i);
 
 	  /* self energy contributions */
-	  if (xi_opt[2 * size + ne + typ1]) {
-	    qq = xi_opt[2 * size + ne + typ1] * xi_opt[2 * size + ne + typ1];
+	  if (charges[typ1]) {
+	    qq = charges[typ1] * charges[typ1];
 	    fnval = dp_eps * dp_kappa * qq / sqrt(M_PI);
 	    forces[energy_p + h] -= fnval;
 	  }
@@ -765,8 +770,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
       }				/* end M A I N loop over configurations */
 
-
-#if defined DIPOLE
+#ifdef DIPOLE
       /* output for "Dipol_Konvergenz_Verlauf" */
       if (myid == 0) {
 	sum_t = sum_c / h;
@@ -822,4 +826,4 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   return -1.;
 }
 
-#endif /* MONOPOLE */
+#endif /* COULOMB */

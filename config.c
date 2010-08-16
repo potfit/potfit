@@ -461,7 +461,7 @@ void read_config(char *filename)
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
-#ifdef MONOPOLE
+#ifdef COULOMB
 		atoms[i].neigh[k].r2 = r * r;
 		atoms[i].neigh[k].r3 = r * r * r;
 #endif

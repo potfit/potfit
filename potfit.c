@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   char  msg[255], file[255];
   FILE *outfile;
 
-#ifdef MONOPOLE
+#ifdef COULOMB
   time_t t_begin, t_end;
   double t_dif;
   time(&t_begin);
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 #elif defined ADP
   calc_forces = calc_forces_adp;
   strcpy(interaction, "ADP");
-#elif defined MONOPOLE
+#elif defined COULOMB
   calc_forces = calc_forces_elstat;
   strcpy(interaction, "ELSTAT");
 #endif
@@ -123,6 +123,9 @@ int main(int argc, char **argv)
     printf("Global energy weight: %f\n", eweight);
 #ifdef STRESS
     printf("Global stress weight: %f\n", sweight);
+#endif
+#ifdef COULOMB
+    init_tails();
 #endif
     /* Select correct spline interpolation and other functions */
     if (format == 0) {
@@ -742,10 +745,10 @@ int main(int argc, char **argv)
   free_all_pointers();
 #endif
 
-#ifdef MONOPOLE
-  time(&t_end);
-  t_dif = difftime(t_end, t_begin);
-  printf("\nRuntime: %lf s\n", t_dif);
+#ifdef COULOMB
+    time(&t_end);
+    t_dif = difftime(t_end, t_begin);
+    printf("\nRuntime: %lf s\n", t_dif);
 #endif
 
   return 0;

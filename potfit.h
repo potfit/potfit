@@ -48,7 +48,7 @@
 
 #define FORCE_EPS .1
 
-#if defined PAIR || defined MONOPOLE
+#if defined PAIR || defined COULOMB
 #define SLOTS 1
 #elif defined EAM
 #define SLOTS 2
@@ -90,7 +90,7 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
-#ifdef MONOPOLE
+#ifdef COULOMB
   real  r2;			/* r^2 */
   real  r3;			/* r^3 */
   real  fnval_el;		/* stores tail of electrostatic potential */
@@ -168,7 +168,7 @@ typedef struct {
 
   /* parameters */
   int   total_par;		/* total number of parameters for all potentials */
-#ifdef MONOPOLE
+#ifdef COULOMB
   int   total_ne_par;		/* total number of non-electrostatic parameters */
 #endif
   int  *idxparam;		/* indirect index for potential parameters */
@@ -187,8 +187,10 @@ typedef struct {
   real *chempot;		/* chemical potentials */
 #endif
 
-#ifdef MONOPOLE
+#ifdef COULOMB
+  real *ratio;                   /* stoichiometric ratio */
   real *charge;			/* charges */
+  real last_charge;             /* last charge determined on the basis of charge neutrality */
 #endif
 #ifdef DIPOLE
   real *dp_alpha;		/* polarisability */
@@ -371,7 +373,7 @@ EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
 
 /* variables needed for electrostatic options */
-#ifdef MONOPOLE
+#ifdef COULOMB
 EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
 EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
@@ -445,7 +447,7 @@ real  calc_forces_pair(real *, real *, int);
 real  calc_forces_eam(real *, real *, int);
 #elif defined ADP
 real  calc_forces_adp(real *, real *, int);
-#elif defined MONOPOLE
+#elif defined COULOMB
 real  calc_forces_elstat(real *, real *, int);
 #endif
 #ifdef APOT
@@ -563,7 +565,8 @@ void  poly_5_value(real, real *, real *);
 void  cbb_value(real, real *, real *);
 
 /* functions for electrostatic calculations  */
-#ifdef MONOPOLE
+#ifdef COULOMB
+void  init_tails();
 void  ms_shift(real, real *, real *);
 void  elstat_value(real, real *, real *, real *);
 void  elstat_shift(real, real *, real *, real *);

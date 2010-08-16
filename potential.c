@@ -37,7 +37,7 @@
 
 /****************************************************************
  *
- * read potential table
+ * read potential tables
  *
  ****************************************************************/
 
@@ -236,26 +236,33 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->pmax = (real **)malloc((size + 1) * sizeof(real *));
     apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
   } else {
-#elif defined MONOPOLE
+#elif defined COULOMB
   if (1) {
+    apt->ratio = (real *)malloc(ntypes * sizeof(real));
     apt->values = (real **)malloc((size + 4) * sizeof(real *));
     apt->param_name = (char ***)malloc((size + 4) * sizeof(char **));
     apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
     apt->pmax = (real **)malloc((size + 4) * sizeof(real *));
     apt->invar_par = (int **)malloc((size + 4) * sizeof(int *));
-    for (i = 0; i < 2; i++) {
-      apt->values[size + i] = (real *)malloc(ntypes * sizeof(real));
-      apt->param_name[size + i] = (char **)malloc(ntypes * sizeof(char *));
-      apt->pmin[size + i] = (real *)malloc(ntypes * sizeof(real));
-      apt->pmax[size + i] = (real *)malloc(ntypes * sizeof(real));
-      apt->invar_par[size + i] = (int *)malloc((size + i) * sizeof(int));
-    }
+ 
+    apt->values[size] = (real *)malloc((ntypes - 1) * sizeof(real));
+    apt->param_name[size] = (char **)malloc((ntypes - 1) * sizeof(char *));
+    apt->pmin[size] = (real *)malloc((ntypes - 1) * sizeof(real));
+    apt->pmax[size] = (real *)malloc((ntypes - 1) * sizeof(real));
+    apt->invar_par[size] = (int *)malloc((ntypes - 1) * sizeof(int));
+
+    apt->values[size + 1] = (real *)malloc(ntypes * sizeof(real));
+    apt->param_name[size + 1] = (char **)malloc(ntypes * sizeof(char *));
+    apt->pmin[size + 1] = (real *)malloc(ntypes * sizeof(real));
+    apt->pmax[size + 1] = (real *)malloc(ntypes * sizeof(real));
+    apt->invar_par[size + 1] = (int *)malloc(ntypes * sizeof(int));
+    
     for (i = 2; i < 4; i++) {
       apt->values[size + i] = (real *)malloc(size * sizeof(real));
       apt->param_name[size + i] = (char **)malloc(size * sizeof(char *));
       apt->pmin[size + i] = (real *)malloc(size * sizeof(real));
       apt->pmax[size + i] = (real *)malloc(size * sizeof(real));
-      apt->invar_par[size + i] = (int *)malloc((size + i) * sizeof(int));
+      apt->invar_par[size + i] = (int *)malloc(size * sizeof(int));
     }
     apt->charge = apt->values[size];
 #ifdef DIPOLE
@@ -264,12 +271,12 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->dp_c = apt->values[size + 3];
 #endif
   } else {
-#endif /* MONOPOLE */
+#endif /* COULOMB */
     apt->values = (real **)malloc(size * sizeof(real *));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->pmin = (real **)malloc(size * sizeof(real *));
     apt->pmax = (real **)malloc(size * sizeof(real *));
-#if defined PAIR || defined MONOPOLE
+#if defined PAIR || defined COULOMB
   }
 #endif
   apt->names = (char **)malloc(size * sizeof(char *));
@@ -419,7 +426,8 @@ void read_pot_table(pot_table_t *pt, char *filename)
     reg_for_free(apt->pmax[size], "apt->pmax[size]");
   }
 #endif /* PAIR && APOT */
-#if defined MONOPOLE
+#if defined COULOMB
+  reg_for_free(apt->ratio, "apt->ratio");
   reg_for_free(apt->charge, "apt->charge");
   reg_for_free(apt->pmin[size], "apt->pmin[size]");
   reg_for_free(apt->pmin[size + 1], "apt->pmin[size + 1]");
@@ -573,7 +581,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 
-#ifdef MONOPOLE
+#ifdef COULOMB
   fsetpos(infile, &startpos);
   /* skip to electrostatic section */
   do {
@@ -588,7 +596,15 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
   /* read electrostatic parameters */
+  fscanf(infile, " %s", buffer);
+ if (strcmp("ratio", buffer) != 0) {
+    sprintf(msg, "Could not read ratio");
+    error(msg);
+  }
   for (i = 0; i < ntypes; i++) {
+    fscanf(infile, "%lf", &apt->ratio[i]);
+      }    
+  for (i = 0; i < ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
 	&apt->charge[i], &apt->pmin[apt->number][i],
@@ -1021,7 +1037,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
 
-#ifdef MONOPOLE
+#ifdef COULOMB
   apt->total_ne_par = apt->total_par;
 #endif
 
@@ -1049,8 +1065,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 
-#ifdef MONOPOLE
-  apt->total_par += ntypes;
+#ifdef COULOMB
+  apt->total_par += ntypes - 1;
 #endif
 #ifdef DIPOLE
   apt->total_par += ntypes;
@@ -1078,8 +1094,8 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     pt->len += (ntypes + compnodes);
   }
 #endif
-#ifdef MONOPOLE
-  pt->len += ntypes;
+#ifdef COULOMB
+  pt->len += ntypes - 1;
 #endif
 #ifdef DIPOLE
   pt->len += ntypes;
@@ -1174,38 +1190,36 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     global_idx += (ntypes + compnodes);
   }
 #endif
-#ifdef MONOPOLE
-  for (i = apt->number; i < apt->number + 1; i++) {
-    for (j = 0; j < (ntypes); j++) {
-      *val = apt->values[i][j];
-      val++;
-      if (!apt->invar_par[i][j]) {
-	pt->idx[k] = l++;
-	apt->idxpot[k] = i;
-	apt->idxparam[k++] = j;
-      } else {
-	l++;
-	apt->total_par -= apt->invar_par[i][j];
-	pt->idxlen -= apt->invar_par[i][j];
-      }
+#ifdef COULOMB
+  i = apt->number;
+  for (j = 0; j < (ntypes - 1); j++) {
+    *val = apt->values[i][j];
+    val++;
+    if (!apt->invar_par[i][j]) {
+      pt->idx[k] = l++;
+      apt->idxpot[k] = i;
+      apt->idxparam[k++] = j;
+    } else {
+      l++;
+      apt->total_par -= apt->invar_par[i][j];
+      pt->idxlen -= apt->invar_par[i][j];
     }
-  }
-  pt->idxlen += ntypes;
+  }  
+  pt->idxlen += ntypes - 1;
 #endif
 #ifdef DIPOLE
-  for (i = apt->number + 1; i < apt->number + 2; i++) {
-    for (j = 0; j < (ntypes); j++) {
-      *val = apt->values[i][j];
-      val++;
-      if (!apt->invar_par[i][j]) {
-	pt->idx[k] = l++;
-	apt->idxpot[k] = i;
-	apt->idxparam[k++] = j;
-      } else {
-	l++;
-	apt->total_par -= apt->invar_par[i][j];
-	pt->idxlen -= apt->invar_par[i][j];
-      }
+  i = apt->number + 1;
+  for (j = 0; j < (ntypes); j++) {
+    *val = apt->values[i][j];
+    val++;
+    if (!apt->invar_par[i][j]) {
+      pt->idx[k] = l++;
+      apt->idxpot[k] = i;
+      apt->idxparam[k++] = j;
+    } else {
+      l++;
+      apt->total_par -= apt->invar_par[i][j];
+      pt->idxlen -= apt->invar_par[i][j];
     }
   }
   for (i = apt->number + 2; i < apt->number + 4; i++) {
@@ -1671,18 +1685,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 		calct->begin[i], h) : f;
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
-	  }
-
-#ifdef MONOPOLE
-	  /* calculate and store tail functions */
-	  for (i = 0; i < natoms; i++) {
-	    for (j = 0; j < atoms[i].n_neigh; j++) {
-	      elstat_shift(atoms[i].neigh[j].r, &atoms[i].neigh[j].fnval_el,
-			   &atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
-	    }	
-	  }
-#endif
-	  
+	  }	  
 	}
 	break;
 #else
@@ -1976,7 +1979,28 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 }
 
 #endif
+#ifdef COULOMB
 
+/*****************************************************************************
+*
+*  Evaluate value and deritvative from parabole through three points.
+*  Extrapolates for all k.
+*
+******************************************************************************/
+
+void init_tails()
+{
+  int i, j;
+
+  for (i = 0; i < natoms; i++) {
+	for (j = 0; j < atoms[i].n_neigh; j++) {
+	  elstat_shift(atoms[i].neigh[j].r, &atoms[i].neigh[j].fnval_el,
+		       &atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+	}	
+      }
+}
+
+#endif /* COULOMB */
 #ifdef APOT
 
 void write_apot_table(apot_table_t *apt, char *filename)
@@ -2045,11 +2069,13 @@ void write_apot_table(apot_table_t *apt, char *filename)
   }
 #endif
 
-#ifdef MONOPOLE
+#ifdef COULOMB
   fprintf(outfile, "elstat\n");
-  for (i = 0; i < ntypes; i++)
+  for (i = 0; i < ntypes - 1; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
       apt->charge[i], apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
+  fprintf(outfile, "charge_%s\t %f\n", elements[ntypes - 1],
+	  apt->last_charge);
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n",

@@ -352,7 +352,7 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 POTFITSRC      += force_eam.c rescale.c
 endif
 
-ifneq (,$(strip $(findstring monopole,${MAKETARGET})))
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
 POTFITSRC      += force_elstat.c
 endif
 
@@ -408,15 +408,15 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   INTERACTION = 1
 endif
 
-# MONOPOLE
-ifneq (,$(strip $(findstring monopole,${MAKETARGET})))
+# COULOMB
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
-    ERROR += MONOPOLE does not support tabulated potentials (yet)
+    ERROR += COULOMB does not support tabulated potentials (yet)
   endif
-  CFLAGS  += -DMONOPOLE
+  CFLAGS  += -DCOULOMB
   INTERACTION = 1
 endif
 
@@ -428,7 +428,7 @@ ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += DIPOLE does not support tabulated potentials (yet)
   endif
-  CFLAGS  += -DMONOPOLE -DDIPOLE 
+  CFLAGS  += -DCOULOMB -DDIPOLE 
   INTERACTION = 1
 endif
 

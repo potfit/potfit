@@ -1,3 +1,7 @@
+dipole-20100816
++ Option MONOPOLE renamed as COULOMB (adapted to IMD)
++ charge neutrality now provided
+
 dipole-20100812
 + MONOPOLE and DIPOLE are now working with MPI
 

@@ -284,7 +284,7 @@ void read_paramfile(FILE *pf)
       getparam("stress_weight", &sweight, PARAM_DOUBLE, 1, 1);
     }
 #endif
-#ifdef MONOPOLE
+#ifdef COULOMB
     /* parameter kappa */
     else if (strcasecmp(token, "dp_kappa") == 0) {
       getparam("dp_kappa", &dp_kappa, PARAM_DOUBLE, 1, 1);

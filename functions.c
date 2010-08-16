@@ -122,7 +122,7 @@ int apot_assign_functions(apot_table_t *apt)
     } else if (strcmp(apt->names[i], "morse") == 0) {
       apt->fvalue[i] = &morse_value;
     } else if (strcmp(apt->names[i], "ms") == 0) {
-#ifdef MONOPOLE
+#ifdef COULOMB
       apt->fvalue[i] = &ms_shift;
 #else
       apt->fvalue[i] = &ms_value;
@@ -733,7 +733,7 @@ void debug_apot()
 
 #endif /* DEBUG */
 
-#ifdef MONOPOLE
+#ifdef COULOMB
 
 /******************************************************************************
 *
@@ -798,7 +798,7 @@ void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 #endif
 }
 
-#endif /* MONOPOLE */
+#endif /* COULOMB */
 #ifdef DIPOLE
 
 /******************************************************************************

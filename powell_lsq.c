@@ -162,7 +162,7 @@ void powell_lsq(real *xi)
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
 	sprintf(errmsg,
-#ifdef MONOPOLE
+#ifdef COULOMB
 	  "F does not depend on the %d. parameter (%s) of the %d. potential.\nFit impossible!\n",
 	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
 #else

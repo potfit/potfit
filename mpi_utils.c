@@ -96,7 +96,7 @@ void debug_mpi(int i)
 #define MAX_MPI_COMPONENTS 9
 #elif defined ADP
 #define MAX_MPI_COMPONENTS 14
-#elif defined MONOPOLE
+#elif defined COULOMB
 #define MAX_MPI_COMPONENTS 13
 #endif /* PAIR */
 
@@ -138,14 +138,14 @@ void broadcast_params()
   blklens[13] = 1;        typen[13] = REAL;       /* w_grad */
   size += 6;
 #endif /* ADP */
-#ifdef MONOPOLE
+#ifdef COULOMB
   blklens[8] = 1;         typen[8] = REAL;        /* r^2 */
   blklens[9] = 1;         typen[9] = REAL;        /* r^3 */
   blklens[10] = 1;        typen[10] = REAL;       /* fnval_el */
   blklens[11] = 1;        typen[11] = REAL;       /* grad_el */
   blklens[12] = 1;        typen[12] = REAL;       /* ggrad_el */
   size += 5;
-#endif /* MONOPOLE */
+#endif /* COULOMB */
  
  /* *INDENT-ON* */
   MPI_Address(&testneigh.typ, displs);
@@ -164,7 +164,7 @@ void broadcast_params()
   MPI_Address(&testneigh.w_val, &displs[12]);
   MPI_Address(&testneigh.w_grad, &displs[13]);
 #endif
-#ifdef MONOPOLE
+#ifdef COULOMB
   MPI_Address(&testneigh.r2, &displs[8]);
   MPI_Address(&testneigh.r3, &displs[9]);
   MPI_Address(&testneigh.fnval_el, &displs[10]);
@@ -251,7 +251,7 @@ void broadcast_params()
   MPI_Bcast(&nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&anneal_temp, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#ifdef MONOPOLE
+#ifdef COULOMB
   MPI_Bcast(&dp_kappa, 1, MPI_REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&dp_cut, 1, MPI_REAL, 0, MPI_COMM_WORLD);
 #endif
