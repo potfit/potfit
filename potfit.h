@@ -572,7 +572,8 @@ void  elstat_value(real, real *, real *, real *);
 void  elstat_shift(real, real *, real *, real *);
 #endif
 #ifdef DIPOLE
-real  shortrange_value(real, real *, real *, real *);
+real  shortrange_value(real, real, real, real);
+void  shortrange_term(real, real, real, real *, real *);
 #endif
 
 /* template for new potential function called newpot */

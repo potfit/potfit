@@ -771,8 +771,8 @@ void elstat_value(real r, real *ftail, real *gtail, real *ggtail)
   x[3] = exp(-x[0] * x[1]);
 
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
-  *gtail = -(*ftail + x[2] * x[3]) / r;
-  *ggtail = 2 * (x[1] * x[2] * x[3] - *gtail / r);
+  *gtail = -(*ftail + x[2] * x[3]) / x[0];
+  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
 }
 
 /******************************************************************************
@@ -784,17 +784,23 @@ void elstat_value(real r, real *ftail, real *gtail, real *ggtail)
 void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 {
   static real ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
-
+  static real x[3];
+  
+  x[0] = r * r;
+  x[1] = dp_cut * dp_cut;
+  x[2] = x[0] - x[1];
+  
   elstat_value(r, &ftail, &gtail, &ggtail);
   elstat_value(dp_cut, &ftail_cut, &gtail_cut, &ggtail_cut);
-
-  *fnval_tail = ftail - ftail_cut - (r - dp_cut) * gtail_cut;
-  *grad_tail = gtail - gtail_cut;
+  
+  *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
+  *grad_tail = gtail;
   *ggrad_tail = 0.;
 #ifdef DIPOLE
-  *fnval_tail -= (r - dp_cut) * (r - dp_cut) * ggtail_cut / 2;
-  *grad_tail -= (r - dp_cut) * ggtail_cut;
-  *ggrad_tail = ggtail - ggtail_cut;
+  *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
+  *grad_tail -= x[2] * ggtail_cut / 2;
+  *grad_tail *= -1;
+  *ggrad_tail = ggtail;
 #endif
 }
 
@@ -807,19 +813,40 @@ void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 *
 ******************************************************************************/
 
-real shortrange_value(real r, real *a, real *b, real *c)
+real shortrange_value(real r, real a, real b, real c)
 {
   static real x[5], y[2];
 
-  x[0] = *b * r;
+  x[0] = b * r;
   x[1] = x[0] * x[0];
   x[2] = x[1] * x[0];
   x[3] = x[1] * x[1];
   x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
   y[0] = r * r;
-  y[1] = (*a * *c) / y[0];
+  y[1] = (a * c) / y[0];
 
   return y[1] * x[4] * exp(-x[0]);
+}
+
+/******************************************************************************
+*
+* tail of additional short-range contribution to energy and forces  
+*
+******************************************************************************/
+
+void shortrange_term(real r, real b, real c, real *srval_tail, real *srgrad_tail)
+{
+  static real x[6];
+
+  x[0] = b * r;
+  x[1] = x[0] * x[0];
+  x[2] = x[1] * x[0];
+  x[3] = x[1] * x[1];
+  x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
+  x[5] = exp(-x[0]);
+
+  *srval_tail = c * x[4] * x[5] / dp_eps;
+  *srgrad_tail = - c * b * x[3] * x[5] / (24 * dp_eps);
 }
 
 #endif /* DIPOLE */
