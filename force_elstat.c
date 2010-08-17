@@ -40,7 +40,6 @@
  *     values
  *
  *  arguments: *xi - pointer to short-range potential
- *             *xi_c, *xi_cd and *xi_d  - pointer to electrostatic potentials
  *             *forces - pointer to forces calculated from potential
  *             flag - used for special tasks
  *
