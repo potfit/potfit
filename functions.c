@@ -237,7 +237,7 @@ void morse_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * morse-stretch potential
+ * morse-stretch potential (without derivative!)
  *
  ****************************************************************/
 
@@ -737,22 +737,37 @@ void debug_apot()
 
 /******************************************************************************
 *
+* ms potential + first derivative
+*
+******************************************************************************/
+
+void ms_init(real r, real *pot, real *grad, real *p)
+{
+ static real x[4];
+
+  x[0] = 1 - r / p[2];
+  x[1] = exp(p[1] * x[0]);
+  x[2] = exp(p[1] * x[0] / 2);
+  x[3] = p[0] * p[1] / (r * p[2]);
+
+  *pot = p[0] * (x[1] - 2 * x[2]);
+  *grad = x[3] * (-x[1] + x[2]);
+}
+
+/******************************************************************************
+*
 * shifted ms potential
 *
 ******************************************************************************/
 
 void ms_shift(real r, real *p, real *f)
 {
-  static real x[2], y[4];
+  static real pot, grad, pot_cut, grad_cut;
 
-  x[0] = p[1] * (1 - r / p[2]);
-  x[1] = p[0] * (exp(x[0]) + 2 * exp(x[0] / 2));
-  y[0] = p[1] * (1 - dp_cut / p[2]);
-  y[1] = p[0] * (exp(y[0]) + 2 * exp(y[0] / 2));
-  y[2] = p[1] * (y[1] + p[0] * exp(y[0] / 2)) / p[2];
-  y[3] = y[1] + y[2] * dp_cut;
+  ms_init(r, &pot, &grad, p);
+  ms_init(dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = x[1] - y[3] + y[2] * r;
+  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
 }
 
 /******************************************************************************
@@ -792,15 +807,15 @@ void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
   
   elstat_value(r, &ftail, &gtail, &ggtail);
   elstat_value(dp_cut, &ftail_cut, &gtail_cut, &ggtail_cut);
-  
+
   *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
-  *grad_tail = gtail;
+  *grad_tail = gtail - gtail_cut;
   *ggrad_tail = 0.;
 #ifdef DIPOLE
   *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
   *grad_tail -= x[2] * ggtail_cut / 2;
   *grad_tail *= -1;
-  *ggrad_tail = ggtail;
+  *ggrad_tail = ggtail - ggtail_cut; // ? richtig so? hier alles checken im Falle Dipole!
 #endif
 }
 

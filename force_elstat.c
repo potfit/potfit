@@ -314,6 +314,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      fnval_tail = neigh->fnval_el;
 	      grad_tail = neigh->grad_el;
 
+	      //  printf("%lf\t%lf\n", neigh->r, grad_tail);
+
 	      grad_i = charges[typ2] * grad_tail;
 	      if (typ1 == typ2) {
 		grad_j = grad_i;
@@ -333,9 +335,9 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      forces[energy_p + h] += fnval;
 
 	      if (uf) {
-		tmp_force.x = neigh->dist.x * grad;
-		tmp_force.y = neigh->dist.y * grad;
-		tmp_force.z = neigh->dist.z * grad;
+		tmp_force.x = neigh->dist.x * grad * neigh->r;
+		tmp_force.y = neigh->dist.y * grad * neigh->r;
+		tmp_force.z = neigh->dist.z * grad * neigh->r;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -576,7 +578,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		grad_1 = charges[typ1] * rp_j * grad_tail * neigh->r;
 		grad_2 = charges[typ1] * fnval_tail;
 
-		forces[energy_p + h] += fnval;
+		forces[energy_p + h] -= fnval;
 
 		if (uf) {
 		  tmp_force.x =
@@ -588,14 +590,14 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		  tmp_force.z =
 		    neigh->dist.z * grad_1 +
 		    atoms[neigh->nr].p_ind.z * grad_2;
-		  forces[k] += tmp_force.x;
-		  forces[k + 1] += tmp_force.y;
-		  forces[k + 2] += tmp_force.z;
+		  forces[k] -= tmp_force.x;
+		  forces[k + 1] -= tmp_force.y;
+		  forces[k + 2] -= tmp_force.z;
 		  /* actio = reactio */
 		  l = 3 * neigh->nr;
-		  forces[l] -= tmp_force.x;
-		  forces[l + 1] -= tmp_force.y;
-		  forces[l + 2] -= tmp_force.z;
+		  forces[l] += tmp_force.x;
+		  forces[l + 1] += tmp_force.y;
+		  forces[l + 2] += tmp_force.z;
 
 #ifdef STRESS
 		  /* calculate stresses */
@@ -685,14 +687,14 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		    * (grad_2 * neigh->dist.y - rp_i * atoms[neigh->nr].p_ind.y - rp_j * atom->p_ind.y);
 		  tmp_force.z = grad_1 * neigh->dist.z - tmp_2 
 		    * (grad_2 * neigh->dist.z - rp_i * atoms[neigh->nr].p_ind.z - rp_j * atom->p_ind.z);
-		  forces[k] += tmp_force.x;
-		  forces[k + 1] += tmp_force.y;
-		  forces[k + 2] += tmp_force.z;
+		  forces[k] -= tmp_force.x;
+		  forces[k + 1] -= tmp_force.y;
+		  forces[k + 2] -= tmp_force.z;
 		  /* actio = reactio */
 		  l = 3 * neigh->nr;
-		  forces[l] -= tmp_force.x;
-		  forces[l + 1] -= tmp_force.y;
-		  forces[l + 2] -= tmp_force.z;
+		  forces[l] += tmp_force.x;
+		  forces[l + 1] += tmp_force.y;
+		  forces[l + 2] += tmp_force.z;
 
 #ifdef STRESS
 		  /* calculate stresses */

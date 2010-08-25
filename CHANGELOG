@@ -1,3 +1,7 @@
+dipole-20100825
++ Option COULOMB now calculates the exactly same forces, energies and stresses
+  as IMD
+
 dipole-20100817
 + last alignments with IMD
 
