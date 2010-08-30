@@ -814,7 +814,6 @@ void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 #ifdef DIPOLE
   *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
   *grad_tail -= x[2] * ggtail_cut / 2;
-  *grad_tail *= -1;
   *ggrad_tail = ggtail - ggtail_cut; // ? richtig so? hier alles checken im Falle Dipole!
 #endif
 }
@@ -830,17 +829,15 @@ void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 
 real shortrange_value(real r, real a, real b, real c)
 {
-  static real x[5], y[2];
+  static real x[5];
 
   x[0] = b * r;
   x[1] = x[0] * x[0];
   x[2] = x[1] * x[0];
   x[3] = x[1] * x[1];
   x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
-  y[0] = r * r;
-  y[1] = (a * c) / y[0];
 
-  return y[1] * x[4] * exp(-x[0]);
+  return a * c * x[4] * exp(-x[0]) / dp_eps;
 }
 
 /******************************************************************************
@@ -861,7 +858,7 @@ void shortrange_term(real r, real b, real c, real *srval_tail, real *srgrad_tail
   x[5] = exp(-x[0]);
 
   *srval_tail = c * x[4] * x[5] / dp_eps;
-  *srgrad_tail = - c * b * x[3] * x[5] / (24 * dp_eps);
+  *srgrad_tail = - c * b * x[3] * x[5] / (24 * dp_eps * r);
 }
 
 #endif /* DIPOLE */

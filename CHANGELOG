@@ -1,3 +1,7 @@
+dipole-20100830
++ Option DIPOLE now calculates the exactly same forces, energies and stresses
+  as IMD
+
 dipole-20100825
 + Option COULOMB now calculates the exactly same forces, energies and stresses
   as IMD
@@ -8,9 +12,6 @@ dipole-20100817
 dipole-20100816
 + Option MONOPOLE renamed as COULOMB (adapted to IMD)
 + charge neutrality now provided
-
-dipole-20100812
-+ MONOPOLE and DIPOLE are now working with MPI
 
 trunk-20100812
 + make endpot optional, is set to ${startpot}_end it not given
