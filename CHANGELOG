@@ -1,3 +1,7 @@
+dipole-20100831
++ Option DIPOLE now calculates the exactly same induced dipole moments and
+  fields within the self-consistent iteration as IMD
+
 dipole-20100830
 + Option DIPOLE now calculates the exactly same forces, energies and stresses
   as IMD

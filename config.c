@@ -463,7 +463,6 @@ void read_config(char *filename)
 		atoms[i].neigh[k].dist = dd;
 #ifdef COULOMB
 		atoms[i].neigh[k].r2 = r * r;
-		atoms[i].neigh[k].r3 = r * r * r;
 #endif
 #ifdef ADP
 		atoms[i].neigh[k].rdist.x = dd.x * r;

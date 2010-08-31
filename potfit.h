@@ -92,7 +92,6 @@ typedef struct {
   vector dist;			/* distance divided by r */
 #ifdef COULOMB
   real  r2;			/* r^2 */
-  real  r3;			/* r^3 */
   real  fnval_el;		/* stores tail of electrostatic potential */
   real  grad_el;		/* stores tail of first derivative of electrostatic potential */
   real  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
@@ -131,7 +130,7 @@ typedef struct {
   vector E_ind;			/* induced field-contribution */
   vector p_ind;			/* induced dipole moment */
   vector E_old;			/* stored old induced field */
-  vector E_temp;		/* temporary induced field */
+  vector E_tot;  		/* temporary induced field */
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
