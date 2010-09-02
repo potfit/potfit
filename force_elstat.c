@@ -339,8 +339,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      fnval_tail = neigh->fnval_el;
 	      grad_tail = neigh->grad_el;
 
-	      // printf("%lf\t%lf\n", fnval_tail, grad_tail);
-
 	      grad_i = charge[typ2] * grad_tail;
 	      if (typ1 == typ2) {
 		grad_j = grad_i;
@@ -453,6 +451,10 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      atom->E_old.x = atom->E_ind.x;
 	      atom->E_old.y = atom->E_ind.y;
 	      atom->E_old.z = atom->E_ind.z;
+
+	      atom->E_ind.x = 0.;
+	      atom->E_ind.y = 0.;
+	      atom->E_ind.z = 0.;
 	    }
 	  }
 
@@ -528,7 +530,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	  dp_it++;
 	}			/* end T H I R D loop over atoms */
-
 
 	// for (i = 0; i < inconf[h]; i++) {
 	// atom = conf_atoms + i + cnfstart[h] - firstatom;
@@ -729,6 +730,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	/* F I F T H  loop: self energy contributions and sum-up force contributions */
 	real  qq, pp;
+	real kkk;
+	kkk = dp_kappa * dp_kappa * dp_kappa;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -741,9 +744,15 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    forces[energy_p + h] -= fnval;
 	  }
 #ifdef DIPOLE
+	  // if (dp_alpha[typ1]) {
+	  // pp = SPROD(atom->p_ind, atom->p_ind);
+	  // fnval = pp / (2 * dp_alpha[typ1]);
+	  // forces[energy_p + h] += fnval;
+	  // }
+	  /* alternative dipole self energy including kappa-dependence */
 	  if (dp_alpha[typ1]) {
 	    pp = SPROD(atom->p_ind, atom->p_ind);
-	    fnval = pp / (2 * dp_alpha[typ1]);
+	    fnval = kkk * pp / sqrt(M_PI);
 	    forces[energy_p + h] += fnval;
 	  }
 #endif
