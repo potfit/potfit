@@ -415,7 +415,7 @@ int main(int argc, char **argv)
 	fprintf(outfile,
 	  "#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
-	"%3d:%5d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
+	"%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3],
 	elements[atoms[i / 3].typ], sqr,
 	force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
 	fprintf(outfile, "\n\n");
       if (i == 0)
 	fprintf(outfile, "#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%3d:%5d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
+      fprintf(outfile, "%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3],
 	elements[atoms[i / 3].typ], sqr, force[i] + force_0[i], force_0[i],
 	force[i] / force_0[i]);
