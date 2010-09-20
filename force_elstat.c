@@ -235,18 +235,18 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  atoms[i].p_sr.x = 0.;
 	  atoms[i].p_sr.y = 0.;
 	  atoms[i].p_sr.z = 0.;
-	  atoms[i].E_ind.x = 0.;
-	  atoms[i].E_ind.y = 0.;
-	  atoms[i].E_ind.z = 0.;
-	  atoms[i].p_ind.x = 0.;
-	  atoms[i].p_ind.y = 0.;
-	  atoms[i].p_ind.z = 0.;
-	  atoms[i].E_old.x = 0.;
-	  atoms[i].E_old.y = 0.;
-	  atoms[i].E_old.z = 0.;
-	  atoms[i].E_tot.x = 0.;
-	  atoms[i].E_tot.y = 0.;
-	  atoms[i].E_tot.z = 0.;
+	  //atoms[i].E_ind.x = 0.;
+	  //atoms[i].E_ind.y = 0.;
+	  //atoms[i].E_ind.z = 0.;
+	  //atoms[i].p_ind.x = 0.;
+	  //atoms[i].p_ind.y = 0.;
+	  //atoms[i].p_ind.z = 0.;
+	  //atoms[i].E_old.x = 0.;
+	  //atoms[i].E_old.y = 0.;
+	  //atoms[i].E_old.z = 0.;
+	  //atoms[i].E_tot.x = 0.;
+	  //atoms[i].E_tot.y = 0.;
+	  //atoms[i].E_tot.z = 0.;
 	}
 #endif
 
@@ -432,6 +432,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    if (dp_alpha[typ1]) {
 
 	      if(dp_it){
+		/* note: mixing parameter is different from that on in IMD */
 	      atom->E_tot.x =
 		(1 - dp_mix) * atom->E_ind.x + dp_mix * atom->E_old.x + atom->E_stat.x;
 	      atom->E_tot.y =
@@ -744,17 +745,17 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    forces[energy_p + h] -= fnval;
 	  }
 #ifdef DIPOLE
-	  // if (dp_alpha[typ1]) {
-	  // pp = SPROD(atom->p_ind, atom->p_ind);
-	  // fnval = pp / (2 * dp_alpha[typ1]);
-	  // forces[energy_p + h] += fnval;
-	  // }
-	  /* alternative dipole self energy including kappa-dependence */
 	  if (dp_alpha[typ1]) {
 	    pp = SPROD(atom->p_ind, atom->p_ind);
-	    fnval = kkk * pp / sqrt(M_PI);
+	    fnval = pp / (2 * dp_alpha[typ1]);
 	    forces[energy_p + h] += fnval;
 	  }
+	  /* alternative dipole self energy including kappa-dependence */
+	  //if (dp_alpha[typ1]) {
+	  // pp = SPROD(atom->p_ind, atom->p_ind);
+	  // fnval = kkk * pp / sqrt(M_PI);
+	  // forces[energy_p + h] += fnval;
+	  //}
 #endif
 
 

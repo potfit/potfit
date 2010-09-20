@@ -379,7 +379,7 @@ EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
 #endif
 #ifdef DIPOLE
 EXTERN real dp_tol INIT(1.e-7);	/* dipole iteration precision */
-EXTERN real dp_mix INIT(0.2);	/* miximg parameter for damping dipole iteration loop */
+EXTERN real dp_mix INIT(0.2);	/* mixing parameter (other than that one in IMD) */
 #endif
 
 /******************************************************************************
