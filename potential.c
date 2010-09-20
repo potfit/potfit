@@ -151,10 +151,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #else
       if (size == ncols) {
 #endif
-	printf("Using %s potentials from file %s\n", interaction, filename);
+	printf("Using %s potentials from file \"%s\".\n", interaction,
+	  filename);
       } else {
 	sprintf(msg,
-	  "Wrong number of data columns in file %s,\n should be %d for %s, but are %d.",
+	  "Wrong number of data columns in file \"%s\",\n should be %d for %s, but are %d.",
 	  filename,
 #ifdef EAM
 	  ncols + 2 * ntypes

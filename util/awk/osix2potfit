@@ -1,16 +1,16 @@
 #!/usr/bin/awk -f
-#####################################################################
+#################################################################
 #
 # osix2potfit: convert osix potential format to potfit format 0
 #
-####################################################################
+#################################################################
 #
 #   Copyright 2009 Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
 #
-####################################################################
+#################################################################
 #
 #   This file is part of potfit.
 #
@@ -25,13 +25,8 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor,
-#   Boston, MA  02110-1301  USA
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 #
-####################################################################
-# $Revision: 1.3 $
-# $Date: 2010/02/18 15:01:17 $
 ####################################################################
 
 {

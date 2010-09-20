@@ -882,7 +882,7 @@ void read_config(char *filename)
   printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
     nconf, w_force, w_stress);
-  printf("with a total of %d atoms (", natoms);
+  printf("  with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
       printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i],
@@ -894,7 +894,7 @@ void read_config(char *filename)
       printf(", ");
   }
 
-  printf(")\nfrom file %s\n", filename);
+  printf(")\n  from file \"%s\".\n", filename);
   if (sh_dist) {
     sprintf(msg,
       "Distances too short, last occurence conf %d, see above for details",

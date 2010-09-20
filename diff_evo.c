@@ -41,9 +41,9 @@
 #endif /* APOT */
 
 /* parameters for the differential evolution algorithm */
-#define NP 50*D			/* number of total population */
-#define CR 0.6			/* crossover constant, in [0,1] */
-#define F 0.25			/* coupling constant with others, in [0,1] */
+#define NP 10*D			/* number of total population */
+#define CR 0.9			/* crossover constant, in [0,1] */
+#define F 0.6			/* coupling constant with others, in [0,1] */
 
 #define MAX_LOOPS 1e6		/* max number of loops performed */
 #define MAX_UNCHANGED 100	/* abort after number of unchanged steps */
@@ -174,6 +174,7 @@ void diff_evo(real *xi)
     }
   }
 
+  printf("Initializing population ... ");
   init_population(x1, xi, D, 1. / evo_width);
   for (i = 0; i < NP; i++) {
 #ifdef APOT
@@ -191,6 +192,7 @@ void diff_evo(real *xi)
   avg = 0;
   for (i = 0; i < NP; i++)
     avg += cost[i];
+  printf("done\n");
 
 #ifdef DEBUG
   printf("Starting Differential Evolution with the following parameters:\n");
@@ -215,17 +217,17 @@ void diff_evo(real *xi)
       do
 	c = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
       while (c == i || c == a || c == b);
-      do
-	d = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
-      while (d == i || d == a || d == b || d == c);
-      do
-	e = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);
-      while (e == i || e == a || e == b || e == c || e == d);
+/*      do*/
+/*        d = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*      while (d == i || d == a || d == b || d == c);*/
+/*      do*/
+/*        e = (int)(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*      while (e == i || e == a || e == b || e == c || e == d);*/
       j = (int)(dsfmt_genrand_close_open(&dsfmt) * D);
       for (k = 1; k <= D; k++) {
 	if (dsfmt_genrand_close_open(&dsfmt) < CR || k == D) {
 	  /* DE/rand/1/exp */
-/*          temp = x1[c][j] + F * (x1[a][j] - x1[b][j]);*/
+	  temp = x1[c][j] + F * (x1[a][j] - x1[b][j]);
 	  /* DE/best/1/exp */
 /*          temp = best[j] + F * (x1[a][j] - x1[b][j]);*/
 	  /* DE/rand/2/exp */
@@ -236,8 +238,8 @@ void diff_evo(real *xi)
 /*          temp = x1[c][j] + (1 - F) * (best[j] - x1[c][j]) +*/
 /*            F * (x1[a][j] - x1[b][j]);*/
 	  /* DE/rand-to-best/2/exp */
-	  temp = x1[e][j] + (1 - F) * (best[j] - x1[e][j]) +
-	    F * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);
+/*          temp = x1[e][j] + (1 - F) * (best[j] - x1[e][j]) +*/
+/*            F * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);*/
 #ifdef APOT
 	  pmin =
 	    apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
@@ -290,9 +292,9 @@ void diff_evo(real *xi)
     for (i = 0; i < NP; i++)
       avg += cost[i];
 #ifdef APOT
-    printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
+    printf("%5d\t\t%f\t%12f\n", count + 1, min, avg / (NP));
 #else
-    printf("%5d\t\t%f\t%f\n", count + 1, min, avg / (NP));
+    printf("%5d\t\t%f\t%12f\n", count + 1, min, avg / (NP));
 #endif /* APOT */
     fflush(stdout);
     for (i = 0; i < NP; i++)
@@ -319,7 +321,7 @@ void diff_evo(real *xi)
 	MAX_UNCHANGED);
       printf("Aborting evolution algorithm ...\n\n");
     }
-    if ((avg / (NP) - min) < 1e-10) {
+    if ((avg / (NP) - min) < 1e-6) {
       printf("Average cost equals minimum cost, nothing more to improve\n");
       if (restart < 3) {
 	printf("Restarting algorithm. (%d tries left)\n\n", 3 - restart);
