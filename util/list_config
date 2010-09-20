@@ -1,12 +1,12 @@
 #!/bin/sh
-####################################################################
+#################################################################
 #
-#   Copyright 2009 Daniel Schopf
+#   Copyright 2009-2010 Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
 #
-####################################################################
+#################################################################
 #
 #   This file is part of potfit.
 #
@@ -21,14 +21,9 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor,
-#   Boston, MA  02110-1301  USA
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 #
-#/****************************************************************
-#* $Revision: 1.1 $
-#* $Date: 2010/03/16 07:34:03 $
-#*****************************************************************/
+#################################################################
 
 if [ $# -eq 0 ]; then
 	echo "Usage: list_config.sh FILENAME"
@@ -42,11 +37,6 @@ if [ ! -e "$1" ]; then
 	echo
 	exit 2;
 fi
-#n_conf=`grep -e \#E $1 | wc -l`
-#n_names=`grep -e generated $1 | wc -l`
-#n_weights=`grep -e \#W $1 | wc -l`
-#echo $n_conf $n_names;
-#if [ $n_conf -gt $n_names ]; then
 grep -n -e \#N -e generated -e \#F -e \#W $1 | awk -v file=$1 'BEGIN{i=0}
 {
 	gsub(":"," ");
@@ -79,14 +69,3 @@ grep -n -e \#N -e generated -e \#F -e \#W $1 | awk -v file=$1 'BEGIN{i=0}
 		i++;
 	}
 }'
-#else
-#grep -n -e \#N -e generated $1 | awk 'BEGIN{i=0} 
-#{
-#        gsub(":"," ");
-#        line=$1;
-#        n_atoms=$3;
-#        getline;
-#        printf "%3d: generated from "$7"\n\t with "n_atoms" atoms, starting at line "line"\n",i;
-#        i++;
-#}'
-#fi

@@ -48,7 +48,7 @@
 # customize these setttings. Before you can do that, we have to explain
 # a bit how the compilation process works.
 #
-# The compilation process requires the SYSTEM variable in the Makefile to be 
+# The compilation process requires the SYSTEM variable in the Makefile to be
 # set to any of the predefined values. It specifies what system you have, and
 # what compiler you are using. The flags for the compiler and the linker
 # are then selected as a function of this variable.
@@ -142,6 +142,7 @@ LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
 MKLPATH         = ${MKLDIR}/lib
+RELEASE		= 0
 
 ###########################################################################
 #
@@ -437,9 +438,6 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
-  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
-    ERROR += ADP does not support tabulated potentials (yet)
-  endif
   CFLAGS  += -DADP
   INTERACTION = 1
 endif
@@ -587,6 +585,7 @@ ifneq (,${ERROR})
 else
 ifneq (,${MAKETARGET})
 	@echo "${WARNING}"
+ifeq (0,${RELEASE})
 ifeq (1,${BAZAAR})
 	@echo -e "Writing bazaar data to version.h\n"
 	@rm -f version.h
@@ -598,6 +597,11 @@ else
 	@echo -e "Writing fake bazaar data to version.h\n"
 	@rm -f version.h
 	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
+	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
+endif
+else
+	@rm -f version.h
+	@echo -e "#define VERSION_INFO \"potfit-setdatehere\"" > version.h
 	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 endif
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}

@@ -1,16 +1,16 @@
 #!/usr/bin/awk -f
-#####################################################################
+#################################################################
 #
 # makeapot:  generate analytic potential files from scratch
 #
-####################################################################
+#################################################################
 #
-#   Copyright 2009 Daniel Schopf
+#   Copyright 2009-2010 Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
 #
-####################################################################
+#################################################################
 #
 #   This file is part of potfit.
 #
@@ -25,11 +25,9 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor,
-#   Boston, MA  02110-1301  USA
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 #
-####################################################################
+#################################################################
 #
 # Usage: makeapot <options>
 # 	 -cp # 			enable chemical potential
@@ -39,7 +37,7 @@
 #
 # eg:    makeapot -cp -cn 5 MgZn.config -co 5 -n 3 eopp_sc
 #
-####################################################################
+#################################################################
 
 function write_header(n)
 {
@@ -134,7 +132,7 @@ function write_pot(name)
     else if (name=="csw") {
 	printf "a_1 %s",valminmax(0.2,-2,2);
 	printf "a_2 %s",valminmax(0.2,-2,2);
-	printf "alpha %s",valminmax(2,1,10);
+	printf "alpha %s",valminmax(2,1,6);
 	printf "beta %s",valminmax(3,0.5,5);
     }
     else if (name=="universal") {

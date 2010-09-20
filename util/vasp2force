@@ -1,12 +1,12 @@
 #!/bin/sh
 ####################################################################
 #
-#   Copyright 2003-2009 Peter Brommer, Daniel Schopf
+#   Copyright 2003-2010 Peter Brommer, Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
 #
-####################################################################
+#################################################################
 #
 #   This file is part of potfit.
 #
@@ -21,21 +21,16 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor,
-#   Boston, MA  02110-1301  USA
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 #
-#/****************************************************************
-#* $Revision: 1.2 $
-#* $Date: 2010/03/30 12:25:16 $
-#*****************************************************************/
+#################################################################
 
 wdir=`pwd`
 list_types="0";
 new_list="0";
 f_arg="0";
 s_arg="0";
-e_file="../single_atom_energies";
+e_file="";
 saeng="0 0 0";
 mycat="cat";
 weight="1";
@@ -148,10 +143,12 @@ for file in $outcars; do
     fi
     if [ "$list_types" != "1" ]; then
 	echo "There are $count configurations in $file" >&2
-	if [ -f $e_file ]; then
-	    saeng=`cat $e_file`;
-	else
-	    printf "Warning: $e_file could not be found - using 0 instead\n" >&2;
+	if [ "$e_file" != "" ]; then
+		if [ -f $e_file ]; then
+		    saeng=`cat $e_file`;
+		else
+		    printf "Warning: $e_file could not be found - using 0 instead\n" >&2;
+		fi
 	fi
 
 	if [ "X$pr_conf" == "X0" ]; then

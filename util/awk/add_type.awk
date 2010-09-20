@@ -1,16 +1,16 @@
 #!/usr/bin/awk -f
-#####################################################################
+#################################################################
 #
 # add_type.awk: add one more atom type to EAM potential.
 #
-####################################################################
+#################################################################
 # 
 #   Copyright 2008 Peter Brommer
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
 #
-####################################################################
+#################################################################
 #   
 #   This file is part of potfit.
 #
@@ -25,14 +25,9 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor, 
-#   Boston, MA  02110-1301  USA
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 # 
-####################################################################
-# $Revision: 1.2 $
-# $Date: 2008/10/28 15:24:41 $
-####################################################################
+#################################################################
 #
 # Usage: add_type.awk orig_eam.pt add_eam.pt cross_pair1.pt ...
 #
@@ -46,7 +41,7 @@
 #
 # ATTENTION add_type.awk is PRE-ALPHA. No valdiation whatsoever!!!
 # 
-####################################################################
+#################################################################
 
 
 ARGIND==1 { # Original potential 
