@@ -327,6 +327,6 @@ void read_parameters(int argc, char **argv)
     exit(2);
   }
   read_paramfile(pf);
-  printf("Read parameters from file %s\n", argv[1]);
+  printf("Read parameters from file \"%s\".\n", argv[1]);
 
 }
