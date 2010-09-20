@@ -1,3 +1,12 @@
+trunk-20100920
++ adjust evo abortion criterion
++ fix force2imd script, is now consistent with potfit config numbering
++ [APOT] adjust ccb potential function to include all parameters
++ the version info is now more precise
++ [vasp2force] remove warning about single atom energy if -e is not given
+
+--> POTFIT-20100812 released
+
 trunk-20100812
 + make endpot optional, is set to ${startpot}_end it not given
 + change i386 profile to i586

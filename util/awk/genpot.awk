@@ -1,17 +1,17 @@
 #!/usr/bin/awk -f
-####################################################################
+#################################################################
 #
 # genpot.awk - generates an interpolated representation of an analytic 
 #              potential with an arbitrary number of parameters.
 #              
-####################################################################
+#################################################################
 # 
 #   Copyright 2008 Peter Brommer
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
 #
-####################################################################
+#################################################################
 #   
 #   This file is part of potfit.
 #
@@ -26,14 +26,9 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with potfit; if not, write to the Free Software
-#   Foundation, Inc., 51 Franklin St, Fifth Floor, 
-#   Boston, MA  02110-1301  USA
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 # 
-####################################################################
-# $Revision: 1.2 $
-# $Date: 2008/10/09 18:03:01 $
-####################################################################
+#################################################################
 #
 # Usage: genpot.awk 
 #    takes no parameters, however the parameters of the potential 
@@ -43,7 +38,7 @@
 # ATTENTION: genpot.awk is pre-alpha. There is no verification of
 #    ANY parameter.
 #
-###################################################################
+#################################################################
 #
 # Implemented potential types:
 #
