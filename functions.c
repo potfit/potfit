@@ -90,7 +90,7 @@ int apot_parameters(char *name)
   } else if (strcmp(name, "poly_5") == 0) {
     return 5;
   } else if (strcmp(name, "cbb") == 0) {
-    return 8;
+    return 12;
   }
 
   /* template for new potential function called newpot */
@@ -522,8 +522,10 @@ void cbb_value(real r, real *p, real *f)
   real  r6 = r * r * r;
   r6 *= r6;
 
-  *f = p[0] / r + p[1] * p[3] * exp((p[2] - r) / p[3]) - p[4] / r6 + p[5] *
-    (exp(-2 * p[6] * (r - p[7])) - 2 * exp(-p[6] * (r - p[7])));
+  *f =
+    p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
+      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r -
+	p[11])) - 2 * exp(-p[10] * (r - p[11])));
 }
 
 /****************************************************************
@@ -564,10 +566,11 @@ void newpot_value(real r, real *p, real *f)
 
 real cutoff(real r, real r0, real h)
 {
-  real  val = 0;
-
   if ((r - r0) > 0)
     return 0;
+
+  real  val = 0;
+
   val = (r - r0) / h;
   val *= val;
   val *= val;
