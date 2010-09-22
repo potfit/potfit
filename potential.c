@@ -744,6 +744,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
     }
 
+    /* initialize properly */
+    apt->invar_par[i][j] = 0;
+
     /* read the global parameters */
     for (j = 0; j < apt->globals; j++) {
       apt->param_name[global_pot][j] = (char *)malloc(30 * sizeof(char));
@@ -1156,7 +1159,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
   if (have_globals) {
-/*    i = apt->number;*/
     i = global_pot;
     for (j = 0; j < apt->globals; j++) {
       *val = apt->values[i][j];
