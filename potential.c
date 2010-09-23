@@ -603,8 +603,11 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     error(msg);
   }
   for (i = 0; i < ntypes; i++) {
-    fscanf(infile, "%lf", &apt->ratio[i]);
-      }    
+    if (1 > fscanf(infile, "%lf", &apt->ratio[i])){
+      sprintf(msg, "Could not read ratio for atomtype #%d\n", i);
+      error(msg);
+    }
+      }   
   for (i = 0; i < ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
