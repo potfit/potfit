@@ -29,11 +29,13 @@
  *
  *****************************************************************/
 
+#if !defined NORESCALE && !defined APOT
+
 #include "potfit.h"
 
 /* Doesn't make much sense without EAM  */
 
-#if defined EAM && !defined NORESCALE
+#if defined EAM || defined ADP
 
 /****************************************************************
 *
@@ -442,4 +444,5 @@ void embed_shift(pot_table_t *pt)
       xi[j] -= shift;
   }
 }
-#endif /* EAM */
+#endif /* EAM || ADP */
+#endif /* !NORESCALE && !APOT */

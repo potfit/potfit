@@ -151,10 +151,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #else
       if (size == ncols) {
 #endif
-	printf("Using %s potentials from file %s\n", interaction, filename);
+	printf("Using %s potentials from file \"%s\".\n", interaction,
+	  filename);
       } else {
 	sprintf(msg,
-	  "Wrong number of data columns in file %s,\n should be %d for %s, but are %d.",
+	  "Wrong number of data columns in file \"%s\",\n should be %d for %s, but are %d.",
 	  filename,
 #ifdef EAM
 	  ncols + 2 * ntypes
@@ -599,6 +600,9 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
     }
 
+    /* initialize properly */
+    apt->invar_par[i][j] = 0;
+
     /* read the global parameters */
     for (j = 0; j < apt->globals; j++) {
       apt->param_name[global_pot][j] = (char *)malloc(30 * sizeof(char));
@@ -991,7 +995,6 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
   if (have_globals) {
-/*    i = apt->number;*/
     i = global_pot;
     for (j = 0; j < apt->globals; j++) {
       *val = apt->values[i][j];
@@ -2109,6 +2112,13 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
+#ifdef APOT
+	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
+	temp = smooth_pot[col1] ? temp *
+	  cutoff(sqrt(r2), apot_table.end[col1],
+	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
 #ifdef NEWSCALE
 	/* Pair potentials corrected so that U'(1)   =0 with NORESCALE */
 	/*                               and U'(n_av)=0 without */
@@ -2123,6 +2133,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
 #endif /* NEWSCALE */
+#endif /* APOT */
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -2170,7 +2181,15 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
+#ifdef APOT
+	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
+	temp = smooth_pot[col1] ? temp *
+	  cutoff(sqrt(r2), apot_table.end[col1],
+	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
+#endif /* APOT */
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -2217,6 +2236,9 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     root += (pt->end[col1] < 0) ?
       pt->table[pt->last[col1]] / sqrt(-pt->end[col1]) : 0;
     for (k = 0; k <= imdpotsteps; k++) {
+#ifdef APOT
+      apot_table.fvalue[col1] (r2, apot_table.values[col1], &temp);
+#else
 #ifdef WZERO
       if (r2 < pt->begin[col1] && pt->begin[col1] > 0)
 	if (r2 <= 0)
@@ -2245,6 +2267,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #ifdef NEWSCALE
       temp -= lambda[i] * r2;
 #endif /* NEWSCALE */
+#endif /* APOT */
       fprintf(outfile, "%.16e\n", temp);
       r2 += r2step[i];
     }
@@ -2302,7 +2325,15 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
+#ifdef APOT
+	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
+	temp = smooth_pot[col1] ? temp *
+	  cutoff(sqrt(r2), apot_table.end[col1],
+	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
+#endif /* APOT */
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -2359,7 +2390,15 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
+#ifdef APOT
+	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
+	temp = smooth_pot[col1] ? temp *
+	  cutoff(sqrt(r2), apot_table.end[col1],
+	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
+#endif /* APOT */
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
