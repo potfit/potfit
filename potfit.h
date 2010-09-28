@@ -566,6 +566,7 @@ void  cbb_value(real, real *, real *);
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
 void  init_tails();
+void  write_coulomb_table();
 void  ms_init(real, real *, real *, real *);
 void  ms_shift(real, real *, real *);
 void  elstat_value(real, real *, real *, real *);

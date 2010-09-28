@@ -1,3 +1,6 @@
+dipole-20100927
++ new outputfile Tailfunction for plotting coulomb-potentials
+
 dipole-20100831
 + Option DIPOLE now calculates the exactly same induced dipole moments and
   fields within the self-consistent iteration as IMD
@@ -55,7 +58,7 @@ dipole-20100804
 + Self energy terms added
 + all splines for electrostatic tail-functions are now evaluated once only
 + shifts changed from (r-r_cut) to 1/2*(r^2 - r_cut^2) (adapted to IMD)
-+ output-file Dipol_Konvergenz_Verlauf is now available
++ output-file Dipol_convergency is now available
 
 devel-20100730
 + more optimization flags for icc and gcc

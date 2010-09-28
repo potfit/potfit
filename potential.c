@@ -1987,8 +1987,7 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 
 /*****************************************************************************
 *
-*  Evaluate value and deritvative from parabole through three points.
-*  Extrapolates for all k.
+*  calculate tail of coulomb-potential and its first derivative 
 *
 ******************************************************************************/
 
@@ -1997,11 +1996,32 @@ void init_tails()
   int i, j;
 
   for (i = 0; i < natoms; i++) {
-	for (j = 0; j < atoms[i].n_neigh; j++) {
-	  elstat_shift(atoms[i].neigh[j].r, &atoms[i].neigh[j].fnval_el,
-		       &atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+    for (j = 0; j < atoms[i].n_neigh; j++) {
+      elstat_shift(atoms[i].neigh[j].r, &atoms[i].neigh[j].fnval_el,
+		   &atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+    }	
+  }
+}
+
+/*****************************************************************************
+*
+* write coulomb-potential
+*
+******************************************************************************/
+
+void write_coulomb_table()
+{
+  int i, j;
+  FILE *outfile;
+  char *filename = "Tailfunction";
+
+  outfile = fopen(filename, "a");
+  for (i = 0; i < natoms; i++) {
+    for (j = 0; j < atoms[i].n_neigh; j++) {
+      fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, atoms[i].neigh[j].fnval_el);
 	}	
-      }
+  }
+  fclose(outfile);
 }
 
 #endif /* COULOMB */
