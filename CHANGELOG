@@ -1,3 +1,16 @@
+devel-live
++ ADP is now available for tabulated potenials, format 3 or 4
++ [APOT] check potentials for nan
++ added NDEBUG flag, enabling the use of assert's for debugging
++ [APOT] add mishin adp potentials, not quite easy to handle
++ implemented self-adjusting control parameters for diff_evo
++ new stopping criterion for diff_evo, replaced evo_width by evo_threshold
+
+--> POTFIT-20100928 released
+
+trunk-20100928
++ [APOT] fix severe bug with imd potentials
+
 trunk-20100920
 + adjust evo abortion criterion
 + fix force2imd script, is now consistent with potfit config numbering

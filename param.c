@@ -259,9 +259,9 @@ void read_paramfile(FILE *pf)
       getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
     }
 #ifdef EVO
-    /* starting width for normal distribution for evo */
-    else if (strcasecmp(token, "evo_width") == 0) {
-      getparam("evo_width", &evo_width, PARAM_DOUBLE, 1, 1);
+    /* stopping criterion for differential evolution */
+    else if (strcasecmp(token, "evo_threshold") == 0) {
+      getparam("evo_threshold", &evo_threshold, PARAM_DOUBLE, 1, 1);
     }
 #endif
 #ifdef APOT

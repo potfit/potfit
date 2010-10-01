@@ -42,6 +42,7 @@
 
 void error(char *msg)
 {
+  fflush(stdout);
   fprintf(stderr, "\nError: %s\n\n", msg);
   fflush(stderr);
 #ifdef MPI
@@ -60,6 +61,7 @@ void error(char *msg)
 
 void warning(char *msg)
 {
+  fflush(stdout);
   fprintf(stderr, "\nWarning: %s\n", msg);
   fflush(stderr);
   return;
@@ -278,7 +280,7 @@ int main(int argc, char **argv)
 #endif
   } else {			/* root thread does minimization */
     if (opt) {
-      printf("\nStarting optimization with %d parameters ...\n", ndim);
+      printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
 #ifdef EVO
       diff_evo(opt_pot.table);
@@ -303,8 +305,9 @@ int main(int argc, char **argv)
       printf("\nPotential in format %d written to file \t%s\n", format,
 	endpot);
     }
-    if (writeimd)
+    if (writeimd) {
       write_pot_table_imd(&calc_pot, imdpot);
+    }
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
 
@@ -316,7 +319,7 @@ int main(int argc, char **argv)
     if (format == 3) {		/* then we can also write format 4 */
       sprintf(endpot, "%s_4", endpot);
       write_pot_table4(&opt_pot, endpot);
-      printf("Potential in format 4 written to file %s\n", endpot);
+      printf("Potential in format 4 written to file \t%s\n", endpot);
     }
 #if defined EAM || defined ADP
 #ifndef MPI

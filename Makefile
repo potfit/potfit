@@ -164,7 +164,7 @@ ifeq (x86_64-icc,${SYSTEM})
 # debug flags
   PROF_FLAGS    += -prof-gen
   PROF_LIBS 	+= -prof-gen
-  DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
+  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -312,7 +312,7 @@ endif
 CC = ${CC_${PARALLEL}}
 
 # optimization flags
-OPT_FLAGS   += ${${PARALLEL}_FLAGS} ${OPT_${PARALLEL}_FLAGS}
+OPT_FLAGS   += ${${PARALLEL}_FLAGS} ${OPT_${PARALLEL}_FLAGS} -DNDEBUG
 DEBUG_FLAGS += ${${PARALLEL}_FLAGS} ${DEBUG_${PARALLEL}_FLAGS}
 
 # libraries
