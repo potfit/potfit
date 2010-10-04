@@ -164,7 +164,7 @@ ifeq (x86_64-icc,${SYSTEM})
 # debug flags
   PROF_FLAGS    += -prof-gen
   PROF_LIBS 	+= -prof-gen
-  DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
+  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -312,7 +312,7 @@ endif
 CC = ${CC_${PARALLEL}}
 
 # optimization flags
-OPT_FLAGS   += ${${PARALLEL}_FLAGS} ${OPT_${PARALLEL}_FLAGS}
+OPT_FLAGS   += ${${PARALLEL}_FLAGS} ${OPT_${PARALLEL}_FLAGS} -DNDEBUG
 DEBUG_FLAGS += ${${PARALLEL}_FLAGS} ${DEBUG_${PARALLEL}_FLAGS}
 
 # libraries
@@ -343,7 +343,7 @@ POTFITHDR   	= bracket.h  potfit.h  powell_lsq.h  \
 		  random-params.h  random.h  utils.h
 POTFITSRC 	= bracket.c brent.c config.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
-		  random.c simann.c splines.c utils.c
+		  random.c diff_evo.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += force_pair.c
@@ -369,8 +369,8 @@ ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 POTFITSRC      += functions.c chempot.c
 endif
 
-ifneq (,$(strip $(findstring evo,${MAKETARGET})))
-POTFITSRC      += diff_evo.c
+ifneq (,$(strip $(findstring simann,${MAKETARGET})))
+POTFITSRC      += simann.c
 endif
 
 MPISRC          = mpi_utils.c
@@ -446,9 +446,9 @@ ifneq (,$(findstring 0,${INTERACTION}))
 ERROR += No interaction model specified
 endif
 
-# EVO - for differential evolution
-ifneq (,$(findstring evo,${MAKETARGET}))
-CFLAGS += -DEVO
+# SIMANN - for simulated annealing
+ifneq (,$(findstring simann,${MAKETARGET}))
+CFLAGS += -DSIMANN
 endif
 
 # APOT - for analytic potentials

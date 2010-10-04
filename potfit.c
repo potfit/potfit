@@ -43,13 +43,15 @@
 
 void error(char *msg)
 {
+  fflush(stdout);
   fprintf(stderr, "\nError: %s\n\n", msg);
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;
-  calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
+  /* go wake up other threads */
+  calc_forces(calc_pot.table, force, 1);
   shutdown_mpi();
-#endif
+#endif /* MPI */
   exit(2);
 }
 
@@ -61,6 +63,7 @@ void error(char *msg)
 
 void warning(char *msg)
 {
+  fflush(stdout);
   fprintf(stderr, "\nWarning: %s\n", msg);
   fflush(stderr);
   return;
@@ -79,7 +82,7 @@ int main(int argc, char **argv)
   real *force;
 #if defined EAM || defined ADP
   real *totdens = NULL;
-#endif
+#endif /* EAM || ADP */
   char  msg[255], file[255];
   FILE *outfile;
 
@@ -91,13 +94,13 @@ int main(int argc, char **argv)
 
 #ifdef MPI
   init_mpi(argc, argv);
-#endif
+#endif /* MPI */
 
   if (myid == 0) {
     printf("This is %s compiled on %s.\n", VERSION_INFO, VERSION_DATE);
 #ifdef MPI
     printf("Starting up MPI with %d processes.\n", num_cpus);
-#endif
+#endif /* MPI */
   }
 
   /* assign correct force routine */
@@ -113,7 +116,7 @@ int main(int argc, char **argv)
 #elif defined COULOMB
   calc_forces = calc_forces_elstat;
   strcpy(interaction, "ELSTAT");
-#endif
+#endif /* PAIR */
 
   /* read the parameters and the potential file */
   if (myid == 0) {
@@ -123,10 +126,11 @@ int main(int argc, char **argv)
     printf("Global energy weight: %f\n", eweight);
 #ifdef STRESS
     printf("Global stress weight: %f\n", sweight);
-#endif
+#endif /* STRESS */
 #ifdef COULOMB
     init_tails();
-#endif
+#endif /* COULOMB */
+
     /* Select correct spline interpolation and other functions */
     if (format == 0) {
 #ifndef APOT
@@ -135,8 +139,8 @@ int main(int argc, char **argv)
       splint = splint_ed;
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
-      write_pot_table = write_apot_table;
-#endif
+      write_pot_table = write_pot_table0;
+#endif /* APOT */
     } else if (format == 3) {
 #ifdef APOT
       error("potfit binary compiled without tabulated potential support\n");
@@ -180,7 +184,7 @@ int main(int argc, char **argv)
 #ifndef NORESCALE
     rescale(&opt_pot, 1., 1);	/* rescale now... */
 #endif /* NORESCALE */
-#endif /* EAM */
+#endif /* EAM || ADP */
     init_done = 1;
   }
 
@@ -255,7 +259,7 @@ int main(int argc, char **argv)
       splint = splint_ed;
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
-      write_pot_table = write_apot_table;
+      write_pot_table = write_pot_table0;
 #endif
     } else if (format == 3) {
 #ifndef APOT
@@ -291,13 +295,14 @@ int main(int argc, char **argv)
 #endif
   } else {			/* root thread does minimization */
     if (opt) {
-      printf("\nStarting optimization with %d parameters ...\n", ndim);
+      printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
-#ifdef EVO
+#ifndef SIMANN
       diff_evo(opt_pot.table);
 #else
       anneal(opt_pot.table);
-#endif
+#endif /* SIMANN */
+      printf("\nStarting powell minimization ...\n");
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
     } else {
@@ -312,12 +317,13 @@ int main(int argc, char **argv)
     tot = calc_forces(opt_pot.table, force, 0);
     if (opt) {
       write_pot_table(&apot_table, endpot);
-#endif
+#endif /* !APOT */
       printf("\nPotential in format %d written to file \t%s\n", format,
 	endpot);
     }
-    if (writeimd)
+    if (writeimd) {
       write_pot_table_imd(&calc_pot, imdpot);
+    }
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
 #ifdef COULOMB
@@ -332,7 +338,7 @@ int main(int argc, char **argv)
     if (format == 3) {		/* then we can also write format 4 */
       sprintf(endpot, "%s_4", endpot);
       write_pot_table4(&opt_pot, endpot);
-      printf("Potential in format 4 written to file %s\n", endpot);
+      printf("Potential in format 4 written to file \t%s\n", endpot);
     }
 #if defined EAM || defined ADP
 #ifndef MPI
@@ -749,9 +755,9 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef COULOMB
-    time(&t_end);
-    t_dif = difftime(t_end, t_begin);
-    printf("\nRuntime: %lf s\n", t_dif);
+  time(&t_end);
+  t_dif = difftime(t_end, t_begin);
+  printf("\nRuntime: %lf s\n", t_dif);
 #endif
 
   return 0;

@@ -31,18 +31,6 @@
 #include "potfit.h"
 #include "utils.h"
 
-/* vector product */
-vector vec_prod(vector u, vector v)
-{
-  vector w;
-
-  w.x = u.y * v.z - u.z * v.y;
-  w.y = u.z * v.x - u.x * v.z;
-  w.z = u.x * v.y - u.y * v.x;
-
-  return w;
-}
-
 /****************************************************************
  *
  *  compute box transformation matrix
@@ -885,7 +873,7 @@ void read_config(char *filename)
   printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
     nconf, w_force, w_stress);
-  printf("  with a total of %d atoms (", natoms);
+  printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
       printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i],
@@ -897,7 +885,7 @@ void read_config(char *filename)
       printf(", ");
   }
 
-  printf(")\n  from file \"%s\".\n", filename);
+  printf(")\nfrom file \"%s\".\n\n", filename);
   if (sh_dist) {
     sprintf(msg,
       "Distances too short, last occurence conf %d, see above for details",
@@ -911,11 +899,11 @@ void read_config(char *filename)
 
 /****************************************************************
  *
- * recalculate the slots of the atoms for tabulated potential
+ * recalculate the slots of the atoms for analytic potential
  *
  ****************************************************************/
 
-void update_slots()
+void update_slots(void)
 {
   int   i, j;
   int   col0;			/* pair potential part */

@@ -166,7 +166,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 
       neigh_t *neigh;
-      real  r;
 
       /* pair variables */
       real  phi_val, phi_grad;

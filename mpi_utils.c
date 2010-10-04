@@ -226,12 +226,12 @@ void broadcast_params()
   MPI_Address(&testatom.nu, &displs[10]);
 #endif /* ADP */
 #ifdef DIPOLE
- MPI_Address(&testatom.E_stat, &displs[6]);
- MPI_Address(&testatom.p_sr, &displs[7]);
- MPI_Address(&testatom.E_ind, &displs[8]);
- MPI_Address(&testatom.p_ind, &displs[9]);
- MPI_Address(&testatom.E_old, &displs[10]);
- MPI_Address(&testatom.E_tot, &displs[11]);
+  MPI_Address(&testatom.E_stat, &displs[6]);
+  MPI_Address(&testatom.p_sr, &displs[7]);
+  MPI_Address(&testatom.E_ind, &displs[8]);
+  MPI_Address(&testatom.p_ind, &displs[9]);
+  MPI_Address(&testatom.E_old, &displs[10]);
+  MPI_Address(&testatom.E_tot, &displs[11]);
 #endif
 
   for (i = 1; i < size; i++) {
@@ -247,7 +247,6 @@ void broadcast_params()
   MPI_Bcast(&ntypes, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&natoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&anneal_temp, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
   MPI_Bcast(&dp_kappa, 1, REAL, 0, MPI_COMM_WORLD);
@@ -327,7 +326,6 @@ void broadcast_params()
 #endif
     smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
-    pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
     rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
     rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
     apot_table.fvalue =
@@ -338,7 +336,6 @@ void broadcast_params()
   MPI_Bcast(invar_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_list, opt_pot.len, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.n_par, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(pot_index, ntypes * (ntypes + 1) / 2, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(rcut, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(rmin, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.fvalue, apot_table.number, REAL, 0, MPI_COMM_WORLD);
@@ -456,13 +453,13 @@ void broadcast_neighbors()
   }
 }
 
-/***************************************************************************
+#ifndef APOT
+
+/****************************************************************
  *
  * potsync: Broadcast parameters etc to other nodes
  *
- **************************************************************************/
-
-#ifndef APOT
+ ****************************************************************/
 
 void potsync()
 {
@@ -480,5 +477,6 @@ void potsync()
   nvals = calc_pot.len - firstval;
   MPI_Bcast(calc_pot.table + firstval, nvals, REAL, 0, MPI_COMM_WORLD);
 }
+
 #endif /* !APOT */
 #endif /* MPI */

@@ -125,6 +125,18 @@ void free_all_pointers()
   free(pointer_names);
 }
 
+/* vector product */
+vector vec_prod(vector u, vector v)
+{
+  vector w;
+
+  w.x = u.y * v.z - u.z * v.y;
+  w.y = u.z * v.x - u.x * v.z;
+  w.z = u.x * v.y - u.y * v.x;
+
+  return w;
+}
+
 /****************************************************************
  *
  *  real normdist(): Returns a normally distributed random variable
@@ -154,3 +166,55 @@ real normdist()
     return nd2;
   }
 }
+
+#ifdef APOT
+
+/****************************************************************
+ *
+ *  quicksort algorithm for opposition-based diff_evo
+ *
+ *****************************************************************/
+
+void quicksort(real *x, int low, int high, real **p)
+{
+  int   newIndex;
+  if (low < high) {
+    int   index = (low + high) / 2;
+    newIndex = partition(x, low, high, index, p);
+    quicksort(x, low, newIndex - 1, p);
+    quicksort(x, newIndex + 1, high, p);
+  }
+}
+
+int partition(real *x, int low, int high, int index, real **p)
+{
+  int   i, store;
+  real  ind_val = x[index], temp;
+
+  SWAP(x[index], x[high], temp);
+  swap_population(p[index], p[high]);
+
+  store = low;
+
+  for (i = low; i < high; i++)
+    if (x[i] <= ind_val) {
+      SWAP(x[i], x[store], temp);
+      swap_population(p[i], p[store]);
+      store++;
+    }
+  SWAP(x[store], x[high], temp);
+  swap_population(p[store], p[high]);
+
+  return store;
+}
+
+void swap_population(real *a, real *b)
+{
+  int   i;
+  real  temp;
+  for (i = 0; i < ndimtot + 2; i++) {
+    SWAP(a[i], b[i], temp);
+  }
+}
+
+#endif /* APOT */

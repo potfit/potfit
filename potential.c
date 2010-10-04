@@ -31,7 +31,7 @@
  ****************************************************************/
 
 #define NPLOT 1000
-#define REPULSE
+
 #include "potfit.h"
 #include "utils.h"
 
@@ -46,7 +46,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
   FILE *infile;
   char  buffer[1024], msg[255], *res, *str;
   int   have_format = 0, end_header = 0;
-  int   size, i, j, k = 0, *nvals, ncols;
+  int   size, i, j, k = 0, *nvals, ncols, npots = 0;
 #ifdef APOT
   apot_table_t *apt = &apot_table;
 #else
@@ -146,26 +146,19 @@ void read_pot_table(pot_table_t *pt, char *filename)
       ncols = ntypes * (ntypes + 1) / 2;
       /* right number of columns? */
 #ifdef EAM
-      if (size == ncols + 2 * ntypes) {
+      npots = ncols + 2 * ntypes;
 #elif defined ADP
-      if (size == 3 * ncols + 2 * ntypes) {
+      npots = 3 * ncols + 2 * ntypes;
 #else
-      if (size == ncols) {
+      npots = ncols;
 #endif
+      if (size == npots) {
 	printf("Using %s potentials from file \"%s\".\n", interaction,
 	  filename);
       } else {
 	sprintf(msg,
 	  "Wrong number of data columns in file \"%s\",\n should be %d for %s, but are %d.",
-	  filename,
-#ifdef EAM
-	  ncols + 2 * ntypes
-#elif defined ADP
-	  3 * ncols + 2 * ntypes
-#else
-	  ncols
-#endif
-	  , interaction, size);
+	  filename, npots, interaction, size);
 	error(msg);
       }
       /* recognized format? */
@@ -245,7 +238,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
     apt->pmax = (real **)malloc((size + 4) * sizeof(real *));
     apt->invar_par = (int **)malloc((size + 4) * sizeof(int *));
- 
+
     apt->values[size] = (real *)malloc((ntypes - 1) * sizeof(real));
     apt->param_name[size] = (char **)malloc((ntypes - 1) * sizeof(char *));
     apt->pmin[size] = (real *)malloc((ntypes - 1) * sizeof(real));
@@ -257,7 +250,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->pmin[size + 1] = (real *)malloc(ntypes * sizeof(real));
     apt->pmax[size + 1] = (real *)malloc(ntypes * sizeof(real));
     apt->invar_par[size + 1] = (int *)malloc(ntypes * sizeof(int));
-    
+
     for (i = 2; i < 4; i++) {
       apt->values[size + i] = (real *)malloc(size * sizeof(real));
       apt->param_name[size + i] = (char **)malloc(size * sizeof(char *));
@@ -292,13 +285,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
       filename);
     error(msg);
   }
-#endif
+#endif /* APOT */
   switch (format) {
 #ifdef APOT
       case 0:
-	read_apot_table(pt, apt, filename, infile);
+	read_pot_table0(pt, apt, filename, infile);
 	break;
-#endif
+#endif /* APOT */
       case 3:
 	read_pot_table3(pt, size, ncols, nvals, filename, infile);
 	break;
@@ -314,39 +307,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
   rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
   if (NULL == rmin)
     error("Cannot allocate rmin");
-#ifdef APOT
-#ifdef EAM
-  pot_index =
-    (int *)malloc(((ntypes * (ntypes + 1) / 2) + ntypes) * sizeof(int));
-  if (NULL == pot_index)
-    error("Cannot allocate pot_index");
-  for (i = 0; i < (ntypes * (ntypes + 1) / 2 + ntypes); i++)
-    pot_index[i] = ntypes * ntypes;
-#else /* EAM */
-  pot_index = (int *)malloc(ntypes * (ntypes + 1) / 2 * sizeof(int));
-  if (NULL == pot_index)
-    error("Cannot allocate pot_index");
-  for (i = 0; i < ntypes * (ntypes + 1) / 2; i++)
-    pot_index[i] = ntypes * ntypes;
-#endif /* EAM */
-#endif /* APOT */
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2)
 	: j * ntypes + i - ((j * (j + 1)) / 2);
       rmin[i * ntypes + j] = pt->begin[k];
-#ifdef APOT
-      pot_index[k] = MIN(pot_index[k], i * ntypes + j);
-#endif /* APOT */
       rcut[i * ntypes + j] = pt->end[k];
     }
-#if defined EAM && defined APOT
-  j = 0;
-  for (i = 0; i < ntypes; i++) {
-    pot_index[++k] = pot_index[j];
-    j += ntypes - i;
-  }
-#endif /* EAM && APOT */
 #if defined EAM || defined ADP
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
@@ -410,7 +377,6 @@ void read_pot_table(pot_table_t *pt, char *filename)
   for (i = 0; i < size; i++) {
     reg_for_free(apt->names[i], "apt->names[i]");
   }
-  reg_for_free(pot_index, "pot_index");
 #else /* APOT */
   reg_for_free(maxchange, "maxchange");
 #endif /* APOT */
@@ -464,7 +430,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
  *
  ****************************************************************/
 
-void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
+void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   FILE *infile)
 {
   int   i, j, k, l, ret_val;
@@ -598,16 +564,16 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
 
   /* read electrostatic parameters */
   fscanf(infile, " %s", buffer);
- if (strcmp("ratio", buffer) != 0) {
+  if (strcmp("ratio", buffer) != 0) {
     sprintf(msg, "Could not read ratio");
     error(msg);
   }
   for (i = 0; i < ntypes; i++) {
-    if (1 > fscanf(infile, "%lf", &apt->ratio[i])){
+    if (1 > fscanf(infile, "%lf", &apt->ratio[i])) {
       sprintf(msg, "Could not read ratio for atomtype #%d\n", i);
       error(msg);
     }
-      }   
+  }
   for (i = 0; i < ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
@@ -1210,7 +1176,7 @@ void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
       apt->total_par -= apt->invar_par[i][j];
       pt->idxlen -= apt->invar_par[i][j];
     }
-  }  
+  }
   pt->idxlen += ntypes - 1;
 #endif
 #ifdef DIPOLE
@@ -1318,8 +1284,10 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   val = pt->table;
   k = 0;
   l = 0;
-  for (i = 0; i < ncols; i++) {	/* read in pair pot */
-    if (have_grad) {		/* read gradient */
+
+  /* read pair potentials */
+  for (i = 0; i < ncols; i++) {
+    if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1337,7 +1305,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(infile, "%lf\n", val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1350,9 +1319,11 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 	l++;
     }
   }
-#if defined EAM
-  for (i = ncols; i < ncols + ntypes; i++) {	/* read in rho */
-    if (have_grad) {		/* read gradient */
+
+#if defined EAM || defined ADP
+  /* read EAM transfer function rho(r) */
+  for (i = ncols; i < ncols + ntypes; i++) {
+    if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1370,7 +1341,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(infile, "%lf\n", val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1383,8 +1355,10 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 	l++;
     }
   }
-  for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {	/* read in F */
-    if (have_grad) {		/* read gradient */
+
+  /* read EAM embedding function F(n) */
+  for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {
+    if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1402,7 +1376,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(infile, "%lf\n", val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1415,7 +1390,79 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 	l++;
     }
   }
-#endif
+#endif /* EAM || ADP */
+
+#ifdef ADP
+  /* read ADP dipole function u(r) */
+  for (i = ncols + 2 * ntypes; i < 2 * (ncols + ntypes); i++) {
+    if (have_grad) {
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      }
+    } else {
+      *val = 1e30;
+      *(val + 1) = 0.;
+    }
+    val += 2;
+    if ((!invar_pot[i]) && (gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!invar_pot[i]) && (gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
+      if (1 > fscanf(infile, "%lf\n", val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else
+	val++;
+      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
+      if ((!invar_pot[i]) && (j < nvals[i] - 1))
+	pt->idx[k++] = l++;
+      else
+	l++;
+    }
+  }
+
+  /* read adp quadrupole function w(r) */
+  for (i = 2 * (ncols + ntypes); i < 3 * ncols + 2 * ntypes; i++) {
+    if (have_grad) {
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      }
+    } else {
+      *val = 1.e30;
+      *(val + 1) = 1.e30;
+    }
+    val += 2;
+    if ((!invar_pot[i]) && (gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!invar_pot[i]) && (gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
+      if (1 > fscanf(infile, "%lf\n", val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else
+	val++;
+      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
+      if ((!invar_pot[i]) && (j < nvals[i] - 1))
+	pt->idx[k++] = l++;
+      else
+	l++;
+    }
+  }
+#endif /* EAM || ADP */
 
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
@@ -1473,8 +1520,10 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   ord = pt->xcoord;
   k = 0;
   l = 0;
-  for (i = 0; i < ncols; i++) {	/* read in pair pot */
-    if (have_grad) {		/* read gradient */
+
+  /* read pair potentials */
+  for (i = 0; i < ncols; i++) {
+    if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1493,7 +1542,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(infile, "%lf %lf\n", ord, val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1518,9 +1568,10 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->invstep[i] = 1. / pt->step[i];
 
   }
-#ifdef EAM
-  for (i = ncols; i < ncols + ntypes; i++) {	/* read in rho */
-    if (have_grad) {		/* read gradient */
+#if defined EAM || defined ADP
+  /* read EAM transfer function rho(r) */
+  for (i = ncols; i < ncols + ntypes; i++) {
+    if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1539,7 +1590,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(infile, "%lf %lf\n", ord, val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1561,10 +1613,11 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     /* pt->step is average step length.. */
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
-
   }
-  for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {	/* read in F */
-    if (have_grad) {		/* read gradient */
+
+  /* read EAM embedding function F(n) */
+  for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {
+    if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1583,7 +1636,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(infile, "%lf %lf\n", ord, val)) {
 	sprintf(msg, "Premature end of potential file %s", filename);
 	error(msg);
@@ -1606,8 +1660,102 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
   }
+#endif /* EAM || ADP */
 
-#endif
+#ifdef ADP
+  /* read ADP dipole function u(r) */
+  for (i = ncols + 2 * ntypes; i < 2 * (ncols + ntypes); i++) {
+    if (have_grad) {
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      }
+    } else {
+      *val = 1e30;
+      *(val + 1) = 0.;
+    }
+    val += 2;
+    ord += 2;
+    if ((!invar_pot[i]) && (gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!invar_pot[i]) && (gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
+      if (2 > fscanf(infile, "%lf %lf\n", ord, val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else {
+	ord++;
+	val++;
+      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2))) {
+	sprintf(msg, "Abscissa not monotonous in potential %d.", i);
+	error(msg);
+      }
+      if ((!invar_pot[i]) && (j < nvals[i] - 1))
+	pt->idx[k++] = l++;
+      else
+	l++;
+    }
+    pt->begin[i] = pt->xcoord[pt->first[i]];
+    pt->end[i] = pt->xcoord[pt->last[i]];
+    /* pt->step is average step length.. */
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
+    pt->invstep[i] = 1. / pt->step[i];
+  }
+
+  /* read adp quadrupole function w(r) */
+  for (i = 2 * (ncols + ntypes); i < 3 * ncols + 2 * ntypes; i++) {
+    if (have_grad) {
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      }
+    } else {
+      *val = 1e30;
+      *(val + 1) = 1.e30;
+    }
+    val += 2;
+    ord += 2;
+    if ((!invar_pot[i]) && (gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!invar_pot[i]) && (gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    /* read values */
+    for (j = 0; j < nvals[i]; j++) {
+      if (1 > fscanf(infile, "%lf %lf\n", ord, val)) {
+	sprintf(msg, "Premature end of potential file %s", filename);
+	error(msg);
+      } else {
+	ord++;
+	val++;
+      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2))) {
+	sprintf(msg, "Abscissa not monotonous in potential %d.", i);
+	error(msg);
+      }
+      if (!invar_pot[i])
+	pt->idx[k++] = l++;
+      else
+	l++;
+    }
+    pt->begin[i] = pt->xcoord[pt->first[i]];
+    pt->end[i] = pt->xcoord[pt->last[i]];
+    /* pt->step is average step length.. */
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
+    pt->invstep[i] = 1. / pt->step[i];
+  }
+#endif /* ADP */
+
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
 }
@@ -1626,12 +1774,9 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
 
 void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 {
-  int   i, size;
 #ifdef APOT
+  int   i, j, index, x = 0, size;
   real *val, f, h;
-  int   j, x = 0, index;
-#else
-  int  *sp;
 #endif
 
   switch (format) {
@@ -1665,8 +1810,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  if (calct->first == NULL || calct->last == NULL
 	    || calct->step == NULL || calct->invstep == NULL
 	    || calct->xcoord == NULL || calct->table == NULL
-	    || calct->d2tab == NULL || calct->idx == NULL
-	    )
+	    || calct->d2tab == NULL || calct->idx == NULL)
 	    error("Cannot allocate info block for calc potential table\n");
 
 	  /* initialize the calc_pot table */
@@ -1691,7 +1835,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 		calct->begin[i], h) : f;
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
-	  }	  
+	  }
 	}
 	break;
 #else
@@ -1716,12 +1860,10 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
-  int   i, j, k, m, n;
-  real *val;
 #ifdef APOT
-  int   change;
+  int   i, j, k, m, n, change;
   real  f, h = 0;
-  real *list;
+  real *list, *val;
 #endif
 
   switch (format) {
@@ -1989,19 +2131,19 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 
 /*****************************************************************************
 *
-*  calculate tail of coulomb-potential and its first derivative 
+*  calculate tail of coulomb-potential and its first derivative
 *
 ******************************************************************************/
 
 void init_tails()
 {
-  int i, j;
+  int   i, j;
 
   for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].n_neigh; j++) {
       elstat_shift(atoms[i].neigh[j].r, &atoms[i].neigh[j].fnval_el,
-		   &atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
-    }	
+	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+    }
   }
 }
 
@@ -2015,19 +2157,19 @@ void write_coulomb_table()
 {
   apot_table_t *apt = &apot_table;
   if (ntypes == 2) {
-    int i, j;
-    real value;
+    int   i, j;
+    real  value;
     FILE *outfile;
     char *filename1 = "Coulomb_00";
     char *filename2 = "Coulomb_01";
     char *filename3 = "Coulomb_11";
-    
+
     outfile = fopen(filename1, "a");
     for (i = 0; i < natoms; i++) {
       for (j = 0; j < atoms[i].n_neigh; j++) {
 	value = apt->charge[0] * apt->charge[0] * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
-      }	
+      }
     }
     fclose(outfile);
 
@@ -2036,7 +2178,7 @@ void write_coulomb_table()
       for (j = 0; j < atoms[i].n_neigh; j++) {
 	value = apt->charge[0] * apt->charge[1] * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
-      }	
+      }
     }
     fclose(outfile);
 
@@ -2045,7 +2187,7 @@ void write_coulomb_table()
       for (j = 0; j < atoms[i].n_neigh; j++) {
 	value = apt->charge[1] * apt->charge[1] * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
-      }	
+      }
     }
     fclose(outfile);
   } else {
@@ -2056,7 +2198,7 @@ void write_coulomb_table()
 #endif /* COULOMB */
 #ifdef APOT
 
-void write_apot_table(apot_table_t *apt, char *filename)
+void write_pot_table0(apot_table_t *apt, char *filename)
 {
   int   i, j;
   FILE *outfile;
@@ -2128,7 +2270,7 @@ void write_apot_table(apot_table_t *apt, char *filename)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
       apt->charge[i], apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
   fprintf(outfile, "charge_%s\t %f\n", elements[ntypes - 1],
-	  apt->last_charge);
+    apt->last_charge);
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n",
@@ -2455,7 +2597,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     }
   }
   fclose(outfile);
-  printf("IMD: pair potential written to \t\t%s\n", filename);
+  printf("IMD pair potential written to \t\t%s\n", filename);
 
 #if defined EAM || defined ADP
   /* write transfer function (over r^2) */
@@ -2479,7 +2621,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #else
       /* Extrapolation possible  */
       r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
-#endif
+#endif /* APOT */
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n",
@@ -2511,7 +2653,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     }
   }
   fclose(outfile);
-  printf("IMD: transfer function written to \t%s\n", filename);
+  printf("IMD transfer function written to \t%s\n", filename);
 
   /* write embedding function (over r) */
   sprintf(filename, "%s_F.imd.pt", prefix);
@@ -2574,10 +2716,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #else /* WZERO */
       temp = splint_ne(pt, pt->table, col1, r2);
 #endif /* WZERO */
-#ifdef REPULSE
       temp2 = r2 - pt->end[col1];
       temp += (temp2 > 0.) ? 5e2 * (temp2 * temp2 * temp2) : 0.;
-#endif
 #ifdef NEWSCALE
       temp -= lambda[i] * r2;
 #endif /* NEWSCALE */
@@ -2588,7 +2728,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     fprintf(outfile, "\n");
   }
   fclose(outfile);
-  printf("IMD: embedding function written to \t%s\n", filename);
+  printf("IMD embedding function written to \t%s\n", filename);
 #endif
 
 #ifdef ADP
@@ -2655,7 +2795,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     }
   }
   fclose(outfile);
-  printf("IMD: dipole potential written to \t%s\n", filename);
+  printf("IMD dipole potential written to \t%s\n", filename);
 
   /* write quadrupole function (over r^2) */
   sprintf(filename, "%s_wpot.imd.pt", prefix);
@@ -2720,7 +2860,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     }
   }
   fclose(outfile);
-  printf("IMD: quadrupole potential written to \t%s\n", filename);
+  printf("IMD quadrupole potential written to \t%s\n", filename);
 #endif
 
   free(r2begin);
@@ -2775,7 +2915,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       fprintf(outfile, "%e %e\n\n\n", r, 0.0);
       k++;
     }
-#ifdef EAM
+#if defined EAM || defined ADP
   for (i = paircol; i < paircol + ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
@@ -2802,6 +2942,28 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "\n\n\n");
   }
+#endif /* EAM || ADP */
+#ifdef ADP
+  for (i = paircol + 2 * ntypes; i < 2 * (paircol + ntypes); i++) {
+    r = pt->begin[i];
+    r_step = (pt->end[i] - r) / (NPLOT - 1);
+    for (l = 0; l < NPLOT - 1; l++) {
+      fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
+      r += r_step;
+    }
+    fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+    k++;
+  }
+  for (i = 2 * (paircol + ntypes); i < 3 * paircol + 2 * ntypes; i++) {
+    r = pt->begin[i];
+    r_step = (pt->end[i] - r) / (NPLOT - 1);
+    for (l = 0; l < NPLOT - 1; l++) {
+      fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
+      r += r_step;
+    }
+    fprintf(outfile, "%e %e\n\n\n", r, 0.0);
+    k++;
+  }
 #endif
 #else /* APOT */
   for (i = 0; i < apot_table.number; i++) {
@@ -2822,8 +2984,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     if (i != (apot_table.number - 1))
       fprintf(outfile, "\n\n");
   }
-
 #endif /* APOT */
+
   fclose(outfile);
   printf("Potential plotting data written to \t%s\n", filename);
 }

@@ -29,6 +29,7 @@
  *****************************************************************/
 
 #define ANSI
+#define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
 
 real  sqrreal(real x);
 int  *vect_int(long dim);
@@ -39,4 +40,8 @@ void  free_vect_int(int *vect);
 void  free_mat_real(real **matrix);
 void  reg_for_free(void *p, char *name);
 void  free_all_pointers();
+vector vec_prod(vector, vector);
 real  normdist();
+void  quicksort(real *x, int low, int high, real **p);
+int   partition(real *x, int low, int high, int index, real **p);
+void  swap_population(real *a, real *b);

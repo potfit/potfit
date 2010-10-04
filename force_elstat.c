@@ -87,16 +87,16 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   int   first, col, ne, size, i;
   real *xi = NULL;
   apot_table_t *apt = &apot_table;
-  real charge[ntypes];
-  real sum_charges;
+  real  charge[ntypes];
+  real  sum_charges;
 #ifdef DIPOLE
   FILE *outfile2;
   char *filename2 = "Dipole.convergency";
   int   sum_c;
   int   sum_t;
-  real dp_alpha[ntypes];
-  real dp_b[apt->number];
-  real dp_c[apt->number];
+  real  dp_alpha[ntypes];
+  real  dp_b[apt->number];
+  real  dp_c[apt->number];
 #endif
 
   switch (format) {
@@ -162,31 +162,31 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     /* local arrays for electrostatic parameters */
     sum_charges = 0;
     for (i = 0; i < ntypes - 1; i++) {
-      if(xi_opt[2*size + ne + i]) {
-	charge[i] = xi_opt[2*size + ne + i];
+      if (xi_opt[2 * size + ne + i]) {
+	charge[i] = xi_opt[2 * size + ne + i];
 	sum_charges += apt->ratio[i] * charge[i];
       } else {
 	charge[i] = 0.;
       }
-    } 
-    apt->last_charge = - sum_charges / apt->ratio[ntypes - 1]; 
+    }
+    apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
     charge[ntypes - 1] = apt->last_charge;
 #ifdef DIPOLE
     for (i = 0; i < ntypes; i++) {
-      if(xi_opt[2*size + ne + ntypes + i -1]) {
-	dp_alpha[i] = xi_opt[2*size + ne + ntypes + i -1];
+      if (xi_opt[2 * size + ne + ntypes + i - 1]) {
+	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i - 1];
       } else {
 	dp_alpha[i] = 0.;
       }
     }
     for (i = 0; i < size; i++) {
-      if(xi_opt[2*size + ne + 2*ntypes + i -1]) {
-	dp_b[i] = xi_opt[2*size + ne + 2*ntypes + i -1];
+      if (xi_opt[2 * size + ne + 2 * ntypes + i - 1]) {
+	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i - 1];
       } else {
 	dp_b[i] = 0.;
       }
-      if(xi_opt[3*size + ne + 2*ntypes + i -1]) {
-	dp_c[i] = xi_opt[3*size + ne + 2*ntypes + i -1];
+      if (xi_opt[3 * size + ne + 2 * ntypes + i - 1]) {
+	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i - 1];
       } else {
 	dp_c[i] = 0.;
       }
@@ -402,17 +402,22 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      /* calculate short-range dipoles */
 	      if (dp_alpha[typ1] && dp_b[col] && dp_c[col]) {
 		p_sr_tail = grad_tail * neigh->r *
-		  shortrange_value(neigh->r, dp_alpha[typ1], dp_b[col], dp_c[col]);
+		  shortrange_value(neigh->r, dp_alpha[typ1], dp_b[col],
+		  dp_c[col]);
 		atom->p_sr.x += charge[typ2] * neigh->dist.x * p_sr_tail;
 		atom->p_sr.y += charge[typ2] * neigh->dist.y * p_sr_tail;
 		atom->p_sr.z += charge[typ2] * neigh->dist.z * p_sr_tail;
 	      }
-	      if ( dp_alpha[typ2] && dp_b[col] && dp_c[col] && !self) {
+	      if (dp_alpha[typ2] && dp_b[col] && dp_c[col] && !self) {
 		p_sr_tail = grad_tail * neigh->r *
-		  shortrange_value(neigh->r, dp_alpha[typ2], dp_b[col], dp_c[col]);
-		atoms[neigh->nr].p_sr.x -= charge[typ1] * neigh->dist.x * p_sr_tail;
-		atoms[neigh->nr].p_sr.y -= charge[typ1] * neigh->dist.y * p_sr_tail;
-		atoms[neigh->nr].p_sr.z -= charge[typ1] * neigh->dist.z * p_sr_tail;
+		  shortrange_value(neigh->r, dp_alpha[typ2], dp_b[col],
+		  dp_c[col]);
+		atoms[neigh->nr].p_sr.x -=
+		  charge[typ1] * neigh->dist.x * p_sr_tail;
+		atoms[neigh->nr].p_sr.y -=
+		  charge[typ1] * neigh->dist.y * p_sr_tail;
+		atoms[neigh->nr].p_sr.z -=
+		  charge[typ1] * neigh->dist.z * p_sr_tail;
 	      }
 #endif /* DIPOLE */
 
@@ -431,26 +436,29 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  dp_sum = 0;
 	  for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
-	    typ1 = atom->typ;	    
+	    typ1 = atom->typ;
 	    if (dp_alpha[typ1]) {
 
-	      if(dp_it){
+	      if (dp_it) {
 		/* note: mixing parameter is different from that on in IMD */
-	      atom->E_tot.x =
-		(1 - dp_mix) * atom->E_ind.x + dp_mix * atom->E_old.x + atom->E_stat.x;
-	      atom->E_tot.y =
-		(1 - dp_mix) * atom->E_ind.y + dp_mix * atom->E_old.y + atom->E_stat.y;
-	      atom->E_tot.z =
-		(1 - dp_mix) * atom->E_ind.z + dp_mix * atom->E_old.z + atom->E_stat.z;
+		atom->E_tot.x =
+		  (1 - dp_mix) * atom->E_ind.x + dp_mix * atom->E_old.x +
+		  atom->E_stat.x;
+		atom->E_tot.y =
+		  (1 - dp_mix) * atom->E_ind.y + dp_mix * atom->E_old.y +
+		  atom->E_stat.y;
+		atom->E_tot.z =
+		  (1 - dp_mix) * atom->E_ind.z + dp_mix * atom->E_old.z +
+		  atom->E_stat.z;
 	      } else {
 		atom->E_tot.x = atom->E_ind.x + atom->E_stat.x;
 		atom->E_tot.y = atom->E_ind.y + atom->E_stat.y;
 		atom->E_tot.z = atom->E_ind.z + atom->E_stat.z;
 	      }
 
-	      atom->p_ind.x = dp_alpha[typ1] *  atom->E_tot.x + atom->p_sr.x;
-	      atom->p_ind.y = dp_alpha[typ1] *  atom->E_tot.y + atom->p_sr.y;
-	      atom->p_ind.z = dp_alpha[typ1] *  atom->E_tot.z + atom->p_sr.z;
+	      atom->p_ind.x = dp_alpha[typ1] * atom->E_tot.x + atom->p_sr.x;
+	      atom->p_ind.y = dp_alpha[typ1] * atom->E_tot.y + atom->p_sr.y;
+	      atom->p_ind.z = dp_alpha[typ1] * atom->E_tot.z + atom->p_sr.z;
 
 	      atom->E_old.x = atom->E_ind.x;
 	      atom->E_old.y = atom->E_ind.y;
@@ -474,22 +482,22 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      if (neigh->r < dp_cut && dp_alpha[typ1] && dp_alpha[typ2]) {
 
-		  rp = SPROD(atoms[neigh->nr].p_ind, neigh->dist);
-		  atom->E_ind.x += neigh->grad_el 
-		    * (3 * rp * neigh->dist.x - atoms[neigh->nr].p_ind.x);
-		  atom->E_ind.y += neigh->grad_el
-		    * (3 * rp * neigh->dist.y - atoms[neigh->nr].p_ind.y);		   
-		  atom->E_ind.z += neigh->grad_el 
-		    * (3 * rp * neigh->dist.z - atoms[neigh->nr].p_ind.z);		   
-		
+		rp = SPROD(atoms[neigh->nr].p_ind, neigh->dist);
+		atom->E_ind.x += neigh->grad_el
+		  * (3 * rp * neigh->dist.x - atoms[neigh->nr].p_ind.x);
+		atom->E_ind.y += neigh->grad_el
+		  * (3 * rp * neigh->dist.y - atoms[neigh->nr].p_ind.y);
+		atom->E_ind.z += neigh->grad_el
+		  * (3 * rp * neigh->dist.z - atoms[neigh->nr].p_ind.z);
+
 		if (!self) {
 		  rp = SPROD(atom->p_ind, neigh->dist);
-		  atoms[neigh->nr].E_ind.x += neigh->grad_el 
+		  atoms[neigh->nr].E_ind.x += neigh->grad_el
 		    * (3 * rp * neigh->dist.x - atom->p_ind.x);
-		  atoms[neigh->nr].E_ind.y += neigh->grad_el 
-		    * (3 * rp * neigh->dist.y - atom->p_ind.y);	          
-		  atoms[neigh->nr].E_ind.z += neigh->grad_el 
-		    * (3 * rp * neigh->dist.z - atom->p_ind.z);		  
+		  atoms[neigh->nr].E_ind.y += neigh->grad_el
+		    * (3 * rp * neigh->dist.y - atom->p_ind.y);
+		  atoms[neigh->nr].E_ind.z += neigh->grad_el
+		    * (3 * rp * neigh->dist.z - atom->p_ind.z);
 		}
 	      }
 	    }
@@ -516,9 +524,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		atom = conf_atoms + i + cnfstart[h] - firstatom;
 		typ1 = atom->typ;
 		if (dp_alpha[typ1]) {
-		  atom->p_ind.x = dp_alpha[typ1] * atom->E_stat.x + atom->p_sr.x;
-		  atom->p_ind.y = dp_alpha[typ1] * atom->E_stat.y + atom->p_sr.y;
-		  atom->p_ind.z = dp_alpha[typ1] * atom->E_stat.z + atom->p_sr.z;
+		  atom->p_ind.x =
+		    dp_alpha[typ1] * atom->E_stat.x + atom->p_sr.x;
+		  atom->p_ind.y =
+		    dp_alpha[typ1] * atom->E_stat.y + atom->p_sr.y;
+		  atom->p_ind.z =
+		    dp_alpha[typ1] * atom->E_stat.z + atom->p_sr.z;
 		  atom->E_ind.x = atom->E_stat.x;
 		  atom->E_ind.y = atom->E_stat.y;
 		  atom->E_ind.z = atom->E_stat.z;
@@ -543,7 +554,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
 	real  rp_i, rp_j, pp_ij, tmp_1, tmp_2;
-	real  grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail, fnval_sum, grad_sum;
+	real  grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail,
+	  fnval_sum, grad_sum;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -563,11 +575,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      // printf("%f\t%f\n", fnval_tail, grad_tail);
 
 	      if (dp_b[col] && dp_c[col]) {
-		shortrange_term(neigh->r, dp_b[col], dp_c[col], &srval_tail, &srgrad_tail);
+		shortrange_term(neigh->r, dp_b[col], dp_c[col], &srval_tail,
+		  &srgrad_tail);
 		srval = fnval_tail * srval_tail;
 		srgrad = fnval_tail * srgrad_tail + grad_tail * srval_tail;
-		}
-	      
+	      }
+
 	      if (self) {
 		fnval_tail *= 0.5;
 		grad_tail *= 0.5;
@@ -575,7 +588,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      /* monopole-dipole contributions */
 	      if (charge[typ1] && dp_alpha[typ2]) {
-		
+
 		if (dp_b[col] && dp_c[col]) {
 		  fnval_sum = fnval_tail + srval;
 		  grad_sum = grad_tail + srgrad;
@@ -592,11 +605,11 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		forces[energy_p + h] -= fnval;
 
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad_1 
+		  tmp_force.x = neigh->dist.x * grad_1
 		    + atoms[neigh->nr].p_ind.x * grad_2;
-		  tmp_force.y = neigh->dist.y * grad_1 
+		  tmp_force.y = neigh->dist.y * grad_1
 		    + atoms[neigh->nr].p_ind.y * grad_2;
-		  tmp_force.z = neigh->dist.z * grad_1 
+		  tmp_force.z = neigh->dist.z * grad_1
 		    + atoms[neigh->nr].p_ind.z * grad_2;
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
@@ -628,7 +641,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      /* dipole-monopole contributions */
 	      if (dp_alpha[typ2] && charge[typ2]) {
-	
+
 		if (dp_b[col] && dp_c[col]) {
 		  fnval_sum = fnval_tail + srval;
 		  grad_sum = grad_tail + srgrad;
@@ -681,7 +694,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      /* dipole-dipole contributions */
 	      if (dp_alpha[typ1] && dp_alpha[typ2]) {
-		
+
 		pp_ij = SPROD(atom->p_ind, atoms[neigh->nr].p_ind);
 		tmp_1 = 3 * rp_i * rp_j;
 		tmp_2 = 3 * fnval_tail / neigh->r2;
@@ -693,12 +706,20 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		forces[energy_p + h] += fnval;
 
 		if (uf) {
-		  tmp_force.x = grad_1 * neigh->r * neigh->dist.x - tmp_2 
-		    * (grad_2 * neigh->r * neigh->dist.x - rp_i * neigh->r * atoms[neigh->nr].p_ind.x - rp_j * neigh->r * atom->p_ind.x);
-		  tmp_force.y = grad_1 * neigh->r * neigh->dist.y - tmp_2 
-		    * (grad_2 * neigh->r * neigh->dist.y - rp_i * neigh->r * atoms[neigh->nr].p_ind.y - rp_j * neigh->r * atom->p_ind.y);
-		  tmp_force.z = grad_1 * neigh->r * neigh->dist.z - tmp_2 
-		    * (grad_2 * neigh->r * neigh->dist.z - rp_i * neigh->r * atoms[neigh->nr].p_ind.z - rp_j * neigh->r * atom->p_ind.z);
+		  tmp_force.x = grad_1 * neigh->r * neigh->dist.x - tmp_2
+		    * (grad_2 * neigh->r * neigh->dist.x -
+		    rp_i * neigh->r * atoms[neigh->nr].p_ind.x -
+		    rp_j * neigh->r * atom->p_ind.x);
+		  tmp_force.y =
+		    grad_1 * neigh->r * neigh->dist.y -
+		    tmp_2 * (grad_2 * neigh->r * neigh->dist.y -
+		    rp_i * neigh->r * atoms[neigh->nr].p_ind.y -
+		    rp_j * neigh->r * atom->p_ind.y);
+		  tmp_force.z =
+		    grad_1 * neigh->r * neigh->dist.z -
+		    tmp_2 * (grad_2 * neigh->r * neigh->dist.z -
+		    rp_i * neigh->r * atoms[neigh->nr].p_ind.z -
+		    rp_j * neigh->r * atom->p_ind.z);
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
 		  forces[k + 2] -= tmp_force.z;

@@ -29,13 +29,14 @@
  *
  ****************************************************************/
 
-/******************************************************************************
-*
-* This utility will optimize a parameter vector xi[N] to minimize the sum of
-* squares U=sum_{i=1..M}(f_i(xi)-F_i)^2, where F_i is an array passed to the
-* utility, and f_i(xi) is a function of the vector xi.
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  This utility will optimize a parameter vector xi[N] to
+ *  minimize the sum of squares U=sum_{i=1..M}(f_i(xi)-F_i)^2,
+ *  where F_i is an array passed to the utility, and f_i(xi)
+ *  is a function of the vector xi.
+ *
+ ****************************************************************/
 
 #ifdef ACML
 #include <acml.h>
@@ -49,8 +50,7 @@
 
 #define EPS .0001
 #define PRECISION 1.E-7
-/* Well, almost nothing */
-#define NOTHING 1.E-12
+#define NOTHING 1.E-12		/* Well, almost nothing */
 #define INNERLOOPS 801
 #define TOOBIG 10000
 
