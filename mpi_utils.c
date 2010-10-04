@@ -214,7 +214,6 @@ void broadcast_params()
   MPI_Bcast(&ntypes, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&natoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&anneal_temp, 1, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (myid > 0) {
     inconf = (int *)malloc(nconf * sizeof(int));
@@ -403,13 +402,13 @@ void broadcast_neighbors()
   }
 }
 
-/***************************************************************************
+#ifndef APOT
+
+/****************************************************************
  *
  * potsync: Broadcast parameters etc to other nodes
  *
- **************************************************************************/
-
-#ifndef APOT
+ ****************************************************************/
 
 void potsync()
 {
@@ -427,5 +426,6 @@ void potsync()
   nvals = calc_pot.len - firstval;
   MPI_Bcast(calc_pot.table + firstval, nvals, REAL, 0, MPI_COMM_WORLD);
 }
+
 #endif /* !APOT */
 #endif /* MPI */

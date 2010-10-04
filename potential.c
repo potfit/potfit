@@ -30,7 +30,7 @@
  ****************************************************************/
 
 #define NPLOT 1000
-#define REPULSE
+
 #include "potfit.h"
 #include "utils.h"
 
@@ -249,13 +249,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
       filename);
     error(msg);
   }
-#endif
+#endif /* APOT */
   switch (format) {
 #ifdef APOT
       case 0:
-	read_apot_table(pt, apt, filename, infile);
+	read_pot_table0(pt, apt, filename, infile);
 	break;
-#endif
+#endif /* APOT */
       case 3:
 	read_pot_table3(pt, size, ncols, nvals, filename, infile);
 	break;
@@ -373,7 +373,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
  *
  ****************************************************************/
 
-void read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
+void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   FILE *infile)
 {
   int   i, j, k, l, ret_val;
@@ -1642,7 +1642,6 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
 #ifdef APOT
-  char  msg[255];
   int   i, j, k, m, n, change;
   real  f, h = 0;
   real *list, *val;
@@ -1908,11 +1907,11 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
   return chi1 * chi2 * p0 - chi0 * chi2 * p1 + chi0 * chi1 * p2;
 }
 
-#endif
+#endif /* PARABEL */
 
 #ifdef APOT
 
-void write_apot_table(apot_table_t *apt, char *filename)
+void write_pot_table0(apot_table_t *apt, char *filename)
 {
   int   i, j;
   FILE *outfile;
@@ -2404,10 +2403,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #else /* WZERO */
       temp = splint_ne(pt, pt->table, col1, r2);
 #endif /* WZERO */
-#ifdef REPULSE
       temp2 = r2 - pt->end[col1];
       temp += (temp2 > 0.) ? 5e2 * (temp2 * temp2 * temp2) : 0.;
-#endif
 #ifdef NEWSCALE
       temp -= lambda[i] * r2;
 #endif /* NEWSCALE */

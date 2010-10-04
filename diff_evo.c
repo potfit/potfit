@@ -29,13 +29,13 @@
  *
  ****************************************************************/
 
-#ifdef EVO
-
 #include "potfit.h"
 #include "utils.h"
 
 #define D (ndimtot+2)
 #define NP 10*D			/* number of total population */
+
+#define JR 0.6			/* jumping rate for opposite algorithm */
 
 /* boundary values for self-adapting parameters */
 #define F_LOWER 0.1		/* lower value for F */
@@ -49,10 +49,11 @@
  *
  ****************************************************************/
 
-void init_population(real **pop, real *xi)
+void init_population(real **pop, real *xi, real *cost)
 {
   int   i, j;
   real  temp, max, min, val;
+  real  fxi[mdim];
 
   for (i = 0; i < NP; i++) {
     for (j = 0; j < (D - 2); j++)
@@ -81,7 +82,92 @@ void init_population(real **pop, real *xi)
 	pop[i][idx[j]] = val + temp * (val - min);
     }
   }
+  for (i = 0; i < NP; i++)
+    cost[i] = (*calc_forces) (pop[i], fxi, 0);
+#ifdef APOT
+  opposite_check(pop, cost, 1);
+#endif /* APOT */
 }
+
+#ifdef APOT
+
+/****************************************************************
+ *
+ *  create and check opposite population
+ *
+ ****************************************************************/
+
+void opposite_check(real **P, real *costP, int init)
+{
+  int   i, j;
+  real  fxi[mdim];
+  real  max, min;
+  real  minp[ndim], maxp[ndim];
+  static real *tot_cost;	/* cost of two populations */
+  static real **tot_P;		/* two populations */
+
+  /* allocate memory if not done yet */
+  if (tot_P == NULL) {
+    tot_P = (real **)malloc(2 * NP * sizeof(real *));
+    if (tot_P == NULL)
+      error("Could not allocate memory for opposition vector!\n");
+    for (i = 0; i < 2 * NP; i++)
+      tot_P[i] = (real *)malloc(D * sizeof(real));
+  }
+  if (tot_cost == NULL)
+    tot_cost = (real *)malloc(2 * NP * sizeof(real));
+
+  if (!init) {
+    for (i = 0; i < ndim; i++) {
+      minp[D] = 10e30;
+      maxp[D] = -10e30;
+    }
+    for (i = 0; i < NP; i++) {
+      for (j = 0; j < ndim; j++) {
+	if (P[i][j] < minp[j])
+	  minp[j] = P[i][j];
+	if (P[i][j] > maxp[j])
+	  maxp[j] = P[i][j];
+      }
+    }
+  }
+
+  /* generate opposite population */
+  for (i = 0; i < NP; i++)
+    for (j = 0; j < D; j++)
+      tot_P[i][j] = P[i][j];
+  for (i = 0; i < NP; i++) {
+    for (j = 0; j < ndim; j++) {
+      if (init) {
+	min = apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
+	max = apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
+      } else {
+	min = minp[j];
+	max = maxp[j];
+      }
+      tot_P[i + NP][idx[j]] = min + max - tot_P[i][idx[j]];
+    }
+    tot_P[i + NP][D - 2] = tot_P[i][D - 2];
+    tot_P[i + NP][D - 1] = tot_P[i][D - 1];
+  }
+
+  /* calculate cost of opposite population */
+  for (i = 0; i < NP; i++)
+    tot_cost[i] = costP[i];
+  for (i = NP; i < 2 * NP; i++)
+    tot_cost[i] = (*calc_forces) (tot_P[i], fxi, 0);
+
+  /* evaluate the NP best individuals from both populations */
+  /* sort with quicksort and return NP best indivuals */
+  quicksort(tot_cost, 0, 2 * NP - 1, tot_P);
+  for (i = 0; i < NP; i++) {
+    for (j = 0; j < D; j++)
+      P[i][j] = tot_P[i][j];
+    costP[i] = tot_cost[i];
+  }
+}
+
+#endif /* APOT */
 
 /****************************************************************
  *
@@ -93,11 +179,13 @@ void diff_evo(real *xi)
 {
   int   a, b, c;		/* store randomly picked numbers */
 /*  int 	d, e;			|+ enable this line for more vectors +|*/
-  int   count = 0;		/* counter for loops */
   int   i, j, k;		/* counters */
+  int   count = 0;		/* counter for loops */
+  int   jsteps = 0;
   real  avg = 0.;		/* average sum of squares for all configurations */
   real  crit = 1000.;		/* treshold for stopping criterion */
   real  force = 0.;		/* holds the current sum of squares */
+  real  jumprate = JR;
   real  min = 10e10;		/* current minimum for all configurations */
   real  max = 0.;		/* current maximum for all configurations */
   real  temp = 0.;		/* temp storage */
@@ -108,7 +196,6 @@ void diff_evo(real *xi)
   real *best;			/* best configuration */
   real *cost;			/* cost values for all configurations */
   real *fxi;			/* force vector */
-  real *opt;			/* used for force calculation */
   real *trial;			/* current trial configuration */
   real **x1;			/* current population */
   real **x2;			/* next generation */
@@ -145,9 +232,9 @@ void diff_evo(real *xi)
   printf("Initializing population ... ");
   fflush(stdout);
 
-  init_population(x1, xi);
+  init_population(x1, xi, cost);
   for (i = 0; i < NP; i++) {
-    cost[i] = (*calc_forces) (x1[i], fxi, 0);
+/*    cost[i] = (*calc_forces) (x1[i], fxi, 0);*/
     if (cost[i] < min) {
       min = cost[i];
       for (j = 0; j < D; j++)
@@ -159,11 +246,6 @@ void diff_evo(real *xi)
   for (i = 0; i < NP; i++)
     avg += cost[i];
   printf("done\n");
-
-#ifdef DEBUG
-  printf("Starting Differential Evolution with the following parameters:\n");
-  printf("D=%d, NP=%d, CR=%f, F=%f\n", D, NP, CR, F);
-#endif /* DEBUG */
 
   crit = max - min;
 
@@ -272,6 +354,14 @@ void diff_evo(real *xi)
 	  max = cost[i];
       }
     }
+#ifdef APOT
+    if (dsfmt_genrand_close_open(&dsfmt) < jumprate) {
+      opposite_check(x2, cost, 0);
+      jsteps++;
+      if (jsteps > 10)
+	jumprate *= 0.9;
+    }
+#endif /* APOT */
     avg = 0;
     for (i = 0; i < NP; i++)
       avg += cost[i];
@@ -298,6 +388,9 @@ void diff_evo(real *xi)
     crit = max - min;
   }
 
+  printf("Finished differential evolution.\n");
+  fflush(stdout);
+
   for (j = 0; j < ndimtot; j++)
     xi[j] = best[j];
 
@@ -313,5 +406,3 @@ void diff_evo(real *xi)
   free(best);
   free(fxi);
 }
-
-#endif /* EVO */

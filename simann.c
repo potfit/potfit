@@ -28,6 +28,8 @@
  *
  *****************************************************************/
 
+#ifdef SIMANN
+
 #include "potfit.h"
 #include "utils.h"
 
@@ -290,7 +292,7 @@ void anneal(real *xi)
       xopt[idx[n]];
   if (*tempfile != '\0')
     write_pot_table(&apot_table, tempfile);
-#endif
+#endif /* APOT */
   free_vect_real(Fvar);
   free_vect_real(v);
   free_vect_real(xopt);
@@ -299,3 +301,5 @@ void anneal(real *xi)
   free_vect_real(fxi1);
   return;
 }
+
+#endif /* SIMANN */

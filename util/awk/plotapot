@@ -115,6 +115,9 @@ function write_pot(i, name, params, file)
     printf "%f+0.5*%f*(x-1)**2+%f*(x-1)**3+%f*(x-1)**4+%f*(x-1)**5",
       params[i "," 1], params[i "," 2], params[i "," 3],
       params[i "," 4], params[i "," 5] > file;
+  } else if (name == "exp_plus") {
+    printf "%f*exp(-%f*x)+%f",
+      params[i "," 1], params[i "," 2], params[i "," 3] > file;
   }
   else {
     print "potential function "name" unknown";
@@ -167,6 +170,8 @@ function read_pot(name)
     return 5;
   else if (name == "poly_5")
     return 5;
+  else if (name == "exp_plus")
+    return 3;
   else {
     print "potential function "name" unknown"
     exit

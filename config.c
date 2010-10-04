@@ -31,18 +31,6 @@
 #include "potfit.h"
 #include "utils.h"
 
-/* vector product */
-vector vec_prod(vector u, vector v)
-{
-  vector w;
-
-  w.x = u.y * v.z - u.z * v.y;
-  w.y = u.z * v.x - u.x * v.z;
-  w.z = u.x * v.y - u.y * v.x;
-
-  return w;
-}
-
 /****************************************************************
  *
  *  compute box transformation matrix
@@ -908,11 +896,11 @@ void read_config(char *filename)
 
 /****************************************************************
  *
- * recalculate the slots of the atoms for tabulated potential
+ * recalculate the slots of the atoms for analytic potential
  *
  ****************************************************************/
 
-void update_slots()
+void update_slots(void)
 {
   int   i, j;
   int   col0;			/* pair potential part */
