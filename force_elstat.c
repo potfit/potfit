@@ -92,8 +92,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 #ifdef DIPOLE
   FILE *outfile2;
   char *filename2 = "Dipole.convergency";
-  int   sum_c = 0;
-  int   sum_t = 0;
+  int   sum_c;
+  int   sum_t;
   real dp_alpha[ntypes];
   real dp_b[apt->number];
   real dp_c[apt->number];
@@ -117,6 +117,10 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
+#ifdef DIPOLE
+    sum_c = 0.;
+    sum_t = 0.;
+#endif
 #ifndef APOT
     if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
@@ -416,7 +420,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	  }			/* loop over neighbours */
 	}			/* end S E C O N D loop over atoms */
-
 
 #ifdef DIPOLE
 	/* T H I R D loop: calculate whole dipole moment for every atom */
@@ -731,8 +734,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	/* F I F T H  loop: self energy contributions and sum-up force contributions */
 	real  qq, pp;
-	real kkk;
-	kkk = dp_kappa * dp_kappa * dp_kappa;
+	//real kkk;
+	//kkk = dp_kappa * dp_kappa * dp_kappa;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;

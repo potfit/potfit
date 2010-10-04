@@ -2011,17 +2011,44 @@ void init_tails()
 
 void write_coulomb_table()
 {
-  int i, j;
-  FILE *outfile;
-  char *filename = "Tailfunction";
+  apot_table_t *apt = &apot_table;
+  if (ntypes == 2) {
+    int i, j;
+    real value;
+    FILE *outfile;
+    char *filename1 = "Coulomb_00";
+    char *filename2 = "Coulomb_01";
+    char *filename3 = "Coulomb_11";
+    
+    outfile = fopen(filename1, "a");
+    for (i = 0; i < natoms; i++) {
+      for (j = 0; j < atoms[i].n_neigh; j++) {
+	value = apt->charge[0] * apt->charge[0] * atoms[i].neigh[j].fnval_el;
+	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
+      }	
+    }
+    fclose(outfile);
 
-  outfile = fopen(filename, "a");
-  for (i = 0; i < natoms; i++) {
-    for (j = 0; j < atoms[i].n_neigh; j++) {
-      fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, atoms[i].neigh[j].fnval_el);
-	}	
+    outfile = fopen(filename2, "a");
+    for (i = 0; i < natoms; i++) {
+      for (j = 0; j < atoms[i].n_neigh; j++) {
+	value = apt->charge[0] * apt->charge[1] * atoms[i].neigh[j].fnval_el;
+	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
+      }	
+    }
+    fclose(outfile);
+
+    outfile = fopen(filename3, "a");
+    for (i = 0; i < natoms; i++) {
+      for (j = 0; j < atoms[i].n_neigh; j++) {
+	value = apt->charge[1] * apt->charge[1] * atoms[i].neigh[j].fnval_el;
+	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
+      }	
+    }
+    fclose(outfile);
+  } else {
+    printf("Coulomb-outfiles are only available in case of two atom types.");
   }
-  fclose(outfile);
 }
 
 #endif /* COULOMB */

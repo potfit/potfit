@@ -321,7 +321,6 @@ int main(int argc, char **argv)
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
 #ifdef COULOMB
-    apot_table_t *apt = &apot_table;
     write_coulomb_table();
 #endif
 
