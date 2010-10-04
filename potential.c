@@ -2164,6 +2164,9 @@ void write_coulomb_table()
     char *filename2 = "Coulomb_01";
     char *filename3 = "Coulomb_11";
 
+    if (!opt)
+      apt->charge[1] = - apt->charge[0] / 2;
+ 
     outfile = fopen(filename1, "a");
     for (i = 0; i < natoms; i++) {
       for (j = 0; j < atoms[i].n_neigh; j++) {
