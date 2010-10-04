@@ -1,5 +1,14 @@
-dipole-20100927
-+ new outputfile Tailfunction for plotting coulomb-potentials
+--> POTFIT-20100928 released
+
+trunk-20100928
++ [APOT] fix severe bug with imd potentials
+
+trunk-20100920
++ adjust evo abortion criterion
++ fix force2imd script, is now consistent with potfit config numbering
++ [APOT] adjust ccb potential function to include all parameters
++ the version info is now more precise
++ [vasp2force] remove warning about single atom energy if -e is not given
 
 dipole-20100831
 + Option DIPOLE now calculates the exactly same induced dipole moments and
@@ -19,13 +28,6 @@ dipole-20100817
 dipole-20100816
 + Option MONOPOLE renamed as COULOMB (adapted to IMD)
 + charge neutrality now provided
-
-trunk-20100920
-+ adjust evo abortion criterion
-+ fix force2imd script, is now consistent with potfit config numbering
-+ [APOT] adjust ccb potential function to include all parameters
-+ the version info is now more precise
-+ [vasp2force] remove warning about single atom energy if -e is not given
 
 --> POTFIT-20100812 released
 
