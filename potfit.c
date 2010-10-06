@@ -35,11 +35,11 @@
 #include "utils.h"
 #include "version.h"
 
-/******************************************************************************
-*
-*  error -- complain and abort
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  error -- complain and abort
+ *
+ ****************************************************************/
 
 void error(char *msg)
 {
@@ -55,11 +55,11 @@ void error(char *msg)
   exit(2);
 }
 
-/******************************************************************************
+/****************************************************************
  *
  *  warning -- just complain, don't abort
  *
- *****************************************************************************/
+ ****************************************************************/
 
 void warning(char *msg)
 {
@@ -69,11 +69,11 @@ void warning(char *msg)
   return;
 }
 
-/******************************************************************************
-*
-*  main
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  main
+ *
+ ****************************************************************/
 
 int main(int argc, char **argv)
 {
@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 #ifdef MPI
   MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
   broadcast_params();		/* let the others know what's going on */
-#else /* MPI */
+#else
   /* Identify subset of atoms/volumes belonging to individual process
      with complete set of atoms/volumes */
   conf_atoms = atoms;
@@ -234,12 +234,12 @@ int main(int argc, char **argv)
 #ifdef APOT
   punish_par_p = dummy_p + 2 * ntypes;
   punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
-#endif
-#else /* EAM || ADP */
+#endif /* APOT */
+#else
 #ifdef APOT
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
-#endif
+#endif /* APOT */
 #endif /* EAM || ADP */
   rms = (real *)malloc(3 * sizeof(real));
   reg_for_free(rms, "rms");
@@ -247,9 +247,9 @@ int main(int argc, char **argv)
 #ifdef APOT
 #ifdef MPI
   MPI_Bcast(opt_pot.table, ndimtot, REAL, 0, MPI_COMM_WORLD);
-#endif
+#endif /* MPI */
   update_calc_table(opt_pot.table, calc_pot.table, 1);
-#endif
+#endif /* APOT */
 
   /* Select correct spline interpolation and other functions */
   /* Root process has done this earlier */
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
       write_pot_table = write_pot_table0;
-#endif
+#endif /* APOT */
     } else if (format == 3) {
 #ifndef APOT
       splint = splint_ed;
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
-#endif /* APOT */
+#endif /* !APOT */
     } else if (format >= 4) {	/*format >= 4 ! */
 #ifndef APOT
       splint = splint_ne;
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ne;
       parab_grad = parab_grad_ne;
 #endif /* PARABEL */
-#endif /* APOT */
+#endif /* !APOT */
     }
 
     /* all but root go to calc_forces */
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
     calc_forces(calc_pot.table, force, 0);
 #else
     calc_forces(opt_pot.table, force, 0);
-#endif
+#endif /* !APOT */
   } else {			/* root thread does minimization */
     if (opt) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
@@ -321,21 +321,21 @@ int main(int argc, char **argv)
       printf("\nPotential in format %d written to file \t%s\n", format,
 	endpot);
     }
-    if (writeimd) {
+    if (writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
-    }
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
 #ifdef COULOMB
     write_coulomb_table();
 #endif
 
-#ifdef PDIST
-#ifndef MPI			/* will not work with MPI */
+    /* will not work with MPI */
+#if defined PDIST && !defined MPI
     write_pairdist(&opt_pot, distfile);
-#endif
-#endif
-    if (format == 3) {		/* then we can also write format 4 */
+#endif /* PDIST && !MPI */
+
+    /* then we can also write format 4 */
+    if (format == 3) {
       sprintf(endpot, "%s_4", endpot);
       write_pot_table4(&opt_pot, endpot);
       printf("Potential in format 4 written to file \t%s\n", endpot);
@@ -380,7 +380,7 @@ int main(int argc, char **argv)
       /* U'(1.) = 0. */
       lambda[i] = splint_grad(&calc_pot, calc_pot.table,
 	paircol + ntypes + i, 1.0);
-#else /* NORESCALE */
+#else
       /* U'(<n>)=0; */
       lambda[i] = splint_grad(&calc_pot, calc_pot.table,
 	paircol + ntypes + i, totdens[i]);
@@ -396,7 +396,7 @@ int main(int argc, char **argv)
     if (writeimd)
       write_pot_table_imd(&opt_pot, imdpot);
 #endif /* NEWSCALE */
-#endif /* MPI */
+#endif /* !MPI */
 #endif /* EAM || ADP */
 
     /* prepare for error calculations */
@@ -441,7 +441,7 @@ int main(int argc, char **argv)
 	force_0[i],
 	(force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
 	atoms[i / 3].absforce);
-#else /* FWEIGHT */
+#else
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
@@ -550,7 +550,8 @@ int main(int argc, char **argv)
     } else {
       printf("Stress data not written (stress weight was 0).\n");
     }
-#endif
+#endif /* STRESS */
+
 #if ( defined EAM || defined ADP ) && !defined NOPUNISH
     /* write EAM punishments */
     if (write_output_files) {
@@ -606,7 +607,7 @@ int main(int argc, char **argv)
 	force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
       fprintf(outfile, "Additional punishment of %f added.\n",
 	SQR(force[dummy_p + ntypes]));
-#endif
+#endif /* NORESCALE */
       printf("Punishment constraints data written to \t%s\n", file);
       fclose(outfile);
     } else {
@@ -642,7 +643,7 @@ int main(int argc, char **argv)
 	(outfile,
 	"total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
 	tot, mdim, 3 * natoms, nconf, 6 * nconf);
-#endif
+#endif /* STRESS */
     }
 #ifndef STRESS
     printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
@@ -651,7 +652,7 @@ int main(int argc, char **argv)
     printf
       ("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
       tot, mdim, 3 * natoms, nconf, 6 * nconf);
-#endif
+#endif /* STRESS */
 
     /* calculate the rms errors for forces, energies, stress */
     rms[0] = 0;			/* rms rms for forces */
@@ -692,7 +693,7 @@ int main(int argc, char **argv)
       if (sweight != 0)
 	fprintf(outfile, "sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
 	  s_sum / tot * 100);
-#endif
+#endif /* STRESS */
       if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
 	fprintf
 	  (outfile,
@@ -709,7 +710,7 @@ int main(int argc, char **argv)
       if (sweight != 0)
 	fprintf(outfile, "stress \t%f\t(%f MPa)\n", rms[2],
 	  rms[2] / 160.2 * 1000);
-#endif
+#endif /* STRESS */
       fprintf(outfile, "\n");
       fprintf(outfile,
 	"\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
@@ -726,7 +727,7 @@ int main(int argc, char **argv)
     if (sweight != 0)
       printf("sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
 	s_sum / tot * 100);
-#endif
+#endif /* STRESS */
     if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
       printf
 	("\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
@@ -741,7 +742,7 @@ int main(int argc, char **argv)
 #ifdef STRESS
     if (sweight != 0)
       printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
-#endif
+#endif /* STRESS */
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
@@ -752,7 +753,7 @@ int main(int argc, char **argv)
   shutdown_mpi();
 #else
   free_all_pointers();
-#endif
+#endif /* MPI */
 
 #ifdef COULOMB
   time(&t_end);
