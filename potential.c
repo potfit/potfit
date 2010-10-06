@@ -2158,14 +2158,13 @@ void write_coulomb_table()
   apot_table_t *apt = &apot_table;
   if (ntypes == 2) {
     int   i, j;
-    real  value;
+    real  value, c1;
     FILE *outfile;
     char *filename1 = "Coulomb_00";
     char *filename2 = "Coulomb_01";
     char *filename3 = "Coulomb_11";
 
-    if (!opt)
-      apt->charge[1] = - apt->charge[0] / 2;
+    c1 = - apt->charge[0] / 2;
  
     outfile = fopen(filename1, "a");
     for (i = 0; i < natoms; i++) {
@@ -2179,7 +2178,7 @@ void write_coulomb_table()
     outfile = fopen(filename2, "a");
     for (i = 0; i < natoms; i++) {
       for (j = 0; j < atoms[i].n_neigh; j++) {
-	value = apt->charge[0] * apt->charge[1] * atoms[i].neigh[j].fnval_el;
+	value = apt->charge[0] * c1 * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
       }
     }
@@ -2188,7 +2187,7 @@ void write_coulomb_table()
     outfile = fopen(filename3, "a");
     for (i = 0; i < natoms; i++) {
       for (j = 0; j < atoms[i].n_neigh; j++) {
-	value = apt->charge[1] * apt->charge[1] * atoms[i].neigh[j].fnval_el;
+	value = c1 * c1 * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
       }
     }
