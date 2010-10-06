@@ -1,5 +1,6 @@
-devel-live
+devel-20101006
 + remove some redundant header files
++ many bugs in new optimization algorithm fixed
 
 devel-20101004
 + add exp_plus potential
