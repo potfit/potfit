@@ -132,7 +132,7 @@ void broadcast_params()
 #ifdef ADP
   blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* rdist */
   blklens[9] = 1;         typen[9] = MPI_STENS;   /* sqrdist */
-  blklens[10] = 1;        typen[10] = REAL;        /* u_val */
+  blklens[10] = 1;        typen[10] = REAL;       /* u_val */
   blklens[11] = 1;        typen[11] = REAL;       /* u_grad */
   blklens[12] = 1;        typen[12] = REAL;       /* w_val */
   blklens[13] = 1;        typen[13] = REAL;       /* w_grad */
@@ -145,7 +145,7 @@ void broadcast_params()
   blklens[11] = 1;        typen[11] = REAL;       /* ggrad_el */
   size += 4;
 #endif /* COULOMB */
- 
+
  /* *INDENT-ON* */
   MPI_Address(&testneigh.typ, displs);
   MPI_Address(&testneigh.nr, &displs[1]);

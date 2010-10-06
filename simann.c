@@ -40,7 +40,7 @@
 #define STEPVAR 2.0
 #define TEMPVAR 0.85
 #define KMAX 1000
-#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-(sqrreal(a))/2.)))
+#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-((a)*(a))/2.)))
 
 #ifdef APOT
 

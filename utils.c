@@ -34,11 +34,6 @@
 #include "potfit.h"
 #include "utils.h"
 
-inline real sqrreal(real x)
-{
-  return x * x;
-}
-
 int  *vect_int(long dim)
 {
   int  *vect, i;

@@ -71,7 +71,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
   if (f_right >= f_left) {
     x_center = x_left;
     f_center = f_left;
-    P_SWAP(p_center, p_left, p_temp);
+    SWAP(p_center, p_left, p_temp);
     x_left = -(x_right - x_center) / CGOLD + x_right;
     nb_eval++;
     for (j = 0; j < ndimtot; j++)
@@ -80,7 +80,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
   } else {
     x_center = x_right;
     f_center = f_right;
-    P_SWAP(p_center, p_right, p_temp);
+    SWAP(p_center, p_right, p_temp);
     x_right = (x_center - x_left) / CGOLD + x_left;
     nb_eval++;
     for (j = 0; j < ndimtot; j++)
@@ -105,10 +105,10 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	/* OK, go right! */
 	x_left = x_center;
 	f_left = f_center;
-	P_SWAP(p_left, p_center, p_temp);
+	SWAP(p_left, p_center, p_temp);
 	x_center = x_right;
 	f_center = f_right;
-	P_SWAP(p_center, p_right, p_temp);
+	SWAP(p_center, p_right, p_temp);
 	x_right = (x_center - x_left) / CGOLD + x_left;
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
@@ -136,10 +136,10 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 
       x_right = x_center;
       f_right = f_center;
-      P_SWAP(p_right, p_center, p_temp);
+      SWAP(p_right, p_center, p_temp);
       x_center = x_left;
       f_center = f_left;
-      P_SWAP(p_center, p_left, p_temp);
+      SWAP(p_center, p_left, p_temp);
       x_left = -(x_right - x_center) / CGOLD + x_right;
       nb_eval++;
       for (j = 0; j < ndimtot; j++)
@@ -164,10 +164,10 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	/* Search to the right */
 	x_left = x_center;
 	f_left = f_center;
-	P_SWAP(p_left, p_center, p_temp);
+	SWAP(p_left, p_center, p_temp);
 	x_center = x_right;
 	f_center = f_right;
-	P_SWAP(p_center, p_right, p_temp);
+	SWAP(p_center, p_right, p_temp);
 	x_right = (x_center - x_left) / CGOLD + x_left;
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)

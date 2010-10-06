@@ -37,8 +37,6 @@
 #define ZEPS 1.0e-9
 #define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
-#define P_SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
-
 extern real *xicom, *delcom;
 
 void  bracket(real *, real *, real *, real *, real *, real *, real *, real *);

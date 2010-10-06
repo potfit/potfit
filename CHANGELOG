@@ -1,11 +1,15 @@
-dipole-20101004
-+ new outputfiles: coulomb-potential-tables
+devel-20101006
++ remove some redundant header files
++ many bugs in new optimization algorithm fixed
 
 devel-20101004
 + add exp_plus potential
 + sorted potfit.h and added a few comments, read_apot_table -> read_pot_table0
 + differential evolution is now the default optimization algorithm,
 	simulated annealing can be used with simann compile option
+
+dipole-20101004
++ new outputfiles: coulomb-potential-tables
 
 devel-20101001
 + ADP is now available for tabulated potenials, format 3 or 4
