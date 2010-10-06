@@ -180,8 +180,9 @@ typedef struct {
 
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
-#define SQR(a)     ((a)*(a))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
+#define SQR(a)     ((a)*(a))
+#define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
 
 /****************************************************************
  *
@@ -193,7 +194,7 @@ typedef struct {
 #ifdef MAIN
 #define EXTERN			/* define Variables in main */
 #define INIT(data) =data	/* initialize data only in main */
-#else /* MAIN */
+#else
 #define EXTERN extern		/* declare them extern otherwise */
 #define INIT(data)		/* skip initialization otherwise */
 #endif /* MAIN */
@@ -291,10 +292,10 @@ EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
 
 /* potential tables */
 EXTERN pot_table_t opt_pot;	/* potential in the internal */
-					 /* representation used for  */
-					 /* minimisation */
+				/* representation used for  */
+				/* minimisation */
 EXTERN pot_table_t calc_pot;	/* the potential table used */
-					 /* for force calculations */
+				/* for force calculations */
 #ifdef APOT
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
 #endif /* APOT */
@@ -447,6 +448,15 @@ void  anneal(real *);
 
 /* powell least squares [powell_lsq.c] */
 void  powell_lsq(real *);
+int   gamma_init(real **, real **, real *, real *);
+int   gamma_update(real **, real, real, real *, real *, real *, int, int, int,
+  real);
+void  lineqsys_init(real **, real **, real *, real *, int, int);
+void  lineqsys_update(real **, real **, real *, real *, int, int, int);
+void  copy_matrix(real **, real **, int, int);
+void  copy_vector(real *, real *, int);
+void  matdotvec(real **, real *, real *, int, int);
+real  normalize_vector(real *, int);
 
 /* differential evolution [diff_evo.c] */
 void  init_population(real **, real *, real *);

@@ -566,7 +566,7 @@ void mishin_value(real r, real *p, real *f)
   vdPow(1, &z, &p[4], &power);
 #else
   power = fastpow(z, p[4]);
-#endif
+#endif /* ACML */
 
   *f = p[0] * power * temp * (1 + p[1] * temp) + p[2];
 }
@@ -603,7 +603,6 @@ void gen_lj_value(real r, real *p, real *f)
 
 void gljm_value(real r, real *p, real *f)
 {
-  real  temp = exp(-p[11] * r);
   real  x[3], y[3], power[3];
 
   x[0] = r / p[3];
@@ -618,7 +617,9 @@ void gljm_value(real r, real *p, real *f)
   power[0] = fastpow(x[0], y[0]);
   power[1] = fastpow(x[1], y[1]);
   power[2] = fastpow(x[2], y[2]);
-#endif
+#endif /* ACML */
+
+  real  temp = exp(-p[11] * power[2]);
 
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +

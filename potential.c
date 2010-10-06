@@ -712,8 +712,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
 #endif
 
-    /* set small begin to prevent division by zero-errors */
-    apt->begin[i] = 0.001;
+    /* set arbitrary begin */
+    apt->begin[i] = 1.;
 
     /* allocate memory for this parameter */
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
@@ -1642,6 +1642,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
 #ifdef APOT
+  char  msg[255];
   int   i, j, k, m, n, change;
   real  f, h = 0;
   real *list, *val;
@@ -1664,8 +1665,20 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    }
 	  }
 	  for (i = 0; i < calc_pot.ncols; i++) {
-	    if (smooth_pot[i])
+	    if (smooth_pot[i]) {
 	      h = *(val + 1 + apot_table.n_par[i]);
+	      if (h == 0) {
+		sprintf(msg,
+		  "The cutoff parameter for potential %d is ZERO.\n", i);
+		sprintf(msg,
+		  "%sPlease adjust the boundaries for this parameter\n", msg);
+		sprintf(msg,
+		  "%sThis will cause a segmentation fault! Aborting ...\n",
+		  msg);
+		error(msg);
+	      }
+	    }
+
 	    (*val) =
 	      apot_grad(calc_pot.begin[i], val + 2, apot_table.fvalue[i]);
 	    val += 2;
@@ -1684,6 +1697,10 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		*(xi_calc + k) =
 		  smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k],
 		  apot_table.end[i], h) : f;
+		if (isnan(f) || isnan(*(xi_calc + k))) {
+		  sprintf(msg, "Potential value was nan or inf. Aborting.\n");
+		  error(msg);
+		}
 	      }
 	    }
 	    val += apot_table.n_par[i];

@@ -33,7 +33,7 @@
 #include "utils.h"
 
 #define D (ndimtot+2)
-#define NP 10*D			/* number of total population */
+#define NP 20*D			/* number of total population */
 
 #define JR 0.6			/* jumping rate for opposite algorithm */
 
@@ -111,23 +111,28 @@ void opposite_check(real **P, real *costP, int init)
     tot_P = (real **)malloc(2 * NP * sizeof(real *));
     if (tot_P == NULL)
       error("Could not allocate memory for opposition vector!\n");
-    for (i = 0; i < 2 * NP; i++)
+    for (i = 0; i < 2 * NP; i++) {
       tot_P[i] = (real *)malloc(D * sizeof(real));
+      for (j = 0; j < D; j++)
+	tot_P[i][j] = 0.;
+    }
   }
   if (tot_cost == NULL)
     tot_cost = (real *)malloc(2 * NP * sizeof(real));
+  for (i = 0; i < 2 * NP; i++)
+    tot_cost[i] = 0.;
 
   if (!init) {
     for (i = 0; i < ndim; i++) {
-      minp[D] = 10e30;
-      maxp[D] = -10e30;
+      minp[i] = 10e30;
+      maxp[i] = -10e30;
     }
     for (i = 0; i < NP; i++) {
       for (j = 0; j < ndim; j++) {
-	if (P[i][j] < minp[j])
-	  minp[j] = P[i][j];
-	if (P[i][j] > maxp[j])
-	  maxp[j] = P[i][j];
+	if (P[i][idx[j]] < minp[j])
+	  minp[j] = P[i][idx[j]];
+	if (P[i][idx[j]] > maxp[j])
+	  maxp[j] = P[i][idx[j]];
       }
     }
   }
@@ -250,7 +255,7 @@ void diff_evo(real *xi)
   crit = max - min;
 
   printf("Loops\t\tOptimum\t\tAverage error sum\t\tMax-Min\n");
-  printf("%5d\t\t%12f\t%20f\t\t%.2e\n", count, min, avg / (NP), crit);
+  printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count, min, avg / (NP), crit);
   fflush(stdout);
 
   /* main differential evolution loop */
@@ -358,14 +363,16 @@ void diff_evo(real *xi)
     if (dsfmt_genrand_close_open(&dsfmt) < jumprate) {
       opposite_check(x2, cost, 0);
       jsteps++;
-      if (jsteps > 10)
+      if (jsteps > 10) {
 	jumprate *= 0.9;
+	jsteps = 0;
+      }
     }
 #endif /* APOT */
     avg = 0;
     for (i = 0; i < NP; i++)
       avg += cost[i];
-    printf("%5d\t\t%12f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP),
+    printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP),
       max - min);
     fflush(stdout);
     for (i = 0; i < NP; i++)

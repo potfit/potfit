@@ -161,7 +161,7 @@ real brent(real ax, real bx, real cx, real fbx, real tol,
 	f_v = f_w;
 	w = u;
 	f_w = f_u;
-	P_SWAP(p_w, p_u, p_temp);
+	SWAP(p_w, p_u, p_temp);
 	/* done */
       } else if (f_u <= f_v || v == z || v == w) {
 	v = u;
@@ -176,8 +176,8 @@ real brent(real ax, real bx, real cx, real fbx, real tol,
       }
       SHIFT(v, w, z, u);
       SHIFT(f_v, f_w, f_z, f_u);
-      P_SWAP(p_w, p_z, p_temp);
-      P_SWAP(p_z, p_u, p_temp);
+      SWAP(p_w, p_z, p_temp);
+      SWAP(p_z, p_u, p_temp);
       /* done */
     } else {
       error("Problems in Brent minimization");

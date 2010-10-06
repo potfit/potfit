@@ -1,3 +1,6 @@
+devel-live
++ remove some redundant header files
+
 devel-20101004
 + add exp_plus potential
 + sorted potfit.h and added a few comments, read_apot_table -> read_pot_table0

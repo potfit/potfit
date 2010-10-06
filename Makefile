@@ -339,7 +339,7 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= bracket.h  potfit.h  powell_lsq.h  \
+POTFITHDR   	= bracket.h  potfit.h \
 		  random-params.h  random.h  utils.h
 POTFITSRC 	= bracket.c brent.c config.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
@@ -358,7 +358,10 @@ POTFITSRC      += force_adp.c rescale.c
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-POTFITSRC      += functions.c chempot.c
+POTFITSRC      += functions.c
+ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+POTFITSRC      += chempot.c
+endif
 endif
 
 ifneq (,$(strip $(findstring simann,${MAKETARGET})))
@@ -386,13 +389,13 @@ endif
 
 INTERACTION = 0
 
-# PAIR
+# pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
 CFLAGS += -DPAIR
 INTERACTION = 1
 endif
 
-# EAM
+# embedded atom method (EAM) potentials
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
@@ -401,7 +404,7 @@ CFLAGS  += -DEAM
 INTERACTION = 1
 endif
 
-# ADP
+# angular dependent potentials (ADP)
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
