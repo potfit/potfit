@@ -1,3 +1,13 @@
+devel-20101018
++ fix strcpy bug with stresses
++ cutoff radius for embedding function is now read from potential file
++ energy and stress weight normalized:
+  if both are set to 1. then the energy is equally
+  weighted as the forces and as the stresses
+  (effectively the squared energy difference is multiplied by
+   eng_weight * 3 * atoms_in_configuration)
++ added timing information from dipole tree
+
 devel-20101006
 + remove some redundant header files
 + many bugs in new optimization algorithm fixed

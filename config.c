@@ -690,17 +690,17 @@ void read_config(char *filename)
     force_0[k++] = atoms[i].force.z;
   }
   for (i = 0; i < nconf; i++) {	/* then cohesive energies */
-    force_0[k++] = eweight * coheng[i];
+    force_0[k++] = coheng[i];
   }
 #ifdef STRESS
   for (i = 0; i < nconf; i++) {	/* then stresses */
     if (usestress[i]) {
-      force_0[k++] = sweight * stress[i].xx;
-      force_0[k++] = sweight * stress[i].yy;
-      force_0[k++] = sweight * stress[i].zz;
-      force_0[k++] = sweight * stress[i].xy;
-      force_0[k++] = sweight * stress[i].yz;
-      force_0[k++] = sweight * stress[i].zx;
+      force_0[k++] = stress[i].xx;
+      force_0[k++] = stress[i].yy;
+      force_0[k++] = stress[i].zz;
+      force_0[k++] = stress[i].xy;
+      force_0[k++] = stress[i].yz;
+      force_0[k++] = stress[i].zx;
     } else {
       for (j = 0; j < 6; j++)
 	force_0[k++] = 0.;

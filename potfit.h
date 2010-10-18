@@ -234,9 +234,9 @@ EXTERN int writeimd INIT(0);
 EXTERN real anneal_temp INIT(1.);
 #endif
 EXTERN real evo_threshold INIT(1.e-6);
-EXTERN real eweight INIT(100.);
+EXTERN real eweight INIT(1.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
-EXTERN real sweight INIT(10.);
+EXTERN real sweight INIT(1.);
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */

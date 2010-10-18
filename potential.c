@@ -682,38 +682,39 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par += apt->n_par[i];
 
     /* read cutoff */
-#if defined EAM || defined ADP
-    if ((i < (ntypes * (ntypes + 1) / 2 + ntypes))
-      || (i >= (ntypes * (ntypes + 1) / 2 + 2 * ntypes))) {
-#endif
-      if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
-	sprintf(msg,
-	  "Could not read cutoff for potential #%d in file %s\nAborting",
-	  i, filename);
-	error(msg);
-      }
-      if (strcmp(buffer, "cutoff") != 0) {
-	sprintf(msg,
-	  "No cutoff found for the %d. potential (%s) after \"type\" in file %s.\nAborting",
-	  i + 1, apt->names[i], filename);
-	error(msg);
-      }
-#if defined EAM || defined ADP
-    } else {
-      fgetpos(infile, &filepos);
-      fscanf(infile, "%s", buffer);
-      if (strncmp(buffer, "cutoff", 6) != 0)
-	fsetpos(infile, &filepos);
-#ifdef DEBUG
-      else
-	fprintf(stderr, "Ignoring cutoff for embedding function %d\n", i);
-#endif
-      apt->end[i] = 2;
+/*#if defined EAM || defined ADP*/
+/*    if ((i < (ntypes * (ntypes + 1) / 2 + ntypes))*/
+/*      || (i >= (ntypes * (ntypes + 1) / 2 + 2 * ntypes))) {*/
+/*#endif*/
+    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
+      sprintf(msg,
+	"Could not read cutoff for potential #%d in file %s\nAborting",
+	i, filename);
+      error(msg);
     }
-#endif
+    if (strcmp(buffer, "cutoff") != 0) {
+      sprintf(msg,
+	"No cutoff found for the %d. potential (%s) after \"type\" in file %s.\nAborting",
+	i + 1, apt->names[i], filename);
+      error(msg);
+    }
+/*#if defined EAM || defined ADP*/
+/*    } else {*/
+/*      fgetpos(infile, &filepos);*/
+/*      fscanf(infile, "%s", buffer);*/
+/*      if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {*/
+/*        fsetpos(infile, &filepos);*/
+/*#ifdef DEBUG*/
+/*      else*/
+/*        fprintf(stderr, "Ignoring cutoff for embedding function %d\n", i);*/
+/*#endif*/
+/*      apt->end[i] = 2.;*/
+/*    }*/
+/*    }*/
+/*#endif*/
 
-    /* set arbitrary begin */
-    apt->begin[i] = 1.;
+    /* set very small begin, needed for EAM embedding function */
+    apt->begin[i] = .0001;
 
     /* allocate memory for this parameter */
     apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
@@ -1665,7 +1666,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    }
 	  }
 	  for (i = 0; i < calc_pot.ncols; i++) {
-	    if (smooth_pot[i]) {
+	    if (smooth_pot[i] && !invar_pot[i]) {
 	      h = *(val + 1 + apot_table.n_par[i]);
 	      if (h == 0) {
 		sprintf(msg,
@@ -1690,7 +1691,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		list[j] = val[j];
 	      }
 	    }
-	    if (change || do_all) {
+	    if ((change || do_all) && !invar_pot[i]) {
 	      for (j = 0; j < APOT_STEPS; j++) {
 		k = i * APOT_STEPS + (i + 1) * 2 + j;
 		apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);

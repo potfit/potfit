@@ -33,7 +33,7 @@
 #include "utils.h"
 
 #define D (ndimtot+2)
-#define NP 20*D			/* number of total population */
+#define NP 15*D			/* number of total population */
 
 #define JR 0.6			/* jumping rate for opposite algorithm */
 
@@ -239,7 +239,6 @@ void diff_evo(real *xi)
 
   init_population(x1, xi, cost);
   for (i = 0; i < NP; i++) {
-/*    cost[i] = (*calc_forces) (x1[i], fxi, 0);*/
     if (cost[i] < min) {
       min = cost[i];
       for (j = 0; j < D; j++)
@@ -259,7 +258,7 @@ void diff_evo(real *xi)
   fflush(stdout);
 
   /* main differential evolution loop */
-  while (crit >= evo_threshold) {
+  while (crit >= evo_threshold && min >= evo_threshold) {
     max = 0;
     /* randomly create new populations */
     for (i = 0; i < NP; i++) {

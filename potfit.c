@@ -30,6 +30,7 @@
 
 #define MAIN
 
+#include <time.h>
 #include "potfit.h"
 #include "utils.h"
 #include "version.h"
@@ -76,14 +77,15 @@ void warning(char *msg)
 
 int main(int argc, char **argv)
 {
+  char  msg[255], file[255];
+  FILE *outfile;
   int   i, j;
-  real  tot, min, max, sqr;
+  real  tot, sqr, sqrw;
   real *force;
+  time_t t_begin, t_end;
 #if defined EAM || defined ADP
   real *totdens = NULL;
 #endif /* EAM || ADP */
-  char  msg[255], file[255];
-  FILE *outfile;
 
 #ifdef MPI
   init_mpi(argc, argv);
@@ -280,6 +282,7 @@ int main(int argc, char **argv)
     calc_forces(opt_pot.table, force, 0);
 #endif /* !APOT */
   } else {			/* root thread does minimization */
+    time(&t_begin);
     if (opt) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
@@ -294,6 +297,7 @@ int main(int argc, char **argv)
     } else {
       printf("\nOptimization disabled. Calculating errors.\n\n");
     }
+    time(&t_end);
 
 #ifndef APOT
     tot = calc_forces(calc_pot.table, force, 0);
@@ -383,8 +387,6 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
 
     /* prepare for error calculations */
-    max = 0.0;
-    min = 100000.0;
     real  f_sum = 0., e_sum = 0., s_sum = 0.;
 
     /* write force deviations */
@@ -401,21 +403,19 @@ int main(int argc, char **argv)
       printf("Forces:\n");
     }
     for (i = 0; i < 6; i++)
-      component[i] = (char *)malloc(2 * sizeof(char));
+      component[i] = (char *)malloc(3 * sizeof(char));
     strcpy(component[0], "x");
     strcpy(component[1], "y");
     strcpy(component[2], "z");
     for (i = 0; i < 3 * natoms; i++) {
       sqr = conf_weight[atoms[i / 3].conf] * SQR(force[i]);
       f_sum += sqr;
-      max = MAX(max, sqr);
-      min = MIN(min, sqr);
 #ifdef FWEIGHT
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
 	fprintf(outfile,
-	  "#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+	  "#conf:atom\ttype\tw*df^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
 	"%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3],
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile, "#conf:atom\ttype\t(w*df)^2\t\tf\t\tf0\t\tdf/f0\n");
+	fprintf(outfile, "#conf:atom\ttype\tw*df^2\t\tf\t\tf0\t\tdf/f0\n");
       fprintf(outfile, "%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3],
 	elements[atoms[i / 3].typ], sqr, force[i] + force_0[i], force_0[i],
@@ -458,29 +458,25 @@ int main(int argc, char **argv)
       if (write_output_files) {
 	fprintf(outfile, "# global energy weight w is %f\n", eweight);
 	fprintf(outfile,
-	  "# nr.\tconf_w\t(w*de)^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+	  "# nr.\tconf_w\tw*de^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
       } else {
 	fprintf(outfile, "energy weight is %f\n", eweight);
-	fprintf(outfile, "conf\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
+	fprintf(outfile, "conf\tconf_w\tw*de^2\te\t\te0\t\tde/e0\n");
       }
 
       for (i = 0; i < nconf; i++) {
 	sqr = conf_weight[i] * SQR(force[energy_p + i]);
-	e_sum += sqr;
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
+	sqrw = eweight * 3 * inconf[i] * sqr;
+	e_sum += sqrw;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
-	    conf_weight[i], sqr,
-	    (force[energy_p + i] + force_0[energy_p + i]) / eweight,
-	    force_0[energy_p + i] / eweight,
-	    fabs(force[energy_p + i]) / eweight,
-	    force[energy_p + i] / eweight,
-	    force[energy_p + i] / force_0[energy_p + i]);
+	    conf_weight[i], sqrw, force[energy_p + i] + force_0[energy_p + i],
+	    force_0[energy_p + i], fabs(force[energy_p + i]),
+	    force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
 	} else
 	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i],
-	    sqr, (force[energy_p + i] + force_0[energy_p + i]) / eweight,
-	    force_0[energy_p + i] / eweight,
+	    sqrw, force[energy_p + i] + force_0[energy_p + i],
+	    force_0[energy_p + i],
 	    force[energy_p + i] / force_0[energy_p + i]);
       }
       if (write_output_files) {
@@ -513,18 +509,16 @@ int main(int argc, char **argv)
       strcpy(component[4], "yz");
       strcpy(component[5], "zx");
 
-      fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\t\ts\t\ts0\t\tds/s0\n");
+      fprintf(outfile, "#\tconf_w\t\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
 	sqr = conf_weight[(i - stress_p) / 6] * SQR(force[i]);
-	s_sum += sqr;
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
-	fprintf(outfile, "%3d-%s\t%10.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
+	sqrw = sweight * inconf[(i - stress_p) / 6] / 2 * sqr;
+	s_sum += sqrw;
+	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
-	  conf_weight[(i - stress_p) / 6], sqr,
-	  (force[i] + force_0[i]) / sweight, force_0[i] / sweight,
-	  force[i] / force_0[i]);
+	  conf_weight[(i - stress_p) / 6], sqrw, force[i] + force_0[i],
+	  force_0[i], force[i] / force_0[i]);
       }
       if (write_output_files) {
 	printf("Stress data written to \t\t\t%s\n", file);
@@ -553,8 +547,6 @@ int main(int argc, char **argv)
     }
     for (i = limit_p; i < dummy_p; i++) {
       sqr = SQR(force[i]);
-      max = MAX(max, sqr);
-      min = MIN(min, sqr);
       if (write_output_files)
 	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
 	  force[i] + force_0[i]);
@@ -569,17 +561,10 @@ int main(int argc, char **argv)
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
 	sqr = SQR(force[i]);
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p],
 	  zero, sqr, zero, force[i]);
 #else
-	sqr = SQR(force[i]);
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
 	sqr = SQR(force[i + ntypes]);
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
 	  SQR(force[i]), force[i + ntypes], force[i]);
 #endif
@@ -597,8 +582,6 @@ int main(int argc, char **argv)
       fprintf(outfile, "Dummy Constraints\n");
       for (i = 0; i < 2 * ntypes; i++) {
 	sqr = SQR(force[i]);
-	max = MAX(max, sqr);
-	min = MIN(min, sqr);
 	fprintf(outfile, "%d %f %f %f %f\n", i - dummy_p, sqr,
 	  force[dummy_p + i] + force_0[dummy_p + i],
 	  force_0[dummy_p + i], force[dummy_p + i] / force_0[dummy_p + i]);
@@ -650,7 +633,7 @@ int main(int argc, char **argv)
     /* energies */
     if (eweight != 0) {
       for (i = 0; i < nconf; i++)
-	rms[1] += SQR(force[3 * natoms + i] / eweight);
+	rms[1] += SQR(force[3 * natoms + i]);
       if (isnan(rms[1]))
 	rms[1] = 0;
       rms[1] = sqrt(rms[1] / nconf);
@@ -660,7 +643,7 @@ int main(int argc, char **argv)
     if (sweight != 0) {
       for (i = 0; i < nconf; i++)
 	for (j = 0; j < 6; j++)
-	  rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j] / sweight);
+	  rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j]);
       if (isnan(rms[2]))
 	rms[2] = 0;
       rms[2] = sqrt(rms[2] / (6 * nconf));
@@ -737,5 +720,10 @@ int main(int argc, char **argv)
 #else
   free_all_pointers();
 #endif /* MPI */
+
+  if (opt && myid === 0)
+    printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
+      (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
+	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
   return 0;
 }
