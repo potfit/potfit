@@ -29,13 +29,14 @@
  *
  ****************************************************************/
 
-/******************************************************************************
-*
-* This utility will optimize a parameter vector xi[N] to minimize the sum of
-* squares U=sum_{i=1..M}(f_i(xi)-F_i)^2, where F_i is an array passed to the
-* utility, and f_i(xi) is a function of the vector xi.
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  This utility will optimize a parameter vector xi[N] to
+ *  minimize the sum of squares U=sum_{i=1..M}(f_i(xi)-F_i)^2,
+ *  where F_i is an array passed to the utility, and f_i(xi)
+ *  is a function of the vector xi.
+ *
+ ****************************************************************/
 
 #ifdef ACML
 #include <acml.h>
@@ -45,12 +46,10 @@
 #include "potfit.h"
 #include "utils.h"
 #include "bracket.h"
-#include "powell_lsq.h"
 
 #define EPS .0001
 #define PRECISION 1.E-7
-/* Well, almost nothing */
-#define NOTHING 1.E-12
+#define NOTHING 1.E-12		/* Well, almost nothing */
 #define INNERLOOPS 801
 #define TOOBIG 10000
 
@@ -81,7 +80,7 @@ void powell_lsq(real *xi)
   real  temp, temp2;		/* as the name indicates: temporary vars */
 #ifdef APOT
   int   itemp, itemp2;		/* the same for integer */
-#endif
+#endif /* APOT */
   real  ferror, berror;		/* forward/backward error estimates */
   static char errmsg[256];	/* Error message */
   FILE *ff;			/* Exit flagfile */
@@ -115,7 +114,7 @@ void powell_lsq(real *xi)
   printf("%d %f %f %f %f %f %f %d\n",
     m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
   fflush(stdout);
-#endif
+#endif /* APOT */
 
   if (F < NOTHING) {
     printf("Error already too small to optimize, aborting ...\n");
@@ -127,7 +126,7 @@ void powell_lsq(real *xi)
 #ifdef APOT
   printf("loops\t\terror_sum\tforce calculations\n");
   printf("%5d\t%17.6f\t%6d\n", m, F, fcalls);
-#endif
+#endif /* APOT */
 
   do {				/*outer loop, includes recalculating gamma */
     m = 0;
@@ -165,7 +164,7 @@ void powell_lsq(real *xi)
 	  "F does not depend on the %d. parameter (%s) of the %d. potential (%s).\nFit impossible!\n",
 	  itemp2 + 1, apot_table.param_name[itemp][itemp2],
 	  itemp + 1, apot_table.names[itemp]);
-#endif
+#endif /* !APOT */
 	warning(errmsg);
 	break;
       }
@@ -184,7 +183,7 @@ void powell_lsq(real *xi)
       dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
 	&les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
 	&cond, &ferror, &berror, &i);
-#else /* ACML */
+#else
       dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim,
 	&les_inverse[0][0], &ndim, perm_indx, p, &ndim, q, &ndim,
 	&cond, &ferror, &berror, work, &worksize, iwork, &i);
@@ -231,7 +230,7 @@ void powell_lsq(real *xi)
 	    apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
 	    xi[idx[i]];
 	}
-#endif
+#endif /* !APOT */
       }
       if (breakflag)
 	break;
@@ -245,7 +244,7 @@ void powell_lsq(real *xi)
 
 #ifdef DEBUG
       printf("%f %6g %f %f %d\n", F, cond, ferror, berror, i);
-#endif
+#endif /* DEBUG */
 
       /* (d) if error estimate is too high after minimization
          in 5 directions: restart outer loop */
@@ -352,7 +351,7 @@ void powell_lsq(real *xi)
   for (i = 0; i < ndim; i++)
     apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
       xi[idx[i]];
-#endif
+#endif /* APOT */
 
   /* Free memory */
   free_vect_real(delta);

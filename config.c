@@ -31,18 +31,6 @@
 #include "potfit.h"
 #include "utils.h"
 
-/* vector product */
-vector vec_prod(vector u, vector v)
-{
-  vector w;
-
-  w.x = u.y * v.z - u.z * v.y;
-  w.y = u.z * v.x - u.x * v.z;
-  w.z = u.x * v.y - u.y * v.x;
-
-  return w;
-}
-
 /****************************************************************
  *
  *  compute box transformation matrix
@@ -702,17 +690,17 @@ void read_config(char *filename)
     force_0[k++] = atoms[i].force.z;
   }
   for (i = 0; i < nconf; i++) {	/* then cohesive energies */
-    force_0[k++] = eweight * coheng[i];
+    force_0[k++] = coheng[i];
   }
 #ifdef STRESS
   for (i = 0; i < nconf; i++) {	/* then stresses */
     if (usestress[i]) {
-      force_0[k++] = sweight * stress[i].xx;
-      force_0[k++] = sweight * stress[i].yy;
-      force_0[k++] = sweight * stress[i].zz;
-      force_0[k++] = sweight * stress[i].xy;
-      force_0[k++] = sweight * stress[i].yz;
-      force_0[k++] = sweight * stress[i].zx;
+      force_0[k++] = stress[i].xx;
+      force_0[k++] = stress[i].yy;
+      force_0[k++] = stress[i].zz;
+      force_0[k++] = stress[i].xy;
+      force_0[k++] = stress[i].yz;
+      force_0[k++] = stress[i].zx;
     } else {
       for (j = 0; j < 6; j++)
 	force_0[k++] = 0.;
@@ -882,7 +870,7 @@ void read_config(char *filename)
   printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n",
     nconf, w_force, w_stress);
-  printf("  with a total of %d atoms (", natoms);
+  printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
       printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i],
@@ -894,7 +882,7 @@ void read_config(char *filename)
       printf(", ");
   }
 
-  printf(")\n  from file \"%s\".\n", filename);
+  printf(")\nfrom file \"%s\".\n\n", filename);
   if (sh_dist) {
     sprintf(msg,
       "Distances too short, last occurence conf %d, see above for details",
@@ -908,11 +896,11 @@ void read_config(char *filename)
 
 /****************************************************************
  *
- * recalculate the slots of the atoms for tabulated potential
+ * recalculate the slots of the atoms for analytic potential
  *
  ****************************************************************/
 
-void update_slots()
+void update_slots(void)
 {
   int   i, j;
   int   col0;			/* pair potential part */

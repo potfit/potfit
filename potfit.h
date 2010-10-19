@@ -38,13 +38,18 @@
 #ifdef MPI
 #include <mpi.h>
 #define REAL MPI_DOUBLE
-#endif
+#endif /* MPI */
 
 #include "random.h"
 
+#ifdef APOT
+#define APOT_STEPS 200		/* number of sampling points for analytic pot */
+#define APOT_PUNISH 10e6	/* general value for apot punishments */
+#endif
+
 #if defined EAM || defined ADP
 #define DUMMY_WEIGHT 100.
-#endif
+#endif /* EAM || ADP */
 
 #define FORCE_EPS .1
 
@@ -54,7 +59,7 @@
 #define SLOTS 2
 #elif defined ADP
 #define SLOTS 4
-#endif
+#endif /* PAIR */
 
 /****************************************************************
  *
@@ -99,7 +104,7 @@ typedef struct {
   sym_tens sqrdist;		/* real squared distance */
   real  u_val, u_grad;		/* value and gradient of u(r) */
   real  w_val, w_grad;		/* value and gradient of w(r) */
-#endif
+#endif				/* ADP */
 } neigh_t;
 
 typedef struct {
@@ -112,12 +117,12 @@ typedef struct {
 #if defined EAM || defined ADP
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
-#endif
+#endif				/* EAM || ADP */
 #ifdef ADP
   vector mu;
   sym_tens lambda;
   real  nu;
-#endif
+#endif				/* ADP */
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
@@ -167,22 +172,23 @@ typedef struct {
 
 #ifdef PAIR
   real *chempot;		/* chemical potentials */
-#endif
+#endif				/* PAIR */
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
-#endif
+#endif /* APOT */
 
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
-#define SQR(a)     ((a)*(a))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
+#define SQR(a)     ((a)*(a))
+#define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
 
-/******************************************************************************
-*
-*  global variables
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  global variables
+ *
+ ****************************************************************/
 
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
@@ -191,7 +197,7 @@ typedef struct {
 #else
 #define EXTERN extern		/* declare them extern otherwise */
 #define INIT(data)		/* skip initialization otherwise */
-#endif
+#endif /* MAIN */
 
 /* system variables */
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
@@ -202,7 +208,7 @@ EXTERN MPI_Datatype MPI_NEIGH;
 EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
 EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VEKTOR;
-#endif
+#endif /* MPI */
 
 /* general settings (from parameter file) */
 EXTERN char config[255] INIT("\0");	/* file with atom configuration */
@@ -224,18 +230,19 @@ EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
 EXTERN int writeimd INIT(0);
+#ifdef SIMANN
 EXTERN real anneal_temp INIT(1.);
-EXTERN real eweight INIT(100.);
+#endif
+EXTERN real evo_threshold INIT(1.e-6);
+EXTERN real eweight INIT(1.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
-EXTERN real sweight INIT(10.);
+EXTERN real sweight INIT(1.);
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
+EXTERN real apot_punish_value INIT(0.);
 EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
-#endif
-#ifdef EVO
-EXTERN real evo_width INIT(1.);
-#endif
+#endif /* APOT */
 
 /* configurations */
 EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
@@ -273,7 +280,6 @@ EXTERN int format INIT(-1);	/* format of potential table */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
-EXTERN int *pot_index INIT(NULL);	/* index to access i*n+j from i*(i+1)/2 */
 EXTERN int *smooth_pot INIT(NULL);
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
 EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
@@ -282,24 +288,24 @@ EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
 EXTERN int have_globals INIT(0);	/* do we have global parameters? */
 EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
 EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
-#endif
+#endif /* APOT */
 
 /* potential tables */
 EXTERN pot_table_t opt_pot;	/* potential in the internal */
-					 /* representation used for  */
-					 /* minimisation */
+				/* representation used for  */
+				/* minimisation */
 EXTERN pot_table_t calc_pot;	/* the potential table used */
-					 /* for force calculations */
+				/* for force calculations */
 #ifdef APOT
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
-#endif
+#endif /* APOT */
 
 /* optimization variables */
 EXTERN int fcalls INIT(0);
 EXTERN int mdim INIT(0);
 EXTERN int ndim INIT(0);
 EXTERN int ndimtot INIT(0);
-EXTERN int paircol INIT(0);	/* How manc columns for pair pot. */
+EXTERN int paircol INIT(0);	/* How manc columns for pair potential */
 EXTERN real d_eps INIT(0.);
 
 /* general variables */
@@ -315,11 +321,11 @@ EXTERN int stress_p INIT(0);	/* pointer to stresses */
 #if defined EAM || defined ADP
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
-#endif
+#endif /* EAM || ADP */
 #ifdef APOT
 EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints */
 EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
-#endif
+#endif /* APOT */
 
 /* memory management */
 EXTERN char **pointer_names INIT(NULL);
@@ -332,7 +338,7 @@ EXTERN int *atom_dist INIT(NULL);
 EXTERN int *atom_len INIT(NULL);
 EXTERN int *conf_dist INIT(NULL);
 EXTERN int *conf_len INIT(NULL);
-#endif
+#endif /* MPI */
 
 /* misc. stuff - has to belong somewhere */
 EXTERN int *idx INIT(NULL);
@@ -343,11 +349,11 @@ EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
 
-/******************************************************************************
-*
-*  global function pointers
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  global function pointers
+ *
+ ****************************************************************/
 
 EXTERN real (*calc_forces) (real *, real *, int);
 EXTERN real (*splint) (pot_table_t *, real *, int, real);
@@ -357,131 +363,151 @@ EXTERN real (*splint_comb) (pot_table_t *, real *, int, real, real *);
 EXTERN void (*write_pot_table) (apot_table_t *, char *);
 #else
 EXTERN void (*write_pot_table) (pot_table_t *, char *);
-#endif
+#endif /* APOT */
 #ifdef PARABEL
 EXTERN real (*parab) (pot_table_t *, real *, int, real);
 EXTERN real (*parab_comb) (pot_table_t *, real *, int, real, real *);
 EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 #endif /* PARABEL */
 
-/******************************************************************************
-*
-*  function prototypes
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  function prototypes
+ *
+ ****************************************************************/
 
+/* general functions [potfit.c] */
 void  error(char *);
 void  warning(char *);
+
+/* reading parameter file [param.c] */
 int   getparam(char *, void *, PARAMTYPE, int, int);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
-#ifdef APOT
-void  read_apot_table(pot_table_t *pt, apot_table_t *apt, char *filename,
-  FILE *infile);
-void  write_apot_table(apot_table_t *, char *);
-#endif
+
+/* reading potential file [potential.c] */
 void  read_pot_table(pot_table_t *, char *);
-void  read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
-  char *filename, FILE *infile);
-void  read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
-  char *filename, FILE *infile);
-void  init_calc_table(pot_table_t *optt, pot_table_t *calct);
-void  update_calc_table(real *xi_opt, real *xi_calc, int);
+#ifdef APOT
+void  read_pot_table0(pot_table_t *, apot_table_t *, char *, FILE *);
+#endif /* APOT */
+void  read_pot_table3(pot_table_t *, int, int, int *, char *, FILE *);
+void  read_pot_table4(pot_table_t *, int, int, int *, char *, FILE *);
+
+/* calculating potential tables [potential.c] */
+void  init_calc_table(pot_table_t *, pot_table_t *);
+void  update_calc_table(real *, real *, int);
+
+/* parabolic interpolation [potential.c] */
+#ifdef PARABEL
+real  parab_comb_ed(pot_table_t *, real *, int, real, real *);
+real  parab_grad_ed(pot_table_t *, real *, int, real);
+real  parab_ed(pot_table_t *, real *, int, real);
+real  parab_comb_ne(pot_table_t *, real *, int, real, real *);
+real  parab_grad_ne(pot_table_t *, real *, int, real);
+real  parab_ne(pot_table_t *, real *, int, real);
+#endif /* PARABEL */
+
+/* writing potentials to files [potential.c] */
+#ifdef APOT
+void  write_pot_table0(apot_table_t *, char *);
+#endif /* APOT */
 void  write_pot_table3(pot_table_t *, char *);
 void  write_pot_table4(pot_table_t *, char *);
 void  write_pot_table_imd(pot_table_t *, char *);
 void  write_plotpot_pair(pot_table_t *, char *);
 void  write_altplot_pair(pot_table_t *, char *);
-real  normdist(void);
-real  grad2(pot_table_t *, real *, int, real);
-real  grad3(pot_table_t *, real *, int, real);
-real  pot2(pot_table_t *, int, real);
-real  pot3(pot_table_t *, int, real);
-vector vec_prod(vector, vector);
+#ifdef PDIST
+void  write_pairdist(pot_table_t *, char *);
+#endif /* PDIST */
+
+/* read atomic configuration file [config.c] */
 real  make_box(void);
 void  read_config(char *);
-void  read_config2(char *);
+#ifdef APOT
+void  update_slots(void);	/* new slots */
+#endif /* APOT */
+
+/* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
 real  calc_forces_pair(real *, real *, int);
 #elif defined EAM
 real  calc_forces_eam(real *, real *, int);
 #elif defined ADP
 real  calc_forces_adp(real *, real *, int);
-#endif
+#endif /* PAIR */
+
+/* simulated annealing [simann.c] */
+#ifdef SIMANN
 #ifdef APOT
 void  randomize_parameter(int, real *, real *);
 #else
 void  makebump(real *, real, real, int);
-#endif
-void  anneal(real *xi);
-void  powell_lsq(real *xi);
-#if defined EVO
-real *calc_vect(real *x);
-void  init_population(real **pop, real *xi, int size, real scale);
-void  diff_evo(real *xi);
-#endif
-void  spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[]);
-real  splint_ed(pot_table_t *pt, real *xi, int col, real r);
-real  splint_grad_ed(pot_table_t *pt, real *xi, int col, real r);
-real  splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real  splint_dir(pot_table_t *pt, real *xi, int k, real b, real step);
-real  splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
-  real *grad);
-real  splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step);
-void  spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[]);
-real  splint_ne(pot_table_t *pt, real *xi, int col, real r);
-real  splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real  splint_grad_ne(pot_table_t *pt, real *xi, int col, real r);
+#endif /* APOT */
+void  anneal(real *);
+#endif /* SIMANN */
 
-#ifdef PARABEL
-real  parab_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real  parab_grad_ed(pot_table_t *pt, real *xi, int col, real r);
-real  parab_ed(pot_table_t *pt, real *xi, int col, real r);
-real  parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad);
-real  parab_grad_ne(pot_table_t *pt, real *xi, int col, real r);
-real  parab_ne(pot_table_t *pt, real *xi, int col, real r);
-#endif
+/* powell least squares [powell_lsq.c] */
+void  powell_lsq(real *);
+int   gamma_init(real **, real **, real *, real *);
+int   gamma_update(real **, real, real, real *, real *, real *, int, int, int,
+  real);
+void  lineqsys_init(real **, real **, real *, real *, int, int);
+void  lineqsys_update(real **, real **, real *, real *, int, int, int);
+void  copy_matrix(real **, real **, int, int);
+void  copy_vector(real *, real *, int);
+void  matdotvec(real **, real *, real *, int, int);
+real  normalize_vector(real *, int);
+
+/* differential evolution [diff_evo.c] */
+void  init_population(real **, real *, real *);
+#ifdef APOT
+void  opposite_check(real **, real *, int);
+#endif /* APOT */
+void  diff_evo(real *);
+
+/* spline interpolation [splines.c] */
+void  spline_ed(real, real *, int, real, real, real *);
+real  splint_ed(pot_table_t *, real *, int, real);
+real  splint_grad_ed(pot_table_t *, real *, int, real);
+real  splint_comb_ed(pot_table_t *, real *, int, real, real *);
+real  splint_dir(pot_table_t *, real *, int, real, real);
+real  splint_comb_dir(pot_table_t *, real *, int, real, real, real *);
+real  splint_grad_dir(pot_table_t *, real *, int, real, real);
+void  spline_ne(real *, real *, int, real, real, real *);
+real  splint_ne(pot_table_t *, real *, int, real);
+real  splint_comb_ne(pot_table_t *, real *, int, real, real *);
+real  splint_grad_ne(pot_table_t *, real *, int, real);
+
+/* rescaling functions for EAM [rescale.c] */
 #ifdef EAM
-real  rescale(pot_table_t *pt, real upper, int flag);
-void  embed_shift(pot_table_t *pt);
-#endif
+real  rescale(pot_table_t *, real, int);
+void  embed_shift(pot_table_t *);
+#endif /* EAM */
+
+/* MPI parallelization [mpi_utils.c] */
 #ifdef MPI
-void  init_mpi(int argc, char **argv);
+void  init_mpi(int, char **);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
-void  debug_mpi(int i);
-void  broadcast_neighbors();
-void  potsync();
-#endif
-#ifdef PDIST
-void  write_pairdist(pot_table_t *pt, char *filename);
-#endif
-
-/******************************************************************************
-*
-*  additional stuff for analytic potentials
-*
-******************************************************************************/
+void  debug_mpi(int);
+void  broadcast_neighbors(void);
+void  potsync(void);
+#endif /* MPI */
 
 #ifdef APOT
-
-#define APOT_STEPS 200		/* number of sampling points for analytic pot */
-#define APOT_PUNISH 10e6	/* general value for apot punishments */
-
-real apot_punish_value INIT(0.);
-
-/* functions.c */
+/* analytic functions [functions.c] */
 int   apot_parameters(char *);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(real *);
 real  apot_punish(real *, real *);
 real  apot_grad(real, real *, void (*function) (real, real *, real *));
-
-/* potential.c */
-void  update_slots();		/* new slots for smooth cutoff */
+real  cutoff(real, real, real);
+#ifdef DEBUG
+void  debug_apot();
+#endif /* DEBUG */
 
 #ifdef PAIR
-/* chempot.c */
+/* chemical potential [chempot.c] */
 int   swap_chem_pot(int, int);
 int   sort_chem_pot_2d(void);
 real  chemical_potential_1d(int *, real *);
@@ -489,16 +515,9 @@ real  chemical_potential_2d(int *, real *);
 real  chemical_potential_3d(int *, real *, int);
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
-#endif
+#endif /* PAIR */
 
-/* smooth.c */
-real  cutoff(real, real, real);
-
-#ifdef DEBUG
-void  debug_apot();
-#endif /* DEBUG */
-
-/* actual functions for different potentials */
+/* actual functions for different potentials [functions.c] */
 
 void  lj_value(real, real *, real *);
 void  eopp_value(real, real *, real *);
@@ -521,6 +540,10 @@ void  double_morse_value(real, real *, real *);
 void  double_exp_value(real, real *, real *);
 void  poly_5_value(real, real *, real *);
 void  cbb_value(real, real *, real *);
+void  exp_plus_value(real, real *, real *);
+void  mishin_value(real, real *, real *);
+void  gen_lj_value(real, real *, real *);
+void  gljm_value(real, real *, real *);
 
 /* template for new potential function called newpot */
 

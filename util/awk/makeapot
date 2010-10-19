@@ -206,6 +206,11 @@ function write_pot(name)
 	printf "beta %s",valminmax(1.6,1.4,1.8);
 	printf "r_0 %s",valminmax(2.5,2.25,2.75);
     }
+    else if (name=="exp_plus") {
+        printf "d1 %s",valminmax(1,0,10);
+	printf "d2 %s",valminmax(1,-10,10);
+	printf "d3 %s",valminmax(0,-2,2);
+    }
     if (do_smooth)
         if (global_co)
 	    printf "h!\n";

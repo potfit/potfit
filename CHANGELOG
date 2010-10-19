@@ -1,3 +1,31 @@
+devel-20101018
++ fix strcpy bug with stresses
++ cutoff radius for embedding function is now read from potential file
++ energy and stress weight normalized:
+  if both are set to 1. then the energy is equally
+  weighted as the forces and as the stresses
+  (effectively the squared energy difference is multiplied by
+   eng_weight * 3 * atoms_in_configuration)
++ added timing information from dipole tree
+
+devel-20101006
++ remove some redundant header files
++ many bugs in new optimization algorithm fixed
+
+devel-20101004
++ add exp_plus potential
++ sorted potfit.h and added a few comments, read_apot_table -> read_pot_table0
++ differential evolution is now the default optimization algorithm,
+	simulated annealing can be used with simann compile option
+
+devel-20101001
++ ADP is now available for tabulated potenials, format 3 or 4
++ [APOT] check potentials for nan
++ added NDEBUG flag, enabling the use of assert's for debugging
++ [APOT] add mishin adp potentials, not quite easy to handle
++ implemented self-adjusting control parameters for diff_evo
++ new stopping criterion for diff_evo, replaced evo_width by evo_threshold
+
 --> POTFIT-20100928 released
 
 trunk-20100928
