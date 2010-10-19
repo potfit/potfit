@@ -467,6 +467,12 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	      &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+#ifdef APOT
+/*            printf("Extrapolating F to the left:\n");*/
+/*            printf("rho %f begin %f\n",atom->rho,calc_pot.begin[col_F]);*/
+	    forces[limit_p + h] += DUMMY_WEIGHT *
+	      10. * SQR(calc_pot.begin[col_F] - atom->rho);
+#endif
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 	    /* and right */
 	    rho_val =
@@ -474,9 +480,13 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
-	  }
-	  /* and in-between */
-	  else {
+#ifdef APOT
+/*            printf("Extrapolating F to the right:\n");*/
+/*            printf("rho %f begin %f\n",atom->rho,calc_pot.end[col_F]);*/
+	    forces[limit_p + h] += DUMMY_WEIGHT *
+	      10. * SQR(atom->rho - calc_pot.end[col_F]);
+#endif
+	  } else {		/* and in-between */
 	    forces[energy_p + h] +=
 	      splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
@@ -692,16 +702,20 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 
 	/* use forces */
 	/* energy contributions */
-	forces[energy_p + h] *= eweight / (real)inconf[h];
+	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
+	tmpsum +=
+	  eweight * conf_weight[h] * 3 * inconf[h] * SQR(forces[energy_p +
+	    h]);
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
+	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
+	    tmpsum +=
+	      sweight * conf_weight[h] * inconf[h] / 2 * SQR(forces[stress_p +
+		6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
