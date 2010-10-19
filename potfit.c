@@ -721,7 +721,7 @@ int main(int argc, char **argv)
   free_all_pointers();
 #endif /* MPI */
 
-  if (opt && myid === 0)
+  if (opt && myid == 0)
     printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
       (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
 	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
