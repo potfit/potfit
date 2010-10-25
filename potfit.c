@@ -418,7 +418,7 @@ int main(int argc, char **argv)
       printf("Forces:\n");
     }
     for (i = 0; i < 6; i++)
-      component[i] = (char *)malloc(2 * sizeof(char));
+      component[i] = (char *)malloc(3 * sizeof(char));
     strcpy(component[0], "x");
     strcpy(component[1], "y");
     strcpy(component[2], "z");

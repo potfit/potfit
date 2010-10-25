@@ -1917,7 +1917,17 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		  smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k],
 		  apot_table.end[i], h) : f;
 		if (isnan(f) || isnan(*(xi_calc + k))) {
-		  sprintf(msg, "Potential value was nan or inf. Aborting.\n");
+		  (void)snprintf(msg, 43,
+				 "Aborting.");
+	
+		  (void)fprintf(stderr, "\nPotential value was nan or inf.\nThis occured in potential %d (%s)\n",
+				i, apot_table.names[i]);
+		  (void)fprintf(stderr,
+				"at distance r=%f with the parameters:\n",
+				calc_pot.xcoord[k]);
+		  for (m = 0; m < apot_table.n_par[i]; m++)
+		    (void)fprintf(stderr, "%d %f\n",
+				  apot_table.param_name[i][m], *(val + m));
 		  error(msg);
 		}
 	      }

@@ -1,3 +1,6 @@
+dipole-20101025
++ COULOMB and DIPOLE are now working with mpi
+
 devel-20101006
 + remove some redundant header files
 + many bugs in new optimization algorithm fixed

@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Philipp Beck
+ * Copyright 2010 Philipp Beck
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -232,25 +232,14 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 #ifdef DIPOLE
 	/* reset dipoles and fields: LOOP Z E R O */
-	for (i = cnfstart[h]; i < cnfstart[h] + inconf[h]; i++) {
-	  atoms[i].E_stat.x = 0.;
-	  atoms[i].E_stat.y = 0.;
-	  atoms[i].E_stat.z = 0.;
-	  atoms[i].p_sr.x = 0.;
-	  atoms[i].p_sr.y = 0.;
-	  atoms[i].p_sr.z = 0.;
-	  //atoms[i].E_ind.x = 0.;
-	  //atoms[i].E_ind.y = 0.;
-	  //atoms[i].E_ind.z = 0.;
-	  //atoms[i].p_ind.x = 0.;
-	  //atoms[i].p_ind.y = 0.;
-	  //atoms[i].p_ind.z = 0.;
-	  //atoms[i].E_old.x = 0.;
-	  //atoms[i].E_old.y = 0.;
-	  //atoms[i].E_old.z = 0.;
-	  //atoms[i].E_tot.x = 0.;
-	  //atoms[i].E_tot.y = 0.;
-	  //atoms[i].E_tot.z = 0.;
+	for (i = 0; i < inconf[h]; i++) {
+	  atom = conf_atoms + i + cnfstart[h] - firstatom;
+	  atom->E_stat.x = 0.;
+	  atom->E_stat.y = 0.;
+	  atom->E_stat.z = 0.;
+	  atom->p_sr.x = 0.;
+	  atom->p_sr.y = 0.;
+	  atom->p_sr.z = 0.;
 	}
 #endif
 
@@ -395,9 +384,10 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      atom->E_stat.x += neigh->dist.x * neigh->r * grad_i;
 	      atom->E_stat.y += neigh->dist.y * neigh->r * grad_i;
 	      atom->E_stat.z += neigh->dist.z * neigh->r * grad_i;
-	      atoms[neigh->nr].E_stat.x -= neigh->dist.x * neigh->r * grad_j;
-	      atoms[neigh->nr].E_stat.y -= neigh->dist.y * neigh->r * grad_j;
-	      atoms[neigh->nr].E_stat.z -= neigh->dist.z * neigh->r * grad_j;
+
+	      conf_atoms[neigh->nr - firstatom].E_stat.x -= neigh->dist.x * neigh->r * grad_j;
+	      conf_atoms[neigh->nr - firstatom].E_stat.y -= neigh->dist.y * neigh->r * grad_j;
+	      conf_atoms[neigh->nr - firstatom].E_stat.z -= neigh->dist.z * neigh->r * grad_j;
 
 	      /* calculate short-range dipoles */
 	      if (dp_alpha[typ1] && dp_b[col] && dp_c[col]) {
@@ -412,11 +402,11 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		p_sr_tail = grad_tail * neigh->r *
 		  shortrange_value(neigh->r, dp_alpha[typ2], dp_b[col],
 		  dp_c[col]);
-		atoms[neigh->nr].p_sr.x -=
+		conf_atoms[neigh->nr - firstatom].p_sr.x -=
 		  charge[typ1] * neigh->dist.x * p_sr_tail;
-		atoms[neigh->nr].p_sr.y -=
+		conf_atoms[neigh->nr - firstatom].p_sr.y -=
 		  charge[typ1] * neigh->dist.y * p_sr_tail;
-		atoms[neigh->nr].p_sr.z -=
+		conf_atoms[neigh->nr - firstatom].p_sr.z -=
 		  charge[typ1] * neigh->dist.z * p_sr_tail;
 	      }
 #endif /* DIPOLE */
@@ -482,21 +472,21 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      if (neigh->r < dp_cut && dp_alpha[typ1] && dp_alpha[typ2]) {
 
-		rp = SPROD(atoms[neigh->nr].p_ind, neigh->dist);
+		rp = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist);
 		atom->E_ind.x += neigh->grad_el
-		  * (3 * rp * neigh->dist.x - atoms[neigh->nr].p_ind.x);
+		  * (3 * rp * neigh->dist.x - conf_atoms[neigh->nr - firstatom].p_ind.x);
 		atom->E_ind.y += neigh->grad_el
-		  * (3 * rp * neigh->dist.y - atoms[neigh->nr].p_ind.y);
+		  * (3 * rp * neigh->dist.y - conf_atoms[neigh->nr - firstatom].p_ind.y);
 		atom->E_ind.z += neigh->grad_el
-		  * (3 * rp * neigh->dist.z - atoms[neigh->nr].p_ind.z);
+		  * (3 * rp * neigh->dist.z - conf_atoms[neigh->nr - firstatom].p_ind.z);
 
 		if (!self) {
 		  rp = SPROD(atom->p_ind, neigh->dist);
-		  atoms[neigh->nr].E_ind.x += neigh->grad_el
+		  conf_atoms[neigh->nr - firstatom].E_ind.x += neigh->grad_el
 		    * (3 * rp * neigh->dist.x - atom->p_ind.x);
-		  atoms[neigh->nr].E_ind.y += neigh->grad_el
+		  conf_atoms[neigh->nr - firstatom].E_ind.y += neigh->grad_el
 		    * (3 * rp * neigh->dist.y - atom->p_ind.y);
-		  atoms[neigh->nr].E_ind.z += neigh->grad_el
+		  conf_atoms[neigh->nr - firstatom].E_ind.z += neigh->grad_el
 		    * (3 * rp * neigh->dist.z - atom->p_ind.z);
 		}
 	      }
@@ -597,7 +587,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		  grad_sum = grad_tail;
 		}
 
-		rp_j = SPROD(atoms[neigh->nr].p_ind, neigh->dist);
+		rp_j = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist);
 		fnval = charge[typ1] * rp_j * fnval_sum * neigh->r;
 		grad_1 = charge[typ1] * rp_j * grad_sum * neigh->r2;
 		grad_2 = charge[typ1] * fnval_sum;
@@ -606,11 +596,11 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 		if (uf) {
 		  tmp_force.x = neigh->dist.x * grad_1
-		    + atoms[neigh->nr].p_ind.x * grad_2;
+		    + conf_atoms[neigh->nr - firstatom].p_ind.x * grad_2;
 		  tmp_force.y = neigh->dist.y * grad_1
-		    + atoms[neigh->nr].p_ind.y * grad_2;
+		    + conf_atoms[neigh->nr - firstatom].p_ind.y * grad_2;
 		  tmp_force.z = neigh->dist.z * grad_1
-		    + atoms[neigh->nr].p_ind.z * grad_2;
+		    + conf_atoms[neigh->nr - firstatom].p_ind.z * grad_2;
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
 		  forces[k + 2] -= tmp_force.z;
@@ -695,7 +685,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      /* dipole-dipole contributions */
 	      if (dp_alpha[typ1] && dp_alpha[typ2]) {
 
-		pp_ij = SPROD(atom->p_ind, atoms[neigh->nr].p_ind);
+		pp_ij = SPROD(atom->p_ind, conf_atoms[neigh->nr - firstatom].p_ind);
 		tmp_1 = 3 * rp_i * rp_j;
 		tmp_2 = 3 * fnval_tail / neigh->r2;
 
@@ -708,17 +698,17 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		if (uf) {
 		  tmp_force.x = grad_1 * neigh->r * neigh->dist.x - tmp_2
 		    * (grad_2 * neigh->r * neigh->dist.x -
-		    rp_i * neigh->r * atoms[neigh->nr].p_ind.x -
+		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.x -
 		    rp_j * neigh->r * atom->p_ind.x);
 		  tmp_force.y =
 		    grad_1 * neigh->r * neigh->dist.y -
 		    tmp_2 * (grad_2 * neigh->r * neigh->dist.y -
-		    rp_i * neigh->r * atoms[neigh->nr].p_ind.y -
+		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.y -
 		    rp_j * neigh->r * atom->p_ind.y);
 		  tmp_force.z =
 		    grad_1 * neigh->r * neigh->dist.z -
 		    tmp_2 * (grad_2 * neigh->r * neigh->dist.z -
-		    rp_i * neigh->r * atoms[neigh->nr].p_ind.z -
+		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.z -
 		    rp_j * neigh->r * atom->p_ind.z);
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
