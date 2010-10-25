@@ -318,7 +318,7 @@ END {
     if (eam_count != 0) {
       for (i = pair_count; i < (pair_count + ntypes); i++) {
 	write_pot(i, pot_name[i], params, "plot");
-	printf " ls 2 lc "(i - pair_count) > "plot";
+	printf " ls 2 lc "(i - pair_count + 1) > "plot";
 	if (i != (pair_count + ntypes - 1))
 	  printf ", " > "plot";
 
@@ -332,7 +332,7 @@ END {
 	else
 	  label = "pot " i;
 	if (i == 0)
-	  printf "'" dist_file "' i " i " w lines t \"rad\\\\_dist " label "\"" > "plot";
+	  printf "'" dist_file "' i " i " w lines t \"g(r) " label "\"" > "plot";
 	else
 	  printf "'' i " i " w lines t \"rad\\\\_dist " label "\"" > "plot";
 	if (i != (n_rad - 1))
