@@ -99,6 +99,10 @@ int apot_parameters(char *name)
     return 5;
   } else if (strcmp(name, "gljm") == 0) {
     return 12;
+  } else if (strcmp(name, "vas") == 0) {
+    return 2;
+  } else if (strcmp(name, "vpair") == 0) {
+    return 7;
   }
 
   /* template for new potential function called newpot */
@@ -177,6 +181,10 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &gen_lj_value;
     } else if (strcmp(apt->names[i], "gljm") == 0) {
       apt->fvalue[i] = &gljm_value;
+    } else if (strcmp(apt->names[i], "vas") == 0) {
+      apt->fvalue[i] = &vas_value;
+    } else if (strcmp(apt->names[i], "vpair") == 0) {
+      apt->fvalue[i] = &vpair_value;
     }
 
 /* template for new potential function called newpot */
@@ -628,6 +636,40 @@ void gljm_value(real r, real *p, real *f)
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
     p[5] * (p[6] * power[2] * temp * (1 + p[7] * temp) + p[8]);
+}
+
+/****************************************************************
+ *
+ * bond-stretching function of vashishta potential (f_c)
+ *
+ ****************************************************************/
+
+void vas_value(real r, real *p, real *f)
+{
+  *f = exp(p[0]/(r - p[1]));
+}
+
+/****************************************************************
+ *
+ * original pair contributions of vashishta potential (V_2)
+ *
+ ****************************************************************/
+
+void vpair_value(real r, real *p, real *f)
+{
+  real x[7], y, z;
+
+  y = r;
+  z = p[1];
+  vdPow(1, &y, &z, &x[0]);
+  x[1] = r * r;
+  x[2] = x[1] * x[1];
+  x[3] = p[2] * p[2];
+  x[4] = p[3] * p[3];
+  x[5] = p[4]* x[4] * p[5] * x[3];
+  x[6] = exp(-r/p[6]);
+
+  *f = p[0] / x[0] + p[1] * p[2] / r - 0.5 * x[5] / x[2] * x[6];
 }
 
 /****************************************************************

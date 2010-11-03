@@ -585,6 +585,8 @@ void  exp_plus_value(real, real *, real *);
 void  mishin_value(real, real *, real *);
 void  gen_lj_value(real, real *, real *);
 void  gljm_value(real, real *, real *);
+void  vas_value(real, real *, real *);
+void  vpair_value(real, real *, real *);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
