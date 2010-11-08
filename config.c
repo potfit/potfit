@@ -98,29 +98,29 @@ void read_config(char *filename)
   sym_tens *stresses;
   vector d, dd, iheight;
 
+  /* initialize elements array */
+  elements = (char **)malloc(ntypes * sizeof(char *));
+  if (NULL == elements)
+    error("Cannot allocate memory for element names.");
+  reg_for_free(elements, "elements");
+  for (i = 0; i < ntypes; i++) {
+    elements[i] = (char *)malloc(3 * sizeof(char));
+    if (NULL == elements[i]) {
+      sprintf(msg, "Cannot allocate memory for %d. element name.\n", i + 1);
+      error(msg);
+    }
+    reg_for_free(elements[i], "elements[i]");
+    sprintf(elements[i], "%d", i);
+  }
+
   /* initialize minimum distance array */
   mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
   if (NULL == mindist)
     error("Cannot allocate memory for minimal distance.");
 
-  /* initialize elements array */
-  elements = (char **)malloc(ntypes * sizeof(char *));
-  reg_for_free(elements, "elements");
-  if (NULL == elements)
-    error("Cannot allocate memory for element names.");
-  for (i = 0; i < ntypes; i++) {
-    elements[i] = (char *)malloc(3 * sizeof(char));
-    reg_for_free(elements[i], "elements[i]");
-    if (NULL == elements[i]) {
-      sprintf(msg, "Cannot allocate memory for element name %d\n", i);
-      error(msg);
-    }
-    sprintf(elements[i], "%d", i);
-  }
-
   /* set maximum cutoff distance as starting value for mindist */
   for (i = 0; i < ntypes * ntypes; i++)
-    mindist[i] = 99;
+    mindist[i] = 99.;
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
@@ -658,6 +658,7 @@ void read_config(char *filename)
 
   reg_for_free(atoms, "atoms");
   reg_for_free(coheng, "coheng");
+  reg_for_free(conf_weight, "conf_weight");
   reg_for_free(volumen, "volumen");
   reg_for_free(stress, "stress");
   reg_for_free(inconf, "inconf");
@@ -739,7 +740,7 @@ void read_config(char *filename)
       paircol);
 
     for (i = 0; i < paircol * pair_steps; i++)
-      pair_table[i] = 0;
+      pair_table[i] = 0.;
 
     for (i = 0; i < ntypes; i++)
       for (k = 0; k < ntypes; k++)
@@ -765,7 +766,7 @@ void read_config(char *filename)
 	    }
 #endif /* DEBUG */
 	    pair_table[k * pair_steps + pos]++;
-	    if (pair_table[k * pair_steps + pos] > max_count)
+	    if ((int)pair_table[k * pair_steps + pos] > max_count)
 	      max_count = (int)pair_table[k * pair_steps + pos];
 	  }
 	}

@@ -1,3 +1,6 @@
+devel-live
++ small technical changes
+
 devel-20101018
 + fix strcpy bug with stresses
 + cutoff radius for embedding function is now read from potential file

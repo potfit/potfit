@@ -1700,6 +1700,16 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		  apot_table.end[i], h) : f;
 		if (isnan(f) || isnan(*(xi_calc + k))) {
 		  sprintf(msg, "Potential value was nan or inf. Aborting.\n");
+		  fprintf(stderr, "This occured in potential %d (%s)\n",
+		    i, apot_table.names[i]);
+		  fprintf(stderr,
+		    "at distance r=%f with the parameters:\n",
+		    calc_pot.xcoord[k]);
+		  for (m = 0; m < apot_table.n_par[i]; m++)
+		    fprintf(stderr, "%s %f\n",
+		      apot_table.param_name[i][m], *(val + m));
+		  if (smooth_pot[i])
+		    fprintf(stderr, "h %f\n", h);
 		  error(msg);
 		}
 	      }
@@ -2214,8 +2224,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   int   i, j, k, m, m2, col1, col2;
   real  r2, temp;
   real *r2begin, *r2end, *r2step;
+#ifndef APOT
+  real  temp2;
+#endif
 #if defined EAM || defined ADP
-  real  root, temp2;
+  real  root;
 #endif /* EAM */
   FILE *outfile;
   char  msg[255], filename[255];
@@ -2672,10 +2685,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #endif
 #else /* APOT */
   for (i = 0; i < apot_table.number; i++) {
-    if (i < (paircol + ntypes))
-      r = (plotmin == 0 ? 0.1 : plotmin);
-    else
-      r = 0.001;
+    r = (plotmin == 0 ? 0.1 : plotmin);
     r_step = (apot_table.end[i] - r) / (NPLOT - 1);
     h = apot_table.values[i][apot_table.n_par[i] - 1];
     for (j = 0; j < NPLOT; j++) {

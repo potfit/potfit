@@ -829,7 +829,7 @@ void debug_apot()
     }
   }
 #endif /* PAIR */
-  exit(2);
+  exit(EXIT_FAILURE);
 }
 
 #endif /* DEBUG */
