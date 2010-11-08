@@ -51,7 +51,9 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
   real  x_left = *x_lower;
   real  x_right = *x_upper;
   real  x_center;
+#ifdef DEBUG
   static char errmsg[255];
+#endif
   static real *vecu = NULL;	/* Vector of location u */
   static real *f_vec3 = NULL;	/* 3rd target vector */
   static real *p_left, *p_right, *p_center, *p_temp;

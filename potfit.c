@@ -52,7 +52,7 @@ void error(char *msg)
   calc_forces(calc_pot.table, force, 1);
   shutdown_mpi();
 #endif /* MPI */
-  exit(2);
+  exit(EXIT_FAILURE);
 }
 
 /****************************************************************
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   char  msg[255], file[255];
   FILE *outfile;
   int   i, j;
-  real  tot, sqr, sqrw;
+  real  tot, sqr;
   real *force;
   time_t t_begin, t_end;
 #if defined EAM || defined ADP
@@ -218,6 +218,8 @@ int main(int argc, char **argv)
 
   /* main force vector, all forces, energies, ... will be stored here */
   force = (real *)malloc((mdim) * sizeof(real));
+  if (NULL == force)
+    error("Could not allocate memory for main force vector.");
   reg_for_free(force, "force");
 
   /* starting positions for the force vector */
@@ -237,6 +239,8 @@ int main(int argc, char **argv)
 #endif /* APOT */
 #endif /* EAM || ADP */
   rms = (real *)malloc(3 * sizeof(real));
+  if (NULL == rms)
+    error("Could not allocate memory for rms errors.");
   reg_for_free(rms, "rms");
 
 #ifdef APOT
@@ -397,7 +401,9 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
 
     /* prepare for error calculations */
-    real  f_sum = 0., e_sum = 0., s_sum = 0.;
+    real  f_sum = 0.;
+    real  e_sum = 0.;
+    real  s_sum = 0.;
 
     /* write force deviations */
     if (write_output_files) {
@@ -412,8 +418,12 @@ int main(int argc, char **argv)
       outfile = stdout;
       printf("Forces:\n");
     }
-    for (i = 0; i < 6; i++)
+    for (i = 0; i < 6; i++) {
       component[i] = (char *)malloc(3 * sizeof(char));
+      if (NULL == component[i])
+	error("Could not allocate memory for component strings");
+      reg_for_free(component[i], "component i");
+    }
     strcpy(component[0], "x");
     strcpy(component[1], "y");
     strcpy(component[2], "z");
@@ -468,24 +478,23 @@ int main(int argc, char **argv)
       if (write_output_files) {
 	fprintf(outfile, "# global energy weight w is %f\n", eweight);
 	fprintf(outfile,
-	  "# nr.\tconf_w\tw*de^2\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+	  "# nr.\tconf_w\tw*de^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
       } else {
 	fprintf(outfile, "energy weight is %f\n", eweight);
 	fprintf(outfile, "conf\tconf_w\tw*de^2\te\t\te0\t\tde/e0\n");
       }
 
       for (i = 0; i < nconf; i++) {
-	sqr = conf_weight[i] * SQR(force[energy_p + i]);
-	sqrw = eweight * 3 * inconf[i] * sqr;
-	e_sum += sqrw;
+	sqr = eweight * conf_weight[i] * SQR(force[energy_p + i]);
+	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
-	    conf_weight[i], sqrw, force[energy_p + i] + force_0[energy_p + i],
+	    conf_weight[i], sqr, force[energy_p + i] + force_0[energy_p + i],
 	    force_0[energy_p + i], fabs(force[energy_p + i]),
 	    force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
 	} else
 	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i],
-	    sqrw, force[energy_p + i] + force_0[energy_p + i],
+	    sqr, force[energy_p + i] + force_0[energy_p + i],
 	    force_0[energy_p + i],
 	    force[energy_p + i] / force_0[energy_p + i]);
       }
@@ -522,12 +531,11 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\tconf_w\t\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-	sqr = conf_weight[(i - stress_p) / 6] * SQR(force[i]);
-	sqrw = sweight * inconf[(i - stress_p) / 6] / 2 * sqr;
-	s_sum += sqrw;
+	sqr = sweight * conf_weight[(i - stress_p) / 6] * SQR(force[i]);
+	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
-	  conf_weight[(i - stress_p) / 6], sqrw, force[i] + force_0[i],
+	  conf_weight[(i - stress_p) / 6], sqr, force[i] + force_0[i],
 	  force_0[i], force[i] / force_0[i]);
       }
       if (write_output_files) {
@@ -631,9 +639,9 @@ int main(int argc, char **argv)
 #endif /* STRESS */
 
     /* calculate the rms errors for forces, energies, stress */
-    rms[0] = 0;			/* rms rms for forces */
-    rms[1] = 0;			/* energies */
-    rms[2] = 0;			/* stresses */
+    rms[0] = 0.;		/* rms rms for forces */
+    rms[1] = 0.;		/* energies */
+    rms[2] = 0.;		/* stresses */
 
     /* forces */
     for (i = 0; i < 3 * natoms; i++)
@@ -719,6 +727,8 @@ int main(int argc, char **argv)
     if (sweight != 0)
       printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif /* STRESS */
+    fclose(outfile);
+
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
@@ -731,9 +741,12 @@ int main(int argc, char **argv)
   free_all_pointers();
 #endif /* MPI */
 
-  if (opt && myid == 0)
+  if (opt && myid == 0) {
     printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
       (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
 	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
+    printf("Did %d force calculations, each took %f seconds\n", fcalls,
+      (real)difftime(t_end, t_begin) / fcalls);
+  }
   return 0;
 }

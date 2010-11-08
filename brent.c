@@ -185,5 +185,5 @@ real brent(real ax, real bx, real cx, real fbx, real tol,
 
   }
   error("Too many iterations in Brent minimization");
-  return 0;
+  return 0.;
 }

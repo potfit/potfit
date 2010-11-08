@@ -1,3 +1,7 @@
+devel-20101108
++ revert the normalization of energy and stress weights
++ small technical changes
+
 dipole-20101025
 + COULOMB and DIPOLE are now working with mpi
 

@@ -344,7 +344,7 @@ void read_parameters(int argc, char **argv)
 #ifdef MPI
     MPI_Abort(MPI_COMM_WORLD, 2);
 #endif
-    exit(2);
+    exit(EXIT_FAILURE);
   }
   read_paramfile(pf);
   printf("Read parameters from file \"%s\".\n", argv[1]);

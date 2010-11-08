@@ -646,7 +646,7 @@ void gljm_value(real r, real *p, real *f)
 
 void vas_value(real r, real *p, real *f)
 {
-  *f = exp(p[0]/(r - p[1]));
+  *f = exp(p[0] / (r - p[1]));
 }
 
 /****************************************************************
@@ -657,7 +657,7 @@ void vas_value(real r, real *p, real *f)
 
 void vpair_value(real r, real *p, real *f)
 {
-  real x[7], y, z;
+  real  x[7], y, z;
 
   y = r;
   z = p[1];
@@ -666,10 +666,10 @@ void vpair_value(real r, real *p, real *f)
   x[2] = x[1] * x[1];
   x[3] = p[2] * p[2];
   x[4] = p[3] * p[3];
-  x[5] = p[4]* x[4] + p[5] * x[3];
-  x[6] = exp(-r/p[6]);
+  x[5] = p[4] * x[4] + p[5] * x[3];
+  x[6] = exp(-r / p[6]);
 
-  *f = 14.4*(p[0] / x[0] + p[2] * p[3] / r - 0.5 * x[5] / x[2] * x[6]);
+  *f = 14.4 * (p[0] / x[0] + p[2] * p[3] / r - 0.5 * x[5] / x[2] * x[6]);
 }
 
 /****************************************************************
@@ -875,7 +875,7 @@ void debug_apot()
     }
   }
 #endif /* PAIR */
-  exit(2);
+  exit(EXIT_FAILURE);
 }
 
 #endif /* DEBUG */
