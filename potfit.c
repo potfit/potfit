@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   char  msg[255], file[255];
   FILE *outfile;
   int   i, j;
-  real  tot, sqr, sqrw;
+  real  tot, sqr;
   real *force;
   time_t t_begin, t_end;
 #if defined EAM || defined ADP
@@ -475,17 +475,16 @@ int main(int argc, char **argv)
       }
 
       for (i = 0; i < nconf; i++) {
-	sqr = conf_weight[i] * SQR(force[energy_p + i]);
-	sqrw = eweight * 3 * inconf[i] * sqr;
-	e_sum += sqrw;
+	sqr = eweight * conf_weight[i] * SQR(force[energy_p + i]);
+	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
-	    conf_weight[i], sqrw, force[energy_p + i] + force_0[energy_p + i],
+	    conf_weight[i], sqr, force[energy_p + i] + force_0[energy_p + i],
 	    force_0[energy_p + i], fabs(force[energy_p + i]),
 	    force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
 	} else
 	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i],
-	    sqrw, force[energy_p + i] + force_0[energy_p + i],
+	    sqr, force[energy_p + i] + force_0[energy_p + i],
 	    force_0[energy_p + i],
 	    force[energy_p + i] / force_0[energy_p + i]);
       }
@@ -522,12 +521,11 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\tconf_w\t\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-	sqr = conf_weight[(i - stress_p) / 6] * SQR(force[i]);
-	sqrw = sweight * inconf[(i - stress_p) / 6] / 2 * sqr;
-	s_sum += sqrw;
+	sqr = sweight * conf_weight[(i - stress_p) / 6] * SQR(force[i]);
+	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
-	  conf_weight[(i - stress_p) / 6], sqrw, force[i] + force_0[i],
+	  conf_weight[(i - stress_p) / 6], sqr, force[i] + force_0[i],
 	  force_0[i], force[i] / force_0[i]);
       }
       if (write_output_files) {

@@ -1,4 +1,5 @@
-devel-live
+devel-20101108
++ revert the normalization of energy and stress weights
 + small technical changes
 
 devel-20101018
