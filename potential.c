@@ -1918,17 +1918,17 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		  smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k],
 		  apot_table.end[i], h) : f;
 		if (isnan(f) || isnan(*(xi_calc + k))) {
-		  (void)snprintf(msg, 43,
-				 "Aborting.");
-	
-		  (void)fprintf(stderr, "\nPotential value was nan or inf.\nThis occured in potential %d (%s)\n",
-				i, apot_table.names[i]);
+		  (void)snprintf(msg, 43, "Aborting.");
+
 		  (void)fprintf(stderr,
-				"at distance r=%f with the parameters:\n",
-				calc_pot.xcoord[k]);
+		    "\nPotential value was nan or inf.\nThis occured in potential %d (%s)\n",
+		    i, apot_table.names[i]);
+		  (void)fprintf(stderr,
+		    "at distance r=%f with the parameters:\n",
+		    calc_pot.xcoord[k]);
 		  for (m = 0; m < apot_table.n_par[i]; m++)
 		    (void)fprintf(stderr, "%d %f\n",
-				  apot_table.param_name[i][m], *(val + m));
+		      apot_table.param_name[i][m], *(val + m));
 		  error(msg);
 		}
 	      }
@@ -2192,8 +2192,8 @@ void write_coulomb_table()
     char *filename2 = "Coulomb_01";
     char *filename3 = "Coulomb_11";
 
-    c1 = - apt->charge[0] / 2;
- 
+    c1 = -apt->charge[0] / 2;
+
     outfile = fopen(filename1, "a");
     for (i = 0; i < natoms; i++) {
       for (j = 0; j < atoms[i].n_neigh; j++) {
