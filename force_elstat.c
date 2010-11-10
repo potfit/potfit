@@ -799,17 +799,17 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 
 	/* whole energy contributions flow into tmpsum */
-	forces[energy_p + h] *= eweight / (real)inconf[h];
+	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
+	tmpsum += conf_weight[h] * SQR(eweight * forces[energy_p + h]);
 
 #ifdef STRESS
 	/* whole stress contributions flow into tmpsum */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
+	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
+	    tmpsum += conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif
