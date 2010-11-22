@@ -1,3 +1,8 @@
+devel-20101122
++ change weights once more from w*d^2 to (w*dx)^2
++ adjust dummy constraints output for console
++ limit number of cpus to nconf
+
 devel-20101108
 + revert the normalization of energy and stress weights
 + small technical changes

@@ -174,23 +174,24 @@ int main(int argc, char **argv)
 #endif /* NORESCALE */
 #endif /* EAM || ADP */
     init_done = 1;
-  }
 
-  /* properly initialize random number generator */
+    /* properly initialize random number generator */
 #define R_SIZE 624
 #define RAND_MAX 2147483647
-  uint32_t *array;
-  array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-  srand(seed + myid);
-  for (i = 0; i < R_SIZE; i++)
-    array[i] = rand();
+    uint32_t *array;
+    array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
+    srand(seed + myid);
+    for (i = 0; i < R_SIZE; i++)
+      array[i] = rand();
 
-  dsfmt_init_by_array(&dsfmt, array, R_SIZE);
-  for (i = 0; i < 10e5; i++)
-    dsfmt_genrand_close_open(&dsfmt);
-  free(array);
+    dsfmt_init_by_array(&dsfmt, array, R_SIZE);
+    for (i = 0; i < 10e5; i++)
+      dsfmt_genrand_close_open(&dsfmt);
+    free(array);
 #undef R_SIZE
 #undef RAND_MAX
+  }
+
 
   /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI
@@ -286,6 +287,10 @@ int main(int argc, char **argv)
     calc_forces(opt_pot.table, force, 0);
 #endif /* !APOT */
   } else {			/* root thread does minimization */
+#ifdef MPI
+    if (num_cpus > nconf)
+      error("You are using more cpus than you have configurations!");
+#endif /* MPI */
     time(&t_begin);
     if (opt) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
@@ -425,7 +430,7 @@ int main(int argc, char **argv)
 	fprintf(outfile, "\n\n");
       if (i == 0)
 	fprintf(outfile,
-	  "#conf:atom\ttype\tw*df^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+	  "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
 	"%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3],
@@ -438,7 +443,7 @@ int main(int argc, char **argv)
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile, "#conf:atom\ttype\tw*df^2\t\tf\t\tf0\t\tdf/f0\n");
+	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
       fprintf(outfile, "%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3],
 	elements[atoms[i / 3].typ], sqr, force[i] + force_0[i], force_0[i],
@@ -468,14 +473,14 @@ int main(int argc, char **argv)
       if (write_output_files) {
 	fprintf(outfile, "# global energy weight w is %f\n", eweight);
 	fprintf(outfile,
-	  "# nr.\tconf_w\tw*de^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+	  "# nr.\tconf_w\t(w*de)^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
       } else {
 	fprintf(outfile, "energy weight is %f\n", eweight);
-	fprintf(outfile, "conf\tconf_w\tw*de^2\te\t\te0\t\tde/e0\n");
+	fprintf(outfile, "conf\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
       }
 
       for (i = 0; i < nconf; i++) {
-	sqr = eweight * conf_weight[i] * SQR(force[energy_p + i]);
+	sqr = conf_weight[i] * SQR(eweight * force[energy_p + i]);
 	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
@@ -518,10 +523,10 @@ int main(int argc, char **argv)
       strcpy(component[4], "yz");
       strcpy(component[5], "zx");
 
-      fprintf(outfile, "#\tconf_w\t\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
+      fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-	sqr = sweight * conf_weight[(i - stress_p) / 6] * SQR(force[i]);
+	sqr = conf_weight[(i - stress_p) / 6] * SQR(sweight * force[i]);
 	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
@@ -588,11 +593,10 @@ int main(int argc, char **argv)
       fclose(outfile);
     } else {
       fprintf(outfile, "Dummy Constraints\n");
-      for (i = 0; i < 2 * ntypes; i++) {
+      for (i = dummy_p; i < dummy_p + ntypes; i++) {
 	sqr = SQR(force[i]);
-	fprintf(outfile, "%d %f %f %f %f\n", i - dummy_p, sqr,
-	  force[dummy_p + i] + force_0[dummy_p + i],
-	  force_0[dummy_p + i], force[dummy_p + i] / force_0[dummy_p + i]);
+	fprintf(outfile, "%s\t%f\t%f\n", elements[i - dummy_p], sqr,
+	  force[i]);
       }
     }
 /*    }*/

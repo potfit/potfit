@@ -297,6 +297,15 @@ void read_paramfile(FILE *pf)
 
   if (strcmp(endpot, "\0") == 0)
     sprintf(endpot, "%s_end", startpot);
+
+  if (eweight < 0)
+    error("Missing in parameter file: energy weight");
+
+#ifdef STRESS
+  if (sweight < 0)
+    error("Missing in parameter file: stress weight");
+#endif
+
 }
 
 /******************************************************************************
