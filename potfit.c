@@ -328,8 +328,7 @@ int main(int argc, char **argv)
     if (opt) {
       write_pot_table(&apot_table, endpot);
 #endif /* !APOT */
-      printf("\nPotential in format %d written to file \t%s\n", format,
-	endpot);
+      printf("\nPotential in format %d written to file \t%s\n", format, endpot);
     }
     if (writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
@@ -383,12 +382,13 @@ int main(int argc, char **argv)
     for (i = 0; i < ntypes; i++) {
 #ifdef NORESCALE
       /* U'(1.) = 0. */
-      lambda[i] = splint_grad(&calc_pot, calc_pot.table,
-	paircol + ntypes + i, 1.0);
+      lambda[i] =
+	splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i, 1.0);
 #else
       /* U'(<n>)=0; */
-      lambda[i] = splint_grad(&calc_pot, calc_pot.table,
-	paircol + ntypes + i, totdens[i]);
+      lambda[i] =
+	splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i,
+	totdens[i]);
 #endif /* NORESCALE */
       printf("lambda[%d] = %f \n", i, lambda[i]);
     }
@@ -436,13 +436,11 @@ int main(int argc, char **argv)
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile,
-	  "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
+	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
 	"%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
-	atoms[i / 3].conf, i / 3, component[i % 3],
-	elements[atoms[i / 3].typ], sqr,
-	force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
+	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
+	sqr, force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	force_0[i],
 	(force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
 	atoms[i / 3].absforce);
@@ -452,9 +450,8 @@ int main(int argc, char **argv)
       if (i == 0)
 	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
       fprintf(outfile, "%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
-	atoms[i / 3].conf, i / 3, component[i % 3],
-	elements[atoms[i / 3].typ], sqr, force[i] + force_0[i], force_0[i],
-	force[i] / force_0[i]);
+	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
+	sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
@@ -493,9 +490,8 @@ int main(int argc, char **argv)
 	    force_0[energy_p + i], fabs(force[energy_p + i]),
 	    force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
 	} else
-	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i],
-	    sqr, force[energy_p + i] + force_0[energy_p + i],
-	    force_0[energy_p + i],
+	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i], sqr,
+	    force[energy_p + i] + force_0[energy_p + i], force_0[energy_p + i],
 	    force[energy_p + i] / force_0[energy_p + i]);
       }
       if (write_output_files) {
@@ -565,8 +561,8 @@ int main(int argc, char **argv)
 	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
 	  force[i] + force_0[i]);
       else
-	fprintf(outfile, "%d %f %f %f %f\n", i - limit_p,
-	  sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+	fprintf(outfile, "%d %f %f %f %f\n", i - limit_p, sqr,
+	  force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
     }
     if (write_output_files) {
       real  zero = 0;
@@ -575,8 +571,8 @@ int main(int argc, char **argv)
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
 	sqr = SQR(force[i]);
-	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p],
-	  zero, sqr, zero, force[i]);
+	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], zero,
+	  sqr, zero, force[i]);
 #else
 	sqr = SQR(force[i + ntypes]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
@@ -585,8 +581,7 @@ int main(int argc, char **argv)
       }
 #ifdef NORESCALE
       fprintf(outfile, "\nNORESCALE: <n>!=1\n");
-      fprintf(outfile, "<n>=%f\n",
-	force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
+      fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
       fprintf(outfile, "Additional punishment of %f added.\n",
 	SQR(force[dummy_p + ntypes]));
 #endif /* NORESCALE */
@@ -596,8 +591,7 @@ int main(int argc, char **argv)
       fprintf(outfile, "Dummy Constraints\n");
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 	sqr = SQR(force[i]);
-	fprintf(outfile, "%s\t%f\t%f\n", elements[i - dummy_p], sqr,
-	  force[i]);
+	fprintf(outfile, "%s\t%f\t%f\n", elements[i - dummy_p], sqr, force[i]);
       }
     }
 /*    }*/
@@ -616,8 +610,7 @@ int main(int argc, char **argv)
 	"total error sum %f, count %d (%d forces, %d energies)\n", tot,
 	mdim - 6 * nconf, 3 * natoms, nconf);
 #else
-      fprintf
-	(outfile,
+      fprintf(outfile,
 	"total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
 	tot, mdim, 3 * natoms, nconf, 6 * nconf);
 #endif /* STRESS */
@@ -672,8 +665,7 @@ int main(int argc, char **argv)
 	  s_sum / tot * 100);
 #endif /* STRESS */
       if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
-	fprintf
-	  (outfile,
+	fprintf(outfile,
 	  "\n --> Warning <--\nThis sum contains punishments! Please check your results.\n");
 	fprintf(outfile, "Total sum of punishments = %f\t\t( %.3f%% )\n\n",
 	  tot - f_sum - e_sum - s_sum,
@@ -695,8 +687,8 @@ int main(int argc, char **argv)
 	rms[2] / 160.2 * 1000, tot);
 
     }
-    printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
-      f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
+    printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n", f_sum,
+      f_sum / tot * 100, f_sum / (3 * natoms));
     if (eweight != 0)
       printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
 	e_sum / tot * 100);
@@ -709,8 +701,7 @@ int main(int argc, char **argv)
       printf
 	("\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
       printf("sum of punishments = %f\t\t( %.3f%% )\n\n",
-	tot - f_sum - e_sum - s_sum,
-	(tot - f_sum - e_sum - s_sum) / tot * 100);
+	tot - f_sum - e_sum - s_sum, (tot - f_sum - e_sum - s_sum) / tot * 100);
     }
     printf("rms-errors:\n");
     printf("force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);

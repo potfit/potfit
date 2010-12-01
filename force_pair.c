@@ -147,8 +147,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
     }
 
 #ifndef MPI
@@ -313,16 +313,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     /* forces */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
-      forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
+      atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
       forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf +
-      6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf,
-      conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
+      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
+      MPI_COMM_WORLD);
 #endif /* MPI */
 
     /* root process exits this function now */

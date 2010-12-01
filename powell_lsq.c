@@ -111,8 +111,8 @@ void powell_lsq(real *xi)
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
 #ifndef APOT
-  printf("%d %f %f %f %f %f %f %d\n",
-    m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
+  printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4],
+    fcalls);
   fflush(stdout);
 #endif /* APOT */
 
@@ -162,8 +162,8 @@ void powell_lsq(real *xi)
 	itemp2 = apot_table.idxparam[i - 1];
 	sprintf(errmsg,
 	  "F does not depend on the %d. parameter (%s) of the %d. potential (%s).\nFit impossible!\n",
-	  itemp2 + 1, apot_table.param_name[itemp][itemp2],
-	  itemp + 1, apot_table.names[itemp]);
+	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1,
+	  apot_table.names[itemp]);
 #endif /* !APOT */
 	warning(errmsg);
 	break;
@@ -180,21 +180,20 @@ void powell_lsq(real *xi)
 
       /* Linear Equation Solution (lapack) */
 #ifdef ACML
-      dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
-	&les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
-	&cond, &ferror, &berror, &i);
+      dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim, &les_inverse[0][0], ndim,
+	perm_indx, p, ndim, q, ndim, &cond, &ferror, &berror, &i);
 #else
-      dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim,
-	&les_inverse[0][0], &ndim, perm_indx, p, &ndim, q, &ndim,
-	&cond, &ferror, &berror, work, &worksize, iwork, &i);
+      dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim, &les_inverse[0][0],
+	&ndim, perm_indx, p, &ndim, q, &ndim, &cond, &ferror, &berror, work,
+	&worksize, iwork, &i);
 #endif /* ACML */
 #if defined DEBUG && !(defined APOT)
-      printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2],
-	q[3], q[4], q[5], q[6], q[7]);
+      printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3],
+	q[4], q[5], q[6], q[7]);
 #endif
       if (i > 0 && i <= ndim) {
-	sprintf(errmsg, "Linear equation system singular after step %d i=%d",
-	  m, i);
+	sprintf(errmsg, "Linear equation system singular after step %d i=%d", m,
+	  i);
 	warning(errmsg);
 	break;
       }
@@ -204,15 +203,15 @@ void powell_lsq(real *xi)
 	for (j = 0; j < ndim; j++)
 	  delta[idx[i]] += d[i][j] * q[j];
 #ifndef APOT
-	if ((usemaxch) && (maxchange[idx[i]] > 0) &&
-	  (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
+	if ((usemaxch) && (maxchange[idx[i]] > 0)
+	  && (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
 	  /* something seriously went wrong,
 	     parameter idx[i] out of control */
 	  sprintf(errmsg,
-	    "Direction vector component %d out of range in step %d\n",
-	    idx[i], m);
-	  sprintf(errmsg, "%s(%g instead of %g).\n",
-	    errmsg, fabs(delta[idx[i]]), maxchange[idx[i]]);
+	    "Direction vector component %d out of range in step %d\n", idx[i],
+	    m);
+	  sprintf(errmsg, "%s(%g instead of %g).\n", errmsg,
+	    fabs(delta[idx[i]]), maxchange[idx[i]]);
 	  sprintf(errmsg, "%sRestarting inner loop\n", errmsg);
 	  warning(errmsg);
 	  breakflag = 1;
@@ -262,8 +261,8 @@ void powell_lsq(real *xi)
 
       /* (f) update gamma, but if fn returns 1, matrix will be sigular,
          break inner loop and restart with new matrix */
-      if (gamma_update
-	(gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, mdim, ndimtot, F)) {
+      if (gamma_update(gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, mdim,
+	  ndimtot, F)) {
 	sprintf(errmsg,
 	  "Matrix gamma singular after step %d, restarting inner loop", m);
 	warning(errmsg);
@@ -293,8 +292,8 @@ void powell_lsq(real *xi)
 #ifdef APOT
     printf("%5d\t%17.6f\t%6d\n", m, F, fcalls);
 #else
-    printf("%d %f %f %f %f %f %f %d\n",
-      m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
+    printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4],
+      fcalls);
 #endif
     fflush(stdout);
 
@@ -343,8 +342,7 @@ void powell_lsq(real *xi)
   else if (F3 == F)
     printf("Could not find any further improvements, aborting!\n");
   else if ((fabs(F3 - F) > PRECISION && F3 != F && fabs(F3 - F) < d_eps))
-    printf("Last improvement was smaller than d_eps (%f), aborting!\n",
-      d_eps);
+    printf("Last improvement was smaller than d_eps (%f), aborting!\n", d_eps);
   else
     printf("Precision not reached!\n");
 #ifdef APOT
@@ -407,7 +405,8 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   for (i = 0; i < ndim; i++) {	/*initialize gamma */
     store = xi[idx[i]];
 #ifdef APOT
-    scale = apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
+    scale =
+      apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
       apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]];
     xi[idx[i]] += (EPS * scale);
 #else
@@ -442,8 +441,8 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 *
 *******************************************************************/
 
-int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
-  real *delta, int j, int m, int n, real fmin)
+int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
+  int j, int m, int n, real fmin)
 {
   int   i;
   real  temp;
@@ -478,8 +477,8 @@ int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
 *
 *******************************************************************/
 
-void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
-  real *p, int n, int m)
+void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, real *p,
+  int n, int m)
 {
   int   i, j, k;		/* Auxiliary vars: Counters */
 /*   real  temp; */
@@ -514,8 +513,8 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
 *
 *******************************************************************/
 
-void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
-  real *p, int i, int n, int m)
+void lineqsys_update(real **gamma, real **lineqsys, real *force_xi, real *p,
+  int i, int n, int m)
 {
   int   k;
   {

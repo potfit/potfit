@@ -49,8 +49,8 @@ real *xicom, *delcom;
  *
  ****************************************************************/
 
-real linmin(real xi[], real del[], real fxi1, real *x1, real *x2,
-  real *fret1, real *fret2)
+real linmin(real xi[], real del[], real fxi1, real *x1, real *x2, real *fret1,
+  real *fret2)
 {
   int   j;
   static real *vecu = NULL;	/* Vector of location u */

@@ -42,8 +42,8 @@
 #include "utils.h"
 #include "bracket.h"
 
-real brent(real ax, real bx, real cx, real fbx, real tol,
-  real *xmin, real *xmin2, real *fxmin, real *fxmin2)
+real brent(real ax, real bx, real cx, real fbx, real tol, real *xmin,
+  real *xmin2, real *fxmin, real *fxmin2)
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin, fxmin2 */
 {
   int   iter, j;

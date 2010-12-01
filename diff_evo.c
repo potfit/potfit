@@ -220,8 +220,7 @@ void diff_evo(real *xi)
   x2 = (real **)malloc(NP * sizeof(real *));
   best = (real *)malloc(NP * sizeof(real));
   cost = (real *)malloc(NP * sizeof(real));
-  if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL
-    || best == NULL)
+  if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
     error("Could not allocate memory for population vector!\n");
   for (i = 0; i < NP; i++) {
     x1[i] = (real *)malloc(D * sizeof(real));
@@ -296,8 +295,7 @@ void diff_evo(real *xi)
 	  /* DE/rand/1/exp */
 /*          temp = x1[c][idx[j]] + trial[D - 2] * (x1[a][idx[j]] - x1[b][idx[j]]);*/
 	  /* DE/best/1/exp */
-	  temp =
-	    best[idx[j]] + trial[D - 2] * (x1[a][idx[j]] - x1[b][idx[j]]);
+	  temp = best[idx[j]] + trial[D - 2] * (x1[a][idx[j]] - x1[b][idx[j]]);
 	  /* DE/rand/2/exp */
 /*          temp = x1[e][j] + trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);*/
 	  /* DE/best/2/exp */
@@ -309,10 +307,8 @@ void diff_evo(real *xi)
 /*          temp = x1[e][j] + (1 - trial[D-2]) * (best[j] - x1[e][j]) +*/
 /*            trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);*/
 #ifdef APOT
-	  pmin =
-	    apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
-	  pmax =
-	    apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
+	  pmin = apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
+	  pmax = apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
 	  if (temp > pmax) {
 	    trial[idx[j]] = pmax;
 	  } else if (temp < pmin) {

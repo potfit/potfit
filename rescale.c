@@ -75,19 +75,18 @@ real rescale(pot_table_t *pt, real upper, int flag)
   for (col = 0; col < paircol; col++) {	/* just pair potentials */
     first = pt->first[col];
     if (format == 3 || format == 0)
-      spline_ed(pt->step[col], pt->table + first,
-	pt->last[col] - first + 1,
+      spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
 	*(pt->table + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, pt->table + first,
-	pt->last[col] - first + 1,
-	*(pt->table + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1, *(pt->table + first - 2), 0.0,
+	pt->d2tab + first);
   }
   for (col = paircol; col < paircol + ntypes; col++) {	/* rho */
     first = pt->first[col];
     if (format == 3)
-      spline_ed(pt->step[col], xi + first,
-	pt->last[col] - first + 1, *(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
+	*(xi + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
 	*(xi + first - 2), 0.0, pt->d2tab + first);
@@ -172,11 +171,10 @@ real rescale(pot_table_t *pt, real upper, int flag)
     left[i] = minrho[i] - 0.3 * pt->step[j];
     right[i] = maxrho[i] + 0.3 * pt->step[j];
     /* is expansion necessary? */
-    if (flag ||
-      minrho[i] - pt->begin[j] < 0. ||
-      minrho[i] - pt->begin[j] > .95 * pt->step[j] ||
-      maxrho[i] - pt->end[j] > 0 ||
-      maxrho[i] - pt->end[j] < -.95 * pt->step[j])
+    if (flag || minrho[i] - pt->begin[j] < 0.
+      || minrho[i] - pt->begin[j] > .95 * pt->step[j]
+      || maxrho[i] - pt->end[j] > 0
+      || maxrho[i] - pt->end[j] < -.95 * pt->step[j])
       flag = 1;
   }
 
@@ -298,8 +296,8 @@ real rescale(pot_table_t *pt, real upper, int flag)
   for (col = paircol; col < paircol + ntypes; col++) {	/* rho */
     first = pt->first[col];
     if (format == 3)
-      spline_ed(pt->step[col], xi + first,
-	pt->last[col] - first + 1, *(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
+	*(xi + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
 	*(xi + first - 2), 0.0, pt->d2tab + first);
@@ -331,9 +329,9 @@ real rescale(pot_table_t *pt, real upper, int flag)
 
   /* correct gauge: U'(n_mean)=0 */
   for (i = 0; i < ntypes; i++) {
-    lambda[i] = splint_grad(&opt_pot, pt->table, paircol + ntypes + i,
-      0.5 * (pt->begin[paircol + ntypes + i] +
-	pt->end[paircol + ntypes + i]));
+    lambda[i] =
+      splint_grad(&opt_pot, pt->table, paircol + ntypes + i,
+      0.5 * (pt->begin[paircol + ntypes + i] + pt->end[paircol + ntypes + i]));
   }
   for (i = 0; i < ntypes; i++)
     printf("lambda[%d] = %f\n", i, lambda[i]);
@@ -343,31 +341,29 @@ real rescale(pot_table_t *pt, real upper, int flag)
     for (col2 = col; col2 < ntypes; col2++) {
       for (j = pt->first[i]; j <= pt->last[i]; j++)
 	pt->table[j] += (pt->xcoord[j] < pt->end[paircol + col2]
-	  ? lambda[col] *
-	  splint_ne(pt, pt->table, paircol + col2, pt->xcoord[j])
+	  ? lambda[col] * splint_ne(pt, pt->table, paircol + col2,
+	    pt->xcoord[j])
 	  : 0.)
 	  + (pt->xcoord[j] < pt->end[paircol + col]
-	  ? lambda[col2] *
-	  splint_ne(pt, pt->table, paircol + col, pt->xcoord[j])
+	  ? lambda[col2] * splint_ne(pt, pt->table, paircol + col,
+	    pt->xcoord[j])
 	  : 0.);
       /* Gradient */
       if (pt->table[pt->first[i] - 2] < 1e29)	/* natural spline */
 	pt->table[pt->first[i] - 2] += (pt->begin[i] < pt->end[paircol + col2]
-	  ? lambda[col] *
-	  splint_grad(pt, pt->table, paircol + col2, pt->begin[i])
+	  ? lambda[col] * splint_grad(pt, pt->table, paircol + col2,
+	    pt->begin[i])
 	  : 0.)
 	  + (pt->begin[i] < pt->end[paircol + col]
-	  ? lambda[col2] *
-	  splint_grad(pt, pt->table, paircol + col, pt->begin[i])
+	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col,
+	    pt->begin[i])
 	  : 0.);
       if (pt->table[pt->first[i] - 1] < 1e29)	/* natural spline */
 	pt->table[pt->first[i] - 1] += (pt->end[i] < pt->end[paircol + col2]
-	  ? lambda[col] *
-	  splint_grad(pt, pt->table, paircol + col2, pt->end[i])
+	  ? lambda[col] * splint_grad(pt, pt->table, paircol + col2, pt->end[i])
 	  : 0.)
 	  + (pt->end[i] < pt->end[paircol + col]
-	  ? lambda[col2] *
-	  splint_grad(pt, pt->table, paircol + col, pt->end[i])
+	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col, pt->end[i])
 	  : 0.);
       i++;
     }
@@ -387,13 +383,12 @@ real rescale(pot_table_t *pt, real upper, int flag)
   for (col = 0; col < paircol; col++) {	/* just pair potentials */
     first = pt->first[col];
     if (format == 3)
-      spline_ed(pt->step[col], pt->table + first,
-	pt->last[col] - first + 1,
+      spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
 	*(pt->table + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, pt->table + first,
-	pt->last[col] - first + 1,
-	*(pt->table + first - 2), 0.0, pt->d2tab + first);
+	pt->last[col] - first + 1, *(pt->table + first - 2), 0.0,
+	pt->d2tab + first);
   }
 
 

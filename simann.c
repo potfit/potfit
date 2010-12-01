@@ -230,8 +230,7 @@ void anneal(real *xi)
       if (*flagfile != '\0') {
 	ff = fopen(flagfile, "r");
 	if (NULL != ff) {
-	  printf
-	    ("Annealing terminated in presence of break flagfile \"%s\"!\n",
+	  printf("Annealing terminated in presence of break flagfile \"%s\"!\n",
 	    flagfile);
 	  printf("Temperature was %f, returning optimum configuration\n", T);
 	  for (n = 0; n < ndimtot; n++)

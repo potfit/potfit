@@ -71,8 +71,8 @@ int   curline;			/* number of current line */
 
 */
 
-int getparam(char *param_name, void *param, PARAMTYPE ptype,
-  int pnum_min, int pnum_max)
+int getparam(char *param_name, void *param, PARAMTYPE ptype, int pnum_min,
+  int pnum_max)
 {
   char *str;
   int   i;
