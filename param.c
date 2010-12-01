@@ -74,7 +74,6 @@ int   curline;			/* number of current line */
 int getparam(char *param_name, void *param, PARAMTYPE ptype,
   int pnum_min, int pnum_max)
 {
-  static char errmsg[256];
   char *str;
   int   i;
   int   numread;
@@ -82,34 +81,28 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
   numread = 0;
   if (ptype == PARAM_STR) {
     str = strtok(NULL, " \t\r\n");
-    if (str == NULL) {
-      sprintf(errmsg,
-	"Parameter for %s missing in line %d\nstring expected!\n",
+    if (str == NULL)
+      error("Parameter for %s missing in line %d\nstring expected!\n",
 	param_name, curline);
-      error(errmsg);
-    } else
+    else
       strncpy((char *)param, str, pnum_max);
     numread++;
   } else if (ptype == PARAM_STRPTR) {
     str = strtok(NULL, " \t\r\n");
-    if (str == NULL) {
-      sprintf(errmsg,
-	"Parameter for %s missing in line %d\nstring expected!\n",
+    if (str == NULL)
+      error("Parameter for %s missing in line %d\nstring expected!\n",
 	param_name, curline);
-      error(errmsg);
-    } else
+    else
       *((char **)param) = strdup(str);
     numread++;
   } else if (ptype == PARAM_INT) {
     for (i = 0; i < pnum_min; i++) {
       str = strtok(NULL, " \t\r\n");
-      if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-	  param_name, curline);
-	sprintf(errmsg + strlen(errmsg),
-	  "Integer vector of length %u expected!\n", (unsigned)pnum_min);
-	error(errmsg);
-      } else
+      if (str == NULL)
+	error
+	  ("Parameter for %s missing in line %d!\nInteger vector of length %u expected!\n",
+	  param_name, curline, (unsigned)pnum_min);
+      else
 	((int *)param)[i] = atoi(str);
       numread++;
     }
@@ -123,13 +116,11 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
   } else if (ptype == PARAM_DOUBLE) {
     for (i = 0; i < pnum_min; i++) {
       str = strtok(NULL, " \t\r\n");
-      if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-	  param_name, curline);
-	sprintf(errmsg + strlen(errmsg),
-	  "Double vector of length %u expected!\n", (unsigned)pnum_min);
-	error(errmsg);
-      } else
+      if (str == NULL)
+	error
+	  ("Parameter for %s missing in line %d!\nDouble vector of length %u expected!\n",
+	  param_name, curline, (unsigned)pnum_min);
+      else
 	((real *)param)[i] = atof(str);
       numread++;
     }
@@ -320,22 +311,13 @@ void read_parameters(int argc, char **argv)
   FILE *pf;
 
   /* check command line */
-  if (argc < 2) {
-    sprintf(msg, "Usage: %s <paramfile>\n", argv[0]);
-    error(msg);
-  }
+  if (argc < 2)
+    error("Usage: %s <paramfile>\n", argv[0]);
 
   /* open parameter file, and read it */
   pf = fopen(argv[1], "r");
-  if (NULL == pf) {
-    fprintf(stderr, "ERROR: Could not open parameter file %s!\n", argv[1]);
-    fflush(stderr);
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 2);
-#endif
-    exit(EXIT_FAILURE);
-  }
+  if (NULL == pf)
+    error("Could not open parameter file \"%s\".\n", argv[1]);
   read_paramfile(pf);
   printf("Read parameters from file \"%s\".\n", argv[1]);
-
 }

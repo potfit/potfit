@@ -41,10 +41,15 @@
  *
  ****************************************************************/
 
-void error(char *msg)
+void error(char *msg, ...)
 {
-  fflush(stdout);
-  fprintf(stderr, "\nError: %s\n\n", msg);
+  va_list ap;
+
+  fflush(stderr);
+  va_start(ap, msg);
+  fprintf(stderr, "\n--> ERROR <--\n");
+  vfprintf(stderr, msg, ap);
+  va_end(ap);
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;
@@ -61,12 +66,18 @@ void error(char *msg)
  *
  ****************************************************************/
 
-void warning(char *msg)
+int warning(char *msg, ...)
 {
+  va_list ap;
+  int   n;
+
   fflush(stdout);
-  fprintf(stderr, "\nWarning: %s\n", msg);
+  va_start(ap, msg);
+  n = fprintf(stderr, "\n--> WARNING <--\n");
+  vfprintf(stderr, msg, ap);
+  va_end(ap);
   fflush(stderr);
-  return;
+  return n;
 }
 
 /****************************************************************
@@ -343,10 +354,8 @@ int main(int argc, char **argv)
       strcpy(file, output_prefix);
       strcat(file, ".rho_loc");
       outfile = fopen(file, "w");
-      if (NULL == outfile) {
-	sprintf(msg, "Could not open file %s\n", file);
-	error(msg);
-      }
+      if (NULL == outfile)
+	error("Could not open file %s\n", file);
     } else {
       outfile = stdout;
       printf("Local electron density rho\n");
@@ -405,10 +414,8 @@ int main(int argc, char **argv)
       strcpy(file, output_prefix);
       strcat(file, ".force");
       outfile = fopen(file, "w");
-      if (NULL == outfile) {
-	sprintf(msg, "Could not open file %s\n", file);
-	error(msg);
-      }
+      if (NULL == outfile)
+	error("Could not open file %s\n", file);
     } else {
       outfile = stdout;
       printf("Forces:\n");
@@ -461,10 +468,8 @@ int main(int argc, char **argv)
 	strcpy(file, output_prefix);
 	strcat(file, ".energy");
 	outfile = fopen(file, "w");
-	if (NULL == outfile) {
-	  sprintf(msg, "Could not open file %s\n", file);
-	  error(msg);
-	}
+	if (NULL == outfile)
+	  error("Could not open file %s\n", file);
       } else {
 	outfile = stdout;
 	printf("Cohesive Energies\n");
@@ -507,10 +512,8 @@ int main(int argc, char **argv)
 	strcpy(file, output_prefix);
 	strcat(file, ".stress");
 	outfile = fopen(file, "w");
-	if (NULL == outfile) {
-	  sprintf(msg, "Could not open file %s\n", file);
-	  error(msg);
-	}
+	if (NULL == outfile)
+	  error("Could not open file %s\n", file);
 	fprintf(outfile, "# global stress weight w is %f\n", sweight);
       } else {
 	outfile = stdout;
@@ -548,10 +551,8 @@ int main(int argc, char **argv)
       strcpy(file, output_prefix);
       strcat(file, ".punish");
       outfile = fopen(file, "w");
-      if (NULL == outfile) {
-	sprintf(msg, "Could not open file %s\n", file);
-	error(msg);
-      }
+      if (NULL == outfile)
+	error("Could not open file %s\n", file);
       fprintf(outfile, "Limiting constraints\n");
       fprintf(outfile, "#conf\tp^2\t\tpunishment\n");
     } else {
@@ -608,10 +609,8 @@ int main(int argc, char **argv)
       strcpy(file, output_prefix);
       strcat(file, ".error");
       outfile = fopen(file, "w");
-      if (NULL == outfile) {
-	sprintf(msg, "Could not open file %s\n", file);
-	error(msg);
-      }
+      if (NULL == outfile)
+	error("Could not open file %s\n", file);
 #ifndef STRESS
       fprintf(outfile,
 	"total error sum %f, count %d (%d forces, %d energies)\n", tot,

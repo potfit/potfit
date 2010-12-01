@@ -30,6 +30,7 @@
 
 #define NRANSI
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -377,8 +378,8 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
  ****************************************************************/
 
 /* general functions [potfit.c] */
-void  error(char *);
-void  warning(char *);
+void  error(char *, ...);
+int   warning(char *, ...);
 
 /* reading parameter file [param.c] */
 int   getparam(char *, void *, PARAMTYPE, int, int);

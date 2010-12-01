@@ -47,7 +47,7 @@
 #include "utils.h"
 #include "bracket.h"
 
-#define EPS .0001
+#define EPS .001
 #define PRECISION 1.E-7
 #define NOTHING 1.E-12		/* Well, almost nothing */
 #define INNERLOOPS 801

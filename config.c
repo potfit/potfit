@@ -50,7 +50,7 @@ real make_box(void)
   /* volume */
   volume = SPROD(box_x, tbox_x);
   if (0 == volume)
-    error("Box edges are parallel");
+    error("Box edges are parallel\n");
 
   /* normalization */
   tbox_x.x /= volume;
@@ -83,6 +83,7 @@ void read_config(char *filename)
   int   cell_scale[3];
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz =
     0, use_force;
+  int   line = 0;
   int   max_type = 0;
   int   sh_dist = 0;		/* short distance flag */
   int   str_len;
@@ -105,10 +106,8 @@ void read_config(char *filename)
   reg_for_free(elements, "elements");
   for (i = 0; i < ntypes; i++) {
     elements[i] = (char *)malloc(3 * sizeof(char));
-    if (NULL == elements[i]) {
-      sprintf(msg, "Cannot allocate memory for %d. element name.\n", i + 1);
-      error(msg);
-    }
+    if (NULL == elements[i])
+      error("Cannot allocate memory for %d. element name.\n", i + 1);
     reg_for_free(elements[i], "elements[i]");
     sprintf(elements[i], "%d", i);
   }
@@ -132,34 +131,31 @@ void read_config(char *filename)
 
   /* open file */
   infile = fopen(filename, "r");
-  if (NULL == infile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == infile)
+    error("Could not open file %s\n", filename);
 
   /* read configurations until the end of the file */
   do {
     res = fgets(buffer, 1024, infile);
-    if (NULL == res) {
-      sprintf(msg, "Unexpected end of file in %s", filename);
-      error(msg);
-    }
+    line++;
+    if (NULL == res)
+      error("Unexpected end of file in %s", filename);
     if (res[0] == '#') {	/* new file type */
       tag_format = 1;
       h_eng = h_stress = h_boxx = h_boxy = h_boxz = 0;
       if (res[1] == 'N') {	/* Atom number line */
 	if (sscanf(res + 3, "%d %d", &count, &use_force) < 2)
-	  error("Error in atom number specification\n");
+	  error("%s: Error in atom number specification on line %d\n",
+	    filename, line);
       } else
-	error("Error - number of atoms missing\n");
+	error("%s: Error - number of atoms missing on line %d\n", filename,
+	  line);
     } else {
       /* number of atoms in this configuration */
       tag_format = 0;
       use_force = 1;
-      if (1 > sscanf(buffer, "%d", &count)) {
-	sprintf(msg, "Unexpected end of file in %s", filename);
-	error(msg);
-      }
+      if (1 > sscanf(buffer, "%d", &count))
+	error("Unexpected end of file in %s", filename);
     }
     /* increase memory for this many additional atoms */
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
@@ -212,33 +208,35 @@ void read_config(char *filename)
     if (tag_format) {
       do {
 	res = fgets(buffer, 1024, infile);
+	line++;
 	/* read the box vectors */
 	if (res[1] == 'X') {
 	  if (sscanf(res + 3, "%lf %lf %lf\n",
 	      &box_x.x, &box_x.y, &box_x.z) == 3)
 	    h_boxx++;
 	  else
-	    error("Error in box_x vector\n");
+	    error("%s: Error in box vector x, line %d\n", filename, line);
 	} else if (res[1] == 'Y') {
 	  if (sscanf(res + 3, "%lf %lf %lf\n",
 	      &box_y.x, &box_y.y, &box_y.z) == 3)
 	    h_boxy++;
 	  else
-	    error("Error in box_y vector\n");
+	    error("%s: Error in box vector y, line %d\n", filename, line);
 	} else if (res[1] == 'Z') {
 	  if (sscanf(res + 3, "%lf %lf %lf\n",
 	      &box_z.x, &box_z.y, &box_z.z) == 3)
 	    h_boxz++;
 	  else
-	    error("Error in box_z vector\n");
+	    error("%s: Error in box vector z, line %d\n", filename, line);
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
 	    h_eng++;
 	  else
-	    error("Error in energy\n");
+	    error("%s: Error in energy on line %d\n", filename, line);
 	} else if (res[1] == 'W') {
 	  if (sscanf(res + 3, "%lf\n", &(conf_weight[nconf])) != 1)
-	    error("Error in configuration weight\n");
+	    error("%s: Error in configuration weight on line %d\n", filename,
+	      line);
 	} else if (res[1] == 'C') {
 	  fgetpos(infile, &filepos);
 	  if (!have_elements) {
@@ -275,19 +273,20 @@ void read_config(char *filename)
 		  if (atoi(elements[j]) == j && j != 0) {
 		    strcpy(elements[j], msg);
 		  } else {
-		    fprintf(stderr,
-		      " --> Warning <--\nFound element mismatch in configuration file!\n");
+		    warning
+		      ("Found element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';
-		    fprintf(stderr, "Mismatch found in configuration %d.\n",
-		      nconf);
+		    fprintf(stderr,
+		      "Mismatch found in configuration %d, line %d.\n", nconf,
+		      line);
 		    fprintf(stderr,
 		      "Expected element >> %s << but found element >> %s <<.\n",
 		      elements[j], msg);
 		    fprintf(stderr,
-		      "You can use list_config to identify that configuration.\n\n");
-		    error("Please check your configuration files!");
+		      "You can use list_config to identify that configuration.\n");
+		    error("Please check your configuration files!\n");
 		  }
 		}
 	      } else if (strlen(res_tmp) > 1) {
@@ -299,18 +298,19 @@ void read_config(char *filename)
 		  if (atoi(elements[j]) == j) {
 		    strcpy(elements[j], msg);
 		  } else {
-		    fprintf(stderr,
-		      " --> Warning <--\nFound element mismatch in configuration file!\n");
+		    warning
+		      ("Found element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';
-		    fprintf(stderr, "Mismatch found in configuration %d.\n",
-		      nconf);
+		    fprintf(stderr,
+		      "Mismatch found in configuration %d on line %d.\n",
+		      nconf, line);
 		    fprintf(stderr,
 		      "Expected element >> %s << but found element >> %s <<.\n",
 		      elements[j], msg);
 		    fprintf(stderr,
-		      "You can use list_config to identify that configuration.\n\n");
+		      "You can use list_config to identify that configuration.\n");
 		    error("Please check your configuration files!");
 		  }
 		}
@@ -328,7 +328,7 @@ void read_config(char *filename)
 	      &(stresses->yz), &(stresses->zx)) == 6)
 	    h_stress++;
 	  else
-	    error("Error in stress tensor\n");
+	    error("Error in stress tensor on line %d\n", line);
 	}
       } while (res[1] != 'F');
       if (!(h_eng && h_boxx && h_boxy && h_boxz))
@@ -339,10 +339,12 @@ void read_config(char *filename)
       fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z);
       fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z);
       fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z);
+      line += 3;
 
       /* read cohesive energy */
       if (1 != fscanf(infile, "%lf\n", &(coheng[nconf])))
 	error("Configuration file without cohesive energy -- old format!");
+      line++;
 
       /* read stress tensor */
       if (6 != fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
@@ -350,6 +352,7 @@ void read_config(char *filename)
 	  &(stresses->yz), &(stresses->zx)))
 	error("No stresses given -- old format");
       usestress[nconf] = 1;
+      line++;
     }
 
     if (usestress[nconf])
@@ -366,11 +369,14 @@ void read_config(char *filename)
       if (7 > fscanf(infile, "%d %lf %lf %lf %lf %lf %lf\n", &(atom->typ),
 	  &(atom->pos.x), &(atom->pos.y), &(atom->pos.z),
 	  &(atom->force.x), &(atom->force.y), &(atom->force.z)))
-	error("Corrupt configuration file");
+	error("Corrupt configuration file on line %d\n", line + 1);
+      line++;
       if (atom->typ >= ntypes || atom->typ < 0)
-	error("Corrupt configuration file: Incorrect atom type");
-      atom->absforce = sqrt(SQR(atom->force.x) +
-	SQR(atom->force.y) + SQR(atom->force.z));
+	error
+	  ("Corrupt configuration file on line %d: Incorrect atom type (%d)\n",
+	  line, atom->typ);
+      atom->absforce =
+	sqrt(SQR(atom->force.x) + SQR(atom->force.y) + SQR(atom->force.z));
       atom->conf = nconf;
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
@@ -650,11 +656,10 @@ void read_config(char *filename)
   fclose(infile);
 
   /* be pedantic about too large ntypes */
-  if ((max_type + 1) < ntypes) {
-    fprintf(stderr,
-      "There are less than %d atom types in your configurations!\n", ntypes);
-    error("Please adjust \"ntypes\" in your parameter file.");
-  }
+  if ((max_type + 1) < ntypes)
+    error
+      ("There are less than %d atom types in your configurations!\n Please adjust \"ntypes\" in your parameter file.",
+      ntypes);
 
   reg_for_free(atoms, "atoms");
   reg_for_free(coheng, "coheng");
@@ -681,7 +686,7 @@ void read_config(char *filename)
 
   /* copy forces into single vector */
   if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
-    error("Cannot allocate forces");
+    error("Cannot allocate force vector");
   reg_for_free(force_0, "force_0");
 
   k = 0;
@@ -884,12 +889,10 @@ void read_config(char *filename)
   }
 
   printf(")\nfrom file \"%s\".\n\n", filename);
-  if (sh_dist) {
-    sprintf(msg,
-      "Distances too short, last occurence conf %d, see above for details",
+  if (sh_dist)
+    error
+      ("Distances too short, last occurence conf %d, see above for details\n",
       sh_dist);
-    error(msg);
-  }
   return;
 }
 

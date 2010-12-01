@@ -87,10 +87,8 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0) {
-    printf("%f %f %d\n", r, pt->begin[col], col);
-    error("short distance");
-  }
+  if (rr < 0)
+    error("%f %f %d\nShort distance", r, pt->begin[col], col);
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -156,9 +154,8 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
-  if (rr < 0) {
+  if (rr < 0)
     error("short distance! in splint_grad_ed");
-  }
 
   /* indices into potential table */
   istep = pt->invstep[col];

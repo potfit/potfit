@@ -1,3 +1,8 @@
+devel-20101201
++ increase the epsilon for the powell_lsq from 0.0001 to 0.001
++ added line numbers for errors in config files
++ error() and warning() functions can now be used with arguments like printf
+
 devel-20101122
 + change weights once more from w*d^2 to (w*dx)^2
 + adjust dummy constraints output for console

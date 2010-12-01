@@ -36,6 +36,7 @@ mycat="cat";
 weight="1";
 declare -a type_list;
 
+# get command line options
 while getopts 'c:e:flrs:w:?h' OPTION
 do
     case $OPTION in
@@ -71,9 +72,11 @@ do
     esac
 done
 
+# shift arguments by options and get the rest as $outcars
 shift $(($OPTIND-1))
 outcars="$*";
 
+# if no outcars are given, search for them (recursively)
 if [ "$outcars" == "" ]; then
     echo "No input files given on the command line. Searching for OUTCAR* ..." >&2;
     if [ "$scan_recursive" == "1" ]; then
@@ -190,13 +193,6 @@ for file in $outcars; do
     		}
     }
     for (i in pr_arr) pr_flag[pr_arr[i]]++;
-#pr_flag now is set for the configurations to be printed.
-#    getline saeng < "../single_atom_energies";
-#    if (poscar) {
-#    getline < "POSCAR"; getline scale < "POSCAR";
-#    getline boxx < "POSCAR"; getline boxy < "POSCAR"; getline boxz < "POSCAR";
-#    getline < "POSCAR"; ntypes = split($0,a);
-#    }
     single_energy=0.;
     split(saeng,sae);
   };
