@@ -30,6 +30,7 @@
 
 #define NRANSI
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -262,9 +263,9 @@ EXTERN int writeimd INIT(0);
 EXTERN real anneal_temp INIT(1.);
 #endif
 EXTERN real evo_threshold INIT(1.e-6);
-EXTERN real eweight INIT(1.);
+EXTERN real eweight INIT(-1.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
-EXTERN real sweight INIT(1.);
+EXTERN real sweight INIT(-1.);
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
@@ -416,8 +417,8 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
  ****************************************************************/
 
 /* general functions [potfit.c] */
-void  error(char *);
-void  warning(char *);
+void  error(char *, ...);
+int   warning(char *, ...);
 
 /* reading parameter file [param.c] */
 int   getparam(char *, void *, PARAMTYPE, int, int);

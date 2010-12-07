@@ -350,8 +350,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifndef NORESCALE
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT *
-	      10. * SQR(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] +=
+	      DUMMY_WEIGHT * 10. * SQR(atom->rho - calc_pot.end[col_F]);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.end[col_F];
@@ -360,8 +360,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT *
-	      10. * SQR(calc_pot.begin[col_F] - atom->rho);
+	    forces[limit_p + h] +=
+	      DUMMY_WEIGHT * 10. * SQR(calc_pot.begin[col_F] - atom->rho);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.begin[col_F];
@@ -418,17 +418,18 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      if ((r < calc_pot.end[neigh->col[1]])
 		|| (r < calc_pot.end[col_F - ntypes])) {
 		rho_grad =
-		  (r < calc_pot.end[neigh->col[1]]) ?
-		  splint_grad_dir(&calc_pot, xi, neigh->slot[1],
-		  neigh->shift[1], neigh->step[1]) : 0.;
+		  (r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot,
+		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.;
 		if (atom->typ == neigh->typ)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
-		  rho_grad_j = (r < calc_pot.end[col_F - ntypes]) ?
-		    splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.;
+		  rho_grad_j =
+		    (r < calc_pot.end[col_F - ntypes]) ? splint_grad(&calc_pot,
+		    xi, col_F - ntypes, r) : 0.;
 		/* now we know everything - calculate forces */
-		eam_force = (rho_grad * atom->gradF + rho_grad_j *
-		  conf_atoms[(neigh->nr) - firstatom].gradF);
+		eam_force =
+		  (rho_grad * atom->gradF +
+		  rho_grad_j * conf_atoms[(neigh->nr) - firstatom].gradF);
 		/* avoid double counting if atom is interacting with a
 		   copy of itself */
 		if (self)
@@ -478,7 +479,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += eweight * conf_weight[h] * SQR(forces[energy_p + h]);
+	tmpsum += conf_weight[h] * SQR(eweight * forces[energy_p + h]);
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -486,7 +487,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      sweight * conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
+	      conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -516,43 +517,43 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	/* PARABEL, WZERO, NORESC - different behaviour */
 #ifdef PARABEL
 /* constraints on U(n) */
-	forces[dummy_p + ntypes + g] = DUMMY_WEIGHT *
-	  parab(&calc_pot, xi, paircol + ntypes + g, 0.)
+	forces[dummy_p + ntypes + g] =
+	  DUMMY_WEIGHT * parab(&calc_pot, xi, paircol + ntypes + g, 0.)
 	  - force_0[dummy_p + ntypes + g];
 /* constraints on U`(n) */
-	forces[dummy_p + g] = DUMMY_WEIGHT *
-	  parab_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
-	  (calc_pot.begin[paircol + ntypes + g] +
-	    calc_pot.end[paircol + ntypes + g])) - force_0[dummy_p + g];
+	forces[dummy_p + g] =
+	  DUMMY_WEIGHT * parab_grad(&calc_pot, xi, paircol + ntypes + g,
+	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol +
+	      ntypes + g])) - force_0[dummy_p + g];
 #elif defined(WZERO)
 	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
 	  /* 0 in domain of U(n) */
 /* constraints on U(n) */
-	  forces[dummy_p + ntypes + g] = DUMMY_WEIGHT *
-	    splint(&calc_pot, xi, paircol + ntypes + g, 0.)
+	  forces[dummy_p + ntypes + g] =
+	    DUMMY_WEIGHT * splint(&calc_pot, xi, paircol + ntypes + g, 0.)
 	    - force_0[dummy_p + ntypes + g];
 	else
 	  /* 0 not in domain of U(n) */
 	  forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
 /* constraints on U`(n) */
-	forces[dummy_p + g] = DUMMY_WEIGHT *
-	  splint_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
-	  (calc_pot.begin[paircol + ntypes + g] +
-	    calc_pot.end[paircol + ntypes + g]))
+	forces[dummy_p + g] =
+	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
+	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol +
+	      ntypes + g]))
 	  - force_0[dummy_p + g];
 #elif defined(NORESCALE)
 	/* clear field */
 	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
-	forces[dummy_p + g] = DUMMY_WEIGHT *
-	  splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
+	forces[dummy_p + g] =
+	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
 #else /* NOTHING */
 	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
 /* constraints on U`(n) */
-	forces[dummy_p + g] = DUMMY_WEIGHT *
-	  splint_grad(&calc_pot, xi, paircol + ntypes + g, .5 *
-	  (calc_pot.begin[paircol + ntypes + g] +
-	    calc_pot.end[paircol + ntypes + g]))
+	forces[dummy_p + g] =
+	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
+	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol +
+	      ntypes + g]))
 	  - force_0[dummy_p + g];
 #endif /* Dummy constraints */
 	tmpsum += SQR(forces[dummy_p + ntypes + g]);
@@ -575,21 +576,19 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
     MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     /* forces */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
-      forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
+      atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
       forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf +
-      6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf,
-      conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
+      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
+      MPI_COMM_WORLD);
     /* punishment constraints */
-    MPI_Gatherv(forces + natoms * 3 + 7 * nconf +
-      firstconf, myconf, REAL,
-      forces + natoms * 3 + 7 * nconf,
-      conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, REAL,
+      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, REAL, 0,
+      MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
 #endif /* MPI */
 
