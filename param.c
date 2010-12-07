@@ -307,7 +307,6 @@ void read_paramfile(FILE *pf)
 
 void read_parameters(int argc, char **argv)
 {
-  char  msg[255];
   FILE *pf;
 
   /* check command line */

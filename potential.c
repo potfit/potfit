@@ -43,7 +43,7 @@
 void read_pot_table(pot_table_t *pt, char *filename)
 {
   FILE *infile;
-  char  buffer[1024], msg[255], *res, *str;
+  char  buffer[1024], *res, *str;
   int   have_format = 0, end_header = 0;
   int   size, i, j, k = 0, *nvals, ncols, npots = 0;
 #ifdef APOT
@@ -122,6 +122,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
       /* format complete? */
       if (2 != sscanf((const char *)(buffer + 2), "%d %d", &format, &size))
 	error("Corrupt format header line in file %s", filename);
+#ifndef APOT
+      if (format == 0)
+	error("potfit binary compiled without analytic potential support.\n");
+#else
+      if (format > 0)
+	error("potfit binary compiled without tabulated potential support.\n");
+#endif
 
       ncols = ntypes * (ntypes + 1) / 2;
       /* right number of columns? */
@@ -345,7 +352,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   FILE *infile)
 {
   int   i, j, k, l, ret_val;
-  char  msg[255];
   char  buffer[255];
   char  name[255];
   char *token;
@@ -912,7 +918,6 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   char *filename, FILE *infile)
 {
   int   i, j, k, l;
-  char  msg[255];
   real *val;
 
   /* read the info block of the function table */
@@ -1141,7 +1146,6 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   char *filename, FILE *infile)
 {
   int   i, k, l, j;
-  char  msg[255];
   real *val, *ord;
 
   /* read the info block of the function table */
@@ -1785,7 +1789,6 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 {
   int   i, j;
   FILE *outfile;
-  char  msg[255];
 
   /* open file */
   outfile = fopen(filename, "w");
@@ -1886,7 +1889,6 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 void write_pot_table3(pot_table_t *pt, char *filename)
 {
   FILE *outfile = NULL, *outfile2 = NULL;
-  char  msg[255];
   int   i, j, flag = 0;
   real  r;
 
@@ -1972,7 +1974,6 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 void write_pot_table4(pot_table_t *pt, char *filename)
 {
   FILE *outfile = NULL, *outfile2 = NULL;
-  char  msg[255];
   int   i, j, flag = 0;
 
   if (*plotpointfile != '\0')
@@ -2062,7 +2063,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   real  root;
 #endif /* EAM */
   FILE *outfile;
-  char  msg[255], filename[255];
+  char  filename[255];
 
   /* allocate memory */
   r2begin = (real *)malloc(ntypes * ntypes * sizeof(real));
@@ -2417,7 +2418,6 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 void write_plotpot_pair(pot_table_t *pt, char *filename)
 {
   FILE *outfile;
-  char  msg[255];
   int   i, j;
 #ifndef APOT
   int   k = 0, l;
@@ -2533,7 +2533,6 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
 void write_altplot_pair(pot_table_t *pt, char *filename)
 {
-  char  msg[255];
   int   i, j, k, l;
   real  r, rmin = 100., rmax = 0., r_step;
 #if defined EAM

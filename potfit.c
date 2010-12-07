@@ -88,7 +88,7 @@ int warning(char *msg, ...)
 
 int main(int argc, char **argv)
 {
-  char  msg[255], file[255];
+  char  file[255];
   FILE *outfile;
   int   i, j;
   real  tot, sqr;
@@ -131,19 +131,15 @@ int main(int argc, char **argv)
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
     /* Select correct spline interpolation and other functions */
+#ifdef APOT
     if (format == 0) {
-#ifndef APOT
-      error("potfit binary compiled without analytic potential support\n");
-#else
       splint = splint_ed;
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
       write_pot_table = write_pot_table0;
-#endif /* APOT */
-    } else if (format == 3) {
-#ifdef APOT
-      error("potfit binary compiled without tabulated potential support\n");
+    }
 #else
+    if (format == 3) {
       splint = splint_ed;
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
@@ -153,11 +149,7 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
-#endif /* APOT */
     } else if (format >= 4) {	/*format >= 4 ! */
-#ifdef APOT
-      error("potfit binary compiled without tabulated potential support\n");
-#else
       splint = splint_ne;
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
@@ -167,8 +159,8 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ne;
       parab_grad = parab_grad_ne;
 #endif /* PARABEL */
-#endif /* APOT */
     }
+#endif /* APOT */
 
     /* set spline density corrections to 0 */
 #if defined EAM || defined ADP

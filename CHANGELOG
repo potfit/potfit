@@ -1,3 +1,7 @@
+devel-20101207
++ properly check for the correct potential types
++ remove some unneeded variables
+
 devel-20101201
 + increase the epsilon for the powell_lsq from 0.0001 to 0.001
 + added line numbers for errors in config files
