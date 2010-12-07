@@ -91,6 +91,14 @@ int apot_parameters(char *name)
     return 5;
   } else if (strcmp(name, "cbb") == 0) {
     return 12;
+  } else if (strcmp(name, "exp_plus") == 0) {
+    return 3;
+  } else if (strcmp(name, "mishin") == 0) {
+    return 6;
+  } else if (strcmp(name, "gen_lj") == 0) {
+    return 5;
+  } else if (strcmp(name, "gljm") == 0) {
+    return 12;
   }
 
   /* template for new potential function called newpot */
@@ -157,6 +165,14 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &poly_5_value;
     } else if (strcmp(apt->names[i], "cbb") == 0) {
       apt->fvalue[i] = &cbb_value;
+    } else if (strcmp(apt->names[i], "exp_plus") == 0) {
+      apt->fvalue[i] = &exp_plus_value;
+    } else if (strcmp(apt->names[i], "mishin") == 0) {
+      apt->fvalue[i] = &mishin_value;
+    } else if (strcmp(apt->names[i], "gen_lj") == 0) {
+      apt->fvalue[i] = &gen_lj_value;
+    } else if (strcmp(apt->names[i], "gljm") == 0) {
+      apt->fvalue[i] = &gljm_value;
     }
 
 /* template for new potential function called newpot */
@@ -189,9 +205,9 @@ void lj_value(real r, real *p, real *f)
 {
   real  sig_d_rad6, sig_d_rad12;
 
-  sig_d_rad6 = (p[1] * p[1]) / (r * r);
+  sig_d_rad6 = SQR(p[1]) / SQR(r);
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
-  sig_d_rad12 = sig_d_rad6 * sig_d_rad6;
+  sig_d_rad12 = SQR(sig_d_rad6);
 
   *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
 }
@@ -371,7 +387,7 @@ void pohlong_value(real r, real *p, real *f)
 
 void parabola_value(real r, real *p, real *f)
 {
-  *f = r * r * p[0] + r * p[1] + p[2];
+  *f = SQR(r) * p[0] + r * p[1] + p[2];
 }
 
 /****************************************************************
@@ -415,8 +431,8 @@ void universal_value(real r, real *p, real *f)
 #endif
 
   *f =
-    p[0] * (p[2] / (p[2] - p[1]) * power[0] -
-    p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
+    p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
+    p[3] * r;
 }
 
 /****************************************************************
@@ -462,8 +478,9 @@ void strmm_value(real r, real *p, real *f)
 {
   real  r_0 = r - p[4];
 
-  *f = 2 * p[0] * exp(-p[1] / 2 * r_0) -
-    p[2] * (1 + p[3] * r_0) * exp(-p[3] * r_0);
+  *f =
+    2 * p[0] * exp(-p[1] / 2 * r_0) - p[2] * (1 +
+    p[3] * r_0) * exp(-p[3] * r_0);
 }
 
 /****************************************************************
@@ -474,9 +491,9 @@ void strmm_value(real r, real *p, real *f)
 
 void double_morse_value(real r, real *p, real *f)
 {
-  *f = (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) +
-    p[6];
+  *f =
+    (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
+    p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) + p[6];
 }
 
 /****************************************************************
@@ -487,8 +504,7 @@ void double_morse_value(real r, real *p, real *f)
 
 void double_exp_value(real r, real *p, real *f)
 {
-  *f =
-    (p[0] * exp(-p[1] * (r - p[2]) * (r - p[2])) + exp(-p[3] * (r - p[4])));
+  *f = (p[0] * exp(-p[1] * SQR(r - p[2])) + exp(-p[3] * (r - p[4])));
 }
 
 /****************************************************************
@@ -501,8 +517,8 @@ void poly_5_value(real r, real *p, real *f)
 {
   real  dr = (r - 1) * (r - 1);
   *f =
-    p[0] + 0.5 * p[1] * dr + p[2] * (r - 1) * dr + p[3] * dr * dr +
-    p[4] * dr * dr * (r - 1);
+    p[0] + 0.5 * p[1] * dr + p[2] * (r - 1) * dr + p[3] * SQR(dr) +
+    p[4] * SQR(dr) * (r - 1);
 }
 
 /****************************************************************
@@ -520,8 +536,95 @@ void cbb_value(real r, real *p, real *f)
 
   *f =
     p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
-      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r -
-	p[11])) - 2 * exp(-p[10] * (r - p[11])));
+      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) -
+    2 * exp(-p[10] * (r - p[11])));
+}
+
+/****************************************************************
+ *
+ * exp_plus potential
+ *
+ ****************************************************************/
+
+void exp_plus_value(real r, real *p, real *f)
+{
+  *f = p[0] * exp(-p[1] * r) + p[2];
+}
+
+/****************************************************************
+ *
+ * mishin potential
+ *
+ ****************************************************************/
+
+void mishin_value(real r, real *p, real *f)
+{
+  real  z = r - p[3];
+  real  temp = exp(-p[5] * r);
+  real  power;
+
+#ifndef ACML
+  vdPow(1, &z, &p[4], &power);
+#else
+  power = fastpow(z, p[4]);
+#endif /* ACML */
+
+  *f = p[0] * power * temp * (1 + p[1] * temp) + p[2];
+}
+
+/****************************************************************
+ *
+ * gen_lj potential, generalized lennard-jones
+ *
+ ****************************************************************/
+
+void gen_lj_value(real r, real *p, real *f)
+{
+  static real x[2], y[2], power[2];
+
+  x[0] = r / p[3];
+  x[1] = x[0];
+  y[0] = p[1];
+  y[1] = p[2];
+#ifndef ACML
+  vdPow(2, x, y, power);
+#else
+  power[0] = fastpow(x[0], y[0]);
+  power[1] = fastpow(x[1], y[1]);
+#endif
+
+  *f = p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4];
+}
+
+/****************************************************************
+ *
+ * gljm potential, generalized lennard-jones + mishin potential
+ *
+ ****************************************************************/
+
+void gljm_value(real r, real *p, real *f)
+{
+  real  x[3], y[3], power[3];
+
+  x[0] = r / p[3];
+  x[1] = x[0];
+  x[2] = r - p[9];
+  y[0] = p[1];
+  y[1] = p[2];
+  y[2] = p[10];
+#ifndef ACML
+  vdPow(3, x, y, power);
+#else
+  power[0] = fastpow(x[0], y[0]);
+  power[1] = fastpow(x[1], y[1]);
+  power[2] = fastpow(x[2], y[2]);
+#endif /* ACML */
+
+  real  temp = exp(-p[11] * power[2]);
+
+  *f =
+    p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
+    p[5] * (p[6] * power[2] * temp * (1 + p[7] * temp) + p[8]);
 }
 
 /****************************************************************
@@ -692,8 +795,7 @@ void debug_apot()
   fprintf(stderr, "\n##############################################\n");
   fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
   fprintf(stderr, "##############################################\n");
-  fprintf(stderr,
-    "\nThere are %d potentials with a total of %d parameters.\n",
+  fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
     apot_table.number, apot_table.total_par);
   for (i = 0; i < apot_table.number; i++) {
     fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
@@ -727,7 +829,7 @@ void debug_apot()
     }
   }
 #endif /* PAIR */
-  exit(2);
+  exit(EXIT_FAILURE);
 }
 
 #endif /* DEBUG */

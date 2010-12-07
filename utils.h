@@ -30,13 +30,25 @@
 
 #define ANSI
 
-real  sqrreal(real x);
+/* vector and matrix allocations */
 int  *vect_int(long dim);
 real *vect_real(long dim);
 real **mat_real(long rowdim, long coldim);
-void  free_vect_real(real *vect);
 void  free_vect_int(int *vect);
+void  free_vect_real(real *vect);
 void  free_mat_real(real **matrix);
+
+/* memory management */
 void  reg_for_free(void *p, char *name);
 void  free_all_pointers();
+
+/* vector procuct */
+vector vec_prod(vector, vector);
+
+/* pRNG with normal distribution */
 real  normdist();
+
+/* quicksort for ODE */
+void  quicksort(real *x, int low, int high, real **p);
+int   partition(real *x, int low, int high, int index, real **p);
+void  swap_population(real *a, real *b);

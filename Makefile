@@ -129,6 +129,7 @@ BIN_DIR 	= ${HOME}/bin
 # Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
 ACMLDIR  	= /common/linux/paket/acml4.4.0/ifort64
+#ACMLDIR  	= /opt/acml4.4.0/gfortran64
 
 ###########################################################################
 #
@@ -164,7 +165,7 @@ ifeq (x86_64-icc,${SYSTEM})
 # debug flags
   PROF_FLAGS    += -prof-gen
   PROF_LIBS 	+= -prof-gen
-  DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
+  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -312,7 +313,7 @@ endif
 CC = ${CC_${PARALLEL}}
 
 # optimization flags
-OPT_FLAGS   += ${${PARALLEL}_FLAGS} ${OPT_${PARALLEL}_FLAGS}
+OPT_FLAGS   += ${${PARALLEL}_FLAGS} ${OPT_${PARALLEL}_FLAGS} -DNDEBUG
 DEBUG_FLAGS += ${${PARALLEL}_FLAGS} ${DEBUG_${PARALLEL}_FLAGS}
 
 # libraries
@@ -339,11 +340,11 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= bracket.h  potfit.h  powell_lsq.h  \
+POTFITHDR   	= bracket.h  potfit.h \
 		  random-params.h  random.h  utils.h
 POTFITSRC 	= bracket.c brent.c config.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
-		  random.c simann.c splines.c utils.c
+		  random.c diff_evo.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += force_pair.c
@@ -358,11 +359,14 @@ POTFITSRC      += force_adp.c rescale.c
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-POTFITSRC      += functions.c chempot.c
+POTFITSRC      += functions.c
+ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+POTFITSRC      += chempot.c
+endif
 endif
 
-ifneq (,$(strip $(findstring evo,${MAKETARGET})))
-POTFITSRC      += diff_evo.c
+ifneq (,$(strip $(findstring simann,${MAKETARGET})))
+POTFITSRC      += simann.c
 endif
 
 MPISRC          = mpi_utils.c
@@ -386,13 +390,13 @@ endif
 
 INTERACTION = 0
 
-# PAIR
+# pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
 CFLAGS += -DPAIR
 INTERACTION = 1
 endif
 
-# EAM
+# embedded atom method (EAM) potentials
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
@@ -401,7 +405,7 @@ CFLAGS  += -DEAM
 INTERACTION = 1
 endif
 
-# ADP
+# angular dependent potentials (ADP)
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
@@ -414,9 +418,9 @@ ifneq (,$(findstring 0,${INTERACTION}))
 ERROR += No interaction model specified
 endif
 
-# EVO - for differential evolution
-ifneq (,$(findstring evo,${MAKETARGET}))
-CFLAGS += -DEVO
+# SIMANN - for simulated annealing
+ifneq (,$(findstring simann,${MAKETARGET}))
+CFLAGS += -DSIMANN
 endif
 
 # APOT - for analytic potentials

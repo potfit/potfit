@@ -28,6 +28,8 @@
  *
  *****************************************************************/
 
+#ifdef SIMANN
+
 #include "potfit.h"
 #include "utils.h"
 
@@ -38,7 +40,7 @@
 #define STEPVAR 2.0
 #define TEMPVAR 0.85
 #define KMAX 1000
-#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-(sqrreal(a))/2.)))
+#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-((a)*(a))/2.)))
 
 #ifdef APOT
 
@@ -228,8 +230,7 @@ void anneal(real *xi)
       if (*flagfile != '\0') {
 	ff = fopen(flagfile, "r");
 	if (NULL != ff) {
-	  printf
-	    ("Annealing terminated in presence of break flagfile \"%s\"!\n",
+	  printf("Annealing terminated in presence of break flagfile \"%s\"!\n",
 	    flagfile);
 	  printf("Temperature was %f, returning optimum configuration\n", T);
 	  for (n = 0; n < ndimtot; n++)
@@ -290,7 +291,7 @@ void anneal(real *xi)
       xopt[idx[n]];
   if (*tempfile != '\0')
     write_pot_table(&apot_table, tempfile);
-#endif
+#endif /* APOT */
   free_vect_real(Fvar);
   free_vect_real(v);
   free_vect_real(xopt);
@@ -299,3 +300,5 @@ void anneal(real *xi)
   free_vect_real(fxi1);
   return;
 }
+
+#endif /* SIMANN */

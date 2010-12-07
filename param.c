@@ -71,10 +71,9 @@ int   curline;			/* number of current line */
 
 */
 
-int getparam(char *param_name, void *param, PARAMTYPE ptype,
-  int pnum_min, int pnum_max)
+int getparam(char *param_name, void *param, PARAMTYPE ptype, int pnum_min,
+  int pnum_max)
 {
-  static char errmsg[256];
   char *str;
   int   i;
   int   numread;
@@ -82,34 +81,28 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
   numread = 0;
   if (ptype == PARAM_STR) {
     str = strtok(NULL, " \t\r\n");
-    if (str == NULL) {
-      sprintf(errmsg,
-	"Parameter for %s missing in line %d\nstring expected!\n",
+    if (str == NULL)
+      error("Parameter for %s missing in line %d\nstring expected!\n",
 	param_name, curline);
-      error(errmsg);
-    } else
+    else
       strncpy((char *)param, str, pnum_max);
     numread++;
   } else if (ptype == PARAM_STRPTR) {
     str = strtok(NULL, " \t\r\n");
-    if (str == NULL) {
-      sprintf(errmsg,
-	"Parameter for %s missing in line %d\nstring expected!\n",
+    if (str == NULL)
+      error("Parameter for %s missing in line %d\nstring expected!\n",
 	param_name, curline);
-      error(errmsg);
-    } else
+    else
       *((char **)param) = strdup(str);
     numread++;
   } else if (ptype == PARAM_INT) {
     for (i = 0; i < pnum_min; i++) {
       str = strtok(NULL, " \t\r\n");
-      if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-	  param_name, curline);
-	sprintf(errmsg + strlen(errmsg),
-	  "Integer vector of length %u expected!\n", (unsigned)pnum_min);
-	error(errmsg);
-      } else
+      if (str == NULL)
+	error
+	  ("Parameter for %s missing in line %d!\nInteger vector of length %u expected!\n",
+	  param_name, curline, (unsigned)pnum_min);
+      else
 	((int *)param)[i] = atoi(str);
       numread++;
     }
@@ -123,13 +116,11 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
   } else if (ptype == PARAM_DOUBLE) {
     for (i = 0; i < pnum_min; i++) {
       str = strtok(NULL, " \t\r\n");
-      if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-	  param_name, curline);
-	sprintf(errmsg + strlen(errmsg),
-	  "Double vector of length %u expected!\n", (unsigned)pnum_min);
-	error(errmsg);
-      } else
+      if (str == NULL)
+	error
+	  ("Parameter for %s missing in line %d!\nDouble vector of length %u expected!\n",
+	  param_name, curline, (unsigned)pnum_min);
+      else
 	((real *)param)[i] = atof(str);
       numread++;
     }
@@ -254,22 +245,22 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "seed") == 0) {
       getparam("seed", &seed, PARAM_INT, 1, 1);
     }
+#ifdef SIMANN
     /* starting temperature for annealing */
     else if (strcasecmp(token, "anneal_temp") == 0) {
       getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
     }
-#ifdef EVO
-    /* starting width for normal distribution for evo */
-    else if (strcasecmp(token, "evo_width") == 0) {
-      getparam("evo_width", &evo_width, PARAM_DOUBLE, 1, 1);
+#endif /* SIMANN */
+    /* stopping criterion for differential evolution */
+    else if (strcasecmp(token, "evo_threshold") == 0) {
+      getparam("evo_threshold", &evo_threshold, PARAM_DOUBLE, 1, 1);
     }
-#endif
 #ifdef APOT
     /* Scaling Constant for APOT Punishment */
     else if (strcasecmp(token, "apot_punish") == 0) {
       getparam("apot_punish", &apot_punish_value, PARAM_DOUBLE, 1, 1);
     }
-#endif
+#endif /* APOT */
     /* Energy Weight */
     else if (strcasecmp(token, "eng_weight") == 0) {
       getparam("eng_weight", &eweight, PARAM_DOUBLE, 1, 1);
@@ -297,6 +288,15 @@ void read_paramfile(FILE *pf)
 
   if (strcmp(endpot, "\0") == 0)
     sprintf(endpot, "%s_end", startpot);
+
+  if (eweight < 0)
+    error("Missing in parameter file: energy weight");
+
+#ifdef STRESS
+  if (sweight < 0)
+    error("Missing in parameter file: stress weight");
+#endif
+
 }
 
 /******************************************************************************
@@ -307,26 +307,16 @@ void read_paramfile(FILE *pf)
 
 void read_parameters(int argc, char **argv)
 {
-  char  msg[255];
   FILE *pf;
 
   /* check command line */
-  if (argc < 2) {
-    sprintf(msg, "Usage: %s <paramfile>\n", argv[0]);
-    error(msg);
-  }
+  if (argc < 2)
+    error("Usage: %s <paramfile>\n", argv[0]);
 
   /* open parameter file, and read it */
   pf = fopen(argv[1], "r");
-  if (NULL == pf) {
-    fprintf(stderr, "ERROR: Could not open parameter file %s!\n", argv[1]);
-    fflush(stderr);
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 2);
-#endif
-    exit(2);
-  }
+  if (NULL == pf)
+    error("Could not open parameter file \"%s\".\n", argv[1]);
   read_paramfile(pf);
   printf("Read parameters from file \"%s\".\n", argv[1]);
-
 }
