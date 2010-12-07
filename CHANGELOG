@@ -1,3 +1,23 @@
+--> POTFIT-20101207 released
+
+devel-20101207
++ properly check for the correct potential types
++ remove some unneeded variables
+
+devel-20101201
++ increase the epsilon for the powell_lsq from 0.0001 to 0.001
++ added line numbers for errors in config files
++ error() and warning() functions can now be used with arguments like printf
+
+devel-20101122
++ change weights once more from w*d^2 to (w*dx)^2
++ adjust dummy constraints output for console
++ limit number of cpus to nconf
+
+devel-20101108
++ revert the normalization of energy and stress weights
++ small technical changes
+
 devel-20101018
 + fix strcpy bug with stresses
 + cutoff radius for embedding function is now read from potential file

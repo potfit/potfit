@@ -147,8 +147,8 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
     }
 
 #ifndef MPI
@@ -282,9 +282,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum +=
-	  eweight * conf_weight[h] * 3 * inconf[h] * SQR(forces[energy_p +
-	    h]);
+	tmpsum += conf_weight[h] * SQR(eweight * forces[energy_p + h]);
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -292,8 +290,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      sweight * conf_weight[h] * inconf[h] / 2 * SQR(forces[stress_p +
-		6 * h + i]);
+	      conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -316,16 +313,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     /* forces */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
-      forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
+      atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
       forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf +
-      6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf,
-      conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
+      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
+      MPI_COMM_WORLD);
 #endif /* MPI */
 
     /* root process exits this function now */

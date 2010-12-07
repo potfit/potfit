@@ -30,6 +30,7 @@
 
 #define NRANSI
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -193,7 +194,7 @@ typedef struct {
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
 #define EXTERN			/* define Variables in main */
-#define INIT(data) =data	/* initialize data only in main */
+#define INIT(data) = data	/* initialize data only in main */
 #else
 #define EXTERN extern		/* declare them extern otherwise */
 #define INIT(data)		/* skip initialization otherwise */
@@ -234,9 +235,9 @@ EXTERN int writeimd INIT(0);
 EXTERN real anneal_temp INIT(1.);
 #endif
 EXTERN real evo_threshold INIT(1.e-6);
-EXTERN real eweight INIT(1.);
+EXTERN real eweight INIT(-1.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
-EXTERN real sweight INIT(1.);
+EXTERN real sweight INIT(-1.);
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
@@ -245,49 +246,49 @@ EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 #endif /* APOT */
 
 /* configurations */
-EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
-EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
-EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
-EXTERN int **na_type INIT(NULL);	/* number of atoms per type */
-EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
-EXTERN int *conf_uf INIT(NULL);
-EXTERN int *conf_us INIT(NULL);
-EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
-EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
-EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
+EXTERN atom_t *atoms;		/* atoms array */
+EXTERN atom_t *conf_atoms;	/* Atoms in configuration */
+EXTERN char **elements;		/* element names from vasp2force */
+EXTERN int **na_type;		/* number of atoms per type */
+EXTERN int *cnfstart;		/* Nr. of first atom in config */
+EXTERN int *conf_uf;
+EXTERN int *conf_us;
+EXTERN int *inconf;		/* Nr. of atoms in each config */
+EXTERN int *useforce;		/* Should we use force/stress */
+EXTERN int *usestress;		/* Should we use force/stress */
 EXTERN int have_elements INIT(0);	/* do we have the elements ? */
 EXTERN int maxneigh INIT(0);	/* maximum number of neighbors */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
-EXTERN real *coheng INIT(NULL);	/* Cohesive energy for each config */
-EXTERN real *conf_vol INIT(NULL);
-EXTERN real *conf_weight INIT(NULL);	/* weight of configuration */
-EXTERN real *force_0 INIT(NULL);	/* the forces we aim at */
-EXTERN real *rcut INIT(NULL);
-EXTERN real *rmin INIT(NULL);
-EXTERN real *volumen INIT(NULL);	/* Volume of cell */
+EXTERN real *coheng;		/* Cohesive energy for each config */
+EXTERN real *conf_vol;
+EXTERN real *conf_weight;	/* weight of configuration */
+EXTERN real *force_0;		/* the forces we aim at */
+EXTERN real *rcut;
+EXTERN real *rmin;
+EXTERN real *volumen;		/* Volume of cell */
 EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
-EXTERN sym_tens *conf_stress INIT(NULL);
-EXTERN sym_tens *stress INIT(NULL);	/* Stresses in each config */
+EXTERN sym_tens *conf_stress;
+EXTERN sym_tens *stress;	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 /* potential variables */
 EXTERN char interaction[10] INIT("\0");
-EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
-EXTERN int *invar_pot INIT(NULL);
+EXTERN int *gradient;		/* Gradient of potential fns.  */
+EXTERN int *invar_pot;
 EXTERN int format INIT(-1);	/* format of potential table */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
-EXTERN int *smooth_pot INIT(NULL);
+EXTERN int *smooth_pot;
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
 EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
 EXTERN int global_idx INIT(0);	/* index for global parameters in opt_pot table */
 EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
 EXTERN int have_globals INIT(0);	/* do we have global parameters? */
-EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
-EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
+EXTERN real *calc_list;		/* list of current potential in the calc table */
+EXTERN real *compnodelist;	/* list of the composition nodes */
 #endif /* APOT */
 
 /* potential tables */
@@ -311,9 +312,9 @@ EXTERN real d_eps INIT(0.);
 /* general variables */
 EXTERN int firstatom INIT(0);
 EXTERN int firstconf INIT(0);
-EXTERN int myatoms INIT(0.);
-EXTERN int myconf INIT(0.);
-EXTERN real *rms INIT(NULL);
+EXTERN int myatoms INIT(0);
+EXTERN int myconf INIT(0);
+EXTERN real *rms;
 
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
@@ -328,24 +329,24 @@ EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints 
 #endif /* APOT */
 
 /* memory management */
-EXTERN char **pointer_names INIT(NULL);
+EXTERN char **pointer_names;
 EXTERN int num_pointers INIT(0);
-EXTERN void **all_pointers INIT(NULL);
+EXTERN void **all_pointers;
 
 /* variables needed for atom distribution with mpi */
 #ifdef MPI
-EXTERN int *atom_dist INIT(NULL);
-EXTERN int *atom_len INIT(NULL);
-EXTERN int *conf_dist INIT(NULL);
-EXTERN int *conf_len INIT(NULL);
+EXTERN int *atom_dist;
+EXTERN int *atom_len;
+EXTERN int *conf_dist;
+EXTERN int *conf_len;
 #endif /* MPI */
 
 /* misc. stuff - has to belong somewhere */
-EXTERN int *idx INIT(NULL);
+EXTERN int *idx;
 EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
-EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
-EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
+EXTERN real *lambda;		/* embedding energy slope... */
+EXTERN real *maxchange;		/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
 
@@ -377,8 +378,8 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
  ****************************************************************/
 
 /* general functions [potfit.c] */
-void  error(char *);
-void  warning(char *);
+void  error(char *, ...);
+int   warning(char *, ...);
 
 /* reading parameter file [param.c] */
 int   getparam(char *, void *, PARAMTYPE, int, int);

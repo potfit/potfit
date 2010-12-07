@@ -129,6 +129,7 @@ BIN_DIR 	= ${HOME}/bin
 # Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
 ACMLDIR  	= /common/linux/paket/acml4.4.0/ifort64
+#ACMLDIR  	= /opt/acml4.4.0/gfortran64
 
 ###########################################################################
 #
