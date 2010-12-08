@@ -443,8 +443,8 @@ void universal_value(real r, real *p, real *f)
 #endif
 
   *f =
-    p[0] * (p[2] / (p[2] - p[1]) * power[0] -
-    p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
+    p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
+    p[3] * r;
 }
 
 /****************************************************************
@@ -490,8 +490,9 @@ void strmm_value(real r, real *p, real *f)
 {
   real  r_0 = r - p[4];
 
-  *f = 2 * p[0] * exp(-p[1] / 2 * r_0) -
-    p[2] * (1 + p[3] * r_0) * exp(-p[3] * r_0);
+  *f =
+    2 * p[0] * exp(-p[1] / 2 * r_0) - p[2] * (1 +
+    p[3] * r_0) * exp(-p[3] * r_0);
 }
 
 /****************************************************************
@@ -502,9 +503,9 @@ void strmm_value(real r, real *p, real *f)
 
 void double_morse_value(real r, real *p, real *f)
 {
-  *f = (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) +
-    p[6];
+  *f =
+    (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
+    p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) + p[6];
 }
 
 /****************************************************************
@@ -547,8 +548,8 @@ void cbb_value(real r, real *p, real *f)
 
   *f =
     p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
-      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r -
-	p[11])) - 2 * exp(-p[10] * (r - p[11])));
+      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) -
+    2 * exp(-p[10] * (r - p[11])));
 }
 
 /****************************************************************
@@ -840,8 +841,7 @@ void debug_apot()
   fprintf(stderr, "\n##############################################\n");
   fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
   fprintf(stderr, "##############################################\n");
-  fprintf(stderr,
-    "\nThere are %d potentials with a total of %d parameters.\n",
+  fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
     apot_table.number, apot_table.total_par);
   for (i = 0; i < apot_table.number; i++) {
     fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,

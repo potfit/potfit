@@ -16,7 +16,7 @@ POTSCALEOBJ = $(POTSCALESRC:.c=.o)
 .c.o: ${POTSCALEHDR}
 	$(CC) $(CFLAGS) $(CINCLUDE) -c $<
 
-.PHONY: force2imd vasp2force list_config potfit_setup
+.PHONY: force2imd vasp2force vasp2energy list_config potfit_setup
 
 clean:
 	rm -f *.o *~
@@ -35,6 +35,9 @@ potscale: ${POTSCALEOBJ} ${POTSCALEHDR}
 
 vasp2force:
 	cp vasp2force ${HOME}/bin/share
+
+vasp2energy:
+	cp vasp2energy ${HOME}/bin/share
 
 force2imd:
 	cp force2imd ${HOME}/bin/share

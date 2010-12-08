@@ -44,7 +44,7 @@
 void read_pot_table(pot_table_t *pt, char *filename)
 {
   FILE *infile;
-  char  buffer[1024], msg[255], *res, *str;
+  char  buffer[1024], *res, *str;
   int   have_format = 0, end_header = 0;
   int   size, i, j, k = 0, *nvals, ncols, npots = 0;
 #ifdef APOT
@@ -55,24 +55,18 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
   /* open file */
   infile = fopen(filename, "r");
-  if (NULL == infile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == infile)
+    error("Could not open file %s\n", filename);
 
   /* read the header */
   do {
     /* read one line */
     res = fgets(buffer, 1024, infile);
-    if (NULL == res) {
-      sprintf(msg, "Unexpected end of file in %s", filename);
-      error(msg);
-    }
+    if (NULL == res)
+      error("Unexpected end of file in %s", filename);
     /* check if it is a header line */
-    if (buffer[0] != '#') {
-      sprintf(msg, "Header corrupt in file %s", filename);
-      error(msg);
-    }
+    if (buffer[0] != '#')
+      error("Header corrupt in file %s", filename);
     /* stop after last header line */
     if (buffer[1] == 'E') {
       end_header = 1;
@@ -80,14 +74,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
     if (buffer[1] == 'T') {
       if ((str = strchr(buffer + 3, '\n')) != NULL)
 	*str = '\0';
-      if (strcmp(buffer + 3, interaction) != 0) {
-	fprintf(stderr, "\nWrong potential type!\n");
-	fprintf(stderr, "This binary only supports %s-potentials.\n",
-	  interaction);
-	fprintf(stderr, "Your potential file contains a %s-potential.\n",
-	  buffer + 3);
-	error("Aborting ...");
-      }
+      if (strcmp(buffer + 3, interaction) != 0)
+	error
+	  ("Wrong potential type!\nThis binary only supports %s-potentials.\nYour potential file contains a %s-potential.\n",
+	  interaction, buffer + 3);
     }
     /* invariant potentials */
     else if (buffer[1] == 'I') {
@@ -108,11 +98,8 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	  }
 	}
 	have_invar = 1;
-      } else {
-	sprintf(msg, "#I needs to be specified after #F in file %s",
-	  filename);
-	error(msg);
-      }
+      } else
+	error("#I needs to be specified after #F in file %s", filename);
     }
 #ifndef APOT
     else if (buffer[1] == 'G') {
@@ -120,28 +107,29 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	/* gradient complete */
 	for (i = 0; i < size; i++) {
 	  str = strtok(((i == 0) ? buffer + 2 : NULL), " \t\r\n");
-	  if (str == NULL) {
-	    sprintf(msg, "Not enough items in #G header line.");
-	    error(msg);
-	  } else
+	  if (str == NULL)
+	    error("Not enough items in #G header line.");
+	  else
 	    ((int *)gradient)[i] = atoi(str);
 	}
 	have_grad = 1;
-      } else {
-	sprintf(msg, "#G needs to be specified after #F in file %s",
-	  filename);
-	error(msg);
-      }
+      } else
+	error("#G needs to be specified after #F in file %s", filename);
     }
 #endif
 
     /* see if it is the format line */
     else if (buffer[1] == 'F') {
       /* format complete? */
-      if (2 != sscanf((const char *)(buffer + 2), "%d %d", &format, &size)) {
-	sprintf(msg, "Corrupt format header line in file %s", filename);
-	error(msg);
-      }
+      if (2 != sscanf((const char *)(buffer + 2), "%d %d", &format, &size))
+	error("Corrupt format header line in file %s", filename);
+#ifndef APOT
+      if (format == 0)
+	error("potfit binary compiled without analytic potential support.\n");
+#else
+      if (format > 0)
+	error("potfit binary compiled without tabulated potential support.\n");
+#endif
 
       ncols = ntypes * (ntypes + 1) / 2;
       /* right number of columns? */
@@ -155,17 +143,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
       if (size == npots) {
 	printf("Using %s potentials from file \"%s\".\n", interaction,
 	  filename);
-      } else {
-	sprintf(msg,
-	  "Wrong number of data columns in file \"%s\",\n should be %d for %s, but are %d.",
+      } else
+	error
+	  ("Wrong number of data columns in file \"%s\",\n should be %d for %s, but are %d.",
 	  filename, npots, interaction, size);
-	error(msg);
-      }
       /* recognized format? */
-      if ((format != 0) && (format != 3) && (format != 4)) {
-	sprintf(msg, "Unrecognized format specified for file %s", filename);
-	error(msg);
-      }
+      if ((format != 0) && (format != 3) && (format != 4))
+	error("Unrecognized format specified for file %s", filename);
       gradient = (int *)malloc(size * sizeof(int));
       invar_pot = (int *)malloc(size * sizeof(int));
 #ifdef APOT
@@ -183,10 +167,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
   } while (!end_header);
 
   /* do we have a format in the header? */
-  if (!have_format) {
-    sprintf(msg, "Format not specified in header of file %s", filename);
-    error(msg);
-  } else if (format != 0)
+  if (!have_format)
+    error("Format not specified in header of file %s", filename);
+  else if (format != 0)
     printf("Potential file format %d detected.\n", format);
   else
     printf("Potential file format %d (analytic potentials) detected.\n",
@@ -202,13 +185,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
   pt->first = (int *)malloc(size * sizeof(int));
   pt->last = (int *)malloc(size * sizeof(int));
   nvals = (int *)malloc(size * sizeof(int));
-  if ((pt->begin == NULL) || (pt->end == NULL) || (pt->step == NULL) ||
-    (pt->invstep == NULL) || (pt->first == NULL) || (pt->last == NULL) ||
-    (nvals == NULL)) {
-    sprintf(msg, "Cannot allocate info block for potential table %s",
-      filename);
-    error(msg);
-  }
+  if ((pt->begin == NULL) || (pt->end == NULL) || (pt->step == NULL)
+    || (pt->invstep == NULL) || (pt->first == NULL) || (pt->last == NULL)
+    || (nvals == NULL))
+    error("Cannot allocate info block for potential table %s", filename);
 #ifdef APOT
   /* allocate memory for analytic potential table */
   apt->number = size;
@@ -280,11 +260,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
   if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL)
     || (apt->fvalue == NULL) || (apt->names == NULL) || (apt->pmin == NULL)
     || (apt->pmax == NULL) || (apt->param_name == NULL)
-    || (apt->values == NULL)) {
-    sprintf(msg, "Cannot allocate info block for analytic potential table %s",
+    || (apt->values == NULL))
+    error("Cannot allocate info block for analytic potential table %s",
       filename);
-    error(msg);
-  }
 #endif /* APOT */
   switch (format) {
 #ifdef APOT
@@ -317,14 +295,14 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #if defined EAM || defined ADP
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
-      rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j],
-	pt->end[(ntypes * (ntypes + 1)) / 2 + i]);
-      rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j],
-	pt->end[(ntypes * (ntypes + 1)) / 2 + j]);
-      rmin[i * ntypes + j] = MIN(rmin[i * ntypes + j],
-	pt->begin[(ntypes * (ntypes + 1)) / 2 + i]);
-      rmin[i * ntypes + j] = MIN(rmin[i * ntypes + j],
-	pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
+      rcut[i * ntypes + j] =
+	MAX(rcut[i * ntypes + j], pt->end[(ntypes * (ntypes + 1)) / 2 + i]);
+      rcut[i * ntypes + j] =
+	MAX(rcut[i * ntypes + j], pt->end[(ntypes * (ntypes + 1)) / 2 + j]);
+      rmin[i * ntypes + j] =
+	MIN(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + i]);
+      rmin[i * ntypes + j] =
+	MIN(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
     }
   }
 #endif /* EAM || ADP */
@@ -337,16 +315,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
   if (usemaxch) {
     /* open file */
     infile = fopen(maxchfile, "r");
-    if (NULL == infile) {
-      sprintf(msg, "Could not open file %s\n", maxchfile);
-      error(msg);
-    }
+    if (NULL == infile)
+      error("Could not open file %s\n", maxchfile);
     val = maxchange;
     for (i = 0; i < pt->len; i++) {
-      if (1 > fscanf(infile, " %lf\n", val)) {
-	sprintf(msg, "Premature end of maxch file %s", maxchfile);
-	error(msg);
-      } else
+      if (1 > fscanf(infile, " %lf\n", val))
+	error("Premature end of maxch file %s", maxchfile);
+      else
 	val++;
     }
     fclose(infile);
@@ -434,7 +409,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   FILE *infile)
 {
   int   i, j, k, l, ret_val;
-  char  msg[255];
   char  buffer[255];
   char  name[255];
   char *token;
@@ -457,11 +431,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 
     for (i = 0; i < ntypes; i++) {
       if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
-	  &apt->pmin[apt->number][i], &apt->pmax[apt->number][i])) {
-	sprintf(msg, "Could not read chemical potential for atomtype #%d.",
-	  i);
-	error(msg);
-      }
+	  &apt->pmin[apt->number][i], &apt->pmax[apt->number][i]))
+	error("Could not read chemical potential for atomtype #%d.", i);
 
       /* split cp and _# */
       token = strchr(buffer, '_');
@@ -471,8 +442,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       }
       if (strcmp("cp", name) != 0) {
 	fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
-	sprintf(msg, "No chemical potentials found in %s.\n", filename);
-	error(msg);
+	error("No chemical potentials found in %s.\n", filename);
       }
     }
     printf("Enabled chemical potentials.\n");
@@ -483,18 +453,13 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
       if (strcmp("type", buffer) == 0)
 	compnodes = -1;
-      else {
-	sprintf(msg,
-	  "Could not read number of composition nodes from potential file.\n");
-	error(msg);
-      }
+      else
+	error
+	  ("Could not read number of composition nodes from potential file.\n");
     }
-    if (strcmp(buffer, "cn") != 0 && ntypes > 1 && compnodes != -1) {
-      sprintf(msg,
-	"No composition nodes found in %s.\nUse \"cn 0\" for none.\n",
+    if (strcmp(buffer, "cn") != 0 && ntypes > 1 && compnodes != -1)
+      error("No composition nodes found in %s.\nUse \"cn 0\" for none.\n",
 	filename);
-      error(msg);
-    }
     if (ntypes == 1) {
       compnodes = 0;
     }
@@ -512,35 +477,25 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       compnodelist = (real *)malloc((ntypes + compnodes) * sizeof(real));
 
       for (j = 0; j < compnodes; j++) {
-	if (4 >
-	  fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
-	    &apt->chempot[ntypes + j],
-	    &apt->pmin[apt->number][ntypes + j],
-	    &apt->pmax[apt->number][ntypes + j])) {
-	  sprintf(msg, "Could not read composition node %d\n", j + 1);
-	  error(msg);
-	}
+	if (4 > fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
+	    &apt->chempot[ntypes + j], &apt->pmin[apt->number][ntypes + j],
+	    &apt->pmax[apt->number][ntypes + j]))
+	  error("Could not read composition node %d\n", j + 1);
 	if (apt->pmin[apt->number][ntypes + j] > apt->chempot[ntypes + j]
-	  || apt->pmax[apt->number][ntypes + j] < apt->chempot[ntypes + j]) {
-	  sprintf(msg, "composition node %d is out of bounds.\n", j + 1);
-	  error(msg);
-	}
+	  || apt->pmax[apt->number][ntypes + j] < apt->chempot[ntypes + j])
+	  error("composition node %d is out of bounds.\n", j + 1);
       }
 
       /* check compnodes for valid values */
       if (ntypes == 2) {
 	for (j = 0; j < compnodes; j++)
-	  if (compnodelist[j] > 1 || compnodelist[j] < 0) {
-	    sprintf(msg,
-	      "Composition node %d is %f but should be inside [0,1].\n",
+	  if (compnodelist[j] > 1 || compnodelist[j] < 0)
+	    error("Composition node %d is %f but should be inside [0,1].\n",
 	      j + 1, compnodelist[j]);
-	    error(msg);
-	  }
       }
     }
     if (compnodes != -1)
-      printf
-	("Enabled chemical potentials with %d extra composition node(s).\n",
+      printf("Enabled chemical potentials with %d extra composition node(s).\n",
 	compnodes);
     if (compnodes == -1)
       compnodes = 0;
@@ -648,10 +603,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 
   /* check for global keyword */
   if (strcmp(buffer, "global") == 0) {
-    if (2 > fscanf(infile, "%s %d", buffer, &apt->globals)) {
-      sprintf(msg, "Premature end of potential file %s", filename);
-      error(msg);
-    }
+    if (2 > fscanf(infile, "%s %d", buffer, &apt->globals))
+      error("Premature end of potential file %s", filename);
     have_globals = 1;
     apt->total_par += apt->globals;
 
@@ -687,13 +640,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->invar_par[global_pot] = (int *)malloc((j + 1) * sizeof(int));
     reg_for_free(apt->invar_par[global_pot], "apt->invar_par[global_pot]");
 
-    apt->pmin =
-      (real **)realloc(apt->pmin, (global_pot + 1) * sizeof(real *));
+    apt->pmin = (real **)realloc(apt->pmin, (global_pot + 1) * sizeof(real *));
     apt->pmin[global_pot] = (real *)malloc(j * sizeof(real));
     reg_for_free(apt->pmin[global_pot], "apt->pmin[global_pot]");
 
-    apt->pmax =
-      (real **)realloc(apt->pmax, (global_pot + 1) * sizeof(real *));
+    apt->pmax = (real **)realloc(apt->pmax, (global_pot + 1) * sizeof(real *));
     apt->pmax[global_pot] = (real *)malloc(j * sizeof(real));
     reg_for_free(apt->pmax[global_pot], "apt->pmax[global_pot]");
 
@@ -707,11 +658,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (NULL == apt->values[global_pot] || NULL == apt->pmin[global_pot]
       || NULL == apt->n_glob || NULL == apt->global_idx
       || NULL == apt->pmax[global_pot]
-      || NULL == apt->param_name[global_pot]) {
-      sprintf(msg, "Cannot allocate memory for global paramters.\nAborting");
-      error(msg);
-
-    }
+      || NULL == apt->param_name[global_pot])
+      error("Cannot allocate memory for global paramters.");
 
     /* initialize properly */
     apt->invar_par[i][j] = 0;
@@ -731,21 +679,18 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	&apt->values[global_pot][j], &apt->pmin[global_pot][j],
 	&apt->pmax[global_pot][j]);
       if (4 > ret_val)
-	if (strcmp(apt->param_name[global_pot][j], "type") == 0) {
-	  sprintf(msg,
-	    "Not enough global parameters!\nYou specified %d parameter(s), but needed are %d.\nAborting",
+	if (strcmp(apt->param_name[global_pot][j], "type") == 0)
+	  error
+	    ("Not enough global parameters!\nYou specified %d parameter(s), but needed are %d.\nAborting",
 	    j, apt->globals);
-	  error(msg);
-	}
 
       /* check for duplicate names */
       for (k = j - 1; k >= 0; k--)
-	if (strcmp
-	  (apt->param_name[global_pot][j],
+	if (strcmp(apt->param_name[global_pot][j],
 	    apt->param_name[global_pot][k]) == 0) {
 	  fprintf(stderr, "\nFound duplicate global parameter name!\n");
-	  fprintf(stderr, "Parameter #%d (%s) is the same as #%d (%s)\n",
-	    j + 1, apt->param_name[global_pot][j], k + 1,
+	  fprintf(stderr, "Parameter #%d (%s) is the same as #%d (%s)\n", j + 1,
+	    apt->param_name[global_pot][j], k + 1,
 	    apt->param_name[global_pot][k]);
 	  error("Aborting");
 	}
@@ -769,9 +714,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	    apt->values[i][j] = apt->pmin[i][j];
 	  if (apt->values[i][j] > apt->pmax[i][j])
 	    apt->values[i][j] = apt->pmax[i][j];
-	  fprintf(stderr, "\n --> Warning <--\n");
-	  fprintf(stderr,
-	    "Starting value for gloabl paramter #%d is outside of specified adjustment range.\nResetting it to %f.\n",
+	  warning
+	    ("Starting value for gloabl paramter #%d is outside of specified adjustment range.\nResetting it to %f.\n",
 	    j + 1, apt->values[i][j]);
 	  if (apt->values[i][j] == 0)
 	    fprintf(stderr,
@@ -791,17 +735,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 
   for (i = 0; i < apt->number; i++) {
     /* read type */
-    if (2 > fscanf(infile, "%s %s", buffer, name)) {
-      printf("%s %s\n", buffer, name);
-      sprintf(msg, "Premature end of potential file %s", filename);
-      error(msg);
-    }
-    if (strcmp(buffer, "type") != 0) {
-      sprintf(msg,
-	"Unknown keyword in file %s, expected \"type\" but found \"%s\".",
+    if (2 > fscanf(infile, "%s %s", buffer, name))
+      error("Premature end of potential file %s", filename);
+    if (strcmp(buffer, "type") != 0)
+      error("Unknown keyword in file %s, expected \"type\" but found \"%s\".",
 	filename, buffer);
-      error(msg);
-    }
 
     /* split name and _sc */
     token = strrchr(name, '_');
@@ -813,12 +751,10 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       do_smooth = 1;
     }
 
-    if (apot_parameters(name) == -1) {
-      sprintf(msg,
-	"Unknown function type in file %s, please define \"%s\" in functions.c.",
+    if (apot_parameters(name) == -1)
+      error
+	("Unknown function type in file %s, please define \"%s\" in functions.c.",
 	filename, name);
-      error(msg);
-    }
 
     strcpy(apt->names[i], name);
     apt->n_par[i] = apot_parameters(name);
@@ -829,36 +765,13 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->total_par += apt->n_par[i];
 
     /* read cutoff */
-/*#if defined EAM || defined ADP*/
-/*    if ((i < (ntypes * (ntypes + 1) / 2 + ntypes))*/
-/*      || (i >= (ntypes * (ntypes + 1) / 2 + 2 * ntypes))) {*/
-/*#endif*/
-    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {
-      sprintf(msg,
-	"Could not read cutoff for potential #%d in file %s\nAborting",
-	i, filename);
-      error(msg);
-    }
-    if (strcmp(buffer, "cutoff") != 0) {
-      sprintf(msg,
-	"No cutoff found for the %d. potential (%s) after \"type\" in file %s.\nAborting",
+    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i]))
+      error("Could not read cutoff for potential #%d in file %s\nAborting", i,
+	filename);
+    if (strcmp(buffer, "cutoff") != 0)
+      error
+	("No cutoff found for the %d. potential (%s) after \"type\" in file %s.\nAborting",
 	i + 1, apt->names[i], filename);
-      error(msg);
-    }
-/*#if defined EAM || defined ADP*/
-/*    } else {*/
-/*      fgetpos(infile, &filepos);*/
-/*      fscanf(infile, "%s", buffer);*/
-/*      if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i])) {*/
-/*        fsetpos(infile, &filepos);*/
-/*#ifdef DEBUG*/
-/*      else*/
-/*        fprintf(stderr, "Ignoring cutoff for embedding function %d\n", i);*/
-/*#endif*/
-/*      apt->end[i] = 2.;*/
-/*    }*/
-/*    }*/
-/*#endif*/
 
     /* set very small begin, needed for EAM embedding function */
     apt->begin[i] = .0001;
@@ -880,11 +793,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->param_name[i], "apt->param_name[i]");
 
     if (NULL == apt->values[i] || NULL == apt->pmin[i]
-      || NULL == apt->pmax[i] || NULL == apt->param_name[i]) {
-      sprintf(msg,
-	"Cannot allocate memory for potential paramters.\nAborting");
-      error(msg);
-    }
+      || NULL == apt->pmax[i] || NULL == apt->param_name[i])
+      error("Cannot allocate memory for potential paramters.\nAborting");
 
     /* check for comments */
     do {
@@ -926,23 +836,18 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	    == 0)
 	    l = k;
 	}
-	if (l == -1) {
-	  fprintf(stderr, "\nCould not find global parameter %s!\n",
-	    apt->param_name[i][j]);
-	  error("Aborting");
-	}
+	if (l == -1)
+	  error("Could not find global parameter %s!\n", apt->param_name[i][j]);
 	sprintf(apt->param_name[i][j], "%s!", apt->param_name[i][j]);
 
 	/* write index array for global parameters */
 	if (++apt->n_glob[l] > 1) {
 	  apt->global_idx[l] =
-	    (int **)realloc(apt->global_idx[l],
-	    apt->n_glob[l] * sizeof(int *));
+	    (int **)realloc(apt->global_idx[l], apt->n_glob[l] * sizeof(int *));
 	} else {
 	  apt->global_idx[l] = (int **)malloc(1 * sizeof(int *));
 	}
-	apt->global_idx[l][apt->n_glob[l] - 1] =
-	  (int *)malloc(2 * sizeof(int));
+	apt->global_idx[l][apt->n_glob[l] - 1] = (int *)malloc(2 * sizeof(int));
 	apt->global_idx[l][apt->n_glob[l] - 1][0] = i;
 	apt->global_idx[l][apt->n_glob[l] - 1][1] = j;
 
@@ -956,10 +861,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	if (4 > ret_val) {
 	  if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
 	    if (strcmp(apt->param_name[i][j], "type") == 0 || feof(infile)) {
-	      sprintf(msg,
-		"No cutoff parameter given for potential #%d: adding one parameter.",
+	      warning
+		("No cutoff parameter given for potential #%d: adding one parameter.",
 		i);
-	      warning(msg);
 	      strcpy(apt->param_name[i][j], "h");
 	      apt->values[i][j] = 1;
 	      apt->pmin[i][j] = 0.5;
@@ -967,16 +871,12 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	      fsetpos(infile, &filepos);
 	    }
 	  } else {
-	    if (strcmp(apt->param_name[i][j], "type") == 0) {
-	      sprintf(msg,
-		"Not enough parameters for potential #%d (%s) in file %s!\nYou specified %d parameters, but needed are %d.",
+	    if (strcmp(apt->param_name[i][j], "type") == 0)
+	      error
+		("Not enough parameters for potential #%d (%s) in file %s!\nYou specified %d parameters, but needed are %d.",
 		i + 1, apt->names[i], filename, j, apt->n_par[i]);
-	      error(msg);
-	    }
-	    sprintf(msg,
-	      "Could not read parameter #%d of potential #%d in file %s",
+	    error("Could not read parameter #%d of potential #%d in file %s",
 	      j + 1, i + 1, filename);
-	    error(msg);
 	  }
 	}
 
@@ -998,9 +898,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	      apt->values[i][j] = apt->pmin[i][j];
 	    if (apt->values[i][j] > apt->pmax[i][j])
 	      apt->values[i][j] = apt->pmax[i][j];
-	    fprintf(stderr, "\n --> Warning <--\n");
-	    fprintf(stderr,
-	      "Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nResetting it to %f.\n",
+	    warning
+	      ("Starting value for paramter #%d in potential #%d is outside of specified adjustment range.\nResetting it to %f.\n",
 	      j + 1, i + 1, apt->values[i][j]);
 	    if (apt->values[i][j] == 0)
 	      fprintf(stderr,
@@ -1028,10 +927,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 
   /* assign the potential functions to the function pointers */
-  if (apot_assign_functions(apt) == -1) {
-    sprintf(msg, "Could not assign the function pointers.\nAborting");
-    error(msg);
-  }
+  if (apot_assign_functions(apt) == -1)
+    error("Could not assign the function pointers.\n");
 #ifdef PAIR
   if (enable_cp) {
     cp_start = apt->total_par - apt->globals + ntypes * (ntypes + 1);
@@ -1092,10 +989,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   reg_for_free(apt->idxparam, "apt->idxparam");
 
   if ((NULL == pt->table) || (NULL == pt->idx) || (apt->idxpot == NULL)
-    || (apt->idxparam == NULL)) {
-    sprintf(msg, "Cannot allocate memory for potential table.\nAborting");
-    error(msg);
-  }
+    || (apt->idxparam == NULL))
+    error("Cannot allocate memory for potential table.\n");
   for (i = 0; i < pt->len; i++) {
     pt->table[i] = 0;
     calc_list[i] = 0;
@@ -1241,16 +1136,12 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   char *filename, FILE *infile)
 {
   int   i, j, k, l;
-  char  msg[255];
   real *val;
 
   /* read the info block of the function table */
   for (i = 0; i < size; i++) {
-    if (3 >
-      fscanf(infile, "%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i])) {
-      sprintf(msg, "Premature end of potential file %s", filename);
-      error(msg);
-    }
+    if (3 > fscanf(infile, "%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i]))
+      error("Premature end of potential file %s", filename);
     pt->step[i] = (pt->end[i] - pt->begin[i]) / (nvals[i] - 1);
     pt->invstep[i] = 1.0 / pt->step[i];
     /* in the two slots between last[i-1] and first[i] the gradients
@@ -1277,9 +1168,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->d2tab[i] = 0.;
     pt->idx[i] = 0.;
   }
-  if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab)) {
+  if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab))
     error("Cannot allocate memory for potential table");
-  }
 
   /* input loop */
   val = pt->table;
@@ -1289,10 +1179,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read pair potentials */
   for (i = 0; i < ncols; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.;
@@ -1308,10 +1196,9 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else
+      if (1 > fscanf(infile, "%lf\n", val))
+	error("Premature end of potential file %s", filename);
+      else
 	val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
       if ((!invar_pot[i]) && (j < nvals[i] - 1))
@@ -1325,10 +1212,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read EAM transfer function rho(r) */
   for (i = ncols; i < ncols + ntypes; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.;
@@ -1344,10 +1229,9 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else
+      if (1 > fscanf(infile, "%lf\n", val))
+	error("Premature end of potential file %s", filename);
+      else
 	val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
       if ((!invar_pot[i]) && (j < nvals[i] - 1))
@@ -1360,10 +1244,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read EAM embedding function F(n) */
   for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1.e30;
       *(val + 1) = 1.e30;
@@ -1379,10 +1261,9 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else
+      if (1 > fscanf(infile, "%lf\n", val))
+	error("Premature end of potential file %s", filename);
+      else
 	val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
       if (!invar_pot[i])
@@ -1397,10 +1278,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read ADP dipole function u(r) */
   for (i = ncols + 2 * ntypes; i < 2 * (ncols + ntypes); i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.;
@@ -1416,10 +1295,9 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else
+      if (1 > fscanf(infile, "%lf\n", val))
+	error("Premature end of potential file %s", filename);
+      else
 	val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
       if ((!invar_pot[i]) && (j < nvals[i] - 1))
@@ -1432,10 +1310,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read adp quadrupole function w(r) */
   for (i = 2 * (ncols + ntypes); i < 3 * ncols + 2 * ntypes; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1.e30;
       *(val + 1) = 1.e30;
@@ -1451,10 +1327,9 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else
+      if (1 > fscanf(infile, "%lf\n", val))
+	error("Premature end of potential file %s", filename);
+      else
 	val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
       if ((!invar_pot[i]) && (j < nvals[i] - 1))
@@ -1489,15 +1364,12 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   char *filename, FILE *infile)
 {
   int   i, k, l, j;
-  char  msg[255];
   real *val, *ord;
 
   /* read the info block of the function table */
   for (i = 0; i < size; i++) {
-    if (1 > fscanf(infile, "%d", &nvals[i])) {
-      sprintf(msg, "Premature end of potential file %s", filename);
-      error(msg);
-    }
+    if (1 > fscanf(infile, "%d", &nvals[i]))
+      error("Premature end of potential file %s", filename);
     pt->step[i] = 0.;
     pt->invstep[i] = 0.;
     if (i == 0)
@@ -1512,9 +1384,9 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   pt->xcoord = (real *)malloc(pt->len * sizeof(real));
   pt->d2tab = (real *)malloc(pt->len * sizeof(real));
   pt->idx = (int *)malloc(pt->len * sizeof(int));
-  if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab)) {
+  if ((NULL == pt->table) || (NULL == pt->xcoord) || (NULL == pt->idx)
+    || (NULL == pt->d2tab))
     error("Cannot allocate memory for potential table");
-  }
 
   /* input loop */
   val = pt->table;
@@ -1525,10 +1397,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read pair potentials */
   for (i = 0; i < ncols; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.;
@@ -1545,17 +1415,14 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (2 > fscanf(infile, "%lf %lf\n", ord, val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else {
+      if (2 > fscanf(infile, "%lf %lf\n", ord, val))
+	error("Premature end of potential file %s", filename);
+      else {
 	val++;
 	ord++;
       }
-      if ((j > 0) && (*(ord - 1) <= *(ord - 2))) {
-	sprintf(msg, "Abscissa not monotonous in potential %d.", i);
-	error(msg);
-      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
+	error("Abscissa not monotonous in potential %d.", i);
       if ((!invar_pot[i]) && (j < nvals[i] - 1))
 	pt->idx[k++] = l++;
       else
@@ -1573,10 +1440,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read EAM transfer function rho(r) */
   for (i = ncols; i < ncols + ntypes; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.;
@@ -1593,17 +1458,14 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (2 > fscanf(infile, "%lf %lf\n", ord, val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else {
+      if (2 > fscanf(infile, "%lf %lf\n", ord, val))
+	error("Premature end of potential file %s", filename);
+      else {
 	ord++;
 	val++;
       }
-      if ((j > 0) && (*(ord - 1) <= *(ord - 2))) {
-	sprintf(msg, "Abscissa not monotonous in potential %d.", i);
-	error(msg);
-      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
+	error("Abscissa not monotonous in potential %d.", i);
       if ((!invar_pot[i]) && (j < nvals[i] - 1))
 	pt->idx[k++] = l++;
       else
@@ -1619,10 +1481,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read EAM embedding function F(n) */
   for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 1.e30;
@@ -1639,17 +1499,14 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf %lf\n", ord, val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else {
+      if (1 > fscanf(infile, "%lf %lf\n", ord, val))
+	error("Premature end of potential file %s", filename);
+      else {
 	ord++;
 	val++;
       }
-      if ((j > 0) && (*(ord - 1) <= *(ord - 2))) {
-	sprintf(msg, "Abscissa not monotonous in potential %d.", i);
-	error(msg);
-      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
+	error("Abscissa not monotonous in potential %d.", i);
       if (!invar_pot[i])
 	pt->idx[k++] = l++;
       else
@@ -1667,10 +1524,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read ADP dipole function u(r) */
   for (i = ncols + 2 * ntypes; i < 2 * (ncols + ntypes); i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.;
@@ -1687,17 +1542,14 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (2 > fscanf(infile, "%lf %lf\n", ord, val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else {
+      if (2 > fscanf(infile, "%lf %lf\n", ord, val))
+	error("Premature end of potential file %s", filename);
+      else {
 	ord++;
 	val++;
       }
-      if ((j > 0) && (*(ord - 1) <= *(ord - 2))) {
-	sprintf(msg, "Abscissa not monotonous in potential %d.", i);
-	error(msg);
-      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
+	error("Abscissa not monotonous in potential %d.", i);
       if ((!invar_pot[i]) && (j < nvals[i] - 1))
 	pt->idx[k++] = l++;
       else
@@ -1713,10 +1565,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   /* read adp quadrupole function w(r) */
   for (i = 2 * (ncols + ntypes); i < 3 * ncols + 2 * ntypes; i++) {
     if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      }
+      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
+	error("Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
       *(val + 1) = 1.e30;
@@ -1733,17 +1583,14 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
       l++;
     /* read values */
     for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf %lf\n", ord, val)) {
-	sprintf(msg, "Premature end of potential file %s", filename);
-	error(msg);
-      } else {
+      if (1 > fscanf(infile, "%lf %lf\n", ord, val))
+	error("Premature end of potential file %s", filename);
+      else {
 	ord++;
 	val++;
       }
-      if ((j > 0) && (*(ord - 1) <= *(ord - 2))) {
-	sprintf(msg, "Abscissa not monotonous in potential %d.", i);
-	error(msg);
-      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
+	error("Abscissa not monotonous in potential %d.", i);
       if (!invar_pot[i])
 	pt->idx[k++] = l++;
       else
@@ -1786,8 +1633,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	{
 	  /* allocate memory for calc_pot potential table */
 	  size = apot_table.number;
-	  calct->len =
-	    size * APOT_STEPS + 2 * optt->ncols + ntypes + compnodes;
+	  calct->len = size * APOT_STEPS + 2 * optt->ncols + ntypes + compnodes;
 	  calct->idxlen = APOT_STEPS;
 	  calct->ncols = optt->ncols;
 	  calct->begin = optt->begin;
@@ -1808,10 +1654,10 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  reg_for_free(calct->d2tab, "calct->d2tab");
 	  calct->idx = (int *)malloc(calct->len * sizeof(int));
 	  reg_for_free(calct->idx, "calct->idx");
-	  if (calct->first == NULL || calct->last == NULL
-	    || calct->step == NULL || calct->invstep == NULL
-	    || calct->xcoord == NULL || calct->table == NULL
-	    || calct->d2tab == NULL || calct->idx == NULL)
+	  if (calct->first == NULL || calct->last == NULL || calct->step == NULL
+	    || calct->invstep == NULL || calct->xcoord == NULL
+	    || calct->table == NULL || calct->d2tab == NULL
+	    || calct->idx == NULL)
 	    error("Cannot allocate info block for calc potential table\n");
 
 	  /* initialize the calc_pot table */
@@ -1888,8 +1734,8 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    if (smooth_pot[i] && !invar_pot[i]) {
 	      h = *(val + 1 + apot_table.n_par[i]);
 	      if (h == 0) {
-		sprintf(msg,
-		  "The cutoff parameter for potential %d is ZERO.\n", i);
+		sprintf(msg, "The cutoff parameter for potential %d is ZERO.\n",
+		  i);
 		sprintf(msg,
 		  "%sPlease adjust the boundaries for this parameter\n", msg);
 		sprintf(msg,
@@ -1919,14 +1765,13 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		  apot_table.end[i], h) : f;
 		if (isnan(f) || isnan(*(xi_calc + k))) {
 		  sprintf(msg, "Potential value was nan or inf. Aborting.\n");
-		  fprintf(stderr, "This occured in potential %d (%s)\n",
-		    i, apot_table.names[i]);
-		  fprintf(stderr,
-		    "at distance r=%f with the parameters:\n",
+		  fprintf(stderr, "This occured in potential %d (%s)\n", i,
+		    apot_table.names[i]);
+		  fprintf(stderr, "at distance r=%f with the parameters:\n",
 		    calc_pot.xcoord[k]);
 		  for (m = 0; m < apot_table.n_par[i]; m++)
-		    fprintf(stderr, "%s %f\n",
-		      apot_table.param_name[i][m], *(val + m));
+		    fprintf(stderr, "%s %f\n", apot_table.param_name[i][m],
+		      *(val + m));
 		  if (smooth_pot[i])
 		    fprintf(stderr, "h %f\n", h);
 		  error(msg);
@@ -2079,8 +1924,8 @@ real parab_grad_ne(pot_table_t *pt, real *xi, int col, real r)
   chi2 = (r - x2) / h2;
 
   /* return the potential value */
-  return (chi2 / h1 + chi1 / h2) * p0
-    - (chi0 / h2 + chi2 / h0) * p1 + (chi0 / h1 + chi1 / h0) * p2;
+  return (chi2 / h1 + chi1 / h2) * p0 - (chi0 / h2 + chi2 / h0) * p1 +
+    (chi0 / h1 + chi1 / h0) * p2;
 
 }
 
@@ -2148,8 +1993,9 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
   chi2 = (r - x2) / h2;
 
   /* return the potential value */
-  *grad = (chi2 / h1 + chi1 / h2) * p0
-    - (chi0 / h2 + chi2 / h0) * p1 + (chi0 / h1 + chi1 / h0) * p2;
+  *grad =
+    (chi2 / h1 + chi1 / h2) * p0 - (chi0 / h2 + chi2 / h0) * p1 + (chi0 / h1 +
+    chi1 / h0) * p2;
 
   return chi1 * chi2 * p0 - chi0 * chi2 * p1 + chi0 * chi1 * p2;
 }
@@ -2232,14 +2078,11 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 {
   int   i, j;
   FILE *outfile;
-  char  msg[255];
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 0 %d", apt->number);
@@ -2281,9 +2124,8 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 #ifdef PAIR
   if (enable_cp) {
     for (i = 0; i < ntypes; i++)
-      fprintf(outfile, "cp_%s %.10f %.2f %.2f\n", elements[i],
-	apt->chempot[i], apt->pmin[apt->number][i],
-	apt->pmax[apt->number][i]);
+      fprintf(outfile, "cp_%s %.10f %.2f %.2f\n", elements[i], apt->chempot[i],
+	apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
     if (compnodes > 0)
       fprintf(outfile, "cn %d\n", compnodes);
     for (j = 0; j < compnodes; j++)
@@ -2362,7 +2204,6 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 void write_pot_table3(pot_table_t *pt, char *filename)
 {
   FILE *outfile = NULL, *outfile2 = NULL;
-  char  msg[255];
   int   i, j, flag = 0;
   real  r;
 
@@ -2371,18 +2212,14 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* if needed: open file for plotpoints */
   if (flag) {
     outfile2 = fopen(plotpointfile, "w");
-    if (NULL == outfile) {
-      sprintf(msg, "Could not open file %s\n", filename);
-      error(msg);
-    }
+    if (NULL == outfile)
+      error("Could not open file %s\n", filename);
   }
 
   /* write header */
@@ -2417,8 +2254,8 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 
   /* write info block */
   for (i = 0; i < pt->ncols; i++) {
-    fprintf(outfile, "%.16e %.16e %d\n",
-      pt->begin[i], pt->end[i], pt->last[i] - pt->first[i] + 1);
+    fprintf(outfile, "%.16e %.16e %d\n", pt->begin[i], pt->end[i],
+      pt->last[i] - pt->first[i] + 1);
   }
   fprintf(outfile, "\n");
 
@@ -2452,7 +2289,6 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 void write_pot_table4(pot_table_t *pt, char *filename)
 {
   FILE *outfile = NULL, *outfile2 = NULL;
-  char  msg[255];
   int   i, j, flag = 0;
 
   if (*plotpointfile != '\0')
@@ -2460,18 +2296,14 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* if needed: open file for plotpoints */
   if (flag) {
     outfile2 = fopen(plotpointfile, "w");
-    if (NULL == outfile) {
-      sprintf(msg, "Could not open file %s\n", filename);
-      error(msg);
-    }
+    if (NULL == outfile)
+      error("Could not open file %s\n", filename);
   }
 
   /* write header */
@@ -2546,7 +2378,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   real  root;
 #endif /* EAM */
   FILE *outfile;
-  char  msg[255], filename[255];
+  char  filename[255];
 
   /* allocate memory */
   r2begin = (real *)malloc(ntypes * ntypes * sizeof(real));
@@ -2559,10 +2391,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   sprintf(filename, "%s_phi.imd.pt", prefix);
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
@@ -2584,8 +2414,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-      fprintf(outfile, "%.16e %.16e %.16e\n",
-	r2begin[col2], r2end[col2], r2step[col2]);
+      fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
+	r2step[col2]);
     }
   }
   fprintf(outfile, "\n");
@@ -2603,22 +2433,21 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       for (k = 0; k < imdpotsteps; k++) {
 #ifdef APOT
 	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
-	temp = smooth_pot[col1] ? temp *
-	  cutoff(sqrt(r2), apot_table.end[col1],
+	temp =
+	  smooth_pot[col1] ? temp * cutoff(sqrt(r2), apot_table.end[col1],
 	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
 #ifdef NEWSCALE
 	/* Pair potentials corrected so that U'(1)   =0 with NORESCALE */
 	/*                               and U'(n_av)=0 without */
-	fprintf(outfile, "%.16e\n",
-	  splint_ne(pt, pt->table, col1,
+	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1,
 	    sqrt(r2)) + (sqrt(r2) <=
-	    pt->end[paircol + j] ? lambda[i] *
-	    splint_ne(pt, pt->table, paircol + j,
-	      sqrt(r2)) : 0.) +
-	  (sqrt(r2) <= pt->end[paircol + i] ? lambda[j] *
-	    splint_ne(pt, pt->table, paircol + i, sqrt(r2)) : 0.));
+	    pt->end[paircol + j] ? lambda[i] * splint_ne(pt, pt->table,
+	      paircol + j,
+	      sqrt(r2)) : 0.) + (sqrt(r2) <=
+	    pt->end[paircol + i] ? lambda[j] * splint_ne(pt, pt->table,
+	      paircol + i, sqrt(r2)) : 0.));
 #else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
 #endif /* NEWSCALE */
@@ -2636,10 +2465,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write transfer function (over r^2) */
   sprintf(filename, "%s_rho.imd.pt", prefix);
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
@@ -2657,8 +2484,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif /* APOT */
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-      fprintf(outfile, "%.16e %.16e %.16e\n",
-	r2begin[col2], r2end[col2], r2step[col2]);
+      fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
+	r2step[col2]);
     }
   }
   fprintf(outfile, "\n");
@@ -2672,8 +2499,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       for (k = 0; k < imdpotsteps; k++) {
 #ifdef APOT
 	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
-	temp = smooth_pot[col1] ? temp *
-	  cutoff(sqrt(r2), apot_table.end[col1],
+	temp =
+	  smooth_pot[col1] ? temp * cutoff(sqrt(r2), apot_table.end[col1],
 	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
@@ -2691,10 +2518,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write embedding function (over r) */
   sprintf(filename, "%s_F.imd.pt", prefix);
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes);
@@ -2720,10 +2545,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   for (i = 0; i < ntypes; i++) {
     r2 = r2begin[i];
     col1 = (ntypes * (ntypes + 3)) / 2 + i;
-    root = (pt->begin[col1] > 0) ?
-      pt->table[pt->first[col1]] / sqrt(pt->begin[col1]) : 0.;
-    root += (pt->end[col1] < 0) ?
-      pt->table[pt->last[col1]] / sqrt(-pt->end[col1]) : 0;
+    root =
+      (pt->begin[col1] >
+      0) ? pt->table[pt->first[col1]] / sqrt(pt->begin[col1]) : 0.;
+    root +=
+      (pt->end[col1] <
+      0) ? pt->table[pt->last[col1]] / sqrt(-pt->end[col1]) : 0;
     for (k = 0; k <= imdpotsteps; k++) {
 #ifdef APOT
       apot_table.fvalue[col1] (r2, apot_table.values[col1], &temp);
@@ -2768,10 +2595,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write dipole function (over r^2) */
   sprintf(filename, "%s_upot.imd.pt", prefix);
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
@@ -2794,8 +2619,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-      fprintf(outfile, "%.16e %.16e %.16e\n",
-	r2begin[col2], r2end[col2], r2step[col2]);
+      fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
+	r2step[col2]);
     }
   }
   fprintf(outfile, "\n");
@@ -2814,8 +2639,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       for (k = 0; k < imdpotsteps; k++) {
 #ifdef APOT
 	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
-	temp = smooth_pot[col1] ? temp *
-	  cutoff(sqrt(r2), apot_table.end[col1],
+	temp =
+	  smooth_pot[col1] ? temp * cutoff(sqrt(r2), apot_table.end[col1],
 	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
@@ -2833,10 +2658,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write quadrupole function (over r^2) */
   sprintf(filename, "%s_wpot.imd.pt", prefix);
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
@@ -2859,8 +2682,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-      fprintf(outfile, "%.16e %.16e %.16e\n",
-	r2begin[col2], r2end[col2], r2step[col2]);
+      fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
+	r2step[col2]);
     }
   }
   fprintf(outfile, "\n");
@@ -2879,8 +2702,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       for (k = 0; k < imdpotsteps; k++) {
 #ifdef APOT
 	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
-	temp = smooth_pot[col1] ? temp *
-	  cutoff(sqrt(r2), apot_table.end[col1],
+	temp =
+	  smooth_pot[col1] ? temp * cutoff(sqrt(r2), apot_table.end[col1],
 	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
@@ -2910,7 +2733,6 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 void write_plotpot_pair(pot_table_t *pt, char *filename)
 {
   FILE *outfile;
-  char  msg[255];
   int   i, j;
 #ifndef APOT
   int   k = 0, l;
@@ -2921,10 +2743,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write data */
 #ifndef APOT
@@ -2935,11 +2755,10 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       for (l = 0; l < NPLOT - 1; l++) {
 #ifdef NEWSCALE
 	fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r)
-	  + (r <= pt->end[paircol + i] ?
-	    splint_ne(pt, pt->table, paircol + i, r) * lambda[j] : 0.)
-	  + (r <=
-	    pt->end[paircol + j] ? splint_ne(pt, pt->table,
-	      paircol + j, r) * lambda[i] : 0.));
+	  + (r <= pt->end[paircol + i] ? splint_ne(pt, pt->table, paircol + i,
+	      r) * lambda[j] : 0.)
+	  + (r <= pt->end[paircol + j] ? splint_ne(pt, pt->table, paircol + j,
+	      r) * lambda[i] : 0.));
 #else
 	fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r));
 #endif /* NEWSCALE */
@@ -3029,7 +2848,6 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
 void write_altplot_pair(pot_table_t *pt, char *filename)
 {
-  char  msg[255];
   int   i, j, k, l;
   real  r, rmin = 100., rmax = 0., r_step;
 #if defined EAM
@@ -3039,10 +2857,8 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
   /* write data */
   k = 0;
@@ -3062,13 +2878,12 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
       r = rmin;
       for (l = 0; l < NPLOT - 1; l++) {
 #ifdef NEWSCALE
-	fprintf(outfile, "%e %e\n", r,
-	  (r <= pt->end[k] ? splint_ne(pt, pt->table, k, r) : 0.)
-	  + (r <= pt->end[paircol + i] ?
-	    splint_ne(pt, pt->table, paircol + i, r) * lambda[j] : 0.)
-	  + (r <=
-	    pt->end[paircol + j] ? splint_ne(pt, pt->table,
-	      paircol + j, r) * lambda[i] : 0.));
+	fprintf(outfile, "%e %e\n", r, (r <= pt->end[k] ? splint_ne(pt,
+	      pt->table, k, r) : 0.)
+	  + (r <= pt->end[paircol + i] ? splint_ne(pt, pt->table, paircol + i,
+	      r) * lambda[j] : 0.)
+	  + (r <= pt->end[paircol + j] ? splint_ne(pt, pt->table, paircol + j,
+	      r) * lambda[i] : 0.));
 #else
 	fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r));
 #endif /* NEWSCALE */
@@ -3082,8 +2897,8 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
   for (i = j; i < j + ntypes; i++) {
     r = rmin;
     for (l = 0; l < NPLOT - 1; l++) {
-      fprintf(outfile, "%e %e\n", r,
-	r <= pt->end[i] ? splint_ne(pt, pt->table, i, r) : 0);
+      fprintf(outfile, "%e %e\n", r, r <= pt->end[i] ? splint_ne(pt, pt->table,
+	  i, r) : 0);
       r += r_step;
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
@@ -3130,12 +2945,10 @@ void write_pairdist(pot_table_t *pt, char *filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error("Could not open file %s\n", filename);
 
-
+#FIXME german comments
   /* Verteilungsfeld initialisieren */
   freq = (int *)malloc(ndimtot * sizeof(int));
   for (i = 0; i < ndimtot; i++)
@@ -3150,8 +2963,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
       for (j = 0; j < atom->n_neigh; j++) {
 	neigh = atom->neigh + j;
 	typ2 = neigh->typ;
-	col = (typ1 <= typ2) ?
-	  typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+	col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 	/* Die Arbeit wurde bereits gemacht */
 	if (neigh->r < pt->end[col])
