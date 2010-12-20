@@ -513,20 +513,17 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 
   /* check for elstat keyword */
   if (strcmp("elstat", buffer) != 0) {
-    sprintf(msg, "No elstat option found in %s.\n", filename);
-    error(msg);
+    error("No elstat option found in %s.\n", filename);
   }
 
   /* read electrostatic parameters */
   fscanf(infile, " %s", buffer);
   if (strcmp("ratio", buffer) != 0) {
-    sprintf(msg, "Could not read ratio");
-    error(msg);
+    error("Could not read ratio");
   }
   for (i = 0; i < ntypes; i++) {
     if (1 > fscanf(infile, "%lf", &apt->ratio[i])) {
-      sprintf(msg, "Could not read ratio for atomtype #%d\n", i);
-      error(msg);
+      error("Could not read ratio for atomtype #%d\n", i);
     }
   }
   for (i = 0; i < ntypes - 1; i++) {
@@ -534,8 +531,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
 	&apt->charge[i], &apt->pmin[apt->number][i],
 	&apt->pmax[apt->number][i])) {
-      sprintf(msg, "Could not read charge for atomtype #%d\n", i);
-      error(msg);
+      error("Could not read charge for atomtype #%d\n", i);
     }
     apt->invar_par[apt->number][i] = 0;
     if (apt->pmin[apt->number][i] == apt->pmax[apt->number][i]) {
@@ -551,8 +547,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (4 > fscanf(infile, "%s %lf %lf %lf",
 	apt->param_name[apt->number + 1][i], &apt->dp_alpha[i],
 	&apt->pmin[apt->number + 1][i], &apt->pmax[apt->number + 1][i])) {
-      sprintf(msg, "Could not read polarisability for atomtype #%d\n", i);
-      error(msg);
+      error("Could not read polarisability for atomtype #%d\n", i);
     }
     apt->invar_par[apt->number + 1][i] = 0;
     if (apt->pmin[apt->number + 1][i] == apt->pmax[apt->number + 1][i]) {
@@ -566,8 +561,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (4 > fscanf(infile, "%s %lf %lf %lf",
 	apt->param_name[apt->number + 2][i], &apt->dp_b[i],
 	&apt->pmin[apt->number + 2][i], &apt->pmax[apt->number + 2][i])) {
-      sprintf(msg, "Could not read parameter dp_b for potential #%d\n", i);
-      error(msg);
+      error("Could not read parameter dp_b for potential #%d\n", i);
     }
     apt->invar_par[apt->number + 2][i] = 0;
     if (apt->pmin[apt->number + 2][i] == apt->pmax[apt->number + 2][i]) {
@@ -581,8 +575,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     if (4 > fscanf(infile, "%s %lf %lf %lf",
 	apt->param_name[apt->number + 3][i], &apt->dp_c[i],
 	&apt->pmin[apt->number + 3][i], &apt->pmax[apt->number + 3][i])) {
-      sprintf(msg, "Could not read parameter dp_c for potential #%d\n", i);
-      error(msg);
+      error("Could not read parameter dp_c for potential #%d\n", i);
     }
     apt->invar_par[apt->number + 3][i] = 0;
     if (apt->pmin[apt->number + 3][i] == apt->pmax[apt->number + 3][i]) {

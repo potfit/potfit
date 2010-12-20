@@ -169,6 +169,7 @@ void powell_lsq(real *xi)
 	  itemp2 + 1, apot_table.param_name[itemp][itemp2],
 	  itemp + 1, apot_table.names[itemp]);
 #endif /* COULOMB */
+#endif /* APOT */
 	warning(errmsg);
 	break;
       }
