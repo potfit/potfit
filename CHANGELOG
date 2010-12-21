@@ -1,3 +1,10 @@
+devel-20101221
++ [APOT] fix bug with chemical potentials and global parameters
++ [EVO] change initialization for tabulated potentials
++ timing information is now shown if output_prefix is not set
+
+--> POTFIT-20101207 released
+
 devel-20101207
 + properly check for the correct potential types
 + remove some unneeded variables

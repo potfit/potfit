@@ -57,6 +57,7 @@ void error(char *msg, ...)
   calc_forces(calc_pot.table, force, 1);
   shutdown_mpi();
 #endif /* MPI */
+  fprintf(stderr, "\n");
   exit(EXIT_FAILURE);
 }
 
@@ -292,7 +293,7 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
 #ifdef MPI
     if (num_cpus > nconf)
-      error("You are using more cpus than you have configurations!");
+      warning("You are using more cpus than you have configurations!");
 #endif /* MPI */
     time(&t_begin);
     if (opt) {
@@ -703,19 +704,13 @@ int main(int argc, char **argv)
     if (sweight != 0)
       printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif /* STRESS */
-    fclose(outfile);
-
+    if (write_output_files) {
+      fclose(outfile);
+    }
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
   }
-  /* do some cleanups before exiting */
-#ifdef MPI
-  /* kill MPI */
-  shutdown_mpi();
-#else
-  free_all_pointers();
-#endif /* MPI */
 
   if (opt && myid == 0) {
     printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
@@ -724,5 +719,14 @@ int main(int argc, char **argv)
     printf("Did %d force calculations, each took %f seconds\n", fcalls,
       (real)difftime(t_end, t_begin) / fcalls);
   }
+
+  /* do some cleanups before exiting */
+#ifdef MPI
+  /* kill MPI */
+  shutdown_mpi();
+#else
+  free_all_pointers();
+#endif /* MPI */
+
   return 0;
 }

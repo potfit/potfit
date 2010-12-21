@@ -30,12 +30,10 @@
  *****************************************************************/
 
 #if !defined NORESCALE && !defined APOT
+/* Doesn't make much sense without EAM or ADP */
+#if defined EAM || defined ADP
 
 #include "potfit.h"
-
-/* Doesn't make much sense without EAM  */
-
-#if defined EAM || defined ADP
 
 /****************************************************************
 *

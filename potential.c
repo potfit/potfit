@@ -461,15 +461,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     have_globals = 1;
     apt->total_par += apt->globals;
 
-    i = apt->number;
+    i = apt->number + enable_cp;
     j = apt->globals;
-    global_pot = apt->number;
-#ifdef PAIR
-    if (enable_cp) {
-      global_pot = apt->number + 1;
-      i = global_pot;
-    }
-#endif
+    global_pot = i;
 
     /* allocate memory for global parameters */
     apt->names =
@@ -856,6 +850,23 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
+
+#ifdef PAIR
+  if (enable_cp) {
+    init_chemical_potential(ntypes);
+    i = apt->number;
+    for (j = 0; j < (ntypes + compnodes); j++) {
+      *val = apt->values[i][j];
+      pt->idx[k] = l++;
+      apt->idxpot[k] = i;
+      apt->idxparam[k++] = j;
+      val++;
+    }
+    pt->idxlen += (ntypes + compnodes);
+    global_idx += (ntypes + compnodes);
+  }
+#endif
+
   if (have_globals) {
     i = global_pot;
     for (j = 0; j < apt->globals; j++) {
@@ -873,23 +884,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     pt->idxlen += apt->globals - apt->invar_par[i][apt->globals];
     apt->total_par -= apt->invar_par[i][apt->globals];
   }
-  global_idx = pt->last[apt->number - 1] + 1;
-
-#ifdef PAIR
-  if (enable_cp) {
-    init_chemical_potential(ntypes);
-    i = apt->number;
-    for (j = 0; j < (ntypes + compnodes); j++) {
-      *val = apt->values[i][j];
-      pt->idx[k] = l++;
-      apt->idxpot[k] = i;
-      apt->idxparam[k++] = j;
-      val++;
-    }
-    pt->idxlen += (ntypes + compnodes);
-    global_idx += (ntypes + compnodes);
-  }
-#endif
+  global_idx += pt->last[apt->number - 1] + 1;
 
 #ifdef NOPUNISH
   warning("Gauge degrees of freedom are NOT fixed!");

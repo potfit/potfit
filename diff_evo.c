@@ -33,7 +33,7 @@
 #include "utils.h"
 
 #define D (ndimtot+2)
-#define NP 15*D			/* number of total population */
+#define NP 25*D			/* number of total population */
 
 #define JR 0.6			/* jumping rate for opposite algorithm */
 
@@ -63,23 +63,26 @@ void init_population(real **pop, real *xi, real *cost)
   }
   for (i = 1; i < NP; i++) {
     for (j = 0; j < ndim; j++) {
-#ifdef APOT
       val = xi[idx[j]];
+#ifdef APOT
       min = apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
       max = apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
-#else /* APOT */
-      val = xi[idx[j]];
-      min = .75 * val;
-      max = 1.25 * val;
-#endif /* APOT */
-      /* scale normal distribution to [-1:1] or less */
-      temp = normdist() / 3.;
+      /* initialize with normal distribution */
+      temp = normdist() / 2.;
       if (fabs(temp) > 1)
 	temp /= fabs(temp);
       if (temp > 0)
 	pop[i][idx[j]] = val + temp * (max - val);
       else
 	pop[i][idx[j]] = val + temp * (val - min);
+#else /* APOT */
+      min = -100. * val;
+      max = 100. * val;
+      /* initialize with uniform distribution in [-1:1] */
+      temp = dsfmt_genrand_close_open(&dsfmt);
+/*      pop[i][idx[j]] = temp * 100.;*/
+      pop[i][idx[j]] = val + temp * (max - min);
+#endif /* APOT */
     }
   }
   for (i = 0; i < NP; i++)
@@ -182,8 +185,8 @@ void opposite_check(real **P, real *costP, int init)
 
 void diff_evo(real *xi)
 {
-  int   a, b;			/* store randomly picked numbers */
-/*  int   c, d, e;		|+ enable this line for more vectors +|*/
+  int   a, b, c;		/* store randomly picked numbers */
+/*  int   d, e; 			|+ enable this line for more vectors +|*/
   int   i, j, k;		/* counters */
   int   count = 0;		/* counter for loops */
   int   jsteps = 0;
@@ -277,6 +280,7 @@ void diff_evo(real *xi)
 /*      do*/
 /*        e = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);*/
 /*      while (e == i || e == a || e == b || e == c || e == d);*/
+
       j = (int)floor(dsfmt_genrand_close_open(&dsfmt) * ndim);
 
       /* self-adaptive parameters */
