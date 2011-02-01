@@ -887,7 +887,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   global_idx += pt->last[apt->number - 1] + 1;
 
 #ifdef NOPUNISH
-  warning("Gauge degrees of freedom are NOT fixed!");
+  if (opt)
+    warning("Gauge degrees of freedom are NOT fixed!");
 #endif /* NOPUNISH */
 
   init_calc_table(pt, &calc_pot);
@@ -2628,8 +2629,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
   if (NULL == outfile)
     error("Could not open file %s\n", filename);
 
-#FIXME german comments
-  /* Verteilungsfeld initialisieren */
+  /* initialize distribution vector */
   freq = (int *)malloc(ndimtot * sizeof(int));
   for (i = 0; i < ndimtot; i++)
     freq[i] = 0;
@@ -2639,30 +2639,30 @@ void write_pairdist(pot_table_t *pt, char *filename)
       atom = atoms + i + cnfstart[h];
       typ1 = atom->typ;
 
-      /* Paarpotenzialfunktion */
+      /* pair potentials */
       for (j = 0; j < atom->n_neigh; j++) {
 	neigh = atom->neigh + j;
 	typ2 = neigh->typ;
 	col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-	/* Die Arbeit wurde bereits gemacht */
+	/* this has already been calculated */
 	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[0]]++;
 #ifdef EAM
-	/* Transferfunktion */
+	/* transfer function */
 	col = paircol + typ2;
 	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[1]]++;
 #endif /* EAM */
       }
 #ifdef EAM
-      /* Finally: Einbettungsfunktion - hier muss Index festgestellt werden */
+      /* embedding function - get index first */
       col = paircol + ntypes + typ1;
       if (format == 3) {
 	rr = atom->rho - pt->begin[col];
 #ifdef NORESCALE
 	if (rr < 0)
-	  rr = 0;		/* Extrapolation */
+	  rr = 0;		/* extrapolation */
 	j = MIN((int)(rr * pt->invstep[col]) + pt->first[col], pt->last[col]);
 #else
 	if (rr < 0)
@@ -2686,7 +2686,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
 #endif /* EAM */
     }
   }
-  /* OK, jetzt haben wir die Daten - schreiben wir sie raus */
+  /* finished calculating data - write it to output file */
   j = 0;
   for (col = 0; col < pt->ncols; col++) {
     for (i = pt->first[col]; i < pt->last[col]; i++) {

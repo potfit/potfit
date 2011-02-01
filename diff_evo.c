@@ -29,11 +29,13 @@
  *
  ****************************************************************/
 
+#ifdef EVO
+
 #include "potfit.h"
 #include "utils.h"
 
 #define D (ndimtot+2)
-#define NP 25*D			/* number of total population */
+#define NP 15*D			/* number of total population */
 
 #define JR 0.6			/* jumping rate for opposite algorithm */
 
@@ -68,7 +70,7 @@ void init_population(real **pop, real *xi, real *cost)
       min = apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
       max = apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
       /* initialize with normal distribution */
-      temp = normdist() / 2.;
+      temp = normdist() / 3.;
       if (fabs(temp) > 1)
 	temp /= fabs(temp);
       if (temp > 0)
@@ -76,8 +78,8 @@ void init_population(real **pop, real *xi, real *cost)
       else
 	pop[i][idx[j]] = val + temp * (val - min);
 #else /* APOT */
-      min = -100. * val;
-      max = 100. * val;
+      min = -10. * val;
+      max = 10. * val;
       /* initialize with uniform distribution in [-1:1] */
       temp = dsfmt_genrand_close_open(&dsfmt);
 /*      pop[i][idx[j]] = temp * 100.;*/
@@ -412,3 +414,5 @@ void diff_evo(real *xi)
   free(best);
   free(fxi);
 }
+
+#endif /* EVO */

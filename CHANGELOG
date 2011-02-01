@@ -1,3 +1,8 @@
+devel-live
++ update comments
++ revert the r=0 fix in spline calculation
++ make simann the default algorithm for all potentials, evo is still available via _evo_ compile option
+
 devel-20101221
 + [APOT] fix bug with chemical potentials and global parameters
 + [EVO] change initialization for tabulated potentials

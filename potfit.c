@@ -174,7 +174,7 @@ int main(int argc, char **argv)
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
 #ifndef NORESCALE
-    rescale(&opt_pot, 1., 1);	/* rescale now... */
+/*    rescale(&opt_pot, 1., 1);	|+ rescale now... +|*/
 #endif /* NORESCALE */
 #endif /* EAM || ADP */
     init_done = 1;
@@ -299,11 +299,11 @@ int main(int argc, char **argv)
     if (opt) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
-#ifndef SIMANN
+#ifdef EVO
       diff_evo(opt_pot.table);
-#else
+#else /* EVO */
       anneal(opt_pot.table);
-#endif /* SIMANN */
+#endif /* EVO */
       printf("\nStarting powell minimization ...\n");
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
