@@ -127,6 +127,10 @@ void anneal(real *xi)
 #ifndef APOT
   real  width, height;		/* gaussian bump size */
 #endif
+#ifdef DIPOLE
+  FILE *outfile;
+  char *filename = "Dipole.convergency";
+#endif
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
 
@@ -222,6 +226,15 @@ void anneal(real *xi)
 	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / NSTEP) / 0.4);
 	naccept[n] = 0;
       }
+
+#ifdef DIPOLE
+      /* output for "Dipol_Konvergenz_Verlauf" */
+      if (myid == 0) {
+	outfile = fopen(filename, "a");
+	fprintf(outfile, "%d\n", apot_table.sum_t);
+	fclose(outfile);
+      }
+#endif
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);

@@ -90,10 +90,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   real  charge[ntypes];
   real  sum_charges;
 #ifdef DIPOLE
-  FILE *outfile2;
-  char *filename2 = "Dipole.convergency";
   int   sum_c;
-  int   sum_t;
   real  dp_alpha[ntypes];
   real  dp_b[apt->number];
   real  dp_c[apt->number];
@@ -119,7 +116,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     tmpsum = 0.;		/* sum of squares of local process */
 #ifdef DIPOLE
     sum_c = 0.;
-    sum_t = 0.;
 #endif
 #ifndef APOT
     if (format > 4 && myid == 0)
@@ -543,11 +539,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  dp_it++;
 	}			/* end T H I R D loop over atoms */
 
-	// for (i = 0; i < inconf[h]; i++) {
-	// atom = conf_atoms + i + cnfstart[h] - firstatom;
-	// printf("%d\t%d\t%f\t%f\t%f\n", i, atom->typ, atom->p_ind.x, atom->p_ind.y, atom->p_ind.z);
-	// }
-
 
 	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
 	real  rp_i, rp_j, pp_ij, tmp_1, tmp_2;
@@ -568,8 +559,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      fnval_tail = -neigh->grad_el;
 	      grad_tail = -neigh->ggrad_el;
-
-	      // printf("%f\t%f\n", fnval_tail, grad_tail);
 
 	      if (dp_b[col] && dp_c[col]) {
 		shortrange_term(neigh->r, dp_b[col], dp_c[col], &srval_tail,
@@ -754,8 +743,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	/* F I F T H  loop: self energy contributions and sum-up force contributions */
 	real  qq, pp;
-	//real kkk;
-	//kkk = dp_kappa * dp_kappa * dp_kappa;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -816,15 +803,11 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
       }				/* end M A I N loop over configurations */
 
+
 #ifdef DIPOLE
-      /* output for "Dipol_Konvergenz_Verlauf" */
-      if (myid == 0) {
-	sum_t = sum_c / h;
-	outfile2 = fopen(filename2, "a");
-	fprintf(outfile2, "%d\n", sum_t);
-	fclose(outfile2);
-      }
+	apt->sum_t = sum_c / h;
 #endif
+
 
     }				/* parallel region */
 
