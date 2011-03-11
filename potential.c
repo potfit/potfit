@@ -1756,6 +1756,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		*(xi_calc + k) =
 		  smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k],
 		  apot_table.end[i], h) : f;
+#ifndef COULOMB
 		if (isnan(f) || isnan(*(xi_calc + k))) {
 		  sprintf(msg, "Potential value was nan or inf. Aborting.\n");
 		  fprintf(stderr, "This occured in potential %d (%s)\n", i,
@@ -1769,6 +1770,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		    fprintf(stderr, "h %f\n", h);
 		  error(msg);
 		}
+#endif
 	      }
 	    }
 	    val += apot_table.n_par[i];
