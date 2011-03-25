@@ -194,12 +194,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       first = calc_pot.first[col];
       if (format == 3 || format == 0) {
 	spline_ed(calc_pot.step[col], xi + first,
-	  calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
       } else {			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
       }
     }
 
@@ -390,17 +390,17 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	      /* calculate short-range dipoles */
 	      if (dp_alpha[typ1] && dp_b[col] && dp_c[col]) {
-		p_sr_tail = grad_tail * neigh->r *
-		  shortrange_value(neigh->r, dp_alpha[typ1], dp_b[col],
-		  dp_c[col]);
+		p_sr_tail =
+		  grad_tail * neigh->r * shortrange_value(neigh->r,
+		  dp_alpha[typ1], dp_b[col], dp_c[col]);
 		atom->p_sr.x += charge[typ2] * neigh->dist.x * p_sr_tail;
 		atom->p_sr.y += charge[typ2] * neigh->dist.y * p_sr_tail;
 		atom->p_sr.z += charge[typ2] * neigh->dist.z * p_sr_tail;
 	      }
 	      if (dp_alpha[typ2] && dp_b[col] && dp_c[col] && !self) {
-		p_sr_tail = grad_tail * neigh->r *
-		  shortrange_value(neigh->r, dp_alpha[typ2], dp_b[col],
-		  dp_c[col]);
+		p_sr_tail =
+		  grad_tail * neigh->r * shortrange_value(neigh->r,
+		  dp_alpha[typ2], dp_b[col], dp_c[col]);
 		conf_atoms[neigh->nr - firstatom].p_sr.x -=
 		  charge[typ1] * neigh->dist.x * p_sr_tail;
 		conf_atoms[neigh->nr - firstatom].p_sr.y -=
@@ -485,12 +485,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 		if (!self) {
 		  rp = SPROD(atom->p_ind, neigh->dist);
-		  conf_atoms[neigh->nr - firstatom].E_ind.x += neigh->grad_el
-		    * (3 * rp * neigh->dist.x - atom->p_ind.x);
-		  conf_atoms[neigh->nr - firstatom].E_ind.y += neigh->grad_el
-		    * (3 * rp * neigh->dist.y - atom->p_ind.y);
-		  conf_atoms[neigh->nr - firstatom].E_ind.z += neigh->grad_el
-		    * (3 * rp * neigh->dist.z - atom->p_ind.z);
+		  conf_atoms[neigh->nr - firstatom].E_ind.x +=
+		    neigh->grad_el * (3 * rp * neigh->dist.x - atom->p_ind.x);
+		  conf_atoms[neigh->nr - firstatom].E_ind.y +=
+		    neigh->grad_el * (3 * rp * neigh->dist.y - atom->p_ind.y);
+		  conf_atoms[neigh->nr - firstatom].E_ind.z +=
+		    neigh->grad_el * (3 * rp * neigh->dist.z - atom->p_ind.z);
 		}
 	      }
 	    }
@@ -542,8 +542,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
 	real  rp_i, rp_j, pp_ij, tmp_1, tmp_2;
-	real  grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail,
-	  fnval_sum, grad_sum;
+	real  grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail, fnval_sum,
+	  grad_sum;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -592,12 +592,15 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		forces[energy_p + h] -= fnval;
 
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad_1
-		    + conf_atoms[neigh->nr - firstatom].p_ind.x * grad_2;
-		  tmp_force.y = neigh->dist.y * grad_1
-		    + conf_atoms[neigh->nr - firstatom].p_ind.y * grad_2;
-		  tmp_force.z = neigh->dist.z * grad_1
-		    + conf_atoms[neigh->nr - firstatom].p_ind.z * grad_2;
+		  tmp_force.x =
+		    neigh->dist.x * grad_1 + conf_atoms[neigh->nr -
+		    firstatom].p_ind.x * grad_2;
+		  tmp_force.y =
+		    neigh->dist.y * grad_1 + conf_atoms[neigh->nr -
+		    firstatom].p_ind.y * grad_2;
+		  tmp_force.z =
+		    neigh->dist.z * grad_1 + conf_atoms[neigh->nr -
+		    firstatom].p_ind.z * grad_2;
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
 		  forces[k + 2] -= tmp_force.z;
@@ -645,12 +648,9 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		forces[energy_p + h] += fnval;
 
 		if (uf) {
-		  tmp_force.x =
-		    neigh->dist.x * grad_1 + atom->p_ind.x * grad_2;
-		  tmp_force.y =
-		    neigh->dist.y * grad_1 + atom->p_ind.y * grad_2;
-		  tmp_force.z =
-		    neigh->dist.z * grad_1 + atom->p_ind.z * grad_2;
+		  tmp_force.x = neigh->dist.x * grad_1 + atom->p_ind.x * grad_2;
+		  tmp_force.y = neigh->dist.y * grad_1 + atom->p_ind.y * grad_2;
+		  tmp_force.z = neigh->dist.z * grad_1 + atom->p_ind.z * grad_2;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
@@ -694,8 +694,9 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 		forces[energy_p + h] += fnval;
 
 		if (uf) {
-		  tmp_force.x = grad_1 * neigh->r * neigh->dist.x - tmp_2
-		    * (grad_2 * neigh->r * neigh->dist.x -
+		  tmp_force.x =
+		    grad_1 * neigh->r * neigh->dist.x -
+		    tmp_2 * (grad_2 * neigh->r * neigh->dist.x -
 		    rp_i * neigh->r * conf_atoms[neigh->nr -
 		      firstatom].p_ind.x - rp_j * neigh->r * atom->p_ind.x);
 		  tmp_force.y =
@@ -796,7 +797,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
+	    tmpsum +=
+	      conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif
@@ -831,10 +833,9 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,	/* energies */
       forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf +
-      6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf,
-      conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
+      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
+      MPI_COMM_WORLD);
 #endif /* MPI */
 
     /* root process exits this function now */

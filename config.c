@@ -108,7 +108,7 @@ void read_config(char *filename)
     if (NULL == elements[i])
       error("Cannot allocate memory for %d. element name.\n", i + 1);
     reg_for_free(elements[i], "elements[i]");
-    sprintf(elements[i], "%d", i);
+    snprintf(elements[i], 3, "%d\0", i);
   }
 
   /* initialize minimum distance array */
@@ -661,7 +661,7 @@ void read_config(char *filename)
   /* be pedantic about too large ntypes */
   if ((max_type + 1) < ntypes)
     error
-      ("There are less than %d atom types in your configurations!\n Please adjust \"ntypes\" in your parameter file.",
+      ("There are less than %d atom types in your configurations!\nPlease adjust \"ntypes\" in your parameter file.",
       ntypes);
 
   reg_for_free(atoms, "atoms");

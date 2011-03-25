@@ -44,7 +44,7 @@
 #include "random.h"
 
 #ifdef APOT
-#define APOT_STEPS 200		/* number of sampling points for analytic pot */
+#define APOT_STEPS 300		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
 #endif
 
@@ -55,12 +55,12 @@
 #define FORCE_EPS .1
 
 #if defined PAIR || defined COULOMB
-#define SLOTS 1
-#elif defined EAM
-#define SLOTS 2
-#elif defined ADP
-#define SLOTS 4
-#endif /* PAIR */
+#define SLOTS 1			/* pair potential = 0 */
+#elif defined EAM		/* transfer function = 0 */
+#define SLOTS 2			/* embedding function = 1 */
+#elif defined ADP		/* dipole term = 2 */
+#define SLOTS 4			/* quadrupole term = 3 */
+#endif /* PAIR || COULOMB */
 
 /****************************************************************
  *
@@ -260,13 +260,14 @@ EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
 EXTERN int writeimd INIT(0);
-#ifdef SIMANN
-EXTERN real anneal_temp INIT(1.);
-#endif
+#ifdef EVO
 EXTERN real evo_threshold INIT(1.e-6);
+#else /* EVO */
+EXTERN real anneal_temp INIT(1.);
+#endif /* EVO */
 EXTERN real eweight INIT(-1.);
-EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
 EXTERN real sweight INIT(-1.);
+EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
@@ -479,15 +480,22 @@ real  calc_forces_adp(real *, real *, int);
 real  calc_forces_elstat(real *, real *, int);
 #endif /* PAIR */
 
+#ifdef EVO
+/* differential evolution [diff_evo.c] */
+void  init_population(real **, real *, real *);
+#ifdef APOT
+void  opposite_check(real **, real *, int);
+#endif /* APOT */
+void  diff_evo(real *);
+#else /* EVO */
 /* simulated annealing [simann.c] */
-#ifdef SIMANN
 #ifdef APOT
 void  randomize_parameter(int, real *, real *);
 #else
 void  makebump(real *, real, real, int);
 #endif /* APOT */
 void  anneal(real *);
-#endif /* SIMANN */
+#endif /* EVO */
 
 /* powell least squares [powell_lsq.c] */
 void  powell_lsq(real *);
@@ -501,12 +509,6 @@ void  copy_vector(real *, real *, int);
 void  matdotvec(real **, real *, real *, int, int);
 real  normalize_vector(real *, int);
 
-/* differential evolution [diff_evo.c] */
-void  init_population(real **, real *, real *);
-#ifdef APOT
-void  opposite_check(real **, real *, int);
-#endif /* APOT */
-void  diff_evo(real *);
 
 /* spline interpolation [splines.c] */
 void  spline_ed(real, real *, int, real, real, real *);

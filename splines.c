@@ -128,6 +128,10 @@ real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
   k = (int)(rr * istep);
   b = (rr - k * pt->step[col]) * istep;
   k += pt->first[col];
+/* This fixes some problems, but causes a lot more ... */
+/*  if (rr = (pt->end[col] - pt->begin[col])) {*/
+/*    return xi[k];*/
+/*  }*/
   a = 1.0 - b;
   p1 = xi[k];
   d21 = pt->d2tab[k++];

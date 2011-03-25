@@ -46,8 +46,8 @@ void error(char *msg, ...)
   va_list ap;
 
   fflush(stderr);
-  va_start(ap, msg);
   fprintf(stderr, "\n--> ERROR <--\n");
+  va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
   fflush(stderr);
@@ -57,6 +57,7 @@ void error(char *msg, ...)
   calc_forces(calc_pot.table, force, 1);
   shutdown_mpi();
 #endif /* MPI */
+  fprintf(stderr, "\n");
   exit(EXIT_FAILURE);
 }
 
@@ -72,10 +73,11 @@ int warning(char *msg, ...)
   int   n;
 
   fflush(stdout);
-  va_start(ap, msg);
   n = fprintf(stderr, "\n--> WARNING <--\n");
+  va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
+  n += fprintf(stderr, "\n");
   fflush(stderr);
   return n;
 }
@@ -180,7 +182,7 @@ int main(int argc, char **argv)
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
 #ifndef NORESCALE
-    rescale(&opt_pot, 1., 1);	/* rescale now... */
+/*    rescale(&opt_pot, 1., 1);	|+ rescale now... +|*/
 #endif /* NORESCALE */
 #endif /* EAM || ADP */
     init_done = 1;
@@ -299,17 +301,17 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
 #ifdef MPI
     if (num_cpus > nconf)
-      error("You are using more cpus than you have configurations!");
+      warning("You are using more cpus than you have configurations!");
 #endif /* MPI */
     time(&t_begin);
     if (opt) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
-#ifndef SIMANN
+#ifdef EVO
       diff_evo(opt_pot.table);
-#else
+#else /* EVO */
       anneal(opt_pot.table);
-#endif /* SIMANN */
+#endif /* EVO */
       printf("\nStarting powell minimization ...\n");
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
@@ -713,12 +715,22 @@ int main(int argc, char **argv)
     if (sweight != 0)
       printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif /* STRESS */
-    fclose(outfile);
-
+    if (write_output_files) {
+      fclose(outfile);
+    }
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
   }
+
+  if (opt && myid == 0) {
+    printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
+      (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
+	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
+    printf("%d force calculations, each took %f seconds\n", fcalls,
+      (real)difftime(t_end, t_begin) / fcalls);
+  }
+
   /* do some cleanups before exiting */
 #ifdef MPI
   /* kill MPI */
@@ -727,12 +739,5 @@ int main(int argc, char **argv)
   free_all_pointers();
 #endif /* MPI */
 
-  if (opt && myid == 0) {
-    printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
-      (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
-	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
-    printf("Did %d force calculations, each took %f seconds\n", fcalls,
-      (real)difftime(t_end, t_begin) / fcalls);
-  }
   return 0;
 }

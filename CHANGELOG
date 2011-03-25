@@ -1,8 +1,21 @@
 dipole-20110325
 + new short-range potential (Buckingham) now available for electrostatic
 
+devel-live
++ update comments
++ revert the r=0 fix in spline calculation
++ make simann the default algorithm for all potentials, evo is still
+  available via _evo_ compile option
++ comments are now allowed in potential files between blocks, starting with #
++ [ADP] fix writing for the quadrupole potential for systems with more than one atom type
+
 dipole-20110309
 + enhanced output for dipole-convergency 
+
+devel-20101221
++ [APOT] fix bug with chemical potentials and global parameters
++ [EVO] change initialization for tabulated potentials
++ timing information is now shown if output_prefix is not set
 
 --> POTFIT-20101207 released
 
