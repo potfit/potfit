@@ -30,12 +30,10 @@
  *****************************************************************/
 
 #if !defined NORESCALE && !defined APOT
+/* Doesn't make much sense without EAM or ADP */
+#if defined EAM || defined ADP
 
 #include "potfit.h"
-
-/* Doesn't make much sense without EAM  */
-
-#if defined EAM || defined ADP
 
 /****************************************************************
 *
@@ -47,8 +45,10 @@
 
 real rescale(pot_table_t *pt, real upper, int flag)
 {
-  int   mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign,
-    dimneuxi;
+  int   i, j, h;		/* counting variables */
+  int   col, col2;		/* loops over potentials */
+  int   typ1, typ2;		/* atom types */
+  int   mincol, maxcol, first, vals, sign, dimneuxi;
   real *xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
   atom_t *atom;
   neigh_t *neigh;
@@ -125,9 +125,8 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	neigh = atom->neigh + j;
 	if (neigh->nr > i + cnfstart[h]) {
 	  typ2 = neigh->typ;
-	  col2 = paircol + typ2;
 	  if (typ2 == typ1) {
-	    if (neigh->r < pt->end[col2]) {
+	    if (neigh->r < pt->end[neigh->col[1]]) {
 	      fnval =
 		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
 		neigh->step[1]);
@@ -135,13 +134,12 @@ real rescale(pot_table_t *pt, real upper, int flag)
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {
-	    col = paircol + typ1;
-	    if (neigh->r < pt->end[col2]) {
+	    if (neigh->r < pt->end[neigh->col[1]]) {
 	      atom->rho +=
 		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
 		neigh->step[1]);
 	    }
-	    if (neigh->r < pt->end[col])
+	    if (neigh->r < pt->end[paircol + atom->typ])
 	      atoms[neigh->nr].rho += splint(pt, xi, col, neigh->r);
 	  }
 	}
@@ -151,7 +149,6 @@ real rescale(pot_table_t *pt, real upper, int flag)
     }
   }
   for (i = 0; i < ntypes; i++) {
-    /* printf("maxrho[%d]=%f\tminrho[%d]=%f\n",i,maxrho[i],i,minrho[i]); */
     if (maxrho[i] > max) {
       max = maxrho[i];
       maxcol = i;
@@ -164,7 +161,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
   /* determine dominant side */
   sign = (max >= -min) ? 1 : -1;
 
-  /* determine new left and right boundary, add 40 per cent... */
+  /* determine new left and right boundary, add 40 percent... */
 
   for (i = 0; i < ntypes; i++) {
     j = paircol + ntypes + i;
@@ -340,14 +337,12 @@ real rescale(pot_table_t *pt, real upper, int flag)
   for (col = 0; col < ntypes; col++)
     for (col2 = col; col2 < ntypes; col2++) {
       for (j = pt->first[i]; j <= pt->last[i]; j++)
-	pt->table[j] += (pt->xcoord[j] < pt->end[paircol + col2]
-	  ? lambda[col] * splint_ne(pt, pt->table, paircol + col2,
-	    pt->xcoord[j])
-	  : 0.)
-	  + (pt->xcoord[j] < pt->end[paircol + col]
-	  ? lambda[col2] * splint_ne(pt, pt->table, paircol + col,
-	    pt->xcoord[j])
-	  : 0.);
+	pt->table[j] +=
+	  (pt->xcoord[j] < pt->end[paircol + col2] ? lambda[col] * splint_ne(pt,
+	    pt->table, paircol + col2,
+	    pt->xcoord[j]) : 0.) + (pt->xcoord[j] <
+	  pt->end[paircol + col] ? lambda[col2] * splint_ne(pt, pt->table,
+	    paircol + col, pt->xcoord[j]) : 0.);
       /* Gradient */
       if (pt->table[pt->first[i] - 2] < 1e29)	/* natural spline */
 	pt->table[pt->first[i] - 2] += (pt->begin[i] < pt->end[paircol + col2]

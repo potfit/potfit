@@ -346,7 +346,12 @@ END {
       printf "set term x11;\n" > "plot_eam";
     printf "set samples 1000;\n" > "plot_eam";
     printf "set grid;\n" > "plot_eam";
-    printf "set xrange [0:2]\n" > "plot_eam";
+    max_embed = 0.;
+    for (i = pair_count + ntypes; i < (pair_count + 2 * ntypes); i++) {
+	    if (cutoff[i]>max_embed)
+		    max_embed = cutoff[i];
+    }
+    printf "set xrange [0:"max_embed"]\n" > "plot_eam";
     printf "set title 'embedding potentials'\n" > "plot_eam";
     printf "pl " > "plot_eam";
     for (i = pair_count + ntypes; i < (pair_count + 2 * ntypes); i++) {

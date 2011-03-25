@@ -461,15 +461,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     have_globals = 1;
     apt->total_par += apt->globals;
 
-    i = apt->number;
+    i = apt->number + enable_cp;
     j = apt->globals;
-    global_pot = apt->number;
-#ifdef PAIR
-    if (enable_cp) {
-      global_pot = apt->number + 1;
-      i = global_pot;
-    }
-#endif
+    global_pot = i;
 
     /* allocate memory for global parameters */
     apt->names =
@@ -587,6 +581,12 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   fsetpos(infile, &filepos);
 
   for (i = 0; i < apt->number; i++) {
+    /* scan for "type" keyword */
+    do {
+      fgetpos(infile, &filepos);
+      fscanf(infile, "%s", buffer);
+    } while (strcmp(buffer, "type") != 0 && !feof(infile));
+    fsetpos(infile, &filepos);
     /* read type */
     if (2 > fscanf(infile, "%s %s", buffer, name))
       error("Premature end of potential file %s", filename);
@@ -856,24 +856,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
-  if (have_globals) {
-    i = global_pot;
-    for (j = 0; j < apt->globals; j++) {
-      *val = apt->values[i][j];
-      *list = apt->values[i][j];
-      val++;
-      list++;
-      if (!apt->invar_par[i][j]) {
-	pt->idx[k] = l++;
-	apt->idxpot[k] = i;
-	apt->idxparam[k++] = j;
-      } else
-	l++;
-    }
-    pt->idxlen += apt->globals - apt->invar_par[i][apt->globals];
-    apt->total_par -= apt->invar_par[i][apt->globals];
-  }
-  global_idx = pt->last[apt->number - 1] + 1;
 
 #ifdef PAIR
   if (enable_cp) {
@@ -891,8 +873,28 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif
 
+  if (have_globals) {
+    i = global_pot;
+    for (j = 0; j < apt->globals; j++) {
+      *val = apt->values[i][j];
+      *list = apt->values[i][j];
+      val++;
+      list++;
+      if (!apt->invar_par[i][j]) {
+	pt->idx[k] = l++;
+	apt->idxpot[k] = i;
+	apt->idxparam[k++] = j;
+      } else
+	l++;
+    }
+    pt->idxlen += apt->globals - apt->invar_par[i][apt->globals];
+    apt->total_par -= apt->invar_par[i][apt->globals];
+  }
+  global_idx += pt->last[apt->number - 1] + 1;
+
 #ifdef NOPUNISH
-  warning("Gauge degrees of freedom are NOT fixed!");
+  if (opt)
+    warning("Gauge degrees of freedom are NOT fixed!");
 #endif /* NOPUNISH */
 
   init_calc_table(pt, &calc_pot);
@@ -2357,7 +2359,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     for (j = 0; j < ntypes; j++) {
       m2 += j;
       col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
-      col1 += paircol + 3 * ntypes;
+      col1 += 2 * paircol + 2 * ntypes;
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
@@ -2381,7 +2383,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     for (j = 0; j < ntypes; j++) {
       m2 += j;
       col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
-      col1 += paircol + 3 * ntypes;
+      col1 += 2 * paircol + 2 * ntypes;
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
@@ -2633,8 +2635,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
   if (NULL == outfile)
     error("Could not open file %s\n", filename);
 
-#FIXME german comments
-  /* Verteilungsfeld initialisieren */
+  /* initialize distribution vector */
   freq = (int *)malloc(ndimtot * sizeof(int));
   for (i = 0; i < ndimtot; i++)
     freq[i] = 0;
@@ -2644,30 +2645,30 @@ void write_pairdist(pot_table_t *pt, char *filename)
       atom = atoms + i + cnfstart[h];
       typ1 = atom->typ;
 
-      /* Paarpotenzialfunktion */
+      /* pair potentials */
       for (j = 0; j < atom->n_neigh; j++) {
 	neigh = atom->neigh + j;
 	typ2 = neigh->typ;
 	col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-	/* Die Arbeit wurde bereits gemacht */
+	/* this has already been calculated */
 	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[0]]++;
 #ifdef EAM
-	/* Transferfunktion */
+	/* transfer function */
 	col = paircol + typ2;
 	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[1]]++;
 #endif /* EAM */
       }
 #ifdef EAM
-      /* Finally: Einbettungsfunktion - hier muss Index festgestellt werden */
+      /* embedding function - get index first */
       col = paircol + ntypes + typ1;
       if (format == 3) {
 	rr = atom->rho - pt->begin[col];
 #ifdef NORESCALE
 	if (rr < 0)
-	  rr = 0;		/* Extrapolation */
+	  rr = 0;		/* extrapolation */
 	j = MIN((int)(rr * pt->invstep[col]) + pt->first[col], pt->last[col]);
 #else
 	if (rr < 0)
@@ -2691,7 +2692,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
 #endif /* EAM */
     }
   }
-  /* OK, jetzt haben wir die Daten - schreiben wir sie raus */
+  /* finished calculating data - write it to output file */
   j = 0;
   for (col = 0; col < pt->ncols; col++) {
     for (i = pt->first[col]; i < pt->last[col]; i++) {
