@@ -57,6 +57,8 @@ int apot_parameters(char *name)
     return 3;
   } else if (strcmp(name, "ms") == 0) {
     return 3;
+  } else if (strcmp(name, "buck") == 0) {
+    return 3;
   } else if (strcmp(name, "softshell") == 0) {
     return 2;
   } else if (strcmp(name, "eopp_exp") == 0) {
@@ -138,6 +140,12 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &ms_shift;
 #else
       apt->fvalue[i] = &ms_value;
+#endif
+    } else if (strcmp(apt->names[i], "buck") == 0) {
+#ifdef COULOMB
+      apt->fvalue[i] = &buck_shift;
+#else
+      apt->fvalue[i] = &buck_value;
 #endif
     } else if (strcmp(apt->names[i], "softshell") == 0) {
       apt->fvalue[i] = &softshell_value;
@@ -272,6 +280,22 @@ void ms_value(real r, real *p, real *f)
   x = 1 - r / p[2];
 
   *f = p[0] * (exp(p[1] * x) - 2 * exp((p[1] * x) / 2));
+}
+
+/****************************************************************
+ *
+ * buckingham potential (without derivative!)
+ *
+ ****************************************************************/
+
+void buck_value(real r, real *p, real *f)
+{
+  static real x, y;
+  
+  x = SQR(p[1]) / SQR(r);
+  y = x * x * x;
+  
+  *f = p[0] * exp(-r / p[1]) - p[2] * y;
 }
 
 /****************************************************************
@@ -903,6 +927,24 @@ void ms_init(real r, real *pot, real *grad, real *p)
 
 /******************************************************************************
 *
+* buckingham potential + first derivative
+*
+******************************************************************************/
+
+void buck_init(real r, real *pot, real *grad, real *p)
+{
+  static real x[3];
+
+  x[0] = SQR(p[1]) / SQR(r);
+  x[1] = p[2] * x[0] * x[0] * x[0];
+  x[2] = p[0] * exp(-r / p[1]);
+
+  *pot = x[2] - x[1];
+  *grad = - x[2] / p[1] + 6 * p[1] * x[1] / r;
+}
+
+/******************************************************************************
+*
 * shifted ms potential
 *
 ******************************************************************************/
@@ -913,6 +955,22 @@ void ms_shift(real r, real *p, real *f)
 
   ms_init(r, &pot, &grad, p);
   ms_init(dp_cut, &pot_cut, &grad_cut, p);
+
+  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+}
+
+/******************************************************************************
+*
+* shifted buckingham potential
+*
+******************************************************************************/
+
+void buck_shift(real r, real *p, real *f)
+{
+  static real pot, grad, pot_cut, grad_cut;
+
+  buck_init(r, &pot, &grad, p);
+  buck_init(dp_cut, &pot_cut, &grad_cut, p);
 
   *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
 }

@@ -566,6 +566,7 @@ void  lj_value(real, real *, real *);
 void  eopp_value(real, real *, real *);
 void  morse_value(real, real *, real *);
 void  ms_value(real, real *, real *);
+void  buck_value(real, real *, real *);
 void  softshell_value(real, real *, real *);
 void  eopp_exp_value(real, real *, real *);
 void  meopp_value(real, real *, real *);
@@ -595,7 +596,9 @@ void  vpair_value(real, real *, real *);
 void  init_tails();
 void  write_coulomb_table();
 void  ms_init(real, real *, real *, real *);
+void  buck_init(real, real *, real *, real *);
 void  ms_shift(real, real *, real *);
+void  buck_shift(real, real *, real *);
 void  elstat_value(real, real *, real *, real *);
 void  elstat_shift(real, real *, real *, real *);
 #endif
