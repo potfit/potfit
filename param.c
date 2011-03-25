@@ -245,16 +245,17 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "seed") == 0) {
       getparam("seed", &seed, PARAM_INT, 1, 1);
     }
-#ifdef SIMANN
-    /* starting temperature for annealing */
-    else if (strcasecmp(token, "anneal_temp") == 0) {
-      getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
-    }
-#endif /* SIMANN */
+#ifdef EVO
     /* stopping criterion for differential evolution */
     else if (strcasecmp(token, "evo_threshold") == 0) {
       getparam("evo_threshold", &evo_threshold, PARAM_DOUBLE, 1, 1);
     }
+#else /* EVO */
+    /* starting temperature for annealing */
+    else if (strcasecmp(token, "anneal_temp") == 0) {
+      getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
+    }
+#endif /* EVO */
 #ifdef APOT
     /* Scaling Constant for APOT Punishment */
     else if (strcasecmp(token, "apot_punish") == 0) {

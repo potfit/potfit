@@ -28,7 +28,7 @@
  *
  *****************************************************************/
 
-#ifdef SIMANN
+#ifndef EVO
 
 #include "potfit.h"
 #include "utils.h"
@@ -93,7 +93,7 @@ void makebump(real *x, real width, real height, int center)
   while (opt_pot.last[j] < idx[center])
     j++;
   for (i = 0; i <= 4. * width; i++) {
-/* using idx avoids moving fixed points */
+    /* using idx avoids moving fixed points */
     if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
       x[idx[center + i]] += GAUSS((real)i / width) * height;
     }
@@ -141,6 +141,7 @@ void anneal(real *xi)
   xi2 = vect_real(ndimtot);
   fxi1 = vect_real(mdim);
   naccept = vect_int(ndim);
+
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
     v[n] = 1.;
@@ -205,7 +206,7 @@ void anneal(real *xi)
 	    }
 	  }
 
-	  else if ((dsfmt_genrand_close_open(&dsfmt)) < exp((F - F2) / T)) {
+	  else if (dsfmt_genrand_close_open(&dsfmt) < (exp((F - F2) / T))) {
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
 	    F = F2;
@@ -242,21 +243,18 @@ void anneal(real *xi)
 	  break;
 	}
       }
-#ifdef EAM
-#ifndef NORESCALE
+#if !defined APOT && ( defined EAM || defined ADP ) && !defined NORESCALE
       /* Check for rescaling... every tenth step */
       if ((m % 10) == 0) {
 	/* Was rescaling necessary ? */
+	printf("Force before rescaling %f\n", F);
 	if (rescale(&opt_pot, 1., 0) != 0.) {
-#ifdef WZERO
-	  /* embed_shift(&opt_pot); */
-#endif /* WZERO */
 	  /* wake other threads and sync potentials */
 	  F = (*calc_forces) (xi, fxi1, 2);
 	}
+	printf("Force after rescaling %f\n", F);
       }
-#endif /* NORESCALE */
-#endif /* EAM */
+#endif /* !APOT && ( EAM || ADP ) && !NORESCALE */
 
     }
     /*Temp adjustment */
@@ -280,6 +278,8 @@ void anneal(real *xi)
   }
 
   printf("Finished annealing, starting powell minimization ...\n");
+/*  for (n=0;n<ndimtot;n++)*/
+/*          printf("%f %f\n",xi[n],xopt[n]);*/
 
   F = Fopt;
 #ifndef APOT
@@ -301,4 +301,4 @@ void anneal(real *xi)
   return;
 }
 
-#endif /* SIMANN */
+#endif /* !EVO */

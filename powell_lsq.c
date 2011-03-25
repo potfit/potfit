@@ -105,8 +105,10 @@ void powell_lsq(real *xi)
 #endif /* ACML */
 
   /* clear delta */
-  for (i = 0; i < ndimtot; i++)
+  for (i = 0; i < ndimtot; i++) {
     delta[i] = 0.;
+/*    printf("%f\n",xi[i]);*/
+  }
 
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
@@ -376,14 +378,14 @@ void powell_lsq(real *xi)
 }
 
 
-/******************************************************************
-*
-* gamma_init: (Re-)Initialize gamma[j][i] (Gradient Matrix) after
-*            (Re-)Start or whenever necessary by calculating numerical
-*            gradients in coordinate directions. Includes re-setting the
-*            direction vectors to coordinate directions.
-*
-******************************************************************/
+/****************************************************************
+ *
+ * gamma_init: (Re-)Initialize gamma[j][i] (Gradient Matrix) after
+ *            (Re-)Start or whenever necessary by calculating numerical
+ *            gradients in coordinate directions. Includes re-setting the
+ *            direction vectors to coordinate directions.
+ *
+ ****************************************************************/
 
 int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 {
@@ -437,13 +439,13 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   return 0;
 }
 
-/*******************************************************************
-*
-* gamma_update: Update column j of gamma ( to newly calculated
-*           numerical derivatives (calculated from fa, fb
-*           at a,b); normalize new vector.
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * gamma_update: Update column j of gamma ( to newly calculated
+ *           numerical derivatives (calculated from fa, fb
+ *           at a,b); normalize new vector.
+ *
+ ****************************************************************/
 
 int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
   int j, int m, int n, real fmin)
@@ -470,16 +472,16 @@ int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
     for (i = 0; i < n; i++)
       delta[i] /= temp;
   } else
-    return 1;			/*Matrix will be singular: Restart! */
+    return 1;			/* Matrix will be singular: Restart! */
   return 0;
 }
 
-/*******************************************************************
-*
-* lineqsys_init: Initialize LinEqSys matrix, vector p in
-*              lineqsys . q == p
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * lineqsys_init: Initialize LinEqSys matrix, vector p in
+ *              lineqsys . q == p
+ *
+ ****************************************************************/
 
 void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, real *p,
   int n, int m)
@@ -510,46 +512,37 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, real *p,
   return;
 }
 
-/*******************************************************************
-*
-* lineqsys_update: Update LinEqSys matrix row and column i, vector
-*            p.
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * lineqsys_update: Update LinEqSys matrix row and column i, vector
+ *            p.
+ *
+ ****************************************************************/
 
 void lineqsys_update(real **gamma, real **lineqsys, real *force_xi, real *p,
   int i, int n, int m)
 {
-  int   k;
-  {
-/*     int j,k; */
-/*     real temp; */
-    for (k = 0; k < n; k++) {
-      int   j;
-/*       real  temp; */
-      p[k] = 0.;
-      lineqsys[i][k] = 0.;
-      for (j = 0; j < m; j++) {
-	p[k] -= gamma[j][k] * force_xi[j];
-	lineqsys[i][k] += gamma[j][i] * gamma[j][k];
-      }
-      lineqsys[k][i] = lineqsys[i][k];
+  int   j, k;
+  for (k = 0; k < n; k++) {
+    p[k] = 0.;
+    lineqsys[i][k] = 0.;
+    for (j = 0; j < m; j++) {
+      p[k] -= gamma[j][k] * force_xi[j];
+      lineqsys[i][k] += gamma[j][i] * gamma[j][k];
     }
+    lineqsys[k][i] = lineqsys[i][k];
   }
-
   return;
 }
 
 
 
-/*******************************************************************
-*
-*  copy_matrix: Copies data from Matrix a into matrix b
-*              (matrix dimension n x m)
-*
-*******************************************************************/
-
-/*>>>>>>>>>>>>>>>  INLINING? <<<<<<<<<<<<<<*/
+/****************************************************************
+ *
+ *  copy_matrix: Copies data from Matrix a into matrix b
+ *              (matrix dimension n x m)
+ *
+ ****************************************************************/
 
 void copy_matrix(real **a, real **b, int n, int m)
 {
@@ -562,13 +555,11 @@ void copy_matrix(real **a, real **b, int n, int m)
   return;
 }
 
-/******************************************************************
-*
-* copy_vector: Copies data from vector a into vector b (both dim n)
-*
-******************************************************************/
-
-/*>>>>>>>>>>>>>>>  INLINING? <<<<<<<<<<<<<<*/
+/****************************************************************
+ *
+ * copy_vector: Copies data from vector a into vector b (both dim n)
+ *
+ ****************************************************************/
 
 void copy_vector(real *a, real *b, int n)
 {
@@ -578,12 +569,12 @@ void copy_vector(real *a, real *b, int n)
   return;
 }
 
-/******************************************************************
-*
-* matdotvec: Calculates the product of matrix a (n x m) with column
-* vector x (dim m), Result y (dim n). (A . x = m)
-*
-******************************************************************/
+/****************************************************************
+ *
+ * matdotvec: Calculates the product of matrix a (n x m) with column
+ * vector x (dim m), Result y (dim n). (A . x = m)
+ *
+ ****************************************************************/
 
 void matdotvec(real **a, real *x, real *y, int n, int m)
 {
@@ -596,11 +587,11 @@ void matdotvec(real **a, real *x, real *y, int n, int m)
   return;
 }
 
-/*******************************************************************
-*
-* normalize_vector: Normalizes vector to |vec|^2=1, returns norm of old vector
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * normalize_vector: Normalizes vector to |vec|^2=1, returns norm of old vector
+ *
+ ****************************************************************/
 
 real normalize_vector(real *v, int n)
 {

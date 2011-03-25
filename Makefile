@@ -344,7 +344,7 @@ POTFITHDR   	= bracket.h  potfit.h \
 		  random-params.h  random.h  utils.h
 POTFITSRC 	= bracket.c brent.c config.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
-		  random.c diff_evo.c splines.c utils.c
+		  random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += force_pair.c
@@ -373,8 +373,8 @@ POTFITSRC      += chempot.c
 endif
 endif
 
-ifneq (,$(strip $(findstring simann,${MAKETARGET})))
-POTFITSRC      += simann.c
+ifneq (,$(strip $(findstring evo,${MAKETARGET})))
+POTFITSRC      += diff_evo.c
 endif
 
 MPISRC          = mpi_utils.c
@@ -450,9 +450,9 @@ ifneq (,$(findstring 0,${INTERACTION}))
 ERROR += No interaction model specified
 endif
 
-# SIMANN - for simulated annealing
-ifneq (,$(findstring simann,${MAKETARGET}))
-CFLAGS += -DSIMANN
+# EVO - for differential evolution
+ifneq (,$(findstring evo,${MAKETARGET}))
+CFLAGS += -DEVO
 endif
 
 # APOT - for analytic potentials
