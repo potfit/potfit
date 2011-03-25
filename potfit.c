@@ -46,8 +46,8 @@ void error(char *msg, ...)
   va_list ap;
 
   fflush(stderr);
-  va_start(ap, msg);
   fprintf(stderr, "\n--> ERROR <--\n");
+  va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
   fflush(stderr);
@@ -73,10 +73,11 @@ int warning(char *msg, ...)
   int   n;
 
   fflush(stdout);
-  va_start(ap, msg);
   n = fprintf(stderr, "\n--> WARNING <--\n");
+  va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
+  n += fprintf(stderr, "\n");
   fflush(stderr);
   return n;
 }
@@ -716,7 +717,7 @@ int main(int argc, char **argv)
     printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
       (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
 	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
-    printf("Did %d force calculations, each took %f seconds\n", fcalls,
+    printf("%d force calculations, each took %f seconds\n", fcalls,
       (real)difftime(t_end, t_begin) / fcalls);
   }
 

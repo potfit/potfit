@@ -1,7 +1,10 @@
 devel-live
 + update comments
 + revert the r=0 fix in spline calculation
-+ make simann the default algorithm for all potentials, evo is still available via _evo_ compile option
++ make simann the default algorithm for all potentials, evo is still
+  available via _evo_ compile option
++ comments are now allowed in potential files between blocks, starting with #
++ [ADP] fix writing for the quadrupole potential for systems with more than one atom type
 
 devel-20101221
 + [APOT] fix bug with chemical potentials and global parameters

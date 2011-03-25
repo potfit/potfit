@@ -581,6 +581,12 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   fsetpos(infile, &filepos);
 
   for (i = 0; i < apt->number; i++) {
+    /* scan for "type" keyword */
+    do {
+      fgetpos(infile, &filepos);
+      fscanf(infile, "%s", buffer);
+    } while (strcmp(buffer, "type") != 0 && !feof(infile));
+    fsetpos(infile, &filepos);
     /* read type */
     if (2 > fscanf(infile, "%s %s", buffer, name))
       error("Premature end of potential file %s", filename);
@@ -2353,7 +2359,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     for (j = 0; j < ntypes; j++) {
       m2 += j;
       col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
-      col1 += paircol + 3 * ntypes;
+      col1 += 2 * paircol + 2 * ntypes;
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
@@ -2377,7 +2383,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     for (j = 0; j < ntypes; j++) {
       m2 += j;
       col1 = i < j ? i * ntypes + j - m : j * ntypes + i - m2;
-      col1 += paircol + 3 * ntypes;
+      col1 += 2 * paircol + 2 * ntypes;
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {

@@ -93,7 +93,7 @@ void makebump(real *x, real width, real height, int center)
   while (opt_pot.last[j] < idx[center])
     j++;
   for (i = 0; i <= 4. * width; i++) {
-/* using idx avoids moving fixed points */
+    /* using idx avoids moving fixed points */
     if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
       x[idx[center + i]] += GAUSS((real)i / width) * height;
     }
