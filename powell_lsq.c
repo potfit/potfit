@@ -168,9 +168,10 @@ void powell_lsq(real *xi)
 	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
 #else
 	  "F does not depend on the %d. parameter (%s) of the %d. potential (%s).\nFit impossible!\n",
-	  itemp2 + 1, apot_table.param_name[itemp][itemp2],
-	  itemp + 1, apot_table.names[itemp]);
+	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1,
+	  apot_table.names[itemp]);
 #endif /* COULOMB */
+#endif /* APOT */
 	warning(errmsg);
 	break;
       }
