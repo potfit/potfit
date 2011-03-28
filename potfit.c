@@ -335,9 +335,10 @@ int main(int argc, char **argv)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
-    //#ifdef COULOMB
-    //write_coulomb_table();
-    //#endif
+#ifdef COULOMB
+    write_coul2imd();
+    //write_coulomb_table(); 
+#endif
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI

@@ -597,6 +597,7 @@ void  vpair_value(real, real *, real *);
 #ifdef COULOMB
 void  init_tails();
 void  write_coulomb_table();
+void  write_coul2imd();
 void  ms_init(real, real *, real *, real *);
 void  buck_init(real, real *, real *, real *);
 void  ms_shift(real, real *, real *);
