@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2008-2010 Daniel Schopf
+ * Copyright 2008-2010 Daniel Schopf, Philipp Beck
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -57,6 +57,8 @@ int apot_parameters(char *name)
     return 3;
   } else if (strcmp(name, "ms") == 0) {
     return 3;
+  } else if (strcmp(name, "buck") == 0) {
+    return 3;
   } else if (strcmp(name, "softshell") == 0) {
     return 2;
   } else if (strcmp(name, "eopp_exp") == 0) {
@@ -99,6 +101,10 @@ int apot_parameters(char *name)
     return 5;
   } else if (strcmp(name, "gljm") == 0) {
     return 12;
+  } else if (strcmp(name, "vas") == 0) {
+    return 2;
+  } else if (strcmp(name, "vpair") == 0) {
+    return 7;
   }
 
   /* template for new potential function called newpot */
@@ -130,7 +136,17 @@ int apot_assign_functions(apot_table_t *apt)
     } else if (strcmp(apt->names[i], "morse") == 0) {
       apt->fvalue[i] = &morse_value;
     } else if (strcmp(apt->names[i], "ms") == 0) {
+#ifdef COULOMB
+      apt->fvalue[i] = &ms_shift;
+#else
       apt->fvalue[i] = &ms_value;
+#endif
+    } else if (strcmp(apt->names[i], "buck") == 0) {
+#ifdef COULOMB
+      apt->fvalue[i] = &buck_shift;
+#else
+      apt->fvalue[i] = &buck_value;
+#endif
     } else if (strcmp(apt->names[i], "softshell") == 0) {
       apt->fvalue[i] = &softshell_value;
     } else if (strcmp(apt->names[i], "eopp_exp") == 0) {
@@ -173,6 +189,10 @@ int apot_assign_functions(apot_table_t *apt)
       apt->fvalue[i] = &gen_lj_value;
     } else if (strcmp(apt->names[i], "gljm") == 0) {
       apt->fvalue[i] = &gljm_value;
+    } else if (strcmp(apt->names[i], "vas") == 0) {
+      apt->fvalue[i] = &vas_value;
+    } else if (strcmp(apt->names[i], "vpair") == 0) {
+      apt->fvalue[i] = &vpair_value;
     }
 
 /* template for new potential function called newpot */
@@ -249,7 +269,7 @@ void morse_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * morse-stretch potential
+ * morse-stretch potential (without derivative!)
  *
  ****************************************************************/
 
@@ -260,6 +280,22 @@ void ms_value(real r, real *p, real *f)
   x = 1 - r / p[2];
 
   *f = p[0] * (exp(p[1] * x) - 2 * exp((p[1] * x) / 2));
+}
+
+/****************************************************************
+ *
+ * buckingham potential (without derivative!)
+ *
+ ****************************************************************/
+
+void buck_value(real r, real *p, real *f)
+{
+  static real x, y;
+
+  x = SQR(p[1]) / SQR(r);
+  y = x * x * x;
+
+  *f = p[0] * exp(-r / p[1]) - p[2] * y;
 }
 
 /****************************************************************
@@ -347,7 +383,7 @@ void power_decay_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * exp_decay potential
+e pot * exp_decay potential
  *
  ****************************************************************/
 
@@ -629,6 +665,40 @@ void gljm_value(real r, real *p, real *f)
 
 /****************************************************************
  *
+ * bond-stretching function of vashishta potential (f_c)
+ *
+ ****************************************************************/
+
+void vas_value(real r, real *p, real *f)
+{
+  *f = exp(p[0] / (r - p[1]));
+}
+
+/****************************************************************
+ *
+ * original pair contributions of vashishta potential (V_2)
+ *
+ ****************************************************************/
+
+void vpair_value(real r, real *p, real *f)
+{
+  real  x[7], y, z;
+
+  y = r;
+  z = p[1];
+  vdPow(1, &y, &z, &x[0]);
+  x[1] = r * r;
+  x[2] = x[1] * x[1];
+  x[3] = p[2] * p[2];
+  x[4] = p[3] * p[3];
+  x[5] = p[4] * x[4] + p[5] * x[3];
+  x[6] = exp(-r / p[6]);
+
+  *f = 14.4 * (p[0] / x[0] + p[2] * p[3] / r - 0.5 * x[5] / x[2] * x[6]);
+}
+
+/****************************************************************
+ *
  * template for new potential function called mypotential
  * for further information plase have a look at the online documentation
  *
@@ -834,4 +904,168 @@ void debug_apot()
 
 #endif /* DEBUG */
 
+#ifdef COULOMB
+
+/******************************************************************************
+*
+* ms potential + first derivative
+*
+******************************************************************************/
+
+void ms_init(real r, real *pot, real *grad, real *p)
+{
+  static real x[4];
+
+  x[0] = 1 - r / p[2];
+  x[1] = exp(p[1] * x[0]);
+  x[2] = exp(p[1] * x[0] / 2);
+  x[3] = p[0] * p[1] / (r * p[2]);
+
+  *pot = p[0] * (x[1] - 2 * x[2]);
+  *grad = x[3] * (-x[1] + x[2]);
+}
+
+/******************************************************************************
+*
+* buckingham potential + first derivative
+*
+******************************************************************************/
+
+void buck_init(real r, real *pot, real *grad, real *p)
+{
+  static real x[3];
+
+  x[0] = SQR(p[1]) / SQR(r);
+  x[1] = p[2] * x[0] * x[0] * x[0];
+  x[2] = p[0] * exp(-r / p[1]);
+
+  *pot = x[2] - x[1];
+  *grad = -x[2] / p[1] + 6 * p[1] * x[1] / r;
+}
+
+/******************************************************************************
+*
+* shifted ms potential
+*
+******************************************************************************/
+
+void ms_shift(real r, real *p, real *f)
+{
+  static real pot, grad, pot_cut, grad_cut;
+
+  ms_init(r, &pot, &grad, p);
+  ms_init(dp_cut, &pot_cut, &grad_cut, p);
+
+  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+}
+
+/******************************************************************************
+*
+* shifted buckingham potential
+*
+******************************************************************************/
+
+void buck_shift(real r, real *p, real *f)
+{
+  static real pot, grad, pot_cut, grad_cut;
+
+  buck_init(r, &pot, &grad, p);
+  buck_init(dp_cut, &pot_cut, &grad_cut, p);
+
+  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+}
+
+/******************************************************************************
+*
+* tail of electrostatic potential and first two derivatives
+*
+******************************************************************************/
+
+void elstat_value(real r, real *ftail, real *gtail, real *ggtail)
+{
+  static real x[4];
+
+  x[0] = r * r;
+  x[1] = dp_kappa * dp_kappa;
+  x[2] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
+  x[3] = exp(-x[0] * x[1]);
+
+  *ftail = dp_eps * erfc(dp_kappa * r) / r;
+  *gtail = -(*ftail + x[2] * x[3]) / x[0];
+  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
+}
+
+/******************************************************************************
+*
+* shifted tail of coloumb potential
+*
+******************************************************************************/
+
+void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
+{
+  static real ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
+  static real x[3];
+
+  x[0] = r * r;
+  x[1] = dp_cut * dp_cut;
+  x[2] = x[0] - x[1];
+
+  elstat_value(r, &ftail, &gtail, &ggtail);
+  elstat_value(dp_cut, &ftail_cut, &gtail_cut, &ggtail_cut);
+
+  *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
+  *grad_tail = gtail - gtail_cut;
+  *ggrad_tail = 0.;
+#ifdef DIPOLE
+  *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
+  *grad_tail -= x[2] * ggtail_cut / 2;
+  *ggrad_tail = ggtail - ggtail_cut;	// ? richtig so? hier alles checken im Falle Dipole!
+#endif
+}
+
+#endif /* COULOMB */
+#ifdef DIPOLE
+
+/******************************************************************************
+*
+* short-range part of dipole moments 
+*
+******************************************************************************/
+
+real shortrange_value(real r, real a, real b, real c)
+{
+  static real x[5];
+
+  x[0] = b * r;
+  x[1] = x[0] * x[0];
+  x[2] = x[1] * x[0];
+  x[3] = x[1] * x[1];
+  x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
+
+  return a * c * x[4] * exp(-x[0]) / dp_eps;
+}
+
+/******************************************************************************
+*
+* tail of additional short-range contribution to energy and forces  
+*
+******************************************************************************/
+
+void shortrange_term(real r, real b, real c, real *srval_tail,
+  real *srgrad_tail)
+{
+  static real x[6];
+
+  x[0] = b * r;
+  x[1] = x[0] * x[0];
+  x[2] = x[1] * x[0];
+  x[3] = x[1] * x[1];
+  x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
+  x[5] = exp(-x[0]);
+
+  *srval_tail = c * x[4] * x[5] / dp_eps;
+  *srgrad_tail = -c * b * x[3] * x[5] / (24 * dp_eps * r);
+}
+
+#endif /* DIPOLE */
 #endif /* APOT */

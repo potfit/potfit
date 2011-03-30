@@ -121,6 +121,9 @@ int main(int argc, char **argv)
 #elif defined ADP
   calc_forces = calc_forces_adp;
   strcpy(interaction, "ADP");
+#elif defined COULOMB
+  calc_forces = calc_forces_elstat;
+  strcpy(interaction, "ELSTAT");
 #endif /* PAIR */
 
   /* read the parameters and the potential file */
@@ -132,6 +135,10 @@ int main(int argc, char **argv)
 #ifdef STRESS
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
+#ifdef COULOMB
+    init_tails();
+#endif /* COULOMB */
+
     /* Select correct spline interpolation and other functions */
 #ifdef APOT
     if (format == 0) {
@@ -328,6 +335,10 @@ int main(int argc, char **argv)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
+#ifdef COULOMB
+    write_coul2imd();
+    //write_coulomb_table(); 
+#endif
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
