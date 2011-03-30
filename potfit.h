@@ -54,13 +54,13 @@
 
 #define FORCE_EPS .1
 
-#if defined PAIR
+#if defined PAIR || defined COULOMB
 #define SLOTS 1			/* pair potential = 0 */
 #elif defined EAM		/* transfer function = 0 */
 #define SLOTS 2			/* embedding function = 1 */
 #elif defined ADP		/* dipole term = 2 */
 #define SLOTS 4			/* quadrupole term = 3 */
-#endif /* PAIR */
+#endif /* PAIR || COULOMB */
 
 /****************************************************************
  *
@@ -96,6 +96,12 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
+#ifdef COULOMB
+  real  r2;			/* r^2 */
+  real  fnval_el;		/* stores tail of electrostatic potential */
+  real  grad_el;		/* stores tail of first derivative of electrostatic potential */
+  real  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
+#endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
@@ -124,6 +130,14 @@ typedef struct {
   sym_tens lambda;
   real  nu;
 #endif				/* ADP */
+#ifdef DIPOLE
+  vector E_stat;		/* static field-contribution */
+  vector p_sr;			/* short-range dipole moment */
+  vector E_ind;			/* induced field-contribution */
+  vector p_ind;			/* induced dipole moment */
+  vector E_old;			/* stored old induced field */
+  vector E_tot;			/* temporary induced field */
+#endif				/* DIPOLE */
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
@@ -159,6 +173,9 @@ typedef struct {
 
   /* parameters */
   int   total_par;		/* total number of parameters for all potentials */
+#ifdef COULOMB
+  int   total_ne_par;		/* total number of non-electrostatic parameters */
+#endif
   int  *idxparam;		/* indirect index for potential parameters */
   int **invar_par;		/* array of invariant parameters */
   char ***param_name;		/* name of parameters */
@@ -174,6 +191,18 @@ typedef struct {
 #ifdef PAIR
   real *chempot;		/* chemical potentials */
 #endif				/* PAIR */
+
+#ifdef COULOMB
+  real *ratio;			/* stoichiometric ratio */
+  real *charge;			/* charges */
+  real  last_charge;		/* last charge determined on the basis of charge neutrality */
+#endif				/* COULOMB */
+#ifdef DIPOLE
+  real *dp_alpha;		/* polarisability */
+  real *dp_b;			/* parameter for short-range-dipole-moment */
+  real *dp_c;			/* parameter for short-range-dipole-moment */
+  int   sum_t;			/* dipole-convergency output */
+#endif				/* DIPOLE */
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
@@ -351,6 +380,17 @@ EXTERN real *maxchange;		/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
 
+/* variables needed for electrostatic options */
+#ifdef COULOMB
+EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
+EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
+EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
+#endif /* COULOMB */
+#ifdef DIPOLE
+EXTERN real dp_tol INIT(1.e-7);	/* dipole iteration precision */
+EXTERN real dp_mix INIT(0.2);	/* mixing parameter (other than that one in IMD) */
+#endif /* DIPOLE */
+
 /****************************************************************
  *
  *  global function pointers
@@ -436,6 +476,8 @@ real  calc_forces_pair(real *, real *, int);
 real  calc_forces_eam(real *, real *, int);
 #elif defined ADP
 real  calc_forces_adp(real *, real *, int);
+#elif defined COULOMB
+real  calc_forces_elstat(real *, real *, int);
 #endif /* PAIR */
 
 #ifdef EVO
@@ -526,6 +568,7 @@ void  lj_value(real, real *, real *);
 void  eopp_value(real, real *, real *);
 void  morse_value(real, real *, real *);
 void  ms_value(real, real *, real *);
+void  buck_value(real, real *, real *);
 void  softshell_value(real, real *, real *);
 void  eopp_exp_value(real, real *, real *);
 void  meopp_value(real, real *, real *);
@@ -547,6 +590,25 @@ void  exp_plus_value(real, real *, real *);
 void  mishin_value(real, real *, real *);
 void  gen_lj_value(real, real *, real *);
 void  gljm_value(real, real *, real *);
+void  vas_value(real, real *, real *);
+void  vpair_value(real, real *, real *);
+
+/* functions for electrostatic calculations  */
+#ifdef COULOMB
+void  init_tails();
+void  write_coulomb_table();
+void  write_coul2imd();
+void  ms_init(real, real *, real *, real *);
+void  buck_init(real, real *, real *, real *);
+void  ms_shift(real, real *, real *);
+void  buck_shift(real, real *, real *);
+void  elstat_value(real, real *, real *, real *);
+void  elstat_shift(real, real *, real *, real *);
+#endif
+#ifdef DIPOLE
+real  shortrange_value(real, real, real, real);
+void  shortrange_term(real, real, real, real *, real *);
+#endif
 
 /* template for new potential function called newpot */
 

@@ -124,7 +124,7 @@
 SYSTEM 		= x86_64-icc
 
 # This is the directory where the potfit binary will be moved to
-BIN_DIR 	= ${HOME}/bin
+BIN_DIR 	= ${HOME}/bin/i386-linux
 
 # Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
@@ -354,6 +354,14 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 POTFITSRC      += force_eam.c rescale.c
 endif
 
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+POTFITSRC      += force_elstat.c
+endif
+
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+POTFITSRC      += force_elstat.c
+endif
+
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
 POTFITSRC      += force_adp.c rescale.c
 endif
@@ -401,8 +409,32 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
-CFLAGS  += -DEAM
-INTERACTION = 1
+  CFLAGS  += -DEAM
+  INTERACTION = 1
+endif
+
+# COULOMB
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += COULOMB does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DCOULOMB
+  INTERACTION = 1
+endif
+
+# DIPOLE
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += DIPOLE does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DCOULOMB -DDIPOLE 
+  INTERACTION = 1
 endif
 
 # angular dependent potentials (ADP)
@@ -411,7 +443,7 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ERROR += More than one potential model specified
   endif
   CFLAGS  += -DADP
-INTERACTION = 1
+  INTERACTION = 1
 endif
 
 ifneq (,$(findstring 0,${INTERACTION}))
