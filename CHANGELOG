@@ -1,4 +1,7 @@
-devel-live
+devel-20110330
++ abort if anneal_temp is missing in parameter file
+
+devel-20110325
 + update comments
 + revert the r=0 fix in spline calculation
 + make simann the default algorithm for all potentials, evo is still
