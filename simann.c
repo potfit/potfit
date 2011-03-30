@@ -135,6 +135,8 @@ void anneal(real *xi)
   int  *naccept;		/* number of accepted changes in dir */
 
   /* init starting temperature for annealing process */
+  if (anneal_temp < 0)
+	  error("anneal_temp is not set in parameter file!");
   T = anneal_temp;
   if (T == 0.)
     return;			/* don't anneal if starttemp equal zero */

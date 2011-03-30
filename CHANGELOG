@@ -1,3 +1,6 @@
+devel-20110330
++ abort if anneal_temp is missing in parameter file
+
 dipole-20110328
 + new outout coul2imd now available
 

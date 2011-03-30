@@ -263,7 +263,7 @@ EXTERN int writeimd INIT(0);
 #ifdef EVO
 EXTERN real evo_threshold INIT(1.e-6);
 #else /* EVO */
-EXTERN real anneal_temp INIT(1.);
+EXTERN real anneal_temp INIT(-1.);
 #endif /* EVO */
 EXTERN real eweight INIT(-1.);
 EXTERN real sweight INIT(-1.);
