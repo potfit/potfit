@@ -13,7 +13,7 @@ devel-live
 + [ADP] fix writing for the quadrupole potential for systems with more than one atom type
 
 dipole-20110309
-+ enhanced output for dipole-convergency 
++ enhanced output for dipole-convergency
 
 devel-20101221
 + [APOT] fix bug with chemical potentials and global parameters

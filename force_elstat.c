@@ -807,7 +807,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 
 #ifdef DIPOLE
-	apt->sum_t = sum_c / h;
+      apt->sum_t = sum_c / h;
 #endif
 
 

@@ -269,12 +269,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
       case 0:
 	read_pot_table0(pt, apt, filename, infile);
 	break;
-#endif /* APOT */
+#else
       case 3:
 	read_pot_table3(pt, size, ncols, nvals, filename, infile);
 	break;
       case 4:
 	read_pot_table4(pt, size, ncols, nvals, filename, infile);
+#endif /* APOT */
   }
   fclose(infile);
 
@@ -3026,18 +3027,19 @@ void write_coul2imd()
   int   i, j;
   FILE *outfile;
   char *filename = "coul2imd";
-  
+
   /* open file */
   outfile = fopen(filename, "w");
   if (NULL == outfile)
     error("Could not open file %s\n", filename);
-  
+
   fprintf(outfile, "charge\t\t");
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%f\t", apt->charge[i]);
   fprintf(outfile, "\n");
 
-  if ( (strcmp(apt->names[0], "ms") == 0) && (strcmp(apt->names[1], "ms") == 0) && (strcmp(apt->names[2], "ms") == 0) ) {
+  if ((strcmp(apt->names[0], "ms") == 0) && (strcmp(apt->names[1], "ms") == 0)
+    && (strcmp(apt->names[2], "ms") == 0)) {
     fprintf(outfile, "ms_D\t\t");
     for (i = 0; i < apt->number; i++)
       fprintf(outfile, "%f\t", apt->values[i][0]);
@@ -3050,7 +3052,9 @@ void write_coul2imd()
     for (i = 0; i < apt->number; i++)
       fprintf(outfile, "%f\t", apt->values[i][2]);
     fprintf(outfile, "\n");
-  } else if ( (strcmp(apt->names[0], "buck") == 0) && (strcmp(apt->names[1], "buck") == 0) && (strcmp(apt->names[2], "buck") == 0) ) {
+  } else if ((strcmp(apt->names[0], "buck") == 0)
+    && (strcmp(apt->names[1], "buck") == 0)
+    && (strcmp(apt->names[2], "buck") == 0)) {
     fprintf(outfile, "buck_a\t");
     for (i = 0; i < apt->number; i++)
       fprintf(outfile, "%f\t", apt->values[i][0]);
@@ -3064,7 +3068,8 @@ void write_coul2imd()
       fprintf(outfile, "%f\t", apt->values[i][2]);
     fprintf(outfile, "\n");
   } else {
-    printf("Only Morse-Stretch or Buckingham potential supported for coul2imd yet.\n");
+    printf
+      ("Only Morse-Stretch or Buckingham potential supported for coul2imd yet.\n");
     printf("No short-range potential printed for coul2imd.");
   }
 
@@ -3094,9 +3099,7 @@ void write_coul2imd()
 
   fprintf(outfile, "\n");
 
-fclose(outfile);
-   
+  fclose(outfile);
+
 }
 #endif /* COULOMB */
-
- 

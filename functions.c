@@ -291,10 +291,10 @@ void ms_value(real r, real *p, real *f)
 void buck_value(real r, real *p, real *f)
 {
   static real x, y;
-  
+
   x = SQR(p[1]) / SQR(r);
   y = x * x * x;
-  
+
   *f = p[0] * exp(-r / p[1]) - p[2] * y;
 }
 
@@ -940,7 +940,7 @@ void buck_init(real r, real *pot, real *grad, real *p)
   x[2] = p[0] * exp(-r / p[1]);
 
   *pot = x[2] - x[1];
-  *grad = - x[2] / p[1] + 6 * p[1] * x[1] / r;
+  *grad = -x[2] / p[1] + 6 * p[1] * x[1] / r;
 }
 
 /******************************************************************************
