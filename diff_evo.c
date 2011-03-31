@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2010 Daniel Schopf
+ * Copyright 2009-2011 Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -202,7 +202,7 @@ void diff_evo(real *xi)
 #ifdef APOT
   real  pmin = 0.;		/* lower bound for parameter */
   real  pmax = 0.;		/* upper bound for parameter */
-#endif
+#endif /* APOT */
   real *best;			/* best configuration */
   real *cost;			/* cost values for all configurations */
   real *fxi;			/* force vector */
@@ -323,7 +323,7 @@ void diff_evo(real *xi)
 	    trial[idx[j]] = temp;
 #else
 	  trial[idx[j]] = temp;
-#endif
+#endif /* APOT */
 	} else {
 	  trial[idx[j]] = x1[i][idx[j]];
 	}

@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -28,7 +28,7 @@
  *
  ****************************************************************/
 
-#define NRANSI
+#define POTFIT_H
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -46,7 +46,7 @@
 #ifdef APOT
 #define APOT_STEPS 300		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
-#endif
+#endif /* APOT */
 
 #if defined EAM || defined ADP
 #define DUMMY_WEIGHT 100.
@@ -56,10 +56,10 @@
 
 #if defined PAIR || defined COULOMB
 #define SLOTS 1			/* pair potential = 0 */
-#elif defined EAM		/* transfer function = 0 */
-#define SLOTS 2			/* embedding function = 1 */
-#elif defined ADP		/* dipole term = 2 */
-#define SLOTS 4			/* quadrupole term = 3 */
+#elif defined EAM		/* transfer function = 1 */
+#define SLOTS 2			/* dipole term = 2 */
+#elif defined ADP		/* quadrupole term = 3 */
+#define SLOTS 4
 #endif /* PAIR || COULOMB */
 
 /****************************************************************
@@ -70,10 +70,9 @@
 
 typedef double real;
 
-typedef enum ParamType {
-  PARAM_STR, PARAM_STRPTR,
-  PARAM_INT, PARAM_DOUBLE
-} PARAMTYPE;
+typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } Param_T;
+
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT } Interaction_T;
 
 typedef struct {
   real  x;
@@ -111,7 +110,7 @@ typedef struct {
   sym_tens sqrdist;		/* real squared distance */
   real  u_val, u_grad;		/* value and gradient of u(r) */
   real  w_val, w_grad;		/* value and gradient of w(r) */
-#endif				/* ADP */
+#endif
 } neigh_t;
 
 typedef struct {
@@ -124,12 +123,12 @@ typedef struct {
 #if defined EAM || defined ADP
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
-#endif				/* EAM || ADP */
+#endif
 #ifdef ADP
   vector mu;
   sym_tens lambda;
   real  nu;
-#endif				/* ADP */
+#endif
 #ifdef DIPOLE
   vector E_stat;		/* static field-contribution */
   vector p_sr;			/* short-range dipole moment */
@@ -137,7 +136,7 @@ typedef struct {
   vector p_ind;			/* induced dipole moment */
   vector E_old;			/* stored old induced field */
   vector E_tot;			/* temporary induced field */
-#endif				/* DIPOLE */
+#endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
@@ -190,19 +189,19 @@ typedef struct {
 
 #ifdef PAIR
   real *chempot;		/* chemical potentials */
-#endif				/* PAIR */
+#endif
 
 #ifdef COULOMB
   real *ratio;			/* stoichiometric ratio */
   real *charge;			/* charges */
   real  last_charge;		/* last charge determined on the basis of charge neutrality */
-#endif				/* COULOMB */
+#endif
 #ifdef DIPOLE
   real *dp_alpha;		/* polarisability */
   real *dp_b;			/* parameter for short-range-dipole-moment */
   real *dp_c;			/* parameter for short-range-dipole-moment */
   int   sum_t;			/* dipole-convergency output */
-#endif				/* DIPOLE */
+#endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
@@ -228,6 +227,17 @@ typedef struct {
 #define EXTERN extern		/* declare them extern otherwise */
 #define INIT(data)		/* skip initialization otherwise */
 #endif /* MAIN */
+
+/* define interaction type */
+#ifdef PAIR
+EXTERN Interaction_T interaction INIT(I_PAIR);
+#elif defined EAM
+EXTERN Interaction_T interaction INIT(I_EAM);
+#elif defined ADP
+EXTERN Interaction_T interaction INIT(I_ADP);
+#elif defined COULOMB
+EXTERN Interaction_T interaction INIT(I_ELSTAT);
+#endif /* interaction type */
 
 /* system variables */
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
@@ -304,7 +314,7 @@ EXTERN vector box_x, box_y, box_z;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 /* potential variables */
-EXTERN char interaction[10] INIT("\0");
+EXTERN char interaction_name[10] INIT("\0");
 EXTERN int *gradient;		/* Gradient of potential fns.  */
 EXTERN int *invar_pot;
 EXTERN int format INIT(-1);	/* format of potential table */
@@ -420,10 +430,10 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
 
 /* general functions [potfit.c] */
 void  error(char *, ...);
-int   warning(char *, ...);
+void  warning(char *, ...);
 
 /* reading parameter file [param.c] */
-int   getparam(char *, void *, PARAMTYPE, int, int);
+int   getparam(char *, void *, Param_T, int, int);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 
@@ -452,9 +462,10 @@ real  parab_ne(pot_table_t *, real *, int, real);
 /* writing potentials to files [potential.c] */
 #ifdef APOT
 void  write_pot_table0(apot_table_t *, char *);
-#endif /* APOT */
+#else
 void  write_pot_table3(pot_table_t *, char *);
 void  write_pot_table4(pot_table_t *, char *);
+#endif /* APOT */
 void  write_pot_table_imd(pot_table_t *, char *);
 void  write_plotpot_pair(pot_table_t *, char *);
 void  write_altplot_pair(pot_table_t *, char *);
@@ -478,7 +489,7 @@ real  calc_forces_eam(real *, real *, int);
 real  calc_forces_adp(real *, real *, int);
 #elif defined COULOMB
 real  calc_forces_elstat(real *, real *, int);
-#endif /* PAIR */
+#endif /* interaction type */
 
 #ifdef EVO
 /* differential evolution [diff_evo.c] */
@@ -534,24 +545,11 @@ void  embed_shift(pot_table_t *);
 void  init_mpi(int, char **);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
-void  debug_mpi(int);
 void  broadcast_neighbors(void);
 void  potsync(void);
 #endif /* MPI */
 
-#ifdef APOT
-/* analytic functions [functions.c] */
-int   apot_parameters(char *);
-int   apot_assign_functions(apot_table_t *);
-int   apot_check_params(real *);
-real  apot_punish(real *, real *);
-real  apot_grad(real, real *, void (*function) (real, real *, real *));
-real  cutoff(real, real, real);
-#ifdef DEBUG
-void  debug_apot();
-#endif /* DEBUG */
-
-#ifdef PAIR
+#if defined APOT && defined PAIR
 /* chemical potential [chempot.c] */
 int   swap_chem_pot(int, int);
 int   sort_chem_pot_2d(void);
@@ -560,60 +558,4 @@ real  chemical_potential_2d(int *, real *);
 real  chemical_potential_3d(int *, real *, int);
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
-#endif /* PAIR */
-
-/* actual functions for different potentials [functions.c] */
-
-void  lj_value(real, real *, real *);
-void  eopp_value(real, real *, real *);
-void  morse_value(real, real *, real *);
-void  ms_value(real, real *, real *);
-void  buck_value(real, real *, real *);
-void  softshell_value(real, real *, real *);
-void  eopp_exp_value(real, real *, real *);
-void  meopp_value(real, real *, real *);
-void  power_decay_value(real, real *, real *);
-void  exp_decay_value(real, real *, real *);
-void  pohlong_value(real, real *, real *);
-void  parabola_value(real, real *, real *);
-void  csw_value(real, real *, real *);
-void  universal_value(real, real *, real *);
-void  const_value(real, real *, real *);
-void  sqrt_value(real, real *, real *);
-void  mexp_decay_value(real, real *, real *);
-void  strmm_value(real, real *, real *);
-void  double_morse_value(real, real *, real *);
-void  double_exp_value(real, real *, real *);
-void  poly_5_value(real, real *, real *);
-void  cbb_value(real, real *, real *);
-void  exp_plus_value(real, real *, real *);
-void  mishin_value(real, real *, real *);
-void  gen_lj_value(real, real *, real *);
-void  gljm_value(real, real *, real *);
-void  vas_value(real, real *, real *);
-void  vpair_value(real, real *, real *);
-
-/* functions for electrostatic calculations  */
-#ifdef COULOMB
-void  init_tails();
-void  write_coulomb_table();
-void  write_coul2imd();
-void  ms_init(real, real *, real *, real *);
-void  buck_init(real, real *, real *, real *);
-void  ms_shift(real, real *, real *);
-void  buck_shift(real, real *, real *);
-void  elstat_value(real, real *, real *, real *);
-void  elstat_shift(real, real *, real *, real *);
-#endif
-#ifdef DIPOLE
-real  shortrange_value(real, real, real, real);
-void  shortrange_term(real, real, real, real *, real *);
-#endif
-
-/* template for new potential function called newpot */
-
-/* newpot potential */
-void  newpot_value(real, real *, real *);
-/* end of template */
-
-#endif /* APOT */
+#endif /* APOT && PAIR */

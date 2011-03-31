@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -29,6 +29,7 @@
  ****************************************************************/
 
 #ifdef PAIR
+
 #include "potfit.h"
 
 /****************************************************************
@@ -112,7 +113,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
-#endif
+#endif /* APOT && !MPI */
 
 #ifdef MPI
 #ifndef APOT
@@ -153,7 +154,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 #ifndef MPI
     myconf = nconf;
-#endif
+#endif /* MPI */
 
     /* region containing loop over configurations,
        also OMP-parallelized region */
@@ -176,7 +177,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	uf = conf_uf[h - firstconf];
 #ifdef STRESS
 	us = conf_us[h - firstconf];
-#endif
+#endif /* STRESS */
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
@@ -186,7 +187,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	if (enable_cp)
 	  forces[energy_p + h] +=
 	    chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
-#endif
+#endif /* APOT */
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {

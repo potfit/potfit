@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2008 Peter Brommer, Franz G"ahler
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
