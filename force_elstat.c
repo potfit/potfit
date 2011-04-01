@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2010 Philipp Beck
+ * Copyright 2010-2011 Philipp Beck
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -30,6 +30,7 @@
  ****************************************************************/
 
 #ifdef COULOMB
+
 #include "potfit.h"
 
 /****************************************************************
@@ -94,7 +95,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   real  dp_alpha[ntypes];
   real  dp_b[apt->number];
   real  dp_c[apt->number];
-#endif
+#endif /* DIPOLE */
 
   switch (format) {
       case 0:
@@ -116,7 +117,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     tmpsum = 0.;		/* sum of squares of local process */
 #ifdef DIPOLE
     sum_c = 0.;
-#endif
+#endif /* DIPOLE */
 #ifndef APOT
     if (format > 4 && myid == 0)
       update_calc_table(xi_opt, xi, 0);
@@ -127,7 +128,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
-#endif
+#endif /* APOT && !MPI */
 
 #ifdef MPI
     /* exchange potential and flag value */
@@ -187,7 +188,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	dp_c[i] = 0.;
       }
     }
-#endif
+#endif /* DIPOLE */
 
     /* init second derivatives for splines */
     for (col = 0; col < paircol; col++) {
@@ -205,7 +206,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 #ifndef MPI
     myconf = nconf;
-#endif
+#endif /* MPI */
 
     /* region containing loop over configurations,
        also OMP-parallelized region */
@@ -237,7 +238,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  atom->p_sr.y = 0.;
 	  atom->p_sr.z = 0.;
 	}
-#endif
+#endif /* DIPOLE */
 
 	/* F I R S T LOOP OVER ATOMS: reset forces, dipoles */
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
@@ -767,7 +768,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  // fnval = kkk * pp / sqrt(M_PI);
 	  // forces[energy_p + h] += fnval;
 	  //}
-#endif
+#endif /* DIPOLE */
 
 
 	  /* sum-up: whole force contributions flow into tmpsum */
@@ -777,7 +778,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    forces[k] /= FORCE_EPS + atom->absforce;
 	    forces[k + 1] /= FORCE_EPS + atom->absforce;
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
-#endif
+#endif /* FWEIGHT */
 	    tmpsum +=
 	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
 	      SQR(forces[k + 2]));
@@ -801,14 +802,14 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	      conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
 	  }
 	}
-#endif
+#endif /* STRESS */
 
       }				/* end M A I N loop over configurations */
 
 
 #ifdef DIPOLE
       apt->sum_t = sum_c / h;
-#endif
+#endif /* DIPOLE */
 
 
     }				/* parallel region */
@@ -819,7 +820,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     if (myid == 0) {
       tmpsum += apot_punish(xi_opt, forces);
     }
-#endif
+#endif /* APOT */
 
     sum = tmpsum;		/* global sum = local sum  */
 
@@ -844,7 +845,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");
-#endif
+#endif /* DEBUG */
 	return 10e10;
       } else
 	return sum;

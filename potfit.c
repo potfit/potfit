@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -67,19 +67,17 @@ void error(char *msg, ...)
  *
  ****************************************************************/
 
-int warning(char *msg, ...)
+void warning(char *msg, ...)
 {
   va_list ap;
-  int   n;
 
   fflush(stdout);
-  n = fprintf(stderr, "\n--> WARNING <--\n");
+  fprintf(stderr, "\n--> WARNING <--\n");
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
-  n += fprintf(stderr, "\n");
+  fprintf(stderr, "\n");
   fflush(stderr);
-  return n;
 }
 
 /****************************************************************
@@ -111,20 +109,34 @@ int main(int argc, char **argv)
 #endif /* MPI */
   }
 
-  /* assign correct force routine */
+  /* assign correct force routines */
 #ifdef PAIR
   calc_forces = calc_forces_pair;
-  strcpy(interaction, "PAIR");
 #elif defined EAM
   calc_forces = calc_forces_eam;
-  strcpy(interaction, "EAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
-  strcpy(interaction, "ADP");
 #elif defined COULOMB
   calc_forces = calc_forces_elstat;
-  strcpy(interaction, "ELSTAT");
-#endif /* PAIR */
+#endif /* interaction type */
+
+  /* assign correct interaction names */
+  switch (interaction) {
+      case I_PAIR:
+	strcpy(interaction_name, "PAIR");
+	break;
+      case I_EAM:
+	strcpy(interaction_name, "EAM");
+	break;
+      case I_ADP:
+	strcpy(interaction_name, "ADP");
+	break;
+      case I_ELSTAT:
+	strcpy(interaction_name, "ELSTAT");
+	break;
+      default:
+	error("Interaction is missing ??");
+  }
 
   /* read the parameters and the potential file */
   if (myid == 0) {
@@ -204,7 +216,6 @@ int main(int argc, char **argv)
 #undef RAND_MAX
   }
 
-
   /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI
   MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -219,7 +230,6 @@ int main(int argc, char **argv)
 #endif /* MPI */
   ndim = opt_pot.idxlen;
   ndimtot = opt_pot.len;
-  paircol = (ntypes * (ntypes + 1)) / 2;
   idx = opt_pot.idx;
 
   /* main force vector, all forces, energies, ... will be stored here */
@@ -337,20 +347,22 @@ int main(int argc, char **argv)
       write_plotpot_pair(&calc_pot, plotfile);
 #ifdef COULOMB
     write_coul2imd();
-    //write_coulomb_table(); 
-#endif
+    //write_coulomb_table();
+#endif /* COULOMB */
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
     write_pairdist(&opt_pot, distfile);
 #endif /* PDIST && !MPI */
 
+#ifndef APOT
     /* then we can also write format 4 */
     if (format == 3) {
       sprintf(endpot, "%s_4", endpot);
       write_pot_table4(&opt_pot, endpot);
       printf("Potential in format 4 written to file \t%s\n", endpot);
     }
+#endif /* !APOT */
 #if defined EAM || defined ADP
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
@@ -429,7 +441,7 @@ int main(int argc, char **argv)
       component[i] = (char *)malloc(3 * sizeof(char));
       if (NULL == component[i])
 	error("Could not allocate memory for component strings");
-      reg_for_free(component[i], "component i");
+      reg_for_free(component[i], "component %d", i);
     }
     strcpy(component[0], "x");
     strcpy(component[1], "y");
@@ -582,7 +594,7 @@ int main(int argc, char **argv)
 	sqr = SQR(force[i + ntypes]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
 	  SQR(force[i]), force[i + ntypes], force[i]);
-#endif
+#endif /* NORESCALE */
       }
 #ifdef NORESCALE
       fprintf(outfile, "\nNORESCALE: <n>!=1\n");

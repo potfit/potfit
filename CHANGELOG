@@ -1,3 +1,8 @@
+devel-20110331
++ adjust copyright years to 2011
++ lots of code clean-up
++ move analytic function to their own header file
+
 devel-20110330
 + abort if anneal_temp is missing in parameter file
 

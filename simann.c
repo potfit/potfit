@@ -4,7 +4,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -135,8 +135,6 @@ void anneal(real *xi)
   int  *naccept;		/* number of accepted changes in dir */
 
   /* init starting temperature for annealing process */
-  if (anneal_temp < 0)
-	  error("anneal_temp is not set in parameter file!");
   T = anneal_temp;
   if (T == 0.)
     return;			/* don't anneal if starttemp equal zero */

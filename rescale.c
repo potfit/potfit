@@ -5,7 +5,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer
+ * Copyright 2002-2011 Peter Brommer
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -33,17 +33,17 @@
 
 #include "potfit.h"
 
-/* Doesn't make much sense without EAM  */
+/* Doesn't make much sense without EAM (or ADP?)  */
 
 #if defined EAM || defined ADP
 
 /****************************************************************
-*
-* rescale: Routine used to automatically rescale
-*     EAM potential. Flag indicates whether to force update...
-*     upper is upper limit of electron density.
-*
-*****************************************************************/
+ *
+ * rescale: Routine used to automatically rescale
+ *     EAM potential. Flag indicates whether to force update...
+ *     upper is upper limit of electron density.
+ *
+ ****************************************************************/
 
 real rescale(pot_table_t *pt, real upper, int flag)
 {
@@ -404,11 +404,11 @@ real rescale(pot_table_t *pt, real upper, int flag)
   return a;
 }
 
-/**********************************************************************
+/****************************************************************
  *
  * embed_shift: Shift embedding function to U(0)=0
  *
- **********************************************************************/
+ ****************************************************************/
 
 void embed_shift(pot_table_t *pt)
 {

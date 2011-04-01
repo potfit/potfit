@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -95,13 +95,17 @@ void free_mat_real(real **matrix)
   free(matrix);
 }
 
-void reg_for_free(void *p, char *name)
+void reg_for_free(void *p, char *name, ...)
 {
+  va_list ap;
+
   pointer_names =
     (char **)realloc(pointer_names, (num_pointers + 1) * sizeof(char *));
   pointer_names[num_pointers] =
     (char *)malloc((strlen(name) + 1) * sizeof(char));
-  strcpy(pointer_names[num_pointers], name);
+  va_start(ap, name);
+  vsprintf(pointer_names[num_pointers], name, ap);
+  va_end(ap);
   all_pointers =
     (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
   all_pointers[num_pointers] = p;
@@ -162,7 +166,7 @@ real normdist()
   }
 }
 
-#ifdef APOT
+#if defined APOT && defined EVO
 
 /****************************************************************
  *
@@ -212,4 +216,4 @@ void swap_population(real *a, real *b)
   }
 }
 
-#endif /* APOT */
+#endif /* APOT && EVO */

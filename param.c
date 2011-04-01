@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -28,50 +28,39 @@
  *
  ****************************************************************/
 
-#include <strings.h>
 #include "potfit.h"
-
-#if defined(__GNUC__) && defined(__STRICT_ANSI__)
-extern char *strdup(char *);
-#endif
-
-#ifdef __WATCOMC__
-#define strcasecmp strcmpi
-#endif
 
 int   curline;			/* number of current line */
 
-/******************************************************************************
-*
-*  get parameters from one line
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  get parameters from one line
+ *
+ ****************************************************************/
 
-/* Parameter:
+/* parameters:
 
-   param_name ... Parametername (fuer Fehlermeldungen)
-   param ........ Adresse der Variable fuer den Parameter
-   ptype ........ Parametertyp
-                  folgende Werte sind zulaessig:
-                  PARAM_STR : String, deklariert als char[]
-                  PARAM_STRPTR : String, deklariert als Zeiger auf char*
-                  PARAM_INT : Integer-Wert(e)
-                  PARAM_DOUBLE : Double-Wert(e)
+   param_name ... parametername (for error messages)
+   param ........ address of the variable for that parameter
+   ptype ........ type of parameter
+                  the following are possible:
+                  PARAM_STR : string, declared as char[]
+                  PARAM_INT : integer value(s)
+                  PARAM_DOUBLE : double value(s)
 
-   pnum_min ..... Minimale Anzahl der einzulesenden Werte
-                  (Falls weniger Werte gelesen werden koennen als verlangt,
-                  wird ein Fehler gemeldet).
-   pnum_max ..... Maximale Anzahl der einzulesenden Werte
-                  (Ueberzaehlige Werte werden ignoriert. Falls weniger als
-                  pnum_max Werte vorhanden sind, wird das Lesen
-                  abgebrochen, es wird aber kein Fehler gemeldet,
-                  wenn mindestens pnum_min Werte abgesaettigt wurden.
+   pnum_min ..... minimum number of parameters to read
+   		  (If there are less parameters than requested an
+		  error will be reported.)
+   pnum_max ..... maximum number of parameters to read
+   		  (Additional values will be ignored. If less than pnum_max
+		  values are registered, the reading process is stopped; there
+		  will be no error if at least pnum_min values were read.)
 
-  Resultat: Die Anzahl der gelesenen Werte wird zurueckgegeben.
+   return value . the number of parameters read is returned
 
 */
 
-int getparam(char *param_name, void *param, PARAMTYPE ptype, int pnum_min,
+int getparam(char *param_name, void *param, Param_T ptype, int pnum_min,
   int pnum_max)
 {
   char *str;
@@ -79,68 +68,64 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype, int pnum_min,
   int   numread;
 
   numread = 0;
-  if (ptype == PARAM_STR) {
-    str = strtok(NULL, " \t\r\n");
-    if (str == NULL)
-      error("Parameter for %s missing in line %d\nstring expected!\n",
-	param_name, curline);
-    else
-      strncpy((char *)param, str, pnum_max);
-    numread++;
-  } else if (ptype == PARAM_STRPTR) {
-    str = strtok(NULL, " \t\r\n");
-    if (str == NULL)
-      error("Parameter for %s missing in line %d\nstring expected!\n",
-	param_name, curline);
-    else
-      *((char **)param) = strdup(str);
-    numread++;
-  } else if (ptype == PARAM_INT) {
-    for (i = 0; i < pnum_min; i++) {
-      str = strtok(NULL, " \t\r\n");
-      if (str == NULL)
-	error
-	  ("Parameter for %s missing in line %d!\nInteger vector of length %u expected!\n",
-	  param_name, curline, (unsigned)pnum_min);
-      else
-	((int *)param)[i] = atoi(str);
-      numread++;
-    }
-    for (i = pnum_min; i < pnum_max; i++) {
-      if ((str = strtok(NULL, " \t\r\n")) != NULL) {
-	((int *)param)[i] = atoi(str);
+  switch (ptype) {
+      case PARAM_STR:
+	str = strtok(NULL, " \t\r\n");
+	if (str == NULL)
+	  error("Parameter for %s missing in line %d\nstring expected!\n",
+	    param_name, curline);
+	else
+	  strncpy((char *)param, str, pnum_max);
 	numread++;
-      } else
 	break;
-    }
-  } else if (ptype == PARAM_DOUBLE) {
-    for (i = 0; i < pnum_min; i++) {
-      str = strtok(NULL, " \t\r\n");
-      if (str == NULL)
-	error
-	  ("Parameter for %s missing in line %d!\nDouble vector of length %u expected!\n",
-	  param_name, curline, (unsigned)pnum_min);
-      else
-	((real *)param)[i] = atof(str);
-      numread++;
-    }
-    for (i = pnum_min; i < pnum_max; i++) {
-      if ((str = strtok(NULL, " \t\r\n")) != NULL) {
-	((real *)param)[i] = atof(str);
-	numread++;
-      } else
+      case PARAM_INT:
+	for (i = 0; i < pnum_min; i++) {
+	  str = strtok(NULL, " \t\r\n");
+	  if (str == NULL)
+	    error
+	      ("Parameter for %s missing in line %d!\nInteger vector of length %u expected!\n",
+	      param_name, curline, (unsigned)pnum_min);
+	  else
+	    ((int *)param)[i] = atoi(str);
+	  numread++;
+	}
+	for (i = pnum_min; i < pnum_max; i++) {
+	  if ((str = strtok(NULL, " \t\r\n")) != NULL) {
+	    ((int *)param)[i] = atoi(str);
+	    numread++;
+	  } else
+	    break;
+	}
 	break;
-    }
+      case PARAM_DOUBLE:
+	for (i = 0; i < pnum_min; i++) {
+	  str = strtok(NULL, " \t\r\n");
+	  if (str == NULL)
+	    error
+	      ("Parameter for %s missing in line %d!\nDouble vector of length %u expected!\n",
+	      param_name, curline, (unsigned)pnum_min);
+	  else
+	    ((real *)param)[i] = atof(str);
+	  numread++;
+	}
+	for (i = pnum_min; i < pnum_max; i++) {
+	  if ((str = strtok(NULL, " \t\r\n")) != NULL) {
+	    ((real *)param)[i] = atof(str);
+	    numread++;
+	  } else
+	    break;
+	}
+	break;
   }
   return numread;
 }
 
-/******************************************************************************
-*
-*  read in parameter file
-*  lines beginning with comment characters '#' or blank lines are skipped
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  read in parameter file
+ *  lines beginning with comment characters '#' or blank lines are skipped
+ *
+ ****************************************************************/
 
 void read_paramfile(FILE *pf)
 {
@@ -206,13 +191,13 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "plotmin") == 0) {
       getparam("plotmin", &plotmin, PARAM_DOUBLE, 1, 1);
     }
-#ifndef EAM
+#ifdef PAIR
     /* exclude chemical potential from energy calculations */
     else if (strcasecmp(token, "enable_cp") == 0) {
       getparam("enable_cp", &enable_cp, PARAM_INT, 1, 1);
     }
-#endif
-#endif
+#endif /* PAIR */
+#endif /* APOT */
     /* how far should the imd pot be extended */
     else if (strcasecmp(token, "extend") == 0) {
       getparam("extend", &extend, PARAM_DOUBLE, 1, 1);
@@ -275,7 +260,7 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "stress_weight") == 0) {
       getparam("stress_weight", &sweight, PARAM_DOUBLE, 1, 1);
     }
-#endif
+#endif /* STRESS */
 #ifdef COULOMB
     /* parameter kappa */
     else if (strcasecmp(token, "dp_kappa") == 0) {
@@ -285,7 +270,7 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "dp_cut") == 0) {
       getparam("dp_cut", &dp_cut, PARAM_DOUBLE, 1, 1);
     }
-#endif
+#endif /* COULOMB */
 #ifdef DIPOLE
     /* dipole iteration precision */
     else if (strcasecmp(token, "dp_tol") == 0) {
@@ -295,7 +280,7 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "dp_mix") == 0) {
       getparam("dp_mix", &dp_mix, PARAM_DOUBLE, 1, 1);
     }
-#endif
+#endif /* DIPOLE */
     /* unknown tag */
     else {
       fprintf(stderr, "Unknown tag <%s> ignored!\n", token);
@@ -316,15 +301,19 @@ void read_paramfile(FILE *pf)
 #ifdef STRESS
   if (sweight < 0)
     error("Missing in parameter file: stress weight");
-#endif
+#endif /* STRESS */
 
+#ifndef EVO
+  if (anneal_temp < 0)
+    error("Missing in parameter file: anneal_temp");
+#endif /* EVO */
 }
 
-/******************************************************************************
-*
-*  read command line
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  read command line
+ *
+ ****************************************************************/
 
 void read_parameters(int argc, char **argv)
 {
