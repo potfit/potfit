@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -107,7 +107,7 @@ void read_config(char *filename)
     elements[i] = (char *)malloc(3 * sizeof(char));
     if (NULL == elements[i])
       error("Cannot allocate memory for %d. element name.\n", i + 1);
-    reg_for_free(elements[i], "elements[i]");
+    reg_for_free(elements[i], "elements[%d]", i);
     snprintf(elements[i], 3, "%d\0", i);
   }
 
@@ -194,7 +194,7 @@ void read_config(char *filename)
     if (NULL == na_type)
       error("Cannot allocate memory for na_type");
     na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
-    reg_for_free(na_type[nconf], "na_type[nconf]");
+    reg_for_free(na_type[nconf], "na_type[%d]", nconf);
     if (NULL == na_type[nconf])
       error("Cannot allocate memory for na_type");
 
@@ -456,7 +456,7 @@ void read_config(char *filename)
 		atoms[i].neigh[k].dist = dd;
 #ifdef COULOMB
 		atoms[i].neigh[k].r2 = r * r;
-#endif
+#endif /* COULOMB */
 #ifdef ADP
 		atoms[i].neigh[k].rdist.x = dd.x * r;
 		atoms[i].neigh[k].rdist.y = dd.y * r;
@@ -647,8 +647,7 @@ void read_config(char *filename)
 	    }
       }
       maxneigh = MAX(maxneigh, atoms[i].n_neigh);
-      sprintf(msg, "neighbor table atom %d", i);
-      reg_for_free(atoms[i].neigh, msg);
+      reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
     }
 
 /* increment natoms and configuration number */
@@ -871,7 +870,7 @@ void read_config(char *filename)
   if (NULL == na_type)
     error("Cannot allocate memory for na_type");
   na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
-  reg_for_free(na_type[nconf], "na_type[nconf]");
+  reg_for_free(na_type[nconf], "na_type[%d]", nconf);
   for (i = 0; i < ntypes; i++)
     na_type[nconf][i] = 0;
 

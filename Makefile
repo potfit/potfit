@@ -1,7 +1,7 @@
 ############################################################################
 #
 # potfit -- The ITAP Force Matching Program
-# 	Copyright 2002-2010
+# 	Copyright 2002-2011
 #
 # 	Institute for Theoretical and Applied Physics,
 # 	University of Stuttgart, D-70550 Stuttgart, Germany
@@ -119,8 +119,8 @@
 # Currently the following systems are available:
 # x86_64-icc  	64bit Intel Compiler
 # x86_64-gcc    64bit GNU Compiler
-# i586-icc 	32bit Intel Compiler
-# i586-gcc  	32bit GNU Compiler
+# i686-icc 	32bit Intel Compiler
+# i686-gcc  	32bit GNU Compiler
 SYSTEM 		= x86_64-icc
 
 # This is the directory where the potfit binary will be moved to
@@ -229,7 +229,7 @@ endif
 #
 ###########################################################################
 
-ifeq (i586-icc,${SYSTEM})
+ifeq (i686-icc,${SYSTEM})
   CC_SERIAL	= icc
   CC_MPI	= mpicc
   OMPI_CC       = icc
@@ -259,7 +259,7 @@ endif
   export        OMPI_CC OMPI_CLINKER
 endif
 
-ifeq (i586-gcc,${SYSTEM})
+ifeq (i686-gcc,${SYSTEM})
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
   OMPI_CC     	= gcc
@@ -351,7 +351,7 @@ POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-POTFITSRC      += force_eam.c rescale.c
+POTFITSRC      += force_eam.c
 endif
 
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
@@ -363,14 +363,17 @@ POTFITSRC      += force_elstat.c
 endif
 
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-POTFITSRC      += force_adp.c rescale.c
+POTFITSRC      += force_adp.c
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+POTFITHDR      += functions.h
 POTFITSRC      += functions.c
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += chempot.c
 endif
+else
+POTFITSRC      += rescale.c
 endif
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))

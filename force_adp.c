@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2010 Daniel Schopf
+ * Copyright 2010-2011 Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -29,6 +29,7 @@
  ****************************************************************/
 
 #ifdef ADP
+
 #include "potfit.h"
 
 /****************************************************************
@@ -209,7 +210,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 
 #ifndef MPI
     myconf = nconf;
-#endif
+#endif /* MPI */
 
     /* region containing loop over configurations,
        also OMP-parallelized region */
@@ -467,11 +468,9 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
 #ifdef APOT
-/*            printf("Extrapolating F to the left:\n");*/
-/*            printf("rho %f begin %f\n",atom->rho,calc_pot.begin[col_F]);*/
 	    forces[limit_p + h] +=
 	      DUMMY_WEIGHT * 10. * SQR(calc_pot.begin[col_F] - atom->rho);
-#endif
+#endif /* APOT */
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 	    /* and right */
 	    rho_val =
@@ -480,11 +479,9 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 #ifdef APOT
-/*            printf("Extrapolating F to the right:\n");*/
-/*            printf("rho %f begin %f\n",atom->rho,calc_pot.end[col_F]);*/
 	    forces[limit_p + h] +=
 	      DUMMY_WEIGHT * 10. * SQR(atom->rho - calc_pot.end[col_F]);
-#endif
+#endif /* APOT */
 	  } else {		/* and in-between */
 	    forces[energy_p + h] +=
 	      splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
@@ -492,7 +489,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 #else
 	  forces[energy_p + h] +=
 	    splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#endif
+#endif /* PARABEL */
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
 

@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -29,6 +29,7 @@
  ****************************************************************/
 
 #ifdef EAM
+
 #include "potfit.h"
 
 /****************************************************************
@@ -202,7 +203,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 #ifndef MPI
     myconf = nconf;
-#endif
+#endif /* MPI */
 
     /* region containing loop over configurations,
        also OMP-parallelized region */
@@ -381,6 +382,10 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+#ifdef APOT
+	    forces[limit_p + h] +=
+	      DUMMY_WEIGHT * 10. * SQR(calc_pot.begin[col_F] - atom->rho);
+#endif /* APOT */
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 	    /* and right */
 	    rho_val =
@@ -388,6 +393,10 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
+#ifdef APOT
+	    forces[limit_p + h] +=
+	      DUMMY_WEIGHT * 10. * SQR(atom->rho - calc_pot.end[col_F]);
+#endif /* APOT */
 	  }
 	  /* and in-between */
 	  else {
@@ -397,7 +406,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #else
 	  forces[energy_p + h] +=
 	    splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#endif
+#endif /* APOT */
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
 	}			/* second loop over atoms */
