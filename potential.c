@@ -3035,9 +3035,9 @@ void write_coul2imd()
     error("Could not open file %s\n", filename);
 
   fprintf(outfile, "charge\t\t");
-  for (i = 0; i < ntypes; i++)
+  for (i = 0; i < ntypes - 1; i++)
     fprintf(outfile, "%f\t", apt->charge[i]);
-  fprintf(outfile, "\n");
+  fprintf(outfile, "%f\n", apt->last_charge);
 
   if ((strcmp(apt->names[0], "ms") == 0) && (strcmp(apt->names[1], "ms") == 0)
     && (strcmp(apt->names[2], "ms") == 0)) {
