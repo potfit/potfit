@@ -240,7 +240,7 @@ void lj_value(real r, real *p, real *f)
 
 void eopp_value(real r, real *p, real *f)
 {
-  real x[2], y[2], power[2];
+  real  x[2], y[2], power[2];
 
   x[0] = r;
   x[1] = r;
@@ -689,7 +689,7 @@ void vpair_value(real r, real *p, real *f)
 #ifndef ACML
   vdPow(1, &y, &z, &x[0]);
 #else
-  x[0] = fastpow(y,z);
+  x[0] = fastpow(y, z);
 #endif /* ACML */
   x[1] = r * r;
   x[2] = x[1] * x[1];
