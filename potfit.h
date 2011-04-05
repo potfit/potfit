@@ -549,7 +549,9 @@ void  broadcast_neighbors(void);
 void  potsync(void);
 #endif /* MPI */
 
-#if defined APOT && defined PAIR
+#ifdef APOT
+real  cutoff(real, real, real);
+#ifdef PAIR
 /* chemical potential [chempot.c] */
 int   swap_chem_pot(int, int);
 int   sort_chem_pot_2d(void);
@@ -558,4 +560,5 @@ real  chemical_potential_2d(int *, real *);
 real  chemical_potential_3d(int *, real *, int);
 real  chemical_potential(int, int *, real *);
 void  init_chemical_potential(int);
-#endif /* APOT && PAIR */
+#endif /* PAIR */
+#endif /* APOT */

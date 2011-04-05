@@ -40,7 +40,6 @@ int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(real *);
 real  apot_punish(real *, real *);
 real  apot_grad(real, real *, void (*function) (real, real *, real *));
-real  cutoff(real, real, real);
 #ifdef DEBUG
 void  debug_apot();
 #endif /* DEBUG */
