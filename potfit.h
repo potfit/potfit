@@ -70,7 +70,7 @@
 
 typedef double real;
 
-typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } Param_T;
+typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
 typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT } Interaction_T;
 
@@ -433,7 +433,7 @@ void  error(char *, ...);
 void  warning(char *, ...);
 
 /* reading parameter file [param.c] */
-int   getparam(char *, void *, Param_T, int, int);
+int   getparam(char *, void *, param_t, int, int);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 
@@ -548,14 +548,3 @@ void  broadcast_params(void);
 void  broadcast_neighbors(void);
 void  potsync(void);
 #endif /* MPI */
-
-#if defined APOT && defined PAIR
-/* chemical potential [chempot.c] */
-int   swap_chem_pot(int, int);
-int   sort_chem_pot_2d(void);
-real  chemical_potential_1d(int *, real *);
-real  chemical_potential_2d(int *, real *);
-real  chemical_potential_3d(int *, real *, int);
-real  chemical_potential(int, int *, real *);
-void  init_chemical_potential(int);
-#endif /* APOT && PAIR */

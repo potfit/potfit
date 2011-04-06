@@ -109,34 +109,20 @@ int main(int argc, char **argv)
 #endif /* MPI */
   }
 
-  /* assign correct force routines */
+  /* assign correct force routine */
 #ifdef PAIR
   calc_forces = calc_forces_pair;
+  strcpy(interaction_name, "PAIR");
 #elif defined EAM
   calc_forces = calc_forces_eam;
+  strcpy(interaction_name, "EAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
+  strcpy(interaction_name, "ADP");
 #elif defined COULOMB
   calc_forces = calc_forces_elstat;
-#endif /* interaction type */
-
-  /* assign correct interaction names */
-  switch (interaction) {
-      case I_PAIR:
-	strcpy(interaction_name, "PAIR");
-	break;
-      case I_EAM:
-	strcpy(interaction_name, "EAM");
-	break;
-      case I_ADP:
-	strcpy(interaction_name, "ADP");
-	break;
-      case I_ELSTAT:
-	strcpy(interaction_name, "ELSTAT");
-	break;
-      default:
-	error("Interaction is missing ??");
-  }
+  strcpy(interaction_name, "ELSTAT");
+#endif /* PAIR */
 
   /* read the parameters and the potential file */
   if (myid == 0) {
@@ -220,6 +206,7 @@ int main(int argc, char **argv)
 #ifdef MPI
   MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
   broadcast_params();		/* let the others know what's going on */
+  paircol = (ntypes * (ntypes + 1)) / 2;
 #else
   /* Identify subset of atoms/volumes belonging to individual process
      with complete set of atoms/volumes */
@@ -363,6 +350,7 @@ int main(int argc, char **argv)
       printf("Potential in format 4 written to file \t%s\n", endpot);
     }
 #endif /* !APOT */
+
 #if defined EAM || defined ADP
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */

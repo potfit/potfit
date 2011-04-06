@@ -33,6 +33,7 @@
 #define NPLOT 1000
 
 #include "potfit.h"
+#include "functions.h"
 #include "utils.h"
 
 /****************************************************************
