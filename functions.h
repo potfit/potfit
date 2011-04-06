@@ -45,6 +45,17 @@ real  cutoff(real, real, real);
 void  debug_apot();
 #endif /* DEBUG */
 
+#ifdef PAIR
+/* chemical potential [chempot.c] */
+int   swap_chem_pot(int, int);
+int   sort_chem_pot_2d(void);
+real  chemical_potential_1d(int *, real *);
+real  chemical_potential_2d(int *, real *);
+real  chemical_potential_3d(int *, real *, int);
+real  chemical_potential(int, int *, real *);
+void  init_chemical_potential(int);
+#endif /* PAIR */
+
 /* actual functions for different potentials */
 
 void  lj_value(real, real *, real *);
