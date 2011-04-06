@@ -34,16 +34,7 @@
 
 #ifdef APOT
 
-/* analytic functions */
-int   apot_parameters(char *);
-int   apot_assign_functions(apot_table_t *);
-int   apot_check_params(real *);
-real  apot_punish(real *, real *);
-real  apot_grad(real, real *, void (*function) (real, real *, real *));
-real  cutoff(real, real, real);
-#ifdef DEBUG
-void  debug_apot();
-#endif /* DEBUG */
+int   add_potential(char *, int, fvalue_pointer);
 
 #ifdef PAIR
 /* chemical potential [chempot.c] */
@@ -52,8 +43,6 @@ int   sort_chem_pot_2d(void);
 real  chemical_potential_1d(int *, real *);
 real  chemical_potential_2d(int *, real *);
 real  chemical_potential_3d(int *, real *, int);
-real  chemical_potential(int, int *, real *);
-void  init_chemical_potential(int);
 #endif /* PAIR */
 
 /* actual functions for different potentials */
@@ -89,20 +78,20 @@ void  vpair_value(real, real *, real *);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  init_tails();
-void  write_coulomb_table();
-void  write_coul2imd();
+void  init_tails(void);
+void  write_coulomb_table(void);
+void  write_coul2imd(void);
 void  ms_init(real, real *, real *, real *);
 void  buck_init(real, real *, real *, real *);
 void  ms_shift(real, real *, real *);
 void  buck_shift(real, real *, real *);
 void  elstat_value(real, real *, real *, real *);
 void  elstat_shift(real, real *, real *, real *);
-#endif
+#endif /* COULOMB */
 #ifdef DIPOLE
 real  shortrange_value(real, real, real, real);
 void  shortrange_term(real, real, real, real *, real *);
-#endif
+#endif /* DIPOLE */
 
 /* template for new potential function called newpot */
 

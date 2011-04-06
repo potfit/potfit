@@ -205,6 +205,13 @@ typedef struct {
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
+
+typedef struct {
+  char **name;			/* identifier of the potential */
+  int  *n_par;			/* number of parameters */
+  fvalue_pointer *fvalue;	/* function pointer */
+} function_table_t;
+
 #endif /* APOT */
 
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
@@ -548,3 +555,27 @@ void  broadcast_params(void);
 void  broadcast_neighbors(void);
 void  potsync(void);
 #endif /* MPI */
+
+/* globally used functions for analytic potentials [functions.c] */
+#ifdef APOT
+/* total number of analytic functions in function_table */
+EXTERN int n_functions INIT(0);
+EXTERN function_table_t function_table;
+
+int   apot_init(void);
+int   apot_assign_functions(apot_table_t *);
+int   apot_check_params(real *);
+int   apot_parameters(char *);
+real  apot_grad(real, real *, void (*function) (real, real *, real *));
+real  apot_punish(real *, real *);
+real  cutoff(real, real, real);
+
+#ifdef PAIR
+real  chemical_potential(int, int *, real *);
+void  init_chemical_potential(int);
+#endif /* PAIR */
+
+#ifdef DEBUG
+void  debug_apot();
+#endif /* DEBUG */
+#endif /* APOT */

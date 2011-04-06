@@ -1,4 +1,5 @@
 devel
++ new initialization method for analytic potential functions
 + don't move the binary if BIN_DIR is empty
 
 devel-20110331

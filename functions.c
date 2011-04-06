@@ -43,77 +43,103 @@
 
 /****************************************************************
  *
+ * initialize the function_table for analytic potentials
+ *
+ ****************************************************************/
+
+int apot_init(void)
+{
+  int   n = 0;
+  n += add_potential("lj", 2, &lj_value);
+  n += add_potential("eopp", 6, &eopp_value);
+  n += add_potential("morse", 3, &morse_value);
+#ifdef COULOMB
+  n += add_potential("ms", 3, &ms_shift);
+  n += add_potential("buck", 3, &buck_shift);
+#else
+  n += add_potential("ms", 3, &ms_value);
+  n += add_potential("buck", 3, &buck_value);
+#endif /* COULOMB */
+  n += add_potential("softshell", 2, &softshell_value);
+  n += add_potential("eopp_exp", 6, &eopp_exp_value);
+  n += add_potential("meopp", 7, &meopp_value);
+  n += add_potential("power_decay", 2, &power_decay_value);
+  n += add_potential("exp_decay", 2, &exp_decay_value);
+  n += add_potential("pohlong", 3, &pohlong_value);
+  n += add_potential("parabola", 3, &parabola_value);
+  n += add_potential("csw", 4, &csw_value);
+  n += add_potential("universal", 4, &universal_value);
+  n += add_potential("const", 1, &const_value);
+  n += add_potential("sqrt", 2, &sqrt_value);
+  n += add_potential("mexp_decay", 3, &mexp_decay_value);
+  n += add_potential("strmm", 5, &strmm_value);
+  n += add_potential("double_morse", 7, &double_morse_value);
+  n += add_potential("double_exp", 5, &double_exp_value);
+  n += add_potential("poly_5", 5, &poly_5_value);
+  n += add_potential("cbb", 12, &cbb_value);
+  n += add_potential("exp_plus", 3, &exp_plus_value);
+  n += add_potential("mishin", 6, &mishin_value);
+  n += add_potential("gen_lj", 5, &gen_lj_value);
+  n += add_potential("gljm", 12, &gljm_value);
+  n += add_potential("vas", 2, &vas_value);
+  n += add_potential("vpair", 7, &vpair_value);
+
+  return n;
+}
+
+/****************************************************************
+ *
+ * add analytic function to function_table
+ *
+ ****************************************************************/
+
+int add_potential(char *name, int parameter, fvalue_pointer fval)
+{
+  int   i;
+  int   k = n_functions;
+
+  /* only add potentials with unused names */
+  for (i = 0; i < n_functions; i++) {
+    if (strcmp(function_table.name[i], name) == 0) {
+      error("There already is a potential with the name \"%s\".", name);
+    }
+  }
+
+  /* allocate memory */
+  function_table.name =
+    (char **)realloc(function_table.name, (k + 1) * sizeof(char *));
+  function_table.name[k] = (char *)malloc(255 * sizeof(char));
+  function_table.n_par =
+    (int *)realloc(function_table.n_par, (k + 1) * sizeof(int));
+  function_table.fvalue =
+    (fvalue_pointer *) realloc(function_table.fvalue,
+    (k + 1) * sizeof(fvalue_pointer));
+  if (function_table.name[k] == NULL || function_table.n_par == NULL
+    || function_table.fvalue == NULL)
+    error("Could not allocate memory for function_table!");
+
+  /* assign values */
+  strncpy(function_table.name[k], name, strlen(name));
+  function_table.n_par[k] = parameter;
+  function_table.fvalue[k] = fval;
+
+  n_functions++;
+  return 0;
+}
+
+/****************************************************************
+ *
  * return the number of parameters for a specific analytic potential
  *
  ****************************************************************/
 
 int apot_parameters(char *name)
 {
-  if (strcmp(name, "lj") == 0) {
-    return 2;
-  } else if (strcmp(name, "eopp") == 0) {
-    return 6;
-  } else if (strcmp(name, "morse") == 0) {
-    return 3;
-  } else if (strcmp(name, "ms") == 0) {
-    return 3;
-  } else if (strcmp(name, "buck") == 0) {
-    return 3;
-  } else if (strcmp(name, "softshell") == 0) {
-    return 2;
-  } else if (strcmp(name, "eopp_exp") == 0) {
-    return 6;
-  } else if (strcmp(name, "meopp") == 0) {
-    return 7;
-  } else if (strcmp(name, "power_decay") == 0) {
-    return 2;
-  } else if (strcmp(name, "exp_decay") == 0) {
-    return 2;
-  } else if (strcmp(name, "pohlong") == 0) {
-    return 3;
-  } else if (strcmp(name, "parabola") == 0) {
-    return 3;
-  } else if (strcmp(name, "csw") == 0) {
-    return 4;
-  } else if (strcmp(name, "universal") == 0) {
-    return 4;
-  } else if (strcmp(name, "const") == 0) {
-    return 1;
-  } else if (strcmp(name, "sqrt") == 0) {
-    return 2;
-  } else if (strcmp(name, "mexp_decay") == 0) {
-    return 3;
-  } else if (strcmp(name, "strmm") == 0) {
-    return 5;
-  } else if (strcmp(name, "double_morse") == 0) {
-    return 7;
-  } else if (strcmp(name, "double_exp") == 0) {
-    return 5;
-  } else if (strcmp(name, "poly_5") == 0) {
-    return 5;
-  } else if (strcmp(name, "cbb") == 0) {
-    return 12;
-  } else if (strcmp(name, "exp_plus") == 0) {
-    return 3;
-  } else if (strcmp(name, "mishin") == 0) {
-    return 6;
-  } else if (strcmp(name, "gen_lj") == 0) {
-    return 5;
-  } else if (strcmp(name, "gljm") == 0) {
-    return 12;
-  } else if (strcmp(name, "vas") == 0) {
-    return 2;
-  } else if (strcmp(name, "vpair") == 0) {
-    return 7;
-  }
+  int   i;
 
-  /* template for new potential function called newpot */
-
-  else if (strcmp(name, "newpot") == 0) {
-    return 2;
-  }
-
-  /* end of template */
+  for (i = 0; i < n_functions; i++)
+    if (strcmp(function_table.name[i], name) == 0)
+      return function_table.n_par[i];
 
   return -1;
 }
@@ -126,86 +152,19 @@ int apot_parameters(char *name)
 
 int apot_assign_functions(apot_table_t *apt)
 {
-  int   i;
+  int   i, j;
 
   for (i = 0; i < apt->number; i++) {
-    if (strcmp(apt->names[i], "lj") == 0) {
-      apt->fvalue[i] = &lj_value;
-    } else if (strcmp(apt->names[i], "eopp") == 0) {
-      apt->fvalue[i] = &eopp_value;
-    } else if (strcmp(apt->names[i], "morse") == 0) {
-      apt->fvalue[i] = &morse_value;
-    } else if (strcmp(apt->names[i], "ms") == 0) {
-#ifdef COULOMB
-      apt->fvalue[i] = &ms_shift;
-#else
-      apt->fvalue[i] = &ms_value;
-#endif /* COULOMB */
-    } else if (strcmp(apt->names[i], "buck") == 0) {
-#ifdef COULOMB
-      apt->fvalue[i] = &buck_shift;
-#else
-      apt->fvalue[i] = &buck_value;
-#endif /* COULOMB */
-    } else if (strcmp(apt->names[i], "softshell") == 0) {
-      apt->fvalue[i] = &softshell_value;
-    } else if (strcmp(apt->names[i], "eopp_exp") == 0) {
-      apt->fvalue[i] = &eopp_exp_value;
-    } else if (strcmp(apt->names[i], "meopp") == 0) {
-      apt->fvalue[i] = &meopp_value;
-    } else if (strcmp(apt->names[i], "power_decay") == 0) {
-      apt->fvalue[i] = &power_decay_value;
-    } else if (strcmp(apt->names[i], "exp_decay") == 0) {
-      apt->fvalue[i] = &exp_decay_value;
-    } else if (strcmp(apt->names[i], "pohlong") == 0) {
-      apt->fvalue[i] = &pohlong_value;
-    } else if (strcmp(apt->names[i], "parabola") == 0) {
-      apt->fvalue[i] = &parabola_value;
-    } else if (strcmp(apt->names[i], "csw") == 0) {
-      apt->fvalue[i] = &csw_value;
-    } else if (strcmp(apt->names[i], "universal") == 0) {
-      apt->fvalue[i] = &universal_value;
-    } else if (strcmp(apt->names[i], "const") == 0) {
-      apt->fvalue[i] = &const_value;
-    } else if (strcmp(apt->names[i], "sqrt") == 0) {
-      apt->fvalue[i] = &sqrt_value;
-    } else if (strcmp(apt->names[i], "mexp_decay") == 0) {
-      apt->fvalue[i] = &mexp_decay_value;
-    } else if (strcmp(apt->names[i], "strmm") == 0) {
-      apt->fvalue[i] = &strmm_value;
-    } else if (strcmp(apt->names[i], "double_morse") == 0) {
-      apt->fvalue[i] = &double_morse_value;
-    } else if (strcmp(apt->names[i], "double_exp") == 0) {
-      apt->fvalue[i] = &double_exp_value;
-    } else if (strcmp(apt->names[i], "poly_5") == 0) {
-      apt->fvalue[i] = &poly_5_value;
-    } else if (strcmp(apt->names[i], "cbb") == 0) {
-      apt->fvalue[i] = &cbb_value;
-    } else if (strcmp(apt->names[i], "exp_plus") == 0) {
-      apt->fvalue[i] = &exp_plus_value;
-    } else if (strcmp(apt->names[i], "mishin") == 0) {
-      apt->fvalue[i] = &mishin_value;
-    } else if (strcmp(apt->names[i], "gen_lj") == 0) {
-      apt->fvalue[i] = &gen_lj_value;
-    } else if (strcmp(apt->names[i], "gljm") == 0) {
-      apt->fvalue[i] = &gljm_value;
-    } else if (strcmp(apt->names[i], "vas") == 0) {
-      apt->fvalue[i] = &vas_value;
-    } else if (strcmp(apt->names[i], "vpair") == 0) {
-      apt->fvalue[i] = &vpair_value;
+    for (j = 0; j < n_functions; j++) {
+      if (strcmp(apt->names[i], function_table.name[j]) == 0) {
+	apt->fvalue[i] = function_table.fvalue[j];
+	break;
+      }
+      if (j == n_functions - 1)
+	return -1;
     }
-
-/* template for new potential function called newpot */
-
-    else if (strcmp(apt->names[i], "newpot") == 0) {
-      apt->fvalue[i] = &newpot_value;
-    }
-
-/* end of template */
-
-    else
-      return -1;
   }
+
   return 0;
 }
 
