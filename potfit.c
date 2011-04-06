@@ -50,6 +50,7 @@ void error(char *msg, ...)
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
+  fprintf(stderr, "\n");
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;

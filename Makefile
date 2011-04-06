@@ -123,8 +123,10 @@
 # i686-gcc  	32bit GNU Compiler
 SYSTEM 		= x86_64-icc
 
-# This is the directory where the potfit binary will be moved to
+# This is the directory where the potfit binary will be moved to.
+# If it is empty, the binary will not be moved.
 BIN_DIR 	= ${HOME}/bin/i386-linux
+# BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
@@ -568,7 +570,9 @@ ifeq (,$(findstring debug,${MAKETARGET}))
 	${STRIP} --strip-unneeded -R .comment $@
 endif
 endif
+ifneq (,$(BIN_DIR))
 	${MV} $@ ${BIN_DIR}; rm -f $@
+endif
 
 # First recursion only set the MAKETARGET Variable
 .DEFAULT:
