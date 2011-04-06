@@ -40,9 +40,21 @@ int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(real *);
 real  apot_punish(real *, real *);
 real  apot_grad(real, real *, void (*function) (real, real *, real *));
+real  cutoff(real, real, real);
 #ifdef DEBUG
 void  debug_apot();
 #endif /* DEBUG */
+
+#ifdef PAIR
+/* chemical potential [chempot.c] */
+int   swap_chem_pot(int, int);
+int   sort_chem_pot_2d(void);
+real  chemical_potential_1d(int *, real *);
+real  chemical_potential_2d(int *, real *);
+real  chemical_potential_3d(int *, real *, int);
+real  chemical_potential(int, int *, real *);
+void  init_chemical_potential(int);
+#endif /* PAIR */
 
 /* actual functions for different potentials */
 
