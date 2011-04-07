@@ -414,8 +414,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   fpos_t filepos, startpos;
 
   /* initialize the function table for analytic potentials */
-  if (apot_init() != 0)
-    error("Could not initialize the analytic potential table!");
+  apot_init();
 
   /* save starting position */
   fgetpos(infile, &startpos);

@@ -34,7 +34,7 @@
 
 #ifdef APOT
 
-int   add_potential(char *, int, fvalue_pointer);
+void  add_potential(char *, int, fvalue_pointer);
 
 #ifdef PAIR
 /* chemical potential [chempot.c] */

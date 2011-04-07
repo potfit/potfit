@@ -562,7 +562,7 @@ void  potsync(void);
 EXTERN int n_functions INIT(0);
 EXTERN function_table_t function_table;
 
-int   apot_init(void);
+void  apot_init(void);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(real *);
 int   apot_parameters(char *);

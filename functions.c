@@ -47,44 +47,41 @@
  *
  ****************************************************************/
 
-int apot_init(void)
+void apot_init(void)
 {
-  int   n = 0;
-  n += add_potential("lj", 2, &lj_value);
-  n += add_potential("eopp", 6, &eopp_value);
-  n += add_potential("morse", 3, &morse_value);
+  add_potential("lj", 2, &lj_value);
+  add_potential("eopp", 6, &eopp_value);
+  add_potential("morse", 3, &morse_value);
 #ifdef COULOMB
-  n += add_potential("ms", 3, &ms_shift);
-  n += add_potential("buck", 3, &buck_shift);
+  add_potential("ms", 3, &ms_shift);
+  add_potential("buck", 3, &buck_shift);
 #else
-  n += add_potential("ms", 3, &ms_value);
-  n += add_potential("buck", 3, &buck_value);
+  add_potential("ms", 3, &ms_value);
+  add_potential("buck", 3, &buck_value);
 #endif /* COULOMB */
-  n += add_potential("softshell", 2, &softshell_value);
-  n += add_potential("eopp_exp", 6, &eopp_exp_value);
-  n += add_potential("meopp", 7, &meopp_value);
-  n += add_potential("power_decay", 2, &power_decay_value);
-  n += add_potential("exp_decay", 2, &exp_decay_value);
-  n += add_potential("pohlong", 3, &pohlong_value);
-  n += add_potential("parabola", 3, &parabola_value);
-  n += add_potential("csw", 4, &csw_value);
-  n += add_potential("universal", 4, &universal_value);
-  n += add_potential("const", 1, &const_value);
-  n += add_potential("sqrt", 2, &sqrt_value);
-  n += add_potential("mexp_decay", 3, &mexp_decay_value);
-  n += add_potential("strmm", 5, &strmm_value);
-  n += add_potential("double_morse", 7, &double_morse_value);
-  n += add_potential("double_exp", 5, &double_exp_value);
-  n += add_potential("poly_5", 5, &poly_5_value);
-  n += add_potential("cbb", 12, &cbb_value);
-  n += add_potential("exp_plus", 3, &exp_plus_value);
-  n += add_potential("mishin", 6, &mishin_value);
-  n += add_potential("gen_lj", 5, &gen_lj_value);
-  n += add_potential("gljm", 12, &gljm_value);
-  n += add_potential("vas", 2, &vas_value);
-  n += add_potential("vpair", 7, &vpair_value);
-
-  return n;
+  add_potential("softshell", 2, &softshell_value);
+  add_potential("eopp_exp", 6, &eopp_exp_value);
+  add_potential("meopp", 7, &meopp_value);
+  add_potential("power_decay", 2, &power_decay_value);
+  add_potential("exp_decay", 2, &exp_decay_value);
+  add_potential("pohlong", 3, &pohlong_value);
+  add_potential("parabola", 3, &parabola_value);
+  add_potential("csw", 4, &csw_value);
+  add_potential("universal", 4, &universal_value);
+  add_potential("const", 1, &const_value);
+  add_potential("sqrt", 2, &sqrt_value);
+  add_potential("mexp_decay", 3, &mexp_decay_value);
+  add_potential("strmm", 5, &strmm_value);
+  add_potential("double_morse", 7, &double_morse_value);
+  add_potential("double_exp", 5, &double_exp_value);
+  add_potential("poly_5", 5, &poly_5_value);
+  add_potential("cbb", 12, &cbb_value);
+  add_potential("exp_plus", 3, &exp_plus_value);
+  add_potential("mishin", 6, &mishin_value);
+  add_potential("gen_lj", 5, &gen_lj_value);
+  add_potential("gljm", 12, &gljm_value);
+  add_potential("vas", 2, &vas_value);
+  add_potential("vpair", 7, &vpair_value);
 }
 
 /****************************************************************
@@ -93,7 +90,7 @@ int apot_init(void)
  *
  ****************************************************************/
 
-int add_potential(char *name, int parameter, fvalue_pointer fval)
+void add_potential(char *name, int parameter, fvalue_pointer fval)
 {
   int   i;
   int   k = n_functions;
@@ -124,7 +121,6 @@ int add_potential(char *name, int parameter, fvalue_pointer fval)
   function_table.fvalue[k] = fval;
 
   n_functions++;
-  return 0;
 }
 
 /****************************************************************
