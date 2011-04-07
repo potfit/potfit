@@ -31,6 +31,8 @@
 #ifndef EVO
 
 #include "potfit.h"
+
+#include "optimize.h"
 #include "utils.h"
 
 #define EPS 0.1

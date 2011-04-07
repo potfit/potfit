@@ -31,7 +31,13 @@
 #define MAIN
 
 #include <time.h>
+
 #include "potfit.h"
+
+#include "functions.h"
+#include "optimize.h"
+#include "potential.h"
+#include "splines.h"
 #include "utils.h"
 #include "version.h"
 

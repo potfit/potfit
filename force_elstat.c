@@ -33,6 +33,10 @@
 
 #include "potfit.h"
 
+#include "functions.h"
+#include "potential.h"
+#include "splines.h"
+
 /****************************************************************
  *
  *  compute forces using pair potentials with spline interpolation

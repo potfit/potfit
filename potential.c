@@ -33,6 +33,10 @@
 #define NPLOT 1000
 
 #include "potfit.h"
+
+#include "functions.h"
+#include "potential.h"
+#include "splines.h"
 #include "utils.h"
 
 /****************************************************************

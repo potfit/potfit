@@ -32,6 +32,10 @@
 
 #include "potfit.h"
 
+#include "functions.h"
+#include "potential.h"
+#include "splines.h"
+
 /****************************************************************
  *
  *  compute forces using eam potentials with spline interpolation

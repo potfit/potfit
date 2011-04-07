@@ -29,14 +29,16 @@
  *
  ****************************************************************/
 
+#include "potfit.h"
+
+#include "splines.h"
+
 /****************************************************************
  *
  * spline_ed: initializes second derivatives used for spline interpolation
  *            (equidistant x[i])
  *
  ****************************************************************/
-
-#include "potfit.h"
 
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 {
