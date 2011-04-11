@@ -343,7 +343,7 @@ endif
 ###########################################################################
 
 POTFITHDR   	= bracket.h optimize.h potfit.h potential.h \
-		  random-params.h  random.h  splines.h utils.h
+		  random.h  splines.h utils.h
 POTFITSRC 	= bracket.c brent.c config.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
 		  random.c simann.c splines.c utils.c

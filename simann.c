@@ -32,6 +32,8 @@
 
 #include "potfit.h"
 
+#include <ctype.h>
+
 #include "optimize.h"
 #include "utils.h"
 
@@ -107,6 +109,7 @@ void makebump(real *x, real width, real height, int center)
   }
   return;
 }
+
 #endif
 
 /****************************************************************
@@ -119,8 +122,9 @@ void makebump(real *x, real width, real height, int center)
 void anneal(real *xi)
 {
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
+  int 	auto_T = 0;
   int   loopagain;		/* loop flag */
-  real  T;			/* Temperature */
+  real  T = -1.;		/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
   real *v;			/* step vector */
@@ -128,16 +132,23 @@ void anneal(real *xi)
   real *fxi1;			/* two latest force vectors */
 #ifndef APOT
   real  width, height;		/* gaussian bump size */
-#endif
+#endif /* APOT */
 #ifdef DIPOLE
   FILE *outfile;
   char *filename = "Dipole.convergency";
-#endif
+#endif /* DIPOLE */
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
 
-  /* init starting temperature for annealing process */
-  T = anneal_temp;
+  /* check for automatic temperature */
+  if (tolower(anneal_temp[0])=='a') {
+	   auto_T = 1;
+  } else {
+	T = atof(anneal_temp);
+	if (T<0)
+		error("The value for anneal_temp \"%s\" is invalid!\n");
+  }
+
   if (T == 0.)
     return;			/* don't anneal if starttemp equal zero */
 

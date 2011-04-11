@@ -82,6 +82,7 @@ void apot_init(void)
   add_potential("gljm", 12, &gljm_value);
   add_potential("vas", 2, &vas_value);
   add_potential("vpair", 7, &vpair_value);
+  add_potential("csw2", 4, &csw2_value);
 }
 
 /****************************************************************
@@ -398,6 +399,25 @@ void csw_value(real r, real *p, real *f)
 #endif /* ACML */
 
   *f = (1 + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
+}
+
+/****************************************************************
+ *
+ * chantasiriwan (csw) and milstein potential - version 2
+ *
+ ****************************************************************/
+
+void csw2_value(real r, real *p, real *f)
+{
+  real  power;
+
+#ifndef ACML
+  vdPow(1, &r, &p[3], &power);
+#else
+  power = fastpow(r, p[3]);
+#endif /* ACML */
+
+  *f = (1 + p[0] * cos(p[1] * r + p[2])) / power;
 }
 
 /****************************************************************

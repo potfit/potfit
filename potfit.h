@@ -94,17 +94,17 @@ typedef struct {
   int   typ;
   int   nr;
   real  r;
-  vector dist;			/* distance divided by r */
+  vector dist;		/* distance divided by r */
 #ifdef COULOMB
-  real  r2;			/* r^2 */
-  real  fnval_el;		/* stores tail of electrostatic potential */
-  real  grad_el;		/* stores tail of first derivative of electrostatic potential */
-  real  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
+  real  r2;		/* r^2 */
+  real  fnval_el;	/* stores tail of electrostatic potential */
+  real  grad_el;	/* stores tail of first derivative of electrostatic potential */
+  real  ggrad_el;	/* stores tail of second derivative of electrostatic potential */
 #endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
-  int   col[SLOTS];		/* coloumn of interaction for this neighbor */
+  int   col[SLOTS];	/* coloumn of interaction for this neighbor */
 #ifdef ADP
   vector rdist;			/* real distance */
   sym_tens sqrdist;		/* real squared distance */
@@ -280,7 +280,7 @@ EXTERN int writeimd INIT(0);
 #ifdef EVO
 EXTERN real evo_threshold INIT(1.e-6);
 #else /* EVO */
-EXTERN real anneal_temp INIT(-1.);
+EXTERN char anneal_temp[20] INIT("\0");
 #endif /* EVO */
 EXTERN real eweight INIT(-1.);
 EXTERN real sweight INIT(-1.);

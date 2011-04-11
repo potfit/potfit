@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 #define RAND_MAX 2147483647
     uint32_t *array;
     array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-    srand(seed + myid);
+    srand(seed);
     for (i = 0; i < R_SIZE; i++)
       array[i] = rand();
 

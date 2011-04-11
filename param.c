@@ -238,7 +238,7 @@ void read_paramfile(FILE *pf)
 #else /* EVO */
     /* starting temperature for annealing */
     else if (strcasecmp(token, "anneal_temp") == 0) {
-      getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
+      getparam("anneal_temp", &anneal_temp, PARAM_STR, 1, 20);
     }
 #endif /* EVO */
 #ifdef APOT
@@ -303,10 +303,6 @@ void read_paramfile(FILE *pf)
     error("Missing in parameter file: stress weight");
 #endif /* STRESS */
 
-#ifndef EVO
-  if (anneal_temp < 0)
-    error("Missing in parameter file: anneal_temp");
-#endif /* EVO */
 }
 
 /****************************************************************
