@@ -89,7 +89,7 @@ void  vpair_value(real, real *, real *);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  update_tails(real);
+void  init_tails(real);
 void  write_coulomb_table();
 void  write_coul2imd();
 void  ms_init(real, real *, real *, real *);

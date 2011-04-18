@@ -135,8 +135,8 @@ int main(int argc, char **argv)
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
 #ifdef COULOMB
-    if (!sw_kappa)
-      update_tails(apt->dp_kappa[0]);
+    if (!apt->invar_par[apt->number +1][0])
+      init_tails(apt->dp_kappa[0]);
 #endif /* COULOMB */ 
 
     /* Select correct spline interpolation and other functions */

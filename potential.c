@@ -556,7 +556,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   apt->invar_par[apt->number + 1][0] = 0;
   if (apt->pmin[apt->number + 1][0] == apt->pmax[apt->number + 1][0]) {
     apt->invar_par[apt->number +1][0]++;
-    sw_kappa = 1;
   }
   reg_for_free(apt->param_name[apt->number + 1][0], "apt->param_name[%d][%d]",
 	       apt->number + 1, 0);
@@ -2029,7 +2028,7 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
  *
  ****************************************************************/
 
-void update_tails(real dp_kappa)
+void init_tails(real dp_kappa)
 {
   int   i, j;
 

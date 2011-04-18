@@ -395,7 +395,6 @@ EXTERN char *component[6];	/* componentes of vectors and tensors */
 #ifdef COULOMB
 EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
-EXTERN real sw_kappa INIT(0);  /* switch for variable dp_kappa */
 #endif /* COULOMB */
 #ifdef DIPOLE
 EXTERN real dp_tol INIT(1.e-7);	/* dipole iteration precision */

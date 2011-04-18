@@ -224,10 +224,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       atom_t *atom;
       neigh_t *neigh;
 
-      /* updating tail-functions - only necessary with variing kappa */
-      if (sw_kappa)
-	update_tails(dp_kappa);
-
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
@@ -276,6 +272,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    typ2 = neigh->typ;
 	    col = neigh->col[0];
 
+	    /* updating tail-functions - only necessary with variing kappa */
+	    if (apt->invar_par[apt->number +1][0]){
+	      elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el,
+			   &neigh->grad_el, &neigh->ggrad_el);
+	    }
+	    
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 

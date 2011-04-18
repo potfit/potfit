@@ -233,7 +233,6 @@ void broadcast_params()
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
   MPI_Bcast(&dp_cut, 1, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&sw_kappa, 1, REAL, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
 #ifdef DIPOLE
   MPI_Bcast(&dp_tol, 1, REAL, 0, MPI_COMM_WORLD);
