@@ -89,15 +89,15 @@ void  vpair_value(real, real *, real *);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  init_tails();
+void  update_tails(real);
 void  write_coulomb_table();
 void  write_coul2imd();
 void  ms_init(real, real *, real *, real *);
 void  buck_init(real, real *, real *, real *);
 void  ms_shift(real, real *, real *);
 void  buck_shift(real, real *, real *);
-void  elstat_value(real, real *, real *, real *);
-void  elstat_shift(real, real *, real *, real *);
+void  elstat_value(real, real, real *, real *, real *);
+void  elstat_shift(real, real, real *, real *, real *);
 #endif
 #ifdef DIPOLE
 real  shortrange_value(real, real, real, real);

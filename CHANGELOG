@@ -1,3 +1,6 @@
+dipole-20110328
++ elstat parameter dp_kappa can now be optimized
+
 devel-20110331
 + adjust copyright years to 2011
 + lots of code clean-up

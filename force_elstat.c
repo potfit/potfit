@@ -90,6 +90,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   apot_table_t *apt = &apot_table;
   real  charge[ntypes];
   real  sum_charges;
+  real dp_kappa;
 #ifdef DIPOLE
   int   sum_c;
   real  dp_alpha[ntypes];
@@ -158,7 +159,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
     /* local arrays for electrostatic parameters */
     sum_charges = 0;
-    for (i = 0; i < ntypes - 1; i++) {
+    for (i = 0; i < ntypes - 1; i++) {   
       if (xi_opt[2 * size + ne + i]) {
 	charge[i] = xi_opt[2 * size + ne + i];
 	sum_charges += apt->ratio[i] * charge[i];
@@ -168,22 +169,27 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     }
     apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
     charge[ntypes - 1] = apt->last_charge;
+    if (xi_opt[2 * size + ne + ntypes]) {     
+      dp_kappa = xi_opt[2 * size + ne + ntypes];
+    } else {
+      dp_kappa = 0.;
+    }
 #ifdef DIPOLE
     for (i = 0; i < ntypes; i++) {
-      if (xi_opt[2 * size + ne + ntypes + i - 1]) {
-	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i - 1];
+      if (xi_opt[2 * size + ne + ntypes + i]) {
+	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i];
       } else {
 	dp_alpha[i] = 0.;
       }
     }
     for (i = 0; i < size; i++) {
-      if (xi_opt[2 * size + ne + 2 * ntypes + i - 1]) {
-	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i - 1];
+      if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
+	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
       } else {
 	dp_b[i] = 0.;
       }
-      if (xi_opt[3 * size + ne + 2 * ntypes + i - 1]) {
-	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i - 1];
+      if (xi_opt[3 * size + ne + 2 * ntypes + i]) {
+	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i];
       } else {
 	dp_c[i] = 0.;
       }
@@ -217,6 +223,10 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
       real  fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
+
+      /* updating tail-functions - only necessary with variing kappa */
+      if (sw_kappa)
+	update_tails(dp_kappa);
 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {

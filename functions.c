@@ -985,7 +985,7 @@ void buck_shift(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void elstat_value(real r, real *ftail, real *gtail, real *ggtail)
+void elstat_value(real r, real dp_kappa, real *ftail, real *gtail, real *ggtail)
 {
   static real x[4];
 
@@ -1005,7 +1005,7 @@ void elstat_value(real r, real *ftail, real *gtail, real *ggtail)
  *
  ****************************************************************/
 
-void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
+void elstat_shift(real r, real dp_kappa, real *fnval_tail, real *grad_tail, real *ggrad_tail)
 {
   static real ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
   static real x[3];
@@ -1014,8 +1014,8 @@ void elstat_shift(real r, real *fnval_tail, real *grad_tail, real *ggrad_tail)
   x[1] = dp_cut * dp_cut;
   x[2] = x[0] - x[1];
 
-  elstat_value(r, &ftail, &gtail, &ggtail);
-  elstat_value(dp_cut, &ftail_cut, &gtail_cut, &ggtail_cut);
+  elstat_value(r, dp_kappa, &ftail, &gtail, &ggtail);
+  elstat_value(dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
 
   *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
   *grad_tail = gtail - gtail_cut;
