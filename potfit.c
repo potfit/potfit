@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 #endif /* MPI */
 
   if (myid == 0) {
-    printf("This is %s compiled on %s.\n", VERSION_INFO, VERSION_DATE);
+    printf("This is %s compiled on %s.\n\n", VERSION_INFO, VERSION_DATE);
 #ifdef MPI
     printf("Starting up MPI with %d processes.\n", num_cpus);
 #endif /* MPI */

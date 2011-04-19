@@ -122,7 +122,7 @@ void makebump(real *x, real width, real height, int center)
 void anneal(real *xi)
 {
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
-  int 	auto_T = 0;
+  int   auto_T = 0;
   int   loopagain;		/* loop flag */
   real  T = -1.;		/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
@@ -141,12 +141,12 @@ void anneal(real *xi)
   int  *naccept;		/* number of accepted changes in dir */
 
   /* check for automatic temperature */
-  if (tolower(anneal_temp[0])=='a') {
-	   auto_T = 1;
+  if (tolower(anneal_temp[0]) == 'a') {
+    auto_T = 1;
   } else {
-	T = atof(anneal_temp);
-	if (T<0)
-		error("The value for anneal_temp \"%s\" is invalid!\n");
+    T = atof(anneal_temp);
+    if (T < 0)
+      error("The value for anneal_temp \"%s\" is invalid!\n");
   }
 
   if (T == 0.)

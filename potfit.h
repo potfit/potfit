@@ -94,17 +94,17 @@ typedef struct {
   int   typ;
   int   nr;
   real  r;
-  vector dist;		/* distance divided by r */
+  vector dist;			/* distance divided by r */
 #ifdef COULOMB
-  real  r2;		/* r^2 */
-  real  fnval_el;	/* stores tail of electrostatic potential */
-  real  grad_el;	/* stores tail of first derivative of electrostatic potential */
-  real  ggrad_el;	/* stores tail of second derivative of electrostatic potential */
+  real  r2;			/* r^2 */
+  real  fnval_el;		/* stores tail of electrostatic potential */
+  real  grad_el;		/* stores tail of first derivative of electrostatic potential */
+  real  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
 #endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
-  int   col[SLOTS];	/* coloumn of interaction for this neighbor */
+  int   col[SLOTS];		/* coloumn of interaction for this neighbor */
 #ifdef ADP
   vector rdist;			/* real distance */
   sym_tens sqrdist;		/* real squared distance */
@@ -270,7 +270,7 @@ EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
 EXTERN char startpot[255] INIT("\0");	/* file with start potential */
 EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
 EXTERN int imdpotsteps INIT(1000);	/* resolution of IMD potential */
-EXTERN int ntypes INIT(1);	/* number of atom types */
+EXTERN int ntypes INIT(-1);	/* number of atom types */
 EXTERN int opt INIT(0);		/* optimization flag */
 EXTERN int seed INIT(4);	/* seed for RNG */
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
@@ -346,8 +346,8 @@ EXTERN pot_table_t calc_pot;	/* the potential table used */
 				/* for force calculations */
 #ifdef APOT
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
-EXTERN int n_functions INIT(0); /* number of analytic function prototypes */
-EXTERN function_table_t function_table; /* table with all functions */
+EXTERN int n_functions INIT(0);	/* number of analytic function prototypes */
+EXTERN function_table_t function_table;	/* table with all functions */
 #endif /* APOT */
 
 /* optimization variables */
@@ -443,6 +443,7 @@ void  warning(char *, ...);
 
 /* reading parameter file [param.c] */
 int   getparam(char *, void *, param_t, int, int);
+void  check_parameters_complete(char *);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 
