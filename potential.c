@@ -335,7 +335,6 @@ void read_pot_table(pot_table_t *pt, char *filename)
     }
     fclose(infile);
   }
-  free(val);
 #endif /* APOT */
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
@@ -3016,7 +3015,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
     fprintf(outfile, "\n\n");
   }
   fclose(outfile);
-  printf("Distribution data written to %s\n", filename);
+  printf("Distribution data written to\t\t%s\n", filename);
 }
 
 #endif /* PDIST */

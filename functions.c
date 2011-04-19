@@ -339,7 +339,7 @@ void power_decay_value(real r, real *p, real *f)
 
 /****************************************************************
  *
-e pot * exp_decay potential
+ * exp_decay potential
  *
  ****************************************************************/
 
