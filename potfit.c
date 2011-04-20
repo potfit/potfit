@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
 #ifdef COULOMB
-    if (!apt->invar_par[apt->number +1][0])
+    if (apt->sw_kappa)
       init_tails(apt->dp_kappa[0]);
 #endif /* COULOMB */ 
 

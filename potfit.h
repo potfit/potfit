@@ -202,6 +202,7 @@ typedef struct {
   real *dp_c;			/* parameter for short-range-dipole-moment */
   real *dp_kappa;        	/* parameter kappa */
   int   sum_t;			/* dipole-convergency output */
+  int   sw_kappa;               /* switch for kappa-optimization */
 #endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */

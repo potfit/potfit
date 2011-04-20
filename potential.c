@@ -559,6 +559,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
   reg_for_free(apt->param_name[apt->number + 1][0], "apt->param_name[%d][%d]",
 	       apt->number + 1, 0);
+  apt->sw_kappa = apt->invar_par[apt->number +1][0];
 #endif
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++) {

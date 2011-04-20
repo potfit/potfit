@@ -273,7 +273,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    col = neigh->col[0];
 
 	    /* updating tail-functions - only necessary with variing kappa */
-	    if (apt->invar_par[apt->number +1][0]){
+	    if (!apt->sw_kappa){
 	      elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el,
 			   &neigh->grad_el, &neigh->ggrad_el);
 	    }
