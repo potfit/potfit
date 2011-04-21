@@ -72,7 +72,8 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
       case PARAM_STR:
 	str = strtok(NULL, " \t\r\n");
 	if (str == NULL)
-	  error("Parameter for %s missing in line %d\nstring expected!", param_name, curline);
+	  error("Parameter for %s missing in line %d\nstring expected!",
+	    param_name, curline);
 	else
 	  strncpy((char *)param, str, pnum_max);
 	numread++;
@@ -165,7 +166,7 @@ void check_parameters_complete(char *paramfile)
       paramfile, imdpotsteps);
 
 #ifdef APOT
-  if (plotmin <= 0)
+  if (plotmin < 0)
     error("Missing parameter or invalid value in %s : plotmin (%f)", paramfile,
       plotmin);
 #ifdef PAIR
