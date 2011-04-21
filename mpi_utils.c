@@ -282,7 +282,6 @@ void broadcast_params()
   MPI_Bcast(calc_pot.xcoord, calclen, REAL, 0, MPI_COMM_WORLD);
 
 #ifdef APOT
-  MPI_Bcast(&do_smooth, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&enable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&apot_table.number, 1, MPI_INT, 0, MPI_COMM_WORLD);

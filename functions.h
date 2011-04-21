@@ -28,33 +28,11 @@
  *
  ****************************************************************/
 
+#ifdef APOT
+
 #ifndef POTFIT_H
 #include "potfit.h"
 #endif
-
-#ifdef APOT
-
-/* analytic functions */
-int   apot_parameters(char *);
-int   apot_assign_functions(apot_table_t *);
-int   apot_check_params(real *);
-real  apot_punish(real *, real *);
-real  apot_grad(real, real *, void (*function) (real, real *, real *));
-real  cutoff(real, real, real);
-#ifdef DEBUG
-void  debug_apot();
-#endif /* DEBUG */
-
-#ifdef PAIR
-/* chemical potential [chempot.c] */
-int   swap_chem_pot(int, int);
-int   sort_chem_pot_2d(void);
-real  chemical_potential_1d(int *, real *);
-real  chemical_potential_2d(int *, real *);
-real  chemical_potential_3d(int *, real *, int);
-real  chemical_potential(int, int *, real *);
-void  init_chemical_potential(int);
-#endif /* PAIR */
 
 /* actual functions for different potentials */
 
@@ -86,28 +64,54 @@ void  gen_lj_value(real, real *, real *);
 void  gljm_value(real, real *, real *);
 void  vas_value(real, real *, real *);
 void  vpair_value(real, real *, real *);
+void  csw2_value(real, real *, real *);
+
+/* template for new potential function called newpot */
+
+/* "newpot" potential */
+void  newpot_value(real, real *, real *);
+/* end of template */
+
+/* functions for analytic potential initialization */
+void  apot_init(void);
+void  add_potential(char *, int, fvalue_pointer);
+int   apot_assign_functions(apot_table_t *);
+int   apot_check_params(real *);
+int   apot_parameters(char *);
+real  apot_grad(real, real *, void (*function) (real, real *, real *));
+real  apot_punish(real *, real *);
+real  cutoff(real, real, real);
+
+#ifdef DEBUG
+void  debug_apot();
+#endif /* DEBUG */
+
+#ifdef PAIR
+/* chemical potential [chempot.c] */
+int   swap_chem_pot(int, int);
+int   sort_chem_pot_2d(void);
+real  chemical_potential(int, int *, real *);
+real  chemical_potential_1d(int *, real *);
+real  chemical_potential_2d(int *, real *);
+real  chemical_potential_3d(int *, real *, int);
+void  init_chemical_potential(int);
+#endif /* PAIR */
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
 void  init_tails(real);
-void  write_coulomb_table();
-void  write_coul2imd();
+void  write_coulomb_table(void);
+void  write_coul2imd(void);
 void  ms_init(real, real *, real *, real *);
 void  buck_init(real, real *, real *, real *);
 void  ms_shift(real, real *, real *);
 void  buck_shift(real, real *, real *);
 void  elstat_value(real, real, real *, real *, real *);
 void  elstat_shift(real, real, real *, real *, real *);
-#endif
+#endif /* COULOMB */
 #ifdef DIPOLE
 real  shortrange_value(real, real, real, real);
 void  shortrange_term(real, real, real, real *, real *);
-#endif
-
-/* template for new potential function called newpot */
-
-/* newpot potential */
-void  newpot_value(real, real *, real *);
-/* end of template */
+#endif /* DIPOLE */
 
 #endif /* APOT */

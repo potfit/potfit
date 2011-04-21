@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "random-params.h"
+#include "random.h"
 
 /** dsfmt internal state vector */
 dsfmt_t dsfmt_global_data;

@@ -31,7 +31,13 @@
 #define MAIN
 
 #include <time.h>
+
 #include "potfit.h"
+
+#include "functions.h"
+#include "optimize.h"
+#include "potential.h"
+#include "splines.h"
 #include "utils.h"
 #include "version.h"
 
@@ -50,6 +56,7 @@ void error(char *msg, ...)
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
+  fprintf(stderr, "\n");
   fflush(stderr);
 #ifdef MPI
   real *force = NULL;
@@ -93,6 +100,7 @@ int main(int argc, char **argv)
   int   i, j;
   real  tot, sqr;
   real *force;
+  real *rms;
   time_t t_begin, t_end;
   apot_table_t *apt = &apot_table;
 #if defined EAM || defined ADP
@@ -104,7 +112,7 @@ int main(int argc, char **argv)
 #endif /* MPI */
 
   if (myid == 0) {
-    printf("This is %s compiled on %s.\n", VERSION_INFO, VERSION_DATE);
+    printf("This is %s compiled on %s.\n\n", VERSION_INFO, VERSION_DATE);
 #ifdef MPI
     printf("Starting up MPI with %d processes.\n", num_cpus);
 #endif /* MPI */
@@ -192,7 +200,7 @@ int main(int argc, char **argv)
 #define RAND_MAX 2147483647
     uint32_t *array;
     array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-    srand(seed + myid);
+    srand(seed);
     for (i = 0; i < R_SIZE; i++)
       array[i] = rand();
 
@@ -489,7 +497,7 @@ int main(int argc, char **argv)
       }
 
       for (i = 0; i < nconf; i++) {
-	sqr = conf_weight[i] * SQR(eweight * force[energy_p + i]);
+	sqr = conf_weight[i] * eweight * SQR(force[energy_p + i]);
 	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
@@ -532,7 +540,7 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-	sqr = conf_weight[(i - stress_p) / 6] * SQR(sweight * force[i]);
+	sqr = conf_weight[(i - stress_p) / 6] * sweight * SQR(force[i]);
 	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],

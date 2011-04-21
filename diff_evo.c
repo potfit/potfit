@@ -32,6 +32,8 @@
 #ifdef EVO
 
 #include "potfit.h"
+
+#include "optimize.h"
 #include "utils.h"
 
 #define D (ndimtot+2)

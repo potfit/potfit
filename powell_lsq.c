@@ -43,9 +43,12 @@
 #else /* ACML */
 #include <mkl_lapack.h>
 #endif /* ACML */
+
 #include "potfit.h"
-#include "utils.h"
+
 #include "bracket.h"
+#include "optimize.h"
+#include "utils.h"
 
 #define EPS .001
 #define PRECISION 1.E-7

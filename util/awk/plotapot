@@ -83,6 +83,9 @@ function write_pot(i, name, params, file)
     printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f", params[i "," 1],
       params[i "," 3], params[i "," 2], params[i "," 3],
       params[i "," 4] > file;
+  } else if (name == "csw2") {
+    printf "(1+%f*cos(%f*x+%f))/x**%f", params[i "," 1],
+      params[i "," 2], params[i "," 3], params[i "," 4] > file;
   } else if (name == "universal") {
     printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x", params[i "," 1],
       params[i "," 3], params[i "," 3], params[i "," 2], params[i "," 2],
@@ -151,6 +154,8 @@ function read_pot(name)
   else if (name == "parabola")
     return 3;
   else if (name == "csw")
+    return 4;
+  else if (name == "csw2")
     return 4;
   else if (name == "universal")
     return 4;
