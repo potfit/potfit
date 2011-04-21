@@ -330,7 +330,6 @@ EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
 EXTERN int *smooth_pot;
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
-EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
 EXTERN int global_idx INIT(0);	/* index for global parameters in opt_pot table */
 EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
 EXTERN int have_globals INIT(0);	/* do we have global parameters? */

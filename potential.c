@@ -746,7 +746,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       buffer[strlen(name) - 3] = '\0';
       strcpy(name, buffer);
       smooth_pot[i] = 1;
-      do_smooth = 1;
     }
 
     if (apot_parameters(name) == -1)
