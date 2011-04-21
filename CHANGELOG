@@ -1,6 +1,7 @@
 devel
 + new initialization method for analytic potential functions
 + don't move the binary if BIN_DIR is empty
++ the error sum is now calculated as w*d^2 and no longer as (w*d)^2
 
 devel-20110331
 + adjust copyright years to 2011

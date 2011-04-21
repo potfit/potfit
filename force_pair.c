@@ -287,7 +287,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(eweight * forces[energy_p + h]);
+	tmpsum += conf_weight[h] * eweight * SQR(forces[energy_p + h]);
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -295,7 +295,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
+	      conf_weight[h] * sweight * SQR(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */

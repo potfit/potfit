@@ -362,7 +362,6 @@ EXTERN int firstatom INIT(0);
 EXTERN int firstconf INIT(0);
 EXTERN int myatoms INIT(0);
 EXTERN int myconf INIT(0);
-EXTERN real *rms;
 
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */

@@ -100,6 +100,7 @@ int main(int argc, char **argv)
   int   i, j;
   real  tot, sqr;
   real *force;
+  real *rms;
   time_t t_begin, t_end;
 #if defined EAM || defined ADP
   real *totdens = NULL;
@@ -494,7 +495,7 @@ int main(int argc, char **argv)
       }
 
       for (i = 0; i < nconf; i++) {
-	sqr = conf_weight[i] * SQR(eweight * force[energy_p + i]);
+	sqr = conf_weight[i] * eweight * SQR(force[energy_p + i]);
 	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
@@ -537,7 +538,7 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-	sqr = conf_weight[(i - stress_p) / 6] * SQR(sweight * force[i]);
+	sqr = conf_weight[(i - stress_p) / 6] * sweight * SQR(force[i]);
 	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
