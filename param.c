@@ -72,7 +72,7 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
       case PARAM_STR:
 	str = strtok(NULL, " \t\r\n");
 	if (str == NULL)
-	  error("Parameter for %s missing in line %d\nstring expected!\n",
+	  error("Parameter for %s missing in line %d\nstring expected!",
 	    param_name, curline);
 	else
 	  strncpy((char *)param, str, pnum_max);
@@ -83,7 +83,7 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 	  str = strtok(NULL, " \t\r\n");
 	  if (str == NULL)
 	    error
-	      ("Parameter for %s missing in line %d!\nInteger vector of length %u expected!\n",
+	      ("Parameter for %s missing in line %d!\nInteger vector of length %u expected!",
 	      param_name, curline, (unsigned)pnum_min);
 	  else
 	    ((int *)param)[i] = atoi(str);
@@ -102,7 +102,7 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 	  str = strtok(NULL, " \t\r\n");
 	  if (str == NULL)
 	    error
-	      ("Parameter for %s missing in line %d!\nDouble vector of length %u expected!\n",
+	      ("Parameter for %s missing in line %d!\nDouble vector of length %u expected!",
 	      param_name, curline, (unsigned)pnum_min);
 	  else
 	    ((real *)param)[i] = atof(str);
@@ -118,6 +118,93 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 	break;
   }
   return numread;
+}
+
+/****************************************************************
+ *
+ *  check all parameters for reasonable values and completeness
+ *
+ ****************************************************************/
+
+void check_parameters_complete(char *paramfile)
+{
+
+  if (ntypes <= 0)
+    error("Missing parameter or invalid value in %s : ntypes (%d)", paramfile,
+      ntypes);
+
+  if (strcmp(startpot, "\0") == 0)
+    error("Missing parameter or invalid value in %s : startpot (%s)", paramfile,
+      startpot);
+
+  if (strcmp(endpot, "\0") == 0) {
+    warning("endpot is missing in %s, setting it to %s_end", paramfile,
+      startpot);
+    sprintf(endpot, "%s_end", startpot);
+  }
+
+  if (strcmp(config, "\0") == 0)
+    error("Missing parameter or invalid value in %s : config (%s)", paramfile,
+      config);
+
+  if (strcmp(tempfile, "\0") == 0)
+    error("Missing parameter or invalid value in %s : tempfile (%s)", paramfile,
+      tempfile);
+
+  if (eweight < 0)
+    error("Missing parameter or invalid value in %s : eweight (%f)", paramfile,
+      eweight);
+
+#ifdef STRESS
+  if (sweight < 0)
+    error("Missing parameter or invalid value in %s : sweight (%f)", paramfile,
+      sweight);
+#endif /* STRESS */
+
+  if (writeimd && imdpotsteps <= 0)
+    error("Missing parameter or invalid value in %s : imdpotsteps (%d)",
+      paramfile, imdpotsteps);
+
+#ifdef APOT
+  if (plotmin < 0)
+    error("Missing parameter or invalid value in %s : plotmin (%f)", paramfile,
+      plotmin);
+#ifdef PAIR
+  if (enable_cp != 0 && enable_cp != 1)
+    error("Missing parameter or invalid value in %s : enable_cp (%d)",
+      paramfile, enable_cp);
+#endif /* PAIR */
+#endif /* APOT */
+
+#ifdef PDIST
+  if (strcmp(distfile, "\0") == 0)
+    error("Missing parameter or invalid value in %s : distfile (%s)", paramfile,
+      distfile);
+#endif /* PDIST */
+}
+
+/****************************************************************
+ *
+ *  read command line
+ *
+ ****************************************************************/
+
+void read_parameters(int argc, char **argv)
+{
+  FILE *pf;
+
+  /* check command line */
+  if (argc < 2)
+    error("Usage: %s <paramfile>\n", argv[0]);
+
+  /* open parameter file, and read it */
+  pf = fopen(argv[1], "r");
+  if (NULL == pf)
+    error("Could not open parameter file \"%s\".\n", argv[1]);
+  read_paramfile(pf);
+  fclose(pf);
+  check_parameters_complete(argv[1]);
+  printf("Read parameters from file \"%s\".\n", argv[1]);
 }
 
 /****************************************************************
@@ -178,10 +265,12 @@ void read_paramfile(FILE *pf)
       getparam("maxchfile", maxchfile, PARAM_STR, 1, 255);
       usemaxch = 1;
     }
+#ifdef PDIST
     /* file for pair distribution */
     else if (strcasecmp(token, "distfile") == 0) {
       getparam("distfile", distfile, PARAM_STR, 1, 255);
     }
+#endif /* PDIST */
     /* number of steps in IMD potential */
     else if (strcasecmp(token, "imdpotsteps") == 0) {
       getparam("imdpotsteps", &imdpotsteps, PARAM_INT, 1, 1);
@@ -238,7 +327,7 @@ void read_paramfile(FILE *pf)
 #else /* EVO */
     /* starting temperature for annealing */
     else if (strcasecmp(token, "anneal_temp") == 0) {
-      getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
+      getparam("anneal_temp", &anneal_temp, PARAM_STR, 1, 20);
     }
 #endif /* EVO */
 #ifdef APOT
@@ -287,46 +376,4 @@ void read_paramfile(FILE *pf)
       fflush(stderr);
     }
   } while (!feof(pf));
-  fclose(pf);
-
-  if (ntypes == 0)
-    error("ntypes cannot be 0!");
-
-  if (strcmp(endpot, "\0") == 0)
-    sprintf(endpot, "%s_end", startpot);
-
-  if (eweight < 0)
-    error("Missing in parameter file: energy weight");
-
-#ifdef STRESS
-  if (sweight < 0)
-    error("Missing in parameter file: stress weight");
-#endif /* STRESS */
-
-#ifndef EVO
-  if (anneal_temp < 0)
-    error("Missing in parameter file: anneal_temp");
-#endif /* EVO */
-}
-
-/****************************************************************
- *
- *  read command line
- *
- ****************************************************************/
-
-void read_parameters(int argc, char **argv)
-{
-  FILE *pf;
-
-  /* check command line */
-  if (argc < 2)
-    error("Usage: %s <paramfile>\n", argv[0]);
-
-  /* open parameter file, and read it */
-  pf = fopen(argv[1], "r");
-  if (NULL == pf)
-    error("Could not open parameter file \"%s\".\n", argv[1]);
-  read_paramfile(pf);
-  printf("Read parameters from file \"%s\".\n", argv[1]);
 }
