@@ -102,7 +102,6 @@ int main(int argc, char **argv)
   real *force;
   real *rms;
   time_t t_begin, t_end;
-  apot_table_t *apt = &apot_table;
 #if defined EAM || defined ADP
   real *totdens = NULL;
 #endif /* EAM || ADP */
@@ -143,9 +142,9 @@ int main(int argc, char **argv)
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
 #ifdef COULOMB
-    if (apt->sw_kappa)
-      init_tails(apt->dp_kappa[0]);
-#endif /* COULOMB */ 
+    if (apot_table.sw_kappa)
+      init_tails(apot_table.dp_kappa[0]);
+#endif /* COULOMB */
 
     /* Select correct spline interpolation and other functions */
 #ifdef APOT
