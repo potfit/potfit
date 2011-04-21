@@ -30,11 +30,14 @@
  *
  ****************************************************************/
 
-#define NPLOT 1000
-
 #include "potfit.h"
+
 #include "functions.h"
+#include "potential.h"
+#include "splines.h"
 #include "utils.h"
+
+#define NPLOT 1000
 
 /****************************************************************
  *
@@ -332,7 +335,6 @@ void read_pot_table(pot_table_t *pt, char *filename)
     }
     fclose(infile);
   }
-  free(val);
 #endif /* APOT */
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
@@ -413,6 +415,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   char *token;
   real *val, *list, temp;
   fpos_t filepos, startpos;
+
+  /* initialize the function table for analytic potentials */
+  apot_init();
 
   /* save starting position */
   fgetpos(infile, &startpos);
@@ -741,7 +746,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       buffer[strlen(name) - 3] = '\0';
       strcpy(name, buffer);
       smooth_pot[i] = 1;
-      do_smooth = 1;
     }
 
     if (apot_parameters(name) == -1)
@@ -3010,7 +3014,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
     fprintf(outfile, "\n\n");
   }
   fclose(outfile);
-  printf("Distribution data written to %s\n", filename);
+  printf("Distribution data written to\t\t%s\n", filename);
 }
 
 #endif /* PDIST */

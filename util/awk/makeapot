@@ -135,6 +135,12 @@ function write_pot(name)
 	printf "alpha %s",valminmax(2,1,6);
 	printf "beta %s",valminmax(3,0.5,5);
     }
+    else if (name=="csw2") {
+	printf "a %s",valminmax(0.2,-2,2);
+	printf "alpha %s",valminmax(2,1,6);
+	printf "phi %s",valminmax(0,0,6.3);
+	printf "beta %s",valminmax(3,0.5,5);
+    }
     else if (name=="universal") {
 	printf "F_0 %s",valminmax(-1,-10,10);
 	printf "m %s",valminmax(1,0,20);
