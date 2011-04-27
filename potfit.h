@@ -195,14 +195,14 @@ typedef struct {
   real *ratio;			/* stoichiometric ratio */
   real *charge;			/* charges */
   real  last_charge;		/* last charge determined on the basis of charge neutrality */
+  real *dp_kappa;        	/* parameter kappa */
+  int   sw_kappa;               /* switch for kappa-optimization */
 #endif
 #ifdef DIPOLE
   real *dp_alpha;		/* polarisability */
   real *dp_b;			/* parameter for short-range-dipole-moment */
   real *dp_c;			/* parameter for short-range-dipole-moment */
-  real *dp_kappa;        	/* parameter kappa */
   int   sum_t;			/* dipole-convergency output */
-  int   sw_kappa;               /* switch for kappa-optimization */
 #endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
