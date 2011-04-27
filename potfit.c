@@ -461,8 +461,8 @@ int main(int argc, char **argv)
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
+	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\t\tf\t\tf0\t\tdf/f0\n");
+      fprintf(outfile, "%3d:%6d:%s\t%4s\t%20.18f\t%11.8f\t%11.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
 	sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
@@ -488,7 +488,7 @@ int main(int argc, char **argv)
       if (write_output_files) {
 	fprintf(outfile, "# global energy weight w is %f\n", eweight);
 	fprintf(outfile,
-	  "# nr.\tconf_w\t(w*de)^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+	  "# nr.\tconf_w\tw*de^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
       } else {
 	fprintf(outfile, "energy weight is %f\n", eweight);
 	fprintf(outfile, "conf\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
@@ -498,8 +498,8 @@ int main(int argc, char **argv)
 	sqr = conf_weight[i] * eweight * SQR(force[energy_p + i]);
 	e_sum += sqr;
 	if (write_output_files) {
-	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
-	    conf_weight[i], sqr, force[energy_p + i] + force_0[energy_p + i],
+	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n", i,
+	    conf_weight[i], sqr/conf_weight[i], force[energy_p + i] + force_0[energy_p + i],
 	    force_0[energy_p + i], fabs(force[energy_p + i]),
 	    force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
 	} else
@@ -535,12 +535,12 @@ int main(int argc, char **argv)
       strcpy(component[4], "yz");
       strcpy(component[5], "zx");
 
-      fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\t\ts\t\ts0\t\tds/s0\n");
+      fprintf(outfile, "#\tconf_w\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
 	sqr = conf_weight[(i - stress_p) / 6] * sweight * SQR(force[i]);
 	s_sum += sqr;
-	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
+	fprintf(outfile, "%3d-%s\t%6.2f\t%14.8f\t%12.10f\t%12.10f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
 	  conf_weight[(i - stress_p) / 6], sqr, force[i] + force_0[i],
 	  force_0[i], force[i] / force_0[i]);

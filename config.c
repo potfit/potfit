@@ -879,7 +879,6 @@ void read_config(char *filename)
       na_type[nconf][j] += na_type[i][j];
 
   /* print diagnostic message and close file */
-  printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n", nconf,
     w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
