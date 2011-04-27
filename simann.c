@@ -114,8 +114,8 @@ void makebump(real *x, real width, real height, int center)
 
 /****************************************************************
  *
- *  anneal(*xi): Anneals x a vector xi to minimize a function F(xi).
- *      Algorithm according to Cordona et al.
+ *  anneal(*xi): Anneals a vector xi to minimize a function F(xi).
+ *      Algorithm according to Corana et al.
  *
  ****************************************************************/
 
@@ -146,10 +146,10 @@ void anneal(real *xi)
   } else {
     T = atof(anneal_temp);
     if (T < 0)
-      error("The value for anneal_temp \"%s\" is invalid!\n");
+      error("The value for anneal_temp (%f) is invalid!\n", T);
   }
 
-  if (T == 0.)
+  if (T == 0. && auto_T != 1)
     return;			/* don't anneal if starttemp equal zero */
 
   Fvar = vect_real(KMAX + 5 + NEPS);	/* Backlog of old F values */
@@ -161,7 +161,7 @@ void anneal(real *xi)
 
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
-    v[n] = 1.;
+    v[n] = .1;
     naccept[n] = 0;
   }
   for (n = 0; n < ndimtot; n++) {
@@ -170,6 +170,48 @@ void anneal(real *xi)
   }
   F = (*calc_forces) (xi, fxi1, 0);
   Fopt = F;
+
+  /* determine optimum temperature for annealing */
+  if (auto_T) {
+    int   e = 0;
+    int   m = 10 * ndim;
+    int   m1 = 0;
+    real  dF = 0.;
+    real  chi = .9;
+
+    printf("Determining optimal starting temperature T ...\n");
+    for (e = 0; e < m; e++) {
+      for (n = 0; n < ndimtot; n++)
+	xi2[n] = xi[n];
+      h = (int)(dsfmt_genrand_close_open(&dsfmt) * ndim);
+#ifdef APOT
+      randomize_parameter(h, xi2, v);
+#else
+      /* Create a gaussian bump,
+         width & hight distributed normally */
+      width = fabs(normdist());
+      height = normdist() * v[h];
+      makebump(xi2, width, height, h);
+#endif
+      F2 = (*calc_forces) (xi2, fxi1, 0);
+      if (F2 <= F) {
+	m1++;
+      } else {
+	dF += F2 - F;
+      }
+    }
+    printf("Did %d steps, %d were accepted\n", m, m1);
+    m -= m1;
+    dF /= m;
+    printf("m2 = %d, dF = %f\n", m, dF);
+
+    T = dF / log(m / (m * chi + (1 - chi) * m1));
+    printf("T=%f -> ", T);
+    if (T < F)
+      T = pow(10, ceil(log10(F)));
+    printf("%f\n", T);
+  }
+
   printf("  k\tT        \t  m\tF          \tFopt\n");
   printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, Fopt);
   fflush(stdout);

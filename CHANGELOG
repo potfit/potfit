@@ -1,6 +1,8 @@
 devel
 + new initialization method for analytic potential functions
 + don't move the binary if BIN_DIR is empty
++ validate parameters after initialization
++ add auto_t feature for simann, enable with "anneal_temp auto"
 + the error sum is now calculated as w*d^2 and no longer as (w*d)^2
 
 devel-20110331
