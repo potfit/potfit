@@ -97,7 +97,7 @@ void add_potential(char *name, int parameter, fvalue_pointer fval)
   int   k = n_functions;
 
   /* only add potentials with unused names */
-  for (i = 0; i < n_functions; i++) {
+  for (i = 0; i < k; i++) {
     if (strcmp(function_table.name[i], name) == 0) {
       error("There already is a potential with the name \"%s\".", name);
     }
@@ -117,6 +117,8 @@ void add_potential(char *name, int parameter, fvalue_pointer fval)
     error("Could not allocate memory for function_table!");
 
   /* assign values */
+  for (i = 0; i < 255; i++)
+    function_table.name[k][i] = '\0';
   strncpy(function_table.name[k], name, strlen(name));
   function_table.n_par[k] = parameter;
   function_table.fvalue[k] = fval;
@@ -134,9 +136,11 @@ int apot_parameters(char *name)
 {
   int   i;
 
-  for (i = 0; i < n_functions; i++)
-    if (strcmp(function_table.name[i], name) == 0)
+  for (i = 0; i < n_functions; i++) {
+    if (strcmp(function_table.name[i], name) == 0) {
       return function_table.n_par[i];
+    }
+  }
 
   return -1;
 }

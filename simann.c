@@ -174,13 +174,13 @@ void anneal(real *xi)
   /* determine optimum temperature for annealing */
   if (auto_T) {
     int   e = 0;
-    int   m = 10 * ndim;
+    int   u = 10 * ndim;
     int   m1 = 0;
     real  dF = 0.;
     real  chi = .9;
 
     printf("Determining optimal starting temperature T ...\n");
-    for (e = 0; e < m; e++) {
+    for (e = 0; e < u; e++) {
       for (n = 0; n < ndimtot; n++)
 	xi2[n] = xi[n];
       h = (int)(dsfmt_genrand_close_open(&dsfmt) * ndim);
@@ -200,12 +200,12 @@ void anneal(real *xi)
 	dF += F2 - F;
       }
     }
-    printf("Did %d steps, %d were accepted\n", m, m1);
-    m -= m1;
-    dF /= m;
-    printf("m2 = %d, dF = %f\n", m, dF);
+    printf("Did %d steps, %d were accepted\n", u, m1);
+    u -= m1;
+    dF /= u;
+    printf("m2 = %d, dF = %f\n", u, dF);
 
-    T = dF / log(m / (m * chi + (1 - chi) * m1));
+    T = dF / log(u / (u * chi + (1 - chi) * m1));
     printf("T=%f -> ", T);
     if (T < F)
       T = pow(10, ceil(log10(F)));

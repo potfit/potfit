@@ -451,7 +451,7 @@ int main(int argc, char **argv)
       if (i == 0)
 	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
-	"%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
+	"%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
 	sqr, force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	force_0[i],
@@ -462,7 +462,7 @@ int main(int argc, char **argv)
 	fprintf(outfile, "\n\n");
       if (i == 0)
 	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%3d:%6d:%s\t%4s\t%20.18f\t%11.8f\t%11.8f\t%14.8f\n",
+      fprintf(outfile, "%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
 	sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
@@ -498,10 +498,11 @@ int main(int argc, char **argv)
 	sqr = conf_weight[i] * eweight * SQR(force[energy_p + i]);
 	e_sum += sqr;
 	if (write_output_files) {
-	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n", i,
-	    conf_weight[i], sqr/conf_weight[i], force[energy_p + i] + force_0[energy_p + i],
-	    force_0[energy_p + i], fabs(force[energy_p + i]),
-	    force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
+	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n",
+	    i, conf_weight[i], sqr / conf_weight[i],
+	    force[energy_p + i] + force_0[energy_p + i], force_0[energy_p + i],
+	    fabs(force[energy_p + i]), force[energy_p + i],
+	    force[energy_p + i] / force_0[energy_p + i]);
 	} else
 	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i], sqr,
 	    force[energy_p + i] + force_0[energy_p + i], force_0[energy_p + i],
