@@ -29,17 +29,17 @@
  ****************************************************************/
 
 #include "potfit.h"
-#include "functions.h"
 
-#ifndef ACML
-#include <mkl_vml.h>
-#else
-#include <acml_mv.h>
-#endif /* ACML */
+#include "functions.h"
+#include "utils.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif /* M_PI */
+
+/* macro for simplified addition of new potential functions */
+#define str(s) #s
+#define add_pot(a,b) add_potential(str(a),b,&a ## _value)
 
 /****************************************************************
  *
@@ -49,40 +49,40 @@
 
 void apot_init(void)
 {
-  add_potential("lj", 2, &lj_value);
-  add_potential("eopp", 6, &eopp_value);
-  add_potential("morse", 3, &morse_value);
+  add_pot(lj, 2);
+  add_pot(eopp, 6);
+  add_pot(morse, 3);
 #ifdef COULOMB
-  add_potential("ms", 3, &ms_shift);
-  add_potential("buck", 3, &buck_shift);
+  add_pot(ms, 3);
+  add_pot(buck, 3);
 #else
-  add_potential("ms", 3, &ms_value);
-  add_potential("buck", 3, &buck_value);
+  add_pot(ms, 3);
+  add_pot(buck, 3);
 #endif /* COULOMB */
-  add_potential("softshell", 2, &softshell_value);
-  add_potential("eopp_exp", 6, &eopp_exp_value);
-  add_potential("meopp", 7, &meopp_value);
-  add_potential("power_decay", 2, &power_decay_value);
-  add_potential("exp_decay", 2, &exp_decay_value);
-  add_potential("pohlong", 3, &pohlong_value);
-  add_potential("parabola", 3, &parabola_value);
-  add_potential("csw", 4, &csw_value);
-  add_potential("universal", 4, &universal_value);
-  add_potential("const", 1, &const_value);
-  add_potential("sqrt", 2, &sqrt_value);
-  add_potential("mexp_decay", 3, &mexp_decay_value);
-  add_potential("strmm", 5, &strmm_value);
-  add_potential("double_morse", 7, &double_morse_value);
-  add_potential("double_exp", 5, &double_exp_value);
-  add_potential("poly_5", 5, &poly_5_value);
-  add_potential("cbb", 12, &cbb_value);
-  add_potential("exp_plus", 3, &exp_plus_value);
-  add_potential("mishin", 6, &mishin_value);
-  add_potential("gen_lj", 5, &gen_lj_value);
-  add_potential("gljm", 12, &gljm_value);
-  add_potential("vas", 2, &vas_value);
-  add_potential("vpair", 7, &vpair_value);
-  add_potential("csw2", 4, &csw2_value);
+  add_pot(softshell, 2);
+  add_pot(eopp_exp, 6);
+  add_pot(meopp, 7);
+  add_pot(power_decay, 2);
+  add_pot(exp_decay, 2);
+  add_pot(pohlong, 3);
+  add_pot(parabola, 3);
+  add_pot(csw, 4);
+  add_pot(universal, 4);
+  add_pot(const, 1);
+  add_pot(sqrt, 2);
+  add_pot(mexp_decay, 3);
+  add_pot(strmm, 5);
+  add_pot(double_morse, 7);
+  add_pot(double_exp, 5);
+  add_pot(poly_5, 5);
+  add_pot(cbb, 12);
+  add_pot(exp_plus, 3);
+  add_pot(mishin, 6);
+  add_pot(gen_lj, 5);
+  add_pot(gljm, 12);
+  add_pot(vas, 2);
+  add_pot(vpair, 7);
+  add_pot(csw2, 4);
 }
 
 /****************************************************************
@@ -183,13 +183,13 @@ int apot_assign_functions(apot_table_t *apt)
 
 void lj_value(real r, real *p, real *f)
 {
-  real  sig_d_rad6, sig_d_rad12;
+  static real sig_d_rad6, sig_d_rad12;
 
-  sig_d_rad6 = SQR(p[1]) / SQR(r);
+  sig_d_rad6 = (p[1] * p[1]) / (r * r);
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
-  sig_d_rad12 = SQR(sig_d_rad6);
+  sig_d_rad12 = dsquare(sig_d_rad6);
 
-  *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
+  *f = 4. * p[0] * (sig_d_rad12 - sig_d_rad6);
 }
 
 /****************************************************************
@@ -200,18 +200,14 @@ void lj_value(real r, real *p, real *f)
 
 void eopp_value(real r, real *p, real *f)
 {
-  real  x[2], y[2], power[2];
+  static real x[2], y[2], power[2];
 
   x[0] = r;
   x[1] = r;
   y[0] = p[1];
   y[1] = p[3];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif /* ACML */
+
+  power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
@@ -224,7 +220,7 @@ void eopp_value(real r, real *p, real *f)
 
 void morse_value(real r, real *p, real *f)
 {
-  *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2])));
+  *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2])));
 }
 
 /****************************************************************
@@ -237,9 +233,9 @@ void ms_value(real r, real *p, real *f)
 {
   static real x;
 
-  x = 1 - r / p[2];
+  x = 1. - r / p[2];
 
-  *f = p[0] * (exp(p[1] * x) - 2 * exp((p[1] * x) / 2));
+  *f = p[0] * (exp(p[1] * x) - 2. * exp((p[1] * x) / 2.));
 }
 
 /****************************************************************
@@ -252,7 +248,7 @@ void buck_value(real r, real *p, real *f)
 {
   static real x, y;
 
-  x = SQR(p[1]) / SQR(r);
+  x = (p[1] * p[1]) / (r * r);
   y = x * x * x;
 
   *f = p[0] * exp(-r / p[1]) - p[2] * y;
@@ -270,11 +266,8 @@ void softshell_value(real r, real *p, real *f)
 
   x = p[0] / r;
   y = p[1];
-#ifndef ACML
-  vdPow(1, &x, &y, f);
-#else
-  *f = fastpow(x, y);
-#endif /* ACML */
+
+  power_1(f, &x, &y);
 }
 
 /****************************************************************
@@ -287,11 +280,7 @@ void eopp_exp_value(real r, real *p, real *f)
 {
   static real power;
 
-#ifndef ACML
-  vdPow(1, &r, &p[3], &power);
-#else
-  power = fastpow(r, p[3]);
-#endif /* ACML */
+  power_1(&power, &r, &p[3]);
 
   *f = p[0] * exp(-p[1] * r) + (p[2] / power) * cos(p[4] * r + p[5]);
 }
@@ -310,12 +299,8 @@ void meopp_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[3];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif /* ACML */
+
+  power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
@@ -332,11 +317,8 @@ void power_decay_value(real r, real *p, real *f)
 
   x = 1. / r;
   y = p[1];
-#ifndef ACML
-  vdPow(1, &x, &y, &power);
-#else
-  power = fastpow(x, y);
-#endif /* ACML */
+
+  power_1(&power, &x, &y);
 
   *f = p[0] * power;
 }
@@ -360,18 +342,13 @@ void exp_decay_value(real r, real *p, real *f)
 
 void pohlong_value(real r, real *p, real *f)
 {
-  real  power;
+  static real power;
 
   if (r == 0)
     *f = 0;
   else {
-#ifndef ACML
-    vdPow(1, &r, &p[1], &power);
-#else
-    power = fastpow(r, p[1]);
-#endif /* ACML */
-
-    *f = p[0] * (1 - p[1] * log(r)) * power + p[2] * r;
+    power_1(&power, &r, &p[1]);
+    *f = p[0] * (1. - p[1] * log(r)) * power + p[2] * r;
   }
 }
 
@@ -383,7 +360,7 @@ void pohlong_value(real r, real *p, real *f)
 
 void parabola_value(real r, real *p, real *f)
 {
-  *f = SQR(r) * p[0] + r * p[1] + p[2];
+  *f = (r * r) * p[0] + r * p[1] + p[2];
 }
 
 /****************************************************************
@@ -394,15 +371,11 @@ void parabola_value(real r, real *p, real *f)
 
 void csw_value(real r, real *p, real *f)
 {
-  real  power;
+  static real power;
 
-#ifndef ACML
-  vdPow(1, &r, &p[3], &power);
-#else
-  power = fastpow(r, p[3]);
-#endif /* ACML */
+  power_1(&power, &r, &p[3]);
 
-  *f = (1 + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
+  *f = (1. + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
 }
 
 /****************************************************************
@@ -413,15 +386,11 @@ void csw_value(real r, real *p, real *f)
 
 void csw2_value(real r, real *p, real *f)
 {
-  real  power;
+  static real power;
 
-#ifndef ACML
-  vdPow(1, &r, &p[3], &power);
-#else
-  power = fastpow(r, p[3]);
-#endif /* ACML */
+  power_1(&power, &r, &p[3]);
 
-  *f = (1 + p[0] * cos(p[1] * r + p[2])) / power;
+  *f = (1. + p[0] * cos(p[1] * r + p[2])) / power;
 }
 
 /****************************************************************
@@ -438,12 +407,8 @@ void universal_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[2];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif /* ACML */
+
+  power_m(2, power, x, y);
 
   *f =
     p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
@@ -491,10 +456,12 @@ void mexp_decay_value(real r, real *p, real *f)
 
 void strmm_value(real r, real *p, real *f)
 {
-  real  r_0 = r - p[4];
+  static real r_0;
+
+  r_0 = r - p[4];
 
   *f =
-    2 * p[0] * exp(-p[1] / 2 * r_0) - p[2] * (1 +
+    2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. +
     p[3] * r_0) * exp(-p[3] * r_0);
 }
 
@@ -507,8 +474,8 @@ void strmm_value(real r, real *p, real *f)
 void double_morse_value(real r, real *p, real *f)
 {
   *f =
-    (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) + p[6];
+    (p[0] * (exp(-2. * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2]))) +
+    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) + p[6];
 }
 
 /****************************************************************
@@ -519,7 +486,7 @@ void double_morse_value(real r, real *p, real *f)
 
 void double_exp_value(real r, real *p, real *f)
 {
-  *f = (p[0] * exp(-p[1] * SQR(r - p[2])) + exp(-p[3] * (r - p[4])));
+  *f = (p[0] * exp(-p[1] * dsquare(r - p[2])) + exp(-p[3] * (r - p[4])));
 }
 
 /****************************************************************
@@ -530,10 +497,13 @@ void double_exp_value(real r, real *p, real *f)
 
 void poly_5_value(real r, real *p, real *f)
 {
-  real  dr = (r - 1) * (r - 1);
+  static real dr;
+
+  dr = (r - 1.) * (r - 1.);
+
   *f =
-    p[0] + 0.5 * p[1] * dr + p[2] * (r - 1) * dr + p[3] * SQR(dr) +
-    p[4] * SQR(dr) * (r - 1);
+    p[0] + 0.5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) +
+    p[4] * (dr * dr) * (r - 1.);
 }
 
 /****************************************************************
@@ -546,13 +516,15 @@ void poly_5_value(real r, real *p, real *f)
 
 void cbb_value(real r, real *p, real *f)
 {
-  real  r6 = r * r * r;
+  static real r6;
+
+  r6 = r * r * r;
   r6 *= r6;
 
   *f =
     p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
       p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) -
-    2 * exp(-p[10] * (r - p[11])));
+    2. * exp(-p[10] * (r - p[11])));
 }
 
 /****************************************************************
@@ -574,17 +546,16 @@ void exp_plus_value(real r, real *p, real *f)
 
 void mishin_value(real r, real *p, real *f)
 {
-  real  z = r - p[3];
-  real  temp = exp(-p[5] * r);
-  real  power;
+  static real z;
+  static real temp;
+  static real power;
 
-#ifndef ACML
-  vdPow(1, &z, &p[4], &power);
-#else
-  power = fastpow(z, p[4]);
-#endif /* ACML */
+  z = r - p[3];
+  temp = exp(-p[5] * r);
 
-  *f = p[0] * power * temp * (1 + p[1] * temp) + p[2];
+  power_1(&power, &z, &p[4]);
+
+  *f = p[0] * power * temp * (1. + p[1] * temp) + p[2];
 }
 
 /****************************************************************
@@ -601,12 +572,8 @@ void gen_lj_value(real r, real *p, real *f)
   x[1] = x[0];
   y[0] = p[1];
   y[1] = p[2];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif /* ACML */
+
+  power_m(2, power, x, y);
 
   *f = p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4];
 }
@@ -619,7 +586,7 @@ void gen_lj_value(real r, real *p, real *f)
 
 void gljm_value(real r, real *p, real *f)
 {
-  real  x[3], y[3], power[3];
+  static real x[3], y[3], power[3];
 
   x[0] = r / p[3];
   x[1] = x[0];
@@ -627,19 +594,14 @@ void gljm_value(real r, real *p, real *f)
   y[0] = p[1];
   y[1] = p[2];
   y[2] = p[10];
-#ifndef ACML
-  vdPow(3, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-  power[2] = fastpow(x[2], y[2]);
-#endif /* ACML */
+
+  power_m(3, power, x, y);
 
   real  temp = exp(-p[11] * power[2]);
 
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
-    p[5] * (p[6] * power[2] * temp * (1 + p[7] * temp) + p[8]);
+    p[5] * (p[6] * power[2] * temp * (1. + p[7] * temp) + p[8]);
 }
 
 /****************************************************************
@@ -661,15 +623,12 @@ void vas_value(real r, real *p, real *f)
 
 void vpair_value(real r, real *p, real *f)
 {
-  real  x[7], y, z;
+  static real x[7], y, z;
 
   y = r;
   z = p[1];
-#ifndef ACML
-  vdPow(1, &y, &z, &x[0]);
-#else
-  x[0] = fastpow(y, z);
-#endif /* ACML */
+
+  power_1(&x[0], &y, &z);
   x[1] = r * r;
   x[2] = x[1] * x[1];
   x[3] = p[2] * p[2];
@@ -721,7 +680,7 @@ real cutoff(real r, real r0, real h)
   if ((r - r0) > 0)
     return 0;
 
-  real  val = 0;
+  static real val;
 
   val = (r - r0) / h;
   val *= val;
@@ -918,7 +877,7 @@ void buck_init(real r, real *pot, real *grad, real *p)
 {
   static real x[3];
 
-  x[0] = SQR(p[1]) / SQR(r);
+  x[0] = dsquare(p[1]) / dsquare(r);
   x[1] = p[2] * x[0] * x[0] * x[0];
   x[2] = p[0] * exp(-r / p[1]);
 

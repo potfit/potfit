@@ -375,7 +375,8 @@ void read_config(char *filename)
 	  ("Corrupt configuration file on line %d: Incorrect atom type (%d)\n",
 	  line, atom->typ);
       atom->absforce =
-	sqrt(SQR(atom->force.x) + SQR(atom->force.y) + SQR(atom->force.z));
+	sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) +
+	dsquare(atom->force.z));
       atom->conf = nconf;
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);

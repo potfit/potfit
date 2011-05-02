@@ -283,7 +283,7 @@ int main(int argc, char **argv)
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
 #endif /* !APOT */
-    } else if (format >= 4) {	/*format >= 4 ! */
+    } else if (format >= 4) {
 #ifndef APOT
       splint = splint_ne;
       splint_comb = splint_comb_ne;
@@ -443,7 +443,7 @@ int main(int argc, char **argv)
     strcpy(component[1], "y");
     strcpy(component[2], "z");
     for (i = 0; i < 3 * natoms; i++) {
-      sqr = conf_weight[atoms[i / 3].conf] * SQR(force[i]);
+      sqr = conf_weight[atoms[i / 3].conf] * dsquare(force[i]);
       f_sum += sqr;
 #ifdef FWEIGHT
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
@@ -495,7 +495,7 @@ int main(int argc, char **argv)
       }
 
       for (i = 0; i < nconf; i++) {
-	sqr = conf_weight[i] * eweight * SQR(force[energy_p + i]);
+	sqr = conf_weight[i] * eweight * dsquare(force[energy_p + i]);
 	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n",
@@ -539,7 +539,7 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\tconf_w\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-	sqr = conf_weight[(i - stress_p) / 6] * sweight * SQR(force[i]);
+	sqr = conf_weight[(i - stress_p) / 6] * sweight * dsquare(force[i]);
 	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%6.2f\t%14.8f\t%12.10f\t%12.10f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
@@ -570,7 +570,7 @@ int main(int argc, char **argv)
       printf("Punishment Constraints\n");
     }
     for (i = limit_p; i < dummy_p; i++) {
-      sqr = SQR(force[i]);
+      sqr = dsquare(force[i]);
       if (write_output_files)
 	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
 	  force[i] + force_0[i]);
@@ -584,27 +584,27 @@ int main(int argc, char **argv)
       fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
-	sqr = SQR(force[i]);
+	sqr = dsquare(force[i]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], zero,
 	  sqr, zero, force[i]);
 #else
-	sqr = SQR(force[i + ntypes]);
+	sqr = dsquare(force[i + ntypes]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
-	  SQR(force[i]), force[i + ntypes], force[i]);
+	  dsquare(force[i]), force[i + ntypes], force[i]);
 #endif /* NORESCALE */
       }
 #ifdef NORESCALE
       fprintf(outfile, "\nNORESCALE: <n>!=1\n");
       fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
       fprintf(outfile, "Additional punishment of %f added.\n",
-	SQR(force[dummy_p + ntypes]));
+	dsquare(force[dummy_p + ntypes]));
 #endif /* NORESCALE */
       printf("Punishment constraints data written to \t%s\n", file);
       fclose(outfile);
     } else {
       fprintf(outfile, "Dummy Constraints\n");
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
-	sqr = SQR(force[i]);
+	sqr = dsquare(force[i]);
 	fprintf(outfile, "%s\t%f\t%f\n", elements[i - dummy_p], sqr, force[i]);
       }
     }
@@ -645,13 +645,13 @@ int main(int argc, char **argv)
 
     /* forces */
     for (i = 0; i < 3 * natoms; i++)
-      rms[0] += SQR(force[i]);
+      rms[0] += dsquare(force[i]);
     rms[0] = sqrt(rms[0] / natoms);
 
     /* energies */
     if (eweight != 0) {
       for (i = 0; i < nconf; i++)
-	rms[1] += SQR(force[3 * natoms + i]);
+	rms[1] += dsquare(force[3 * natoms + i]);
       if (isnan(rms[1]))
 	rms[1] = 0;
       rms[1] = sqrt(rms[1] / nconf);
@@ -661,7 +661,7 @@ int main(int argc, char **argv)
     if (sweight != 0) {
       for (i = 0; i < nconf; i++)
 	for (j = 0; j < 6; j++)
-	  rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j]);
+	  rms[2] += dsquare(force[3 * natoms + nconf + 6 * i + j]);
       if (isnan(rms[2]))
 	rms[2] = 0;
       rms[2] = sqrt(rms[2] / (6 * nconf));

@@ -36,6 +36,7 @@
 #include "functions.h"
 #include "potential.h"
 #include "splines.h"
+#include "utils.h"
 
 /****************************************************************
  *
@@ -505,9 +506,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    typ1 = atom->typ;
 	    if (dp_alpha[typ1]) {
-	      dp_sum += SQR(dp_alpha[typ1] * (atom->E_old.x - atom->E_ind.x));
-	      dp_sum += SQR(dp_alpha[typ1] * (atom->E_old.y - atom->E_ind.y));
-	      dp_sum += SQR(dp_alpha[typ1] * (atom->E_old.z - atom->E_ind.z));
+	      dp_sum +=
+		dsquare(dp_alpha[typ1] * (atom->E_old.x - atom->E_ind.x));
+	      dp_sum +=
+		dsquare(dp_alpha[typ1] * (atom->E_old.y - atom->E_ind.y));
+	      dp_sum +=
+		dsquare(dp_alpha[typ1] * (atom->E_old.z - atom->E_ind.z));
 	    }
 	  }
 
@@ -784,8 +788,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
 	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-	      SQR(forces[k + 2]));
+	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
+	      dsquare(forces[k + 2]));
 	  }
 
 	}			/* end F I F T H loop over atoms */
@@ -794,7 +798,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	/* whole energy contributions flow into tmpsum */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * SQR(forces[energy_p + h]);
+	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
 
 #ifdef STRESS
 	/* whole stress contributions flow into tmpsum */
@@ -803,7 +807,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      conf_weight[h] * sweight * SQR(forces[stress_p + 6 * h + i]);
+	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */

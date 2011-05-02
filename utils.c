@@ -31,6 +31,13 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+
+#ifndef ACML
+#include <mkl_vml.h>
+#else
+#include <acml_mv.h>
+#endif /* ACML */
+
 #include "potfit.h"
 #include "utils.h"
 
@@ -141,7 +148,7 @@ vector vec_prod(vector u, vector v)
  *  real normdist(): Returns a normally distributed random variable
  * 	Uses dsfmt PRNG to generate a random number.
  *
- *****************************************************************/
+ ****************************************************************/
 
 real normdist()
 {
@@ -166,13 +173,56 @@ real normdist()
   }
 }
 
+/****************************************************************
+ *
+ *  square functions for integer and real values
+ *
+ ****************************************************************/
+
+inline int isquare(int i)
+{
+  return i * i;
+}
+
+inline real dsquare(real d)
+{
+  return d * d;
+}
+
+/****************************************************************
+ *
+ *  higher powers in one and more dimensions
+ *
+ ****************************************************************/
+
+void power_1(real *result, real *x, real *y)
+{
+#ifndef ACML
+  vdPow(1, x, y, result);
+#else
+  *result = fastpow(x, y);
+#endif
+}
+
+void power_m(int dim, real *result, real *x, real *y)
+{
+#ifndef ACML
+  vdPow(dim, x, y, result);
+#else
+  int   i;
+  for (i = 0; i < dim; i++) {
+    *(result + i) = fastpow(*(x + i), *(y + i));
+  }
+#endif
+}
+
 #if defined APOT && defined EVO
 
 /****************************************************************
  *
  *  quicksort algorithm for opposition-based diff_evo
  *
- *****************************************************************/
+ ****************************************************************/
 
 void quicksort(real *x, int low, int high, real **p)
 {

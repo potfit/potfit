@@ -2406,11 +2406,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
 #endif
-      r2end[col2] = SQR(pt->end[col1]);
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2475,12 +2476,13 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col1 = (ntypes * (ntypes + 1)) / 2 + j;
       col2 = i * ntypes + j;
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
       /* Extrapolation possible  */
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
 #endif /* APOT */
-      r2end[col2] = SQR(pt->end[col1]);
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2611,11 +2613,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
 #endif
-      r2end[col2] = SQR(pt->end[col1]);
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2674,11 +2677,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
 #endif
-      r2end[col2] = SQR(pt->end[col1]);
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);

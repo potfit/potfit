@@ -428,7 +428,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
     for (j = 0; j < mdim; j++) {
       temp = (force[j] - force_xi[j]) / (EPS * scale);
       gamma[j][i] = temp;
-      sum += SQR(temp);
+      sum += dsquare(temp);
     }
     temp = sqrt(sum);
     xi[idx[i]] = store;		/*...and reset [idx[i]] again */
@@ -504,7 +504,7 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, real *p,
   for (i = 0; i < n; i++) {
     lineqsys[i][i] = 0;
     for (j = 0; j < m; j++)
-      lineqsys[i][i] += SQR(gamma[j][i]);
+      lineqsys[i][i] += dsquare(gamma[j][i]);
     for (k = i + 1; k < n; k++) {
       lineqsys[i][k] = 0.;
       for (j = 0; j < m; j++) {
@@ -602,7 +602,7 @@ real normalize_vector(real *v, int n)
   int   j;
   real  temp, sum = 0.0;
   for (j = 0; j < n; j++)
-    sum += SQR(v[j]);
+    sum += dsquare(v[j]);
   temp = sqrt(sum);
   for (j = 0; j < n; j++)
     v[j] /= temp;

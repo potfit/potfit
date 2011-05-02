@@ -46,6 +46,12 @@ vector vec_prod(vector, vector);
 /* pRNG with normal distribution */
 real  normdist();
 
+/* different power functions */
+inline int isquare(int);
+inline real dsquare(real);
+void  power_1(real *, real *, real *);
+void  power_m(int, real *, real *, real *);
+
 #if defined APOT && defined EVO
 /* quicksort for ODE */
 void  quicksort(real *x, int low, int high, real **p);

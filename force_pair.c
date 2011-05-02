@@ -35,6 +35,7 @@
 #include "functions.h"
 #include "potential.h"
 #include "splines.h"
+#include "utils.h"
 
 /****************************************************************
  *
@@ -279,15 +280,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* FWEIGHT */
 	    /* sum up forces */
 	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-	      SQR(forces[k + 2]));
+	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
+	      dsquare(forces[k + 2]));
 	  }			/* second loop over atoms */
 	}
 
 	/* energy contributions */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * SQR(forces[energy_p + h]);
+	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -295,7 +296,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      conf_weight[h] * sweight * SQR(forces[stress_p + 6 * h + i]);
+	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
