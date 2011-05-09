@@ -53,11 +53,11 @@ void apot_init(void)
   add_pot(eopp, 6);
   add_pot(morse, 3);
 #ifdef COULOMB
-  add_pot(ms, 3);
-  add_pot(buck, 3);
+  add_potential("ms", 3, &ms_shift);
+  add_potential("buck", 3, &buck_shift);
 #else
-  add_pot(ms, 3);
-  add_pot(buck, 3);
+  add_potential("ms", 3, &ms_value);
+  add_potential("buck", 3, &buck_value);
 #endif /* COULOMB */
   add_pot(softshell, 2);
   add_pot(eopp_exp, 6);
@@ -475,7 +475,8 @@ void double_morse_value(real r, real *p, real *f)
 {
   *f =
     (p[0] * (exp(-2. * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) + p[6];
+    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) +
+    p[6];
 }
 
 /****************************************************************
@@ -788,7 +789,7 @@ real apot_grad(real r, real *p, void (*function) (real, real *, real *))
   function(r + h, p, &a);
   function(r - h, p, &b);
 
-  return (a - b) / (2 * h);
+  return (a - b) / (2. * h);
 }
 
 /****************************************************************

@@ -36,11 +36,10 @@
 /*** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24 	***/
 /*** Switched to GSL Implementation, put routine under GSL protection 	***/
 
-#include <stddef.h>
-#include <float.h>
 #include "potfit.h"
-#include "utils.h"
+
 #include "bracket.h"
+#include "utils.h"
 
 real brent(real ax, real bx, real cx, real fbx, real tol, real *xmin,
   real *xmin2, real *fxmin, real *fxmin2)

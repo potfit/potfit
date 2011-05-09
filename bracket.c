@@ -31,8 +31,9 @@
  ****************************************************************/
 
 #include "potfit.h"
-#include "utils.h"
+
 #include "bracket.h"
+#include "utils.h"
 
 void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
   real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2)

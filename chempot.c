@@ -31,6 +31,7 @@
 #if defined APOT && defined PAIR
 
 #include "potfit.h"
+
 #include "functions.h"
 
 int swap_chem_pot(int i, int j)

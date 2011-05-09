@@ -177,7 +177,7 @@ void anneal(real *xi)
     int   u = 10 * ndim;
     int   m1 = 0;
     real  dF = 0.;
-    real  chi = .9;
+    real  chi = .5;
 
     printf("Determining optimal starting temperature T ...\n");
     for (e = 0; e < u; e++) {
@@ -203,13 +203,12 @@ void anneal(real *xi)
     printf("Did %d steps, %d were accepted\n", u, m1);
     u -= m1;
     dF /= u;
-    printf("m2 = %d, dF = %f\n", u, dF);
+/*    printf("m2 = %d, dF = %f\n", u, dF);*/
 
     T = dF / log(u / (u * chi + (1 - chi) * m1));
-    printf("T=%f -> ", T);
-    if (T < F)
-      T = pow(10, ceil(log10(F)));
-    printf("%f\n", T);
+    if (T < 0)
+	    T = -T;
+    printf("Setting T=%f\n\n", T);
   }
 
   printf("  k\tT        \t  m\tF          \tFopt\n");

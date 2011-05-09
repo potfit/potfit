@@ -28,10 +28,6 @@
  *
  *****************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-
 #ifndef ACML
 #include <mkl_vml.h>
 #else
