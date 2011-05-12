@@ -179,6 +179,8 @@ int apot_assign_functions(apot_table_t *apt)
  *
  * lennard-jones potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void lj_value(real r, real *p, real *f)
@@ -195,6 +197,8 @@ void lj_value(real r, real *p, real *f)
 /****************************************************************
  *
  * empirical oscillating pair potential
+ *
+ * from http://arxiv.org/abs/0802.2926v2
  *
  ****************************************************************/
 
@@ -216,6 +220,8 @@ void eopp_value(real r, real *p, real *f)
  *
  * morse potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void morse_value(real r, real *p, real *f)
@@ -226,6 +232,8 @@ void morse_value(real r, real *p, real *f)
 /****************************************************************
  *
  * morse-stretch potential (without derivative!)
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -241,6 +249,8 @@ void ms_value(real r, real *p, real *f)
 /****************************************************************
  *
  * buckingham potential (without derivative!)
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -258,6 +268,8 @@ void buck_value(real r, real *p, real *f)
  *
  * softshell potential
  *
+ * CITATION NEEDED
+ *
  *****************************************************************/
 
 void softshell_value(real r, real *p, real *f)
@@ -274,6 +286,8 @@ void softshell_value(real r, real *p, real *f)
  *
  * eopp_exp potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void eopp_exp_value(real r, real *p, real *f)
@@ -288,6 +302,8 @@ void eopp_exp_value(real r, real *p, real *f)
 /****************************************************************
  *
  * meopp potential
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -309,6 +325,8 @@ void meopp_value(real r, real *p, real *f)
  *
  * power_decay potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void power_decay_value(real r, real *p, real *f)
@@ -327,6 +345,8 @@ void power_decay_value(real r, real *p, real *f)
  *
  * exp_decay potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void exp_decay_value(real r, real *p, real *f)
@@ -337,6 +357,8 @@ void exp_decay_value(real r, real *p, real *f)
 /****************************************************************
  *
  * pohlong potential
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -356,6 +378,8 @@ void pohlong_value(real r, real *p, real *f)
  *
  * parabola potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void parabola_value(real r, real *p, real *f)
@@ -366,6 +390,8 @@ void parabola_value(real r, real *p, real *f)
 /****************************************************************
  *
  * chantasiriwan (csw) and milstein potential
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -382,6 +408,8 @@ void csw_value(real r, real *p, real *f)
  *
  * chantasiriwan (csw) and milstein potential - version 2
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void csw2_value(real r, real *p, real *f)
@@ -396,6 +424,8 @@ void csw2_value(real r, real *p, real *f)
 /****************************************************************
  *
  * universal embedding function
+ *
+ * http://dx.doi.org/doi:10.1557/jmr.1989.1195
  *
  ****************************************************************/
 
@@ -419,6 +449,8 @@ void universal_value(real r, real *p, real *f)
  *
  * constant function
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void const_value(real r, real *p, real *f)
@@ -429,6 +461,8 @@ void const_value(real r, real *p, real *f)
 /****************************************************************
  *
  * square root function
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -441,6 +475,8 @@ void sqrt_value(real r, real *p, real *f)
  *
  * mexp_decay potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void mexp_decay_value(real r, real *p, real *f)
@@ -451,6 +487,8 @@ void mexp_decay_value(real r, real *p, real *f)
 /****************************************************************
  *
  * streitz-mintmire (strmm) potential
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -469,6 +507,8 @@ void strmm_value(real r, real *p, real *f)
  *
  * double morse potential
  *
+ * http://dx.doi.org/doi:10.1557/proc-538-535
+ *
  ****************************************************************/
 
 void double_morse_value(real r, real *p, real *f)
@@ -483,6 +523,8 @@ void double_morse_value(real r, real *p, real *f)
  *
  * double exp potential
  *
+ * http://dx.doi.org/doi:10.1557/proc-538-535
+ *
  ****************************************************************/
 
 void double_exp_value(real r, real *p, real *f)
@@ -493,6 +535,8 @@ void double_exp_value(real r, real *p, real *f)
 /****************************************************************
  *
  * poly 5 potential
+ *
+ * http://dx.doi.org/doi:10.1557/proc-538-535
  *
  ****************************************************************/
 
@@ -511,7 +555,7 @@ void poly_5_value(real r, real *p, real *f)
  *
  * cbb potential, from C. B. Basak
  *
- * see http://dx.doi.org/10.1016/S0925-8388(03)00350-5
+ * http://dx.doi.org/10.1016/S0925-8388(03)00350-5
  *
  ****************************************************************/
 
@@ -532,6 +576,8 @@ void cbb_value(real r, real *p, real *f)
  *
  * exp_plus potential
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void exp_plus_value(real r, real *p, real *f)
@@ -542,6 +588,8 @@ void exp_plus_value(real r, real *p, real *f)
 /****************************************************************
  *
  * mishin potential
+ *
+ * http://dx.doi.org/doi:10.1016/j.actamat.2005.05.001
  *
  ****************************************************************/
 
@@ -563,6 +611,8 @@ void mishin_value(real r, real *p, real *f)
  *
  * gen_lj potential, generalized lennard-jones
  *
+ * http://dx.doi.org/doi:10.1016/j.actamat.2005.05.001
+ *
  ****************************************************************/
 
 void gen_lj_value(real r, real *p, real *f)
@@ -582,6 +632,8 @@ void gen_lj_value(real r, real *p, real *f)
 /****************************************************************
  *
  * gljm potential, generalized lennard-jones + mishin potential
+ *
+ * http://dx.doi.org/doi:10.1016/j.actamat.2005.05.001
  *
  ****************************************************************/
 

@@ -28,11 +28,11 @@
  *
  ****************************************************************/
 
-#define MAIN
-
 #include <time.h>
 
+#define MAIN
 #include "potfit.h"
+#undef MAIN
 
 #include "functions.h"
 #include "optimize.h"

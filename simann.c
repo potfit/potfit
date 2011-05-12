@@ -177,7 +177,7 @@ void anneal(real *xi)
     int   u = 10 * ndim;
     int   m1 = 0;
     real  dF = 0.;
-    real  chi = .5;
+    real  chi = .8;
 
     printf("Determining optimal starting temperature T ...\n");
     for (e = 0; e < u; e++) {
