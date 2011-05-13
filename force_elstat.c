@@ -95,6 +95,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   apot_table_t *apt = &apot_table;
   real  charge[ntypes];
   real  sum_charges;
+  real  dp_kappa;
 #ifdef DIPOLE
   int   sum_c;
   real  dp_alpha[ntypes];
@@ -173,22 +174,27 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     }
     apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
     charge[ntypes - 1] = apt->last_charge;
+    if (xi_opt[2 * size + ne + ntypes]) {
+      dp_kappa = xi_opt[2 * size + ne + ntypes];
+    } else {
+      dp_kappa = 0.;
+    }
 #ifdef DIPOLE
     for (i = 0; i < ntypes; i++) {
-      if (xi_opt[2 * size + ne + ntypes + i - 1]) {
-	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i - 1];
+      if (xi_opt[2 * size + ne + ntypes + i]) {
+	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i];
       } else {
 	dp_alpha[i] = 0.;
       }
     }
     for (i = 0; i < size; i++) {
-      if (xi_opt[2 * size + ne + 2 * ntypes + i - 1]) {
-	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i - 1];
+      if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
+	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
       } else {
 	dp_b[i] = 0.;
       }
-      if (xi_opt[3 * size + ne + 2 * ntypes + i - 1]) {
-	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i - 1];
+      if (xi_opt[3 * size + ne + 2 * ntypes + i]) {
+	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i];
       } else {
 	dp_c[i] = 0.;
       }
@@ -270,6 +276,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    neigh = atom->neigh + j;
 	    typ2 = neigh->typ;
 	    col = neigh->col[0];
+
+	    /* updating tail-functions - only necessary with variing kappa */
+	    if (!apt->sw_kappa) {
+	      elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el,
+		&neigh->grad_el, &neigh->ggrad_el);
+	    }
 
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;

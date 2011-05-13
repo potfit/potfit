@@ -221,11 +221,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #elif defined COULOMB
   if (1) {
     apt->ratio = (real *)malloc(ntypes * sizeof(real));
-    apt->values = (real **)malloc((size + 4) * sizeof(real *));
-    apt->param_name = (char ***)malloc((size + 4) * sizeof(char **));
-    apt->pmin = (real **)malloc((size + 4) * sizeof(real *));
-    apt->pmax = (real **)malloc((size + 4) * sizeof(real *));
-    apt->invar_par = (int **)malloc((size + 4) * sizeof(int *));
+    apt->values = (real **)malloc((size + 5) * sizeof(real *));
+    apt->param_name = (char ***)malloc((size + 5) * sizeof(char **));
+    apt->pmin = (real **)malloc((size + 5) * sizeof(real *));
+    apt->pmax = (real **)malloc((size + 5) * sizeof(real *));
+    apt->invar_par = (int **)malloc((size + 5) * sizeof(int *));
 
     apt->values[size] = (real *)malloc((ntypes - 1) * sizeof(real));
     apt->param_name[size] = (char **)malloc((ntypes - 1) * sizeof(char *));
@@ -233,13 +233,19 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->pmax[size] = (real *)malloc((ntypes - 1) * sizeof(real));
     apt->invar_par[size] = (int *)malloc((ntypes - 1) * sizeof(int));
 
-    apt->values[size + 1] = (real *)malloc(ntypes * sizeof(real));
-    apt->param_name[size + 1] = (char **)malloc(ntypes * sizeof(char *));
-    apt->pmin[size + 1] = (real *)malloc(ntypes * sizeof(real));
-    apt->pmax[size + 1] = (real *)malloc(ntypes * sizeof(real));
-    apt->invar_par[size + 1] = (int *)malloc(ntypes * sizeof(int));
+    apt->values[size + 1] = (real *)malloc(sizeof(real));
+    apt->param_name[size + 1] = (char **)malloc(sizeof(char *));
+    apt->pmin[size + 1] = (real *)malloc(sizeof(real));
+    apt->pmax[size + 1] = (real *)malloc(sizeof(real));
+    apt->invar_par[size + 1] = (int *)malloc(sizeof(int));
 
-    for (i = 2; i < 4; i++) {
+    apt->values[size + 2] = (real *)malloc(ntypes * sizeof(real));
+    apt->param_name[size + 2] = (char **)malloc(ntypes * sizeof(char *));
+    apt->pmin[size + 2] = (real *)malloc(ntypes * sizeof(real));
+    apt->pmax[size + 2] = (real *)malloc(ntypes * sizeof(real));
+    apt->invar_par[size + 2] = (int *)malloc(ntypes * sizeof(int));
+
+    for (i = 3; i < 5; i++) {
       apt->values[size + i] = (real *)malloc(size * sizeof(real));
       apt->param_name[size + i] = (char **)malloc(size * sizeof(char *));
       apt->pmin[size + i] = (real *)malloc(size * sizeof(real));
@@ -247,10 +253,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
       apt->invar_par[size + i] = (int *)malloc(size * sizeof(int));
     }
     apt->charge = apt->values[size];
+    apt->dp_kappa = apt->values[size + 1];
 #ifdef DIPOLE
-    apt->dp_alpha = apt->values[size + 1];
-    apt->dp_b = apt->values[size + 2];
-    apt->dp_c = apt->values[size + 3];
+    apt->dp_alpha = apt->values[size + 2];
+    apt->dp_b = apt->values[size + 3];
+    apt->dp_c = apt->values[size + 4];
 #endif /* DIPOLE */
   } else {
 #endif /* COULOMB */
@@ -380,7 +387,8 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #ifdef COULOMB
   reg_for_free(apt->ratio, "apt->ratio");
   reg_for_free(apt->charge, "apt->charge");
-  for (i = 0; i < 4; i++) {
+  reg_for_free(apt->dp_kappa, "apt->dp_kappa");
+  for (i = 0; i < 5; i++) {
     reg_for_free(apt->pmin[size + i], "apt->pmin[%d]", size + i);
     reg_for_free(apt->pmax[size + i], "apt->pmax[%d]", size + i);
     reg_for_free(apt->invar_par[size + i], "apt->invar_par[%d]", size + i);
@@ -544,29 +552,27 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->param_name[apt->number][i], "apt->param_name[%d][%d]",
       apt->number, i);
   }
-#endif /* PAIR */
-
+  apt->param_name[apt->number + 1][0] = (char *)malloc(30 * sizeof(char));
+  if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][0],
+      &apt->dp_kappa[0], &apt->pmin[apt->number + 1][0],
+      &apt->pmax[apt->number + 1][0])) {
+    error("Could not read kappa");
+  }
+  apt->invar_par[apt->number + 1][0] = 0;
+  if (apt->pmin[apt->number + 1][0] == apt->pmax[apt->number + 1][0]) {
+    apt->invar_par[apt->number + 1][0]++;
+  }
+  reg_for_free(apt->param_name[apt->number + 1][0], "apt->param_name[%d][%d]",
+    apt->number + 1, 0);
+  apt->sw_kappa = apt->invar_par[apt->number + 1][0];
+#endif /* COULOMB */
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++) {
-    apt->param_name[apt->number + 1][i] = (char *)malloc(30 * sizeof(char));
-    if (4 > fscanf(infile, "%s %lf %lf %lf",
-	apt->param_name[apt->number + 1][i], &apt->dp_alpha[i],
-	&apt->pmin[apt->number + 1][i], &apt->pmax[apt->number + 1][i])) {
-      error("Could not read polarisability for atomtype #%d\n", i);
-    }
-    apt->invar_par[apt->number + 1][i] = 0;
-    if (apt->pmin[apt->number + 1][i] == apt->pmax[apt->number + 1][i]) {
-      apt->invar_par[apt->number + 1][i]++;
-    }
-    reg_for_free(apt->param_name[apt->number + 1][i], "apt->param_name[%d][%d]",
-      apt->number + 1, i);
-  }
-  for (i = 0; i < apt->number; i++) {
     apt->param_name[apt->number + 2][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
-	apt->param_name[apt->number + 2][i], &apt->dp_b[i],
+	apt->param_name[apt->number + 2][i], &apt->dp_alpha[i],
 	&apt->pmin[apt->number + 2][i], &apt->pmax[apt->number + 2][i])) {
-      error("Could not read parameter dp_b for potential #%d\n", i);
+      error("Could not read polarisability for atomtype #%d\n", i);
     }
     apt->invar_par[apt->number + 2][i] = 0;
     if (apt->pmin[apt->number + 2][i] == apt->pmax[apt->number + 2][i]) {
@@ -578,9 +584,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   for (i = 0; i < apt->number; i++) {
     apt->param_name[apt->number + 3][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
-	apt->param_name[apt->number + 3][i], &apt->dp_c[i],
+	apt->param_name[apt->number + 3][i], &apt->dp_b[i],
 	&apt->pmin[apt->number + 3][i], &apt->pmax[apt->number + 3][i])) {
-      error("Could not read parameter dp_c for potential #%d\n", i);
+      error("Could not read parameter dp_b for potential #%d\n", i);
     }
     apt->invar_par[apt->number + 3][i] = 0;
     if (apt->pmin[apt->number + 3][i] == apt->pmax[apt->number + 3][i]) {
@@ -588,6 +594,20 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[%d][%d]",
       apt->number + 3, i);
+  }
+  for (i = 0; i < apt->number; i++) {
+    apt->param_name[apt->number + 4][i] = (char *)malloc(30 * sizeof(char));
+    if (4 > fscanf(infile, "%s %lf %lf %lf",
+	apt->param_name[apt->number + 4][i], &apt->dp_c[i],
+	&apt->pmin[apt->number + 4][i], &apt->pmax[apt->number + 4][i])) {
+      error("Could not read parameter dp_c for potential #%d\n", i);
+    }
+    apt->invar_par[apt->number + 4][i] = 0;
+    if (apt->pmin[apt->number + 4][i] == apt->pmax[apt->number + 4][i]) {
+      apt->invar_par[apt->number + 4][i]++;
+    }
+    reg_for_free(apt->param_name[apt->number + 4][i], "apt->param_name[%d][%d]",
+      apt->number + 4, i);
   }
 #endif /* DIPOLE */
 
@@ -935,7 +955,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif /* PAIR */
 
 #ifdef COULOMB
-  apt->total_par += ntypes - 1;
+  apt->total_par += ntypes;
 #endif /* COULOMB */
 #ifdef DIPOLE
   apt->total_par += ntypes;
@@ -964,6 +984,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
 #endif /* PAIR */
 #ifdef COULOMB
+  pt->len += ntypes;
   pt->len += ntypes - 1;
 #endif /* COULOMB */
 #ifdef DIPOLE
@@ -1051,10 +1072,22 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       pt->idxlen -= apt->invar_par[i][j];
     }
   }
-  pt->idxlen += ntypes - 1;
-#endif /* COULOMB */
-#ifdef DIPOLE
   i = apt->number + 1;
+  *val = apt->values[i][0];
+  val++;
+  if (!apt->invar_par[i][0]) {
+    pt->idx[k] = l++;
+    apt->idxpot[k] = i;
+    apt->idxparam[k++] = 0;
+  } else {
+    l++;
+    apt->total_par -= apt->invar_par[i][0];
+    pt->idxlen -= apt->invar_par[i][0];
+  }
+  pt->idxlen += ntypes;
+#endif
+#ifdef DIPOLE
+  i = apt->number + 2;
   for (j = 0; j < (ntypes); j++) {
     *val = apt->values[i][j];
     val++;
@@ -1068,7 +1101,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       pt->idxlen -= apt->invar_par[i][j];
     }
   }
-  for (i = apt->number + 2; i < apt->number + 4; i++) {
+  for (i = apt->number + 3; i < apt->number + 5; i++) {
     for (j = 0; j < (apt->number); j++) {
       *val = apt->values[i][j];
       val++;
@@ -2005,13 +2038,13 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
  *
  ****************************************************************/
 
-void init_tails()
+void init_tails(real dp_kappa)
 {
   int   i, j;
 
   for (i = 0; i < natoms; i++)
     for (j = 0; j < atoms[i].n_neigh; j++)
-      elstat_shift(atoms[i].neigh[j].r, &atoms[i].neigh[j].fnval_el,
+      elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
 	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
 }
 
@@ -2143,20 +2176,23 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
       apt->charge[i], apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
   fprintf(outfile, "charge_%s\t %f\n", elements[ntypes - 1], apt->last_charge);
+  fprintf(outfile, "%s\t\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][0],
+    apt->dp_kappa[0], apt->pmin[apt->number + 1][0],
+    apt->pmax[apt->number + 1][0]);
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++)
-    fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][i],
-      apt->dp_alpha[i], apt->pmin[apt->number + 1][i],
-      apt->pmax[apt->number + 1][i]);
-  for (i = 0; i < apt->number; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
-      apt->dp_b[i], apt->pmin[apt->number + 2][i],
+      apt->dp_alpha[i], apt->pmin[apt->number + 2][i],
       apt->pmax[apt->number + 2][i]);
-  }
   for (i = 0; i < apt->number; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i],
-      apt->dp_c[i], apt->pmin[apt->number + 3][i],
+      apt->dp_b[i], apt->pmin[apt->number + 3][i],
       apt->pmax[apt->number + 3][i]);
+  }
+  for (i = 0; i < apt->number; i++) {
+    fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 4][i],
+      apt->dp_c[i], apt->pmin[apt->number + 4][i],
+      apt->pmax[apt->number + 4][i]);
   }
 #endif /* DIPOLE */
   fprintf(outfile, "\n");
@@ -3049,9 +3085,9 @@ void write_coul2imd()
     error("Could not open file %s\n", filename);
 
   fprintf(outfile, "charge\t\t");
-  for (i = 0; i < ntypes; i++)
+  for (i = 0; i < ntypes - 1; i++)
     fprintf(outfile, "%f\t", apt->charge[i]);
-  fprintf(outfile, "\n");
+  fprintf(outfile, "%f\n", apt->last_charge);
 
   if ((strcmp(apt->names[0], "ms") == 0) && (strcmp(apt->names[1], "ms") == 0)
     && (strcmp(apt->names[2], "ms") == 0)) {
@@ -3090,7 +3126,7 @@ void write_coul2imd()
 
   fprintf(outfile, "\n");
   fprintf(outfile, "ew_rcut\t\t%f\n", dp_cut);
-  fprintf(outfile, "ew_kappa\t%f\n", dp_kappa);
+  fprintf(outfile, "ew_kappa\t\t%f\n", apt->dp_kappa[0]);
   fprintf(outfile, "r_cut\t\t");
   for (i = 0; i < apt->number; i++)
     fprintf(outfile, "%f\t", apot_table.end[0]);
