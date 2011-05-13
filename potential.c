@@ -236,7 +236,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->values[size + 1] = (real *)malloc(sizeof(real));
     apt->param_name[size + 1] = (char **)malloc(sizeof(char *));
     apt->pmin[size + 1] = (real *)malloc(sizeof(real));
-    apt->pmax[size +1 ] = (real *)malloc(sizeof(real));
+    apt->pmax[size + 1] = (real *)malloc(sizeof(real));
     apt->invar_par[size + 1] = (int *)malloc(sizeof(int));
 
     apt->values[size + 2] = (real *)malloc(ntypes * sizeof(real));
@@ -541,8 +541,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   for (i = 0; i < ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
-		   &apt->charge[i], &apt->pmin[apt->number][i],
-		   &apt->pmax[apt->number][i])) {
+	&apt->charge[i], &apt->pmin[apt->number][i],
+	&apt->pmax[apt->number][i])) {
       error("Could not read charge for atomtype #%d\n", i);
     }
     apt->invar_par[apt->number][i] = 0;
@@ -550,21 +550,21 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       apt->invar_par[apt->number][i]++;
     }
     reg_for_free(apt->param_name[apt->number][i], "apt->param_name[%d][%d]",
-		 apt->number, i);
+      apt->number, i);
   }
   apt->param_name[apt->number + 1][0] = (char *)malloc(30 * sizeof(char));
   if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][0],
-		 &apt->dp_kappa[0], &apt->pmin[apt->number +1 ][0],
-		 &apt->pmax[apt->number + 1][0])) {
+      &apt->dp_kappa[0], &apt->pmin[apt->number + 1][0],
+      &apt->pmax[apt->number + 1][0])) {
     error("Could not read kappa");
   }
   apt->invar_par[apt->number + 1][0] = 0;
   if (apt->pmin[apt->number + 1][0] == apt->pmax[apt->number + 1][0]) {
-    apt->invar_par[apt->number +1][0]++;
+    apt->invar_par[apt->number + 1][0]++;
   }
   reg_for_free(apt->param_name[apt->number + 1][0], "apt->param_name[%d][%d]",
-	       apt->number + 1, 0);
-  apt->sw_kappa = apt->invar_par[apt->number +1][0];
+    apt->number + 1, 0);
+  apt->sw_kappa = apt->invar_par[apt->number + 1][0];
 #endif /* COULOMB */
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++) {
@@ -2174,10 +2174,11 @@ void write_pot_table0(apot_table_t *apt, char *filename)
   fprintf(outfile, "elstat\n");
   for (i = 0; i < ntypes - 1; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
-	    apt->charge[i], apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
+      apt->charge[i], apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
   fprintf(outfile, "charge_%s\t %f\n", elements[ntypes - 1], apt->last_charge);
   fprintf(outfile, "%s\t\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][0],
-	  apt->dp_kappa[0], apt->pmin[apt->number + 1][0], apt->pmax[apt->number + 1][0]);
+    apt->dp_kappa[0], apt->pmin[apt->number + 1][0],
+    apt->pmax[apt->number + 1][0]);
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],

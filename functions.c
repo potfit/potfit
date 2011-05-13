@@ -986,7 +986,8 @@ void elstat_value(real r, real dp_kappa, real *ftail, real *gtail, real *ggtail)
  *
  ****************************************************************/
 
-void elstat_shift(real r, real dp_kappa, real *fnval_tail, real *grad_tail, real *ggrad_tail)
+void elstat_shift(real r, real dp_kappa, real *fnval_tail, real *grad_tail,
+  real *ggrad_tail)
 {
   static real ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
   static real x[3];
