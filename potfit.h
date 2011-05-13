@@ -195,6 +195,8 @@ typedef struct {
   real *ratio;			/* stoichiometric ratio */
   real *charge;			/* charges */
   real  last_charge;		/* last charge determined on the basis of charge neutrality */
+  real *dp_kappa;        	/* parameter kappa */
+  int   sw_kappa;               /* switch for kappa-optimization */
 #endif
 #ifdef DIPOLE
   real *dp_alpha;		/* polarisability */
@@ -399,7 +401,6 @@ EXTERN char *component[6];	/* componentes of vectors and tensors */
 /* variables needed for electrostatic options */
 #ifdef COULOMB
 EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
-EXTERN real dp_kappa INIT(0.10);	/* parameter kappa */
 EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
 #endif /* COULOMB */
 #ifdef DIPOLE

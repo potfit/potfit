@@ -1,3 +1,6 @@
+dipole-20110328
++ elstat parameter dp_kappa can now be optimized
+
 devel
 + new internal initialization method for analytic potential functions
 + don't move the binary if BIN_DIR is empty

@@ -350,10 +350,6 @@ void read_paramfile(FILE *pf)
     }
 #endif /* STRESS */
 #ifdef COULOMB
-    /* parameter kappa */
-    else if (strcasecmp(token, "dp_kappa") == 0) {
-      getparam("dp_kappa", &dp_kappa, PARAM_DOUBLE, 1, 1);
-    }
     /* cutoff-radius for long-range interactions */
     else if (strcasecmp(token, "dp_cut") == 0) {
       getparam("dp_cut", &dp_cut, PARAM_DOUBLE, 1, 1);
