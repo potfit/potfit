@@ -197,7 +197,7 @@ void power_1(real *result, real *x, real *y)
   vdPow(1, x, y, result);
 #else
   *result = fastpow(x, y);
-#endif
+#endif /* ACML */
 }
 
 void power_m(int dim, real *result, real *x, real *y)
@@ -209,7 +209,7 @@ void power_m(int dim, real *result, real *x, real *y)
   for (i = 0; i < dim; i++) {
     *(result + i) = fastpow(*(x + i), *(y + i));
   }
-#endif
+#endif /* ACML */
 }
 
 #if defined APOT && defined EVO

@@ -46,7 +46,7 @@ void  eopp_exp_value(real, real *, real *);
 void  meopp_value(real, real *, real *);
 void  power_decay_value(real, real *, real *);
 void  exp_decay_value(real, real *, real *);
-void  pohlong_value(real, real *, real *);
+void  bjs_value(real, real *, real *);
 void  parabola_value(real, real *, real *);
 void  csw_value(real, real *, real *);
 void  universal_value(real, real *, real *);

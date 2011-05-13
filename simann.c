@@ -110,7 +110,7 @@ void makebump(real *x, real width, real height, int center)
   return;
 }
 
-#endif
+#endif /* APOT */
 
 /****************************************************************
  *
@@ -192,7 +192,7 @@ void anneal(real *xi)
       width = fabs(normdist());
       height = normdist() * v[h];
       makebump(xi2, width, height, h);
-#endif
+#endif /* APOT */
       F2 = (*calc_forces) (xi2, fxi1, 0);
       if (F2 <= F) {
 	m1++;
@@ -207,7 +207,7 @@ void anneal(real *xi)
 
     T = dF / log(u / (u * chi + (1 - chi) * m1));
     if (T < 0)
-	    T = -T;
+      T = -T;
     printf("Setting T=%f\n\n", T);
   }
 
@@ -234,7 +234,7 @@ void anneal(real *xi)
 	  width = fabs(normdist());
 	  height = normdist() * v[h];
 	  makebump(xi2, width, height, h);
-#endif
+#endif /* APOT */
 	  F2 = (*calc_forces) (xi2, fxi1, 0);
 	  if (F2 <= F) {	/* accept new point */
 #ifdef APOT
@@ -242,7 +242,7 @@ void anneal(real *xi)
 #else
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
-#endif
+#endif /* APOT */
 	    F = F2;
 	    naccept[h]++;
 	    if (F2 < Fopt) {
@@ -260,7 +260,7 @@ void anneal(real *xi)
 		/* *INDENT-ON* */
 		}
 	      write_pot_table(&apot_table, tempfile);
-#endif
+#endif /* APOT */
 	    }
 	  }
 
@@ -289,7 +289,7 @@ void anneal(real *xi)
 	fprintf(outfile, "%d\n", apot_table.sum_t);
 	fclose(outfile);
       }
-#endif
+#endif /* DIPOLE */
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);

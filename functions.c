@@ -64,7 +64,7 @@ void apot_init(void)
   add_pot(meopp, 7);
   add_pot(power_decay, 2);
   add_pot(exp_decay, 2);
-  add_pot(pohlong, 3);
+  add_pot(bjs, 3);
   add_pot(parabola, 3);
   add_pot(csw, 4);
   add_pot(universal, 4);
@@ -179,7 +179,7 @@ int apot_assign_functions(apot_table_t *apt)
  *
  * lennard-jones potential
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1098/rspa.1924.0082
  *
  ****************************************************************/
 
@@ -196,9 +196,9 @@ void lj_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * empirical oscillating pair potential
+ * empirical oscillating pair potential (eopp)
  *
- * from http://arxiv.org/abs/0802.2926v2
+ * http://arxiv.org/abs/0802.2926v2
  *
  ****************************************************************/
 
@@ -220,7 +220,7 @@ void eopp_value(real r, real *p, real *f)
  *
  * morse potential
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1103/PhysRev.34.57
  *
  ****************************************************************/
 
@@ -268,8 +268,6 @@ void buck_value(real r, real *p, real *f)
  *
  * softshell potential
  *
- * CITATION NEEDED
- *
  *****************************************************************/
 
 void softshell_value(real r, real *p, real *f)
@@ -286,7 +284,7 @@ void softshell_value(real r, real *p, real *f)
  *
  * eopp_exp potential
  *
- * CITATION NEEDED
+ * http://arxiv.org/abs/0802.2926v2
  *
  ****************************************************************/
 
@@ -303,7 +301,7 @@ void eopp_exp_value(real r, real *p, real *f)
  *
  * meopp potential
  *
- * CITATION NEEDED
+ * http://arxiv.org/abs/0802.2926v2
  *
  ****************************************************************/
 
@@ -325,8 +323,6 @@ void meopp_value(real r, real *p, real *f)
  *
  * power_decay potential
  *
- * CITATION NEEDED
- *
  ****************************************************************/
 
 void power_decay_value(real r, real *p, real *f)
@@ -345,8 +341,6 @@ void power_decay_value(real r, real *p, real *f)
  *
  * exp_decay potential
  *
- * CITATION NEEDED
- *
  ****************************************************************/
 
 void exp_decay_value(real r, real *p, real *f)
@@ -356,13 +350,13 @@ void exp_decay_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * pohlong potential
+ * bjs potential
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1103/PhysRevB.37.6632
  *
  ****************************************************************/
 
-void pohlong_value(real r, real *p, real *f)
+void bjs_value(real r, real *p, real *f)
 {
   static real power;
 
@@ -378,8 +372,6 @@ void pohlong_value(real r, real *p, real *f)
  *
  * parabola potential
  *
- * CITATION NEEDED
- *
  ****************************************************************/
 
 void parabola_value(real r, real *p, real *f)
@@ -391,7 +383,7 @@ void parabola_value(real r, real *p, real *f)
  *
  * chantasiriwan (csw) and milstein potential
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1103/PhysRevB.53.14080
  *
  ****************************************************************/
 
@@ -406,9 +398,9 @@ void csw_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * chantasiriwan (csw) and milstein potential - version 2
+ * chantasiriwan (csw) and milstein potential - slightly modified
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1103/PhysRevB.53.14080
  *
  ****************************************************************/
 
@@ -449,8 +441,6 @@ void universal_value(real r, real *p, real *f)
  *
  * constant function
  *
- * CITATION NEEDED
- *
  ****************************************************************/
 
 void const_value(real r, real *p, real *f)
@@ -462,7 +452,7 @@ void const_value(real r, real *p, real *f)
  *
  * square root function
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1080/01418618408244210
  *
  ****************************************************************/
 
@@ -474,8 +464,6 @@ void sqrt_value(real r, real *p, real *f)
 /****************************************************************
  *
  * mexp_decay potential
- *
- * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -547,7 +535,7 @@ void poly_5_value(real r, real *p, real *f)
   dr = (r - 1.) * (r - 1.);
 
   *f =
-    p[0] + 0.5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) +
+    p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) +
     p[4] * (dr * dr) * (r - 1.);
 }
 
@@ -575,8 +563,6 @@ void cbb_value(real r, real *p, real *f)
 /****************************************************************
  *
  * exp_plus potential
- *
- * CITATION NEEDED
  *
  ****************************************************************/
 
@@ -661,6 +647,8 @@ void gljm_value(real r, real *p, real *f)
  *
  * bond-stretching function of vashishta potential (f_c)
  *
+ * CITATION NEEDED
+ *
  ****************************************************************/
 
 void vas_value(real r, real *p, real *f)
@@ -671,6 +659,8 @@ void vas_value(real r, real *p, real *f)
 /****************************************************************
  *
  * original pair contributions of vashishta potential (V_2)
+ *
+ * CITATION NEEDED
  *
  ****************************************************************/
 

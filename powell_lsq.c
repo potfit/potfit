@@ -200,7 +200,7 @@ void powell_lsq(real *xi)
 #if defined DEBUG && !(defined APOT)
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3],
 	q[4], q[5], q[6], q[7]);
-#endif
+#endif /* DEBUG && !APOT */
       if (i > 0 && i <= ndim) {
 	sprintf(errmsg, "Linear equation system singular after step %d i=%d", m,
 	  i);
@@ -304,7 +304,7 @@ void powell_lsq(real *xi)
 #else
     printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4],
       fcalls);
-#endif
+#endif /* APOT */
     fflush(stdout);
 
     /* End fit if break flagfile exists */
@@ -341,7 +341,7 @@ void powell_lsq(real *xi)
 	apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
 	  xi[idx[i]];
     write_pot_table(&apot_table, tempfile);
-#endif
+#endif /* APOT */
 
     /*End fit if whole series didn't improve F */
   } while (((F3 - F > PRECISION / 10.) || (F3 - F < 0)) && (F3 - F > d_eps));
@@ -422,7 +422,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 #else
     scale = 1.;
     xi[idx[i]] += EPS;		/*increase xi[idx[i]]... */
-#endif
+#endif /* APOT */
     sum = 0.;
     (void)(*calc_forces) (xi, force, 0);
     for (j = 0; j < mdim; j++) {
