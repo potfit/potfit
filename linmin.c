@@ -35,8 +35,10 @@
 /*** by Peter Brommer, ITAP, 2002-10-10 					***/
 
 #include "potfit.h"
+
 #include "utils.h"
 #include "bracket.h"
+
 #define TOL 1.0e-1
 
 real *xicom, *delcom;

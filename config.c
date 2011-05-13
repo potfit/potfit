@@ -29,6 +29,7 @@
  ****************************************************************/
 
 #include "potfit.h"
+
 #include "utils.h"
 
 /****************************************************************
@@ -375,7 +376,8 @@ void read_config(char *filename)
 	  ("Corrupt configuration file on line %d: Incorrect atom type (%d)\n",
 	  line, atom->typ);
       atom->absforce =
-	sqrt(SQR(atom->force.x) + SQR(atom->force.y) + SQR(atom->force.z));
+	sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) +
+	dsquare(atom->force.z));
       atom->conf = nconf;
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
@@ -879,7 +881,6 @@ void read_config(char *filename)
       na_type[nconf][j] += na_type[i][j];
 
   /* print diagnostic message and close file */
-  printf("Maximum number of neighbors is %d.\n", maxneigh);
   printf("Read %d configurations (%d with forces, %d with stresses)\n", nconf,
     w_force, w_stress);
   printf("with a total of %d atoms (", natoms);

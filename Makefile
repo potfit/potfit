@@ -438,7 +438,7 @@ ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += DIPOLE does not support tabulated potentials (yet)
   endif
-  CFLAGS  += -DCOULOMB -DDIPOLE 
+  CFLAGS  += -DCOULOMB -DDIPOLE
   INTERACTION = 1
 endif
 
@@ -546,8 +546,8 @@ powell_lsq.o: powell_lsq.c
 	${CC} ${CFLAGS} ${CINCLUDE} -c powell_lsq.c
 
 # special rules for function evaluation
-functions.o: functions.c
-	${CC} ${CFLAGS} ${CINCLUDE} -c functions.c
+utils.o: utils.c
+	${CC} ${CFLAGS} ${CINCLUDE} -c utils.c
 
 # generic compilation rule
 .c.o:

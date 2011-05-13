@@ -195,8 +195,8 @@ typedef struct {
   real *ratio;			/* stoichiometric ratio */
   real *charge;			/* charges */
   real  last_charge;		/* last charge determined on the basis of charge neutrality */
-  real *dp_kappa;        	/* parameter kappa */
-  int   sw_kappa;               /* switch for kappa-optimization */
+  real *dp_kappa;		/* parameter kappa */
+  int   sw_kappa;		/* switch for kappa-optimization */
 #endif
 #ifdef DIPOLE
   real *dp_alpha;		/* polarisability */
@@ -219,7 +219,6 @@ typedef struct {
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-#define SQR(a)     ((a)*(a))
 #define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
 
 /****************************************************************

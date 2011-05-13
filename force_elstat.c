@@ -36,6 +36,7 @@
 #include "functions.h"
 #include "potential.h"
 #include "splines.h"
+#include "utils.h"
 
 /****************************************************************
  *
@@ -94,7 +95,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   apot_table_t *apt = &apot_table;
   real  charge[ntypes];
   real  sum_charges;
-  real dp_kappa;
+  real  dp_kappa;
 #ifdef DIPOLE
   int   sum_c;
   real  dp_alpha[ntypes];
@@ -163,7 +164,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
     /* local arrays for electrostatic parameters */
     sum_charges = 0;
-    for (i = 0; i < ntypes - 1; i++) {   
+    for (i = 0; i < ntypes - 1; i++) {
       if (xi_opt[2 * size + ne + i]) {
 	charge[i] = xi_opt[2 * size + ne + i];
 	sum_charges += apt->ratio[i] * charge[i];
@@ -173,7 +174,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     }
     apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
     charge[ntypes - 1] = apt->last_charge;
-    if (xi_opt[2 * size + ne + ntypes]) {     
+    if (xi_opt[2 * size + ne + ntypes]) {
       dp_kappa = xi_opt[2 * size + ne + ntypes];
     } else {
       dp_kappa = 0.;
@@ -277,11 +278,11 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    col = neigh->col[0];
 
 	    /* updating tail-functions - only necessary with variing kappa */
-	    if (!apt->sw_kappa){
+	    if (!apt->sw_kappa) {
 	      elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el,
-			   &neigh->grad_el, &neigh->ggrad_el);
+		&neigh->grad_el, &neigh->ggrad_el);
 	    }
-	    
+
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 
@@ -517,9 +518,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    typ1 = atom->typ;
 	    if (dp_alpha[typ1]) {
-	      dp_sum += SQR(dp_alpha[typ1] * (atom->E_old.x - atom->E_ind.x));
-	      dp_sum += SQR(dp_alpha[typ1] * (atom->E_old.y - atom->E_ind.y));
-	      dp_sum += SQR(dp_alpha[typ1] * (atom->E_old.z - atom->E_ind.z));
+	      dp_sum +=
+		dsquare(dp_alpha[typ1] * (atom->E_old.x - atom->E_ind.x));
+	      dp_sum +=
+		dsquare(dp_alpha[typ1] * (atom->E_old.y - atom->E_ind.y));
+	      dp_sum +=
+		dsquare(dp_alpha[typ1] * (atom->E_old.z - atom->E_ind.z));
 	    }
 	  }
 
@@ -796,8 +800,8 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
 	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-	      SQR(forces[k + 2]));
+	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
+	      dsquare(forces[k + 2]));
 	  }
 
 	}			/* end F I F T H loop over atoms */
@@ -806,7 +810,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	/* whole energy contributions flow into tmpsum */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * SQR(forces[energy_p + h]);
+	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
 
 #ifdef STRESS
 	/* whole stress contributions flow into tmpsum */
@@ -815,7 +819,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      conf_weight[h] * sweight * SQR(forces[stress_p + 6 * h + i]);
+	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
