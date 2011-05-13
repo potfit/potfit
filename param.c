@@ -128,14 +128,13 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 
 void check_parameters_complete(char *paramfile)
 {
-
   if (ntypes <= 0)
-    error("Missing parameter or invalid value in %s : ntypes (%d)", paramfile,
-      ntypes);
+    error("Missing parameter or invalid value in %s : ntypes is \"%d\"",
+      paramfile, ntypes);
 
   if (strcmp(startpot, "\0") == 0)
-    error("Missing parameter or invalid value in %s : startpot (%s)", paramfile,
-      startpot);
+    error("Missing parameter or invalid value in %s : startpot is \"%s\"",
+      paramfile, startpot);
 
   if (strcmp(endpot, "\0") == 0) {
     warning("endpot is missing in %s, setting it to %s_end", paramfile,
@@ -144,42 +143,42 @@ void check_parameters_complete(char *paramfile)
   }
 
   if (strcmp(config, "\0") == 0)
-    error("Missing parameter or invalid value in %s : config (%s)", paramfile,
-      config);
+    error("Missing parameter or invalid value in %s : config is \"%s\"",
+      paramfile, config);
 
   if (strcmp(tempfile, "\0") == 0)
-    error("Missing parameter or invalid value in %s : tempfile (%s)", paramfile,
-      tempfile);
+    error("Missing parameter or invalid value in %s : tempfile is \"%s\"",
+      paramfile, tempfile);
 
   if (eweight < 0)
-    error("Missing parameter or invalid value in %s : eweight (%f)", paramfile,
-      eweight);
+    error("Missing parameter or invalid value in %s : eweight is \"%f\"",
+      paramfile, eweight);
 
 #ifdef STRESS
   if (sweight < 0)
-    error("Missing parameter or invalid value in %s : sweight (%f)", paramfile,
-      sweight);
+    error("Missing parameter or invalid value in %s : sweight is \"%f\"",
+      paramfile, sweight);
 #endif /* STRESS */
 
   if (writeimd && imdpotsteps <= 0)
-    error("Missing parameter or invalid value in %s : imdpotsteps (%d)",
+    error("Missing parameter or invalid value in %s : imdpotsteps is \"%d\"",
       paramfile, imdpotsteps);
 
 #ifdef APOT
   if (plotmin < 0)
-    error("Missing parameter or invalid value in %s : plotmin (%f)", paramfile,
-      plotmin);
+    error("Missing parameter or invalid value in %s : plotmin is \"%f\"",
+      paramfile, plotmin);
 #ifdef PAIR
   if (enable_cp != 0 && enable_cp != 1)
-    error("Missing parameter or invalid value in %s : enable_cp (%d)",
+    error("Missing parameter or invalid value in %s : enable_cp is \"%d\"",
       paramfile, enable_cp);
 #endif /* PAIR */
 #endif /* APOT */
 
 #ifdef PDIST
   if (strcmp(distfile, "\0") == 0)
-    error("Missing parameter or invalid value in %s : distfile (%s)", paramfile,
-      distfile);
+    error("Missing parameter or invalid value in %s : distfile is \"%s\"",
+      paramfile, distfile);
 #endif /* PDIST */
 }
 

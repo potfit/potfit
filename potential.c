@@ -162,13 +162,13 @@ void read_pot_table(pot_table_t *pt, char *filename)
       invar_pot = (int *)malloc(size * sizeof(int));
 #ifdef APOT
       smooth_pot = (int *)malloc(size * sizeof(int));
-#endif
+#endif /* APOT */
       for (i = 0; i < size; i++) {
 	gradient[i] = 0;
 	invar_pot[i] = 0;
 #ifdef APOT
 	smooth_pot[i] = 0;
-#endif
+#endif /* APOT */
       }
       have_format = 1;
     }
@@ -251,7 +251,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->dp_alpha = apt->values[size + 1];
     apt->dp_b = apt->values[size + 2];
     apt->dp_c = apt->values[size + 3];
-#endif
+#endif /* DIPOLE */
   } else {
 #endif /* COULOMB */
     apt->values = (real **)malloc(size * sizeof(real *));
@@ -260,7 +260,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->pmax = (real **)malloc(size * sizeof(real *));
 #if defined PAIR || defined COULOMB
   }
-#endif
+#endif /* PAIR || COULOMB */
   apt->names = (char **)malloc(size * sizeof(char *));
   for (i = 0; i < size; i++) {
     apt->names[i] = (char *)malloc(20 * sizeof(char));
@@ -503,9 +503,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	compnodes);
     if (compnodes == -1)
       compnodes = 0;
-#endif
+#endif /* CN */
   }
-#endif
+#endif /* PAIR */
 
 #ifdef COULOMB
   fsetpos(infile, &startpos);
@@ -544,7 +544,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->param_name[apt->number][i], "apt->param_name[%d][%d]",
       apt->number, i);
   }
-#endif
+#endif /* PAIR */
+
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++) {
     apt->param_name[apt->number + 1][i] = (char *)malloc(30 * sizeof(char));
@@ -588,7 +589,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[%d][%d]",
       apt->number + 3, i);
   }
-#endif
+#endif /* DIPOLE */
 
   /* skip to global section */
   fsetpos(infile, &startpos);
@@ -748,6 +749,10 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       smooth_pot[i] = 1;
     }
 
+    /* check if potential is "pohlong" and change it to bjs */
+    if (strcmp(name, "pohlong") == 0)
+      strcpy(name, "bjs\0");
+
     if (apot_parameters(name) == -1)
       error
 	("Unknown function type in file %s, please define \"%s\" in functions.c.",
@@ -905,7 +910,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 
 #ifdef COULOMB
   apt->total_ne_par = apt->total_par;
-#endif
+#endif /* COULOMB */
 
   /* if we have global parameters, are they actually used ? */
   if (have_globals) {
@@ -927,15 +932,15 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     cp_start = apt->total_par - apt->globals + ntypes * (ntypes + 1);
     apt->total_par += (ntypes + compnodes);
   }
-#endif
+#endif /* PAIR */
 
 #ifdef COULOMB
   apt->total_par += ntypes - 1;
-#endif
+#endif /* COULOMB */
 #ifdef DIPOLE
   apt->total_par += ntypes;
   apt->total_par += (2 * apt->number);
-#endif
+#endif /* DIPOLE */
 
   /* initialize function table and write indirect index */
   for (i = 0; i < apt->number; i++) {
@@ -957,14 +962,14 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   if (enable_cp) {
     pt->len += (ntypes + compnodes);
   }
-#endif
+#endif /* PAIR */
 #ifdef COULOMB
   pt->len += ntypes - 1;
-#endif
+#endif /* COULOMB */
 #ifdef DIPOLE
   pt->len += ntypes;
   pt->len += (2 * apt->number);
-#endif
+#endif /* DIPOLE */
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
   reg_for_free(pt->table, "pt->table");
@@ -1030,7 +1035,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     pt->idxlen += (ntypes + compnodes);
     global_idx += (ntypes + compnodes);
   }
-#endif
+#endif /* PAIR */
 #ifdef COULOMB
   i = apt->number;
   for (j = 0; j < (ntypes - 1); j++) {
@@ -1047,7 +1052,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
   pt->idxlen += ntypes - 1;
-#endif
+#endif /* COULOMB */
 #ifdef DIPOLE
   i = apt->number + 1;
   for (j = 0; j < (ntypes); j++) {
@@ -1080,7 +1085,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   }
   pt->idxlen += ntypes;
   pt->idxlen += (2 * apt->number);
-#endif
+#endif /* DIPOLE */
 
   if (have_globals) {
     i = global_pot;
@@ -1621,7 +1626,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 #ifdef APOT
   int   i, j, index, x = 0, size;
   real *val, f, h;
-#endif
+#endif /* APOT */
 
   switch (format) {
 #ifdef APOT
@@ -1708,7 +1713,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
   int   i, j, k, m, n, change;
   real  f, h = 0;
   real *list, *val;
-#endif
+#endif /* APOT */
 
   switch (format) {
 #ifdef APOT
@@ -1765,7 +1770,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		    fprintf(stderr, "h %f\n", h);
 		  error(msg);
 		}
-#endif
+#endif /* !COULOMB */
 	      }
 	    }
 	    val += apot_table.n_par[i];
@@ -1774,7 +1779,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	}
 
 	return;
-#endif
+#endif /* APOT */
       case 3:			/* fall through */
       case 4:
 	return;
@@ -2098,8 +2103,8 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
-#endif
-#if defined ADP
+#endif /* EAM || ADP */
+#ifdef ADP
     /* dipole terms */
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)
@@ -2108,7 +2113,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
-#endif
+#endif /* ADP */
   }
   if (have_invar) {
     fprintf(outfile, "\n#I");
@@ -2130,7 +2135,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 	apt->pmax[apt->number][ntypes + j]);
     fprintf(outfile, "\n");
   }
-#endif
+#endif /* PAIR */
 
 #ifdef COULOMB
   fprintf(outfile, "elstat\n");
@@ -2153,9 +2158,9 @@ void write_pot_table0(apot_table_t *apt, char *filename)
       apt->dp_c[i], apt->pmin[apt->number + 3][i],
       apt->pmax[apt->number + 3][i]);
   }
-#endif
+#endif /* DIPOLE */
   fprintf(outfile, "\n");
-#endif
+#endif /* COULOMB */
 
   if (have_globals) {
     fprintf(outfile, "global %d\n", apt->globals);
@@ -2236,7 +2241,7 @@ void write_pot_table3(pot_table_t *pt, char *filename)
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
-#endif
+#endif /* EAM */
   }
   if (have_invar) {
     fprintf(outfile, "\n#I");
@@ -2320,7 +2325,7 @@ void write_pot_table4(pot_table_t *pt, char *filename)
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
-#endif
+#endif /* EAM */
   }
   if (have_invar) {
     fprintf(outfile, "\n#I");
@@ -2371,7 +2376,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   real *r2begin, *r2end, *r2step;
 #ifndef APOT
   real  temp2;
-#endif
+#endif /* APOT */
 #if defined EAM || defined ADP
   real  root;
 #endif /* EAM */
@@ -2406,11 +2411,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
-#endif
-      r2end[col2] = SQR(pt->end[col1]);
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif /* APOT */
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2475,12 +2481,13 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col1 = (ntypes * (ntypes + 1)) / 2 + j;
       col2 = i * ntypes + j;
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
       /* Extrapolation possible  */
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
 #endif /* APOT */
-      r2end[col2] = SQR(pt->end[col1]);
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2533,7 +2540,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     r2begin[i] = pt->begin[col1] - extend * pt->step[col1];
     /* extrapolation */
     r2end[i] = pt->end[col1] + extend * pt->step[col1];
-#endif
+#endif /* APOT */
     r2step[i] = (r2end[i] - r2begin[i]) / imdpotsteps;
     fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[i], r2end[i], r2step[i]);
   }
@@ -2569,7 +2576,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	temp = parab(pt, pt->table, col1, r2);
 #else
 	temp = splint_ne(pt, pt->table, col1, r2);
-#endif
+#endif /* PARABEL */
       }
 #else /* WZERO */
       temp = splint_ne(pt, pt->table, col1, r2);
@@ -2587,7 +2594,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   }
   fclose(outfile);
   printf("IMD embedding function written to \t%s\n", filename);
-#endif
+#endif /* EAM || ADP */
 
 #ifdef ADP
   /* write dipole function (over r^2) */
@@ -2611,11 +2618,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
-#endif
-      r2end[col2] = SQR(pt->end[col1]);
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif /* APOT */
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2674,11 +2682,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
-      r2begin[col2] = SQR((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
 #else
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
-#endif
-      r2end[col2] = SQR(pt->end[col1]);
+      r2begin[col2] =
+	dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif /* APOT */
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2715,7 +2724,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   }
   fclose(outfile);
   printf("IMD quadrupole potential written to \t%s\n", filename);
-#endif
+#endif /* APOT */
 
   free(r2begin);
   free(r2end);
@@ -2736,7 +2745,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   int   k = 0, l;
 #else
   real  h;
-#endif
+#endif /* APOT */
   real  r, r_step, temp;
 
   /* open file */
@@ -2783,7 +2792,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       temp = parab(pt, pt->table, i, r);
 #else
       temp = splint_ne(pt, pt->table, i, r);
-#endif
+#endif /* PARABEL */
 #ifdef NEWSCALE
       temp -= lambda[i - (paircol + ntypes)] * r;
 #endif /* NEWSCALE */
@@ -2814,7 +2823,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
     k++;
   }
-#endif
+#endif /* ADP */
 #else /* APOT */
   for (i = 0; i < apot_table.number; i++) {
     r = (plotmin == 0 ? 0.1 : plotmin);
@@ -2909,7 +2918,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
       temp = parab(pt, pt->table, i, r);
 #else
       temp = splint_ne(pt, pt->table, i, r);
-#endif
+#endif /* PARABEL */
 #ifdef NEWSCALE
       temp -= lambda[i - (j + ntypes)] * r;
 #endif /* NEWSCALE */
@@ -2918,7 +2927,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "\n\n\n");
   }
-#endif
+#endif /* EAM */
   fclose(outfile);
   printf("Potential plotting data written to %s\n", filename);
 }
@@ -2986,7 +2995,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
 	if (rr < 0)
 	  error("short distance");
 	j = (int)(rr * pt->invstep[col]) + pt->first[col];
-#endif
+#endif /* NORESCALE */
       } else {			/* format ==4 */
 	rr = atom->rho;
 	k = pt->first[col];

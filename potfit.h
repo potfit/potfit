@@ -217,7 +217,6 @@ typedef struct {
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-#define SQR(a)     ((a)*(a))
 #define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
 
 /****************************************************************

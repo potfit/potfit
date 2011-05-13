@@ -30,9 +30,9 @@
 
 #ifndef EVO
 
-#include "potfit.h"
-
 #include <ctype.h>
+
+#include "potfit.h"
 
 #include "optimize.h"
 #include "utils.h"
@@ -110,12 +110,12 @@ void makebump(real *x, real width, real height, int center)
   return;
 }
 
-#endif
+#endif /* APOT */
 
 /****************************************************************
  *
- *  anneal(*xi): Anneals x a vector xi to minimize a function F(xi).
- *      Algorithm according to Cordona et al.
+ *  anneal(*xi): Anneals a vector xi to minimize a function F(xi).
+ *      Algorithm according to Corana et al.
  *
  ****************************************************************/
 
@@ -146,10 +146,10 @@ void anneal(real *xi)
   } else {
     T = atof(anneal_temp);
     if (T < 0)
-      error("The value for anneal_temp \"%s\" is invalid!\n");
+      error("The value for anneal_temp (%f) is invalid!\n", T);
   }
 
-  if (T == 0.)
+  if (T == 0. && auto_T != 1)
     return;			/* don't anneal if starttemp equal zero */
 
   Fvar = vect_real(KMAX + 5 + NEPS);	/* Backlog of old F values */
@@ -161,7 +161,7 @@ void anneal(real *xi)
 
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
-    v[n] = 1.;
+    v[n] = .1;
     naccept[n] = 0;
   }
   for (n = 0; n < ndimtot; n++) {
@@ -170,6 +170,47 @@ void anneal(real *xi)
   }
   F = (*calc_forces) (xi, fxi1, 0);
   Fopt = F;
+
+  /* determine optimum temperature for annealing */
+  if (auto_T) {
+    int   e = 0;
+    int   u = 10 * ndim;
+    int   m1 = 0;
+    real  dF = 0.;
+    real  chi = .8;
+
+    printf("Determining optimal starting temperature T ...\n");
+    for (e = 0; e < u; e++) {
+      for (n = 0; n < ndimtot; n++)
+	xi2[n] = xi[n];
+      h = (int)(dsfmt_genrand_close_open(&dsfmt) * ndim);
+#ifdef APOT
+      randomize_parameter(h, xi2, v);
+#else
+      /* Create a gaussian bump,
+         width & hight distributed normally */
+      width = fabs(normdist());
+      height = normdist() * v[h];
+      makebump(xi2, width, height, h);
+#endif /* APOT */
+      F2 = (*calc_forces) (xi2, fxi1, 0);
+      if (F2 <= F) {
+	m1++;
+      } else {
+	dF += F2 - F;
+      }
+    }
+    printf("Did %d steps, %d were accepted\n", u, m1);
+    u -= m1;
+    dF /= u;
+/*    printf("m2 = %d, dF = %f\n", u, dF);*/
+
+    T = dF / log(u / (u * chi + (1 - chi) * m1));
+    if (T < 0)
+      T = -T;
+    printf("Setting T=%f\n\n", T);
+  }
+
   printf("  k\tT        \t  m\tF          \tFopt\n");
   printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, Fopt);
   fflush(stdout);
@@ -193,7 +234,7 @@ void anneal(real *xi)
 	  width = fabs(normdist());
 	  height = normdist() * v[h];
 	  makebump(xi2, width, height, h);
-#endif
+#endif /* APOT */
 	  F2 = (*calc_forces) (xi2, fxi1, 0);
 	  if (F2 <= F) {	/* accept new point */
 #ifdef APOT
@@ -201,7 +242,7 @@ void anneal(real *xi)
 #else
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
-#endif
+#endif /* APOT */
 	    F = F2;
 	    naccept[h]++;
 	    if (F2 < Fopt) {
@@ -219,7 +260,7 @@ void anneal(real *xi)
 		/* *INDENT-ON* */
 		}
 	      write_pot_table(&apot_table, tempfile);
-#endif
+#endif /* APOT */
 	    }
 	  }
 
@@ -248,7 +289,7 @@ void anneal(real *xi)
 	fprintf(outfile, "%d\n", apot_table.sum_t);
 	fclose(outfile);
       }
-#endif
+#endif /* DIPOLE */
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
