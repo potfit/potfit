@@ -162,7 +162,9 @@ void powell_lsq(real *xi)
 	write_pot_table(&apot_table, tempfile);
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
-	warning(0, "F does not depend on the %d. parameter (%s) of the %d. potential.\n", itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
+	warning(0,
+	  "F does not depend on the %d. parameter (%s) of the %d. potential.\n",
+	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
 	warning(1, "Fit impossible!\n");
 #endif /* APOT */
 	break;
