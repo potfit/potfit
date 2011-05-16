@@ -48,6 +48,7 @@
 
 #include "bracket.h"
 #include "optimize.h"
+#include "potential.h"
 #include "utils.h"
 
 #define EPS .001
@@ -151,6 +152,7 @@ void powell_lsq(real *xi)
       i = gamma_init(gamma, d, xi, fxi1);
 #endif /* NORESCALE */
 #endif /* EAM */
+
       /* try again */
       if (i) {
 	/* ok, now this is serious, better exit cleanly */
@@ -159,9 +161,7 @@ void powell_lsq(real *xi)
 	sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
 	  idx[i - 1]);
 #else
-	for (n = 0; n < ndim; n++)
-	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
-	    xi[idx[n]];
+	update_apot_table(xi);
 	write_pot_table(&apot_table, tempfile);
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
@@ -182,7 +182,9 @@ void powell_lsq(real *xi)
     (void)lineqsys_init(gamma, lineqsys, fxi1, p, ndim, mdim);	/*init LES */
     F3 = F;
     breakflag = 0;
-    do {			/*inner loop - only calculate changed rows/lines in gamma */
+
+    /*inner loop - only calculate changed rows/lines in gamma */
+    do {
       /* (a) solve linear equation */
 
       /* All in one driver routine */
@@ -319,8 +321,7 @@ void powell_lsq(real *xi)
 	break;
       }
     }
-#ifdef EAM
-#ifndef NORESCALE
+#if defined EAM && !defined NORESCALE
     /* Check for rescaling... every fourth step */
     if ((n % 4) == 0) {
       temp = rescale(&opt_pot, 1., 0);
@@ -330,18 +331,17 @@ void powell_lsq(real *xi)
 	F = calc_forces(xi, fxi1, 2);
       }
     }
-#endif /* NORESCALE */
-#endif /* EAM */
+#endif /* EAM && !NORESCALE */
+
     /* write temp file  */
-    if (*tempfile != '\0')
+    if (*tempfile != '\0') {
 #ifndef APOT
       write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
 #else
-      for (i = 0; i < ndim; i++)
-	apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
-	  xi[idx[i]];
-    write_pot_table(&apot_table, tempfile);
+      update_apot_table(xi);
+      write_pot_table(&apot_table, tempfile);
 #endif /* APOT */
+    }
 
     /*End fit if whole series didn't improve F */
   } while (((F3 - F > PRECISION / 10.) || (F3 - F < 0)) && (F3 - F > d_eps));
@@ -356,9 +356,7 @@ void powell_lsq(real *xi)
   else
     printf("Precision not reached!\n");
 #ifdef APOT
-  for (i = 0; i < ndim; i++)
-    apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
-      xi[idx[i]];
+  update_apot_table(xi);
 #endif /* APOT */
 
   /* Free memory */

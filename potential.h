@@ -43,6 +43,9 @@ void  read_pot_table4(pot_table_t *, int, int, int *, char *, FILE *);
 
 /* calculating the potential tables */
 void  init_calc_table(pot_table_t *, pot_table_t *);
+#ifdef APOT
+void  update_apot_table(real *);
+#endif /* APOT */
 void  update_calc_table(real *, real *, int);
 
 /* parabolic interpolation */
