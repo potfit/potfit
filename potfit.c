@@ -165,7 +165,7 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
-    } else if (format >= 4) {	/*format >= 4 ! */
+    } else if (format >= 4) {
       splint = splint_ne;
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
