@@ -1739,6 +1739,40 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
   }
 }
 
+#ifdef APOT
+
+/****************************************************************
+ *
+ * update apot_table from opt_pot_table, including globals
+ *
+ ****************************************************************/
+
+void update_apot_table(real *xi)
+{
+  int   i = 0, j = 0, m = 0, n = 0;
+
+  for (i = 0; i < ndim; i++)
+    apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
+      xi[idx[i]];
+  if (have_globals) {
+    for (i = 0; i < apot_table.globals; i++) {
+      for (j = 0; j < apot_table.n_glob[i]; j++) {
+	m = apot_table.global_idx[i][j][0];
+	n = apot_table.global_idx[i][j][1];
+	apot_table.values[m][n] = *(xi + global_idx + i);
+      }
+    }
+  }
+}
+
+#endif /* APOT */
+
+/****************************************************************
+ *
+ * update calc_pot.table from opt_pot.table, including globals
+ *
+ ****************************************************************/
+
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
 #ifdef APOT
@@ -1818,7 +1852,6 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	return;
   }
 }
-
 
 #ifdef PARABEL
 

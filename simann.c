@@ -35,6 +35,7 @@
 #include "potfit.h"
 
 #include "optimize.h"
+#include "potential.h"
 #include "utils.h"
 
 #define EPS 0.1
@@ -249,18 +250,14 @@ void anneal(real *xi)
 	      for (n = 0; n < ndimtot; n++)
 		xopt[n] = xi2[n];
 	      Fopt = F2;
-	      if (*tempfile != '\0')
+	      if (*tempfile != '\0') {
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-		for (n = 0; n < ndim; n++) {
-		/* *INDENT-OFF* */
-		  apot_table.values[apot_table.idxpot[n]]
-			  [apot_table.idxparam[n]] = xopt[idx[n]];
-		/* *INDENT-ON* */
-		}
-	      write_pot_table(&apot_table, tempfile);
+		update_apot_table(xi);
+		write_pot_table(&apot_table, tempfile);
 #endif /* APOT */
+	      }
 	    }
 	  }
 
@@ -349,16 +346,15 @@ void anneal(real *xi)
 /*          printf("%f %f\n",xi[n],xopt[n]);*/
 
   F = Fopt;
+  if (*tempfile != '\0') {
 #ifndef APOT
-  if (*tempfile != '\0')
     write_pot_table(&opt_pot, tempfile);
 #else
-  for (n = 0; n < ndim; n++)
-    apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
-      xopt[idx[n]];
-  if (*tempfile != '\0')
+    update_apot_table(xopt);
     write_pot_table(&apot_table, tempfile);
 #endif /* APOT */
+  }
+
   free_vect_real(Fvar);
   free_vect_real(v);
   free_vect_real(xopt);

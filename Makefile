@@ -159,7 +159,7 @@ ifeq (x86_64-icc,${SYSTEM})
   CC_MPI        = mpicc
 
 # general optimization flags
-  OPT_FLAGS     += -fast -xHost -multiple-processes
+  OPT_FLAGS     += -fast -xHost
 
   OMPI_CC      = icc
   OMPI_CLINKER = icc
@@ -236,7 +236,7 @@ ifeq (i686-icc,${SYSTEM})
   CC_MPI	= mpicc
   OMPI_CC       = icc
   OMPI_CLINKER  = icc
-  OPT_FLAGS	+= -fast -xHost -multiple-processes
+  OPT_FLAGS	+= -fast -xHost
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -prof-gen
   PROF_LIBS 	+= -prof-gen

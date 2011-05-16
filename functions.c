@@ -834,61 +834,6 @@ real apot_grad(real r, real *p, void (*function) (real, real *, real *))
   return (a - b) / (2. * h);
 }
 
-/****************************************************************
- *
- *  debug function to print the potentials
- *
- ****************************************************************/
-
-#ifdef DEBUG
-
-void debug_apot()
-{
-  int   i, j;
-
-  fflush(stdout);
-  fprintf(stderr, "\n##############################################\n");
-  fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
-  fprintf(stderr, "##############################################\n");
-  fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
-    apot_table.number, apot_table.total_par);
-  for (i = 0; i < apot_table.number; i++) {
-    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
-      apot_table.names[i], smooth_pot[i]);
-    fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i],
-      apot_table.end[i]);
-    for (j = 0; j < apot_table.n_par[i]; j++) {
-      fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
-	apot_table.param_name[i][j], apot_table.values[i][j],
-	apot_table.pmin[i][j], apot_table.pmax[i][j]);
-    }
-  }
-#ifdef PAIR
-  if (!enable_cp) {
-    fprintf(stderr, "\nchemical potentials are DISABLED!\n");
-  } else {
-    fprintf(stderr, "\nchemical potentials:\n");
-    for (i = 0; i < ntypes; i++)
-      fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, apot_table.chempot[i],
-	apot_table.pmin[apot_table.number][i],
-	apot_table.pmax[apot_table.number][i]);
-    if (compnodes > 0) {
-      if (ntypes == 2) {
-	fprintf(stderr, "composition nodes:\n");
-	for (j = 0; j < compnodes; j++)
-	  fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
-	    compnodelist[j], apot_table.chempot[ntypes + j],
-	    apot_table.pmin[apot_table.number][ntypes + j],
-	    apot_table.pmax[apot_table.number][ntypes + j]);
-      }
-    }
-  }
-#endif /* PAIR */
-  exit(EXIT_FAILURE);
-}
-
-#endif /* DEBUG */
-
 #ifdef COULOMB
 
 /****************************************************************
@@ -1055,3 +1000,58 @@ void shortrange_term(real r, real b, real c, real *srval_tail,
 }
 
 #endif /* DIPOLE */
+
+/****************************************************************
+ *
+ *  debug function to print the potentials
+ *
+ ****************************************************************/
+
+#ifdef DEBUG
+
+void debug_apot()
+{
+  int   i, j;
+
+  fflush(stdout);
+  fprintf(stderr, "\n##############################################\n");
+  fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
+  fprintf(stderr, "##############################################\n");
+  fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
+    apot_table.number, apot_table.total_par);
+  for (i = 0; i < apot_table.number; i++) {
+    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
+      apot_table.names[i], smooth_pot[i]);
+    fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i],
+      apot_table.end[i]);
+    for (j = 0; j < apot_table.n_par[i]; j++) {
+      fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
+	apot_table.param_name[i][j], apot_table.values[i][j],
+	apot_table.pmin[i][j], apot_table.pmax[i][j]);
+    }
+  }
+#ifdef PAIR
+  if (!enable_cp) {
+    fprintf(stderr, "\nchemical potentials are DISABLED!\n");
+  } else {
+    fprintf(stderr, "\nchemical potentials:\n");
+    for (i = 0; i < ntypes; i++)
+      fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, apot_table.chempot[i],
+	apot_table.pmin[apot_table.number][i],
+	apot_table.pmax[apot_table.number][i]);
+    if (compnodes > 0) {
+      if (ntypes == 2) {
+	fprintf(stderr, "composition nodes:\n");
+	for (j = 0; j < compnodes; j++)
+	  fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
+	    compnodelist[j], apot_table.chempot[ntypes + j],
+	    apot_table.pmin[apot_table.number][ntypes + j],
+	    apot_table.pmax[apot_table.number][ntypes + j]);
+      }
+    }
+  }
+#endif /* PAIR */
+  exit(EXIT_FAILURE);
+}
+
+#endif /* DEBUG */
