@@ -47,25 +47,30 @@
  *
  ****************************************************************/
 
-void error(char *msg, ...)
+void error(int done, char *msg, ...)
 {
+  static int begin = 0;
   va_list ap;
 
   fflush(stderr);
-  fprintf(stderr, "\n--> ERROR <--\n");
+  if (begin == 0) {
+    fprintf(stderr, "\n--> ERROR <--\n");
+    begin = 1;
+  }
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
-  fprintf(stderr, "\n");
   fflush(stderr);
+  if (done == 1) {
 #ifdef MPI
-  real *force = NULL;
-  /* go wake up other threads */
-  calc_forces(calc_pot.table, force, 1);
-  shutdown_mpi();
+    real *force = NULL;
+    /* go wake up other threads */
+    calc_forces(calc_pot.table, force, 1);
+    shutdown_mpi();
 #endif /* MPI */
-  fprintf(stderr, "\n");
-  exit(EXIT_FAILURE);
+    fprintf(stderr, "\n");
+    exit(EXIT_FAILURE);
+  }
 }
 
 /****************************************************************
@@ -74,16 +79,23 @@ void error(char *msg, ...)
  *
  ****************************************************************/
 
-void warning(char *msg, ...)
+void warning(int done, char *msg, ...)
 {
+  static int begin = 0;
   va_list ap;
 
   fflush(stdout);
-  fprintf(stderr, "\n--> WARNING <--\n");
+  if (begin == 0) {
+    fprintf(stderr, "\n--> WARNING <--\n");
+    begin = 1;
+  }
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
-  fprintf(stderr, "\n");
+  if (done == 1) {
+    fprintf(stderr, "\n");
+    begin = 0;
+  }
   fflush(stderr);
 }
 
@@ -231,7 +243,7 @@ int main(int argc, char **argv)
   /* main force vector, all forces, energies, ... will be stored here */
   force = (real *)malloc((mdim) * sizeof(real));
   if (NULL == force)
-    error("Could not allocate memory for main force vector.");
+    error(1, "Could not allocate memory for main force vector.");
   reg_for_free(force, "force");
 
   /* starting positions for the force vector */
@@ -252,7 +264,7 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
   rms = (real *)malloc(3 * sizeof(real));
   if (NULL == rms)
-    error("Could not allocate memory for rms errors.");
+    error(1, "Could not allocate memory for rms errors.");
   reg_for_free(rms, "rms");
 
 #ifdef APOT
@@ -307,7 +319,7 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
 #ifdef MPI
     if (num_cpus > nconf)
-      warning("You are using more cpus than you have configurations!");
+      warning(1, "You are using more cpus than you have configurations!");
 #endif /* MPI */
     time(&t_begin);
     if (opt) {
@@ -368,7 +380,7 @@ int main(int argc, char **argv)
       strcat(file, ".rho_loc");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
     } else {
       outfile = stdout;
       printf("Local electron density rho\n");
@@ -429,7 +441,7 @@ int main(int argc, char **argv)
       strcat(file, ".force");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
     } else {
       outfile = stdout;
       printf("Forces:\n");
@@ -437,7 +449,7 @@ int main(int argc, char **argv)
     for (i = 0; i < 6; i++) {
       component[i] = (char *)malloc(3 * sizeof(char));
       if (NULL == component[i])
-	error("Could not allocate memory for component strings");
+	error(1, "Could not allocate memory for component strings");
       reg_for_free(component[i], "component %d", i);
     }
     strcpy(component[0], "x");
@@ -480,7 +492,7 @@ int main(int argc, char **argv)
 	strcat(file, ".energy");
 	outfile = fopen(file, "w");
 	if (NULL == outfile)
-	  error("Could not open file %s\n", file);
+	  error(1, "Could not open file %s\n", file);
       } else {
 	outfile = stdout;
 	printf("Cohesive Energies\n");
@@ -524,7 +536,7 @@ int main(int argc, char **argv)
 	strcat(file, ".stress");
 	outfile = fopen(file, "w");
 	if (NULL == outfile)
-	  error("Could not open file %s\n", file);
+	  error(1, "Could not open file %s\n", file);
 	fprintf(outfile, "# global stress weight w is %f\n", sweight);
       } else {
 	outfile = stdout;
@@ -563,7 +575,7 @@ int main(int argc, char **argv)
       strcat(file, ".punish");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
       fprintf(outfile, "Limiting constraints\n");
       fprintf(outfile, "#conf\tp^2\t\tpunishment\n");
     } else {
@@ -619,7 +631,7 @@ int main(int argc, char **argv)
       strcat(file, ".error");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
 #ifndef STRESS
       fprintf(outfile,
 	"total error sum %f, count %d (%d forces, %d energies)\n", tot,

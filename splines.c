@@ -90,7 +90,7 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
   if (rr < 0)
-    error("%f %f %d\nShort distance", r, pt->begin[col], col);
+    error(1, "%f %f %d\nShort distance", r, pt->begin[col], col);
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -123,7 +123,7 @@ real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
   if (rr < 0)
-    error("short distance! in splint_comb_ed");
+    error(1, "short distance! in splint_comb_ed");
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -162,7 +162,7 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
   if (rr < 0)
-    error("short distance! in splint_grad_ed");
+    error(1, "short distance! in splint_grad_ed");
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -339,7 +339,6 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
   d21 = pt->d2tab[klo];
   d22 = pt->d2tab[khi];
 
-/*   if (h == 0.0) error("Bad xa input to routine splint"); */
   b = (r - x1) / h;
   a = (1. - b);
   return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b -

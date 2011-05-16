@@ -119,7 +119,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	/* Pathological: Search between center and right */
 	/* This means a change from original algorithm */
 #ifdef DEBUG
-	warning("Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left,
+	warning(1, "Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left,
 	  x_center, x_right);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
@@ -149,7 +149,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
       if (f_center < f_right) {
 	/* between center and left */
 #ifdef DEBUG
-	warning("Pathological  @%li %f %f %f! center-left!\n", nb_eval, x_left,
+	warning(1, "Pathological  @%li %f %f %f! center-left!\n", nb_eval, x_left,
 	  x_center, x_right);
 #endif /* DEBUG */
 	x_left = -(x_right - x_left) * CGOLD + x_left;
@@ -177,7 +177,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	if (last == 2) {
 	  /* go further to left, it goes up towards the right */
 #ifdef DEBUG
-	  warning("Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left,
+	  warning(1, "Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left,
 	    x_center, x_right);
 #endif /* DEBUG */
 	  x_left = -(x_right - x_left) / CGOLD + x_left;
@@ -189,7 +189,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	} else {		/* go further to the right, to left it went up */
 
 #ifdef DEBUG
-	  warning("Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left,
+	  warning(1, "Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left,
 	    x_center, x_right);
 #endif /* DEBUG */
 	  x_right = (x_right - x_left) / CGOLD + x_right;
@@ -203,11 +203,11 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
     }
   } while (nb_eval < MAX_IT);
 #ifdef DEBUG
-  error
-    ("Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.\n",
-    nb_eval, x_left, f_left, x_center, f_center, x_right, f_right);
+  error(0, "Problems with bracketing minimum in %li tries:\n", nb_eval);
+  error(1, "F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.\n", x_left, f_left,
+    x_center, f_center, x_right, f_right);
 #else /* DEBUG */
-  error("Problems with bracketing of minimum, aborting\n");
+  error(1, "Problems with bracketing of minimum, aborting\n");
 #endif /* DEBUG */
   return;
 }

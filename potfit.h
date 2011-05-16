@@ -436,8 +436,8 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
  ****************************************************************/
 
 /* general functions [potfit.c] */
-void  error(char *, ...);
-void  warning(char *, ...);
+void  error(int, char *, ...);
+void  warning(int, char *, ...);
 
 /* reading parameter file [param.c] */
 int   getparam(char *, void *, param_t, int, int);

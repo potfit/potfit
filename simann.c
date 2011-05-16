@@ -147,7 +147,7 @@ void anneal(real *xi)
   } else {
     T = atof(anneal_temp);
     if (T < 0)
-      error("The value for anneal_temp (%f) is invalid!\n", T);
+      error(1, "The value for anneal_temp (%f) is invalid!\n", T);
   }
 
   if (T == 0. && auto_T != 1)
@@ -342,8 +342,6 @@ void anneal(real *xi)
   }
 
   printf("Finished annealing, starting powell minimization ...\n");
-/*  for (n=0;n<ndimtot;n++)*/
-/*          printf("%f %f\n",xi[n],xopt[n]);*/
 
   F = Fopt;
   if (*tempfile != '\0') {

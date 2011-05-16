@@ -99,7 +99,7 @@ void add_potential(char *name, int parameter, fvalue_pointer fval)
   /* only add potentials with unused names */
   for (i = 0; i < k; i++) {
     if (strcmp(function_table.name[i], name) == 0) {
-      error("There already is a potential with the name \"%s\".", name);
+      error(1, "There already is a potential with the name \"%s\".", name);
     }
   }
 
@@ -114,7 +114,7 @@ void add_potential(char *name, int parameter, fvalue_pointer fval)
     (k + 1) * sizeof(fvalue_pointer));
   if (function_table.name[k] == NULL || function_table.n_par == NULL
     || function_table.fvalue == NULL)
-    error("Could not allocate memory for function_table!");
+    error(1, "Could not allocate memory for function_table!");
 
   /* assign values */
   for (i = 0; i < 255; i++)
