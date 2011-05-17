@@ -9,6 +9,7 @@ devel
   pohlong can still be used for compability with older potential files
 + fixed a bug where not the latest value of the global parameters was used to write the
   imd potentials
++ add compatibility mode for old (w*d)^2 error sum, enable with compat flag
 
 dipole
 + elstat parameter dp_kappa can now be optimized

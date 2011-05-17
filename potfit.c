@@ -508,7 +508,11 @@ int main(int argc, char **argv)
       }
 
       for (i = 0; i < nconf; i++) {
+#ifdef COMPAT
+	sqr = conf_weight[i] * dsquare(eweight * force[energy_p + i]);
+#else
 	sqr = conf_weight[i] * eweight * dsquare(force[energy_p + i]);
+#endif /* COMPAT */
 	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n",
@@ -552,7 +556,11 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\tconf_w\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
+#ifdef COMPAT
+	sqr = conf_weight[(i - stress_p) / 6] * dsquare(sweight * force[i]);
+#else
 	sqr = conf_weight[(i - stress_p) / 6] * sweight * dsquare(force[i]);
+#endif /* COMPAT */
 	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%6.2f\t%14.8f\t%12.10f\t%12.10f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
