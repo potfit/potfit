@@ -6,7 +6,7 @@ devel
 + the error sum is now calculated as w*d^2 and no longer as (w*d)^2
 + added the proper citations to most of the analytic potential functions
 + [APOT] the pohlong potential has been renamed to "bjs" to credit the original author
-  pohlong can still be used for compability with older potential files
+  pohlong can still be used for compatibility with older potential files
 + fixed a bug where not the latest value of the global parameters was used to write the
   imd potentials
 + add compatibility mode for old (w*d)^2 error sum, enable with compat flag

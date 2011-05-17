@@ -221,6 +221,11 @@ int main(int argc, char **argv)
     free(array);
 #undef R_SIZE
 #undef RAND_MAX
+
+#ifdef COMPAT
+    warning(0, "You are running in compatibility mode!\n");
+    warning(1, "energy and stress weights will also be squared!\n");
+#endif
   }
 
   /* initialize the remaining parameters and assign the atoms */
