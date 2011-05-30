@@ -117,7 +117,7 @@ void opposite_check(real **P, real *costP, int init)
   if (tot_P == NULL) {
     tot_P = (real **)malloc(2 * NP * sizeof(real *));
     if (tot_P == NULL)
-      error("Could not allocate memory for opposition vector!\n");
+      error(1, "Could not allocate memory for opposition vector!\n");
     for (i = 0; i < 2 * NP; i++) {
       tot_P[i] = (real *)malloc(D * sizeof(real));
       for (j = 0; j < D; j++)
@@ -228,12 +228,12 @@ void diff_evo(real *xi)
   best = (real *)malloc(NP * sizeof(real));
   cost = (real *)malloc(NP * sizeof(real));
   if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
-    error("Could not allocate memory for population vector!\n");
+    error(1, "Could not allocate memory for population vector!\n");
   for (i = 0; i < NP; i++) {
     x1[i] = (real *)malloc(D * sizeof(real));
     x2[i] = (real *)malloc(D * sizeof(real));
     if (x1[i] == NULL || x2[i] == NULL)
-      error("Could not allocate memory for population vector!\n");
+      error(1, "Could not allocate memory for population vector!\n");
     for (j = 0; j < D; j++) {
       x1[i][j] = 0;
       x2[i][j] = 0;

@@ -455,6 +455,11 @@ ifneq (,$(findstring 0,${INTERACTION}))
 ERROR += No interaction model specified
 endif
 
+# COMPAT - compatibility mode for old (w*d)^2
+ifneq (,$(findstring compat,${MAKETARGET}))
+CFLAGS += -DCOMPAT
+endif
+
 # EVO - for differential evolution
 ifneq (,$(findstring evo,${MAKETARGET}))
 CFLAGS += -DEVO

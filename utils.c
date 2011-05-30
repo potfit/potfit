@@ -42,7 +42,7 @@ int  *vect_int(long dim)
   int  *vect, i;
   vect = (int *)malloc((size_t) (dim * sizeof(int)));
   if (vect == NULL)
-    error("Error in integer vector allocation");
+    error(1, "Error in integer vector allocation");
   for (i = 0; i < dim; i++)
     vect[i] = 0;
   return vect;
@@ -54,7 +54,7 @@ real *vect_real(long dim)
   int   i;
   vect = (real *)malloc((size_t) (dim * sizeof(real)));
   if (vect == NULL)
-    error("Error in real vector allocation");
+    error(1, "Error in real vector allocation");
   for (i = 0; i < dim; i++)
     vect[i] = 0.;
   return vect;
@@ -69,12 +69,12 @@ real **mat_real(long rowdim, long coldim)
   /* matrix: pointer to rows */
   matrix = (real **)malloc((size_t) rowdim * sizeof(real *));
   if (matrix == NULL)
-    error("Error in real matrix row allocation");
+    error(1, "Error in real matrix row allocation");
 
   /* matrix[0]: pointer to elements */
   matrix[0] = (real *)malloc((size_t) rowdim * coldim * sizeof(real));
   if (matrix[0] == NULL)
-    error("Error in real matrix element allocation");
+    error(1, "Error in real matrix element allocation");
 
   for (i = 1; i < rowdim; i++)
     matrix[i] = matrix[i - 1] + coldim;

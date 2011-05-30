@@ -179,10 +179,10 @@ real brent(real ax, real bx, real cx, real fbx, real tol, real *xmin,
       SWAP(p_z, p_u, p_temp);
       /* done */
     } else {
-      error("Problems in Brent minimization.\n");
+      error(1, "Problems in Brent minimization.\n");
     }
 
   }
-  error("Too many iterations in Brent minimization.\n");
+  error(1, "Too many iterations in Brent minimization.\n");
   return 0.;
 }
