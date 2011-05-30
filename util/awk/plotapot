@@ -71,7 +71,7 @@ function write_pot(i, name, params, file)
     printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f)", params[i "," 1],
       params[i "," 7], params[i "," 2], params[i "," 3], params[i "," 4],
       params[i "," 5], params[i "," 6] > file;
-  } else if (name == "pohlong") {
+  } else if (name == "pohlong" || name == "bjs") {
     printf "%f*(1-%f*log(x))*(x)**%f+%f*x", params[i "," 1], params[i "," 2],
       params[i "," 2],params[i "," 3] > file;
   } else if (name == "power_decay") {
@@ -149,7 +149,7 @@ function read_pot(name)
     return 7;
   else if (name == "power_decay")
     return 2;
-  else if (name == "pohlong")
+  else if (name == "pohlong" || name == "bjs")
     return 3;
   else if (name == "parabola")
     return 3;

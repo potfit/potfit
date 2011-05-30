@@ -72,7 +72,7 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
       case PARAM_STR:
 	str = strtok(NULL, " \t\r\n");
 	if (str == NULL)
-	  error("Parameter for %s missing in line %d\nstring expected!",
+	  error(1, "Parameter for %s missing in line %d\nstring expected!",
 	    param_name, curline);
 	else
 	  strncpy((char *)param, str, pnum_max);
@@ -82,8 +82,8 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 	for (i = 0; i < pnum_min; i++) {
 	  str = strtok(NULL, " \t\r\n");
 	  if (str == NULL)
-	    error
-	      ("Parameter for %s missing in line %d!\nInteger vector of length %u expected!",
+	    error(1,
+	      "Parameter for %s missing in line %d!\nInteger vector of length %u expected!",
 	      param_name, curline, (unsigned)pnum_min);
 	  else
 	    ((int *)param)[i] = atoi(str);
@@ -101,8 +101,8 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 	for (i = 0; i < pnum_min; i++) {
 	  str = strtok(NULL, " \t\r\n");
 	  if (str == NULL)
-	    error
-	      ("Parameter for %s missing in line %d!\nDouble vector of length %u expected!",
+	    error(1,
+	      "Parameter for %s missing in line %d!\nDouble vector of length %u expected!",
 	      param_name, curline, (unsigned)pnum_min);
 	  else
 	    ((real *)param)[i] = atof(str);
@@ -129,55 +129,55 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 void check_parameters_complete(char *paramfile)
 {
   if (ntypes <= 0)
-    error("Missing parameter or invalid value in %s : ntypes is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : ntypes is \"%d\"",
       paramfile, ntypes);
 
   if (strcmp(startpot, "\0") == 0)
-    error("Missing parameter or invalid value in %s : startpot is \"%s\"",
+    error(1, "Missing parameter or invalid value in %s : startpot is \"%s\"",
       paramfile, startpot);
 
   if (strcmp(endpot, "\0") == 0) {
-    warning("endpot is missing in %s, setting it to %s_end", paramfile,
+    warning(1, "endpot is missing in %s, setting it to %s_end", paramfile,
       startpot);
     sprintf(endpot, "%s_end", startpot);
   }
 
   if (strcmp(config, "\0") == 0)
-    error("Missing parameter or invalid value in %s : config is \"%s\"",
+    error(1, "Missing parameter or invalid value in %s : config is \"%s\"",
       paramfile, config);
 
   if (strcmp(tempfile, "\0") == 0)
-    error("Missing parameter or invalid value in %s : tempfile is \"%s\"",
+    error(1, "Missing parameter or invalid value in %s : tempfile is \"%s\"",
       paramfile, tempfile);
 
   if (eweight < 0)
-    error("Missing parameter or invalid value in %s : eweight is \"%f\"",
+    error(1, "Missing parameter or invalid value in %s : eweight is \"%f\"",
       paramfile, eweight);
 
 #ifdef STRESS
   if (sweight < 0)
-    error("Missing parameter or invalid value in %s : sweight is \"%f\"",
+    error(1, "Missing parameter or invalid value in %s : sweight is \"%f\"",
       paramfile, sweight);
 #endif /* STRESS */
 
   if (writeimd && imdpotsteps <= 0)
-    error("Missing parameter or invalid value in %s : imdpotsteps is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"",
       paramfile, imdpotsteps);
 
 #ifdef APOT
   if (plotmin < 0)
-    error("Missing parameter or invalid value in %s : plotmin is \"%f\"",
+    error(1, "Missing parameter or invalid value in %s : plotmin is \"%f\"",
       paramfile, plotmin);
 #ifdef PAIR
   if (enable_cp != 0 && enable_cp != 1)
-    error("Missing parameter or invalid value in %s : enable_cp is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : enable_cp is \"%d\"",
       paramfile, enable_cp);
 #endif /* PAIR */
 #endif /* APOT */
 
 #ifdef PDIST
   if (strcmp(distfile, "\0") == 0)
-    error("Missing parameter or invalid value in %s : distfile is \"%s\"",
+    error(1, "Missing parameter or invalid value in %s : distfile is \"%s\"",
       paramfile, distfile);
 #endif /* PDIST */
 }
@@ -194,12 +194,12 @@ void read_parameters(int argc, char **argv)
 
   /* check command line */
   if (argc < 2)
-    error("Usage: %s <paramfile>\n", argv[0]);
+    error(1, "Usage: %s <paramfile>\n", argv[0]);
 
   /* open parameter file, and read it */
   pf = fopen(argv[1], "r");
   if (NULL == pf)
-    error("Could not open parameter file \"%s\".\n", argv[1]);
+    error(1, "Could not open parameter file \"%s\".\n", argv[1]);
   read_paramfile(pf);
   fclose(pf);
   check_parameters_complete(argv[1]);

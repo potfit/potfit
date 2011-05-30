@@ -57,7 +57,6 @@
 #define INNERLOOPS 801
 #define TOOBIG 10000
 
-
 void powell_lsq(real *xi)
 {
   char  uplo[1] = "U";		/* char used in dsysvx */
@@ -142,13 +141,11 @@ void powell_lsq(real *xi)
 #ifdef EAM
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
-      sprintf(errmsg, "F does not depend on xi[%d], trying to rescale!\n",
+      warning(1, "F does not depend on xi[%d], trying to rescale!\n",
 	idx[i - 1]);
-      warning(errmsg);
       rescale(&opt_pot, 1., 1);
       /* wake other threads and sync potentials */
       F = calc_forces(xi, fxi1, 2);
-/*      printf("F=%f\n", F);*/
       i = gamma_init(gamma, d, xi, fxi1);
 #endif /* NORESCALE */
 #endif /* EAM */
@@ -158,24 +155,18 @@ void powell_lsq(real *xi)
 	/* ok, now this is serious, better exit cleanly */
 #ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
-	sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
+	warning(1, "F does not depend on xi[%d], fit impossible!\n",
 	  idx[i - 1]);
 #else
 	update_apot_table(xi);
 	write_pot_table(&apot_table, tempfile);
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
-	sprintf(errmsg,
-#ifdef COULOMB
-	  "F does not depend on the %d. parameter (%s) of the %d. potential.\nFit impossible!\n",
+	warning(0,
+	  "F does not depend on the %d. parameter (%s) of the %d. potential.\n",
 	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
-#else
-	  "F does not depend on the %d. parameter (%s) of the %d. potential (%s).\nFit impossible!\n",
-	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1,
-	  apot_table.names[itemp]);
-#endif /* COULOMB */
+	warning(1, "Fit impossible!\n");
 #endif /* APOT */
-	warning(errmsg);
 	break;
       }
     }
@@ -204,9 +195,7 @@ void powell_lsq(real *xi)
 	q[4], q[5], q[6], q[7]);
 #endif /* DEBUG && !APOT */
       if (i > 0 && i <= ndim) {
-	sprintf(errmsg, "Linear equation system singular after step %d i=%d", m,
-	  i);
-	warning(errmsg);
+	warning(1, "Linear equation system singular after step %d i=%d", m, i);
 	break;
       }
       /* (b) get delta by multiplying q with the direction vectors */
@@ -219,13 +208,11 @@ void powell_lsq(real *xi)
 	  && (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
 	  /* something seriously went wrong,
 	     parameter idx[i] out of control */
-	  sprintf(errmsg,
-	    "Direction vector component %d out of range in step %d\n", idx[i],
-	    m);
-	  sprintf(errmsg, "%s(%g instead of %g).\n", errmsg,
-	    fabs(delta[idx[i]]), maxchange[idx[i]]);
-	  sprintf(errmsg, "%sRestarting inner loop\n", errmsg);
-	  warning(errmsg);
+	  warning(0, "Direction vector component %d out of range in step %d\n",
+	    idx[i], m);
+	  warning(0, "(%g instead of %g).\n", fabs(delta[idx[i]]),
+	    maxchange[idx[i]]);
+	  warning(0, "Restarting inner loop\n");
 	  breakflag = 1;
 	}
 #else
@@ -275,9 +262,8 @@ void powell_lsq(real *xi)
          break inner loop and restart with new matrix */
       if (gamma_update(gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, mdim,
 	  ndimtot, F)) {
-	sprintf(errmsg,
-	  "Matrix gamma singular after step %d, restarting inner loop", m);
-	warning(errmsg);
+	warning(1, "Matrix gamma singular after step %d, restarting inner loop",
+	  m);
 	break;
       }
 
@@ -404,7 +390,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   if (force == NULL) {
     force = (real *)malloc(mdim * sizeof(real));
     if (force == NULL)
-      error("Error in real vector allocation");
+      error(1, "Error in real vector allocation");
     for (i = 0; i < mdim; i++)
       force[i] = 0;
     reg_for_free(force, "force from init_gamma");
