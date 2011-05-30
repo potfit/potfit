@@ -233,7 +233,7 @@ void morse_value(real r, real *p, real *f)
  *
  * morse-stretch potential (without derivative!)
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1063/1.1513312
  *
  ****************************************************************/
 
@@ -248,9 +248,9 @@ void ms_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * buckingham potential (without derivative!)
+ * buckingham potential (without derivative!) - slightly modified
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1098/rspa.1977.0049 
  *
  ****************************************************************/
 
