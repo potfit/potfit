@@ -155,6 +155,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
       if (size == npots) {
 	printf("Using %s potentials from file \"%s\".\n", interaction_name,
 	  filename);
+	fflush(stdout);
       } else {
 	error(0, "Wrong number of data columns in file \"%s\",\n", filename);
 	error(1, "should be %d for %s, but are %d.", npots, interaction_name,
