@@ -207,6 +207,8 @@ void anneal(real *xi)
 /*    printf("m2 = %d, dF = %f\n", u, dF);*/
 
     T = dF / log(u / (u * chi + (1 - chi) * m1));
+    if (isnan(T) || isinf(T))
+      error(1, "Simann failed because T was %f, please set it manually.", T);
     if (T < 0)
       T = -T;
     printf("Setting T=%f\n\n", T);
