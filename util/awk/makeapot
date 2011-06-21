@@ -119,7 +119,7 @@ function write_pot(name)
 	printf "a %s",valminmax(1,0.1,10);
 	printf "b %s",valminmax(2,1,5);
     }
-    else if (name=="pohlong") {
+    else if (name=="bjs") {
 	printf "F_0 %s",valminmax(-1,-10,0);
 	printf "gamma %s",valminmax(2,0.1,2);
 	printf "F_1 %s",valminmax(0,-10,10);
@@ -263,6 +263,8 @@ BEGIN{
 	printf "\n";
 	    }
     for (i=0;i<total_pot;i++) {
+	if (pot[i]=="pohlong")
+		pot[i]="bjs";
 	write_pot(pot[i]);
 	if (i!=(total_pot-1))
 		printf "\n";

@@ -1787,7 +1787,6 @@ void update_apot_table(real *xi)
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
 #ifdef APOT
-  char  msg[255];
   int   i, j, k, m, n, change;
   real  f, h = 0;
   real *list, *val;

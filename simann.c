@@ -204,7 +204,6 @@ void anneal(real *xi)
     printf("Did %d steps, %d were accepted\n", u, m1);
     u -= m1;
     dF /= u;
-/*    printf("m2 = %d, dF = %f\n", u, dF);*/
 
     T = dF / log(u / (u * chi + (1 - chi) * m1));
     if (isnan(T) || isinf(T))

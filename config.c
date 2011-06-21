@@ -82,6 +82,7 @@ void read_config(char *filename)
   int   i, j, k, ix, iy, iz;
   int   typ1, typ2, col, slot, klo, khi;
   int   cell_scale[3];
+  int   fixed_elements;
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
   int   line = 0;
   int   max_type = 0;
@@ -210,6 +211,8 @@ void read_config(char *filename)
     if (tag_format) {
       do {
 	res = fgets(buffer, 1024, infile);
+	if( (ptr = strchr(res, '\n')) != NULL)
+	  *ptr = '\0';
 	line++;
 	/* read the box vectors */
 	if (res[1] == 'X') {
@@ -256,6 +259,7 @@ void read_config(char *filename)
 		  *ptr = '\0';
 		strcpy(elements[j], res_tmp);
 		i += strlen(res_tmp);
+		fixed_elements = j;
 	      } else
 		break;
 	    }
@@ -272,11 +276,10 @@ void read_config(char *filename)
 		msg[str_len - 1] = '\0';
 		i += str_len;
 		if (strcmp(msg, elements[j]) != 0) {
-		  if (atoi(elements[j]) == j && j != 0) {
+		  if (atoi(elements[j]) == j && j > fixed_elements) {
 		    strcpy(elements[j], msg);
+		    fixed_elements++;
 		  } else {
-		    warning(1,
-		      "Found element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';
@@ -296,11 +299,10 @@ void read_config(char *filename)
 		  *ptr = '\0';
 		i += strlen(msg);
 		if (strcmp(msg, elements[j]) != 0) {
-		  if (atoi(elements[j]) == j) {
+		  if (atoi(elements[j]) == j && j > fixed_elements) {
 		    strcpy(elements[j], msg);
+		    fixed_elements++;
 		  } else {
-		    warning(1,
-		      "Found element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';

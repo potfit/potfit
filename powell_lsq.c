@@ -85,7 +85,6 @@ void powell_lsq(real *xi)
   int   itemp, itemp2;		/* the same for integer */
 #endif /* APOT */
   real  ferror, berror;		/* forward/backward error estimates */
-  static char errmsg[256];	/* Error message */
   FILE *ff;			/* Exit flagfile */
 
   d = mat_real(ndim, ndim);
