@@ -211,7 +211,7 @@ void read_config(char *filename)
     if (tag_format) {
       do {
 	res = fgets(buffer, 1024, infile);
-	if( (ptr = strchr(res, '\n')) != NULL)
+	if ((ptr = strchr(res, '\n')) != NULL)
 	  *ptr = '\0';
 	line++;
 	/* read the box vectors */

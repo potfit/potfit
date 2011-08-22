@@ -62,8 +62,8 @@ void init_population(real **pop, real *xi, real *cost)
   for (i = 0; i < NP; i++) {
     for (j = 0; j < (D - 2); j++)
       pop[i][j] = xi[j];
-    pop[i][D - 2] = F_LOWER + dsfmt_genrand_close_open(&dsfmt) * F_UPPER;
-    pop[i][D - 1] = dsfmt_genrand_close_open(&dsfmt);
+    pop[i][D - 2] = F_LOWER + eqdist() * F_UPPER;
+    pop[i][D - 1] = eqdist();
   }
   for (i = 1; i < NP; i++) {
     for (j = 0; j < ndim; j++) {
@@ -270,36 +270,36 @@ void diff_evo(real *xi)
     for (i = 0; i < NP; i++) {
       /* generate random numbers */
       do
-	a = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);
+	a = (int)floor(eqdist() * NP);
       while (a == i);
       do
-	b = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);
+	b = (int)floor(eqdist() * NP);
       while (b == i || b == a);
 /*      do*/
-/*        c = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*        c = (int)floor(eqdist() * NP);*/
 /*      while (c == i || c == a || c == b);*/
 /*      do*/
-/*        d = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*        d = (int)floor(eqdist() * NP);*/
 /*      while (d == i || d == a || d == b || d == c);*/
 /*      do*/
-/*        e = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*        e = (int)floor(eqdist() * NP);*/
 /*      while (e == i || e == a || e == b || e == c || e == d);*/
 
-      j = (int)floor(dsfmt_genrand_close_open(&dsfmt) * ndim);
+      j = (int)floor(eqdist() * ndim);
 
       /* self-adaptive parameters */
-      if (dsfmt_genrand_close_open(&dsfmt) < TAU_1)
-	trial[D - 2] = F_LOWER + dsfmt_genrand_close_open(&dsfmt) * F_UPPER;
+      if (eqdist() < TAU_1)
+	trial[D - 2] = F_LOWER + eqdist() * F_UPPER;
       else
 	trial[D - 2] = x1[i][D - 2];
-      if (dsfmt_genrand_close_open(&dsfmt) < TAU_2)
-	trial[D - 1] = dsfmt_genrand_close_open(&dsfmt);
+      if (eqdist() < TAU_2)
+	trial[D - 1] = eqdist();
       else
 	trial[D - 1] = x1[i][D - 1];
 
       /* create trail vectors with different methods */
       for (k = 1; k <= ndim; k++) {
-	if (dsfmt_genrand_close_open(&dsfmt) < trial[D - 1] || k == j) {
+	if (eqdist() < trial[D - 1] || k == j) {
 	  /* DE/rand/1/exp */
 /*          temp = x1[c][idx[j]] + trial[D - 2] * (x1[a][idx[j]] - x1[b][idx[j]]);*/
 	  /* DE/best/1/exp */
@@ -363,7 +363,7 @@ void diff_evo(real *xi)
       }
     }
 #ifdef APOT
-    if (dsfmt_genrand_close_open(&dsfmt) < jumprate) {
+    if (eqdist() < jumprate) {
       opposite_check(x2, cost, 0);
       jsteps++;
       if (jsteps > 10) {

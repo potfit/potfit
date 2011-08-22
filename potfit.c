@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 
     dsfmt_init_by_array(&dsfmt, array, R_SIZE);
     for (i = 0; i < 10e5; i++)
-      dsfmt_genrand_close_open(&dsfmt);
+      eqdist();
     free(array);
 #undef R_SIZE
 #undef RAND_MAX

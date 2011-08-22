@@ -141,6 +141,18 @@ vector vec_prod(vector u, vector v)
 
 /****************************************************************
  *
+ *  real eqdist(): Returns an equally distributed random number in [0,1[
+ * 	Uses dsfmt PRNG to generate a random number.
+ *
+ ****************************************************************/
+
+inline real eqdist()
+{
+   return dsfmt_genrand_close_open(&dsfmt);
+}
+
+/****************************************************************
+ *
  *  real normdist(): Returns a normally distributed random variable
  * 	Uses dsfmt PRNG to generate a random number.
  *
@@ -154,8 +166,8 @@ real normdist()
 
   if (!(have)) {
     do {
-      x1 = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.0;
-      x2 = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.0;
+      x1 = 2.0 * eqdist() - 1.0;
+      x2 = 2.0 * eqdist() - 1.0;
       sqr = x1 * x1 + x2 * x2;
     } while (!(sqr <= 1.0 && sqr > 0));
     /* Box Muller Transformation */
