@@ -121,7 +121,9 @@
 # x86_64-gcc    64bit GNU Compiler
 # i686-icc 	32bit Intel Compiler
 # i686-gcc  	32bit GNU Compiler
-SYSTEM 		= x86_64-icc
+# 
+#SYSTEM 		= x86_64-icc 	# Use this as fallback
+SYSTEM 		= $(shell uname -m)-icc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
@@ -458,6 +460,11 @@ endif
 # COMPAT - compatibility mode for old (w*d)^2
 ifneq (,$(findstring compat,${MAKETARGET}))
 CFLAGS += -DCOMPAT
+endif
+
+# STRICT - force all contributions to decrease
+ifneq (,$(findstring strict,${MAKETARGET}))
+CFLAGS += -DSTRICT
 endif
 
 # EVO - for differential evolution
