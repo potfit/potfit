@@ -462,11 +462,6 @@ ifneq (,$(findstring compat,${MAKETARGET}))
 CFLAGS += -DCOMPAT
 endif
 
-# STRICT - force all contributions to decrease
-ifneq (,$(findstring strict,${MAKETARGET}))
-CFLAGS += -DSTRICT
-endif
-
 # EVO - for differential evolution
 ifneq (,$(findstring evo,${MAKETARGET}))
 CFLAGS += -DEVO
