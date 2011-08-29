@@ -672,7 +672,7 @@ int main(int argc, char **argv)
     /* forces */
     for (i = 0; i < 3 * natoms; i++)
       rms[0] += dsquare(force[i]);
-    rms[0] = sqrt(rms[0] / natoms);
+    rms[0] = sqrt(rms[0] / (3 * natoms));
 
     /* energies */
     if (eweight != 0) {

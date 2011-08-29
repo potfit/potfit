@@ -208,7 +208,7 @@ void power_1(real *result, real *x, real *y)
 #ifndef ACML
   vdPow(1, x, y, result);
 #else
-  *result = fastpow(x, y);
+  *result = fastpow(*x, *y);
 #endif /* ACML */
 }
 

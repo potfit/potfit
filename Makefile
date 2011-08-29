@@ -197,7 +197,7 @@ ifeq (x86_64-gcc,${SYSTEM})
   CC_MPI        = mpicc
 
 # general optimization flags
-  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused
+  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused 
 
   OMPI_CC      	= gcc
   OMPI_CLINKER 	= gcc
