@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -29,6 +29,7 @@
  ****************************************************************/
 
 #include "potfit.h"
+
 #include "utils.h"
 
 /****************************************************************
@@ -50,7 +51,7 @@ real make_box(void)
   /* volume */
   volume = SPROD(box_x, tbox_x);
   if (0 == volume)
-    error("Box edges are parallel");
+    error(1, "Box edges are parallel\n");
 
   /* normalization */
   tbox_x.x /= volume;
@@ -81,8 +82,9 @@ void read_config(char *filename)
   int   i, j, k, ix, iy, iz;
   int   typ1, typ2, col, slot, klo, khi;
   int   cell_scale[3];
-  int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz =
-    0, use_force;
+  int   fixed_elements;
+  int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
+  int   line = 0;
   int   max_type = 0;
   int   sh_dist = 0;		/* short distance flag */
   int   str_len;
@@ -98,33 +100,33 @@ void read_config(char *filename)
   sym_tens *stresses;
   vector d, dd, iheight;
 
+  /* initialize elements array */
+  elements = (char **)malloc(ntypes * sizeof(char *));
+  if (NULL == elements)
+    error(1, "Cannot allocate memory for element names.");
+  reg_for_free(elements, "elements");
+  for (i = 0; i < ntypes; i++) {
+    elements[i] = (char *)malloc(3 * sizeof(char));
+    if (NULL == elements[i])
+      error(1, "Cannot allocate memory for %d. element name.\n", i + 1);
+    reg_for_free(elements[i], "elements[%d]", i);
+    snprintf(elements[i], 3, "%d\0", i);
+  }
+
   /* initialize minimum distance array */
   mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
   if (NULL == mindist)
-    error("Cannot allocate memory for minimal distance.");
-
-  /* initialize elements array */
-  elements = (char **)malloc(ntypes * sizeof(char *));
-  reg_for_free(elements, "elements");
-  if (NULL == elements)
-    error("Cannot allocate memory for element names.");
-  for (i = 0; i < ntypes; i++) {
-    elements[i] = (char *)malloc(3 * sizeof(char));
-    reg_for_free(elements[i], "elements[i]");
-    if (NULL == elements[i]) {
-      sprintf(msg, "Cannot allocate memory for element name %d\n", i);
-      error(msg);
-    }
-    sprintf(elements[i], "%d", i);
-  }
+    error(1, "Cannot allocate memory for minimal distance.");
 
   /* set maximum cutoff distance as starting value for mindist */
   for (i = 0; i < ntypes * ntypes; i++)
-    mindist[i] = 99;
+    mindist[i] = 99.;
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
-	((j * (j + 1)) / 2);
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
       mindist[k] = MAX(rcut[i * ntypes + j], mindist[i * ntypes + j]);
     }
 
@@ -132,74 +134,71 @@ void read_config(char *filename)
 
   /* open file */
   infile = fopen(filename, "r");
-  if (NULL == infile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == infile)
+    error(1, "Could not open file %s\n", filename);
 
   /* read configurations until the end of the file */
   do {
     res = fgets(buffer, 1024, infile);
-    if (NULL == res) {
-      sprintf(msg, "Unexpected end of file in %s", filename);
-      error(msg);
-    }
+    line++;
+    if (NULL == res)
+      error(1, "Unexpected end of file in %s", filename);
     if (res[0] == '#') {	/* new file type */
       tag_format = 1;
       h_eng = h_stress = h_boxx = h_boxy = h_boxz = 0;
       if (res[1] == 'N') {	/* Atom number line */
 	if (sscanf(res + 3, "%d %d", &count, &use_force) < 2)
-	  error("Error in atom number specification\n");
+	  error(1, "%s: Error in atom number specification on line %d\n",
+	    filename, line);
       } else
-	error("Error - number of atoms missing\n");
+	error(1, "%s: Error - number of atoms missing on line %d\n", filename,
+	  line);
     } else {
       /* number of atoms in this configuration */
       tag_format = 0;
       use_force = 1;
-      if (1 > sscanf(buffer, "%d", &count)) {
-	sprintf(msg, "Unexpected end of file in %s", filename);
-	error(msg);
-      }
+      if (1 > sscanf(buffer, "%d", &count))
+	error(1, "Unexpected end of file in %s", filename);
     }
     /* increase memory for this many additional atoms */
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
     if (NULL == atoms)
-      error("Cannot allocate memory for atoms");
+      error(1, "Cannot allocate memory for atoms");
     for (i = 0; i < count; i++)
       atoms[natoms + i].neigh = malloc(1 * sizeof(neigh_t));
     coheng = (real *)realloc(coheng, (nconf + 1) * sizeof(real));
     if (NULL == coheng)
-      error("Cannot allocate memory for cohesive energy");
+      error(1, "Cannot allocate memory for cohesive energy");
     conf_weight = (real *)realloc(conf_weight, (nconf + 1) * sizeof(real));
     if (NULL == conf_weight)
-      error("Cannot allocate memory for configuration weights");
+      error(1, "Cannot allocate memory for configuration weights");
     else
       conf_weight[nconf] = 1.;
     volumen = (real *)realloc(volumen, (nconf + 1) * sizeof(real));
     if (NULL == volumen)
-      error("Cannot allocate memory for volume");
+      error(1, "Cannot allocate memory for volume");
     stress = (sym_tens *)realloc(stress, (nconf + 1) * sizeof(sym_tens));
     if (NULL == stress)
-      error("Cannot allocate memory for stress");
+      error(1, "Cannot allocate memory for stress");
     inconf = (int *)realloc(inconf, (nconf + 1) * sizeof(int));
     if (NULL == inconf)
-      error("Cannot allocate memory for atoms in conf");
+      error(1, "Cannot allocate memory for atoms in conf");
     cnfstart = (int *)realloc(cnfstart, (nconf + 1) * sizeof(int));
     if (NULL == cnfstart)
-      error("Cannot allocate memory for start of conf");
+      error(1, "Cannot allocate memory for start of conf");
     useforce = (int *)realloc(useforce, (nconf + 1) * sizeof(int));
     if (NULL == useforce)
-      error("Cannot allocate memory for useforce");
+      error(1, "Cannot allocate memory for useforce");
     usestress = (int *)realloc(usestress, (nconf + 1) * sizeof(int));
     if (NULL == useforce)
-      error("Cannot allocate memory for usestress");
+      error(1, "Cannot allocate memory for usestress");
     na_type = (int **)realloc(na_type, (nconf + 2) * sizeof(int *));
     if (NULL == na_type)
-      error("Cannot allocate memory for na_type");
+      error(1, "Cannot allocate memory for na_type");
     na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
-    reg_for_free(na_type[nconf], "na_type[nconf]");
+    reg_for_free(na_type[nconf], "na_type[%d]", nconf);
     if (NULL == na_type[nconf])
-      error("Cannot allocate memory for na_type");
+      error(1, "Cannot allocate memory for na_type");
 
     for (i = 0; i < ntypes; i++)
       na_type[nconf][i] = 0;
@@ -212,33 +211,37 @@ void read_config(char *filename)
     if (tag_format) {
       do {
 	res = fgets(buffer, 1024, infile);
+	if ((ptr = strchr(res, '\n')) != NULL)
+	  *ptr = '\0';
+	line++;
 	/* read the box vectors */
 	if (res[1] == 'X') {
-	  if (sscanf(res + 3, "%lf %lf %lf\n",
-	      &box_x.x, &box_x.y, &box_x.z) == 3)
+	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_x.x, &box_x.y,
+	      &box_x.z) == 3)
 	    h_boxx++;
 	  else
-	    error("Error in box_x vector\n");
+	    error(1, "%s: Error in box vector x, line %d\n", filename, line);
 	} else if (res[1] == 'Y') {
-	  if (sscanf(res + 3, "%lf %lf %lf\n",
-	      &box_y.x, &box_y.y, &box_y.z) == 3)
+	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_y.x, &box_y.y,
+	      &box_y.z) == 3)
 	    h_boxy++;
 	  else
-	    error("Error in box_y vector\n");
+	    error(1, "%s: Error in box vector y, line %d\n", filename, line);
 	} else if (res[1] == 'Z') {
-	  if (sscanf(res + 3, "%lf %lf %lf\n",
-	      &box_z.x, &box_z.y, &box_z.z) == 3)
+	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_z.x, &box_z.y,
+	      &box_z.z) == 3)
 	    h_boxz++;
 	  else
-	    error("Error in box_z vector\n");
+	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
 	    h_eng++;
 	  else
-	    error("Error in energy\n");
+	    error(1, "%s: Error in energy on line %d\n", filename, line);
 	} else if (res[1] == 'W') {
 	  if (sscanf(res + 3, "%lf\n", &(conf_weight[nconf])) != 1)
-	    error("Error in configuration weight\n");
+	    error(1, "%s: Error in configuration weight on line %d\n", filename,
+	      line);
 	} else if (res[1] == 'C') {
 	  fgetpos(infile, &filepos);
 	  if (!have_elements) {
@@ -256,6 +259,7 @@ void read_config(char *filename)
 		  *ptr = '\0';
 		strcpy(elements[j], res_tmp);
 		i += strlen(res_tmp);
+		fixed_elements = j;
 	      } else
 		break;
 	    }
@@ -272,22 +276,21 @@ void read_config(char *filename)
 		msg[str_len - 1] = '\0';
 		i += str_len;
 		if (strcmp(msg, elements[j]) != 0) {
-		  if (atoi(elements[j]) == j && j != 0) {
+		  if (atoi(elements[j]) == j && j > fixed_elements) {
 		    strcpy(elements[j], msg);
+		    fixed_elements++;
 		  } else {
-		    fprintf(stderr,
-		      " --> Warning <--\nFound element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';
-		    fprintf(stderr, "Mismatch found in configuration %d.\n",
-		      nconf);
-		    fprintf(stderr,
+		    error(0, "Mismatch found in configuration %d, line %d.\n",
+		      nconf, line);
+		    error(0,
 		      "Expected element >> %s << but found element >> %s <<.\n",
 		      elements[j], msg);
-		    fprintf(stderr,
-		      "You can use list_config to identify that configuration.\n\n");
-		    error("Please check your configuration files!");
+		    error(0,
+		      "You can use list_config to identify that configuration.\n");
+		    error(1, "Please check your configuration files!\n");
 		  }
 		}
 	      } else if (strlen(res_tmp) > 1) {
@@ -296,22 +299,21 @@ void read_config(char *filename)
 		  *ptr = '\0';
 		i += strlen(msg);
 		if (strcmp(msg, elements[j]) != 0) {
-		  if (atoi(elements[j]) == j) {
+		  if (atoi(elements[j]) == j && j > fixed_elements) {
 		    strcpy(elements[j], msg);
+		    fixed_elements++;
 		  } else {
-		    fprintf(stderr,
-		      " --> Warning <--\nFound element mismatch in configuration file!\n");
 		    /* Fix newline at the end of a string */
 		    if ((ptr = strchr(msg, '\n')) != NULL)
 		      *ptr = '\0';
-		    fprintf(stderr, "Mismatch found in configuration %d.\n",
-		      nconf);
-		    fprintf(stderr,
+		    error(0, "Mismatch found in configuration %d on line %d.\n",
+		      nconf, line);
+		    error(0,
 		      "Expected element >> %s << but found element >> %s <<.\n",
 		      elements[j], msg);
-		    fprintf(stderr,
-		      "You can use list_config to identify that configuration.\n\n");
-		    error("Please check your configuration files!");
+		    error(0,
+		      "You can use list_config to identify that configuration.\n");
+		    error(1, "Please check your configuration files!");
 		  }
 		}
 	      } else
@@ -328,28 +330,31 @@ void read_config(char *filename)
 	      &(stresses->yz), &(stresses->zx)) == 6)
 	    h_stress++;
 	  else
-	    error("Error in stress tensor\n");
+	    error(1, "Error in stress tensor on line %d\n", line);
 	}
       } while (res[1] != 'F');
       if (!(h_eng && h_boxx && h_boxy && h_boxz))
-	error("Incomplete force file!");
+	error(1, "Incomplete force file!");
       usestress[nconf] = h_stress;	/* no stress tensor available */
     } else {
       /* read the box vectors */
       fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z);
       fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z);
       fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z);
+      line += 3;
 
       /* read cohesive energy */
       if (1 != fscanf(infile, "%lf\n", &(coheng[nconf])))
-	error("Configuration file without cohesive energy -- old format!");
+	error(1, "Configuration file without cohesive energy -- old format!");
+      line++;
 
       /* read stress tensor */
       if (6 != fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
-	  &(stresses->yy), &(stresses->zz), &(stresses->xy),
-	  &(stresses->yz), &(stresses->zx)))
-	error("No stresses given -- old format");
+	  &(stresses->yy), &(stresses->zz), &(stresses->xy), &(stresses->yz),
+	  &(stresses->zx)))
+	error(1, "No stresses given -- old format");
       usestress[nconf] = 1;
+      line++;
     }
 
     if (usestress[nconf])
@@ -364,13 +369,17 @@ void read_config(char *filename)
       k = 3 * (natoms + i);
       atom = atoms + natoms + i;
       if (7 > fscanf(infile, "%d %lf %lf %lf %lf %lf %lf\n", &(atom->typ),
-	  &(atom->pos.x), &(atom->pos.y), &(atom->pos.z),
-	  &(atom->force.x), &(atom->force.y), &(atom->force.z)))
-	error("Corrupt configuration file");
+	  &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), &(atom->force.x),
+	  &(atom->force.y), &(atom->force.z)))
+	error(1, "Corrupt configuration file on line %d\n", line + 1);
+      line++;
       if (atom->typ >= ntypes || atom->typ < 0)
-	error("Corrupt configuration file: Incorrect atom type");
-      atom->absforce = sqrt(SQR(atom->force.x) +
-	SQR(atom->force.y) + SQR(atom->force.z));
+	error(1,
+	  "Corrupt configuration file on line %d: Incorrect atom type (%d)\n",
+	  line, atom->typ);
+      atom->absforce =
+	sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) +
+	dsquare(atom->force.z));
       atom->conf = nconf;
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
@@ -381,10 +390,10 @@ void read_config(char *filename)
     iheight.y = sqrt(SPROD(tbox_y, tbox_y));
     iheight.z = sqrt(SPROD(tbox_z, tbox_z));
 
-    if ((ceil(rcutmax * iheight.x) > 30000) ||
-      (ceil(rcutmax * iheight.y) > 30000) ||
-      (ceil(rcutmax * iheight.z) > 30000))
-      error("Very bizarre small cell size - aborting");
+    if ((ceil(rcutmax * iheight.x) > 30000)
+      || (ceil(rcutmax * iheight.y) > 30000)
+      || (ceil(rcutmax * iheight.z) > 30000))
+      error(1, "Very bizarre small cell size - aborting");
 
     cell_scale[0] = (int)ceil(rcutmax * iheight.x);
     cell_scale[1] = (int)ceil(rcutmax * iheight.y);
@@ -404,8 +413,8 @@ void read_config(char *filename)
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_z.x, tbox_z.y,
       tbox_z.z);
     fprintf(stderr, "Box heights:\n");
-    fprintf(stderr, "     %10.6f %10.6f %10.6f\n",
-      1. / iheight.x, 1. / iheight.y, 1. / iheight.z);
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", 1. / iheight.x,
+      1. / iheight.y, 1. / iheight.z);
     fprintf(stderr, "Potential range:  %f\n", rcutmax);
     fprintf(stderr, "Periodic images needed: %d %d %d\n\n",
       2 * cell_scale[0] + 1, 2 * cell_scale[1] + 1, 2 * cell_scale[2] + 1);
@@ -432,14 +441,15 @@ void read_config(char *filename)
 	      if (r <= rcut[typ1 * ntypes + typ2]) {
 		if (r <= rmin[typ1 * ntypes + typ2]) {
 		  sh_dist = nconf;
-		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf,
-		    r);
-		  fprintf(stderr, "%d (type %d): %f %f %f\n", i - natoms,
-		    typ1, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
-		  fprintf(stderr, "%d (type %d): %f %f %f\n", j - natoms,
-		    typ2, dd.x, dd.y, dd.z);
+		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf, r);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n",
+		    i - natoms, typ1, atoms[i].pos.x, atoms[i].pos.y,
+		    atoms[i].pos.z);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n",
+		    j - natoms, typ2, dd.x, dd.y, dd.z);
 		}
-		atoms[i].neigh = (neigh_t *)realloc(atoms[i].neigh,
+		atoms[i].neigh =
+		  (neigh_t *)realloc(atoms[i].neigh,
 		  (atoms[i].n_neigh + 1) * sizeof(neigh_t));
 		dd.x /= r;
 		dd.y /= r;
@@ -449,6 +459,9 @@ void read_config(char *filename)
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].dist = dd;
+#ifdef COULOMB
+		atoms[i].neigh[k].r2 = r * r;
+#endif /* COULOMB */
 #ifdef ADP
 		atoms[i].neigh[k].rdist.x = dd.x * r;
 		atoms[i].neigh[k].rdist.y = dd.y * r;
@@ -462,8 +475,9 @@ void read_config(char *filename)
 #endif /* ADP */
 		atoms[i].n_neigh++;
 
-		col = (typ1 <= typ2) ?
-		  typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+		col =
+		  (typ1 <=
+		  typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 		  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 		atoms[i].neigh[k].col[0] = col;
 		mindist[col] = MIN(mindist[col], r);
@@ -474,10 +488,12 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			nconf, i - natoms);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
-		      error("short distance in config.c!");
+		      error(1, "Short distance!");
 		    }
 		    istep = calc_pot.invstep[col];
 		    slot = (int)(rr * istep);
@@ -515,10 +531,12 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			typ1, typ2);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
-		      error("short distance in config.c!");
+		      error(1, "short distance in config.c!");
 		    }
 		    istep = calc_pot.invstep[col];
 		    slot = (int)(rr * istep);
@@ -557,10 +575,12 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			typ1, typ2);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
-		      error("short distance in config.c!");
+		      error(1, "short distance in config.c!");
 		    }
 		    istep = calc_pot.invstep[col];
 		    slot = (int)(rr * istep);
@@ -598,10 +618,12 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			typ1, typ2);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
-		      error("short distance in config.c!");
+		      error(1, "short distance in config.c!");
 		    }
 		    istep = calc_pot.invstep[col];
 		    slot = (int)(rr * istep);
@@ -638,8 +660,7 @@ void read_config(char *filename)
 	    }
       }
       maxneigh = MAX(maxneigh, atoms[i].n_neigh);
-      sprintf(msg, "neighbor table atom %d", i);
-      reg_for_free(atoms[i].neigh, msg);
+      reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
     }
 
 /* increment natoms and configuration number */
@@ -651,13 +672,14 @@ void read_config(char *filename)
 
   /* be pedantic about too large ntypes */
   if ((max_type + 1) < ntypes) {
-    fprintf(stderr,
-      "There are less than %d atom types in your configurations!\n", ntypes);
-    error("Please adjust \"ntypes\" in your parameter file.");
+    error(0, "There are less than %d atom types in your configurations!\n",
+      ntypes);
+    error(1, "Please adjust \"ntypes\" in your parameter file.", ntypes);
   }
 
   reg_for_free(atoms, "atoms");
   reg_for_free(coheng, "coheng");
+  reg_for_free(conf_weight, "conf_weight");
   reg_for_free(volumen, "volumen");
   reg_for_free(stress, "stress");
   reg_for_free(inconf, "inconf");
@@ -680,7 +702,7 @@ void read_config(char *filename)
 
   /* copy forces into single vector */
   if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
-    error("Cannot allocate forces");
+    error(1, "Cannot allocate force vector");
   reg_for_free(force_0, "force_0");
 
   k = 0;
@@ -739,22 +761,23 @@ void read_config(char *filename)
       paircol);
 
     for (i = 0; i < paircol * pair_steps; i++)
-      pair_table[i] = 0;
+      pair_table[i] = 0.;
 
     for (i = 0; i < ntypes; i++)
       for (k = 0; k < ntypes; k++)
 	pair_dist[(i <=
-	    k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes +
-	  i - (k * (k + 1) / 2)] = rcut[i * ntypes + k] / pair_steps;
+	    k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i - (k * (k +
+	      1) / 2)] = rcut[i * ntypes + k] / pair_steps;
 
     for (k = 0; k < paircol; k++) {
       for (i = 0; i < natoms; i++) {
 	typ1 = atoms[i].typ;
 	for (j = 0; j < atoms[i].n_neigh; j++) {
 	  typ2 = atoms[i].neigh[j].typ;
-	  col = (typ1 <= typ2) ? typ1 * ntypes + typ2 -
-	    ((typ1 * (typ1 + 1)) / 2) : typ2 * ntypes + typ1 -
-	    ((typ2 * (typ2 + 1)) / 2);
+	  col =
+	    (typ1 <=
+	    typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 +
+		1)) / 2) : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 	  if (col == k) {
 	    pos = (int)(atoms[i].neigh[j].r / pair_dist[k]);
 #ifdef DEBUG
@@ -765,7 +788,7 @@ void read_config(char *filename)
 	    }
 #endif /* DEBUG */
 	    pair_table[k * pair_steps + pos]++;
-	    if (pair_table[k * pair_steps + pos] > max_count)
+	    if ((int)pair_table[k * pair_steps + pos] > max_count)
 	      max_count = (int)pair_table[k * pair_steps + pos];
 	  }
 	}
@@ -790,8 +813,10 @@ void read_config(char *filename)
 
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
-	((j * (j + 1)) / 2);
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
       if (mindist[k] == 99)
 	mindist[k] = 3;
       rmin[i * ntypes + j] = mindist[k];
@@ -820,8 +845,7 @@ void read_config(char *filename)
 #endif /* ADP */
   /* recalculate step, invstep and xcoord for new tables */
   for (i = 0; i < calc_pot.ncols; i++) {
-    calc_pot.step[i] =
-      (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
+    calc_pot.step[i] = (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
     calc_pot.invstep[i] = 1. / calc_pot.step[i];
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
@@ -841,8 +865,10 @@ void read_config(char *filename)
   for (i = 0; i < ntypes; i++) {
     printf("%s\t", elements[i]);
     for (j = 0; j < ntypes; j++) {
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i -
-	((j * (j + 1)) / 2);
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
       printf("%f\t", mindist[k]);
 
     }
@@ -856,9 +882,9 @@ void read_config(char *filename)
   na_type = (int **)realloc(na_type, (nconf + 1) * sizeof(int *));
   reg_for_free(na_type, "na_type");
   if (NULL == na_type)
-    error("Cannot allocate memory for na_type");
+    error(1, "Cannot allocate memory for na_type");
   na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
-  reg_for_free(na_type[nconf], "na_type[nconf]");
+  reg_for_free(na_type[nconf], "na_type[%d]", nconf);
   for (i = 0; i < ntypes; i++)
     na_type[nconf][i] = 0;
 
@@ -867,9 +893,8 @@ void read_config(char *filename)
       na_type[nconf][j] += na_type[i][j];
 
   /* print diagnostic message and close file */
-  printf("Maximum number of neighbors is %d.\n", maxneigh);
-  printf("Read %d configurations (%d with forces, %d with stresses)\n",
-    nconf, w_force, w_stress);
+  printf("Read %d configurations (%d with forces, %d with stresses)\n", nconf,
+    w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
@@ -883,12 +908,10 @@ void read_config(char *filename)
   }
 
   printf(")\nfrom file \"%s\".\n\n", filename);
-  if (sh_dist) {
-    sprintf(msg,
-      "Distances too short, last occurence conf %d, see above for details",
+  if (sh_dist)
+    error(1,
+      "Distances too short, last occurence conf %d, see above for details\n",
       sh_dist);
-    error(msg);
-  }
   return;
 }
 

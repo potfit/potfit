@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -28,9 +28,12 @@
  *
  *****************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
+#ifndef ACML
+#include <mkl_vml.h>
+#else
+#include <acml_mv.h>
+#endif /* ACML */
+
 #include "potfit.h"
 #include "utils.h"
 
@@ -39,7 +42,7 @@ int  *vect_int(long dim)
   int  *vect, i;
   vect = (int *)malloc((size_t) (dim * sizeof(int)));
   if (vect == NULL)
-    error("Error in integer vector allocation");
+    error(1, "Error in integer vector allocation");
   for (i = 0; i < dim; i++)
     vect[i] = 0;
   return vect;
@@ -51,7 +54,7 @@ real *vect_real(long dim)
   int   i;
   vect = (real *)malloc((size_t) (dim * sizeof(real)));
   if (vect == NULL)
-    error("Error in real vector allocation");
+    error(1, "Error in real vector allocation");
   for (i = 0; i < dim; i++)
     vect[i] = 0.;
   return vect;
@@ -66,12 +69,12 @@ real **mat_real(long rowdim, long coldim)
   /* matrix: pointer to rows */
   matrix = (real **)malloc((size_t) rowdim * sizeof(real *));
   if (matrix == NULL)
-    error("Error in real matrix row allocation");
+    error(1, "Error in real matrix row allocation");
 
   /* matrix[0]: pointer to elements */
   matrix[0] = (real *)malloc((size_t) rowdim * coldim * sizeof(real));
   if (matrix[0] == NULL)
-    error("Error in real matrix element allocation");
+    error(1, "Error in real matrix element allocation");
 
   for (i = 1; i < rowdim; i++)
     matrix[i] = matrix[i - 1] + coldim;
@@ -95,13 +98,17 @@ void free_mat_real(real **matrix)
   free(matrix);
 }
 
-void reg_for_free(void *p, char *name)
+void reg_for_free(void *p, char *name, ...)
 {
+  va_list ap;
+
   pointer_names =
     (char **)realloc(pointer_names, (num_pointers + 1) * sizeof(char *));
   pointer_names[num_pointers] =
-    (char *)malloc((strlen(name) + 1) * sizeof(char));
-  strcpy(pointer_names[num_pointers], name);
+    (char *)malloc((strlen(name) + 10) * sizeof(char));
+  va_start(ap, name);
+  vsprintf(pointer_names[num_pointers], name, ap);
+  va_end(ap);
   all_pointers =
     (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
   all_pointers[num_pointers] = p;
@@ -134,10 +141,22 @@ vector vec_prod(vector u, vector v)
 
 /****************************************************************
  *
+ *  real eqdist(): Returns an equally distributed random number in [0,1[
+ * 	Uses dsfmt PRNG to generate a random number.
+ *
+ ****************************************************************/
+
+inline real eqdist()
+{
+  return dsfmt_genrand_close_open(&dsfmt);
+}
+
+/****************************************************************
+ *
  *  real normdist(): Returns a normally distributed random variable
  * 	Uses dsfmt PRNG to generate a random number.
  *
- *****************************************************************/
+ ****************************************************************/
 
 real normdist()
 {
@@ -147,8 +166,8 @@ real normdist()
 
   if (!(have)) {
     do {
-      x1 = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.0;
-      x2 = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.0;
+      x1 = 2.0 * eqdist() - 1.0;
+      x2 = 2.0 * eqdist() - 1.0;
       sqr = x1 * x1 + x2 * x2;
     } while (!(sqr <= 1.0 && sqr > 0));
     /* Box Muller Transformation */
@@ -162,13 +181,56 @@ real normdist()
   }
 }
 
-#ifdef APOT
+/****************************************************************
+ *
+ *  square functions for integer and real values
+ *
+ ****************************************************************/
+
+inline int isquare(int i)
+{
+  return i * i;
+}
+
+inline real dsquare(real d)
+{
+  return d * d;
+}
+
+/****************************************************************
+ *
+ *  higher powers in one and more dimensions
+ *
+ ****************************************************************/
+
+void power_1(real *result, real *x, real *y)
+{
+#ifndef ACML
+  vdPow(1, x, y, result);
+#else
+  *result = fastpow(*x, *y);
+#endif /* ACML */
+}
+
+void power_m(int dim, real *result, real *x, real *y)
+{
+#ifndef ACML
+  vdPow(dim, x, y, result);
+#else
+  int   i;
+  for (i = 0; i < dim; i++) {
+    *(result + i) = fastpow(*(x + i), *(y + i));
+  }
+#endif /* ACML */
+}
+
+#if defined APOT && defined EVO
 
 /****************************************************************
  *
  *  quicksort algorithm for opposition-based diff_evo
  *
- *****************************************************************/
+ ****************************************************************/
 
 void quicksort(real *x, int low, int high, real **p)
 {
@@ -212,4 +274,4 @@ void swap_population(real *a, real *b)
   }
 }
 
-#endif /* APOT */
+#endif /* APOT && EVO */

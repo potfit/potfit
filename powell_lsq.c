@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -43,16 +43,19 @@
 #else /* ACML */
 #include <mkl_lapack.h>
 #endif /* ACML */
-#include "potfit.h"
-#include "utils.h"
-#include "bracket.h"
 
-#define EPS .0001
+#include "potfit.h"
+
+#include "bracket.h"
+#include "optimize.h"
+#include "potential.h"
+#include "utils.h"
+
+#define EPS .001
 #define PRECISION 1.E-7
 #define NOTHING 1.E-12		/* Well, almost nothing */
 #define INNERLOOPS 801
 #define TOOBIG 10000
-
 
 void powell_lsq(real *xi)
 {
@@ -82,7 +85,6 @@ void powell_lsq(real *xi)
   int   itemp, itemp2;		/* the same for integer */
 #endif /* APOT */
   real  ferror, berror;		/* forward/backward error estimates */
-  static char errmsg[256];	/* Error message */
   FILE *ff;			/* Exit flagfile */
 
   d = mat_real(ndim, ndim);
@@ -105,14 +107,16 @@ void powell_lsq(real *xi)
 #endif /* ACML */
 
   /* clear delta */
-  for (i = 0; i < ndimtot; i++)
+  for (i = 0; i < ndimtot; i++) {
     delta[i] = 0.;
+/*    printf("%f\n",xi[i]);*/
+  }
 
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
 #ifndef APOT
-  printf("%d %f %f %f %f %f %f %d\n",
-    m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
+  printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4],
+    fcalls);
   fflush(stdout);
 #endif /* APOT */
 
@@ -136,43 +140,41 @@ void powell_lsq(real *xi)
 #ifdef EAM
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
-      sprintf(errmsg, "F does not depend on xi[%d], trying to rescale!\n",
+      warning(1, "F does not depend on xi[%d], trying to rescale!\n",
 	idx[i - 1]);
-      warning(errmsg);
       rescale(&opt_pot, 1., 1);
       /* wake other threads and sync potentials */
       F = calc_forces(xi, fxi1, 2);
-/*      printf("F=%f\n", F);*/
       i = gamma_init(gamma, d, xi, fxi1);
 #endif /* NORESCALE */
 #endif /* EAM */
+
       /* try again */
       if (i) {
 	/* ok, now this is serious, better exit cleanly */
 #ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
-	sprintf(errmsg, "F does not depend on xi[%d], fit impossible!\n",
+	warning(1, "F does not depend on xi[%d], fit impossible!\n",
 	  idx[i - 1]);
 #else
-	for (n = 0; n < ndim; n++)
-	  apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
-	    xi[idx[n]];
+	update_apot_table(xi);
 	write_pot_table(&apot_table, tempfile);
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
-	sprintf(errmsg,
-	  "F does not depend on the %d. parameter (%s) of the %d. potential (%s).\nFit impossible!\n",
-	  itemp2 + 1, apot_table.param_name[itemp][itemp2],
-	  itemp + 1, apot_table.names[itemp]);
-#endif /* !APOT */
-	warning(errmsg);
+	warning(0,
+	  "F does not depend on the %d. parameter (%s) of the %d. potential.\n",
+	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
+	warning(1, "Fit impossible!\n");
+#endif /* APOT */
 	break;
       }
     }
     (void)lineqsys_init(gamma, lineqsys, fxi1, p, ndim, mdim);	/*init LES */
     F3 = F;
     breakflag = 0;
-    do {			/*inner loop - only calculate changed rows/lines in gamma */
+
+    /*inner loop - only calculate changed rows/lines in gamma */
+    do {
       /* (a) solve linear equation */
 
       /* All in one driver routine */
@@ -180,22 +182,19 @@ void powell_lsq(real *xi)
 
       /* Linear Equation Solution (lapack) */
 #ifdef ACML
-      dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim,
-	&les_inverse[0][0], ndim, perm_indx, p, ndim, q, ndim,
-	&cond, &ferror, &berror, &i);
+      dsysvx('N', 'U', ndim, j, &lineqsys[0][0], ndim, &les_inverse[0][0], ndim,
+	perm_indx, p, ndim, q, ndim, &cond, &ferror, &berror, &i);
 #else
-      dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim,
-	&les_inverse[0][0], &ndim, perm_indx, p, &ndim, q, &ndim,
-	&cond, &ferror, &berror, work, &worksize, iwork, &i);
+      dsysvx(fact, uplo, &ndim, &j, &lineqsys[0][0], &ndim, &les_inverse[0][0],
+	&ndim, perm_indx, p, &ndim, q, &ndim, &cond, &ferror, &berror, work,
+	&worksize, iwork, &i);
 #endif /* ACML */
 #if defined DEBUG && !(defined APOT)
-      printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2],
-	q[3], q[4], q[5], q[6], q[7]);
-#endif
+      printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3],
+	q[4], q[5], q[6], q[7]);
+#endif /* DEBUG && !APOT */
       if (i > 0 && i <= ndim) {
-	sprintf(errmsg, "Linear equation system singular after step %d i=%d",
-	  m, i);
-	warning(errmsg);
+	warning(1, "Linear equation system singular after step %d i=%d", m, i);
 	break;
       }
       /* (b) get delta by multiplying q with the direction vectors */
@@ -204,17 +203,15 @@ void powell_lsq(real *xi)
 	for (j = 0; j < ndim; j++)
 	  delta[idx[i]] += d[i][j] * q[j];
 #ifndef APOT
-	if ((usemaxch) && (maxchange[idx[i]] > 0) &&
-	  (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
+	if ((usemaxch) && (maxchange[idx[i]] > 0)
+	  && (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
 	  /* something seriously went wrong,
 	     parameter idx[i] out of control */
-	  sprintf(errmsg,
-	    "Direction vector component %d out of range in step %d\n",
+	  warning(0, "Direction vector component %d out of range in step %d\n",
 	    idx[i], m);
-	  sprintf(errmsg, "%s(%g instead of %g).\n",
-	    errmsg, fabs(delta[idx[i]]), maxchange[idx[i]]);
-	  sprintf(errmsg, "%sRestarting inner loop\n", errmsg);
-	  warning(errmsg);
+	  warning(0, "(%g instead of %g).\n", fabs(delta[idx[i]]),
+	    maxchange[idx[i]]);
+	  warning(0, "Restarting inner loop\n");
 	  breakflag = 1;
 	}
 #else
@@ -262,11 +259,10 @@ void powell_lsq(real *xi)
 
       /* (f) update gamma, but if fn returns 1, matrix will be sigular,
          break inner loop and restart with new matrix */
-      if (gamma_update
-	(gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, mdim, ndimtot, F)) {
-	sprintf(errmsg,
-	  "Matrix gamma singular after step %d, restarting inner loop", m);
-	warning(errmsg);
+      if (gamma_update(gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, mdim,
+	  ndimtot, F)) {
+	warning(1, "Matrix gamma singular after step %d, restarting inner loop",
+	  m);
 	break;
       }
 
@@ -293,9 +289,9 @@ void powell_lsq(real *xi)
 #ifdef APOT
     printf("%5d\t%17.6f\t%6d\n", m, F, fcalls);
 #else
-    printf("%d %f %f %f %f %f %f %d\n",
-      m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
-#endif
+    printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4],
+      fcalls);
+#endif /* APOT */
     fflush(stdout);
 
     /* End fit if break flagfile exists */
@@ -310,8 +306,7 @@ void powell_lsq(real *xi)
 	break;
       }
     }
-#ifdef EAM
-#ifndef NORESCALE
+#if defined EAM && !defined NORESCALE
     /* Check for rescaling... every fourth step */
     if ((n % 4) == 0) {
       temp = rescale(&opt_pot, 1., 0);
@@ -321,18 +316,17 @@ void powell_lsq(real *xi)
 	F = calc_forces(xi, fxi1, 2);
       }
     }
-#endif /* NORESCALE */
-#endif /* EAM */
+#endif /* EAM && !NORESCALE */
+
     /* write temp file  */
-    if (*tempfile != '\0')
+    if (*tempfile != '\0') {
 #ifndef APOT
       write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
 #else
-      for (i = 0; i < ndim; i++)
-	apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
-	  xi[idx[i]];
-    write_pot_table(&apot_table, tempfile);
-#endif
+      update_apot_table(xi);
+      write_pot_table(&apot_table, tempfile);
+#endif /* APOT */
+    }
 
     /*End fit if whole series didn't improve F */
   } while (((F3 - F > PRECISION / 10.) || (F3 - F < 0)) && (F3 - F > d_eps));
@@ -343,14 +337,11 @@ void powell_lsq(real *xi)
   else if (F3 == F)
     printf("Could not find any further improvements, aborting!\n");
   else if ((fabs(F3 - F) > PRECISION && F3 != F && fabs(F3 - F) < d_eps))
-    printf("Last improvement was smaller than d_eps (%f), aborting!\n",
-      d_eps);
+    printf("Last improvement was smaller than d_eps (%f), aborting!\n", d_eps);
   else
     printf("Precision not reached!\n");
 #ifdef APOT
-  for (i = 0; i < ndim; i++)
-    apot_table.values[apot_table.idxpot[i]][apot_table.idxparam[i]] =
-      xi[idx[i]];
+  update_apot_table(xi);
 #endif /* APOT */
 
   /* Free memory */
@@ -374,14 +365,14 @@ void powell_lsq(real *xi)
 }
 
 
-/******************************************************************
-*
-* gamma_init: (Re-)Initialize gamma[j][i] (Gradient Matrix) after
-*            (Re-)Start or whenever necessary by calculating numerical
-*            gradients in coordinate directions. Includes re-setting the
-*            direction vectors to coordinate directions.
-*
-******************************************************************/
+/****************************************************************
+ *
+ * gamma_init: (Re-)Initialize gamma[j][i] (Gradient Matrix) after
+ *            (Re-)Start or whenever necessary by calculating numerical
+ *            gradients in coordinate directions. Includes re-setting the
+ *            direction vectors to coordinate directions.
+ *
+ ****************************************************************/
 
 int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
 {
@@ -398,7 +389,7 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   if (force == NULL) {
     force = (real *)malloc(mdim * sizeof(real));
     if (force == NULL)
-      error("Error in real vector allocation");
+      error(1, "Error in real vector allocation");
     for (i = 0; i < mdim; i++)
       force[i] = 0;
     reg_for_free(force, "force from init_gamma");
@@ -407,19 +398,20 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   for (i = 0; i < ndim; i++) {	/*initialize gamma */
     store = xi[idx[i]];
 #ifdef APOT
-    scale = apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
+    scale =
+      apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]] -
       apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]];
     xi[idx[i]] += (EPS * scale);
 #else
     scale = 1.;
     xi[idx[i]] += EPS;		/*increase xi[idx[i]]... */
-#endif
+#endif /* APOT */
     sum = 0.;
     (void)(*calc_forces) (xi, force, 0);
     for (j = 0; j < mdim; j++) {
       temp = (force[j] - force_xi[j]) / (EPS * scale);
       gamma[j][i] = temp;
-      sum += SQR(temp);
+      sum += dsquare(temp);
     }
     temp = sqrt(sum);
     xi[idx[i]] = store;		/*...and reset [idx[i]] again */
@@ -434,16 +426,16 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   return 0;
 }
 
-/*******************************************************************
-*
-* gamma_update: Update column j of gamma ( to newly calculated
-*           numerical derivatives (calculated from fa, fb
-*           at a,b); normalize new vector.
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * gamma_update: Update column j of gamma ( to newly calculated
+ *           numerical derivatives (calculated from fa, fb
+ *           at a,b); normalize new vector.
+ *
+ ****************************************************************/
 
-int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
-  real *delta, int j, int m, int n, real fmin)
+int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
+  int j, int m, int n, real fmin)
 {
   int   i;
   real  temp;
@@ -467,19 +459,19 @@ int gamma_update(real **gamma, real a, real b, real *fa, real *fb,
     for (i = 0; i < n; i++)
       delta[i] /= temp;
   } else
-    return 1;			/*Matrix will be singular: Restart! */
+    return 1;			/* Matrix will be singular: Restart! */
   return 0;
 }
 
-/*******************************************************************
-*
-* lineqsys_init: Initialize LinEqSys matrix, vector p in
-*              lineqsys . q == p
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * lineqsys_init: Initialize LinEqSys matrix, vector p in
+ *              lineqsys . q == p
+ *
+ ****************************************************************/
 
-void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
-  real *p, int n, int m)
+void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, real *p,
+  int n, int m)
 {
   int   i, j, k;		/* Auxiliary vars: Counters */
 /*   real  temp; */
@@ -495,7 +487,7 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
   for (i = 0; i < n; i++) {
     lineqsys[i][i] = 0;
     for (j = 0; j < m; j++)
-      lineqsys[i][i] += SQR(gamma[j][i]);
+      lineqsys[i][i] += dsquare(gamma[j][i]);
     for (k = i + 1; k < n; k++) {
       lineqsys[i][k] = 0.;
       for (j = 0; j < m; j++) {
@@ -507,46 +499,37 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce,
   return;
 }
 
-/*******************************************************************
-*
-* lineqsys_update: Update LinEqSys matrix row and column i, vector
-*            p.
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * lineqsys_update: Update LinEqSys matrix row and column i, vector
+ *            p.
+ *
+ ****************************************************************/
 
-void lineqsys_update(real **gamma, real **lineqsys, real *force_xi,
-  real *p, int i, int n, int m)
+void lineqsys_update(real **gamma, real **lineqsys, real *force_xi, real *p,
+  int i, int n, int m)
 {
-  int   k;
-  {
-/*     int j,k; */
-/*     real temp; */
-    for (k = 0; k < n; k++) {
-      int   j;
-/*       real  temp; */
-      p[k] = 0.;
-      lineqsys[i][k] = 0.;
-      for (j = 0; j < m; j++) {
-	p[k] -= gamma[j][k] * force_xi[j];
-	lineqsys[i][k] += gamma[j][i] * gamma[j][k];
-      }
-      lineqsys[k][i] = lineqsys[i][k];
+  int   j, k;
+  for (k = 0; k < n; k++) {
+    p[k] = 0.;
+    lineqsys[i][k] = 0.;
+    for (j = 0; j < m; j++) {
+      p[k] -= gamma[j][k] * force_xi[j];
+      lineqsys[i][k] += gamma[j][i] * gamma[j][k];
     }
+    lineqsys[k][i] = lineqsys[i][k];
   }
-
   return;
 }
 
 
 
-/*******************************************************************
-*
-*  copy_matrix: Copies data from Matrix a into matrix b
-*              (matrix dimension n x m)
-*
-*******************************************************************/
-
-/*>>>>>>>>>>>>>>>  INLINING? <<<<<<<<<<<<<<*/
+/****************************************************************
+ *
+ *  copy_matrix: Copies data from Matrix a into matrix b
+ *              (matrix dimension n x m)
+ *
+ ****************************************************************/
 
 void copy_matrix(real **a, real **b, int n, int m)
 {
@@ -559,13 +542,11 @@ void copy_matrix(real **a, real **b, int n, int m)
   return;
 }
 
-/******************************************************************
-*
-* copy_vector: Copies data from vector a into vector b (both dim n)
-*
-******************************************************************/
-
-/*>>>>>>>>>>>>>>>  INLINING? <<<<<<<<<<<<<<*/
+/****************************************************************
+ *
+ * copy_vector: Copies data from vector a into vector b (both dim n)
+ *
+ ****************************************************************/
 
 void copy_vector(real *a, real *b, int n)
 {
@@ -575,12 +556,12 @@ void copy_vector(real *a, real *b, int n)
   return;
 }
 
-/******************************************************************
-*
-* matdotvec: Calculates the product of matrix a (n x m) with column
-* vector x (dim m), Result y (dim n). (A . x = m)
-*
-******************************************************************/
+/****************************************************************
+ *
+ * matdotvec: Calculates the product of matrix a (n x m) with column
+ * vector x (dim m), Result y (dim n). (A . x = m)
+ *
+ ****************************************************************/
 
 void matdotvec(real **a, real *x, real *y, int n, int m)
 {
@@ -593,18 +574,18 @@ void matdotvec(real **a, real *x, real *y, int n, int m)
   return;
 }
 
-/*******************************************************************
-*
-* normalize_vector: Normalizes vector to |vec|^2=1, returns norm of old vector
-*
-*******************************************************************/
+/****************************************************************
+ *
+ * normalize_vector: Normalizes vector to |vec|^2=1, returns norm of old vector
+ *
+ ****************************************************************/
 
 real normalize_vector(real *v, int n)
 {
   int   j;
   real  temp, sum = 0.0;
   for (j = 0; j < n; j++)
-    sum += SQR(v[j]);
+    sum += dsquare(v[j]);
   temp = sqrt(sum);
   for (j = 0; j < n; j++)
     v[j] /= temp;

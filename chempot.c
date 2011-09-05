@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2010 Daniel Schopf
+ * Copyright 2009-2011 Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -31,6 +31,8 @@
 #if defined APOT && defined PAIR
 
 #include "potfit.h"
+
+#include "functions.h"
 
 int swap_chem_pot(int i, int j)
 {

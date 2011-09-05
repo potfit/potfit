@@ -36,14 +36,13 @@
 /*** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24 	***/
 /*** Switched to GSL Implementation, put routine under GSL protection 	***/
 
-#include <stddef.h>
-#include <float.h>
 #include "potfit.h"
-#include "utils.h"
-#include "bracket.h"
 
-real brent(real ax, real bx, real cx, real fbx, real tol,
-  real *xmin, real *xmin2, real *fxmin, real *fxmin2)
+#include "bracket.h"
+#include "utils.h"
+
+real brent(real ax, real bx, real cx, real fbx, real tol, real *xmin,
+  real *xmin2, real *fxmin, real *fxmin2)
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin, fxmin2 */
 {
   int   iter, j;
@@ -180,10 +179,10 @@ real brent(real ax, real bx, real cx, real fbx, real tol,
       SWAP(p_z, p_u, p_temp);
       /* done */
     } else {
-      error("Problems in Brent minimization");
+      error(1, "Problems in Brent minimization.\n");
     }
 
   }
-  error("Too many iterations in Brent minimization");
-  return 0;
+  error(1, "Too many iterations in Brent minimization.\n");
+  return 0.;
 }

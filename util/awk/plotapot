@@ -71,7 +71,7 @@ function write_pot(i, name, params, file)
     printf "%f/(x-%f)**%f+%f/x**%f*cos(%f*x+%f)", params[i "," 1],
       params[i "," 7], params[i "," 2], params[i "," 3], params[i "," 4],
       params[i "," 5], params[i "," 6] > file;
-  } else if (name == "pohlong") {
+  } else if (name == "pohlong" || name == "bjs") {
     printf "%f*(1-%f*log(x))*(x)**%f+%f*x", params[i "," 1], params[i "," 2],
       params[i "," 2],params[i "," 3] > file;
   } else if (name == "power_decay") {
@@ -83,6 +83,9 @@ function write_pot(i, name, params, file)
     printf "(1+%f*cos(%f*x)+%f*sin(%f*x))/x**%f", params[i "," 1],
       params[i "," 3], params[i "," 2], params[i "," 3],
       params[i "," 4] > file;
+  } else if (name == "csw2") {
+    printf "(1+%f*cos(%f*x+%f))/x**%f", params[i "," 1],
+      params[i "," 2], params[i "," 3], params[i "," 4] > file;
   } else if (name == "universal") {
     printf "%f*(%f/(%f-%f)*x**%f-%f/(%f-%f)*x**%f)+%f*x", params[i "," 1],
       params[i "," 3], params[i "," 3], params[i "," 2], params[i "," 2],
@@ -146,11 +149,13 @@ function read_pot(name)
     return 7;
   else if (name == "power_decay")
     return 2;
-  else if (name == "pohlong")
+  else if (name == "pohlong" || name == "bjs")
     return 3;
   else if (name == "parabola")
     return 3;
   else if (name == "csw")
+    return 4;
+  else if (name == "csw2")
     return 4;
   else if (name == "universal")
     return 4;
@@ -346,7 +351,12 @@ END {
       printf "set term x11;\n" > "plot_eam";
     printf "set samples 1000;\n" > "plot_eam";
     printf "set grid;\n" > "plot_eam";
-    printf "set xrange [0:2]\n" > "plot_eam";
+    max_embed = 0.;
+    for (i = pair_count + ntypes; i < (pair_count + 2 * ntypes); i++) {
+	    if (cutoff[i]>max_embed)
+		    max_embed = cutoff[i];
+    }
+    printf "set xrange [0:"max_embed"]\n" > "plot_eam";
     printf "set title 'embedding potentials'\n" > "plot_eam";
     printf "pl " > "plot_eam";
     for (i = pair_count + ntypes; i < (pair_count + 2 * ntypes); i++) {

@@ -1,3 +1,61 @@
+devel
++ errors for short distances are now more clear
++ rms for forces is now calculated correctly
++ fix wrong element detection in config.c
++ new internal initialization method for analytic potential functions
++ don't move the binary if BIN_DIR is empty
++ validate parameters from parameter file after initialization
++ add auto_t feature for simann, enable with "anneal_temp auto"
++ the error sum is now calculated as w*d^2 and no longer as (w*d)^2
++ added the proper citations to most of the analytic potential functions
++ [APOT] the pohlong potential has been renamed to "bjs" to credit the original author
+  pohlong can still be used for compatibility with older potential files
++ fixed a bug where not the latest value of the global parameters was used to write the
+  imd potentials
++ add compatibility mode for old (w*d)^2 error sum, enable with compat flag
++ adjust copyright years to 2011
++ lots of code clean-up
++ move analytic function to their own header file
++ abort if anneal_temp is missing in parameter file
++ update comments
++ revert the r=0 fix in spline calculation
++ make simann the default algorithm for all potentials, evo is still
+  available via _evo_ compile option
++ comments are now allowed in potential files between blocks, starting with #
++ [ADP] fix writing for the quadrupole potential for systems with more than one atom type
++ [APOT] fix bug with chemical potentials and global parameters
++ [EVO] change initialization for tabulated potentials
++ timing information is now shown if output_prefix is not set
+
+dipole
++ enhanced output for dipole-convergency
++ elstat parameter dp_kappa can now be optimized
++ new outout coul2imd now available
++ new short-range potential (Buckingham) now available for electrostatic
+
+--> POTFIT-20101207 released
+
+devel-20101207
++ properly check for the correct potential types
++ remove some unneeded variables
+
+devel-20101201
++ increase the epsilon for the powell_lsq from 0.0001 to 0.001
++ added line numbers for errors in config files
++ error() and warning() functions can now be used with arguments like printf
+
+devel-20101122
++ change weights once more from w*d^2 to (w*dx)^2
++ adjust dummy constraints output for console
++ limit number of cpus to nconf
+
+devel-20101108
++ revert the normalization of energy and stress weights
++ small technical changes
+
+dipole-20101025
++ COULOMB and DIPOLE are now working with mpi
+
 devel-20101018
 + fix strcpy bug with stresses
 + cutoff radius for embedding function is now read from potential file
@@ -17,6 +75,9 @@ devel-20101004
 + sorted potfit.h and added a few comments, read_apot_table -> read_pot_table0
 + differential evolution is now the default optimization algorithm,
 	simulated annealing can be used with simann compile option
+
+dipole-20101004
++ new outputfiles: coulomb-potential-tables
 
 devel-20101001
 + ADP is now available for tabulated potenials, format 3 or 4
@@ -38,6 +99,25 @@ trunk-20100920
 + the version info is now more precise
 + [vasp2force] remove warning about single atom energy if -e is not given
 
+dipole-20100831
++ Option DIPOLE now calculates the exactly same induced dipole moments and
+  fields within the self-consistent iteration as IMD
+
+dipole-20100830
++ Option DIPOLE now calculates the exactly same forces, energies and stresses
+  as IMD
+
+dipole-20100825
++ Option COULOMB now calculates the exactly same forces, energies and stresses
+  as IMD
+
+dipole-20100817
++ last alignments with IMD
+
+dipole-20100816
++ Option MONOPOLE renamed as COULOMB (adapted to IMD)
++ charge neutrality now provided
+
 --> POTFIT-20100812 released
 
 trunk-20100812
@@ -53,10 +133,23 @@ trunk-20100812
 trunk-20100810
 + strip even more (comments)
 
+dipole-20100809
++ split option DIPOLE in MONOPOLE and DIPOLE, thereby MONOPOLE is implied by DIPOLE
++ uf (use forces) can now be used in connection with electrostatic forces
++ option FWEIGHT now works with options MONOPOLE and DIPOLE
++ all tail-functions are now evaluated without splines in order to have
+  accurate derivations
+
 devel-20100809
 + final commit before next release
 + evolutionary algorithm now restarts if average==best
 + fix Makefile for gcc profiles
+
+dipole-20100804
++ Self energy terms added
++ all splines for electrostatic tail-functions are now evaluated once only
++ shifts changed from (r-r_cut) to 1/2*(r^2 - r_cut^2) (adapted to IMD)
++ output-file Dipol_convergency is now available
 
 devel-20100730
 + more optimization flags for icc and gcc
@@ -64,6 +157,12 @@ devel-20100730
 + remove openmp
 + Makefile updated
 + [APOT] add support for ACML for analytic functions
+
+dipole-20100729
++ last loop added for dipole calculation
+
+dipole-20100729
++ tail of dipole potential -> all electrostatic potential-tails (five) implemented
 
 devel-20100726
 + strip binaries
@@ -74,12 +173,30 @@ trunk-20100726
 + [ADP] fix? force calculation
 + [APOT] fix punishments with invariant potentials
 
+dipole-20100713
++ tail of coloumb-dipole potential
++ full dipole table now initializing
+
 trunk-20100709
 + [APOT] reduce number of sampling points for analytic potentials
 + [APOT] makeapot now writes the correct potential type
 + [APOT] fixed a bug with cp and globals
 + don't write errors if the weight is 0 for energy or stress
 + [APOT] update NOPUNISH target a little bit
+
+dipole-20100707
++ third loop in calc_forces_dipole
+
+dipole-20100705
++ splines for tail of coulomb-potential
+
+dipole-20100702
++ monopole enhancement done
+
+dipole-20100630
++ dipole output
++ energy conserving shift for ms-potential
++ new properties static field and short-range dipole moment added to atom_t
 
 trunk-20100623
 + change indent mode a little bit
@@ -148,6 +265,12 @@ bzr-20100426
 	merged smooth.c into functions.c
 	remove MEAM, ADP and DIPOLE parts
 	remove all references to format5
+
+bzr-20100429
++ new functions and loops added for dipole calculation
+
+bzr-20100426
++ re-add DIPOLE part
 
 CVS-20100422
 + final updates

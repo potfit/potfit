@@ -5,7 +5,7 @@
  *
  *****************************************************************
  *
- * Copyright 2010 Daniel Schopf
+ * Copyright 2010-2011 Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -28,6 +28,9 @@
  *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  *****************************************************************/
+
+#ifndef DSFMT_PARAMS_H
+#define DSFMT_PARAMS_H
 
 /*
 Copyright (c) 2007, 2008 Mutsuo Saito, Makoto Matsumoto and Hiroshima
@@ -61,8 +64,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/** 
- * @file dSFMT.h 
+/**
+ * @file dSFMT.h
  *
  * @brief double precision SIMD oriented Fast Mersenne Twister(dSFMT)
  * pseudorandom number generator based on IEEE 754 format.
@@ -81,7 +84,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * and you have to define PRIu64 and PRIx64 in this file as follows:
  * @verbatim
  typedef unsigned int uint32_t
- typedef unsigned long long uint64_t  
+ typedef unsigned long long uint64_t
  #define PRIu64 "llu"
  #define PRIx64 "llx"
 @endverbatim
@@ -102,7 +105,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*-----------------
   BASIC DEFINITIONS
   -----------------*/
-/* Mersenne Exponent. The period of the sequence 
+/* Mersenne Exponent. The period of the sequence
  *  is a multiple of 2^DSFMT_MEXP-1.
  * #define DSFMT_MEXP 19937 */
 /** DSFMT generator has an internal state array of 128-bit integers,
@@ -233,8 +236,7 @@ void  dsfmt_gen_rand_all(dsfmt_t * dsfmt);
 void  dsfmt_fill_array_open_close(dsfmt_t * dsfmt, double array[], int size);
 void  dsfmt_fill_array_close_open(dsfmt_t * dsfmt, double array[], int size);
 void  dsfmt_fill_array_open_open(dsfmt_t * dsfmt, double array[], int size);
-void  dsfmt_fill_array_close1_open2(dsfmt_t * dsfmt, double array[],
-  int size);
+void  dsfmt_fill_array_close1_open2(dsfmt_t * dsfmt, double array[], int size);
 void  dsfmt_chk_init_gen_rand(dsfmt_t * dsfmt, uint32_t seed, int mexp);
 void  dsfmt_chk_init_by_array(dsfmt_t * dsfmt, uint32_t init_key[],
   int key_length, int mexp);
@@ -264,12 +266,9 @@ DSFMT_PRE_INLINE uint32_t dsfmt_genrand_uint32(dsfmt_t *
      DSFMT_PRE_INLINE uint32_t dsfmt_gv_genrand_uint32(void) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE double dsfmt_gv_genrand_close1_open2(void)
   DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE double dsfmt_gv_genrand_close_open(void)
-  DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE double dsfmt_gv_genrand_open_close(void)
-  DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE double dsfmt_gv_genrand_open_open(void)
-  DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE double dsfmt_gv_genrand_close_open(void) DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE double dsfmt_gv_genrand_open_close(void) DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE double dsfmt_gv_genrand_open_open(void) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE void dsfmt_gv_fill_array_open_close(double array[],
   int size) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE void dsfmt_gv_fill_array_close_open(double array[],
@@ -383,7 +382,7 @@ inline static double dsfmt_gv_genrand_close_open(void)
  * This function generates and returns double precision pseudorandom
  * number which distributes uniformly in the range (0, 1].
  * dsfmt_init_gen_rand() or dsfmt_init_by_array() must be called
- * before this function. 
+ * before this function.
  * @param dsfmt dsfmt internal state date
  * @return double precision floating point pseudorandom number
  */
@@ -560,20 +559,20 @@ inline static void dsfmt_gv_init_by_array(uint32_t init_key[], int key_length)
 DSFMT_PRE_INLINE const char *get_idstring(void) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE int get_min_array_size(void) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE void init_gen_rand(uint32_t seed) DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE void init_by_array(uint32_t init_key[], int key_length)
-  DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE void init_by_array(uint32_t init_key[],
+  int key_length) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE double genrand_close1_open2(void) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE double genrand_close_open(void) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE double genrand_open_close(void) DSFMT_PST_INLINE;
      DSFMT_PRE_INLINE double genrand_open_open(void) DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE void fill_array_open_close(double array[], int size)
-  DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE void fill_array_close_open(double array[], int size)
-  DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE void fill_array_open_open(double array[], int size)
-  DSFMT_PST_INLINE;
-     DSFMT_PRE_INLINE void fill_array_close1_open2(double array[], int size)
-  DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE void fill_array_open_close(double array[],
+  int size) DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE void fill_array_close_open(double array[],
+  int size) DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE void fill_array_open_open(double array[],
+  int size) DSFMT_PST_INLINE;
+     DSFMT_PRE_INLINE void fill_array_close1_open2(double array[],
+  int size) DSFMT_PST_INLINE;
 
 /**
  * This function is just the same as dsfmt_get_idstring().
@@ -717,3 +716,90 @@ inline static void fill_array_close1_open2(double array[], int size)
 #endif /* DSFMT_DO_NOT_USE_OLD_NAMES */
 
 #endif /* DSFMT_H */
+
+/*----------------------
+  the parameters of DSFMT
+  following definitions are in dSFMT-paramsXXXX.h file.
+  ----------------------*/
+/** the pick up position of the array.
+#define DSFMT_POS1 122
+*/
+
+/** the parameter of shift left as four 32-bit registers.
+#define DSFMT_SL1 18
+ */
+
+/** the parameter of shift right as four 32-bit registers.
+#define DSFMT_SR1 12
+*/
+
+/** A bitmask, used in the recursion.  These parameters are introduced
+ * to break symmetry of SIMD.
+#define DSFMT_MSK1 (uint64_t)0xdfffffefULL
+#define DSFMT_MSK2 (uint64_t)0xddfecb7fULL
+*/
+
+/** These definitions are part of a 128-bit period certification vector.
+#define DSFMT_PCV1	UINT64_C(0x00000001)
+#define DSFMT_PCV2	UINT64_C(0x00000000)
+*/
+
+#define DSFMT_LOW_MASK  UINT64_C(0x000FFFFFFFFFFFFF)
+#define DSFMT_HIGH_CONST UINT64_C(0x3FF0000000000000)
+#define DSFMT_SR	12
+
+/* for sse2 */
+#if defined(HAVE_SSE2)
+#define SSE2_SHUFF 0x1b
+#elif defined(HAVE_ALTIVEC)
+#if defined(__APPLE__)		/* For OSX */
+#define ALTI_SR (vector unsigned char)(4)
+#define ALTI_SR_PERM \
+        (vector unsigned char)(15,0,1,2,3,4,5,6,15,8,9,10,11,12,13,14)
+#define ALTI_SR_MSK \
+        (vector unsigned int)(0x000fffffU,0xffffffffU,0x000fffffU,0xffffffffU)
+#define ALTI_PERM \
+        (vector unsigned char)(12,13,14,15,8,9,10,11,4,5,6,7,0,1,2,3)
+#else
+#define ALTI_SR      {4}
+#define ALTI_SR_PERM {15,0,1,2,3,4,5,6,15,8,9,10,11,12,13,14}
+#define ALTI_SR_MSK  {0x000fffffU,0xffffffffU,0x000fffffU,0xffffffffU}
+#define ALTI_PERM    {12,13,14,15,8,9,10,11,4,5,6,7,0,1,2,3}
+#endif
+#endif
+
+#define DSFMT_POS1	117
+#define DSFMT_SL1	19
+#define DSFMT_MSK1	UINT64_C(0x000ffafffffffb3f)
+#define DSFMT_MSK2	UINT64_C(0x000ffdfffc90fffd)
+#define DSFMT_MSK32_1	0x000ffaffU
+#define DSFMT_MSK32_2	0xfffffb3fU
+#define DSFMT_MSK32_3	0x000ffdffU
+#define DSFMT_MSK32_4	0xfc90fffdU
+#define DSFMT_FIX1	UINT64_C(0x90014964b32f4329)
+#define DSFMT_FIX2	UINT64_C(0x3b8d12ac548a7c7a)
+#define DSFMT_PCV1	UINT64_C(0x3d84e1ac0dc82880)
+#define DSFMT_PCV2	UINT64_C(0x0000000000000001)
+#define DSFMT_IDSTR	"dSFMT2-19937:117-19:ffafffffffb3f-ffdfffc90fffd"
+
+
+/* PARAMETERS FOR ALTIVEC */
+#if defined(__APPLE__)		/* For OSX */
+#define ALTI_SL1 	(vector unsigned int)(3, 3, 3, 3)
+#define ALTI_SL1_PERM \
+	(vector unsigned char)(2,3,4,5,6,7,30,30,10,11,12,13,14,15,0,1)
+#define ALTI_SL1_MSK \
+	(vector unsigned int)(0xffffffffU,0xfff80000U,0xffffffffU,0xfff80000U)
+#define ALTI_MSK	(vector unsigned int)(DSFMT_MSK32_1, \
+			DSFMT_MSK32_2, DSFMT_MSK32_3, DSFMT_MSK32_4)
+#else /* For OTHER OSs(Linux?) */
+#define ALTI_SL1 	{3, 3, 3, 3}
+#define ALTI_SL1_PERM \
+	{2,3,4,5,6,7,30,30,10,11,12,13,14,15,0,1}
+#define ALTI_SL1_MSK \
+	{0xffffffffU,0xfff80000U,0xffffffffU,0xfff80000U}
+#define ALTI_MSK \
+	{DSFMT_MSK32_1, DSFMT_MSK32_2, DSFMT_MSK32_3, DSFMT_MSK32_4}
+#endif
+
+#endif /* DSFMT_PARAMS_H */

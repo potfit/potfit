@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2010 Daniel Schopf
+ * Copyright 2009-2011 Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -29,7 +29,11 @@
  *
  ****************************************************************/
 
+#ifdef EVO
+
 #include "potfit.h"
+
+#include "optimize.h"
 #include "utils.h"
 
 #define D (ndimtot+2)
@@ -58,21 +62,16 @@ void init_population(real **pop, real *xi, real *cost)
   for (i = 0; i < NP; i++) {
     for (j = 0; j < (D - 2); j++)
       pop[i][j] = xi[j];
-    pop[i][D - 2] = F_LOWER + dsfmt_genrand_close_open(&dsfmt) * F_UPPER;
-    pop[i][D - 1] = dsfmt_genrand_close_open(&dsfmt);
+    pop[i][D - 2] = F_LOWER + eqdist() * F_UPPER;
+    pop[i][D - 1] = eqdist();
   }
   for (i = 1; i < NP; i++) {
     for (j = 0; j < ndim; j++) {
-#ifdef APOT
       val = xi[idx[j]];
+#ifdef APOT
       min = apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
       max = apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
-#else /* APOT */
-      val = xi[idx[j]];
-      min = .75 * val;
-      max = 1.25 * val;
-#endif /* APOT */
-      /* scale normal distribution to [-1:1] or less */
+      /* initialize with normal distribution */
       temp = normdist() / 3.;
       if (fabs(temp) > 1)
 	temp /= fabs(temp);
@@ -80,6 +79,14 @@ void init_population(real **pop, real *xi, real *cost)
 	pop[i][idx[j]] = val + temp * (max - val);
       else
 	pop[i][idx[j]] = val + temp * (val - min);
+#else /* APOT */
+      min = -10. * val;
+      max = 10. * val;
+      /* initialize with uniform distribution in [-1:1] */
+      temp = dsfmt_genrand_close_open(&dsfmt);
+/*      pop[i][idx[j]] = temp * 100.;*/
+      pop[i][idx[j]] = val + temp * (max - min);
+#endif /* APOT */
     }
   }
   for (i = 0; i < NP; i++)
@@ -110,7 +117,7 @@ void opposite_check(real **P, real *costP, int init)
   if (tot_P == NULL) {
     tot_P = (real **)malloc(2 * NP * sizeof(real *));
     if (tot_P == NULL)
-      error("Could not allocate memory for opposition vector!\n");
+      error(1, "Could not allocate memory for opposition vector!\n");
     for (i = 0; i < 2 * NP; i++) {
       tot_P[i] = (real *)malloc(D * sizeof(real));
       for (j = 0; j < D; j++)
@@ -183,7 +190,7 @@ void opposite_check(real **P, real *costP, int init)
 void diff_evo(real *xi)
 {
   int   a, b, c;		/* store randomly picked numbers */
-/*  int 	d, e;			|+ enable this line for more vectors +|*/
+/*  int   d, e; 			|+ enable this line for more vectors +|*/
   int   i, j, k;		/* counters */
   int   count = 0;		/* counter for loops */
   int   jsteps = 0;
@@ -197,7 +204,7 @@ void diff_evo(real *xi)
 #ifdef APOT
   real  pmin = 0.;		/* lower bound for parameter */
   real  pmax = 0.;		/* upper bound for parameter */
-#endif
+#endif /* APOT */
   real *best;			/* best configuration */
   real *cost;			/* cost values for all configurations */
   real *fxi;			/* force vector */
@@ -220,14 +227,13 @@ void diff_evo(real *xi)
   x2 = (real **)malloc(NP * sizeof(real *));
   best = (real *)malloc(NP * sizeof(real));
   cost = (real *)malloc(NP * sizeof(real));
-  if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL
-    || best == NULL)
-    error("Could not allocate memory for population vector!\n");
+  if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
+    error(1, "Could not allocate memory for population vector!\n");
   for (i = 0; i < NP; i++) {
     x1[i] = (real *)malloc(D * sizeof(real));
     x2[i] = (real *)malloc(D * sizeof(real));
     if (x1[i] == NULL || x2[i] == NULL)
-      error("Could not allocate memory for population vector!\n");
+      error(1, "Could not allocate memory for population vector!\n");
     for (j = 0; j < D; j++) {
       x1[i][j] = 0;
       x2[i][j] = 0;
@@ -259,45 +265,45 @@ void diff_evo(real *xi)
 
   /* main differential evolution loop */
   while (crit >= evo_threshold && min >= evo_threshold) {
-    max = 0;
+    max = 0.;
     /* randomly create new populations */
     for (i = 0; i < NP; i++) {
       /* generate random numbers */
       do
-	a = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);
+	a = (int)floor(eqdist() * NP);
       while (a == i);
       do
-	b = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);
+	b = (int)floor(eqdist() * NP);
       while (b == i || b == a);
 /*      do*/
-/*        c = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*        c = (int)floor(eqdist() * NP);*/
 /*      while (c == i || c == a || c == b);*/
 /*      do*/
-/*        d = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*        d = (int)floor(eqdist() * NP);*/
 /*      while (d == i || d == a || d == b || d == c);*/
 /*      do*/
-/*        e = (int)floor(dsfmt_genrand_close_open(&dsfmt) * NP);*/
+/*        e = (int)floor(eqdist() * NP);*/
 /*      while (e == i || e == a || e == b || e == c || e == d);*/
-      j = (int)floor(dsfmt_genrand_close_open(&dsfmt) * ndim);
+
+      j = (int)floor(eqdist() * ndim);
 
       /* self-adaptive parameters */
-      if (dsfmt_genrand_close_open(&dsfmt) < TAU_1)
-	trial[D - 2] = F_LOWER + dsfmt_genrand_close_open(&dsfmt) * F_UPPER;
+      if (eqdist() < TAU_1)
+	trial[D - 2] = F_LOWER + eqdist() * F_UPPER;
       else
 	trial[D - 2] = x1[i][D - 2];
-      if (dsfmt_genrand_close_open(&dsfmt) < TAU_2)
-	trial[D - 1] = dsfmt_genrand_close_open(&dsfmt);
+      if (eqdist() < TAU_2)
+	trial[D - 1] = eqdist();
       else
 	trial[D - 1] = x1[i][D - 1];
 
       /* create trail vectors with different methods */
       for (k = 1; k <= ndim; k++) {
-	if (dsfmt_genrand_close_open(&dsfmt) < trial[D - 1] || k == j) {
+	if (eqdist() < trial[D - 1] || k == j) {
 	  /* DE/rand/1/exp */
 /*          temp = x1[c][idx[j]] + trial[D - 2] * (x1[a][idx[j]] - x1[b][idx[j]]);*/
 	  /* DE/best/1/exp */
-	  temp =
-	    best[idx[j]] + trial[D - 2] * (x1[a][idx[j]] - x1[b][idx[j]]);
+	  temp = best[idx[j]] + trial[D - 2] * (x1[a][idx[j]] - x1[b][idx[j]]);
 	  /* DE/rand/2/exp */
 /*          temp = x1[e][j] + trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);*/
 	  /* DE/best/2/exp */
@@ -309,10 +315,8 @@ void diff_evo(real *xi)
 /*          temp = x1[e][j] + (1 - trial[D-2]) * (best[j] - x1[e][j]) +*/
 /*            trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);*/
 #ifdef APOT
-	  pmin =
-	    apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
-	  pmax =
-	    apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
+	  pmin = apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
+	  pmax = apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
 	  if (temp > pmax) {
 	    trial[idx[j]] = pmax;
 	  } else if (temp < pmin) {
@@ -321,7 +325,7 @@ void diff_evo(real *xi)
 	    trial[idx[j]] = temp;
 #else
 	  trial[idx[j]] = temp;
-#endif
+#endif /* APOT */
 	} else {
 	  trial[idx[j]] = x1[i][idx[j]];
 	}
@@ -359,7 +363,7 @@ void diff_evo(real *xi)
       }
     }
 #ifdef APOT
-    if (dsfmt_genrand_close_open(&dsfmt) < jumprate) {
+    if (eqdist() < jumprate) {
       opposite_check(x2, cost, 0);
       jsteps++;
       if (jsteps > 10) {
@@ -368,7 +372,7 @@ void diff_evo(real *xi)
       }
     }
 #endif /* APOT */
-    avg = 0;
+    avg = 0.;
     for (i = 0; i < NP; i++)
       avg += cost[i];
     printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP),
@@ -412,3 +416,5 @@ void diff_evo(real *xi)
   free(best);
   free(fxi);
 }
+
+#endif /* EVO */

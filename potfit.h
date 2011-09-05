@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -28,8 +28,9 @@
  *
  ****************************************************************/
 
-#define NRANSI
+#define POTFIT_H
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -43,9 +44,9 @@
 #include "random.h"
 
 #ifdef APOT
-#define APOT_STEPS 200		/* number of sampling points for analytic pot */
+#define APOT_STEPS 300		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
-#endif
+#endif /* APOT */
 
 #if defined EAM || defined ADP
 #define DUMMY_WEIGHT 100.
@@ -53,13 +54,13 @@
 
 #define FORCE_EPS .1
 
-#if defined PAIR
-#define SLOTS 1
-#elif defined EAM
-#define SLOTS 2
-#elif defined ADP
+#if defined PAIR || defined COULOMB
+#define SLOTS 1			/* pair potential = 0 */
+#elif defined EAM		/* transfer function = 1 */
+#define SLOTS 2			/* dipole term = 2 */
+#elif defined ADP		/* quadrupole term = 3 */
 #define SLOTS 4
-#endif /* PAIR */
+#endif /* PAIR || COULOMB */
 
 /****************************************************************
  *
@@ -69,10 +70,9 @@
 
 typedef double real;
 
-typedef enum ParamType {
-  PARAM_STR, PARAM_STRPTR,
-  PARAM_INT, PARAM_DOUBLE
-} PARAMTYPE;
+typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
+
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT } Interaction_T;
 
 typedef struct {
   real  x;
@@ -95,6 +95,12 @@ typedef struct {
   int   nr;
   real  r;
   vector dist;			/* distance divided by r */
+#ifdef COULOMB
+  real  r2;			/* r^2 */
+  real  fnval_el;		/* stores tail of electrostatic potential */
+  real  grad_el;		/* stores tail of first derivative of electrostatic potential */
+  real  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
+#endif
   int   slot[SLOTS];
   real  shift[SLOTS];
   real  step[SLOTS];
@@ -104,7 +110,7 @@ typedef struct {
   sym_tens sqrdist;		/* real squared distance */
   real  u_val, u_grad;		/* value and gradient of u(r) */
   real  w_val, w_grad;		/* value and gradient of w(r) */
-#endif				/* ADP */
+#endif
 } neigh_t;
 
 typedef struct {
@@ -117,12 +123,20 @@ typedef struct {
 #if defined EAM || defined ADP
   real  rho;			/* embedding electron density */
   real  gradF;			/* gradient of embedding fn. */
-#endif				/* EAM || ADP */
+#endif
 #ifdef ADP
   vector mu;
   sym_tens lambda;
   real  nu;
-#endif				/* ADP */
+#endif
+#ifdef DIPOLE
+  vector E_stat;		/* static field-contribution */
+  vector p_sr;			/* short-range dipole moment */
+  vector E_ind;			/* induced field-contribution */
+  vector p_ind;			/* induced dipole moment */
+  vector E_old;			/* stored old induced field */
+  vector E_tot;			/* temporary induced field */
+#endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
 
@@ -158,6 +172,9 @@ typedef struct {
 
   /* parameters */
   int   total_par;		/* total number of parameters for all potentials */
+#ifdef COULOMB
+  int   total_ne_par;		/* total number of non-electrostatic parameters */
+#endif
   int  *idxparam;		/* indirect index for potential parameters */
   int **invar_par;		/* array of invariant parameters */
   char ***param_name;		/* name of parameters */
@@ -172,16 +189,36 @@ typedef struct {
 
 #ifdef PAIR
   real *chempot;		/* chemical potentials */
-#endif				/* PAIR */
+#endif
+
+#ifdef COULOMB
+  real *ratio;			/* stoichiometric ratio */
+  real *charge;			/* charges */
+  real  last_charge;		/* last charge determined on the basis of charge neutrality */
+  real *dp_kappa;		/* parameter kappa */
+  int   sw_kappa;		/* switch for kappa-optimization */
+#endif
+#ifdef DIPOLE
+  real *dp_alpha;		/* polarisability */
+  real *dp_b;			/* parameter for short-range-dipole-moment */
+  real *dp_c;			/* parameter for short-range-dipole-moment */
+  int   sum_t;			/* dipole-convergency output */
+#endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
+
+typedef struct {
+  char **name;			/* identifier of the potential */
+  int  *n_par;			/* number of parameters */
+  fvalue_pointer *fvalue;	/* function pointer */
+} function_table_t;
+
 #endif /* APOT */
 
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-#define SQR(a)     ((a)*(a))
 #define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
 
 /****************************************************************
@@ -193,11 +230,22 @@ typedef struct {
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
 #define EXTERN			/* define Variables in main */
-#define INIT(data) =data	/* initialize data only in main */
+#define INIT(data) = data	/* initialize data only in main */
 #else
 #define EXTERN extern		/* declare them extern otherwise */
 #define INIT(data)		/* skip initialization otherwise */
 #endif /* MAIN */
+
+/* define interaction type */
+#ifdef PAIR
+EXTERN Interaction_T interaction INIT(I_PAIR);
+#elif defined EAM
+EXTERN Interaction_T interaction INIT(I_EAM);
+#elif defined ADP
+EXTERN Interaction_T interaction INIT(I_ADP);
+#elif defined COULOMB
+EXTERN Interaction_T interaction INIT(I_ELSTAT);
+#endif /* interaction type */
 
 /* system variables */
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
@@ -223,20 +271,21 @@ EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
 EXTERN char startpot[255] INIT("\0");	/* file with start potential */
 EXTERN char tempfile[255] INIT("\0");	/* backup potential file */
 EXTERN int imdpotsteps INIT(1000);	/* resolution of IMD potential */
-EXTERN int ntypes INIT(1);	/* number of atom types */
+EXTERN int ntypes INIT(-1);	/* number of atom types */
 EXTERN int opt INIT(0);		/* optimization flag */
 EXTERN int seed INIT(4);	/* seed for RNG */
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
 EXTERN int writeimd INIT(0);
-#ifdef SIMANN
-EXTERN real anneal_temp INIT(1.);
-#endif
+#ifdef EVO
 EXTERN real evo_threshold INIT(1.e-6);
-EXTERN real eweight INIT(1.);
+#else /* EVO */
+EXTERN char anneal_temp[20] INIT("\0");
+#endif /* EVO */
+EXTERN real eweight INIT(-1.);
+EXTERN real sweight INIT(-1.);
 EXTERN real extend INIT(2.);	/* how far should one extend imd pot */
-EXTERN real sweight INIT(1.);
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
@@ -245,49 +294,48 @@ EXTERN real plotmin INIT(0.);	/* minimum for plotfile */
 #endif /* APOT */
 
 /* configurations */
-EXTERN atom_t *atoms INIT(NULL);	/* atoms array */
-EXTERN atom_t *conf_atoms INIT(NULL);	/* Atoms in configuration */
-EXTERN char **elements INIT(NULL);	/* element names from vasp2force */
-EXTERN int **na_type INIT(NULL);	/* number of atoms per type */
-EXTERN int *cnfstart INIT(NULL);	/* Nr. of first atom in config */
-EXTERN int *conf_uf INIT(NULL);
-EXTERN int *conf_us INIT(NULL);
-EXTERN int *inconf INIT(NULL);	/* Nr. of atoms in each config */
-EXTERN int *useforce INIT(NULL);	/* Should we use force/stress */
-EXTERN int *usestress INIT(NULL);	/* Should we use force/stress */
+EXTERN atom_t *atoms;		/* atoms array */
+EXTERN atom_t *conf_atoms;	/* Atoms in configuration */
+EXTERN char **elements;		/* element names from vasp2force */
+EXTERN int **na_type;		/* number of atoms per type */
+EXTERN int *cnfstart;		/* Nr. of first atom in config */
+EXTERN int *conf_uf;
+EXTERN int *conf_us;
+EXTERN int *inconf;		/* Nr. of atoms in each config */
+EXTERN int *useforce;		/* Should we use force/stress */
+EXTERN int *usestress;		/* Should we use force/stress */
 EXTERN int have_elements INIT(0);	/* do we have the elements ? */
 EXTERN int maxneigh INIT(0);	/* maximum number of neighbors */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
-EXTERN real *coheng INIT(NULL);	/* Cohesive energy for each config */
-EXTERN real *conf_vol INIT(NULL);
-EXTERN real *conf_weight INIT(NULL);	/* weight of configuration */
-EXTERN real *force_0 INIT(NULL);	/* the forces we aim at */
-EXTERN real *rcut INIT(NULL);
-EXTERN real *rmin INIT(NULL);
-EXTERN real *volumen INIT(NULL);	/* Volume of cell */
+EXTERN real *coheng;		/* Cohesive energy for each config */
+EXTERN real *conf_vol;
+EXTERN real *conf_weight;	/* weight of configuration */
+EXTERN real *force_0;		/* the forces we aim at */
+EXTERN real *rcut;
+EXTERN real *rmin;
+EXTERN real *volumen;		/* Volume of cell */
 EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
-EXTERN sym_tens *conf_stress INIT(NULL);
-EXTERN sym_tens *stress INIT(NULL);	/* Stresses in each config */
+EXTERN sym_tens *conf_stress;
+EXTERN sym_tens *stress;	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 /* potential variables */
-EXTERN char interaction[10] INIT("\0");
-EXTERN int *gradient INIT(NULL);	/* Gradient of potential fns.  */
-EXTERN int *invar_pot INIT(NULL);
+EXTERN char interaction_name[10] INIT("\0");
+EXTERN int *gradient;		/* Gradient of potential fns.  */
+EXTERN int *invar_pot;
 EXTERN int format INIT(-1);	/* format of potential table */
 EXTERN int have_grad INIT(0);	/* Is gradient specified?  */
 EXTERN int have_invar INIT(0);	/* Are invariant pots specified?  */
 #ifdef APOT
-EXTERN int *smooth_pot INIT(NULL);
+EXTERN int *smooth_pot;
 EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
-EXTERN int do_smooth INIT(0);	/* smooth cutoff option enabled? */
 EXTERN int global_idx INIT(0);	/* index for global parameters in opt_pot table */
 EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
 EXTERN int have_globals INIT(0);	/* do we have global parameters? */
-EXTERN real *calc_list INIT(NULL);	/* list of current potential in the calc table */
-EXTERN real *compnodelist INIT(NULL);	/* list of the composition nodes */
+EXTERN real *calc_list;		/* list of current potential in the calc table */
+EXTERN real *compnodelist;	/* list of the composition nodes */
 #endif /* APOT */
 
 /* potential tables */
@@ -298,6 +346,8 @@ EXTERN pot_table_t calc_pot;	/* the potential table used */
 				/* for force calculations */
 #ifdef APOT
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
+EXTERN int n_functions INIT(0);	/* number of analytic function prototypes */
+EXTERN function_table_t function_table;	/* table with all functions */
 #endif /* APOT */
 
 /* optimization variables */
@@ -311,9 +361,8 @@ EXTERN real d_eps INIT(0.);
 /* general variables */
 EXTERN int firstatom INIT(0);
 EXTERN int firstconf INIT(0);
-EXTERN int myatoms INIT(0.);
-EXTERN int myconf INIT(0.);
-EXTERN real *rms INIT(NULL);
+EXTERN int myatoms INIT(0);
+EXTERN int myconf INIT(0);
 
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
@@ -328,26 +377,36 @@ EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints 
 #endif /* APOT */
 
 /* memory management */
-EXTERN char **pointer_names INIT(NULL);
+EXTERN char **pointer_names;
 EXTERN int num_pointers INIT(0);
-EXTERN void **all_pointers INIT(NULL);
+EXTERN void **all_pointers;
 
 /* variables needed for atom distribution with mpi */
 #ifdef MPI
-EXTERN int *atom_dist INIT(NULL);
-EXTERN int *atom_len INIT(NULL);
-EXTERN int *conf_dist INIT(NULL);
-EXTERN int *conf_len INIT(NULL);
+EXTERN int *atom_dist;
+EXTERN int *atom_len;
+EXTERN int *conf_dist;
+EXTERN int *conf_len;
 #endif /* MPI */
 
 /* misc. stuff - has to belong somewhere */
-EXTERN int *idx INIT(NULL);
+EXTERN int *idx;
 EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
-EXTERN real *lambda INIT(NULL);	/* embedding energy slope... */
-EXTERN real *maxchange INIT(NULL);	/* Maximal permissible change */
+EXTERN real *lambda;		/* embedding energy slope... */
+EXTERN real *maxchange;		/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
+
+/* variables needed for electrostatic options */
+#ifdef COULOMB
+EXTERN real dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
+EXTERN real dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
+#endif /* COULOMB */
+#ifdef DIPOLE
+EXTERN real dp_tol INIT(1.e-7);	/* dipole iteration precision */
+EXTERN real dp_mix INIT(0.2);	/* mixing parameter (other than that one in IMD) */
+#endif /* DIPOLE */
 
 /****************************************************************
  *
@@ -377,50 +436,14 @@ EXTERN real (*parab_grad) (pot_table_t *, real *, int, real);
  ****************************************************************/
 
 /* general functions [potfit.c] */
-void  error(char *);
-void  warning(char *);
+void  error(int, char *, ...);
+void  warning(int, char *, ...);
 
 /* reading parameter file [param.c] */
-int   getparam(char *, void *, PARAMTYPE, int, int);
+int   getparam(char *, void *, param_t, int, int);
+void  check_parameters_complete(char *);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
-
-/* reading potential file [potential.c] */
-void  read_pot_table(pot_table_t *, char *);
-#ifdef APOT
-void  read_pot_table0(pot_table_t *, apot_table_t *, char *, FILE *);
-#endif /* APOT */
-void  read_pot_table3(pot_table_t *, int, int, int *, char *, FILE *);
-void  read_pot_table4(pot_table_t *, int, int, int *, char *, FILE *);
-void  read_pot_table5(pot_table_t *, int, int, int *, char *, FILE *);
-
-/* calculating potential tables [potential.c] */
-void  init_calc_table(pot_table_t *, pot_table_t *);
-void  update_calc_table(real *, real *, int);
-
-/* parabolic interpolation [potential.c] */
-#ifdef PARABEL
-real  parab_comb_ed(pot_table_t *, real *, int, real, real *);
-real  parab_grad_ed(pot_table_t *, real *, int, real);
-real  parab_ed(pot_table_t *, real *, int, real);
-real  parab_comb_ne(pot_table_t *, real *, int, real, real *);
-real  parab_grad_ne(pot_table_t *, real *, int, real);
-real  parab_ne(pot_table_t *, real *, int, real);
-#endif /* PARABEL */
-
-/* writing potentials to files [potential.c] */
-#ifdef APOT
-void  write_pot_table0(apot_table_t *, char *);
-#endif /* APOT */
-void  write_pot_table3(pot_table_t *, char *);
-void  write_pot_table4(pot_table_t *, char *);
-void  write_pot_table5(pot_table_t *, char *);
-void  write_pot_table_imd(pot_table_t *, char *);
-void  write_plotpot_pair(pot_table_t *, char *);
-void  write_altplot_pair(pot_table_t *, char *);
-#ifdef PDIST
-void  write_pairdist(pot_table_t *, char *);
-#endif /* PDIST */
 
 /* read atomic configuration file [config.c] */
 real  make_box(void);
@@ -436,49 +459,9 @@ real  calc_forces_pair(real *, real *, int);
 real  calc_forces_eam(real *, real *, int);
 #elif defined ADP
 real  calc_forces_adp(real *, real *, int);
-#endif /* PAIR */
-
-/* simulated annealing [simann.c] */
-#ifdef SIMANN
-#ifdef APOT
-void  randomize_parameter(int, real *, real *);
-#else
-void  makebump(real *, real, real, int);
-#endif /* APOT */
-void  anneal(real *);
-#endif /* SIMANN */
-
-/* powell least squares [powell_lsq.c] */
-void  powell_lsq(real *);
-int   gamma_init(real **, real **, real *, real *);
-int   gamma_update(real **, real, real, real *, real *, real *, int, int, int,
-  real);
-void  lineqsys_init(real **, real **, real *, real *, int, int);
-void  lineqsys_update(real **, real **, real *, real *, int, int, int);
-void  copy_matrix(real **, real **, int, int);
-void  copy_vector(real *, real *, int);
-void  matdotvec(real **, real *, real *, int, int);
-real  normalize_vector(real *, int);
-
-/* differential evolution [diff_evo.c] */
-void  init_population(real **, real *, real *);
-#ifdef APOT
-void  opposite_check(real **, real *, int);
-#endif /* APOT */
-void  diff_evo(real *);
-
-/* spline interpolation [splines.c] */
-void  spline_ed(real, real *, int, real, real, real *);
-real  splint_ed(pot_table_t *, real *, int, real);
-real  splint_grad_ed(pot_table_t *, real *, int, real);
-real  splint_comb_ed(pot_table_t *, real *, int, real, real *);
-real  splint_dir(pot_table_t *, real *, int, real, real);
-real  splint_comb_dir(pot_table_t *, real *, int, real, real, real *);
-real  splint_grad_dir(pot_table_t *, real *, int, real, real);
-void  spline_ne(real *, real *, int, real, real, real *);
-real  splint_ne(pot_table_t *, real *, int, real);
-real  splint_comb_ne(pot_table_t *, real *, int, real, real *);
-real  splint_grad_ne(pot_table_t *, real *, int, real);
+#elif defined COULOMB
+real  calc_forces_elstat(real *, real *, int);
+#endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
 #ifdef EAM
@@ -491,66 +474,6 @@ void  embed_shift(pot_table_t *);
 void  init_mpi(int, char **);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
-void  debug_mpi(int);
 void  broadcast_neighbors(void);
 void  potsync(void);
 #endif /* MPI */
-
-#ifdef APOT
-/* analytic functions [functions.c] */
-int   apot_parameters(char *);
-int   apot_assign_functions(apot_table_t *);
-int   apot_check_params(real *);
-real  apot_punish(real *, real *);
-real  apot_grad(real, real *, void (*function) (real, real *, real *));
-real  cutoff(real, real, real);
-#ifdef DEBUG
-void  debug_apot();
-#endif /* DEBUG */
-
-#ifdef PAIR
-/* chemical potential [chempot.c] */
-int   swap_chem_pot(int, int);
-int   sort_chem_pot_2d(void);
-real  chemical_potential_1d(int *, real *);
-real  chemical_potential_2d(int *, real *);
-real  chemical_potential_3d(int *, real *, int);
-real  chemical_potential(int, int *, real *);
-void  init_chemical_potential(int);
-#endif /* PAIR */
-
-/* actual functions for different potentials [functions.c] */
-
-void  lj_value(real, real *, real *);
-void  eopp_value(real, real *, real *);
-void  morse_value(real, real *, real *);
-void  ms_value(real, real *, real *);
-void  softshell_value(real, real *, real *);
-void  eopp_exp_value(real, real *, real *);
-void  meopp_value(real, real *, real *);
-void  power_decay_value(real, real *, real *);
-void  exp_decay_value(real, real *, real *);
-void  pohlong_value(real, real *, real *);
-void  parabola_value(real, real *, real *);
-void  csw_value(real, real *, real *);
-void  universal_value(real, real *, real *);
-void  const_value(real, real *, real *);
-void  sqrt_value(real, real *, real *);
-void  mexp_decay_value(real, real *, real *);
-void  strmm_value(real, real *, real *);
-void  double_morse_value(real, real *, real *);
-void  double_exp_value(real, real *, real *);
-void  poly_5_value(real, real *, real *);
-void  cbb_value(real, real *, real *);
-void  exp_plus_value(real, real *, real *);
-void  mishin_value(real, real *, real *);
-void  gen_lj_value(real, real *, real *);
-void  gljm_value(real, real *, real *);
-
-/* template for new potential function called newpot */
-
-/* newpot potential */
-void  newpot_value(real, real *, real *);
-/* end of template */
-
-#endif /* APOT */
