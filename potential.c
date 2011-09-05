@@ -322,9 +322,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
       rcut[i * ntypes + j] =
 	MAX(rcut[i * ntypes + j], pt->end[(ntypes * (ntypes + 1)) / 2 + j]);
       rmin[i * ntypes + j] =
-	MIN(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + i]);
+	MAX(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + i]);
       rmin[i * ntypes + j] =
-	MIN(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
+	MAX(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
     }
   }
 #endif /* EAM || ADP */

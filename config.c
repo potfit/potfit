@@ -442,10 +442,11 @@ void read_config(char *filename)
 		if (r <= rmin[typ1 * ntypes + typ2]) {
 		  sh_dist = nconf;
 		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf, r);
-		  fprintf(stderr, "%d (type %d): %f %f %f\n", i - natoms, typ1,
-		    atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
-		  fprintf(stderr, "%d (type %d): %f %f %f\n", j - natoms, typ2,
-		    dd.x, dd.y, dd.z);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n",
+		    i - natoms, typ1, atoms[i].pos.x, atoms[i].pos.y,
+		    atoms[i].pos.z);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n",
+		    j - natoms, typ2, dd.x, dd.y, dd.z);
 		}
 		atoms[i].neigh =
 		  (neigh_t *)realloc(atoms[i].neigh,
@@ -487,10 +488,12 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			nconf, i - natoms);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
-		      error(1, "short distance in config.c!");
+		      error(1, "Short distance!");
 		    }
 		    istep = calc_pot.invstep[col];
 		    slot = (int)(rr * istep);
@@ -528,8 +531,10 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			typ1, typ2);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
 		      error(1, "short distance in config.c!");
 		    }
@@ -570,8 +575,10 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			typ1, typ2);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
 		      error(1, "short distance in config.c!");
 		    }
@@ -611,8 +618,10 @@ void read_config(char *filename)
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			typ1, typ2);
+		      fprintf(stderr,
+			"The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n",
+			col, calc_pot.begin[col]);
 		      fflush(stdout);
 		      error(1, "short distance in config.c!");
 		    }

@@ -148,7 +148,7 @@ vector vec_prod(vector u, vector v)
 
 inline real eqdist()
 {
-   return dsfmt_genrand_close_open(&dsfmt);
+  return dsfmt_genrand_close_open(&dsfmt);
 }
 
 /****************************************************************

@@ -66,6 +66,7 @@ void error(int done, char *msg, ...)
     real *force = NULL;
     /* go wake up other threads */
     calc_forces(calc_pot.table, force, 1);
+    fprintf(stderr, "\n");
     shutdown_mpi();
 #endif /* MPI */
     fprintf(stderr, "\n");
