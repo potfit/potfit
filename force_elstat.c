@@ -124,10 +124,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 #ifdef DIPOLE
     sum_c = 0.;
 #endif /* DIPOLE */
-#ifndef APOT
-    if (format > 4 && myid == 0)
-      update_calc_table(xi_opt, xi, 0);
-#endif /* APOT */
 
 #if defined APOT && !defined MPI
     if (format == 0) {
@@ -143,22 +139,19 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+    if (flag == 1)
+      break;			/* Exception: flag 1 means clean up */
+
 #ifdef APOT
     if (myid == 0)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
     if (format == 0)
       update_calc_table(xi_opt, xi, 0);
-    if (flag == 1)
-      break;
 #else /* APOT */
-
     /* if flag==2 then the potential parameters have changed -> sync */
     if (flag == 2)
       potsync();
-    /* non root processes hang on, unless...  */
-    if (flag == 1)
-      break;			/* Exception: flag 1 means clean up */
 #endif /* APOT */
 #endif /* MPI */
 

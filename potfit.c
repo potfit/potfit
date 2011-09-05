@@ -606,14 +606,13 @@ int main(int argc, char **argv)
 	  force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
     }
     if (write_output_files) {
-      real  zero = 0;
       fprintf(outfile, "\nDummy Constraints\n");
       fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
 	sqr = dsquare(force[i]);
-	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], zero,
-	  sqr, zero, force[i]);
+	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0., sqr,
+	  0., force[i]);
 #else
 	sqr = dsquare(force[i + ntypes]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,

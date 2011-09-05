@@ -108,11 +108,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
 
-#ifndef APOT
-    if (format > 4 && myid == 0)
-      update_calc_table(xi_opt, xi, 0);
-#endif /* APOT */
-
 #if defined APOT && !defined MPI
     if (format == 0) {
       apot_check_params(xi_opt);

@@ -1776,8 +1776,6 @@ void update_apot_table(real *xi)
   }
 }
 
-#endif /* APOT */
-
 /****************************************************************
  *
  * update calc_pot.table from opt_pot.table, including globals
@@ -1786,14 +1784,11 @@ void update_apot_table(real *xi)
 
 void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 {
-#ifdef APOT
   int   i, j, k, m, n, change;
   real  f, h = 0;
   real *list, *val;
-#endif /* APOT */
 
   switch (format) {
-#ifdef APOT
       case 0:
 	{
 	  val = xi_opt;
@@ -1854,14 +1849,14 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    list += apot_table.n_par[i] + 2;
 	  }
 	}
-
 	return;
-#endif /* APOT */
       case 3:			/* fall through */
       case 4:
 	return;
   }
 }
+
+#endif /* APOT */
 
 #ifdef PARABEL
 
