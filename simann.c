@@ -71,7 +71,7 @@ void randomize_parameter(int n, real *xi, real *v)
 
   do {
     temp = xi[idx[n]];
-    rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
+    rand = 2.0 * eqdist() - 1.;
     temp += (rand * v[n]);
     if (temp >= min && temp <= max)
       done = 1;
@@ -184,7 +184,7 @@ void anneal(real *xi)
     for (e = 0; e < u; e++) {
       for (n = 0; n < ndimtot; n++)
 	xi2[n] = xi[n];
-      h = (int)(dsfmt_genrand_close_open(&dsfmt) * ndim);
+      h = (int)(eqdist() * ndim);
 #ifdef APOT
       randomize_parameter(h, xi2, v);
 #else
@@ -204,9 +204,10 @@ void anneal(real *xi)
     printf("Did %d steps, %d were accepted\n", u, m1);
     u -= m1;
     dF /= u;
-/*    printf("m2 = %d, dF = %f\n", u, dF);*/
 
     T = dF / log(u / (u * chi + (1 - chi) * m1));
+    if (isnan(T) || isinf(T))
+      error(1, "Simann failed because T was %f, please set it manually.", T);
     if (T < 0)
       T = -T;
     printf("Setting T=%f\n\n", T);
@@ -259,9 +260,7 @@ void anneal(real *xi)
 #endif /* APOT */
 	      }
 	    }
-	  }
-
-	  else if (dsfmt_genrand_close_open(&dsfmt) < (exp((F - F2) / T))) {
+	  } else if (eqdist() < (exp((F - F2) / T))) {
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
 	    F = F2;
