@@ -1,4 +1,7 @@
 devel
++ errors for short distances are now more clear
++ rms for forces is now calculated correctly
++ fix wrong element detection in config.c
 + new internal initialization method for analytic potential functions
 + don't move the binary if BIN_DIR is empty
 + validate parameters from parameter file after initialization

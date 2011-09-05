@@ -70,6 +70,7 @@ void  csw2_value(real, real *, real *);
 
 /* "newpot" potential */
 void  newpot_value(real, real *, real *);
+
 /* end of template */
 
 /* functions for analytic potential initialization */

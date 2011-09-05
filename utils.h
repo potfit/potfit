@@ -43,7 +43,8 @@ void  free_all_pointers();
 /* vector procuct */
 vector vec_prod(vector, vector);
 
-/* pRNG with normal distribution */
+/* pRNG with equal or normal distribution */
+real  eqdist();
 real  normdist();
 
 /* different power functions */

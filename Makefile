@@ -121,7 +121,9 @@
 # x86_64-gcc    64bit GNU Compiler
 # i686-icc 	32bit Intel Compiler
 # i686-gcc  	32bit GNU Compiler
-SYSTEM 		= x86_64-icc
+# 
+#SYSTEM 		= x86_64-icc 	# Use this as fallback
+SYSTEM 		= $(shell uname -m)-icc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
@@ -195,7 +197,7 @@ ifeq (x86_64-gcc,${SYSTEM})
   CC_MPI        = mpicc
 
 # general optimization flags
-  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused
+  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused 
 
   OMPI_CC      	= gcc
   OMPI_CLINKER 	= gcc
