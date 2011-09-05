@@ -31,11 +31,12 @@
  ****************************************************************/
 
 #include "potfit.h"
-#include "utils.h"
-#include "bracket.h"
 
-void bracket(real *x_lower, real *x_minimum, real *x_upper,
-  real *f_lower, real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2)
+#include "bracket.h"
+#include "utils.h"
+
+void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
+  real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
@@ -51,7 +52,6 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
   real  x_left = *x_lower;
   real  x_right = *x_upper;
   real  x_center;
-  static char errmsg[255];
   static real *vecu = NULL;	/* Vector of location u */
   static real *f_vec3 = NULL;	/* 3rd target vector */
   static real *p_left, *p_right, *p_center, *p_temp;
@@ -71,7 +71,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
   if (f_right >= f_left) {
     x_center = x_left;
     f_center = f_left;
-    P_SWAP(p_center, p_left, p_temp);
+    SWAP(p_center, p_left, p_temp);
     x_left = -(x_right - x_center) / CGOLD + x_right;
     nb_eval++;
     for (j = 0; j < ndimtot; j++)
@@ -80,7 +80,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
   } else {
     x_center = x_right;
     f_center = f_right;
-    P_SWAP(p_center, p_right, p_temp);
+    SWAP(p_center, p_right, p_temp);
     x_right = (x_center - x_left) / CGOLD + x_left;
     nb_eval++;
     for (j = 0; j < ndimtot; j++)
@@ -105,10 +105,10 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	/* OK, go right! */
 	x_left = x_center;
 	f_left = f_center;
-	P_SWAP(p_left, p_center, p_temp);
+	SWAP(p_left, p_center, p_temp);
 	x_center = x_right;
 	f_center = f_right;
-	P_SWAP(p_center, p_right, p_temp);
+	SWAP(p_center, p_right, p_temp);
 	x_right = (x_center - x_left) / CGOLD + x_left;
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
@@ -119,9 +119,8 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	/* Pathological: Search between center and right */
 	/* This means a change from original algorithm */
 #ifdef DEBUG
-	sprintf(errmsg, "Pathological  @%li %f %f %f! center-right!\n",
-	  nb_eval, x_left, x_center, x_right);
-	warning(errmsg);
+	warning(1, "Pathological  @%li %f %f %f! center-right!\n", nb_eval,
+	  x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
 	nb_eval++;
@@ -136,10 +135,10 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 
       x_right = x_center;
       f_right = f_center;
-      P_SWAP(p_right, p_center, p_temp);
+      SWAP(p_right, p_center, p_temp);
       x_center = x_left;
       f_center = f_left;
-      P_SWAP(p_center, p_left, p_temp);
+      SWAP(p_center, p_left, p_temp);
       x_left = -(x_right - x_center) / CGOLD + x_right;
       nb_eval++;
       for (j = 0; j < ndimtot; j++)
@@ -150,9 +149,8 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
       if (f_center < f_right) {
 	/* between center and left */
 #ifdef DEBUG
-	sprintf(errmsg, "Pathological  @%li %f %f %f! center-left!\n",
-	  nb_eval, x_left, x_center, x_right);
-	warning(errmsg);
+	warning(1, "Pathological  @%li %f %f %f! center-left!\n", nb_eval,
+	  x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_left = -(x_right - x_left) * CGOLD + x_left;
 	nb_eval++;
@@ -164,10 +162,10 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	/* Search to the right */
 	x_left = x_center;
 	f_left = f_center;
-	P_SWAP(p_left, p_center, p_temp);
+	SWAP(p_left, p_center, p_temp);
 	x_center = x_right;
 	f_center = f_right;
-	P_SWAP(p_center, p_right, p_temp);
+	SWAP(p_center, p_right, p_temp);
 	x_right = (x_center - x_left) / CGOLD + x_left;
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
@@ -179,10 +177,8 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	if (last == 2) {
 	  /* go further to left, it goes up towards the right */
 #ifdef DEBUG
-
-	  sprintf(errmsg, "Pathological  @%li %f %f %f! Go left!\n",
-	    nb_eval, x_left, x_center, x_right);
-	  warning(errmsg);
+	  warning(1, "Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left,
+	    x_center, x_right);
 #endif /* DEBUG */
 	  x_left = -(x_right - x_left) / CGOLD + x_left;
 	  nb_eval++;
@@ -193,9 +189,8 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
 	} else {		/* go further to the right, to left it went up */
 
 #ifdef DEBUG
-	  sprintf(errmsg, "Pathological @%li %f %f %f! go right!\n",
-	    nb_eval, x_left, x_center, x_right);
-	  warning(errmsg);
+	  warning(1, "Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left,
+	    x_center, x_right);
 #endif /* DEBUG */
 	  x_right = (x_right - x_left) / CGOLD + x_right;
 	  nb_eval++;
@@ -208,12 +203,11 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper,
     }
   } while (nb_eval < MAX_IT);
 #ifdef DEBUG
-  sprintf(errmsg,
-    "Problems with bracketing minimum in %li tries: F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.",
-    nb_eval, x_left, f_left, x_center, f_center, x_right, f_right);
-  error(errmsg);
+  error(0, "Problems with bracketing minimum in %li tries:\n", nb_eval);
+  error(1, "F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.\n", x_left, f_left,
+    x_center, f_center, x_right, f_right);
 #else /* DEBUG */
-  error("Problems with bracketing of minimum, aborting");
+  error(1, "Problems with bracketing of minimum, aborting\n");
 #endif /* DEBUG */
   return;
 }

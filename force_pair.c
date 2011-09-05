@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -29,7 +29,13 @@
  ****************************************************************/
 
 #ifdef PAIR
+
 #include "potfit.h"
+
+#include "functions.h"
+#include "potential.h"
+#include "splines.h"
+#include "utils.h"
 
 /****************************************************************
  *
@@ -102,17 +108,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
 
-#ifndef APOT
-    if (format > 4 && myid == 0)
-      update_calc_table(xi_opt, xi, 0);
-#endif /* APOT */
-
 #if defined APOT && !defined MPI
     if (format == 0) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
-#endif
+#endif /* APOT && !MPI */
 
 #ifdef MPI
 #ifndef APOT
@@ -147,13 +148,13 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+	  calc_pot.d2tab + first);
     }
 
 #ifndef MPI
     myconf = nconf;
-#endif
+#endif /* MPI */
 
     /* region containing loop over configurations,
        also OMP-parallelized region */
@@ -166,7 +167,6 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* STRESS */
 
       neigh_t *neigh;
-      real  r;
 
       /* pair variables */
       real  phi_val, phi_grad;
@@ -177,7 +177,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	uf = conf_uf[h - firstconf];
 #ifdef STRESS
 	us = conf_us[h - firstconf];
-#endif
+#endif /* STRESS */
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
@@ -187,7 +187,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	if (enable_cp)
 	  forces[energy_p + h] +=
 	    chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
-#endif
+#endif /* APOT */
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
@@ -275,22 +275,31 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* FWEIGHT */
 	    /* sum up forces */
 	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-	      SQR(forces[k + 2]));
+	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
+	      dsquare(forces[k + 2]));
 	  }			/* second loop over atoms */
 	}
 
 	/* energy contributions */
-	forces[energy_p + h] *= eweight / (real)inconf[h];
+	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
+#ifdef COMPAT
+	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
+#else
+	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+#endif /* COMPAT */
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
+	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * SQR(forces[stress_p + 6 * h + i]);
+	    tmpsum +=
+#ifdef COMPAT
+	      conf_weight[h] * dsquare(sweight * forces[stress_p + 6 * h + i]);
+#else
+	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
+#endif /* COMPAT */
 	  }
 	}
 #endif /* STRESS */
@@ -313,16 +322,15 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
     MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     /* forces */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
-      forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
+      atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
       forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
     /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf +
-      6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf,
-      conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
+      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
+      MPI_COMM_WORLD);
 #endif /* MPI */
 
     /* root process exits this function now */

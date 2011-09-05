@@ -1,7 +1,7 @@
 #!/bin/sh
 ####################################################################
 #
-#   Copyright 2003-2010 Peter Brommer, Daniel Schopf
+#   Copyright 2003-2009 Peter Brommer, Daniel Schopf
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://www.itap.physik.uni-stuttgart.de/
@@ -36,7 +36,6 @@ mycat="cat";
 weight="1";
 declare -a type_list;
 
-# get command line options
 while getopts 'c:e:flrs:w:?h' OPTION
 do
     case $OPTION in
@@ -88,13 +87,26 @@ if [ "$outcars" == "" ]; then
 	outcars="${outcars} `basename $i`";
     done
     fi
-    if [ "$outcars" != "" ]; then
-	echo "Found the following files:$outcars" >&2;
-    else
+    if [ "$outcars" == "" ]; then
 	echo "Could not find any OUTCAR files in this directory, aborting."
 	break;
     fi
 fi
+
+# check if the corresponding XDATCAR is there, if not delete if from $outcars
+xdatcars="";
+temp="";
+for i in $outcars; do
+	test=`echo $i | sed s/OUTCAR/XDATCAR/`;
+	if [ ! -f $test ]; then
+		continue;
+	else
+		xdatcars="${xdatcars} $test";
+		temp="${temp} $i";
+	fi
+done
+outcars="${temp}";
+echo -e "The following OUTCAR* files could be associated with a XDATCAR file: \n${outcars}\n" >&2;
 
 for file in $outcars; do
     if [ ! -f $file ]; then
@@ -105,7 +117,7 @@ for file in $outcars; do
     if [ "$zipped" != "" ]; then
 	mycat="zcat";
     fi
-    count=`$mycat $file | grep -c "TOTAL-FORCE"`;
+    count=`$mycat $file | grep -c "energy  without"`;
     pr_conf="0";
     if [ "$f_arg" == "1" ]; then
 	pr_conf="${pr_conf},$count";
@@ -147,12 +159,12 @@ for file in $outcars; do
     if [ "$list_types" != "1" ]; then
 	echo "There are $count configurations in $file" >&2
 	if [ "$e_file" != "" ]; then
-		if [ -f $e_file ]; then
-		    saeng=`cat $e_file`;
-		else
-		    printf "Warning: $e_file could not be found - using 0 instead\n" >&2;
-		fi
+	if [ -f $e_file ]; then
+	    saeng=`cat $e_file`;
+	else
+	    printf "Warning: $e_file could not be found - using 0 instead\n" >&2;
 	fi
+fi
 
 	if [ "X$pr_conf" == "X0" ]; then
 	    pr_conf=1;
@@ -167,7 +179,8 @@ for file in $outcars; do
 		done
 	fi
 	name_array=$( printf "%s," "${name[@]}" )
-	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v saeng="$saeng" -v name="$name_array" -v c_string="$c_string" -v file="$file" -v recursive="$scan_recursive" -v weight="$weight" '  BEGIN {
+	xdatcar=`echo $file | sed s/OUTCAR/XDATCAR/`;
+	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v saeng="$saeng" -v name="$name_array" -v c_string="$c_string" -v file="$file" -v recursive="$scan_recursive" -v weight="$weight" -v xdatcar="$xdatcar" '  BEGIN {
     OFMT="%11.7g"
 #Select confs to print
     count=0;
@@ -195,6 +208,12 @@ for file in $outcars; do
     for (i in pr_arr) pr_flag[pr_arr[i]]++;
     single_energy=0.;
     split(saeng,sae);
+    getline < xdatcar;
+    getline < xdatcar;
+    getline < xdatcar;
+    getline < xdatcar;
+    getline < xdatcar;
+    getline < xdatcar;
   };
   /ions per type/ {
     ntypes = split($0,a) - 4;
@@ -206,8 +225,7 @@ for file in $outcars; do
 # Marker for energy is two spaces between energy and without.
 # Correct energy is energy(sigma->0)
   /energy  without/ {
-    energy=($7-single_energy)/a[ntypes];
-    delete stress;
+  energy=($7-single_energy)/a[ntypes];
   }
 # Find box vectors
   /VOLUME and BASIS/ {
@@ -220,14 +238,11 @@ for file in $outcars; do
     split(boxy,boxy_v);
     split(boxz,boxz_v);
     scale=1.0;
-}
-  ($2=="kB") {
-     for (i=1;i<=6;i++) stress[i]=$(i+2)/1602.;
-}
-  ($2=="TOTAL-FORCE") {
-     count++;
+	}
+/ETOTAL/ {
+  count++;
      if (count in pr_flag) {
-       print "#N",a[ntypes],1; #flag indicates whether to use forces or not
+       print "#N",a[ntypes],0; #flag indicates whether to use forces or not
        printf "#C";
        if (c_string == "") {
        for (j=1;j<=ntypes;j++)
@@ -251,22 +266,30 @@ for file in $outcars; do
                    boxz_v[2]*scale,boxz_v[3]*scale;
        printf("#W %f\n",weight) ;
        printf("#E %.10f\n",energy) ;
-       if ( 1 in stress )
-         print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];
        print "#F";
      }
-     getline; getline;
      for (i=1; i<=a[ntypes]; i++) {
 	     if (c_string == "") {
-       if (count in pr_flag)
-	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n",
-	       b[i],$1,$2,$3,$4,$5,$6);
-       } else {
-       if (count in pr_flag)
-	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n",
-	       el_number[names[b[i]+1]],$1,$2,$3,$4,$5,$6);
+		     getline < xdatcar;
+       if (count in pr_flag) {
+	   printf("%d", b[i]);
+	   printf(" %11.7g",$1*boxx_v[1]+$2*boxy_v[1]+$3*boxz_v[1]);
+	   printf(" %11.7g",$1*boxx_v[2]+$2*boxy_v[2]+$3*boxz_v[2]);
+	   printf(" %11.7g",$1*boxx_v[3]+$2*boxy_v[3]+$3*boxz_v[3]);
+	   printf(" 0 0 0\n");
        }
-     getline; }
+       } else {
+       getline < xdatcar;
+       if (count in pr_flag) {
+	   printf("%d", el_number[names[b[i]+1]]);
+	   printf(" %11.7g",$1*boxx_v[1]+$2*boxy_v[1]+$3*boxz_v[1]);
+	   printf(" %11.7g",$1*boxx_v[2]+$2*boxy_v[2]+$3*boxz_v[2]);
+	   printf(" %11.7g",$1*boxx_v[3]+$2*boxy_v[3]+$3*boxz_v[3]);
+	   printf(" 0 0 0\n");
+       }
+       }
+}
+       getline < xdatcar;
   };'
     fi
 done

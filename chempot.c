@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2010 Daniel Schopf
+ * Copyright 2009-2011 Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -32,19 +32,19 @@
 
 #include "potfit.h"
 
-#define SWAP_REAL(x,y,t) t=x;x=y;y=t;
+#include "functions.h"
 
 int swap_chem_pot(int i, int j)
 {
   real  temp;
 
   if (i != j) {
-    SWAP_REAL(apot_table.values[apot_table.number][i],
+    SWAP(apot_table.values[apot_table.number][i],
       apot_table.values[apot_table.number][j], temp);
-    SWAP_REAL(compnodelist[i - ntypes], compnodelist[j - ntypes], temp);
-    SWAP_REAL(apot_table.pmin[apot_table.number][i],
+    SWAP(compnodelist[i - ntypes], compnodelist[j - ntypes], temp);
+    SWAP(apot_table.pmin[apot_table.number][i],
       apot_table.pmin[apot_table.number][j], temp);
-    SWAP_REAL(apot_table.pmax[apot_table.number][i],
+    SWAP(apot_table.pmax[apot_table.number][i],
       apot_table.pmax[apot_table.number][j], temp);
     return 0;
   } else

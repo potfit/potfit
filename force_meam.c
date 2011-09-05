@@ -116,11 +116,6 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
     tmpsum = 0.;		/* sum of squares of local process */
     rho_sum_loc = 0.;
 
-#if !defined APOT
-    if (format > 4 && myid == 0)
-      update_calc_table(xi_opt, xi, 0);
-#endif /* APOT */
-
 #if defined APOT && !defined MPI
     if (format == 0) {
       apot_check_params(xi_opt);
@@ -439,7 +434,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	  if (atom->rho > calc_pot.end[col2]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT *
-	      10. * SQR(atom->rho - calc_pot.end[col2]);
+	      10. * dsquare(atom->rho - calc_pot.end[col2]);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.end[col2];
@@ -449,7 +444,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	  if (atom->rho < calc_pot.begin[col2]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT *
-	      10. * SQR(calc_pot.begin[col2] - atom->rho);
+	      10. * dsquare(calc_pot.begin[col2] - atom->rho);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.begin[col2];
@@ -710,8 +705,8 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 #endif /* FWEIGHT */
 	    /* sum up forces  */
 	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-	      SQR(forces[k + 2]));
+	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
+	      dsquare(forces[k + 2]));
 #if defined DEBUG && defined FORCES
 	    fprintf(stderr, "k=%d forces %f %f %f tmpsum=%f\n", k, forces[k],
 	      forces[k + 1], forces[k + 2], tmpsum);
@@ -723,7 +718,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] *= eweight / (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(forces[energy_p + h]);
+	tmpsum += conf_weight[h] * dsquare(forces[energy_p + h]);
 #if defined DEBUG && defined FORCES
 	fprintf(stderr, "energy: tmpsum=%f energy=%f\n", tmpsum,
 	  forces[energy_p + h]);
@@ -734,12 +729,12 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] *= sweight / conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += SQR(conf_weight[h] * forces[stress_p + 6 * h + i]);
+	    tmpsum += dsquare(conf_weight[h] * forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
 	/* limiting constraints per configuration */
-	tmpsum += conf_weight[h] * SQR(forces[limit_p + h]);
+	tmpsum += conf_weight[h] * dsquare(forces[limit_p + h]);
       }				/* loop over configurations */
     }				/* parallel region */
 #ifdef MPI
@@ -807,8 +802,8 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	    calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #endif /* Dummy constraints */
-	tmpsum += SQR(forces[dummy_p + ntypes + g]);
-	tmpsum += SQR(forces[dummy_p + g]);
+	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
+	tmpsum += dsquare(forces[dummy_p + g]);
 #if defined DEBUG && defined FORCES
 	fprintf(stderr, "dummy constraints on U: tmpsum=%f punish=%f\n",
 	  tmpsum, forces[dummy_p + ntypes + g]);
@@ -822,7 +817,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
       rho_sum /= (real)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
-      tmpsum += SQR(forces[dummy_p + ntypes]);
+      tmpsum += dsquare(forces[dummy_p + ntypes]);
 #endif
 #if defined DEBUG && defined FORCES
 /*      fprintf(stderr, "limiting constraints: tmpsum=%f punish=%f\n", tmpsum,*/

@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -28,15 +28,34 @@
  *
  *****************************************************************/
 
-#define ANSI
-
-real  sqrreal(real x);
+/* vector and matrix allocations */
 int  *vect_int(long dim);
 real *vect_real(long dim);
 real **mat_real(long rowdim, long coldim);
-void  free_vect_real(real *vect);
 void  free_vect_int(int *vect);
+void  free_vect_real(real *vect);
 void  free_mat_real(real **matrix);
-void  reg_for_free(void *p, char *name);
+
+/* memory management */
+void  reg_for_free(void *p, char *name, ...);
 void  free_all_pointers();
+
+/* vector procuct */
+vector vec_prod(vector, vector);
+
+/* pRNG with equal or normal distribution */
+real  eqdist();
 real  normdist();
+
+/* different power functions */
+inline int isquare(int);
+inline real dsquare(real);
+void  power_1(real *, real *, real *);
+void  power_m(int, real *, real *, real *);
+
+#if defined APOT && defined EVO
+/* quicksort for ODE */
+void  quicksort(real *x, int low, int high, real **p);
+int   partition(real *x, int low, int high, int index, real **p);
+void  swap_population(real *a, real *b);
+#endif /* APOT && EVO */

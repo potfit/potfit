@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2008 Peter Brommer, Franz G"ahler
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -34,21 +34,25 @@
 /*** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24 		***/
 /*** by Peter Brommer, ITAP, 2002-10-10 					***/
 
-
 #include "potfit.h"
+
 #include "utils.h"
 #include "bracket.h"
-#include "powell_lsq.h"
+
 #define TOL 1.0e-1
 
 real *xicom, *delcom;
 
-real linmin(real xi[], real del[], real fxi1, real *x1, real *x2,
-  real *fret1, real *fret2)
-/* takes vector del (direction of search), xi (originating point),
-   n,m (dimensions),
-   x1, x2 (two best locations),
-   fret1, fret2 (return vectors) as arguments */
+/****************************************************************
+ *
+ *  takes vector del (direction of search), xi (originating point),
+ *  n,m (dimensions), x1, x2 (two best locations),
+ *  fret1, fret2 (return vectors) as arguments
+ *
+ ****************************************************************/
+
+real linmin(real xi[], real del[], real fxi1, real *x1, real *x2, real *fret1,
+  real *fret2)
 {
   int   j;
   static real *vecu = NULL;	/* Vector of location u */

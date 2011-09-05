@@ -5,7 +5,7 @@
  *
  *****************************************************************
  *
- * Copyright 2010 Daniel Schopf
+ * Copyright 2010-2011 Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -25,9 +25,7 @@
  *   GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with potfit; if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin St, Fifth Floor,
- *   Boston, MA  02110-1301  USA
+ *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  *****************************************************************/
 
@@ -48,7 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "random-params.h"
+#include "random.h"
 
 /** dsfmt internal state vector */
 dsfmt_t dsfmt_global_data;
@@ -149,8 +147,8 @@ static void setup_const(void)
   if (!first) {
     return;
   }
-  sse2_param_mask = _mm_set_epi32(DSFMT_MSK32_3, DSFMT_MSK32_4,
-    DSFMT_MSK32_1, DSFMT_MSK32_2);
+  sse2_param_mask =
+    _mm_set_epi32(DSFMT_MSK32_3, DSFMT_MSK32_4, DSFMT_MSK32_1, DSFMT_MSK32_2);
   sse2_int_one = _mm_set_epi32(0, 1, 0, 1);
   sse2_double_two = _mm_set_pd(2.0, 2.0);
   sse2_double_m_one = _mm_set_pd(-1.0, -1.0);
@@ -164,8 +162,7 @@ static void setup_const(void)
  * @param b a 128-bit part of the internal state array
  * @param d a 128-bit part of the internal state array (I/O)
  */
-inline static void do_recursion(w128_t * r, w128_t * a, w128_t * b,
-  w128_t * u)
+inline static void do_recursion(w128_t * r, w128_t * a, w128_t * b, w128_t * u)
 {
   __m128i v, w, x, y, z;
 
@@ -294,15 +291,14 @@ inline static void gen_rand_array_c1o2(dsfmt_t * dsfmt, w128_t * array,
   w128_t lung;
 
   lung = dsfmt->status[DSFMT_N];
-  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1],
-    &lung);
+  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1], &lung);
   for (i = 1; i < DSFMT_N - DSFMT_POS1; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &dsfmt->status[i + DSFMT_POS1], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &dsfmt->status[i + DSFMT_POS1],
+      &lung);
   }
   for (; i < DSFMT_N; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &array[i + DSFMT_POS1 - DSFMT_N], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &array[i + DSFMT_POS1 - DSFMT_N],
+      &lung);
   }
   for (; i < size - DSFMT_N; i++) {
     do_recursion(&array[i], &array[i - DSFMT_N],
@@ -333,15 +329,14 @@ inline static void gen_rand_array_c0o1(dsfmt_t * dsfmt, w128_t * array,
   w128_t lung;
 
   lung = dsfmt->status[DSFMT_N];
-  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1],
-    &lung);
+  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1], &lung);
   for (i = 1; i < DSFMT_N - DSFMT_POS1; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &dsfmt->status[i + DSFMT_POS1], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &dsfmt->status[i + DSFMT_POS1],
+      &lung);
   }
   for (; i < DSFMT_N; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &array[i + DSFMT_POS1 - DSFMT_N], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &array[i + DSFMT_POS1 - DSFMT_N],
+      &lung);
   }
   for (; i < size - DSFMT_N; i++) {
     do_recursion(&array[i], &array[i - DSFMT_N],
@@ -377,15 +372,14 @@ inline static void gen_rand_array_o0o1(dsfmt_t * dsfmt, w128_t * array,
   w128_t lung;
 
   lung = dsfmt->status[DSFMT_N];
-  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1],
-    &lung);
+  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1], &lung);
   for (i = 1; i < DSFMT_N - DSFMT_POS1; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &dsfmt->status[i + DSFMT_POS1], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &dsfmt->status[i + DSFMT_POS1],
+      &lung);
   }
   for (; i < DSFMT_N; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &array[i + DSFMT_POS1 - DSFMT_N], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &array[i + DSFMT_POS1 - DSFMT_N],
+      &lung);
   }
   for (; i < size - DSFMT_N; i++) {
     do_recursion(&array[i], &array[i - DSFMT_N],
@@ -421,15 +415,14 @@ inline static void gen_rand_array_o0c1(dsfmt_t * dsfmt, w128_t * array,
   w128_t lung;
 
   lung = dsfmt->status[DSFMT_N];
-  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1],
-    &lung);
+  do_recursion(&array[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1], &lung);
   for (i = 1; i < DSFMT_N - DSFMT_POS1; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &dsfmt->status[i + DSFMT_POS1], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &dsfmt->status[i + DSFMT_POS1],
+      &lung);
   }
   for (; i < DSFMT_N; i++) {
-    do_recursion(&array[i], &dsfmt->status[i],
-      &array[i + DSFMT_POS1 - DSFMT_N], &lung);
+    do_recursion(&array[i], &dsfmt->status[i], &array[i + DSFMT_POS1 - DSFMT_N],
+      &lung);
   }
   for (; i < size - DSFMT_N; i++) {
     do_recursion(&array[i], &array[i - DSFMT_N],
@@ -569,8 +562,8 @@ void dsfmt_gen_rand_all(dsfmt_t * dsfmt)
   w128_t lung;
 
   lung = dsfmt->status[DSFMT_N];
-  do_recursion(&dsfmt->status[0], &dsfmt->status[0],
-    &dsfmt->status[DSFMT_POS1], &lung);
+  do_recursion(&dsfmt->status[0], &dsfmt->status[0], &dsfmt->status[DSFMT_POS1],
+    &lung);
   for (i = 1; i < DSFMT_N - DSFMT_POS1; i++) {
     do_recursion(&dsfmt->status[i], &dsfmt->status[i],
       &dsfmt->status[i + DSFMT_POS1], &lung);
@@ -692,13 +685,13 @@ void dsfmt_chk_init_gen_rand(dsfmt_t * dsfmt, uint32_t seed, int mexp)
   /* make sure caller program is compiled with the same MEXP */
   if (mexp != dsfmt_mexp) {
     fprintf(stderr, "DSFMT_MEXP doesn't match with dSFMT.c\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   psfmt = &dsfmt->status[0].u32[0];
   psfmt[idxof(0)] = seed;
   for (i = 1; i < (DSFMT_N + 1) * 4; i++) {
-    psfmt[idxof(i)] = 1812433253UL
-      * (psfmt[idxof(i - 1)] ^ (psfmt[idxof(i - 1)] >> 30)) + i;
+    psfmt[idxof(i)] =
+      1812433253UL * (psfmt[idxof(i - 1)] ^ (psfmt[idxof(i - 1)] >> 30)) + i;
   }
   initial_mask(dsfmt);
   period_certification(dsfmt);
@@ -729,7 +722,7 @@ void dsfmt_chk_init_by_array(dsfmt_t * dsfmt, uint32_t init_key[],
   /* make sure caller program is compiled with the same MEXP */
   if (mexp != dsfmt_mexp) {
     fprintf(stderr, "DSFMT_MEXP doesn't match with dSFMT.c\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   if (size >= 623) {
     lag = 11;

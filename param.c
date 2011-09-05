@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://www.itap.physik.uni-stuttgart.de/
@@ -28,128 +28,190 @@
  *
  ****************************************************************/
 
-#include <strings.h>
 #include "potfit.h"
-
-#if defined(__GNUC__) && defined(__STRICT_ANSI__)
-extern char *strdup(char *);
-#endif
-
-#ifdef __WATCOMC__
-#define strcasecmp strcmpi
-#endif
 
 int   curline;			/* number of current line */
 
-/******************************************************************************
-*
-*  get parameters from one line
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  get parameters from one line
+ *
+ ****************************************************************/
 
-/* Parameter:
+/* parameters:
 
-   param_name ... Parametername (fuer Fehlermeldungen)
-   param ........ Adresse der Variable fuer den Parameter
-   ptype ........ Parametertyp
-                  folgende Werte sind zulaessig:
-                  PARAM_STR : String, deklariert als char[]
-                  PARAM_STRPTR : String, deklariert als Zeiger auf char*
-                  PARAM_INT : Integer-Wert(e)
-                  PARAM_DOUBLE : Double-Wert(e)
+   param_name ... parametername (for error messages)
+   param ........ address of the variable for that parameter
+   ptype ........ type of parameter
+                  the following are possible:
+                  PARAM_STR : string, declared as char[]
+                  PARAM_INT : integer value(s)
+                  PARAM_DOUBLE : double value(s)
 
-   pnum_min ..... Minimale Anzahl der einzulesenden Werte
-                  (Falls weniger Werte gelesen werden koennen als verlangt,
-                  wird ein Fehler gemeldet).
-   pnum_max ..... Maximale Anzahl der einzulesenden Werte
-                  (Ueberzaehlige Werte werden ignoriert. Falls weniger als
-                  pnum_max Werte vorhanden sind, wird das Lesen
-                  abgebrochen, es wird aber kein Fehler gemeldet,
-                  wenn mindestens pnum_min Werte abgesaettigt wurden.
+   pnum_min ..... minimum number of parameters to read
+   		  (If there are less parameters than requested an
+		  error will be reported.)
+   pnum_max ..... maximum number of parameters to read
+   		  (Additional values will be ignored. If less than pnum_max
+		  values are registered, the reading process is stopped; there
+		  will be no error if at least pnum_min values were read.)
 
-  Resultat: Die Anzahl der gelesenen Werte wird zurueckgegeben.
+   return value . the number of parameters read is returned
 
 */
 
-int getparam(char *param_name, void *param, PARAMTYPE ptype,
-  int pnum_min, int pnum_max)
+int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
+  int pnum_max)
 {
-  static char errmsg[256];
   char *str;
   int   i;
   int   numread;
 
   numread = 0;
-  if (ptype == PARAM_STR) {
-    str = strtok(NULL, " \t\r\n");
-    if (str == NULL) {
-      sprintf(errmsg,
-	"Parameter for %s missing in line %d\nstring expected!\n",
-	param_name, curline);
-      error(errmsg);
-    } else
-      strncpy((char *)param, str, pnum_max);
-    numread++;
-  } else if (ptype == PARAM_STRPTR) {
-    str = strtok(NULL, " \t\r\n");
-    if (str == NULL) {
-      sprintf(errmsg,
-	"Parameter for %s missing in line %d\nstring expected!\n",
-	param_name, curline);
-      error(errmsg);
-    } else
-      *((char **)param) = strdup(str);
-    numread++;
-  } else if (ptype == PARAM_INT) {
-    for (i = 0; i < pnum_min; i++) {
-      str = strtok(NULL, " \t\r\n");
-      if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-	  param_name, curline);
-	sprintf(errmsg + strlen(errmsg),
-	  "Integer vector of length %u expected!\n", (unsigned)pnum_min);
-	error(errmsg);
-      } else
-	((int *)param)[i] = atoi(str);
-      numread++;
-    }
-    for (i = pnum_min; i < pnum_max; i++) {
-      if ((str = strtok(NULL, " \t\r\n")) != NULL) {
-	((int *)param)[i] = atoi(str);
+  switch (ptype) {
+      case PARAM_STR:
+	str = strtok(NULL, " \t\r\n");
+	if (str == NULL)
+	  error(1, "Parameter for %s missing in line %d\nstring expected!",
+	    param_name, curline);
+	else
+	  strncpy((char *)param, str, pnum_max);
 	numread++;
-      } else
 	break;
-    }
-  } else if (ptype == PARAM_DOUBLE) {
-    for (i = 0; i < pnum_min; i++) {
-      str = strtok(NULL, " \t\r\n");
-      if (str == NULL) {
-	sprintf(errmsg, "Parameter for %s missing in line %d!\n",
-	  param_name, curline);
-	sprintf(errmsg + strlen(errmsg),
-	  "Double vector of length %u expected!\n", (unsigned)pnum_min);
-	error(errmsg);
-      } else
-	((real *)param)[i] = atof(str);
-      numread++;
-    }
-    for (i = pnum_min; i < pnum_max; i++) {
-      if ((str = strtok(NULL, " \t\r\n")) != NULL) {
-	((real *)param)[i] = atof(str);
-	numread++;
-      } else
+      case PARAM_INT:
+	for (i = 0; i < pnum_min; i++) {
+	  str = strtok(NULL, " \t\r\n");
+	  if (str == NULL)
+	    error(1,
+	      "Parameter for %s missing in line %d!\nInteger vector of length %u expected!",
+	      param_name, curline, (unsigned)pnum_min);
+	  else
+	    ((int *)param)[i] = atoi(str);
+	  numread++;
+	}
+	for (i = pnum_min; i < pnum_max; i++) {
+	  if ((str = strtok(NULL, " \t\r\n")) != NULL) {
+	    ((int *)param)[i] = atoi(str);
+	    numread++;
+	  } else
+	    break;
+	}
 	break;
-    }
+      case PARAM_DOUBLE:
+	for (i = 0; i < pnum_min; i++) {
+	  str = strtok(NULL, " \t\r\n");
+	  if (str == NULL)
+	    error(1,
+	      "Parameter for %s missing in line %d!\nDouble vector of length %u expected!",
+	      param_name, curline, (unsigned)pnum_min);
+	  else
+	    ((real *)param)[i] = atof(str);
+	  numread++;
+	}
+	for (i = pnum_min; i < pnum_max; i++) {
+	  if ((str = strtok(NULL, " \t\r\n")) != NULL) {
+	    ((real *)param)[i] = atof(str);
+	    numread++;
+	  } else
+	    break;
+	}
+	break;
   }
   return numread;
 }
 
-/******************************************************************************
-*
-*  read in parameter file
-*  lines beginning with comment characters '#' or blank lines are skipped
-*
-******************************************************************************/
+/****************************************************************
+ *
+ *  check all parameters for reasonable values and completeness
+ *
+ ****************************************************************/
+
+void check_parameters_complete(char *paramfile)
+{
+  if (ntypes <= 0)
+    error(1, "Missing parameter or invalid value in %s : ntypes is \"%d\"",
+      paramfile, ntypes);
+
+  if (strcmp(startpot, "\0") == 0)
+    error(1, "Missing parameter or invalid value in %s : startpot is \"%s\"",
+      paramfile, startpot);
+
+  if (strcmp(endpot, "\0") == 0) {
+    warning(1, "endpot is missing in %s, setting it to %s_end", paramfile,
+      startpot);
+    sprintf(endpot, "%s_end", startpot);
+  }
+
+  if (strcmp(config, "\0") == 0)
+    error(1, "Missing parameter or invalid value in %s : config is \"%s\"",
+      paramfile, config);
+
+  if (strcmp(tempfile, "\0") == 0)
+    error(1, "Missing parameter or invalid value in %s : tempfile is \"%s\"",
+      paramfile, tempfile);
+
+  if (eweight < 0)
+    error(1, "Missing parameter or invalid value in %s : eweight is \"%f\"",
+      paramfile, eweight);
+
+#ifdef STRESS
+  if (sweight < 0)
+    error(1, "Missing parameter or invalid value in %s : sweight is \"%f\"",
+      paramfile, sweight);
+#endif /* STRESS */
+
+  if (writeimd && imdpotsteps <= 0)
+    error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"",
+      paramfile, imdpotsteps);
+
+#ifdef APOT
+  if (plotmin < 0)
+    error(1, "Missing parameter or invalid value in %s : plotmin is \"%f\"",
+      paramfile, plotmin);
+#ifdef PAIR
+  if (enable_cp != 0 && enable_cp != 1)
+    error(1, "Missing parameter or invalid value in %s : enable_cp is \"%d\"",
+      paramfile, enable_cp);
+#endif /* PAIR */
+#endif /* APOT */
+
+#ifdef PDIST
+  if (strcmp(distfile, "\0") == 0)
+    error(1, "Missing parameter or invalid value in %s : distfile is \"%s\"",
+      paramfile, distfile);
+#endif /* PDIST */
+}
+
+/****************************************************************
+ *
+ *  read command line
+ *
+ ****************************************************************/
+
+void read_parameters(int argc, char **argv)
+{
+  FILE *pf;
+
+  /* check command line */
+  if (argc < 2)
+    error(1, "Usage: %s <paramfile>\n", argv[0]);
+
+  /* open parameter file, and read it */
+  pf = fopen(argv[1], "r");
+  if (NULL == pf)
+    error(1, "Could not open parameter file \"%s\".\n", argv[1]);
+  read_paramfile(pf);
+  fclose(pf);
+  check_parameters_complete(argv[1]);
+  printf("Read parameters from file \"%s\".\n", argv[1]);
+}
+
+/****************************************************************
+ *
+ *  read in parameter file
+ *  lines beginning with comment characters '#' or blank lines are skipped
+ *
+ ****************************************************************/
 
 void read_paramfile(FILE *pf)
 {
@@ -202,10 +264,12 @@ void read_paramfile(FILE *pf)
       getparam("maxchfile", maxchfile, PARAM_STR, 1, 255);
       usemaxch = 1;
     }
+#ifdef PDIST
     /* file for pair distribution */
     else if (strcasecmp(token, "distfile") == 0) {
       getparam("distfile", distfile, PARAM_STR, 1, 255);
     }
+#endif /* PDIST */
     /* number of steps in IMD potential */
     else if (strcasecmp(token, "imdpotsteps") == 0) {
       getparam("imdpotsteps", &imdpotsteps, PARAM_INT, 1, 1);
@@ -215,13 +279,13 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "plotmin") == 0) {
       getparam("plotmin", &plotmin, PARAM_DOUBLE, 1, 1);
     }
-#ifndef EAM
+#ifdef PAIR
     /* exclude chemical potential from energy calculations */
     else if (strcasecmp(token, "enable_cp") == 0) {
       getparam("enable_cp", &enable_cp, PARAM_INT, 1, 1);
     }
-#endif
-#endif
+#endif /* PAIR */
+#endif /* APOT */
     /* how far should the imd pot be extended */
     else if (strcasecmp(token, "extend") == 0) {
       getparam("extend", &extend, PARAM_DOUBLE, 1, 1);
@@ -254,22 +318,23 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "seed") == 0) {
       getparam("seed", &seed, PARAM_INT, 1, 1);
     }
+#ifdef EVO
+    /* stopping criterion for differential evolution */
+    else if (strcasecmp(token, "evo_threshold") == 0) {
+      getparam("evo_threshold", &evo_threshold, PARAM_DOUBLE, 1, 1);
+    }
+#else /* EVO */
     /* starting temperature for annealing */
     else if (strcasecmp(token, "anneal_temp") == 0) {
-      getparam("anneal_temp", &anneal_temp, PARAM_DOUBLE, 1, 1);
+      getparam("anneal_temp", &anneal_temp, PARAM_STR, 1, 20);
     }
-#ifdef EVO
-    /* starting width for normal distribution for evo */
-    else if (strcasecmp(token, "evo_width") == 0) {
-      getparam("evo_width", &evo_width, PARAM_DOUBLE, 1, 1);
-    }
-#endif
+#endif /* EVO */
 #ifdef APOT
     /* Scaling Constant for APOT Punishment */
     else if (strcasecmp(token, "apot_punish") == 0) {
       getparam("apot_punish", &apot_punish_value, PARAM_DOUBLE, 1, 1);
     }
-#endif
+#endif /* APOT */
     /* Energy Weight */
     else if (strcasecmp(token, "eng_weight") == 0) {
       getparam("eng_weight", &eweight, PARAM_DOUBLE, 1, 1);
@@ -283,50 +348,27 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "stress_weight") == 0) {
       getparam("stress_weight", &sweight, PARAM_DOUBLE, 1, 1);
     }
-#endif
+#endif /* STRESS */
+#ifdef COULOMB
+    /* cutoff-radius for long-range interactions */
+    else if (strcasecmp(token, "dp_cut") == 0) {
+      getparam("dp_cut", &dp_cut, PARAM_DOUBLE, 1, 1);
+    }
+#endif /* COULOMB */
+#ifdef DIPOLE
+    /* dipole iteration precision */
+    else if (strcasecmp(token, "dp_tol") == 0) {
+      getparam("dp_tol", &dp_tol, PARAM_DOUBLE, 1, 1);
+    }
+    /* mixing parameter for damping dipole iteration loop */
+    else if (strcasecmp(token, "dp_mix") == 0) {
+      getparam("dp_mix", &dp_mix, PARAM_DOUBLE, 1, 1);
+    }
+#endif /* DIPOLE */
     /* unknown tag */
     else {
       fprintf(stderr, "Unknown tag <%s> ignored!\n", token);
       fflush(stderr);
     }
   } while (!feof(pf));
-  fclose(pf);
-
-  if (ntypes == 0)
-    error("ntypes cannot be 0!");
-
-  if (strcmp(endpot, "\0") == 0)
-    sprintf(endpot, "%s_end", startpot);
-}
-
-/******************************************************************************
-*
-*  read command line
-*
-******************************************************************************/
-
-void read_parameters(int argc, char **argv)
-{
-  char  msg[255];
-  FILE *pf;
-
-  /* check command line */
-  if (argc < 2) {
-    sprintf(msg, "Usage: %s <paramfile>\n", argv[0]);
-    error(msg);
-  }
-
-  /* open parameter file, and read it */
-  pf = fopen(argv[1], "r");
-  if (NULL == pf) {
-    fprintf(stderr, "ERROR: Could not open parameter file %s!\n", argv[1]);
-    fflush(stderr);
-#ifdef MPI
-    MPI_Abort(MPI_COMM_WORLD, 2);
-#endif
-    exit(2);
-  }
-  read_paramfile(pf);
-  printf("Read parameters from file \"%s\".\n", argv[1]);
-
 }
