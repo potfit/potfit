@@ -380,8 +380,8 @@ POTFITSRC      += functions.c
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += chempot.c
 endif
-else
-POTFITSRC      += rescale.c
+# else
+# POTFITSRC      += rescale.c
 endif
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))

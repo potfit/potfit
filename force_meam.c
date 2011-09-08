@@ -102,7 +102,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
   // Only works for format=3 for now
   if (format != 3)
-    error("Needs format = 3.\n");
+    error(1, "Needs format = 3.\n");
 
   while (1) {
 
@@ -390,7 +390,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
 	    // Punish this potential for having rho lie outside of F
 	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * SQR(calc_pot.begin[col_F] - atom->rho);
+	      DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
 
 	    // Set the atomic density to the first rho in the spline F
 	    atom->rho = calc_pot.begin[col_F];
@@ -399,7 +399,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
 	    // Punish this potential for having rho lie outside of F
 	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * SQR(atom->rho - calc_pot.end[col_F]);
+	      DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
 
 	    // Set the atomic density to the last rho in the spline F
 	    atom->rho = calc_pot.end[col_F];
@@ -601,7 +601,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	  forces[k] *= conf_weight[h];
 	  forces[k + 1] *= conf_weight[h];
 	  forces[k + 2] *= conf_weight[h];
-	  tmpsum += (SQR(forces[k]) + SQR(forces[k + 1]) + SQR(forces[k + 2]));
+	  tmpsum += (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
 
 	}			// END OF THIRD LOOP OVER ATOM i
 
@@ -615,7 +615,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	// Sum up square of this new energy term for each config
 	// multiplied by its respective weight
 	forces[energy_p + h] *= conf_weight[h] * eweight;
-	tmpsum += SQR(forces[energy_p + h]);
+	tmpsum += dsquare(forces[energy_p + h]);
 
 #ifdef STRESS
 	// LOOP OVER STRESSES
@@ -629,7 +629,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
 	  // Sum in the square of each stress component with config weight
 	  forces[stress_p + 6 * h + i] *= conf_weight[h] * sweight;
-	  tmpsum += SQR(forces[stress_p + 6 * h + i]);
+	  tmpsum += dsquare(forces[stress_p + 6 * h + i]);
 
 	}			// END LOOP OVER 6 STRESSES
 #endif // STRESS
@@ -639,7 +639,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	// This is punishment from going out of bounds for F(rho)
 	// if NORESCALE is not defined
 	forces[limit_p + h] *= conf_weight[h];
-	tmpsum += SQR(forces[limit_p + h]);
+	tmpsum += dsquare(forces[limit_p + h]);
 #endif // not NORESCALE
 
       }				// END MAIN LOOP OVER CONFIGURATIONS
@@ -666,7 +666,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
       // Please read the other constraint on gauge conditions
       // above.
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
-      tmpsum += SQR(forces[dummy_p + ntypes]);
+      tmpsum += dsquare(forces[dummy_p + ntypes]);
 #endif // NORESCALE
     }				// END ROOT NODE PROCESSING OF CONSTRAINTS ON F and F'
 

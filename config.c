@@ -595,7 +595,7 @@ void read_config(char *filename)
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
 			typ1, typ2);
 		      fflush(stdout);
-		      error("short distance in config.c!");
+		      error(1, "short distance in config.c!");
 		    }
 		    istep = calc_pot.invstep[col];
 		    slot = (int)(rr * istep);
@@ -750,7 +750,7 @@ void read_config(char *filename)
 	      printf("%f %f %d %d %d\n", ccos, calc_pot.begin[col], col, typ1,
 		typ2);
 	      fflush(stdout);
-	      error("wrong cos, it is strange!");
+	      error(1, "wrong cos, it is strange!");
 	    }
 	    istep = calc_pot.invstep[col];
 	    slot = (int)((ccos + 1) * istep);

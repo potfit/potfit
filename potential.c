@@ -2899,10 +2899,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write f_r2 for MEAM */
   sprintf(filename, "%s_f_meam.imd.pt", prefix);
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
@@ -2918,8 +2916,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col1 += i < j ? i * ntypes + j - m : j * ntypes + i - m2;
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
-      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
-      r2end[col2] = SQR(pt->end[col1]);
+      r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
 	r2step[col2]);
@@ -2954,10 +2952,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write g(cos) for MEAM */
   sprintf(filename, "%s_g_meam.imd.pt", prefix);
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 2 %d\n#E\n", ntypes);
@@ -3440,7 +3436,7 @@ void write_coul2imd()
 
 #endif /* COULOMB */
 
-#ifdef MEAM
+#if defined EAM || defined MEAM
 
 /*****************************************************************************
 *
@@ -3459,10 +3455,8 @@ void write_pot_table_lammps(pot_table_t *pt)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) {
-    sprintf(msg, "Could not open file %s\n", filename);
-    error(msg);
-  }
+  if (NULL == outfile)
+    error(1 , "Could not open file %s\n", filename);
 
   /* write header */
 #ifdef EAM
@@ -3518,4 +3512,4 @@ void write_pot_table_lammps(pot_table_t *pt)
   printf("Potential LAMMPS data written to %s\n", filename);
 }
 
-#endif /* MEAM */
+#endif /* EAM || MEAM */

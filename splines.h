@@ -41,5 +41,6 @@ real  splint_comb_dir(pot_table_t *, real *, int, real, real, real *);
 real  splint_grad_dir(pot_table_t *, real *, int, real, real);
 void  spline_ne(real *, real *, int, real, real, real *);
 real  splint_ne(pot_table_t *, real *, int, real);
+real  splint_ne_lin(pot_table_t *, real *, int , real);
 real  splint_comb_ne(pot_table_t *, real *, int, real, real *);
 real  splint_grad_ne(pot_table_t *, real *, int, real);
