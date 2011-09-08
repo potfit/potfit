@@ -468,7 +468,7 @@ void read_config(char *filename)
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
 #ifdef MEAM
-		atoms[i].neigh[k].recip = 1/r;
+		atoms[i].neigh[k].recip = 1 / r;
 #endif /* MEAM */
 		atoms[i].neigh[k].dist = dd;
 #ifdef COULOMB
@@ -581,16 +581,19 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].step[1] = step;
 #endif
 #if defined MEAM
-          // Store slots and stuff for f(r_ij)
-      col = (typ1 <= typ2) ?
-        paircol + 2 * ntypes + typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-        : paircol + 2 * ntypes + typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
-      atoms[i].neigh[k].col[2] = col;
+		  // Store slots and stuff for f(r_ij)
+		  col =
+		    (typ1 <=
+		    typ2) ? paircol + 2 * ntypes + typ1 * ntypes + typ2 -
+		    ((typ1 * (typ1 + 1)) / 2)
+		    : paircol + 2 * ntypes + typ2 * ntypes + typ1 -
+		    ((typ2 * (typ2 + 1)) / 2);
+		  atoms[i].neigh[k].col[2] = col;
 		  if (format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
 		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-			     typ1, typ2);
+			typ1, typ2);
 		      fflush(stdout);
 		      error("short distance in config.c!");
 		    }
@@ -729,46 +732,47 @@ void read_config(char *filename)
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].n_neigh;
       // Set size of angles for each atom to conserve mem
-      atoms[i].angl_part = malloc(((nnn*(nnn-1))/2) * sizeof(angl));
+      atoms[i].angl_part = malloc(((nnn * (nnn - 1)) / 2) * sizeof(angl));
       ijk = 0;
       for (j = 0; j < nnn - 1; ++j) {
-	    for (k = j + 1; k < nnn; ++k) {
-          ccos = atoms[i].neigh[j].dist.x * atoms[i].neigh[k].dist.x +
-                atoms[i].neigh[j].dist.y * atoms[i].neigh[k].dist.y +
-                atoms[i].neigh[j].dist.z * atoms[i].neigh[k].dist.z;
+	for (k = j + 1; k < nnn; ++k) {
+	  ccos =
+	    atoms[i].neigh[j].dist.x * atoms[i].neigh[k].dist.x +
+	    atoms[i].neigh[j].dist.y * atoms[i].neigh[k].dist.y +
+	    atoms[i].neigh[j].dist.z * atoms[i].neigh[k].dist.z;
 
-	      atoms[i].angl_part[ijk].cos = ccos;
+	  atoms[i].angl_part[ijk].cos = ccos;
 
-	      col = 2 * paircol + 2 * ntypes + atoms[i].typ;
+	  col = 2 * paircol + 2 * ntypes + atoms[i].typ;
 
-          if (format == 3) {
-            if (ccos > 2) {
-              printf("%f %f %d %d %d\n", ccos, calc_pot.begin[col], col,
-                 typ1, typ2);
-              fflush(stdout);
-              error("wrong cos, it is strange!");
-            }
-            istep = calc_pot.invstep[col];
-            slot = (int)((ccos + 1) * istep);
-            shift = ((ccos + 1) - slot * calc_pot.step[col]) * istep;
-            slot += calc_pot.first[col];
-            step = calc_pot.step[col];
+	  if (format == 3) {
+	    if (ccos > 2) {
+	      printf("%f %f %d %d %d\n", ccos, calc_pot.begin[col], col, typ1,
+		typ2);
+	      fflush(stdout);
+	      error("wrong cos, it is strange!");
+	    }
+	    istep = calc_pot.invstep[col];
+	    slot = (int)((ccos + 1) * istep);
+	    shift = ((ccos + 1) - slot * calc_pot.step[col]) * istep;
+	    slot += calc_pot.first[col];
+	    step = calc_pot.step[col];
 
-            // Don't want lower bound spline knot to be final knot or upper
-            // bound knot will cause trouble since it goes beyond the array
-            if (slot == calc_pot.last[col]) {
-                slot--;
-                shift = 1.0;
-            }
-          }
+	    // Don't want lower bound spline knot to be final knot or upper
+	    // bound knot will cause trouble since it goes beyond the array
+	    if (slot == calc_pot.last[col]) {
+	      slot--;
+	      shift = 1.0;
+	    }
+	  }
 
-          atoms[i].angl_part[ijk].shift = shift;
-          atoms[i].angl_part[ijk].slot = slot;
-          atoms[i].angl_part[ijk].step = step;
-    //        ang = fopen("/home/sstar/potfit/ang.txt", "a");
-    //        fclose(ang);
-          ++ijk;
-        }
+	  atoms[i].angl_part[ijk].shift = shift;
+	  atoms[i].angl_part[ijk].slot = slot;
+	  atoms[i].angl_part[ijk].step = step;
+	  //        ang = fopen("/home/sstar/potfit/ang.txt", "a");
+	  //        fclose(ang);
+	  ++ijk;
+	}
       }
     }
 #endif /* MEAM */

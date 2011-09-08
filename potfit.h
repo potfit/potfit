@@ -59,12 +59,12 @@
 #define FORCE_EPS .1
 
 #if defined PAIR || defined COULOMB
-#define SLOTS 1			 	/* pair potential = 0 */
-#elif defined EAM	/* transfer function = 1 */
-#define SLOTS 2				/* dipole term = 2 */
+#define SLOTS 1			/* pair potential = 0 */
+#elif defined EAM		/* transfer function = 1 */
+#define SLOTS 2			/* dipole term = 2 */
 #elif defined MEAM
 #define SLOTS 3
-#elif defined ADP			/* quadrupole term = 3 */
+#elif defined ADP		/* quadrupole term = 3 */
 #define SLOTS 4
 #endif /* PAIR || COULOMB */
 
@@ -78,7 +78,9 @@ typedef double real;
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
-typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_MEAM } Interaction_T;
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT,
+  I_MEAM
+} Interaction_T;
 
 typedef struct {
   real  x;
@@ -116,24 +118,24 @@ typedef struct {
   sym_tens sqrdist;		/* real squared distance */
   real  u_val, u_grad;		/* value and gradient of u(r) */
   real  w_val, w_grad;		/* value and gradient of w(r) */
-#endif 
+#endif
 #ifdef MEAM
-  real recip;
-  real f;
-  real df;
-  real drho;
+  real  recip;
+  real  f;
+  real  df;
+  real  drho;
 #endif
 } neigh_t;
 
 #ifdef MEAM
 typedef struct {
   real  cos;
-  int  slot;
+  int   slot;
   real  shift;
   real  step;
 
-  real g;
-  real dg;
+  real  g;
+  real  dg;
 } angl;
 #endif
 
@@ -154,8 +156,8 @@ typedef struct {
   real  nu;
 #endif				/* ADP */
 #ifdef MEAM
-  real rho_eam;  // Store EAM density
-  angl  *angl_part;
+  real  rho_eam;		// Store EAM density
+  angl *angl_part;
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;

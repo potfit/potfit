@@ -81,7 +81,7 @@ void shutdown_mpi(void)
 #define MAX_MPI_COMPONENTS 14
 #elif defined COULOMB
 #define MAX_MPI_COMPONENTS 12
-#elif defined MEAM 
+#elif defined MEAM
 #define MAX_MPI_COMPONENTS 12
 #endif /* PAIR */
 
@@ -92,7 +92,7 @@ void broadcast_params()
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
 #ifdef MEAM
-  angl testangl;
+  angl  testangl;
 #endif
   atom_t testatom;
   int   calclen, size, i, j, each, odd;
@@ -493,7 +493,7 @@ void broadcast_neighbors()
 void broadcast_angles()
 {
   int   i, j, neighs, nangles;
-  angl angle;
+  angl  angle;
   atom_t *atom;
 
   for (i = 0; i < natoms; ++i) {
@@ -502,22 +502,22 @@ void broadcast_angles()
     if (myid == 0)
       neighs = atoms[i].n_neigh;
 
-    nangles = (neighs*(neighs - 1))/2;
+    nangles = (neighs * (neighs - 1)) / 2;
 
     MPI_Bcast(&nangles, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (i >= firstatom && i < (firstatom + myatoms)) {
-      atom->angl_part = (angl *)malloc(nangles * sizeof(angl));
+      atom->angl_part = (angl *) malloc(nangles * sizeof(angl));
     }
 
     for (j = 0; j < nangles; ++j) {
       if (myid == 0)
-        angle = atoms[i].angl_part[j];
+	angle = atoms[i].angl_part[j];
 
       MPI_Bcast(&angle, 1, MPI_ANGL, 0, MPI_COMM_WORLD);
 
       if (i >= firstatom && i < (firstatom + myatoms)) {
-        atom->angl_part[j] = angle;
+	atom->angl_part[j] = angle;
       }
     }
   }

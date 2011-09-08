@@ -1413,7 +1413,8 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       // Clamp first spline knot in first f_ij potential only
       // to remove degeneracy of f*f*g where f' = f/b and g' = b^2*g
 #ifndef MEAMf
-      if ((!invar_pot[i]) && (j < nvals[i] - 1 && (j != 0 || i != ncols+2*ntypes)))
+      if ((!invar_pot[i]) && (j < nvals[i] - 1 && (j != 0
+	    || i != ncols + 2 * ntypes)))
 #else
       if (!invar_pot[i])
 #endif //MEAMf
@@ -2607,7 +2608,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	      paircol + i, sqrt(r2)) : 0.));
 #else /* NEWSCALE */
 #ifdef MEAM
-	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1,
+	    sqrt(r2)));
 #else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
 #endif //MEAM
@@ -2667,9 +2669,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	fprintf(outfile, "%.16e\n", temp);
 #else
 #ifdef MEAM
-	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1,
+	    sqrt(r2)));
 #else
-    	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1,
+	    sqrt(r2)));
 #endif /* MEAM */
 #endif
 	r2 += r2step[col2];
@@ -2917,8 +2921,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
       r2end[col2] = SQR(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
-      fprintf(outfile, "%.16e %.16e %.16e\n",
-	      r2begin[col2], r2end[col2], r2step[col2]);
+      fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2],
+	r2step[col2]);
     }
   }
   fprintf(outfile, "\n");
@@ -2935,7 +2939,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
-	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1,
+	    sqrt(r2)));
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -3228,8 +3233,8 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
   for (i = j; i < j + ntypes; i++) {
     r = rmin;
     for (l = 0; l < NPLOT - 1; l++) {
-      fprintf(outfile, "%e %e\n", r,
-	r <= pt->end[i] ? splint_ne(pt, pt->table, i, r) : 0);
+      fprintf(outfile, "%e %e\n", r, r <= pt->end[i] ? splint_ne(pt, pt->table,
+	  i, r) : 0);
       r += r_step;
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
@@ -3445,72 +3450,72 @@ void write_coul2imd()
 
 void write_pot_table_lammps(pot_table_t *pt)
 {
-    int i, j, col, first;
-    real grad1, grad2;
-    FILE *outfile;
-    char  msg[255], filename[255];
+  int   i, j, col, first;
+  real  grad1, grad2;
+  FILE *outfile;
+  char  msg[255], filename[255];
 
-    sprintf(filename, "lammps.pt");
+  sprintf(filename, "lammps.pt");
 
-    /* open file */
-    outfile = fopen(filename, "w");
-    if (NULL == outfile) {
+  /* open file */
+  outfile = fopen(filename, "w");
+  if (NULL == outfile) {
     sprintf(msg, "Could not open file %s\n", filename);
     error(msg);
-    }
+  }
 
   /* write header */
 #ifdef EAM
-    fprintf(outfile, "EAMPOT\n");
+  fprintf(outfile, "EAMPOT\n");
 #else
-    fprintf(outfile, "MEAMPOT\n");
+  fprintf(outfile, "MEAMPOT\n");
 #endif
-    fprintf(outfile, "species -- --.---\n");
-    fprintf(outfile, "<spline>\n");
-    fprintf(outfile, "1 0 0 0 0 1\n");
+  fprintf(outfile, "species -- --.---\n");
+  fprintf(outfile, "<spline>\n");
+  fprintf(outfile, "1 0 0 0 0 1\n");
 
   // Compute the 2nd derivatives of the potentials,
   // since I am not sure if this was done before
 #ifdef EAM
-    for (col = 0; col < paircol + 2*ntypes; ++col) {
-#else   // MEAM
-    for (col = 0; col < 2*paircol + 3*ntypes; ++col) {
-#endif  // EAM
-        // Pointer to first entry
-        first = pt->first[col];
+  for (col = 0; col < paircol + 2 * ntypes; ++col) {
+#else // MEAM
+  for (col = 0; col < 2 * paircol + 3 * ntypes; ++col) {
+#endif // EAM
+    // Pointer to first entry
+    first = pt->first[col];
 
-        // Get 2nd derivatives
-        spline_ed(pt->step[col], pt->table + first,
-                  pt->last[col] - first + 1,
-                  *(pt->table + first - 2), *(pt->table + first - 1),
-                  pt->d2tab + first);
+    // Get 2nd derivatives
+    spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
+      *(pt->table + first - 2), *(pt->table + first - 1), pt->d2tab + first);
+  }
+
+  for (i = 0; i < pt->ncols; i++) {
+
+    if (pt->table[pt->first[i] - 2] < 1.e30)
+      grad1 = pt->table[pt->first[i] - 2];
+    else
+      grad1 = splint_grad_ne(pt, pt->table, i, pt->begin[i]);
+
+    if (pt->table[pt->first[i] - 1] < 1.e30)
+      grad2 = pt->table[pt->first[i] - 1];
+    else
+      grad2 = splint_grad_ne(pt, pt->table, i, pt->end[i]);
+    /* write gradient */
+    fprintf(outfile, "%d %.16e %.16e\n", pt->last[i] - pt->first[i] + 1, grad1,
+      grad2);
+
+    // Loop through spline knots
+    for (j = pt->first[i]; j <= pt->last[i]; j++) {
+      fprintf(outfile, "%.16e %.16e %.16e\n", pt->xcoord[j], pt->table[j],
+	pt->d2tab[j]);
     }
+  }
 
-    for (i = 0; i < pt->ncols; i++) {
+  fprintf(outfile, "</spline>\n");
+  fprintf(outfile, "end\n");
 
-        if ( pt->table[pt->first[i] - 2] < 1.e30 )
-            grad1 = pt->table[pt->first[i] - 2];
-        else
-            grad1 = splint_grad_ne(pt, pt->table, i, pt->begin[i]);
-
-        if ( pt->table[pt->first[i] - 1] < 1.e30 )
-            grad2 = pt->table[pt->first[i] - 1];
-        else
-            grad2 = splint_grad_ne(pt, pt->table, i, pt->end[i]);
-        /* write gradient */
-        fprintf(outfile, "%d %.16e %.16e\n", pt->last[i] - pt->first[i] + 1, grad1, grad2);
-
-        // Loop through spline knots
-        for (j = pt->first[i]; j <= pt->last[i]; j++) {
-            fprintf(outfile, "%.16e %.16e %.16e\n", pt->xcoord[j], pt->table[j], pt->d2tab[j]);
-        }
-    }
-
-    fprintf(outfile, "</spline>\n");
-    fprintf(outfile, "end\n");
-
-    fclose(outfile);
-    printf("Potential LAMMPS data written to %s\n", filename);
+  fclose(outfile);
+  printf("Potential LAMMPS data written to %s\n", filename);
 }
 
 #endif /* MEAM */

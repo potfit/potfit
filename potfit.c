@@ -406,7 +406,8 @@ int main(int argc, char **argv)
 #if defined EAM || defined ADP
       fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].typ, atoms[i].rho);
 #elif defined MEAM
-      fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, atoms[i].typ, atoms[i].rho, atoms[i].rho_eam,atoms[i].rho-atoms[i].rho_eam);
+      fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, atoms[i].typ, atoms[i].rho,
+	atoms[i].rho_eam, atoms[i].rho - atoms[i].rho_eam);
 #endif
       totdens[atoms[i].typ] += atoms[i].rho;
     }

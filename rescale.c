@@ -124,20 +124,20 @@ real rescale(pot_table_t *pt, real upper, int flag)
       typ1 = atom->typ;
       for (j = 0; j < atom->n_neigh; j++) {
 	neigh = atom->neigh + j;
-	    /* In small cells, an atom might interact with itself */
-	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-//	if (neigh->nr > i + cnfstart[h]) {
-	  typ2 = neigh->typ;
-	  col2 = paircol + typ2;
-	  if (typ2 == typ1) {
-	    if (neigh->r < pt->end[col2]) {
-	      fnval =
-		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
-		neigh->step[1]);
-	      atom->rho += fnval;
-		/* avoid double counting if atom is interacting with a
-		   copy of itself */
-		if (!self) {
+	/* In small cells, an atom might interact with itself */
+	self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+//      if (neigh->nr > i + cnfstart[h]) {
+	typ2 = neigh->typ;
+	col2 = paircol + typ2;
+	if (typ2 == typ1) {
+	  if (neigh->r < pt->end[col2]) {
+	    fnval =
+	      splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
+	      neigh->step[1]);
+	    atom->rho += fnval;
+	    /* avoid double counting if atom is interacting with a
+	       copy of itself */
+	    if (!self) {
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {

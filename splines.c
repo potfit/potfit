@@ -357,7 +357,7 @@ real splint_ne_lin(pot_table_t *pt, real *xi, int col, real r)
 {
   int   klo, khi, k;
   real  h, b, a, d22, d21, p1, p2, x1, x2;
-  real grad;
+  real  grad;
 
   klo = pt->first[col];
   khi = pt->last[col];
@@ -382,20 +382,24 @@ real splint_ne_lin(pot_table_t *pt, real *xi, int col, real r)
   b = (r - x1) / h;
   a = (1. - b);
 
-  if ( r < pt->begin[col] ) {
-    b = 0.; a = 1.;
-    grad = (p2 - p1) / h +
-        ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+  if (r < pt->begin[col]) {
+    b = 0.;
+    a = 1.;
+    grad =
+      (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) -
+	1) * d21) * h / 6.0;
     return p1 + grad * (r - x1);
-  } else if ( r > pt->end[col] ) {
-    b = 1.; a = 0.;
-    grad = (p2 - p1) / h +
-        ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+  } else if (r > pt->end[col]) {
+    b = 1.;
+    a = 0.;
+    grad =
+      (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) -
+	1) * d21) * h / 6.0;
     return p2 + grad * (r - x2);
   }
 
-  return a * p1 + b * p2 +
-    ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
+  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b -
+      b) * d22) * (h * h) / 6.0;
 
 }
 
