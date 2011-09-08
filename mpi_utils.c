@@ -81,6 +81,8 @@ void shutdown_mpi(void)
 #define MAX_MPI_COMPONENTS 14
 #elif defined COULOMB
 #define MAX_MPI_COMPONENTS 12
+#elif defined MEAM 
+#define MAX_MPI_COMPONENTS 12
 #endif /* PAIR */
 
 void broadcast_params()
@@ -89,6 +91,9 @@ void broadcast_params()
   MPI_Aint displs[MAX_MPI_COMPONENTS];
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
+#ifdef MEAM
+  angl testangl;
+#endif
   atom_t testatom;
   int   calclen, size, i, j, each, odd;
 
@@ -110,7 +115,7 @@ void broadcast_params()
   blklens[4] = SLOTS;     typen[4] = MPI_INT;     /* slot */
   blklens[5] = SLOTS;     typen[5] = REAL;        /* shift */
   blklens[6] = SLOTS;     typen[6] = REAL;        /* step */
-  blklens[7] = SLOTS;     typen[7] = REAL;        /* col */
+  blklens[7] = SLOTS;     typen[7] = MPI_INT;     /* col */
   size = 8;
 #ifdef ADP
   blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* rdist */
@@ -127,6 +132,14 @@ void broadcast_params()
   blklens[10] = 1;        typen[10] = REAL;       /* grad_el */
   blklens[11] = 1;        typen[11] = REAL;       /* ggrad_el */
   size += 4;
+#endif /* COULOMB */
+#ifdef MEAM
+  blklens[8] = 1;         typen[8] = REAL;        /* recip */
+  blklens[9] = 1;         typen[9] = REAL;        /* f */
+  blklens[10] = 1;        typen[10] = REAL;       /* df */
+  blklens[11] = 1;        typen[11] = REAL;       /* drho */
+  size += 4;
+
 #endif /* COULOMB */
 
  /* *INDENT-ON* */
@@ -152,6 +165,12 @@ void broadcast_params()
   MPI_Address(&testneigh.grad_el, &displs[10]);
   MPI_Address(&testneigh.ggrad_el, &displs[11]);
 #endif /* COULOMB */
+#ifdef MEAM
+  MPI_Address(&testneigh.recip, &displs[8]);
+  MPI_Address(&testneigh.f, &displs[9]);
+  MPI_Address(&testneigh.df, &displs[10]);
+  MPI_Address(&testneigh.drho, &displs[11]);
+#endif /* MEAM */
 
   for (i = 1; i < size; i++) {
     displs[i] -= displs[0];
@@ -159,6 +178,32 @@ void broadcast_params()
   displs[0] = 0;		/* set displacements */
   MPI_Type_struct(size, blklens, displs, typen, &MPI_NEIGH);
   MPI_Type_commit(&MPI_NEIGH);
+
+#ifdef MEAM
+  /* MPI_ANGL */
+  /* *INDENT-OFF* */
+  blklens[0] = 1;         typen[0] = REAL;        /* cos */
+  blklens[1] = 1;         typen[1] = MPI_INT;     /* slot */
+  blklens[2] = 1;         typen[2] = REAL;        /* shift */
+  blklens[3] = 1;         typen[3] = REAL;        /* step */
+  blklens[4] = 1;         typen[4] = REAL;        /* g */
+  blklens[5] = 1;         typen[5] = REAL;        /* dg */
+
+  /* *INDENT-ON* */
+  MPI_Address(&testangl.cos, &displs[0]);
+  MPI_Address(&testangl.slot, &displs[1]);
+  MPI_Address(&testangl.shift, &displs[2]);
+  MPI_Address(&testangl.step, &displs[3]);
+  MPI_Address(&testangl.g, &displs[4]);
+  MPI_Address(&testangl.dg, &displs[5]);
+
+  for (i = 1; i < 6; i++) {
+    displs[i] -= displs[0];
+  }
+  displs[0] = 0;		/* set displacements */
+  MPI_Type_struct(6, blklens, displs, typen, &MPI_ANGL);
+  MPI_Type_commit(&MPI_ANGL);
+#endif
 
   /* MPI_ATOM */
   /* *INDENT-OFF* */
@@ -191,6 +236,7 @@ void broadcast_params()
 #endif /* DIPOLE */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
+  /* DO NOT BROADCAST ANGLES !!! DYNAMIC ALLOCATION */
 
   /* *INDENT-ON* */
   MPI_Address(&testatom.typ, &displs[0]);
@@ -390,6 +436,9 @@ void broadcast_params()
     }
   }
   broadcast_neighbors();
+#ifdef MEAM
+  broadcast_angles();
+#endif
   conf_vol = (real *)malloc(myconf * sizeof(real));
   conf_uf = (int *)malloc(myconf * sizeof(real));
   conf_us = (int *)malloc(myconf * sizeof(real));
@@ -433,6 +482,48 @@ void broadcast_neighbors()
 }
 
 #ifndef APOT
+#ifdef MEAM
+
+/***************************************************************************
+ *
+ * scatter dynamic angle table
+ *
+ **************************************************************************/
+
+void broadcast_angles()
+{
+  int   i, j, neighs, nangles;
+  angl angle;
+  atom_t *atom;
+
+  for (i = 0; i < natoms; ++i) {
+    atom = conf_atoms + i - firstatom;
+
+    if (myid == 0)
+      neighs = atoms[i].n_neigh;
+
+    nangles = (neighs*(neighs - 1))/2;
+
+    MPI_Bcast(&nangles, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (i >= firstatom && i < (firstatom + myatoms)) {
+      atom->angl_part = (angl *)malloc(nangles * sizeof(angl));
+    }
+
+    for (j = 0; j < nangles; ++j) {
+      if (myid == 0)
+        angle = atoms[i].angl_part[j];
+
+      MPI_Bcast(&angle, 1, MPI_ANGL, 0, MPI_COMM_WORLD);
+
+      if (i >= firstatom && i < (firstatom + myatoms)) {
+        atom->angl_part[j] = angle;
+      }
+    }
+  }
+}
+
+#endif /* MEAM */
 
 /****************************************************************
  *

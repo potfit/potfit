@@ -100,13 +100,10 @@ void read_config(char *filename)
   sym_tens *stresses;
   vector d, dd, iheight;
 #ifdef MEAM
-  int   slot_ij, slot_ik, ijk;
-  int   n_j, n_k, nnn;
-  real  rjk, rij, rik, ccos, dccos, dc_ij, dc_ik, shift_ij, shift_ik, step_ij,
-    step_ik;
-  vector rrjk;
-//  FILE        *ang;
-#endif
+  int   ijk;
+  int   nnn;
+  real  ccos;
+#endif /* MEAM */
 
   /* initialize elements array */
   elements = (char **)malloc(ntypes * sizeof(char *));
@@ -431,7 +428,11 @@ void read_config(char *filename)
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
       atoms[i].n_neigh = 0;
+#ifdef MEAM
+      for (j = natoms; j < natoms + count; j++) {
+#else
       for (j = i; j < natoms + count; j++) {
+#endif /* MEAM */
 	d.x = atoms[j].pos.x - atoms[i].pos.x;
 	d.y = atoms[j].pos.y - atoms[i].pos.y;
 	d.z = atoms[j].pos.z - atoms[i].pos.z;
@@ -466,6 +467,9 @@ void read_config(char *filename)
 		atoms[i].neigh[k].typ = typ2;
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
+#ifdef MEAM
+		atoms[i].neigh[k].recip = 1/r;
+#endif /* MEAM */
 		atoms[i].neigh[k].dist = dd;
 #ifdef COULOMB
 		atoms[i].neigh[k].r2 = r * r;
@@ -575,7 +579,57 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[1] = shift;
 		  atoms[i].neigh[k].slot[1] = slot;
 		  atoms[i].neigh[k].step[1] = step;
-#endif /* EAM || ADP || MEAM */
+#endif
+#if defined MEAM
+          // Store slots and stuff for f(r_ij)
+      col = (typ1 <= typ2) ?
+        paircol + 2 * ntypes + typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+        : paircol + 2 * ntypes + typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+      atoms[i].neigh[k].col[2] = col;
+		  if (format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
+			     typ1, typ2);
+		      fflush(stdout);
+		      error("short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    /* Check if we are at the last index - we should be lower */
+		    /* should be impossible anyway */
+		    /*   if (slot>=calc_pot.last[col]) {  */
+		    /*    klo--;khi--; */
+		    /*  } */
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[2] = shift;
+		  atoms[i].neigh[k].slot[2] = slot;
+		  atoms[i].neigh[k].step[2] = step;
+#endif /* MEAM */
+
 #ifdef ADP
 		  /* dipole part */
 		  col = paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
@@ -674,117 +728,47 @@ void read_config(char *filename)
 #ifdef MEAM
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].n_neigh;
+      // Set size of angles for each atom to conserve mem
+      atoms[i].angl_part = malloc(((nnn*(nnn-1))/2) * sizeof(angl));
       ijk = 0;
-      for (j = 0; j < nnn - 1; j++) {
-	for (k = j + 1; k < nnn; k++) {
-	  atoms[i].angl_part[ijk].typ2 = atoms[i].neigh[j].typ;
-	  atoms[i].angl_part[ijk].typ3 = atoms[i].neigh[k].typ;
-	  atoms[i].angl_part[ijk].nr2 = atoms[i].neigh[j].nr;
-	  n_j = atoms[i].angl_part[ijk].nr2;
-	  atoms[i].angl_part[ijk].nr3 = atoms[i].neigh[k].nr;
-	  n_k = atoms[i].angl_part[ijk].nr3;
-	  atoms[i].angl_part[ijk].r2 = atoms[i].neigh[j].r;
-	  atoms[i].angl_part[ijk].dist_ij = atoms[i].neigh[j].dist;
-	  atoms[i].angl_part[ijk].dist_ik = atoms[i].neigh[k].dist;
-	  rij = atoms[i].neigh[j].r;
-	  atoms[i].angl_part[ijk].r3 = atoms[i].neigh[k].r;
-	  rik = atoms[i].neigh[k].r;
-	  rrjk.x =
-	    atoms[i].neigh[j].dist.x * rij - atoms[i].neigh[k].dist.x * rik;
-	  rrjk.y =
-	    atoms[i].neigh[j].dist.y * rij - atoms[i].neigh[k].dist.y * rik;
-	  rrjk.z =
-	    atoms[i].neigh[j].dist.z * rij - atoms[i].neigh[k].dist.z * rik;
-	  rjk = sqrt(SPROD(rrjk, rrjk));
-	  ccos = (rij * rij + rik * rik - rjk * rjk) / (2 * rij * rik);
-	  dccos =
-	    (rij * rij * rik -
-	    (rik * rik - rjk * rjk) * rik) / (2 * rij * rij * rik * rik);
-	  atoms[i].angl_part[ijk].cos = ccos;
-	  atoms[i].angl_part[ijk].dcos_ij = dccos;
-	  dccos =
-	    (rik * rik * rij -
-	    (rij * rij - rjk * rjk) * rij) / (2 * rij * rij * rik * rik);
-	  atoms[i].angl_part[ijk].dcos_ik = dccos;	/* three different angular derivativies are used at calculation of force */
-	  dccos = (rjk) / (rij * rij) * rrjk.x / rjk;
-	  atoms[i].angl_part[ijk].dcos_jk_x = dccos;	/* three different angular derivativies are used at calculation of force */
-	  dccos = (rjk) / (rij * rij) * rrjk.y / rjk;
-	  atoms[i].angl_part[ijk].dcos_jk_y = dccos;
-	  dccos = (rjk) / (rij * rij) * rrjk.z / rjk;
-	  atoms[i].angl_part[ijk].dcos_jk_z = dccos;
-	  dc_ij = atoms[i].angl_part[ijk].dcos_ij;
-	  dc_ik = atoms[i].angl_part[ijk].dcos_ik;
-	  col = 2 * paircol + 2 * ntypes + atoms[i].typ;
-	  if (format == 3) {
-	    if (ccos > 1) {
-	      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col,
-		typ1, typ2);
-	      fflush(stdout);
-	      error(1, "wrong cos, it is strange!");
-	    }
-	    istep = calc_pot.invstep[col];
-	    slot = (int)((ccos + 1) * istep);
-	    shift = ((ccos + 1) - slot * calc_pot.step[col]) * istep;
-	    slot += calc_pot.first[col];
-	    step = calc_pot.step[col];
-	  }
-	  col = (atoms[i].typ <= atoms[i].angl_part[ijk].typ2) ?
-	    paircol + 2 * ntypes + atoms[i].typ * ntypes +
-	    atoms[i].angl_part[ijk].typ2 -
-	    ((atoms[i].typ * (atoms[i].typ + 1)) / 2)
-	    : paircol + 2 * ntypes + atoms[i].angl_part[ijk].typ2 * ntypes +
-	    atoms[i].typ -
-	    ((atoms[i].angl_part[ijk].typ2 *
-	      (atoms[i].angl_part[ijk].typ2 + 1)) / 2);
-	  if (format == 3) {
-	    rr = rij - calc_pot.begin[col];
-	    if (rr < 0) {
-	      printf("%f %f %d %d %d\n", rij, calc_pot.begin[col], col,
-		atoms[i].typ, atoms[i].angl_part[ijk].typ2);
-	      fflush(stdout);
-	      error(1, "short distance in config.c!");
-	    }
-	    istep = calc_pot.invstep[col];
-	    slot_ij = (int)(rr * istep);
-	    shift_ij = (rr - slot_ij * calc_pot.step[col]) * istep;
-	    slot_ij += calc_pot.first[col];
-	    step_ij = calc_pot.step[col];
-	  }
-	  col = (atoms[i].typ <= atoms[i].angl_part[ijk].typ3) ?
-	    paircol + 2 * ntypes + atoms[i].typ * ntypes +
-	    atoms[i].angl_part[ijk].typ3 -
-	    ((atoms[i].typ * (atoms[i].typ + 1)) / 2)
-	    : paircol + 2 * ntypes + atoms[i].angl_part[ijk].typ3 * ntypes +
-	    atoms[i].typ -
-	    ((atoms[i].angl_part[ijk].typ3 *
-	      (atoms[i].angl_part[ijk].typ3 + 1)) / 2);
-	  if (format == 3) {
-	    rr = rik - calc_pot.begin[col];
-	    if (rr < 0) {
-	      printf("%f %f %d %d %d\n", rik, calc_pot.begin[col], col,
-		atoms[i].typ, atoms[i].angl_part[ijk].typ3);
-	      fflush(stdout);
-	      error(1, "short distance in config.c!");
-	    }
-	    istep = calc_pot.invstep[col];
-	    slot_ik = (int)(rr * istep);
-	    shift_ik = (rr - slot_ik * calc_pot.step[col]) * istep;
-	    slot_ik += calc_pot.first[col];
-	    step_ik = calc_pot.step[col];
-	  }
-	  atoms[i].angl_part[ijk].shift[0] = shift_ij;
-	  atoms[i].angl_part[ijk].slot[0] = slot_ij;
-	  atoms[i].angl_part[ijk].step[0] = step_ij;
-	  atoms[i].angl_part[ijk].shift[1] = shift_ik;
-	  atoms[i].angl_part[ijk].slot[1] = slot_ik;
-	  atoms[i].angl_part[ijk].step[1] = step_ik;
-	  atoms[i].angl_part[ijk].shift[2] = shift;
-	  atoms[i].angl_part[ijk].slot[2] = slot;
-	  atoms[i].angl_part[ijk].step[2] = step;
-//        ang = fopen("/home/sstar/potfit/ang.txt", "a");
-//        fclose(ang);
-	  ijk++;
-	}
+      for (j = 0; j < nnn - 1; ++j) {
+	    for (k = j + 1; k < nnn; ++k) {
+          ccos = atoms[i].neigh[j].dist.x * atoms[i].neigh[k].dist.x +
+                atoms[i].neigh[j].dist.y * atoms[i].neigh[k].dist.y +
+                atoms[i].neigh[j].dist.z * atoms[i].neigh[k].dist.z;
+
+	      atoms[i].angl_part[ijk].cos = ccos;
+
+	      col = 2 * paircol + 2 * ntypes + atoms[i].typ;
+
+          if (format == 3) {
+            if (ccos > 2) {
+              printf("%f %f %d %d %d\n", ccos, calc_pot.begin[col], col,
+                 typ1, typ2);
+              fflush(stdout);
+              error("wrong cos, it is strange!");
+            }
+            istep = calc_pot.invstep[col];
+            slot = (int)((ccos + 1) * istep);
+            shift = ((ccos + 1) - slot * calc_pot.step[col]) * istep;
+            slot += calc_pot.first[col];
+            step = calc_pot.step[col];
+
+            // Don't want lower bound spline knot to be final knot or upper
+            // bound knot will cause trouble since it goes beyond the array
+            if (slot == calc_pot.last[col]) {
+                slot--;
+                shift = 1.0;
+            }
+          }
+
+          atoms[i].angl_part[ijk].shift = shift;
+          atoms[i].angl_part[ijk].slot = slot;
+          atoms[i].angl_part[ijk].step = step;
+    //        ang = fopen("/home/sstar/potfit/ang.txt", "a");
+    //        fclose(ang);
+          ++ijk;
+        }
       }
     }
 #endif /* MEAM */

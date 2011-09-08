@@ -60,8 +60,10 @@
 
 #if defined PAIR || defined COULOMB
 #define SLOTS 1			 	/* pair potential = 0 */
-#elif defined EAM || defined MEAM	/* transfer function = 1 */
+#elif defined EAM	/* transfer function = 1 */
 #define SLOTS 2				/* dipole term = 2 */
+#elif defined MEAM
+#define SLOTS 3
 #elif defined ADP			/* quadrupole term = 3 */
 #define SLOTS 4
 #endif /* PAIR || COULOMB */
@@ -114,28 +116,24 @@ typedef struct {
   sym_tens sqrdist;		/* real squared distance */
   real  u_val, u_grad;		/* value and gradient of u(r) */
   real  w_val, w_grad;		/* value and gradient of w(r) */
+#endif 
+#ifdef MEAM
+  real recip;
+  real f;
+  real df;
+  real drho;
 #endif
 } neigh_t;
 
 #ifdef MEAM
 typedef struct {
-  int   typ2;
-  int   typ3;
-  int   nr2;
-  int   nr3;
-  real  r2;
-  real  r3;
-  vector dist_ij;
-  vector dist_ik;
   real  cos;
-  real  dcos_ij;		/* deriv on r_ij */
-  real  dcos_ik;		/* deriv on r_ik */
-  real  dcos_jk_x;		/* deriv on x_jk */
-  real  dcos_jk_y;		/* deriv on y_jk */
-  real  dcos_jk_z;		/* deriv on z_jk */
-  real  slot[3];
-  real  shift[3];
-  real  step[3];
+  int  slot;
+  real  shift;
+  real  step;
+
+  real g;
+  real dg;
 } angl;
 #endif
 
@@ -156,15 +154,8 @@ typedef struct {
   real  nu;
 #endif				/* ADP */
 #ifdef MEAM
-  angl  angl_part[MAXNEIGH * (MAXNEIGH - 1) / 2];
-#endif				/* MEAM */
-#ifdef DIPOLE
-  vector E_stat;		/* static field-contribution */
-  vector p_sr;			/* short-range dipole moment */
-  vector E_ind;			/* induced field-contribution */
-  vector p_ind;			/* induced dipole moment */
-  vector E_old;			/* stored old induced field */
-  vector E_tot;			/* temporary induced field */
+  real rho_eam;  // Store EAM density
+  angl  *angl_part;
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 } atom_t;
@@ -284,6 +275,7 @@ EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+EXTERN MPI_Datatype MPI_ANGL;
 EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
 EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VEKTOR;
@@ -297,6 +289,7 @@ EXTERN char flagfile[255] INIT("\0");	/* break if file exists */
 EXTERN char imdpot[255] INIT("\0");	/* file for IMD potential */
 EXTERN char maxchfile[255] INIT("\0");	/* file with maximal changes */
 EXTERN char output_prefix[255] INIT("\0");	/* prefix for all output files */
+EXTERN char output_lammps[255] INIT("\0");	/* lammps output files */
 EXTERN char plotfile[255] INIT("\0");	/* file for plotting */
 EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
 EXTERN char startpot[255] INIT("\0");	/* file with start potential */
@@ -307,6 +300,7 @@ EXTERN int opt INIT(0);		/* optimization flag */
 EXTERN int seed INIT(4);	/* seed for RNG */
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
+EXTERN int write_lammps_files INIT(0);
 EXTERN int write_pair INIT(0);
 EXTERN int writeimd INIT(0);
 #ifdef EVO
@@ -401,7 +395,7 @@ EXTERN int stress_p INIT(0);	/* pointer to stresses */
 #if defined EAM || defined ADP || defined MEAM
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
 #ifdef APOT
 EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints */
 EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
@@ -497,7 +491,7 @@ real  calc_forces_meam(real *, real *, int);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
-#ifdef EAM
+#if defined EAM || defined MEAM
 real  rescale(pot_table_t *, real, int);
 void  embed_shift(pot_table_t *);
 #endif /* EAM */
@@ -508,5 +502,6 @@ void  init_mpi(int, char **);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
 void  broadcast_neighbors(void);
+void  broadcast_angles(void);
 void  potsync(void);
 #endif /* MPI */

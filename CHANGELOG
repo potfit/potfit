@@ -1,3 +1,6 @@
+meam
++ merge MEAM implementation of Jeremy Nicklas (Ohio State University)
+
 devel
 + errors for short distances are now more clear
 + rms for forces is now calculated correctly

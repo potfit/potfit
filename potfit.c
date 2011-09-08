@@ -362,9 +362,10 @@ int main(int argc, char **argv)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
+    if (write_lammps_files)
+      write_pot_table_lammps(&opt_pot);
 #ifdef COULOMB
     write_coul2imd();
-    //write_coulomb_table();
 #endif /* COULOMB */
 
     /* will not work with MPI */
@@ -398,8 +399,15 @@ int main(int argc, char **argv)
       totdens[i] = 0.;
     }
     fprintf(outfile, "#    atomtype\trho\n");
+#if defined MEAM
+    fprintf(outfile, "#    atomtype\trho\trho_eam\trho_meam\n");
+#endif
     for (i = 0; i < natoms; i++) {
+#if defined EAM || defined ADP
       fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].typ, atoms[i].rho);
+#elif defined MEAM
+      fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, atoms[i].typ, atoms[i].rho, atoms[i].rho_eam,atoms[i].rho-atoms[i].rho_eam);
+#endif
       totdens[atoms[i].typ] += atoms[i].rho;
     }
     fprintf(outfile, "\n");

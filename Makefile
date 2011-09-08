@@ -356,7 +356,7 @@ endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-    POTFITSRC      += force_meam.c rescale.c
+    POTFITSRC      += force_meam.c rescale_meam.c
   else
     POTFITSRC      += force_eam.c rescale.c
   endif
@@ -421,7 +421,7 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ERROR += More than one potential model specified
   endif
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-    CFLAGS  += -DMEAM -DNORESCALE
+    CFLAGS  += -DMEAM
     ifneq (,$(strip $(findstring apot,${MAKETARGET})))
       ERROR += MEAM does not support analytic potentials (yet)
     endif

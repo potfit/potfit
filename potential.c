@@ -1410,7 +1410,13 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
       } else
 	val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if ((!invar_pot[i]) && (j < nvals[i] - 1))
+      // Clamp first spline knot in first f_ij potential only
+      // to remove degeneracy of f*f*g where f' = f/b and g' = b^2*g
+#ifndef MEAMf
+      if ((!invar_pot[i]) && (j < nvals[i] - 1 && (j != 0 || i != ncols+2*ntypes)))
+#else
+      if (!invar_pot[i])
+#endif //MEAMf
 	pt->idx[k++] = l++;
       else
 	l++;
@@ -2524,7 +2530,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #ifndef APOT
   real  temp2;
 #endif /* APOT */
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
   real  root;
 #endif /* EAM */
   FILE *outfile;
@@ -2599,8 +2605,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	      sqrt(r2)) : 0.) + (sqrt(r2) <=
 	    pt->end[paircol + i] ? lambda[j] * splint_ne(pt, pt->table,
 	      paircol + i, sqrt(r2)) : 0.));
+#else /* NEWSCALE */
+#ifdef MEAM
+	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
 #else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
+#endif //MEAM
 #endif /* NEWSCALE */
 #endif /* APOT */
 	r2 += r2step[col2];
@@ -2612,7 +2622,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fclose(outfile);
   printf("IMD pair potential written to \t\t%s\n", filename);
 
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
   /* write transfer function (over r^2) */
   sprintf(filename, "%s_rho.imd.pt", prefix);
   outfile = fopen(filename, "w");
@@ -2656,8 +2666,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
-	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
-#endif /* APOT */
+#ifdef MEAM
+	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+#else
+    	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+#endif /* MEAM */
+#endif
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -2726,7 +2740,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif /* PARABEL */
       }
 #else /* WZERO */
-      temp = splint_ne(pt, pt->table, col1, r2);
+#ifdef MEAM
+      temp = splint_ne_lin(pt, pt->table, col1, r2);
+#else
+      temp = splint_ne_lin(pt, pt->table, col1, r2);
+#endif
 #endif /* WZERO */
       temp2 = r2 - pt->end[col1];
       temp += (temp2 > 0.) ? 5e2 * (temp2 * temp2 * temp2) : 0.;
@@ -2872,6 +2890,97 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fclose(outfile);
   printf("IMD quadrupole potential written to \t%s\n", filename);
 #endif /* APOT */
+
+#ifdef MEAM
+  /* write f_r2 for MEAM */
+  sprintf(filename, "%s_f_meam.imd.pt", prefix);
+  outfile = fopen(filename, "w");
+  if (NULL == outfile) {
+    sprintf(msg, "Could not open file %s\n", filename);
+    error(msg);
+  }
+
+  /* write header */
+  fprintf(outfile, "#F 2 %d\n#E\n", ntypes * ntypes);
+
+  /* write info block */
+  m = 0;
+  for (i = 0; i < ntypes; i++) {
+    m += i;
+    m2 = 0;
+    for (j = 0; j < ntypes; j++) {
+      m2 += j;
+      col1 = (ntypes * (ntypes + 5)) / 2;
+      col1 += i < j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col2 = i * ntypes + j;
+      /* Extrapolation possible  */
+      r2begin[col2] = SQR(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2end[col2] = SQR(pt->end[col1]);
+      r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
+      fprintf(outfile, "%.16e %.16e %.16e\n",
+	      r2begin[col2], r2end[col2], r2step[col2]);
+    }
+  }
+  fprintf(outfile, "\n");
+
+  /* write data */
+  m = 0;
+  for (i = 0; i < ntypes; i++) {
+    m += i;
+    m2 = 0;
+    for (j = 0; j < ntypes; j++) {
+      m2 += j;
+      col1 = (ntypes * (ntypes + 5)) / 2;
+      col1 += i < j ? i * ntypes + j - m : j * ntypes + i - m2;
+      col2 = i * ntypes + j;
+      r2 = r2begin[col2];
+      for (k = 0; k < imdpotsteps; k++) {
+	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+	r2 += r2step[col2];
+      }
+      fprintf(outfile, "%.16e\n", 0.0);
+      fprintf(outfile, "\n");
+    }
+  }
+
+  fclose(outfile);
+  printf("IMD MEAM f potential data written to %s\n", filename);
+
+  /* write g(cos) for MEAM */
+  sprintf(filename, "%s_g_meam.imd.pt", prefix);
+  outfile = fopen(filename, "w");
+  if (NULL == outfile) {
+    sprintf(msg, "Could not open file %s\n", filename);
+    error(msg);
+  }
+
+  /* write header */
+  fprintf(outfile, "#F 2 %d\n#E\n", ntypes);
+
+  /* write info block */
+  for (i = 0; i < ntypes; i++) {
+    col1 = (ntypes * (ntypes + 3)) + i;
+    /* from -1 to +1 */
+    r2begin[i] = pt->begin[col1];
+    r2end[i] = pt->end[col1];
+    r2step[i] = (r2end[i] - r2begin[i]) / imdpotsteps;
+    fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[i], r2end[i], r2step[i]);
+  }
+  fprintf(outfile, "\n");
+
+  /* write data */
+  for (i = 0; i < ntypes; i++) {
+    r2 = r2begin[i];
+    col1 = (ntypes * (ntypes + 3)) + i;
+    for (k = 0; k <= imdpotsteps; k++) {
+      fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, r2));
+      r2 += r2step[i];
+    }
+    fprintf(outfile, "\n");
+  }
+  fclose(outfile);
+  printf("IMD MEAM f potential data written to %s\n", filename);
+#endif /* MEAM */
 
   free(r2begin);
   free(r2end);
@@ -3325,3 +3434,83 @@ void write_coul2imd()
 }
 
 #endif /* COULOMB */
+
+#ifdef MEAM
+
+/*****************************************************************************
+*
+*  write potential table for LAMMPS
+*
+******************************************************************************/
+
+void write_pot_table_lammps(pot_table_t *pt)
+{
+    int i, j, col, first;
+    real grad1, grad2;
+    FILE *outfile;
+    char  msg[255], filename[255];
+
+    sprintf(filename, "lammps.pt");
+
+    /* open file */
+    outfile = fopen(filename, "w");
+    if (NULL == outfile) {
+    sprintf(msg, "Could not open file %s\n", filename);
+    error(msg);
+    }
+
+  /* write header */
+#ifdef EAM
+    fprintf(outfile, "EAMPOT\n");
+#else
+    fprintf(outfile, "MEAMPOT\n");
+#endif
+    fprintf(outfile, "species -- --.---\n");
+    fprintf(outfile, "<spline>\n");
+    fprintf(outfile, "1 0 0 0 0 1\n");
+
+  // Compute the 2nd derivatives of the potentials,
+  // since I am not sure if this was done before
+#ifdef EAM
+    for (col = 0; col < paircol + 2*ntypes; ++col) {
+#else   // MEAM
+    for (col = 0; col < 2*paircol + 3*ntypes; ++col) {
+#endif  // EAM
+        // Pointer to first entry
+        first = pt->first[col];
+
+        // Get 2nd derivatives
+        spline_ed(pt->step[col], pt->table + first,
+                  pt->last[col] - first + 1,
+                  *(pt->table + first - 2), *(pt->table + first - 1),
+                  pt->d2tab + first);
+    }
+
+    for (i = 0; i < pt->ncols; i++) {
+
+        if ( pt->table[pt->first[i] - 2] < 1.e30 )
+            grad1 = pt->table[pt->first[i] - 2];
+        else
+            grad1 = splint_grad_ne(pt, pt->table, i, pt->begin[i]);
+
+        if ( pt->table[pt->first[i] - 1] < 1.e30 )
+            grad2 = pt->table[pt->first[i] - 1];
+        else
+            grad2 = splint_grad_ne(pt, pt->table, i, pt->end[i]);
+        /* write gradient */
+        fprintf(outfile, "%d %.16e %.16e\n", pt->last[i] - pt->first[i] + 1, grad1, grad2);
+
+        // Loop through spline knots
+        for (j = pt->first[i]; j <= pt->last[i]; j++) {
+            fprintf(outfile, "%.16e %.16e %.16e\n", pt->xcoord[j], pt->table[j], pt->d2tab[j]);
+        }
+    }
+
+    fprintf(outfile, "</spline>\n");
+    fprintf(outfile, "end\n");
+
+    fclose(outfile);
+    printf("Potential LAMMPS data written to %s\n", filename);
+}
+
+#endif /* MEAM */

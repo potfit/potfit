@@ -49,7 +49,7 @@
 real rescale(pot_table_t *pt, real upper, int flag)
 {
   int   mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign,
-    dimneuxi;
+    dimneuxi, self;
   real *xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
   atom_t *atom;
   neigh_t *neigh;
@@ -124,7 +124,9 @@ real rescale(pot_table_t *pt, real upper, int flag)
       typ1 = atom->typ;
       for (j = 0; j < atom->n_neigh; j++) {
 	neigh = atom->neigh + j;
-	if (neigh->nr > i + cnfstart[h]) {
+	    /* In small cells, an atom might interact with itself */
+	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+//	if (neigh->nr > i + cnfstart[h]) {
 	  typ2 = neigh->typ;
 	  col2 = paircol + typ2;
 	  if (typ2 == typ1) {
@@ -133,6 +135,9 @@ real rescale(pot_table_t *pt, real upper, int flag)
 		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
 		neigh->step[1]);
 	      atom->rho += fnval;
+		/* avoid double counting if atom is interacting with a
+		   copy of itself */
+		if (!self) {
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {
@@ -266,7 +271,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
       else
 	grad = 1.e30;
       if (xi[pt->first[i] - 1] < 1.e30)
-	xi[pt->first[i] - 2] = -xi[pt->first[i] - 2] / a;
+	xi[pt->first[i] - 2] = -xi[pt->first[i] - 1] / a;
       else
 	xi[pt->first[i] - 2] = 1.e30;
       xi[pt->first[i] - 1] = grad;
@@ -289,7 +294,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
     for (j = paircol + ntypes; j < paircol + 2 * ntypes; j++)
       for (i = pt->first[j]; i <= pt->last[j]; i++) {
 	xi[i] = neuxi[col];
-	pt->xcoord[i] = neuord[col];
+	//pt->xcoord[i] = neuord[col];
 	col++;
       }
   }
@@ -401,7 +406,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
   free(right);
 
 
-  /* Faktor zurückgeben */
+  /* Faktor zurï¿½ckgeben */
   return a;
 }
 
