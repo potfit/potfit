@@ -445,12 +445,44 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
       fgetpos(infile, &filepos);
       fscanf(infile, "%s", buffer);
     } while (strncmp(buffer, "cp", 2) != 0 && !feof(infile));
+    /* and save the position */
     fsetpos(infile, &filepos);
 
-    for (i = 0; i < ntypes; i++) {
-      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[i],
-	  &apt->pmin[apt->number][i], &apt->pmax[apt->number][i]))
-	error(1, "Could not read chemical potential for atomtype #%d.", i);
+    /* shortcut for apt->number */
+    i = apt->number;
+
+    /* allocate memory for global parameters */
+    apt->names = (char **)realloc(apt->names, (i + 1) * sizeof(char *));
+    apt->names[i] = (char *)malloc(20 * sizeof(char));
+    strcpy(apt->names[i], "chemical potentials");
+
+    apt->invar_par = (int **)realloc(apt->invar_par, (i + 1) * sizeof(int *));
+    apt->invar_par[i] = (int *)malloc((ntypes + 1) * sizeof(int));
+    reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
+
+    apt->param_name =
+      (char ***)realloc(apt->param_name, (i + 1) * sizeof(char **));
+    apt->param_name[i] = (char **)malloc(ntypes * sizeof(char *));
+    reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
+
+    /* check if the allocation was successfull */
+    if (apt->names[i] == NULL || apt->invar_par[i] == NULL
+      || apt->param_name[i] == NULL)
+      error(1, "Cannot allocate memory for chemical potentials.");
+
+    /* loop over all atom types */
+    for (j = 0; j < ntypes; j++) {
+
+      /* allocate memory for parameter name */
+      apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
+      reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
+      if (apt->param_name[i][j] == NULL)
+	error(1, "Cannot allocate memory for chemical potential names.");
+
+      /* read one line */
+      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[j],
+	  &apt->pmin[i][j], &apt->pmax[i][j]))
+	error(1, "Could not read chemical potential for %d. atomtype.", j);
 
       /* split cp and _# */
       token = strchr(buffer, '_');
@@ -462,6 +494,35 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 	fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
 	error(1, "No chemical potentials found in %s.\n", filename);
       }
+
+      /* check for invariance and proper value (respect boundaries) */
+      apt->invar_par[i][j] = 0.;
+      /* parameter will not be optimized if min==max */
+      if (apt->pmin[i][j] == apt->pmax[i][j]) {
+	apt->invar_par[i][j] = 1;
+	apt->invar_par[i][ntypes]++;
+	/* swap min and max if max<min */
+      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
+	temp = apt->pmin[i][j];
+	apt->pmin[i][j] = apt->pmax[i][j];
+	apt->pmax[i][j] = temp;
+	/* reset value if >max or <min */
+      } else if ((apt->values[i][j] < apt->pmin[i][j])
+	|| (apt->values[i][j] > apt->pmax[i][j])) {
+	/* Only print warning if we are optimizing */
+	if (opt) {
+	  if (apt->values[i][j] < apt->pmin[i][j])
+	    apt->values[i][j] = apt->pmin[i][j];
+	  if (apt->values[i][j] > apt->pmax[i][j])
+	    apt->values[i][j] = apt->pmax[i][j];
+	  warning(0, "Starting value for chemical potential #%d is ", j + 1);
+	  warning(0, "outside of specified adjustment range.\n");
+	  warning(1, "Resetting it to %f.\n", j + 1, apt->values[i][j]);
+	  if (apt->values[i][j] == 0)
+	    warning(1, "New value is 0 ! Please be careful about this.\n");
+	}
+      }
+      strcpy(apt->param_name[i][j], buffer);
     }
     printf("Enabled chemical potentials.\n");
 
@@ -572,6 +633,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->number + 1, 0);
   apt->sw_kappa = apt->invar_par[apt->number + 1][0];
 #endif /* COULOMB */
+
 #ifdef DIPOLE
   for (i = 0; i < ntypes; i++) {
     apt->param_name[apt->number + 2][i] = (char *)malloc(30 * sizeof(char));
@@ -961,7 +1023,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 #ifdef PAIR
   if (enable_cp) {
     cp_start = apt->total_par - apt->globals + ntypes * (ntypes + 1);
-    apt->total_par += (ntypes + compnodes);
+    apt->total_par +=
+      (ntypes + compnodes - apt->invar_par[apt->number][ntypes]);
   }
 #endif /* PAIR */
 
@@ -1059,13 +1122,15 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     i = apt->number;
     for (j = 0; j < (ntypes + compnodes); j++) {
       *val = apt->values[i][j];
-      pt->idx[k] = l++;
-      apt->idxpot[k] = i;
-      apt->idxparam[k++] = j;
       val++;
+      if (!apt->invar_par[i][j]) {
+	pt->idx[k] = l++;
+	apt->idxpot[k] = i;
+	apt->idxparam[k++] = j;
+      }
     }
-    pt->idxlen += (ntypes + compnodes);
-    global_idx += (ntypes + compnodes);
+    pt->idxlen += (ntypes + compnodes - apt->invar_par[apt->number][ntypes]);
+    global_idx += (ntypes + compnodes - apt->invar_par[apt->number][ntypes]);
   }
 #endif /* PAIR */
 #ifdef COULOMB
@@ -1381,7 +1446,7 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
 	l++;
     }
   }
-#endif /* EAM || ADP */
+#endif /* ADP */
 
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);

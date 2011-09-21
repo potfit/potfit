@@ -213,7 +213,7 @@ void diff_evo(real *xi)
   real **x2;			/* next generation */
   FILE *ff;			/* exit flagfile */
 
-  if (evo_threshold == 0)
+  if (evo_threshold == 0.)
     return;
 
   /* vector for force calculation */

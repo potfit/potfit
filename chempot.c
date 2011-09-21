@@ -130,9 +130,6 @@ void init_chemical_potential(int dim)
 {
   if (dim == 2)
     sort_chem_pot_2d();
-  if (dim == 3)
-    printf
-      ("Chemical potentials for n>2 is not implemented.\nFalling back to N*mu\n");
 }
 
 real chemical_potential(int dim, int *n, real *mu)
