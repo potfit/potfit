@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2008-2011 Daniel Schopf, Philipp Beck
+ * Copyright 2008-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -250,7 +250,7 @@ void ms_value(real r, real *p, real *f)
  *
  * buckingham potential (without derivative!) - slightly modified
  *
- * http://dx.doi.org/doi:10.1098/rspa.1977.0049 
+ * http://dx.doi.org/doi:10.1098/rspa.1977.0049
  *
  ****************************************************************/
 
@@ -687,7 +687,7 @@ void vpair_value(real r, real *p, real *f)
  * template for new potential function called mypotential
  * for further information plase have a look at the online documentation
  *
- * http://www.itap.physik.uni-stuttgart.de/~imd/potfit/potfit.html
+ * http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************/
 
@@ -758,7 +758,7 @@ int apot_check_params(real *params)
     }
 
     /* jump to next potential */
-    j += 1 + apot_table.n_par[i] + smooth_pot[i];
+    j += 2 + apot_parameters(apot_table.names[i]) + smooth_pot[i];
   }
   return 0;
 }

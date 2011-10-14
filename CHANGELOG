@@ -1,4 +1,5 @@
 devel
++ fix invariant chemical potentials
 + errors for short distances are now more clear
 + rms for forces is now calculated correctly
 + fix wrong element detection in config.c

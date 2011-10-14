@@ -5,11 +5,12 @@
  *
  ****************************************************************
  *
- * Copyright (C) 1996, 1997, 1998, 1999, 2000 Brian Gough
- *	2005 Peter Brommer
+ * Copyright 1996, 1997, 1998, 1999, 2000
+ * 	Brian Gough
+ * Copyright 2005-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -29,12 +30,6 @@
  *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
-
-/*** rewritten for double precision 					***/
-/*** by Peter Brommer, ITAP, 2002-10-10 				***/
-/*** Adapted to Powell requirements 2002-10-11 				***/
-/*** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24 	***/
-/*** Switched to GSL Implementation, put routine under GSL protection 	***/
 
 #include "potfit.h"
 

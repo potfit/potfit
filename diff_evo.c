@@ -5,10 +5,10 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2011 Daniel Schopf
+ * Copyright 2009-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -213,7 +213,7 @@ void diff_evo(real *xi)
   real **x2;			/* next generation */
   FILE *ff;			/* exit flagfile */
 
-  if (evo_threshold == 0)
+  if (evo_threshold == 0.)
     return;
 
   /* vector for force calculation */

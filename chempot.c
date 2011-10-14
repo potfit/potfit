@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2011 Daniel Schopf
+ * Copyright 2009-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -130,9 +130,6 @@ void init_chemical_potential(int dim)
 {
   if (dim == 2)
     sort_chem_pot_2d();
-  if (dim == 3)
-    printf
-      ("Chemical potentials for n>2 is not implemented.\nFalling back to N*mu\n");
 }
 
 real chemical_potential(int dim, int *n, real *mu)
