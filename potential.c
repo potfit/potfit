@@ -5,11 +5,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf,
- *                     Philipp Beck
+ * Copyright 2002-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
