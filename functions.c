@@ -476,7 +476,7 @@ void mexp_decay_value(real r, real *p, real *f)
  *
  * streitz-mintmire (strmm) potential
  *
- * http://dx.doi.org/10.1103/PhysRevB.50.11996
+ * http://dx.doi.org/doi:10.1103/PhysRevB.50.11996
  *
  ****************************************************************/
 
@@ -647,7 +647,7 @@ void gljm_value(real r, real *p, real *f)
  *
  * bond-stretching function of vashishta potential (f_c)
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
  *
  ****************************************************************/
 
@@ -660,7 +660,7 @@ void vas_value(real r, real *p, real *f)
  *
  * original pair contributions of vashishta potential (V_2)
  *
- * CITATION NEEDED
+ * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
  *
  ****************************************************************/
 
