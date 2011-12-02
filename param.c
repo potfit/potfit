@@ -151,12 +151,12 @@ void check_parameters_complete(char *paramfile)
       paramfile, tempfile);
 
   if (eweight < 0)
-    error(1, "Missing parameter or invalid value in %s : eweight is \"%f\"",
+    error(1, "Missing parameter or invalid value in %s : eng_weight is \"%f\"",
       paramfile, eweight);
 
 #ifdef STRESS
   if (sweight < 0)
-    error(1, "Missing parameter or invalid value in %s : sweight is \"%f\"",
+    error(1, "Missing parameter or invalid value in %s : stress_weight is \"%f\"",
       paramfile, sweight);
 #endif /* STRESS */
 
