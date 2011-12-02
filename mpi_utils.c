@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2004-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2004-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -110,7 +110,7 @@ void broadcast_params()
   blklens[4] = SLOTS;     typen[4] = MPI_INT;     /* slot */
   blklens[5] = SLOTS;     typen[5] = REAL;        /* shift */
   blklens[6] = SLOTS;     typen[6] = REAL;        /* step */
-  blklens[7] = SLOTS;     typen[7] = REAL;        /* col */
+  blklens[7] = SLOTS;     typen[7] = MPI_INT;     /* col */
   size = 8;
 #ifdef ADP
   blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* rdist */

@@ -4,12 +4,12 @@
  *
  ****************************************************************
  *
- * Copyright (C) 1996, 1997, 1998, 1999, 2000 Fabrice Rossi
- * 		(gsl/min/bracketing.c)
- * 	2005-2008 Peter Brommer
+ * Copyright 1996, 1997, 1998, 1999, 2000
+ * 	Fabrice Rossi (gsl/min/bracketing.c)
+ * Copyright 2005-2011
  * 	Institute for Theoretical and Applied Physics
  * 	University of Stuttgart, D-70550 Stuttgart, Germany
- * 	http://www.itap.physik.uni-stuttgart.de/
+ * 	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
