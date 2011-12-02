@@ -187,6 +187,7 @@ for file in $outcars; do
 	    for (i in el_names) {
 		    split(el_names[i],temp,"=");
 		    el_array[temp[1]]=temp[2];
+		    el_inv_array[temp[2]]=temp[1];
 	    }
 	    for (i in el_names) {
 	    el_number[names[i]]=el_array[names[i]];
@@ -234,8 +235,7 @@ for file in $outcars; do
 	       printf " %s",names[j];
        } else {
        for (j=1;j<=n_elements;j++) {
-	       split(el_names[j],temp,"=");
-		printf " %s",temp[1];
+		printf " %s",el_inv_array[j-1];
 	}
        }
        printf "\n";
