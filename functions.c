@@ -476,7 +476,7 @@ void mexp_decay_value(real r, real *p, real *f)
  *
  * streitz-mintmire (strmm) potential
  *
- * CITATION NEEDED
+ * http://dx.doi.org/10.1103/PhysRevB.50.11996
  *
  ****************************************************************/
 
