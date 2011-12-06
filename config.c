@@ -797,7 +797,7 @@ void read_config(char *filename)
 
     for (k = 0; k < paircol; k++) {
       for (i = 0; i < pair_steps; i++) {
-	pair_table[k * pair_steps + i] /= (max_count * 10 / 6);
+	pair_table[k * pair_steps + i] /= max_count;
 	fprintf(pairfile, "%f %f\n", i * pair_dist[k],
 	  pair_table[k * pair_steps + i]);
       }

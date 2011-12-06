@@ -202,7 +202,6 @@ typedef struct {
   real *dp_alpha;		/* polarisability */
   real *dp_b;			/* parameter for short-range-dipole-moment */
   real *dp_c;			/* parameter for short-range-dipole-moment */
-  int   sum_t;			/* dipole-convergency output */
 #endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */

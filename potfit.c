@@ -360,7 +360,7 @@ int main(int argc, char **argv)
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
 #ifdef COULOMB
-    write_coul2imd();
+    /* write coulomb part to plot file */
     //write_coulomb_table();
 #endif /* COULOMB */
 

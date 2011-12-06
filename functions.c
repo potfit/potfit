@@ -772,7 +772,7 @@ int apot_check_params(real *params)
 real apot_punish(real *params, real *forces)
 {
   int   i, j;
-  real  x, tmpsum = 0, min, max;
+  real  x, tmpsum = 0., min, max;
 
   /* loop over parameters */
   for (i = 0; i < ndim; i++) {

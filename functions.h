@@ -87,8 +87,8 @@ real  cutoff(real, real, real);
 void  debug_apot();
 #endif /* DEBUG */
 
-#ifdef PAIR
 /* chemical potential [chempot.c] */
+#ifdef PAIR
 int   swap_chem_pot(int, int);
 int   sort_chem_pot_2d(void);
 real  chemical_potential(int, int *, real *);
@@ -100,9 +100,6 @@ void  init_chemical_potential(int);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  init_tails(real);
-void  write_coulomb_table(void);
-void  write_coul2imd(void);
 void  ms_init(real, real *, real *, real *);
 void  buck_init(real, real *, real *, real *);
 void  ms_shift(real, real *, real *);

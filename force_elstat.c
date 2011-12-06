@@ -97,7 +97,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   real  sum_charges;
   real  dp_kappa;
 #ifdef DIPOLE
-  int   sum_c;
   real  dp_alpha[ntypes];
   real  dp_b[apt->number];
   real  dp_c[apt->number];
@@ -121,9 +120,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
-#ifdef DIPOLE
-    sum_c = 0.;
-#endif /* DIPOLE */
 
 #if defined APOT && !defined MPI
     if (format == 0) {
@@ -525,7 +521,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	  if (dp_it) {
 	    if ((dp_sum > max_diff) || (dp_it > 50)) {
-	      sum_c += 50;
 	      dp_converged = 1;
 	      for (i = 0; i < inconf[h]; i++) {	/* atoms */
 		atom = conf_atoms + i + cnfstart[h] - firstatom;
@@ -547,7 +542,6 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 
 	  if (dp_sum < dp_tol) {
 	    dp_converged = 1;
-	    sum_c += dp_it;
 	  }
 
 	  dp_it++;
@@ -824,15 +818,7 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
 	  }
 	}
 #endif /* STRESS */
-
       }				/* end M A I N loop over configurations */
-
-
-#ifdef DIPOLE
-      apt->sum_t = sum_c / h;
-#endif /* DIPOLE */
-
-
     }				/* parallel region */
 
     /* dummy constraints (global) */
