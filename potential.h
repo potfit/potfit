@@ -71,3 +71,9 @@ void  write_altplot_pair(pot_table_t *, char *);
 #ifdef PDIST
 void  write_pairdist(pot_table_t *, char *);
 #endif /* PDIST */
+
+/* functions for electrostatic calculations  */
+#ifdef COULOMB
+void  init_tails(real);
+void  write_coulomb_table(void);
+#endif /* COULOMB */

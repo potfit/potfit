@@ -476,7 +476,7 @@ void mexp_decay_value(real r, real *p, real *f)
  *
  * streitz-mintmire (strmm) potential
  *
- * http://link.aps.org/doi/10.1103/PhysRevB.50.11996
+ * http://dx.doi.org/doi:10.1103/PhysRevB.50.11996
  *
  ****************************************************************/
 
@@ -772,7 +772,7 @@ int apot_check_params(real *params)
 real apot_punish(real *params, real *forces)
 {
   int   i, j;
-  real  x, tmpsum = 0, min, max;
+  real  x, tmpsum = 0., min, max;
 
   /* loop over parameters */
   for (i = 0; i < ndim; i++) {
