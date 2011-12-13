@@ -278,15 +278,6 @@ void anneal(real *xi)
 	naccept[n] = 0;
       }
 
-#ifdef DIPOLE
-      /* output for "Dipol_Konvergenz_Verlauf" */
-      if (myid == 0) {
-	outfile = fopen(filename, "a");
-	fprintf(outfile, "%d\n", apot_table.sum_t);
-	fclose(outfile);
-      }
-#endif /* DIPOLE */
-
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
 

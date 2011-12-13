@@ -2867,6 +2867,72 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   free(r2begin);
   free(r2end);
   free(r2step);
+
+  /* write endpot for IMD with electrostatics */
+#if defined COULOMB && defined APOT
+  apot_table_t *apt = &apot_table;
+  sprintf(filename, "%s_charges.imd", prefix);
+
+  /* open file */
+  outfile = fopen(filename, "w");
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
+
+  fprintf(outfile, "charge\t\t");
+  for (i = 0; i < ntypes - 1; i++)
+    fprintf(outfile, "%f\t", apt->charge[i]);
+  fprintf(outfile, "%f\n", apt->last_charge);
+
+  if ((strcmp(apt->names[0], "ms") == 0) && (strcmp(apt->names[1], "ms") == 0)
+    && (strcmp(apt->names[2], "ms") == 0)) {
+    fprintf(outfile, "ms_D\t\t");
+    for (i = 0; i < apt->number; i++)
+      fprintf(outfile, "%f\t", apt->values[i][0]);
+    fprintf(outfile, "\nms_gamma\t");
+    for (i = 0; i < apt->number; i++)
+      fprintf(outfile, "%f\t", apt->values[i][1]);
+    fprintf(outfile, "\nms_r0\t\t");
+    for (i = 0; i < apt->number; i++)
+      fprintf(outfile, "%f\t", apt->values[i][2]);
+    fprintf(outfile, "\n");
+  } else if ((strcmp(apt->names[0], "buck") == 0)
+    && (strcmp(apt->names[1], "buck") == 0)
+    && (strcmp(apt->names[2], "buck") == 0)) {
+    fprintf(outfile, "buck_a\t");
+    for (i = 0; i < apt->number; i++)
+      fprintf(outfile, "%f\t", apt->values[i][0]);
+    fprintf(outfile, "\nbuck_sigma\t");
+    for (i = 0; i < apt->number; i++)
+      fprintf(outfile, "%f\t", apt->values[i][1]);
+    fprintf(outfile, "\nbuck_c\t");
+    for (i = 0; i < apt->number; i++)
+      fprintf(outfile, "%f\t", apt->values[i][2]);
+    fprintf(outfile, "\n");
+  }
+
+  fprintf(outfile, "\new_rcut\t\t%f\n", dp_cut);
+  fprintf(outfile, "ew_kappa\t\t%f\n", apt->dp_kappa[0]);
+  fprintf(outfile, "r_cut\t\t");
+  for (i = 0; i < apt->number; i++)
+    fprintf(outfile, "%f\t", apot_table.end[0]);
+  fprintf(outfile, "\n\n");
+
+#ifdef DIPOLE
+  fprintf(outfile, "dp_alpha\t");
+  for (i = 0; i < ntypes; i++)
+    fprintf(outfile, "%f\t", apt->dp_alpha[i]);
+  fprintf(outfile, "\ndp_b\t\t");
+  for (i = 0; i < apt->number; i++)
+    fprintf(outfile, "%f\t", apt->dp_b[i]);
+  fprintf(outfile, "\ndp_c\t\t");
+  for (i = 0; i < apt->number; i++)
+    fprintf(outfile, "%f\t", apt->dp_c[i]);
+  fprintf(outfile, "\n");
+#endif /* DIPOLE */
+
+  fclose(outfile);
+  printf("Electrostatic table for IMD written to \t%s\n", filename);
+#endif /* COULOMB && APOT */
 }
 
 /****************************************************************
@@ -3165,93 +3231,3 @@ void write_pairdist(pot_table_t *pt, char *filename)
 }
 
 #endif /* PDIST */
-
-#ifdef COULOMB
-
-/****************************************************************
- *
- * write endpot for IMD with electrostatics
- *
- ****************************************************************/
-
-void write_coul2imd()
-{
-  apot_table_t *apt = &apot_table;
-  int   i, j;
-  FILE *outfile;
-  char *filename = "coul2imd";
-
-  /* open file */
-  outfile = fopen(filename, "w");
-  if (NULL == outfile)
-    error(1, "Could not open file %s\n", filename);
-
-  fprintf(outfile, "charge\t\t");
-  for (i = 0; i < ntypes - 1; i++)
-    fprintf(outfile, "%f\t", apt->charge[i]);
-  fprintf(outfile, "%f\n", apt->last_charge);
-
-  if ((strcmp(apt->names[0], "ms") == 0) && (strcmp(apt->names[1], "ms") == 0)
-    && (strcmp(apt->names[2], "ms") == 0)) {
-    fprintf(outfile, "ms_D\t\t");
-    for (i = 0; i < apt->number; i++)
-      fprintf(outfile, "%f\t", apt->values[i][0]);
-    fprintf(outfile, "\n");
-    fprintf(outfile, "ms_gamma\t");
-    for (i = 0; i < apt->number; i++)
-      fprintf(outfile, "%f\t", apt->values[i][1]);
-    fprintf(outfile, "\n");
-    fprintf(outfile, "ms_r0\t\t");
-    for (i = 0; i < apt->number; i++)
-      fprintf(outfile, "%f\t", apt->values[i][2]);
-    fprintf(outfile, "\n");
-  } else if ((strcmp(apt->names[0], "buck") == 0)
-    && (strcmp(apt->names[1], "buck") == 0)
-    && (strcmp(apt->names[2], "buck") == 0)) {
-    fprintf(outfile, "buck_a\t");
-    for (i = 0; i < apt->number; i++)
-      fprintf(outfile, "%f\t", apt->values[i][0]);
-    fprintf(outfile, "\n");
-    fprintf(outfile, "buck_sigma\t");
-    for (i = 0; i < apt->number; i++)
-      fprintf(outfile, "%f\t", apt->values[i][1]);
-    fprintf(outfile, "\n");
-    fprintf(outfile, "buck_c\t");
-    for (i = 0; i < apt->number; i++)
-      fprintf(outfile, "%f\t", apt->values[i][2]);
-    fprintf(outfile, "\n");
-  } else {
-    printf
-      ("Only Morse-Stretch or Buckingham potential supported for coul2imd yet.\n");
-    printf("No short-range potential printed for coul2imd.");
-  }
-
-  fprintf(outfile, "\n");
-  fprintf(outfile, "ew_rcut\t\t%f\n", dp_cut);
-  fprintf(outfile, "ew_kappa\t\t%f\n", apt->dp_kappa[0]);
-  fprintf(outfile, "r_cut\t\t");
-  for (i = 0; i < apt->number; i++)
-    fprintf(outfile, "%f\t", apot_table.end[0]);
-  fprintf(outfile, "\n");
-  fprintf(outfile, "\n");
-
-#ifdef DIPOLE
-  fprintf(outfile, "dp_alpha\t");
-  for (i = 0; i < ntypes; i++)
-    fprintf(outfile, "%f\t", apt->dp_alpha[i]);
-  fprintf(outfile, "\n");
-  fprintf(outfile, "dp_b\t\t");
-  for (i = 0; i < apt->number; i++)
-    fprintf(outfile, "%f\t", apt->dp_b[i]);
-  fprintf(outfile, "\n");
-  fprintf(outfile, "dp_c\t\t");
-  for (i = 0; i < apt->number; i++)
-    fprintf(outfile, "%f\t", apt->dp_c[i]);
-  fprintf(outfile, "\n");
-#endif /* DIPOLE */
-
-  fprintf(outfile, "\n");
-  fclose(outfile);
-}
-
-#endif /* COULOMB */
