@@ -163,11 +163,12 @@ real calc_forces_elstat(real *xi_opt, real *forces, int flag)
     }
     apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
     charge[ntypes - 1] = apt->last_charge;
-    if (xi_opt[2 * size + ne + ntypes]) {
-      dp_kappa = xi_opt[2 * size + ne + ntypes];
+    if (xi_opt[2 * size + ne + ntypes - 1]) {
+      dp_kappa = xi_opt[2 * size + ne + ntypes - 1];
     } else {
       dp_kappa = 0.;
     }
+
 #ifdef DIPOLE
     for (i = 0; i < ntypes; i++) {
       if (xi_opt[2 * size + ne + ntypes + i]) {
