@@ -1,10 +1,10 @@
 /****************************************************************
  *
- * utils.h: potfit utilities header file
+ * potential.h: potfit spline functions header file
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -26,36 +26,20 @@
  *   You should have received a copy of the GNU General Public License
  *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
- *****************************************************************/
+ ****************************************************************/
 
-/* vector and matrix allocations */
-int  *vect_int(long dim);
-real *vect_real(long dim);
-real **mat_real(long rowdim, long coldim);
-void  free_vect_int(int *vect);
-void  free_vect_real(real *vect);
-void  free_mat_real(real **matrix);
+#ifndef POTFIT_H
+#include "potfit.h"
+#endif
 
-/* memory management */
-void  reg_for_free(void *p, char *name, ...);
-void  free_all_pointers();
-
-/* vector procuct */
-vector vec_prod(vector, vector);
-
-/* pRNG with equal or normal distribution */
-real  eqdist();
-real  normdist();
-
-/* different power functions */
-inline int isquare(int);
-inline real dsquare(real);
-void  power_1(real *, real *, real *);
-void  power_m(int, real *, real *, real *);
-
-#if defined APOT && defined EVO
-/* quicksort for ODE */
-void  quicksort(real *x, int low, int high, real **p);
-int   partition(real *x, int low, int high, int index, real **p);
-void  swap_population(real *a, real *b);
-#endif /* APOT && EVO */
+void  spline_ed(real, real *, int, real, real, real *);
+real  splint_ed(pot_table_t *, real *, int, real);
+real  splint_grad_ed(pot_table_t *, real *, int, real);
+real  splint_comb_ed(pot_table_t *, real *, int, real, real *);
+real  splint_dir(pot_table_t *, real *, int, real, real);
+real  splint_comb_dir(pot_table_t *, real *, int, real, real, real *);
+real  splint_grad_dir(pot_table_t *, real *, int, real, real);
+void  spline_ne(real *, real *, int, real, real, real *);
+real  splint_ne(pot_table_t *, real *, int, real);
+real  splint_comb_ne(pot_table_t *, real *, int, real, real *);
+real  splint_grad_ne(pot_table_t *, real *, int, real);

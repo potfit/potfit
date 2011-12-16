@@ -5,10 +5,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2008 Peter Brommer, Franz G"ahler
+ * Copyright 2002-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -35,8 +35,10 @@
 /*** by Peter Brommer, ITAP, 2002-10-10 					***/
 
 #include "potfit.h"
+
 #include "utils.h"
 #include "bracket.h"
+
 #define TOL 1.0e-1
 
 real *xicom, *delcom;

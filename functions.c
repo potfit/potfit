@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2008-2010 Daniel Schopf
+ * Copyright 2008-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -28,18 +28,103 @@
  *
  ****************************************************************/
 
-#ifdef APOT
-
 #include "potfit.h"
-#ifndef ACML
-#include <mkl_vml.h>
-#else
-#include <acml_mv.h>
-#endif
+
+#include "functions.h"
+#include "utils.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
-#endif
+#endif /* M_PI */
+
+/* macro for simplified addition of new potential functions */
+#define str(s) #s
+#define add_pot(a,b) add_potential(str(a),b,&a ## _value)
+
+/****************************************************************
+ *
+ * initialize the function_table for analytic potentials
+ *
+ ****************************************************************/
+
+void apot_init(void)
+{
+  add_pot(lj, 2);
+  add_pot(eopp, 6);
+  add_pot(morse, 3);
+#ifdef COULOMB
+  add_potential("ms", 3, &ms_shift);
+  add_potential("buck", 3, &buck_shift);
+#else
+  add_potential("ms", 3, &ms_value);
+  add_potential("buck", 3, &buck_value);
+#endif /* COULOMB */
+  add_pot(softshell, 2);
+  add_pot(eopp_exp, 6);
+  add_pot(meopp, 7);
+  add_pot(power_decay, 2);
+  add_pot(exp_decay, 2);
+  add_pot(bjs, 3);
+  add_pot(parabola, 3);
+  add_pot(csw, 4);
+  add_pot(universal, 4);
+  add_pot(const, 1);
+  add_pot(sqrt, 2);
+  add_pot(mexp_decay, 3);
+  add_pot(strmm, 5);
+  add_pot(double_morse, 7);
+  add_pot(double_exp, 5);
+  add_pot(poly_5, 5);
+  add_pot(cbb, 12);
+  add_pot(exp_plus, 3);
+  add_pot(mishin, 6);
+  add_pot(gen_lj, 5);
+  add_pot(gljm, 12);
+  add_pot(vas, 2);
+  add_pot(vpair, 7);
+  add_pot(csw2, 4);
+}
+
+/****************************************************************
+ *
+ * add analytic function to function_table
+ *
+ ****************************************************************/
+
+void add_potential(char *name, int parameter, fvalue_pointer fval)
+{
+  int   i;
+  int   k = n_functions;
+
+  /* only add potentials with unused names */
+  for (i = 0; i < k; i++) {
+    if (strcmp(function_table.name[i], name) == 0) {
+      error(1, "There already is a potential with the name \"%s\".", name);
+    }
+  }
+
+  /* allocate memory */
+  function_table.name =
+    (char **)realloc(function_table.name, (k + 1) * sizeof(char *));
+  function_table.name[k] = (char *)malloc(255 * sizeof(char));
+  function_table.n_par =
+    (int *)realloc(function_table.n_par, (k + 1) * sizeof(int));
+  function_table.fvalue =
+    (fvalue_pointer *) realloc(function_table.fvalue,
+    (k + 1) * sizeof(fvalue_pointer));
+  if (function_table.name[k] == NULL || function_table.n_par == NULL
+    || function_table.fvalue == NULL)
+    error(1, "Could not allocate memory for function_table!");
+
+  /* assign values */
+  for (i = 0; i < 255; i++)
+    function_table.name[k][i] = '\0';
+  strncpy(function_table.name[k], name, strlen(name));
+  function_table.n_par[k] = parameter;
+  function_table.fvalue[k] = fval;
+
+  n_functions++;
+}
 
 /****************************************************************
  *
@@ -49,65 +134,13 @@
 
 int apot_parameters(char *name)
 {
-  if (strcmp(name, "lj") == 0) {
-    return 2;
-  } else if (strcmp(name, "eopp") == 0) {
-    return 6;
-  } else if (strcmp(name, "morse") == 0) {
-    return 3;
-  } else if (strcmp(name, "ms") == 0) {
-    return 3;
-  } else if (strcmp(name, "softshell") == 0) {
-    return 2;
-  } else if (strcmp(name, "eopp_exp") == 0) {
-    return 6;
-  } else if (strcmp(name, "meopp") == 0) {
-    return 7;
-  } else if (strcmp(name, "power_decay") == 0) {
-    return 2;
-  } else if (strcmp(name, "exp_decay") == 0) {
-    return 2;
-  } else if (strcmp(name, "pohlong") == 0) {
-    return 3;
-  } else if (strcmp(name, "parabola") == 0) {
-    return 3;
-  } else if (strcmp(name, "csw") == 0) {
-    return 4;
-  } else if (strcmp(name, "universal") == 0) {
-    return 4;
-  } else if (strcmp(name, "const") == 0) {
-    return 1;
-  } else if (strcmp(name, "sqrt") == 0) {
-    return 2;
-  } else if (strcmp(name, "mexp_decay") == 0) {
-    return 3;
-  } else if (strcmp(name, "strmm") == 0) {
-    return 5;
-  } else if (strcmp(name, "double_morse") == 0) {
-    return 7;
-  } else if (strcmp(name, "double_exp") == 0) {
-    return 5;
-  } else if (strcmp(name, "poly_5") == 0) {
-    return 5;
-  } else if (strcmp(name, "cbb") == 0) {
-    return 12;
-  } else if (strcmp(name, "exp_plus") == 0) {
-    return 3;
-  } else if (strcmp(name, "mishin") == 0) {
-    return 6;
-  } else if (strcmp(name, "gen_lj") == 0) {
-    return 5;
-  } else if (strcmp(name, "gljm") == 0) {
-    return 12;
+  int   i;
+
+  for (i = 0; i < n_functions; i++) {
+    if (strcmp(function_table.name[i], name) == 0) {
+      return function_table.n_par[i];
+    }
   }
-
-  /* template for new potential function called newpot */
-
-  else if (strcmp(name, "newpot") == 0) {
-    return 2;
-  }
-
-  /* end of template */
 
   return -1;
 }
@@ -120,72 +153,19 @@ int apot_parameters(char *name)
 
 int apot_assign_functions(apot_table_t *apt)
 {
-  int   i;
+  int   i, j;
 
   for (i = 0; i < apt->number; i++) {
-    if (strcmp(apt->names[i], "lj") == 0) {
-      apt->fvalue[i] = &lj_value;
-    } else if (strcmp(apt->names[i], "eopp") == 0) {
-      apt->fvalue[i] = &eopp_value;
-    } else if (strcmp(apt->names[i], "morse") == 0) {
-      apt->fvalue[i] = &morse_value;
-    } else if (strcmp(apt->names[i], "ms") == 0) {
-      apt->fvalue[i] = &ms_value;
-    } else if (strcmp(apt->names[i], "softshell") == 0) {
-      apt->fvalue[i] = &softshell_value;
-    } else if (strcmp(apt->names[i], "eopp_exp") == 0) {
-      apt->fvalue[i] = &eopp_exp_value;
-    } else if (strcmp(apt->names[i], "meopp") == 0) {
-      apt->fvalue[i] = &meopp_value;
-    } else if (strcmp(apt->names[i], "power_decay") == 0) {
-      apt->fvalue[i] = &power_decay_value;
-    } else if (strcmp(apt->names[i], "exp_decay") == 0) {
-      apt->fvalue[i] = &exp_decay_value;
-    } else if (strcmp(apt->names[i], "pohlong") == 0) {
-      apt->fvalue[i] = &pohlong_value;
-    } else if (strcmp(apt->names[i], "parabola") == 0) {
-      apt->fvalue[i] = &parabola_value;
-    } else if (strcmp(apt->names[i], "csw") == 0) {
-      apt->fvalue[i] = &csw_value;
-    } else if (strcmp(apt->names[i], "universal") == 0) {
-      apt->fvalue[i] = &universal_value;
-    } else if (strcmp(apt->names[i], "const") == 0) {
-      apt->fvalue[i] = &const_value;
-    } else if (strcmp(apt->names[i], "sqrt") == 0) {
-      apt->fvalue[i] = &sqrt_value;
-    } else if (strcmp(apt->names[i], "mexp_decay") == 0) {
-      apt->fvalue[i] = &mexp_decay_value;
-    } else if (strcmp(apt->names[i], "strmm") == 0) {
-      apt->fvalue[i] = &strmm_value;
-    } else if (strcmp(apt->names[i], "double_morse") == 0) {
-      apt->fvalue[i] = &double_morse_value;
-    } else if (strcmp(apt->names[i], "double_exp") == 0) {
-      apt->fvalue[i] = &double_exp_value;
-    } else if (strcmp(apt->names[i], "poly_5") == 0) {
-      apt->fvalue[i] = &poly_5_value;
-    } else if (strcmp(apt->names[i], "cbb") == 0) {
-      apt->fvalue[i] = &cbb_value;
-    } else if (strcmp(apt->names[i], "exp_plus") == 0) {
-      apt->fvalue[i] = &exp_plus_value;
-    } else if (strcmp(apt->names[i], "mishin") == 0) {
-      apt->fvalue[i] = &mishin_value;
-    } else if (strcmp(apt->names[i], "gen_lj") == 0) {
-      apt->fvalue[i] = &gen_lj_value;
-    } else if (strcmp(apt->names[i], "gljm") == 0) {
-      apt->fvalue[i] = &gljm_value;
+    for (j = 0; j < n_functions; j++) {
+      if (strcmp(apt->names[i], function_table.name[j]) == 0) {
+	apt->fvalue[i] = function_table.fvalue[j];
+	break;
+      }
+      if (j == n_functions - 1)
+	return -1;
     }
-
-/* template for new potential function called newpot */
-
-    else if (strcmp(apt->names[i], "newpot") == 0) {
-      apt->fvalue[i] = &newpot_value;
-    }
-
-/* end of template */
-
-    else
-      return -1;
   }
+
   return 0;
 }
 
@@ -199,22 +179,26 @@ int apot_assign_functions(apot_table_t *apt)
  *
  * lennard-jones potential
  *
+ * http://dx.doi.org/doi:10.1098/rspa.1924.0082
+ *
  ****************************************************************/
 
 void lj_value(real r, real *p, real *f)
 {
-  real  sig_d_rad6, sig_d_rad12;
+  static real sig_d_rad6, sig_d_rad12;
 
-  sig_d_rad6 = SQR(p[1]) / SQR(r);
+  sig_d_rad6 = (p[1] * p[1]) / (r * r);
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
-  sig_d_rad12 = SQR(sig_d_rad6);
+  sig_d_rad12 = dsquare(sig_d_rad6);
 
-  *f = 4 * p[0] * (sig_d_rad12 - sig_d_rad6);
+  *f = 4. * p[0] * (sig_d_rad12 - sig_d_rad6);
 }
 
 /****************************************************************
  *
- * empirical oscillating pair potential
+ * empirical oscillating pair potential (eopp)
+ *
+ * http://arxiv.org/abs/0802.2926v2
  *
  ****************************************************************/
 
@@ -226,12 +210,8 @@ void eopp_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[3];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif
+
+  power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
@@ -240,16 +220,20 @@ void eopp_value(real r, real *p, real *f)
  *
  * morse potential
  *
+ * http://dx.doi.org/doi:10.1103/PhysRev.34.57
+ *
  ****************************************************************/
 
 void morse_value(real r, real *p, real *f)
 {
-  *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2])));
+  *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2])));
 }
 
 /****************************************************************
  *
- * morse-stretch potential
+ * morse-stretch potential (without derivative!)
+ *
+ * http://dx.doi.org/doi:10.1063/1.1513312
  *
  ****************************************************************/
 
@@ -257,9 +241,27 @@ void ms_value(real r, real *p, real *f)
 {
   static real x;
 
-  x = 1 - r / p[2];
+  x = 1. - r / p[2];
 
-  *f = p[0] * (exp(p[1] * x) - 2 * exp((p[1] * x) / 2));
+  *f = p[0] * (exp(p[1] * x) - 2. * exp((p[1] * x) / 2.));
+}
+
+/****************************************************************
+ *
+ * buckingham potential (without derivative!) - slightly modified
+ *
+ * http://dx.doi.org/doi:10.1098/rspa.1977.0049
+ *
+ ****************************************************************/
+
+void buck_value(real r, real *p, real *f)
+{
+  static real x, y;
+
+  x = (p[1] * p[1]) / (r * r);
+  y = x * x * x;
+
+  *f = p[0] * exp(-r / p[1]) - p[2] * y;
 }
 
 /****************************************************************
@@ -274,16 +276,15 @@ void softshell_value(real r, real *p, real *f)
 
   x = p[0] / r;
   y = p[1];
-#ifndef ACML
-  vdPow(1, &x, &y, f);
-#else
-  *f = fastpow(x, y);
-#endif
+
+  power_1(f, &x, &y);
 }
 
 /****************************************************************
  *
  * eopp_exp potential
+ *
+ * http://arxiv.org/abs/0802.2926v2
  *
  ****************************************************************/
 
@@ -291,11 +292,7 @@ void eopp_exp_value(real r, real *p, real *f)
 {
   static real power;
 
-#ifndef ACML
-  vdPow(1, &r, &p[3], &power);
-#else
-  power = fastpow(r, p[3]);
-#endif
+  power_1(&power, &r, &p[3]);
 
   *f = p[0] * exp(-p[1] * r) + (p[2] / power) * cos(p[4] * r + p[5]);
 }
@@ -303,6 +300,8 @@ void eopp_exp_value(real r, real *p, real *f)
 /****************************************************************
  *
  * meopp potential
+ *
+ * http://arxiv.org/abs/0802.2926v2
  *
  ****************************************************************/
 
@@ -314,12 +313,8 @@ void meopp_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[3];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif
+
+  power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
 }
@@ -336,11 +331,8 @@ void power_decay_value(real r, real *p, real *f)
 
   x = 1. / r;
   y = p[1];
-#ifndef ACML
-  vdPow(1, &x, &y, &power);
-#else
-  power = fastpow(x, y);
-#endif
+
+  power_1(&power, &x, &y);
 
   *f = p[0] * power;
 }
@@ -358,24 +350,21 @@ void exp_decay_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * pohlong potential
+ * bjs potential
+ *
+ * http://dx.doi.org/doi:10.1103/PhysRevB.37.6632
  *
  ****************************************************************/
 
-void pohlong_value(real r, real *p, real *f)
+void bjs_value(real r, real *p, real *f)
 {
-  real  power;
+  static real power;
 
   if (r == 0)
     *f = 0;
   else {
-#ifndef ACML
-    vdPow(1, &r, &p[1], &power);
-#else
-    power = fastpow(r, p[1]);
-#endif
-
-    *f = p[0] * (1 - p[1] * log(r)) * power + p[2] * r;
+    power_1(&power, &r, &p[1]);
+    *f = p[0] * (1. - p[1] * log(r)) * power + p[2] * r;
   }
 }
 
@@ -387,31 +376,48 @@ void pohlong_value(real r, real *p, real *f)
 
 void parabola_value(real r, real *p, real *f)
 {
-  *f = SQR(r) * p[0] + r * p[1] + p[2];
+  *f = (r * r) * p[0] + r * p[1] + p[2];
 }
 
 /****************************************************************
  *
  * chantasiriwan (csw) and milstein potential
  *
+ * http://dx.doi.org/doi:10.1103/PhysRevB.53.14080
+ *
  ****************************************************************/
 
 void csw_value(real r, real *p, real *f)
 {
-  real  power;
+  static real power;
 
-#ifndef ACML
-  vdPow(1, &r, &p[3], &power);
-#else
-  power = fastpow(r, p[3]);
-#endif
+  power_1(&power, &r, &p[3]);
 
-  *f = (1 + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
+  *f = (1. + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
+}
+
+/****************************************************************
+ *
+ * chantasiriwan (csw) and milstein potential - slightly modified
+ *
+ * http://dx.doi.org/doi:10.1103/PhysRevB.53.14080
+ *
+ ****************************************************************/
+
+void csw2_value(real r, real *p, real *f)
+{
+  static real power;
+
+  power_1(&power, &r, &p[3]);
+
+  *f = (1. + p[0] * cos(p[1] * r + p[2])) / power;
 }
 
 /****************************************************************
  *
  * universal embedding function
+ *
+ * http://dx.doi.org/doi:10.1557/jmr.1989.1195
  *
  ****************************************************************/
 
@@ -423,12 +429,8 @@ void universal_value(real r, real *p, real *f)
   x[1] = r;
   y[0] = p[1];
   y[1] = p[2];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif
+
+  power_m(2, power, x, y);
 
   *f =
     p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
@@ -449,6 +451,8 @@ void const_value(real r, real *p, real *f)
 /****************************************************************
  *
  * square root function
+ *
+ * http://dx.doi.org/doi:10.1080/01418618408244210
  *
  ****************************************************************/
 
@@ -472,14 +476,18 @@ void mexp_decay_value(real r, real *p, real *f)
  *
  * streitz-mintmire (strmm) potential
  *
+ * http://dx.doi.org/doi:10.1103/PhysRevB.50.11996
+ *
  ****************************************************************/
 
 void strmm_value(real r, real *p, real *f)
 {
-  real  r_0 = r - p[4];
+  static real r_0;
+
+  r_0 = r - p[4];
 
   *f =
-    2 * p[0] * exp(-p[1] / 2 * r_0) - p[2] * (1 +
+    2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. +
     p[3] * r_0) * exp(-p[3] * r_0);
 }
 
@@ -487,57 +495,69 @@ void strmm_value(real r, real *p, real *f)
  *
  * double morse potential
  *
+ * http://dx.doi.org/doi:10.1557/proc-538-535
+ *
  ****************************************************************/
 
 void double_morse_value(real r, real *p, real *f)
 {
   *f =
-    (p[0] * (exp(-2 * p[1] * (r - p[2])) - 2 * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2 * p[4] * (r - p[5])) - 2 * exp(-p[4] * (r - p[5])))) + p[6];
+    (p[0] * (exp(-2. * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2]))) +
+    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) +
+    p[6];
 }
 
 /****************************************************************
  *
  * double exp potential
  *
+ * http://dx.doi.org/doi:10.1557/proc-538-535
+ *
  ****************************************************************/
 
 void double_exp_value(real r, real *p, real *f)
 {
-  *f = (p[0] * exp(-p[1] * SQR(r - p[2])) + exp(-p[3] * (r - p[4])));
+  *f = (p[0] * exp(-p[1] * dsquare(r - p[2])) + exp(-p[3] * (r - p[4])));
 }
 
 /****************************************************************
  *
  * poly 5 potential
  *
+ * http://dx.doi.org/doi:10.1557/proc-538-535
+ *
  ****************************************************************/
 
 void poly_5_value(real r, real *p, real *f)
 {
-  real  dr = (r - 1) * (r - 1);
+  static real dr;
+
+  dr = (r - 1.) * (r - 1.);
+
   *f =
-    p[0] + 0.5 * p[1] * dr + p[2] * (r - 1) * dr + p[3] * SQR(dr) +
-    p[4] * SQR(dr) * (r - 1);
+    p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) +
+    p[4] * (dr * dr) * (r - 1.);
 }
 
 /****************************************************************
  *
  * cbb potential, from C. B. Basak
  *
- * see http://dx.doi.org/10.1016/S0925-8388(03)00350-5
+ * http://dx.doi.org/10.1016/S0925-8388(03)00350-5
  *
  ****************************************************************/
 
 void cbb_value(real r, real *p, real *f)
 {
-  real  r6 = r * r * r;
+  static real r6;
+
+  r6 = r * r * r;
   r6 *= r6;
 
   *f =
     p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
       p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) -
-    2 * exp(-p[10] * (r - p[11])));
+    2. * exp(-p[10] * (r - p[11])));
 }
 
 /****************************************************************
@@ -555,26 +575,29 @@ void exp_plus_value(real r, real *p, real *f)
  *
  * mishin potential
  *
+ * http://dx.doi.org/doi:10.1016/j.actamat.2005.05.001
+ *
  ****************************************************************/
 
 void mishin_value(real r, real *p, real *f)
 {
-  real  z = r - p[3];
-  real  temp = exp(-p[5] * r);
-  real  power;
+  static real z;
+  static real temp;
+  static real power;
 
-#ifndef ACML
-  vdPow(1, &z, &p[4], &power);
-#else
-  power = fastpow(z, p[4]);
-#endif /* ACML */
+  z = r - p[3];
+  temp = exp(-p[5] * r);
 
-  *f = p[0] * power * temp * (1 + p[1] * temp) + p[2];
+  power_1(&power, &z, &p[4]);
+
+  *f = p[0] * power * temp * (1. + p[1] * temp) + p[2];
 }
 
 /****************************************************************
  *
  * gen_lj potential, generalized lennard-jones
+ *
+ * http://dx.doi.org/doi:10.1016/j.actamat.2005.05.001
  *
  ****************************************************************/
 
@@ -586,12 +609,8 @@ void gen_lj_value(real r, real *p, real *f)
   x[1] = x[0];
   y[0] = p[1];
   y[1] = p[2];
-#ifndef ACML
-  vdPow(2, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-#endif
+
+  power_m(2, power, x, y);
 
   *f = p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4];
 }
@@ -600,11 +619,13 @@ void gen_lj_value(real r, real *p, real *f)
  *
  * gljm potential, generalized lennard-jones + mishin potential
  *
+ * http://dx.doi.org/doi:10.1016/j.actamat.2005.05.001
+ *
  ****************************************************************/
 
 void gljm_value(real r, real *p, real *f)
 {
-  real  x[3], y[3], power[3];
+  static real x[3], y[3], power[3];
 
   x[0] = r / p[3];
   x[1] = x[0];
@@ -612,19 +633,53 @@ void gljm_value(real r, real *p, real *f)
   y[0] = p[1];
   y[1] = p[2];
   y[2] = p[10];
-#ifndef ACML
-  vdPow(3, x, y, power);
-#else
-  power[0] = fastpow(x[0], y[0]);
-  power[1] = fastpow(x[1], y[1]);
-  power[2] = fastpow(x[2], y[2]);
-#endif /* ACML */
+
+  power_m(3, power, x, y);
 
   real  temp = exp(-p[11] * power[2]);
 
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
-    p[5] * (p[6] * power[2] * temp * (1 + p[7] * temp) + p[8]);
+    p[5] * (p[6] * power[2] * temp * (1. + p[7] * temp) + p[8]);
+}
+
+/****************************************************************
+ *
+ * bond-stretching function of vashishta potential (f_c)
+ *
+ * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
+ *
+ ****************************************************************/
+
+void vas_value(real r, real *p, real *f)
+{
+  *f = exp(p[0] / (r - p[1]));
+}
+
+/****************************************************************
+ *
+ * original pair contributions of vashishta potential (V_2)
+ *
+ * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
+ *
+ ****************************************************************/
+
+void vpair_value(real r, real *p, real *f)
+{
+  static real x[7], y, z;
+
+  y = r;
+  z = p[1];
+
+  power_1(&x[0], &y, &z);
+  x[1] = r * r;
+  x[2] = x[1] * x[1];
+  x[3] = p[2] * p[2];
+  x[4] = p[3] * p[3];
+  x[5] = p[4] * x[4] + p[5] * x[3];
+  x[6] = exp(-r / p[6]);
+
+  *f = 14.4 * (p[0] / x[0] + p[2] * p[3] / r - 0.5 * x[5] / x[2] * x[6]);
 }
 
 /****************************************************************
@@ -632,7 +687,7 @@ void gljm_value(real r, real *p, real *f)
  * template for new potential function called mypotential
  * for further information plase have a look at the online documentation
  *
- * http://www.itap.physik.uni-stuttgart.de/~imd/potfit/potfit.html
+ * http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************/
 
@@ -668,7 +723,7 @@ real cutoff(real r, real r0, real h)
   if ((r - r0) > 0)
     return 0;
 
-  real  val = 0;
+  static real val;
 
   val = (r - r0) / h;
   val *= val;
@@ -703,7 +758,7 @@ int apot_check_params(real *params)
     }
 
     /* jump to next potential */
-    j += 1 + apot_table.n_par[i] + smooth_pot[i];
+    j += 2 + apot_parameters(apot_table.names[i]) + smooth_pot[i];
   }
   return 0;
 }
@@ -717,7 +772,7 @@ int apot_check_params(real *params)
 real apot_punish(real *params, real *forces)
 {
   int   i, j;
-  real  x, tmpsum = 0, min, max;
+  real  x, tmpsum = 0., min, max;
 
   /* loop over parameters */
   for (i = 0; i < ndim; i++) {
@@ -754,7 +809,7 @@ real apot_punish(real *params, real *forces)
 	tmpsum += apot_punish_value / (x * x);
       }
     }
-#endif
+#endif /* EAM */
 
     /* jump to next potential */
     j += 2 + apot_table.n_par[i];
@@ -776,8 +831,175 @@ real apot_grad(real r, real *p, void (*function) (real, real *, real *))
   function(r + h, p, &a);
   function(r - h, p, &b);
 
-  return (a - b) / (2 * h);
+  return (a - b) / (2. * h);
 }
+
+#ifdef COULOMB
+
+/****************************************************************
+ *
+ * ms potential + first derivative
+ *
+ ****************************************************************/
+
+void ms_init(real r, real *pot, real *grad, real *p)
+{
+  static real x[4];
+
+  x[0] = 1 - r / p[2];
+  x[1] = exp(p[1] * x[0]);
+  x[2] = exp(p[1] * x[0] / 2);
+  x[3] = p[0] * p[1] / (r * p[2]);
+
+  *pot = p[0] * (x[1] - 2 * x[2]);
+  *grad = x[3] * (-x[1] + x[2]);
+}
+
+/****************************************************************
+ *
+ * buckingham potential + first derivative
+ *
+ ****************************************************************/
+
+void buck_init(real r, real *pot, real *grad, real *p)
+{
+  static real x[3];
+
+  x[0] = dsquare(p[1]) / dsquare(r);
+  x[1] = p[2] * x[0] * x[0] * x[0];
+  x[2] = p[0] * exp(-r / p[1]);
+
+  *pot = x[2] - x[1];
+  *grad = -x[2] / p[1] + 6 * p[1] * x[1] / r;
+}
+
+/****************************************************************
+ *
+ * shifted ms potential
+ *
+ ****************************************************************/
+
+void ms_shift(real r, real *p, real *f)
+{
+  static real pot, grad, pot_cut, grad_cut;
+
+  ms_init(r, &pot, &grad, p);
+  ms_init(dp_cut, &pot_cut, &grad_cut, p);
+
+  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+}
+
+/****************************************************************
+ *
+ * shifted buckingham potential
+ *
+ ****************************************************************/
+
+void buck_shift(real r, real *p, real *f)
+{
+  static real pot, grad, pot_cut, grad_cut;
+
+  buck_init(r, &pot, &grad, p);
+  buck_init(dp_cut, &pot_cut, &grad_cut, p);
+
+  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+}
+
+/****************************************************************
+ *
+ * tail of electrostatic potential and first two derivatives
+ *
+ ****************************************************************/
+
+void elstat_value(real r, real dp_kappa, real *ftail, real *gtail, real *ggtail)
+{
+  static real x[4];
+
+  x[0] = r * r;
+  x[1] = dp_kappa * dp_kappa;
+  x[2] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
+  x[3] = exp(-x[0] * x[1]);
+
+  *ftail = dp_eps * erfc(dp_kappa * r) / r;
+  *gtail = -(*ftail + x[2] * x[3]) / x[0];
+  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
+}
+
+/****************************************************************
+ *
+ * shifted tail of coloumb potential
+ *
+ ****************************************************************/
+
+void elstat_shift(real r, real dp_kappa, real *fnval_tail, real *grad_tail,
+  real *ggrad_tail)
+{
+  static real ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
+  static real x[3];
+
+  x[0] = r * r;
+  x[1] = dp_cut * dp_cut;
+  x[2] = x[0] - x[1];
+
+  elstat_value(r, dp_kappa, &ftail, &gtail, &ggtail);
+  elstat_value(dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
+
+  *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
+  *grad_tail = gtail - gtail_cut;
+  *ggrad_tail = 0.;
+#ifdef DIPOLE
+  *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
+  *grad_tail -= x[2] * ggtail_cut / 2;
+  *ggrad_tail = ggtail - ggtail_cut;
+#endif /* DIPOLE */
+}
+
+#endif /* COULOMB */
+
+#ifdef DIPOLE
+
+/****************************************************************
+ *
+ * short-range part of dipole moments
+ *
+ ****************************************************************/
+
+real shortrange_value(real r, real a, real b, real c)
+{
+  static real x[5];
+
+  x[0] = b * r;
+  x[1] = x[0] * x[0];
+  x[2] = x[1] * x[0];
+  x[3] = x[1] * x[1];
+  x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
+
+  return a * c * x[4] * exp(-x[0]) / dp_eps;
+}
+
+/****************************************************************
+ *
+ * tail of additional short-range contribution to energy and forces
+ *
+ ****************************************************************/
+
+void shortrange_term(real r, real b, real c, real *srval_tail,
+  real *srgrad_tail)
+{
+  static real x[6];
+
+  x[0] = b * r;
+  x[1] = x[0] * x[0];
+  x[2] = x[1] * x[0];
+  x[3] = x[1] * x[1];
+  x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
+  x[5] = exp(-x[0]);
+
+  *srval_tail = c * x[4] * x[5] / dp_eps;
+  *srgrad_tail = -c * b * x[3] * x[5] / (24 * dp_eps * r);
+}
+
+#endif /* DIPOLE */
 
 /****************************************************************
  *
@@ -833,5 +1055,3 @@ void debug_apot()
 }
 
 #endif /* DEBUG */
-
-#endif /* APOT */

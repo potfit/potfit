@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2004-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2004-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -29,6 +29,7 @@
  ****************************************************************/
 
 #ifdef MPI
+
 #include "potfit.h"
 
 /****************************************************************
@@ -66,24 +67,6 @@ void shutdown_mpi(void)
   MPI_Finalize();		/* Shutdown */
 }
 
-void debug_mpi(int i)
-{
-/*   int j,k; */
-/*   MPI_Status status; */
-/*   if (myid==0)  */
-/*     for (k=1;k<num_cpus;k++) { */
-/*       MPI_Send(&i,1,MPI_INT,k,12,MPI_COMM_WORLD); */
-/*       printf("Node 0, sent %d to node %d\n",i,k); */
-/*     } */
-/*   else {  */
-/*     MPI_Recv(&j,1,MPI_INT,0,12,MPI_COMM_WORLD,&status); */
-/*     printf("Node %d, received %d at point %d.\n",myid,j,i); */
-/*   } */
-  MPI_Barrier(MPI_COMM_WORLD);
-  printf("I am node %d. Still running at point %d.\n", myid, i);
-  fflush(stdout);
-}
-
 /****************************************************************
  *
  * broadcast_param: Broadcast parameters etc to other nodes
@@ -96,6 +79,8 @@ void debug_mpi(int i)
 #define MAX_MPI_COMPONENTS 9
 #elif defined ADP
 #define MAX_MPI_COMPONENTS 14
+#elif defined COULOMB
+#define MAX_MPI_COMPONENTS 12
 #endif /* PAIR */
 
 void broadcast_params()
@@ -125,7 +110,7 @@ void broadcast_params()
   blklens[4] = SLOTS;     typen[4] = MPI_INT;     /* slot */
   blklens[5] = SLOTS;     typen[5] = REAL;        /* shift */
   blklens[6] = SLOTS;     typen[6] = REAL;        /* step */
-  blklens[7] = SLOTS;     typen[7] = REAL;        /* step */
+  blklens[7] = SLOTS;     typen[7] = MPI_INT;     /* col */
   size = 8;
 #ifdef ADP
   blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* rdist */
@@ -136,8 +121,15 @@ void broadcast_params()
   blklens[13] = 1;        typen[13] = REAL;       /* w_grad */
   size += 6;
 #endif /* ADP */
-  /* *INDENT-ON* */
+#ifdef COULOMB
+  blklens[8] = 1;         typen[8] = REAL;        /* r^2 */
+  blklens[9] = 1;         typen[9] = REAL;        /* fnval_el */
+  blklens[10] = 1;        typen[10] = REAL;       /* grad_el */
+  blklens[11] = 1;        typen[11] = REAL;       /* ggrad_el */
+  size += 4;
+#endif /* COULOMB */
 
+ /* *INDENT-ON* */
   MPI_Address(&testneigh.typ, displs);
   MPI_Address(&testneigh.nr, &displs[1]);
   MPI_Address(&testneigh.r, &displs[2]);
@@ -153,7 +145,13 @@ void broadcast_params()
   MPI_Address(&testneigh.u_grad, &displs[11]);
   MPI_Address(&testneigh.w_val, &displs[12]);
   MPI_Address(&testneigh.w_grad, &displs[13]);
-#endif
+#endif /* ADP */
+#ifdef COULOMB
+  MPI_Address(&testneigh.r2, &displs[8]);
+  MPI_Address(&testneigh.fnval_el, &displs[9]);
+  MPI_Address(&testneigh.grad_el, &displs[10]);
+  MPI_Address(&testneigh.ggrad_el, &displs[11]);
+#endif /* COULOMB */
 
   for (i = 1; i < size; i++) {
     displs[i] -= displs[0];
@@ -182,6 +180,15 @@ void broadcast_params()
   blklens[10] = 1;        typen[10] = REAL;       /* nu */
   size += 3;
 #endif /* ADP */
+#ifdef DIPOLE
+  blklens[6] = 1;         typen[6] = MPI_VEKTOR;     /* E_stat */
+  blklens[7] = 1;         typen[7] =  MPI_VEKTOR;    /* p_sr */
+  blklens[8] = 1;         typen[8] =  MPI_VEKTOR;   /* E_ind */
+  blklens[9] = 1;         typen[9] =  MPI_VEKTOR;   /* p_ind */
+  blklens[10] = 1;        typen[10] =  MPI_VEKTOR;   /* E_old */
+  blklens[11] = 1;        typen[11] =  MPI_VEKTOR;   /* E_tot */
+  size += 6;
+#endif /* DIPOLE */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
 
@@ -201,6 +208,15 @@ void broadcast_params()
   MPI_Address(&testatom.lambda, &displs[9]);
   MPI_Address(&testatom.nu, &displs[10]);
 #endif /* ADP */
+#ifdef DIPOLE
+  MPI_Address(&testatom.E_stat, &displs[6]);
+  MPI_Address(&testatom.p_sr, &displs[7]);
+  MPI_Address(&testatom.E_ind, &displs[8]);
+  MPI_Address(&testatom.p_ind, &displs[9]);
+  MPI_Address(&testatom.E_old, &displs[10]);
+  MPI_Address(&testatom.E_tot, &displs[11]);
+#endif /* DIPOLE */
+
   for (i = 1; i < size; i++) {
     displs[i] -= displs[0];
   }
@@ -215,6 +231,13 @@ void broadcast_params()
   MPI_Bcast(&natoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef COULOMB
+  MPI_Bcast(&dp_cut, 1, REAL, 0, MPI_COMM_WORLD);
+#endif /* COULOMB */
+#ifdef DIPOLE
+  MPI_Bcast(&dp_tol, 1, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dp_mix, 1, REAL, 0, MPI_COMM_WORLD);
+#endif /* DIPOLE */
   if (myid > 0) {
     inconf = (int *)malloc(nconf * sizeof(int));
     cnfstart = (int *)malloc(nconf * sizeof(int));
@@ -259,10 +282,12 @@ void broadcast_params()
   MPI_Bcast(calc_pot.xcoord, calclen, REAL, 0, MPI_COMM_WORLD);
 
 #ifdef APOT
-  MPI_Bcast(&do_smooth, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&enable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&apot_table.number, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef COULOMB
+  MPI_Bcast(&apot_table.total_ne_par, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif /* COULOMB */
   if (enable_cp) {
     if (myid > 0) {
       na_type = (int **)malloc((nconf + 1) * sizeof(int *));
@@ -277,6 +302,9 @@ void broadcast_params()
     apot_table.n_par = (int *)malloc(apot_table.number * sizeof(int));
     apot_table.end = (real *)malloc(apot_table.number * sizeof(real));
     apot_table.begin = (real *)malloc(apot_table.number * sizeof(real));
+#ifdef COULOMB
+    apot_table.ratio = (real *)malloc(2 * sizeof(real));
+#endif /* COULOMB */
     smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
     rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
@@ -298,6 +326,10 @@ void broadcast_params()
   MPI_Bcast(&have_globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&global_idx, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&apot_table.globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef COULOMB
+  MPI_Bcast(&apot_table.last_charge, 1, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.ratio, 2, REAL, 0, MPI_COMM_WORLD);
+#endif /* COULOMB */
   if (have_globals) {
     if (myid > 0) {
       apot_table.n_glob = (int *)malloc(apot_table.globals * sizeof(int));
@@ -320,7 +352,7 @@ void broadcast_params()
       for (j = 0; j < apot_table.n_glob[i]; j++)
 	MPI_Bcast(apot_table.global_idx[i][j], 2, MPI_INT, 0, MPI_COMM_WORLD);
   }
-#endif
+#endif /* APOT */
 
   /* Distribute configurations */
   /* Each node: nconf/num_cpus configurations.

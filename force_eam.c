@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -29,7 +29,13 @@
  ****************************************************************/
 
 #ifdef EAM
+
 #include "potfit.h"
+
+#include "functions.h"
+#include "potential.h"
+#include "splines.h"
+#include "utils.h"
 
 /****************************************************************
  *
@@ -105,11 +111,6 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
     rho_sum_loc = 0.;
-
-#ifndef APOT
-    if (format > 4 && myid == 0)
-      update_calc_table(xi_opt, xi, 0);
-#endif /* APOT */
 
 #if defined APOT && !defined MPI
     if (format == 0) {
@@ -202,7 +203,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 #ifndef MPI
     myconf = nconf;
-#endif
+#endif /* MPI */
 
     /* region containing loop over configurations,
        also OMP-parallelized region */
@@ -351,7 +352,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * SQR(atom->rho - calc_pot.end[col_F]);
+	      DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.end[col_F];
@@ -361,7 +362,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * SQR(calc_pot.begin[col_F] - atom->rho);
+	      DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
 #ifndef PARABEL
 /* then we use the final value, with PARABEL: extrapolate */
 	    atom->rho = calc_pot.begin[col_F];
@@ -381,6 +382,10 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+#ifdef APOT
+	    forces[limit_p + h] +=
+	      DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+#endif /* APOT */
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 	    /* and right */
 	    rho_val =
@@ -388,6 +393,10 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
+#ifdef APOT
+	    forces[limit_p + h] +=
+	      DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+#endif /* APOT */
 	  }
 	  /* and in-between */
 	  else {
@@ -397,7 +406,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #else
 	  forces[energy_p + h] +=
 	    splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#endif
+#endif /* NORESCALE */
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
 	}			/* second loop over atoms */
@@ -470,8 +479,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #endif /* FWEIGHT */
 	    /* sum up forces  */
 	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-	      SQR(forces[k + 2]));
+	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
+	      dsquare(forces[k + 2]));
 	  }			/* third loop over atoms */
 	}
 
@@ -479,7 +488,11 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(eweight * forces[energy_p + h]);
+#ifdef COMPAT
+	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
+#else
+	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+#endif /* COMPAT */
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -487,12 +500,16 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
+#ifdef COMPAT
+	      conf_weight[h] * dsquare(sweight * forces[stress_p + 6 * h + i]);
+#else
+	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
+#endif /* COMPAT */
 	  }
 	}
 #endif /* STRESS */
 	/* limiting constraints per configuration */
-	tmpsum += conf_weight[h] * SQR(forces[limit_p + h]);
+	tmpsum += conf_weight[h] * dsquare(forces[limit_p + h]);
       }				/* loop over configurations */
     }				/* parallel region */
 #ifdef MPI
@@ -556,8 +573,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	      ntypes + g]))
 	  - force_0[dummy_p + g];
 #endif /* Dummy constraints */
-	tmpsum += SQR(forces[dummy_p + ntypes + g]);
-	tmpsum += SQR(forces[dummy_p + g]);
+	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
+	tmpsum += dsquare(forces[dummy_p + g]);
       }				/* loop over types */
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
@@ -565,7 +582,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       rho_sum /= (real)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
-      tmpsum += SQR(forces[dummy_p + ntypes]);
+      tmpsum += dsquare(forces[dummy_p + ntypes]);
 #endif /* NORESCALE */
     }				/* only root process */
 #endif /* !NOPUNISH */

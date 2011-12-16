@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -29,7 +29,13 @@
  ****************************************************************/
 
 #ifdef PAIR
+
 #include "potfit.h"
+
+#include "functions.h"
+#include "potential.h"
+#include "splines.h"
+#include "utils.h"
 
 /****************************************************************
  *
@@ -102,17 +108,12 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
 
-#ifndef APOT
-    if (format > 4 && myid == 0)
-      update_calc_table(xi_opt, xi, 0);
-#endif /* APOT */
-
 #if defined APOT && !defined MPI
     if (format == 0) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
-#endif
+#endif /* APOT && !MPI */
 
 #ifdef MPI
 #ifndef APOT
@@ -153,7 +154,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 #ifndef MPI
     myconf = nconf;
-#endif
+#endif /* MPI */
 
     /* region containing loop over configurations,
        also OMP-parallelized region */
@@ -176,7 +177,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	uf = conf_uf[h - firstconf];
 #ifdef STRESS
 	us = conf_us[h - firstconf];
-#endif
+#endif /* STRESS */
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
@@ -186,7 +187,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	if (enable_cp)
 	  forces[energy_p + h] +=
 	    chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
-#endif
+#endif /* APOT */
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
@@ -274,15 +275,19 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #endif /* FWEIGHT */
 	    /* sum up forces */
 	    tmpsum +=
-	      conf_weight[h] * (SQR(forces[k]) + SQR(forces[k + 1]) +
-	      SQR(forces[k + 2]));
+	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
+	      dsquare(forces[k + 2]));
 	  }			/* second loop over atoms */
 	}
 
 	/* energy contributions */
 	forces[energy_p + h] /= (real)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * SQR(eweight * forces[energy_p + h]);
+#ifdef COMPAT
+	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
+#else
+	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+#endif /* COMPAT */
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -290,7 +295,11 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
 	    tmpsum +=
-	      conf_weight[h] * SQR(sweight * forces[stress_p + 6 * h + i]);
+#ifdef COMPAT
+	      conf_weight[h] * dsquare(sweight * forces[stress_p + 6 * h + i]);
+#else
+	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
+#endif /* COMPAT */
 	  }
 	}
 #endif /* STRESS */

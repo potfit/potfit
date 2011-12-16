@@ -5,10 +5,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2005 Peter Brommer, Franz G"ahler
+ * Copyright 2002-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -29,14 +29,16 @@
  *
  ****************************************************************/
 
+#include "potfit.h"
+
+#include "splines.h"
+
 /****************************************************************
  *
  * spline_ed: initializes second derivatives used for spline interpolation
  *            (equidistant x[i])
  *
  ****************************************************************/
-
-#include "potfit.h"
 
 void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
 {
@@ -73,12 +75,12 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
     y2[k] = y2[k] * y2[k + 1] + u[k];
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_ed: interpolates the function with splines
  *            (equidistant x[i])
  *
- *****************************************************************************/
+ ****************************************************************/
 
 real splint_ed(pot_table_t *pt, real *xi, int col, real r)
 {
@@ -88,7 +90,7 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
   if (rr < 0)
-    error("%f %f %d\nShort distance", r, pt->begin[col], col);
+    error(1, "%f %f %d\nShort distance", r, pt->begin[col], col);
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -106,12 +108,12 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
       b) * d22) / (6.0 * istep * istep);
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_comb_ed: calculates spline interpolation of a function (return value)
  *            and its gradiend (grad), equidistant x[i]
  *
- *****************************************************************************/
+ ****************************************************************/
 
 real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
 {
@@ -121,13 +123,17 @@ real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
   if (rr < 0)
-    error("short distance! in splint_comb_ed");
+    error(1, "short distance! in splint_comb_ed");
 
   /* indices into potential table */
   istep = pt->invstep[col];
   k = (int)(rr * istep);
   b = (rr - k * pt->step[col]) * istep;
   k += pt->first[col];
+/* This fixes some problems, but causes a lot more ... */
+/*  if (rr = (pt->end[col] - pt->begin[col])) {*/
+/*    return xi[k];*/
+/*  }*/
   a = 1.0 - b;
   p1 = xi[k];
   d21 = pt->d2tab[k++];
@@ -140,12 +146,12 @@ real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
       b) * d22) / (6.0 * istep * istep);
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_grad_ed: calculates the first derivative from spline interpolation
  *            (equidistant x[i])
  *
- *****************************************************************************/
+ ****************************************************************/
 
 
 real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
@@ -156,7 +162,7 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
   /* check for distances shorter than minimal distance in table */
   rr = r - pt->begin[col];
   if (rr < 0)
-    error("short distance! in splint_grad_ed");
+    error(1, "short distance! in splint_grad_ed");
 
   /* indices into potential table */
   istep = pt->invstep[col];
@@ -179,13 +185,13 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
 
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_dir: interpolates the function with splines
  *            (equidistant AND NON-eq.dist x[i])
  *            with known index position
  *
- *****************************************************************************/
+ ****************************************************************/
 
 real splint_dir(pot_table_t *pt, real *xi, int k, real b, real step)
 {
@@ -202,14 +208,14 @@ real splint_dir(pot_table_t *pt, real *xi, int k, real b, real step)
       b) * d22) * (step * step) / 6.0;
 }
 
-/****************************************************************************
+/****************************************************************
  *
  * splint_comb_dir: calculates spline interpolation of a function
  *            (return value)
  *            and its gradiend (grad), equidistant and non-eqd x[i]
  *            with known index position
  *
- *****************************************************************************/
+ ****************************************************************/
 
 real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
   real *grad)
@@ -231,13 +237,13 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
       b) * d22) * (step * step) / 6.0;
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_grad_dir: calculates the first derivative
  *            from spline interpolation (equidistant and NON-eqd. x[i])
  *            with known index position
  *
- *****************************************************************************/
+ ****************************************************************/
 
 
 real splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step)
@@ -256,12 +262,12 @@ real splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step)
 
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * spline_ne  : initializes second derivatives used for spline interpolation
  *            (nonequidistant x[i])
  *
- *****************************************************************************/
+ ****************************************************************/
 
 void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
 {
@@ -302,12 +308,12 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
     y2[k] = y2[k] * y2[k + 1] + u[k];
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_ne: interpolates the function with splines
  *            (nonequidistant x[i])
  *
- *****************************************************************************/
+ ****************************************************************/
 
 real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 {
@@ -333,7 +339,6 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
   d21 = pt->d2tab[klo];
   d22 = pt->d2tab[khi];
 
-/*   if (h == 0.0) error("Bad xa input to routine splint"); */
   b = (r - x1) / h;
   a = (1. - b);
   return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b -
@@ -341,12 +346,12 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
 
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_comb_ne: calculates spline interpolation of a function (return value)
  *            and its gradiend (grad), non-equidistant x[i]
  *
- *****************************************************************************/
+ ****************************************************************/
 
 real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 {
@@ -384,12 +389,12 @@ real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
 
 }
 
-/******************************************************************************
+/****************************************************************
  *
  * splint_grad_ne: calculates the first derivative from spline interpolation
  *            (equidistant x[i])
  *
- *****************************************************************************/
+ ****************************************************************/
 
 real splint_grad_ne(pot_table_t *pt, real *xi, int col, real r)
 {

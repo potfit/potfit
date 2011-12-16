@@ -5,11 +5,12 @@
  *
  ****************************************************************
  *
- * Copyright (C) 1996, 1997, 1998, 1999, 2000 Brian Gough
- *	2005 Peter Brommer
+ * Copyright 1996, 1997, 1998, 1999, 2000
+ * 	Brian Gough
+ * Copyright 2005-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -30,17 +31,10 @@
  *
  ****************************************************************/
 
-/*** rewritten for double precision 					***/
-/*** by Peter Brommer, ITAP, 2002-10-10 				***/
-/*** Adapted to Powell requirements 2002-10-11 				***/
-/*** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24 	***/
-/*** Switched to GSL Implementation, put routine under GSL protection 	***/
-
-#include <stddef.h>
-#include <float.h>
 #include "potfit.h"
-#include "utils.h"
+
 #include "bracket.h"
+#include "utils.h"
 
 real brent(real ax, real bx, real cx, real fbx, real tol, real *xmin,
   real *xmin2, real *fxmin, real *fxmin2)
@@ -180,10 +174,10 @@ real brent(real ax, real bx, real cx, real fbx, real tol, real *xmin,
       SWAP(p_z, p_u, p_temp);
       /* done */
     } else {
-      error("Problems in Brent minimization.\n");
+      error(1, "Problems in Brent minimization.\n");
     }
 
   }
-  error("Too many iterations in Brent minimization.\n");
+  error(1, "Too many iterations in Brent minimization.\n");
   return 0.;
 }

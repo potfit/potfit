@@ -4,10 +4,10 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  *****************************************************************
  *
@@ -28,9 +28,14 @@
  *
  *****************************************************************/
 
-#ifdef SIMANN
+#ifndef EVO
+
+#include <ctype.h>
 
 #include "potfit.h"
+
+#include "optimize.h"
+#include "potential.h"
 #include "utils.h"
 
 #define EPS 0.1
@@ -66,7 +71,7 @@ void randomize_parameter(int n, real *xi, real *v)
 
   do {
     temp = xi[idx[n]];
-    rand = 2.0 * dsfmt_genrand_close_open(&dsfmt) - 1.;
+    rand = 2.0 * eqdist() - 1.;
     temp += (rand * v[n]);
     if (temp >= min && temp <= max)
       done = 1;
@@ -93,7 +98,7 @@ void makebump(real *x, real width, real height, int center)
   while (opt_pot.last[j] < idx[center])
     j++;
   for (i = 0; i <= 4. * width; i++) {
-/* using idx avoids moving fixed points */
+    /* using idx avoids moving fixed points */
     if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
       x[idx[center + i]] += GAUSS((real)i / width) * height;
     }
@@ -105,20 +110,22 @@ void makebump(real *x, real width, real height, int center)
   }
   return;
 }
-#endif
+
+#endif /* APOT */
 
 /****************************************************************
  *
- *  anneal(*xi): Anneals x a vector xi to minimize a function F(xi).
- *      Algorithm according to Cordona et al.
+ *  anneal(*xi): Anneals a vector xi to minimize a function F(xi).
+ *      Algorithm according to Corana et al.
  *
  ****************************************************************/
 
 void anneal(real *xi)
 {
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
+  int   auto_T = 0;
   int   loopagain;		/* loop flag */
-  real  T;			/* Temperature */
+  real  T = -1.;		/* Temperature */
   real  F, Fopt, F2;		/* Fn value */
   real *Fvar;			/* backlog of Fn vals */
   real *v;			/* step vector */
@@ -126,13 +133,24 @@ void anneal(real *xi)
   real *fxi1;			/* two latest force vectors */
 #ifndef APOT
   real  width, height;		/* gaussian bump size */
-#endif
+#endif /* APOT */
+#ifdef DIPOLE
+  FILE *outfile;
+  char *filename = "Dipole.convergency";
+#endif /* DIPOLE */
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
 
-  /* init starting temperature for annealing process */
-  T = anneal_temp;
-  if (T == 0.)
+  /* check for automatic temperature */
+  if (tolower(anneal_temp[0]) == 'a') {
+    auto_T = 1;
+  } else {
+    T = atof(anneal_temp);
+    if (T < 0)
+      error(1, "The value for anneal_temp (%f) is invalid!\n", T);
+  }
+
+  if (T == 0. && auto_T != 1)
     return;			/* don't anneal if starttemp equal zero */
 
   Fvar = vect_real(KMAX + 5 + NEPS);	/* Backlog of old F values */
@@ -141,9 +159,10 @@ void anneal(real *xi)
   xi2 = vect_real(ndimtot);
   fxi1 = vect_real(mdim);
   naccept = vect_int(ndim);
+
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
-    v[n] = 1.;
+    v[n] = .1;
     naccept[n] = 0;
   }
   for (n = 0; n < ndimtot; n++) {
@@ -152,6 +171,48 @@ void anneal(real *xi)
   }
   F = (*calc_forces) (xi, fxi1, 0);
   Fopt = F;
+
+  /* determine optimum temperature for annealing */
+  if (auto_T) {
+    int   e = 0;
+    int   u = 10 * ndim;
+    int   m1 = 0;
+    real  dF = 0.;
+    real  chi = .8;
+
+    printf("Determining optimal starting temperature T ...\n");
+    for (e = 0; e < u; e++) {
+      for (n = 0; n < ndimtot; n++)
+	xi2[n] = xi[n];
+      h = (int)(eqdist() * ndim);
+#ifdef APOT
+      randomize_parameter(h, xi2, v);
+#else
+      /* Create a gaussian bump,
+         width & hight distributed normally */
+      width = fabs(normdist());
+      height = normdist() * v[h];
+      makebump(xi2, width, height, h);
+#endif /* APOT */
+      F2 = (*calc_forces) (xi2, fxi1, 0);
+      if (F2 <= F) {
+	m1++;
+      } else {
+	dF += F2 - F;
+      }
+    }
+    printf("Did %d steps, %d were accepted\n", u, m1);
+    u -= m1;
+    dF /= u;
+
+    T = dF / log(u / (u * chi + (1 - chi) * m1));
+    if (isnan(T) || isinf(T))
+      error(1, "Simann failed because T was %f, please set it manually.", T);
+    if (T < 0)
+      T = -T;
+    printf("Setting T=%f\n\n", T);
+  }
+
   printf("  k\tT        \t  m\tF          \tFopt\n");
   printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, Fopt);
   fflush(stdout);
@@ -175,7 +236,7 @@ void anneal(real *xi)
 	  width = fabs(normdist());
 	  height = normdist() * v[h];
 	  makebump(xi2, width, height, h);
-#endif
+#endif /* APOT */
 	  F2 = (*calc_forces) (xi2, fxi1, 0);
 	  if (F2 <= F) {	/* accept new point */
 #ifdef APOT
@@ -183,29 +244,23 @@ void anneal(real *xi)
 #else
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
-#endif
+#endif /* APOT */
 	    F = F2;
 	    naccept[h]++;
 	    if (F2 < Fopt) {
 	      for (n = 0; n < ndimtot; n++)
 		xopt[n] = xi2[n];
 	      Fopt = F2;
-	      if (*tempfile != '\0')
+	      if (*tempfile != '\0') {
 #ifndef APOT
 		write_pot_table(&opt_pot, tempfile);
 #else
-		for (n = 0; n < ndim; n++) {
-		/* *INDENT-OFF* */
-		  apot_table.values[apot_table.idxpot[n]]
-			  [apot_table.idxparam[n]] = xopt[idx[n]];
-		/* *INDENT-ON* */
-		}
-	      write_pot_table(&apot_table, tempfile);
-#endif
+		update_apot_table(xi);
+		write_pot_table(&apot_table, tempfile);
+#endif /* APOT */
+	      }
 	    }
-	  }
-
-	  else if ((dsfmt_genrand_close_open(&dsfmt)) < exp((F - F2) / T)) {
+	  } else if (eqdist() < (exp((F - F2) / T))) {
 	    for (n = 0; n < ndimtot; n++)
 	      xi[n] = xi2[n];
 	    F = F2;
@@ -242,21 +297,18 @@ void anneal(real *xi)
 	  break;
 	}
       }
-#ifdef EAM
-#ifndef NORESCALE
+#if !defined APOT && ( defined EAM || defined ADP ) && !defined NORESCALE
       /* Check for rescaling... every tenth step */
       if ((m % 10) == 0) {
 	/* Was rescaling necessary ? */
+	printf("Force before rescaling %f\n", F);
 	if (rescale(&opt_pot, 1., 0) != 0.) {
-#ifdef WZERO
-	  /* embed_shift(&opt_pot); */
-#endif /* WZERO */
 	  /* wake other threads and sync potentials */
 	  F = (*calc_forces) (xi, fxi1, 2);
 	}
+	printf("Force after rescaling %f\n", F);
       }
-#endif /* NORESCALE */
-#endif /* EAM */
+#endif /* !APOT && ( EAM || ADP ) && !NORESCALE */
 
     }
     /*Temp adjustment */
@@ -282,16 +334,15 @@ void anneal(real *xi)
   printf("Finished annealing, starting powell minimization ...\n");
 
   F = Fopt;
+  if (*tempfile != '\0') {
 #ifndef APOT
-  if (*tempfile != '\0')
     write_pot_table(&opt_pot, tempfile);
 #else
-  for (n = 0; n < ndim; n++)
-    apot_table.values[apot_table.idxpot[n]][apot_table.idxparam[n]] =
-      xopt[idx[n]];
-  if (*tempfile != '\0')
+    update_apot_table(xopt);
     write_pot_table(&apot_table, tempfile);
 #endif /* APOT */
+  }
+
   free_vect_real(Fvar);
   free_vect_real(v);
   free_vect_real(xopt);
@@ -301,4 +352,4 @@ void anneal(real *xi)
   return;
 }
 
-#endif /* SIMANN */
+#endif /* !EVO */

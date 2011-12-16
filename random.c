@@ -5,10 +5,10 @@
  *
  *****************************************************************
  *
- * Copyright 2010 Daniel Schopf
+ * Copyright 2010-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  *****************************************************************
  *
@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "random-params.h"
+#include "random.h"
 
 /** dsfmt internal state vector */
 dsfmt_t dsfmt_global_data;

@@ -1,11 +1,11 @@
 ############################################################################
 #
 # potfit -- The ITAP Force Matching Program
-# 	Copyright 2002-2010
+# 	Copyright 2002-2011
 #
 # 	Institute for Theoretical and Applied Physics,
 # 	University of Stuttgart, D-70550 Stuttgart, Germany
-# 	http://www.itap.physik.uni-stuttgart.de/
+# 	http://potfit.itap.physik.uni-stuttgart.de/
 #
 ############################################################################
 #
@@ -119,12 +119,16 @@
 # Currently the following systems are available:
 # x86_64-icc  	64bit Intel Compiler
 # x86_64-gcc    64bit GNU Compiler
-# i586-icc 	32bit Intel Compiler
-# i586-gcc  	32bit GNU Compiler
-SYSTEM 		= x86_64-icc
+# i686-icc 	32bit Intel Compiler
+# i686-gcc  	32bit GNU Compiler
+#
+#SYSTEM 		= x86_64-icc 	# Use this as fallback
+SYSTEM 		= $(shell uname -m)-icc
 
-# This is the directory where the potfit binary will be moved to
-BIN_DIR 	= ${HOME}/bin
+# This is the directory where the potfit binary will be moved to.
+# If it is empty, the binary will not be moved.
+BIN_DIR 	= ${HOME}/bin/i386-linux
+#BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
@@ -157,7 +161,7 @@ ifeq (x86_64-icc,${SYSTEM})
   CC_MPI        = mpicc
 
 # general optimization flags
-  OPT_FLAGS     += -fast -xHost -multiple-processes
+  OPT_FLAGS     += -fast -xHost
 
   OMPI_CC      = icc
   OMPI_CLINKER = icc
@@ -193,7 +197,7 @@ ifeq (x86_64-gcc,${SYSTEM})
   CC_MPI        = mpicc
 
 # general optimization flags
-  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused
+  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused 
 
   OMPI_CC      	= gcc
   OMPI_CLINKER 	= gcc
@@ -229,12 +233,12 @@ endif
 #
 ###########################################################################
 
-ifeq (i586-icc,${SYSTEM})
+ifeq (i686-icc,${SYSTEM})
   CC_SERIAL	= icc
   CC_MPI	= mpicc
   OMPI_CC       = icc
   OMPI_CLINKER  = icc
-  OPT_FLAGS	+= -fast -xHost -multiple-processes
+  OPT_FLAGS	+= -fast -xHost
   DEBUG_FLAGS	+= -g
   PROF_FLAGS	+= -prof-gen
   PROF_LIBS 	+= -prof-gen
@@ -259,7 +263,7 @@ endif
   export        OMPI_CC OMPI_CLINKER
 endif
 
-ifeq (i586-gcc,${SYSTEM})
+ifeq (i686-gcc,${SYSTEM})
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
   OMPI_CC     	= gcc
@@ -340,33 +344,44 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= bracket.h  potfit.h \
-		  random-params.h  random.h  utils.h
+POTFITHDR   	= bracket.h optimize.h potfit.h potential.h \
+		  random.h  splines.h utils.h
 POTFITSRC 	= bracket.c brent.c config.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
-		  random.c diff_evo.c splines.c utils.c
+		  random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-POTFITSRC      += force_eam.c rescale.c
+POTFITSRC      += force_eam.c
+endif
+
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+POTFITSRC      += force_elstat.c
+endif
+
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+POTFITSRC      += force_elstat.c
 endif
 
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-POTFITSRC      += force_adp.c rescale.c
+POTFITSRC      += force_adp.c
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+POTFITHDR      += functions.h
 POTFITSRC      += functions.c
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 POTFITSRC      += chempot.c
 endif
+else
+POTFITSRC      += rescale.c
 endif
 
-ifneq (,$(strip $(findstring simann,${MAKETARGET})))
-POTFITSRC      += simann.c
+ifneq (,$(strip $(findstring evo,${MAKETARGET})))
+POTFITSRC      += diff_evo.c
 endif
 
 MPISRC          = mpi_utils.c
@@ -401,8 +416,32 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
-CFLAGS  += -DEAM
-INTERACTION = 1
+  CFLAGS  += -DEAM
+  INTERACTION = 1
+endif
+
+# COULOMB
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += COULOMB does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DCOULOMB
+  INTERACTION = 1
+endif
+
+# DIPOLE
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += DIPOLE does not support tabulated potentials (yet)
+  endif
+  CFLAGS  += -DCOULOMB -DDIPOLE
+  INTERACTION = 1
 endif
 
 # angular dependent potentials (ADP)
@@ -411,16 +450,21 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ERROR += More than one potential model specified
   endif
   CFLAGS  += -DADP
-INTERACTION = 1
+  INTERACTION = 1
 endif
 
 ifneq (,$(findstring 0,${INTERACTION}))
 ERROR += No interaction model specified
 endif
 
-# SIMANN - for simulated annealing
-ifneq (,$(findstring simann,${MAKETARGET}))
-CFLAGS += -DSIMANN
+# COMPAT - compatibility mode for old (w*d)^2
+ifneq (,$(findstring compat,${MAKETARGET}))
+CFLAGS += -DCOMPAT
+endif
+
+# EVO - for differential evolution
+ifneq (,$(findstring evo,${MAKETARGET}))
+CFLAGS += -DEVO
 endif
 
 # APOT - for analytic potentials
@@ -509,8 +553,8 @@ powell_lsq.o: powell_lsq.c
 	${CC} ${CFLAGS} ${CINCLUDE} -c powell_lsq.c
 
 # special rules for function evaluation
-functions.o: functions.c
-	${CC} ${CFLAGS} ${CINCLUDE} -c functions.c
+utils.o: utils.c
+	${CC} ${CFLAGS} ${CINCLUDE} -c utils.c
 
 # generic compilation rule
 .c.o:
@@ -533,7 +577,9 @@ ifeq (,$(findstring debug,${MAKETARGET}))
 	${STRIP} --strip-unneeded -R .comment $@
 endif
 endif
+ifneq (,$(BIN_DIR))
 	${MV} $@ ${BIN_DIR}; rm -f $@
+endif
 
 # First recursion only set the MAKETARGET Variable
 .DEFAULT:

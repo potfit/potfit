@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2010 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -28,10 +28,16 @@
  *
  ****************************************************************/
 
-#define MAIN
-
 #include <time.h>
+
+#define MAIN
 #include "potfit.h"
+#undef MAIN
+
+#include "functions.h"
+#include "optimize.h"
+#include "potential.h"
+#include "splines.h"
 #include "utils.h"
 #include "version.h"
 
@@ -41,23 +47,31 @@
  *
  ****************************************************************/
 
-void error(char *msg, ...)
+void error(int done, char *msg, ...)
 {
+  static int begin = 0;
   va_list ap;
 
   fflush(stderr);
+  if (begin == 0) {
+    fprintf(stderr, "\n--> ERROR <--\n");
+    begin = 1;
+  }
   va_start(ap, msg);
-  fprintf(stderr, "\n--> ERROR <--\n");
   vfprintf(stderr, msg, ap);
   va_end(ap);
   fflush(stderr);
+  if (done == 1) {
 #ifdef MPI
-  real *force = NULL;
-  /* go wake up other threads */
-  calc_forces(calc_pot.table, force, 1);
-  shutdown_mpi();
+    real *force = NULL;
+    /* go wake up other threads */
+    calc_forces(calc_pot.table, force, 1);
+    fprintf(stderr, "\n");
+    shutdown_mpi();
 #endif /* MPI */
-  exit(EXIT_FAILURE);
+    fprintf(stderr, "\n");
+    exit(EXIT_FAILURE);
+  }
 }
 
 /****************************************************************
@@ -66,18 +80,24 @@ void error(char *msg, ...)
  *
  ****************************************************************/
 
-int warning(char *msg, ...)
+void warning(int done, char *msg, ...)
 {
+  static int begin = 0;
   va_list ap;
-  int   n;
 
   fflush(stdout);
+  if (begin == 0) {
+    fprintf(stderr, "\n--> WARNING <--\n");
+    begin = 1;
+  }
   va_start(ap, msg);
-  n = fprintf(stderr, "\n--> WARNING <--\n");
   vfprintf(stderr, msg, ap);
   va_end(ap);
+  if (done == 1) {
+    fprintf(stderr, "\n");
+    begin = 0;
+  }
   fflush(stderr);
-  return n;
 }
 
 /****************************************************************
@@ -93,6 +113,7 @@ int main(int argc, char **argv)
   int   i, j;
   real  tot, sqr;
   real *force;
+  real *rms;
   time_t t_begin, t_end;
 #if defined EAM || defined ADP
   real *totdens = NULL;
@@ -103,7 +124,7 @@ int main(int argc, char **argv)
 #endif /* MPI */
 
   if (myid == 0) {
-    printf("This is %s compiled on %s.\n", VERSION_INFO, VERSION_DATE);
+    printf("This is %s compiled on %s.\n\n", VERSION_INFO, VERSION_DATE);
 #ifdef MPI
     printf("Starting up MPI with %d processes.\n", num_cpus);
 #endif /* MPI */
@@ -112,13 +133,16 @@ int main(int argc, char **argv)
   /* assign correct force routine */
 #ifdef PAIR
   calc_forces = calc_forces_pair;
-  strcpy(interaction, "PAIR");
+  strcpy(interaction_name, "PAIR");
 #elif defined EAM
   calc_forces = calc_forces_eam;
-  strcpy(interaction, "EAM");
+  strcpy(interaction_name, "EAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
-  strcpy(interaction, "ADP");
+  strcpy(interaction_name, "ADP");
+#elif defined COULOMB
+  calc_forces = calc_forces_elstat;
+  strcpy(interaction_name, "ELSTAT");
 #endif /* PAIR */
 
   /* read the parameters and the potential file */
@@ -130,6 +154,11 @@ int main(int argc, char **argv)
 #ifdef STRESS
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
+#ifdef COULOMB
+    if (apot_table.sw_kappa)
+      init_tails(apot_table.dp_kappa[0]);
+#endif /* COULOMB */
+
     /* Select correct spline interpolation and other functions */
 #ifdef APOT
     if (format == 0) {
@@ -149,7 +178,7 @@ int main(int argc, char **argv)
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
-    } else if (format >= 4) {	/*format >= 4 ! */
+    } else if (format >= 4) {
       splint = splint_ne;
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
@@ -173,7 +202,7 @@ int main(int argc, char **argv)
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
 #ifndef NORESCALE
-    rescale(&opt_pot, 1., 1);	/* rescale now... */
+/*    rescale(&opt_pot, 1., 1);	|+ rescale now... +|*/
 #endif /* NORESCALE */
 #endif /* EAM || ADP */
     init_done = 1;
@@ -183,23 +212,28 @@ int main(int argc, char **argv)
 #define RAND_MAX 2147483647
     uint32_t *array;
     array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-    srand(seed + myid);
+    srand(seed);
     for (i = 0; i < R_SIZE; i++)
       array[i] = rand();
 
     dsfmt_init_by_array(&dsfmt, array, R_SIZE);
     for (i = 0; i < 10e5; i++)
-      dsfmt_genrand_close_open(&dsfmt);
+      eqdist();
     free(array);
 #undef R_SIZE
 #undef RAND_MAX
-  }
 
+#ifdef COMPAT
+    warning(0, "You are running in compatibility mode!\n");
+    warning(1, "energy and stress weights will also be squared!\n");
+#endif
+  }
 
   /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI
   MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
   broadcast_params();		/* let the others know what's going on */
+  paircol = (ntypes * (ntypes + 1)) / 2;
 #else
   /* Identify subset of atoms/volumes belonging to individual process
      with complete set of atoms/volumes */
@@ -210,13 +244,12 @@ int main(int argc, char **argv)
 #endif /* MPI */
   ndim = opt_pot.idxlen;
   ndimtot = opt_pot.len;
-  paircol = (ntypes * (ntypes + 1)) / 2;
   idx = opt_pot.idx;
 
   /* main force vector, all forces, energies, ... will be stored here */
   force = (real *)malloc((mdim) * sizeof(real));
   if (NULL == force)
-    error("Could not allocate memory for main force vector.");
+    error(1, "Could not allocate memory for main force vector.");
   reg_for_free(force, "force");
 
   /* starting positions for the force vector */
@@ -237,7 +270,7 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
   rms = (real *)malloc(3 * sizeof(real));
   if (NULL == rms)
-    error("Could not allocate memory for rms errors.");
+    error(1, "Could not allocate memory for rms errors.");
   reg_for_free(rms, "rms");
 
 #ifdef APOT
@@ -269,7 +302,7 @@ int main(int argc, char **argv)
       parab_grad = parab_grad_ed;
 #endif /* PARABEL */
 #endif /* !APOT */
-    } else if (format >= 4) {	/*format >= 4 ! */
+    } else if (format >= 4) {
 #ifndef APOT
       splint = splint_ne;
       splint_comb = splint_comb_ne;
@@ -292,17 +325,17 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
 #ifdef MPI
     if (num_cpus > nconf)
-      error("You are using more cpus than you have configurations!");
+      warning(1, "You are using more cpus than you have configurations!");
 #endif /* MPI */
     time(&t_begin);
     if (opt) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
-#ifndef SIMANN
+#ifdef EVO
       diff_evo(opt_pot.table);
-#else
+#else /* EVO */
       anneal(opt_pot.table);
-#endif /* SIMANN */
+#endif /* EVO */
       printf("\nStarting powell minimization ...\n");
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
@@ -326,18 +359,25 @@ int main(int argc, char **argv)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
+#ifdef COULOMB
+    /* write coulomb part to plot file */
+    //write_coulomb_table();
+#endif /* COULOMB */
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
     write_pairdist(&opt_pot, distfile);
 #endif /* PDIST && !MPI */
 
+#ifndef APOT
     /* then we can also write format 4 */
     if (format == 3) {
       sprintf(endpot, "%s_4", endpot);
       write_pot_table4(&opt_pot, endpot);
       printf("Potential in format 4 written to file \t%s\n", endpot);
     }
+#endif /* !APOT */
+
 #if defined EAM || defined ADP
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
@@ -346,7 +386,7 @@ int main(int argc, char **argv)
       strcat(file, ".rho_loc");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
     } else {
       outfile = stdout;
       printf("Local electron density rho\n");
@@ -407,7 +447,7 @@ int main(int argc, char **argv)
       strcat(file, ".force");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
     } else {
       outfile = stdout;
       printf("Forces:\n");
@@ -415,14 +455,14 @@ int main(int argc, char **argv)
     for (i = 0; i < 6; i++) {
       component[i] = (char *)malloc(3 * sizeof(char));
       if (NULL == component[i])
-	error("Could not allocate memory for component strings");
-      reg_for_free(component[i], "component i");
+	error(1, "Could not allocate memory for component strings");
+      reg_for_free(component[i], "component %d", i);
     }
     strcpy(component[0], "x");
     strcpy(component[1], "y");
     strcpy(component[2], "z");
     for (i = 0; i < 3 * natoms; i++) {
-      sqr = conf_weight[atoms[i / 3].conf] * SQR(force[i]);
+      sqr = conf_weight[atoms[i / 3].conf] * dsquare(force[i]);
       f_sum += sqr;
 #ifdef FWEIGHT
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
@@ -430,7 +470,7 @@ int main(int argc, char **argv)
       if (i == 0)
 	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
-	"%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\t%14.8f\n",
+	"%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
 	sqr, force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	force_0[i],
@@ -440,8 +480,8 @@ int main(int argc, char **argv)
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%3d:%6d:%s\t%4s\t%14.8f\t%12.8f\t%12.8f\t%14.8f\n",
+	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\t\tf\t\tf0\t\tdf/f0\n");
+      fprintf(outfile, "%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
 	sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
@@ -458,7 +498,7 @@ int main(int argc, char **argv)
 	strcat(file, ".energy");
 	outfile = fopen(file, "w");
 	if (NULL == outfile)
-	  error("Could not open file %s\n", file);
+	  error(1, "Could not open file %s\n", file);
       } else {
 	outfile = stdout;
 	printf("Cohesive Energies\n");
@@ -467,20 +507,25 @@ int main(int argc, char **argv)
       if (write_output_files) {
 	fprintf(outfile, "# global energy weight w is %f\n", eweight);
 	fprintf(outfile,
-	  "# nr.\tconf_w\t(w*de)^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+	  "# nr.\tconf_w\tw*de^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
       } else {
 	fprintf(outfile, "energy weight is %f\n", eweight);
 	fprintf(outfile, "conf\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
       }
 
       for (i = 0; i < nconf; i++) {
-	sqr = conf_weight[i] * SQR(eweight * force[energy_p + i]);
+#ifdef COMPAT
+	sqr = conf_weight[i] * dsquare(eweight * force[energy_p + i]);
+#else
+	sqr = conf_weight[i] * eweight * dsquare(force[energy_p + i]);
+#endif /* COMPAT */
 	e_sum += sqr;
 	if (write_output_files) {
-	  fprintf(outfile, "%3d\t%.4f\t%f\t%.10f\t%.10f\t%f\t%f\t%f\n", i,
-	    conf_weight[i], sqr, force[energy_p + i] + force_0[energy_p + i],
-	    force_0[energy_p + i], fabs(force[energy_p + i]),
-	    force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
+	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n",
+	    i, conf_weight[i], sqr / conf_weight[i],
+	    force[energy_p + i] + force_0[energy_p + i], force_0[energy_p + i],
+	    fabs(force[energy_p + i]), force[energy_p + i],
+	    force[energy_p + i] / force_0[energy_p + i]);
 	} else
 	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i], sqr,
 	    force[energy_p + i] + force_0[energy_p + i], force_0[energy_p + i],
@@ -501,7 +546,7 @@ int main(int argc, char **argv)
 	strcat(file, ".stress");
 	outfile = fopen(file, "w");
 	if (NULL == outfile)
-	  error("Could not open file %s\n", file);
+	  error(1, "Could not open file %s\n", file);
 	fprintf(outfile, "# global stress weight w is %f\n", sweight);
       } else {
 	outfile = stdout;
@@ -514,12 +559,16 @@ int main(int argc, char **argv)
       strcpy(component[4], "yz");
       strcpy(component[5], "zx");
 
-      fprintf(outfile, "#\tconf_w\t\t(w*ds)^2\t\ts\t\ts0\t\tds/s0\n");
+      fprintf(outfile, "#\tconf_w\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-	sqr = conf_weight[(i - stress_p) / 6] * SQR(sweight * force[i]);
+#ifdef COMPAT
+	sqr = conf_weight[(i - stress_p) / 6] * dsquare(sweight * force[i]);
+#else
+	sqr = conf_weight[(i - stress_p) / 6] * sweight * dsquare(force[i]);
+#endif /* COMPAT */
 	s_sum += sqr;
-	fprintf(outfile, "%3d-%s\t%7.3f\t%14.8f\t%10.6f\t%10.6f\t%14.8f\n",
+	fprintf(outfile, "%3d-%s\t%6.2f\t%14.8f\t%12.10f\t%12.10f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
 	  conf_weight[(i - stress_p) / 6], sqr, force[i] + force_0[i],
 	  force_0[i], force[i] / force_0[i]);
@@ -540,7 +589,7 @@ int main(int argc, char **argv)
       strcat(file, ".punish");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
       fprintf(outfile, "Limiting constraints\n");
       fprintf(outfile, "#conf\tp^2\t\tpunishment\n");
     } else {
@@ -548,7 +597,7 @@ int main(int argc, char **argv)
       printf("Punishment Constraints\n");
     }
     for (i = limit_p; i < dummy_p; i++) {
-      sqr = SQR(force[i]);
+      sqr = dsquare(force[i]);
       if (write_output_files)
 	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
 	  force[i] + force_0[i]);
@@ -557,32 +606,31 @@ int main(int argc, char **argv)
 	  force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
     }
     if (write_output_files) {
-      real  zero = 0;
       fprintf(outfile, "\nDummy Constraints\n");
       fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
-	sqr = SQR(force[i]);
-	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], zero,
-	  sqr, zero, force[i]);
+	sqr = dsquare(force[i]);
+	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0., sqr,
+	  0., force[i]);
 #else
-	sqr = SQR(force[i + ntypes]);
+	sqr = dsquare(force[i + ntypes]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
-	  SQR(force[i]), force[i + ntypes], force[i]);
-#endif
+	  dsquare(force[i]), force[i + ntypes], force[i]);
+#endif /* NORESCALE */
       }
 #ifdef NORESCALE
       fprintf(outfile, "\nNORESCALE: <n>!=1\n");
       fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
       fprintf(outfile, "Additional punishment of %f added.\n",
-	SQR(force[dummy_p + ntypes]));
+	dsquare(force[dummy_p + ntypes]));
 #endif /* NORESCALE */
       printf("Punishment constraints data written to \t%s\n", file);
       fclose(outfile);
     } else {
       fprintf(outfile, "Dummy Constraints\n");
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
-	sqr = SQR(force[i]);
+	sqr = dsquare(force[i]);
 	fprintf(outfile, "%s\t%f\t%f\n", elements[i - dummy_p], sqr, force[i]);
       }
     }
@@ -596,7 +644,7 @@ int main(int argc, char **argv)
       strcat(file, ".error");
       outfile = fopen(file, "w");
       if (NULL == outfile)
-	error("Could not open file %s\n", file);
+	error(1, "Could not open file %s\n", file);
 #ifndef STRESS
       fprintf(outfile,
 	"total error sum %f, count %d (%d forces, %d energies)\n", tot,
@@ -623,13 +671,13 @@ int main(int argc, char **argv)
 
     /* forces */
     for (i = 0; i < 3 * natoms; i++)
-      rms[0] += SQR(force[i]);
-    rms[0] = sqrt(rms[0] / natoms);
+      rms[0] += dsquare(force[i]);
+    rms[0] = sqrt(rms[0] / (3 * natoms));
 
     /* energies */
     if (eweight != 0) {
       for (i = 0; i < nconf; i++)
-	rms[1] += SQR(force[3 * natoms + i]);
+	rms[1] += dsquare(force[3 * natoms + i]);
       if (isnan(rms[1]))
 	rms[1] = 0;
       rms[1] = sqrt(rms[1] / nconf);
@@ -639,7 +687,7 @@ int main(int argc, char **argv)
     if (sweight != 0) {
       for (i = 0; i < nconf; i++)
 	for (j = 0; j < 6; j++)
-	  rms[2] += SQR(force[3 * natoms + nconf + 6 * i + j]);
+	  rms[2] += dsquare(force[3 * natoms + nconf + 6 * i + j]);
       if (isnan(rms[2]))
 	rms[2] = 0;
       rms[2] = sqrt(rms[2] / (6 * nconf));
@@ -703,12 +751,22 @@ int main(int argc, char **argv)
     if (sweight != 0)
       printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif /* STRESS */
-    fclose(outfile);
-
+    if (write_output_files) {
+      fclose(outfile);
+    }
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
   }
+
+  if (opt && myid == 0) {
+    printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
+      (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
+	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
+    printf("%d force calculations, each took %f seconds\n", fcalls,
+      (real)difftime(t_end, t_begin) / fcalls);
+  }
+
   /* do some cleanups before exiting */
 #ifdef MPI
   /* kill MPI */
@@ -717,12 +775,5 @@ int main(int argc, char **argv)
   free_all_pointers();
 #endif /* MPI */
 
-  if (opt && myid == 0) {
-    printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
-      (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
-	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
-    printf("Did %d force calculations, each took %f seconds\n", fcalls,
-      (real)difftime(t_end, t_begin) / fcalls);
-  }
   return 0;
 }
