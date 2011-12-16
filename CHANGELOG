@@ -1,4 +1,4 @@
-devel
+potfit-0.5 (20111216)
 + fix invariant chemical potentials
 + errors for short distances are now more clear
 + rms for forces is now calculated correctly
@@ -261,8 +261,8 @@ bzr-20100426
 + re-add DIPOLE part
 
 bzr-20100426
-+ start migration to bazaar vcs 
-+ prepare trunk: 
++ start migration to bazaar vcs
++ prepare trunk:
 	removed .revisions file
 	moved potscale to util directory
 	removed html directory

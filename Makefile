@@ -619,7 +619,7 @@ else
 endif
 else
 	@rm -f version.h
-	@echo -e "#define VERSION_INFO \"potfit-setdatehere\"" > version.h
+	@echo -e "#define VERSION_INFO \"setversionhere\"" > version.h
 	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 endif
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
