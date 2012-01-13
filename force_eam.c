@@ -211,6 +211,9 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       atom_t *atom;
       int   h, j, k, l;
       int   self, uf;
+#ifdef APOT
+      real  temp_eng;
+#endif /* APOT */
 #ifdef STRESS
       int   us, stresses;
 #endif /* STRESS */
@@ -379,7 +382,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef APOT
 	    /* calculate analytic value explicitly */
 	    apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
-	      forces + energy_p + h);
+	      &temp_eng);
+	    forces[energy_p + h] += temp_eng;
 #else
 	    /* linear extrapolation left */
 	    rho_val =
@@ -392,7 +396,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef APOT
 	    /* calculate analytic value explicitly */
 	    apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
-	      forces + energy_p + h);
+	      &temp_eng);
+	    forces[energy_p + h] += temp_eng;
 #else
 	    /* and right */
 	    rho_val =
