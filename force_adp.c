@@ -456,7 +456,7 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    atom->rho = calc_pot.begin[col_F];
 #endif /* PARABEL */
 	  }
-#endif /* NOT NORESCALE */
+#endif /* !NORESCALE */
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 #ifdef PARABEL
@@ -491,9 +491,19 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 #endif /* APOT */
-	  } else {		/* and in-between */
-	    forces[energy_p + h] +=
-	      splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+	  }
+	  /* and in-between */
+	  else {
+#ifdef APOT
+	    /* calculate small values directly */
+	    if (atom->rho < 0.1) {
+	      apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
+		&temp_eng);
+	      forces[energy_p + h] += temp_eng;
+	    } else
+#endif
+	      forces[energy_p + h] +=
+		splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
 #else
 	  forces[energy_p + h] +=
