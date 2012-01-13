@@ -461,26 +461,30 @@ real calc_forces_adp(real *xi_opt, real *forces, int flag)
 	    parab_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col_F]) {
+#ifdef APOT
+	    /* calculate analytic value explicitly */
+	    apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
+	      forces + energy_p + h);
+#else
 	    /* linear extrapolation left */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F],
 	      &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
-#ifdef APOT
-	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
 #endif /* APOT */
 	  } else if (atom->rho > calc_pot.end[col_F]) {
+#ifdef APOT
+	    /* calculate analytic value explicitly */
+	    apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
+	      forces + energy_p + h);
+#else
 	    /* and right */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F,
 	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
-#ifdef APOT
-	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
 #endif /* APOT */
 	  } else {		/* and in-between */
 	    forces[energy_p + h] +=
