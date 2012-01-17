@@ -79,6 +79,11 @@ real **mat_real(long rowdim, long coldim)
   for (i = 1; i < rowdim; i++)
     matrix[i] = matrix[i - 1] + coldim;
 
+  int   j, k;
+  for (j = 0; j < rowdim; j++)
+    for (k = 0; k < coldim; k++)
+      matrix[j][k] = 0.;
+
   return matrix;
 }
 

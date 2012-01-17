@@ -77,14 +77,15 @@ void powell_lsq(real *xi)
 #endif /* ACML */
   int  *perm_indx;		/* Keeps track of LU pivoting */
   int   breakflag;		/* Breakflag */
-  real  cond;			/* Condition number dsysvx */
+  real  cond = 0.;		/* Condition number dsysvx */
   real *p, *q;			/* Vectors needed in Powell's algorithm */
   real  F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
   real  temp, temp2;		/* as the name indicates: temporary vars */
 #ifdef APOT
   int   itemp, itemp2;		/* the same for integer */
 #endif /* APOT */
-  real  ferror, berror;		/* forward/backward error estimates */
+  real  ferror = 0.;
+  real  berror = 0.;		/* forward/backward error estimates */
   FILE *ff;			/* Exit flagfile */
 
   d = mat_real(ndim, ndim);
