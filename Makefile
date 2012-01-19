@@ -204,6 +204,7 @@ ifeq (x86_64-gcc,${SYSTEM})
 
 # debug flags
   PROF_FLAGS    += -pg
+  PROF_LIBS    += -pg
   DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
 
 # Intel Math Kernel Library
@@ -573,8 +574,10 @@ endif
 ${MAKETARGET}: ${OBJECTS}
 	${CC} ${LIBS} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS}
 ifneq (,${STRIP})
+ifeq (,$(findstring prof,${MAKETARGET}))
 ifeq (,$(findstring debug,${MAKETARGET}))
 	${STRIP} --strip-unneeded -R .comment $@
+endif
 endif
 endif
 ifneq (,$(BIN_DIR))

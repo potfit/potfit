@@ -222,9 +222,7 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
 {
   real  a, p1, p2, d21, d22;
 
-
   /* indices into potential table */
-
   a = 1.0 - b;
   p1 = xi[k];
   d21 = pt->d2tab[k++];
