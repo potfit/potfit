@@ -159,16 +159,15 @@ ifeq (x86_64-icc,${SYSTEM})
 # compiler
   CC_SERIAL     = icc
   CC_MPI        = mpicc
+  OMPI_CC       = icc
+  OMPI_CLINKER  = icc
 
 # general optimization flags
   OPT_FLAGS     += -fast -xHost
 
-  OMPI_CC      = icc
-  OMPI_CLINKER = icc
-
-# debug flags
+# profiling and debug flags
   PROF_FLAGS    += -prof-gen
-  PROF_LIBS 	+= -prof-gen
+  PROF_LIBS     += -prof-gen
   DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
 
 # Intel Math Kernel Library
@@ -195,17 +194,16 @@ ifeq (x86_64-gcc,${SYSTEM})
 # compiler
   CC_SERIAL     = gcc
   CC_MPI        = mpicc
+  OMPI_CC       = gcc
+  OMPI_CLINKER  = gcc
 
 # general optimization flags
   OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused 
 
-  OMPI_CC      	= gcc
-  OMPI_CLINKER 	= gcc
-
-# debug flags
-  PROF_FLAGS    += -pg
-  PROF_LIBS    += -pg
-  DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
+# profiling and debug flags
+  PROF_FLAGS    += -g3 -pg
+  PROF_LIBS     += -g3 -pg
+  DEBUG_FLAGS   += -g3 -Wall
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -235,14 +233,19 @@ endif
 ###########################################################################
 
 ifeq (i686-icc,${SYSTEM})
+# compiler
   CC_SERIAL	= icc
   CC_MPI	= mpicc
   OMPI_CC       = icc
   OMPI_CLINKER  = icc
+
+# general optimization flags
   OPT_FLAGS	+= -fast -xHost
-  DEBUG_FLAGS	+= -g
+
+# profiling and debug flags
   PROF_FLAGS	+= -prof-gen
   PROF_LIBS 	+= -prof-gen
+  DEBUG_FLAGS	+= -g -Wall
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -265,13 +268,19 @@ endif
 endif
 
 ifeq (i686-gcc,${SYSTEM})
+# compiler
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
   OMPI_CC     	= gcc
   OMPI_CLINKER 	= gcc
+
+# general optimization flags
   OPT_FLAGS	+= -O3 -march=native
-  DEBUG_FLAGS	+= -g
+
+# profiling and debug flags
   PROF_FLAGS	+= -g3 -pg
+  PROF_LIBS	+= -g3 -pg
+  DEBUG_FLAGS	+= -g3 -Wall
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
