@@ -3093,7 +3093,7 @@ void write_pot_table_lammps(pot_table_t *pt)
   fprintf(outfile, "\n");
   dx = rcutmin / imdpotsteps;
   /* line 5: Nrho, drho, Nr, dr, cutoff */
-  fprintf(outfile, "%d %f %d %f %f\n", imdpotsteps, dx, imdpotsteps, dx,
+  fprintf(outfile, "%d %f %d %f %f\n", imdpotsteps + 1, dx, imdpotsteps + 1, dx,
     rcutmin);
 
   /* one block for every atom type */
@@ -3102,14 +3102,16 @@ void write_pot_table_lammps(pot_table_t *pt)
     fprintf(outfile, "%3d %f 0 ???\n", ele_number_from_name(elements[i]),
       ele_mass_from_name(elements[i]));
     r = 0.;
+    /* embedding function F(n) */
     k = paircol + ntypes + i;
-    for (j = 0; j < imdpotsteps; j++) {
+    for (j = 0; j <= imdpotsteps; j++) {
       fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
       r += dx;
     }
     r = 0.;
     k = paircol + i;
-    for (j = 0; j < imdpotsteps; j++) {
+    /* transfer function rho(r) */
+    for (j = 0; j <= imdpotsteps; j++) {
       fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
       r += dx;
     }
@@ -3118,30 +3120,38 @@ void write_pot_table_lammps(pot_table_t *pt)
 
   /* pair potentials */
   for (i = 0; i < ntypes; i++)
-    for (j = 0; j <= i; j++) {
+    for (j = i; j < ntypes; j++) {
       r = 0.;
-      k = j + ntypes * i;
-      for (l = 0; l < imdpotsteps; l++) {
+      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+      for (l = 0; l <= imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", r * splint_ne(pt, pt->table, k, r));
 	r += dx;
       }
     }
 
 #ifdef ADP
-  for (i = paircol + 2 * ntypes; i < 2 * (paircol + ntypes); i++) {
-    r = 0.;
-    for (l = 0; l < imdpotsteps; l++) {
-      fprintf(outfile, "%e\n", r * splint_ne(pt, pt->table, i, r));
-      r += dx;
+  /* dipole distortion */
+  for (i = 0; i < ntypes; i++)
+    for (j = i; j < ntypes; j++) {
+      r = 0.;
+      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+      k += paircol + 2 * ntypes;
+      for (l = 0; l <= imdpotsteps; l++) {
+	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+	r += dx;
+      }
     }
-  }
-  for (i = 2 * (paircol + ntypes); i < 3 * paircol + 2 * ntypes; i++) {
-    r = 0.;
-    for (l = 0; l < imdpotsteps; l++) {
-      fprintf(outfile, "%e\n", r * splint_ne(pt, pt->table, i, r));
-      r += dx;
+  /* quadrupole distortion */
+  for (i = 0; i < ntypes; i++)
+    for (j = i; j < ntypes; j++) {
+      r = 0.;
+      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+      k += 2 * (paircol + ntypes);
+      for (l = 0; l <= imdpotsteps; l++) {
+	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+	r += dx;
+      }
     }
-  }
 #endif /* ADP */
 
   fclose(outfile);
