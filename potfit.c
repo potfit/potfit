@@ -359,6 +359,10 @@ int main(int argc, char **argv)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
+#if defined EAM || defined ADP
+    if (write_lammps)
+      write_pot_table_lammps(&calc_pot);
+#endif /* EAM || ADP */
 #ifdef COULOMB
     /* write coulomb part to plot file */
     //write_coulomb_table();

@@ -354,9 +354,9 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= bracket.h optimize.h potfit.h potential.h \
+POTFITHDR   	= bracket.h elements.h optimize.h potfit.h potential.h \
 		  random.h  splines.h utils.h
-POTFITSRC 	= bracket.c brent.c config.c linmin.c \
+POTFITSRC 	= bracket.c brent.c config.c elements.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
 		  random.c simann.c splines.c utils.c
 

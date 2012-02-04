@@ -277,6 +277,7 @@ EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
 EXTERN int write_pair INIT(0);
 EXTERN int writeimd INIT(0);
+EXTERN int write_lammps INIT(0);	/* write output also in LAMMPS format */
 #ifdef EVO
 EXTERN real evo_threshold INIT(1.e-6);
 #else /* EVO */
@@ -314,6 +315,7 @@ EXTERN real *force_0;		/* the forces we aim at */
 EXTERN real *rcut;
 EXTERN real *rmin;
 EXTERN real *volumen;		/* Volume of cell */
+EXTERN real rcutmin INIT(999.);	/* minimum of all cutoff values */
 EXTERN real rcutmax INIT(0.);	/* maximum of all cutoff values */
 EXTERN sym_tens *conf_stress;
 EXTERN sym_tens *stress;	/* Stresses in each config */
