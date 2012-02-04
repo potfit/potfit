@@ -590,7 +590,7 @@ endif
 endif
 endif
 ifneq (,$(BIN_DIR))
-	${MV} $@ ${BIN_DIR}; rm -f $@
+	${MV} $@ ${BIN_DIR} && rm -f $@
 endif
 
 # First recursion only set the MAKETARGET Variable
