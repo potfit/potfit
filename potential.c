@@ -3120,7 +3120,7 @@ void write_pot_table_lammps(pot_table_t *pt)
 
   /* pair potentials */
   for (i = 0; i < ntypes; i++)
-    for (j = i; j < ntypes; j++) {
+    for (j = 0; j <= i; j++) {
       r = 0.;
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
       for (l = 0; l <= imdpotsteps; l++) {

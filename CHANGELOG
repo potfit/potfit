@@ -1,3 +1,6 @@
+potfit-next (unreleased)
++ add support for writing LAMMPS potentials (EAM and ADP for now)
+
 potfit-0.5 (20111216)
 + fix invariant chemical potentials
 + errors for short distances are now more clear
