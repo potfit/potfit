@@ -167,7 +167,7 @@ void init_elements()
 /* 32 - Germanium */
   strcpy(element_table[32].name, "Germanium");
   strcpy(element_table[32].short_name, "Ge");
-  element_table[32].mass = 72.590000;
+  element_table[32].mass = 72.630000;
 /* 33 - Arsenic */
   strcpy(element_table[33].name, "Arsenic");
   strcpy(element_table[33].short_name, "As");

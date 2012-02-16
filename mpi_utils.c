@@ -302,6 +302,7 @@ void broadcast_params()
     apot_table.n_par = (int *)malloc(apot_table.number * sizeof(int));
     apot_table.end = (real *)malloc(apot_table.number * sizeof(real));
     apot_table.begin = (real *)malloc(apot_table.number * sizeof(real));
+    apot_table.idxpot = (int *)malloc(apot_table.number * sizeof(int));
 #ifdef COULOMB
     apot_table.ratio = (real *)malloc(2 * sizeof(real));
 #endif /* COULOMB */
@@ -322,6 +323,7 @@ void broadcast_params()
   MPI_Bcast(apot_table.fvalue, apot_table.number, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.end, apot_table.number, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.begin, apot_table.number, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.idxpot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cp_start, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&have_globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&global_idx, 1, MPI_INT, 0, MPI_COMM_WORLD);
