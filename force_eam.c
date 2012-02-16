@@ -381,8 +381,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	  if (atom->rho < calc_pot.begin[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
-	      &temp_eng);
+	    apot_table.fvalue[col_F] (atom->rho,
+	      xi_opt + apot_table.idxpot[col_F], &temp_eng);
 	    forces[energy_p + h] += temp_eng;
 #else
 	    /* linear extrapolation left */
@@ -395,8 +395,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
-	      &temp_eng);
+	    apot_table.fvalue[col_F] (atom->rho,
+	      xi_opt + apot_table.idxpot[col_F], &temp_eng);
 	    forces[energy_p + h] += temp_eng;
 #else
 	    /* and right */
@@ -412,8 +412,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef APOT
 	    /* calculate small values directly */
 	    if (atom->rho < 0.1) {
-	      apot_table.fvalue[col_F] (atom->rho, apot_table.values[col_F],
-		&temp_eng);
+	      apot_table.fvalue[col_F] (atom->rho,
+		xi_opt + apot_table.idxpot[col_F], &temp_eng);
 	      forces[energy_p + h] += temp_eng;
 	    } else
 #endif

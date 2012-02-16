@@ -3122,7 +3122,10 @@ void write_pot_table_lammps(pot_table_t *pt)
   for (i = 0; i < ntypes; i++)
     for (j = 0; j <= i; j++) {
       r = 0.;
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
       for (l = 0; l <= imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", r * splint_ne(pt, pt->table, k, r));
 	r += dx;
@@ -3134,7 +3137,10 @@ void write_pot_table_lammps(pot_table_t *pt)
   for (i = 0; i < ntypes; i++)
     for (j = i; j < ntypes; j++) {
       r = 0.;
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
       k += paircol + 2 * ntypes;
       for (l = 0; l <= imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
@@ -3145,7 +3151,10 @@ void write_pot_table_lammps(pot_table_t *pt)
   for (i = 0; i < ntypes; i++)
     for (j = i; j < ntypes; j++) {
       r = 0.;
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
       k += 2 * (paircol + ntypes);
       for (l = 0; l <= imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
