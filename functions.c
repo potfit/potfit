@@ -658,7 +658,8 @@ void vas_value(real r, real *p, real *f)
 
 /****************************************************************
  *
- * original pair contributions of vashishta potential (V_2)
+ * original pair contributions of vashishta potential 
+ * (V_2 without second "Coulomb"-term)
  *
  * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
  *
@@ -679,7 +680,7 @@ void vpair_value(real r, real *p, real *f)
   x[5] = p[4] * x[4] + p[5] * x[3];
   x[6] = exp(-r / p[6]);
 
-  *f = 14.4 * (p[0] / x[0] + p[2] * p[3] / r - 0.5 * x[5] / x[2] * x[6]);
+  *f = p[0] / x[0] - 0.5 * x[5] / x[2] * x[6];
 }
 
 /****************************************************************
