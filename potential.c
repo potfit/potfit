@@ -1871,7 +1871,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    }
 	  }
 	  for (i = 0; i < calc_pot.ncols; i++) {
-	    if (smooth_pot[i] && !invar_pot[i]) {
+	    if (smooth_pot[i] && (do_all || !invar_pot[i])) {
 	      h = *(val + 1 + apot_table.n_par[i]);
 	      if (h == 0)
 		error(1, "The cutoff parameter for potential %d is 0!", i);
