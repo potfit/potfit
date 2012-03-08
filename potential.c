@@ -1888,7 +1888,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		list[j] = val[j];
 	      }
 	    }
-	    if ((change || do_all) && !invar_pot[i]) {
+	    if ( do_all || (change && !invar_pot[i])) {
 	      for (j = 0; j < APOT_STEPS; j++) {
 		k = i * APOT_STEPS + (i + 1) * 2 + j;
 		apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
