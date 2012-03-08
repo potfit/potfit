@@ -54,13 +54,13 @@
 
 #define FORCE_EPS .1
 
-#if defined PAIR || defined COULOMB
+#if defined PAIR || defined COULOMB && !defined EAM
 #define SLOTS 1			/* pair potential = 0 */
 #elif defined EAM		/* transfer function = 1 */
 #define SLOTS 2			/* dipole term = 2 */
 #elif defined ADP		/* quadrupole term = 3 */
 #define SLOTS 4
-#endif /* PAIR || COULOMB */
+#endif /* PAIR || COULOMB && !EAM */
 
 /****************************************************************
  *
@@ -72,7 +72,7 @@ typedef double real;
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
-typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT } Interaction_T;
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT } Interaction_T;
 
 typedef struct {
   real  x;
@@ -238,12 +238,14 @@ typedef struct {
 /* define interaction type */
 #ifdef PAIR
 EXTERN Interaction_T interaction INIT(I_PAIR);
-#elif defined EAM
+#elif defined EAM && !defined COULOMB
 EXTERN Interaction_T interaction INIT(I_EAM);
 #elif defined ADP
 EXTERN Interaction_T interaction INIT(I_ADP);
-#elif defined COULOMB
+#elif defined COULOMB && !defined EAM
 EXTERN Interaction_T interaction INIT(I_ELSTAT);
+#elif defined COULOMB && defined EAM
+EXTERN Interaction_T interaction INIT(I_EAM_ELSTAT);
 #endif /* interaction type */
 
 /* system variables */
@@ -454,12 +456,14 @@ void  update_slots(void);	/* new slots */
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
 real  calc_forces_pair(real *, real *, int);
-#elif defined EAM
+#elif defined EAM && !defined COULOMB
 real  calc_forces_eam(real *, real *, int);
 #elif defined ADP
 real  calc_forces_adp(real *, real *, int);
-#elif defined COULOMB
+#elif defined COULOMB && !defined EAM
 real  calc_forces_elstat(real *, real *, int);
+#elif defined COULOMB && defined EAM
+real  calc_forces_eam_elstat(real *, real *, int);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */

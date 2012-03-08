@@ -134,15 +134,18 @@ int main(int argc, char **argv)
 #ifdef PAIR
   calc_forces = calc_forces_pair;
   strcpy(interaction_name, "PAIR");
-#elif defined EAM
+#elif defined EAM && !defined COULOMB
   calc_forces = calc_forces_eam;
   strcpy(interaction_name, "EAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
   strcpy(interaction_name, "ADP");
-#elif defined COULOMB
+#elif defined COULOMB && !defined EAM
   calc_forces = calc_forces_elstat;
   strcpy(interaction_name, "ELSTAT");
+#elif defined COULOMB && defined EAM
+  calc_forces = calc_forces_eam_elstat;
+  strcpy(interaction_name, "EAM_ELSTAT");
 #endif /* PAIR */
 
   /* read the parameters and the potential file */

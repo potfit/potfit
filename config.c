@@ -254,7 +254,7 @@ void read_config(char *filename)
 		strncpy(elements[j], res_tmp, str_len - 1);
 		elements[j][str_len - 1] = '\0';
 		i += str_len;
-	      } else if (strlen(res_tmp) > 1) {
+	      } else if (strlen(res_tmp) >= 1) {
 		if ((ptr = strchr(res_tmp, '\n')) != NULL)
 		  *ptr = '\0';
 		strcpy(elements[j], res_tmp);

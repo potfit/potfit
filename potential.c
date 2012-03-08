@@ -144,6 +144,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	  case I_EAM:
 	    npots = ncols + 2 * ntypes;
 	    break;
+          case I_EAM_ELSTAT:
+	    npots = ncols + 2 * ntypes;
+	    break;
 	  case I_ADP:
 	    npots = 3 * ncols + 2 * ntypes;
 	    break;
@@ -582,6 +585,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif /* PAIR */
 
 #ifdef COULOMB
+  int ncols;
+  ncols = ntypes * (ntypes + 1) / 2;
+
   fsetpos(infile, &startpos);
   /* skip to electrostatic section */
   do {
@@ -648,7 +654,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->param_name[apt->number + 2][i], "apt->param_name[%d][%d]",
       apt->number + 2, i);
   }
-  for (i = 0; i < apt->number; i++) {
+  for (i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 3][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
 	apt->param_name[apt->number + 3][i], &apt->dp_b[i],
@@ -662,7 +668,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[%d][%d]",
       apt->number + 3, i);
   }
-  for (i = 0; i < apt->number; i++) {
+  for (i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 4][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
 	apt->param_name[apt->number + 4][i], &apt->dp_c[i],
@@ -1062,7 +1068,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif /* COULOMB */
 #ifdef DIPOLE
   pt->len += ntypes;
-  pt->len += (2 * apt->number);
+  pt->len += (2 * ncols);
 #endif /* DIPOLE */
 
   pt->table = (real *)malloc(pt->len * sizeof(real));
@@ -1192,7 +1198,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
   pt->idxlen += ntypes;
-  pt->idxlen += (2 * apt->number);
+  pt->idxlen += (2 * ncols);
 #endif /* DIPOLE */
 
   if (have_globals) {
@@ -2273,6 +2279,9 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 #endif /* PAIR */
 
 #ifdef COULOMB
+  int ncols;
+  ncols = ntypes * (ntypes + 1) / 2;
+
   fprintf(outfile, "elstat\n");
   for (i = 0; i < ntypes - 1; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
@@ -2286,12 +2295,12 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
       apt->dp_alpha[i], apt->pmin[apt->number + 2][i],
       apt->pmax[apt->number + 2][i]);
-  for (i = 0; i < apt->number; i++) {
+  for (i = 0; i < ncols; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i],
       apt->dp_b[i], apt->pmin[apt->number + 3][i],
       apt->pmax[apt->number + 3][i]);
   }
-  for (i = 0; i < apt->number; i++) {
+  for (i = 0; i < ncols; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 4][i],
       apt->dp_c[i], apt->pmin[apt->number + 4][i],
       apt->pmax[apt->number + 4][i]);

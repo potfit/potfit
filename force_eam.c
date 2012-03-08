@@ -28,7 +28,7 @@
  *
  ****************************************************************/
 
-#ifdef EAM
+#if defined EAM && !defined COULOMB
 
 #include "potfit.h"
 
