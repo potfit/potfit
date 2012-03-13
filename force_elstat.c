@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * force_elstat.c: Routines used for calculating pair/monopole/dipole
+ * force_elstat.c: Routine used for calculating pair/monopole/dipole
  *     forces/energies in various interpolation schemes.
  *
  ****************************************************************

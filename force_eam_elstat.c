@@ -1,8 +1,8 @@
 /****************************************************************
  *
- * force_elstat.c: Routines used for calculating pair/monopole/dipole
- *     forces/energies in various interpolation schemes.
- *
+ * force_eam_elstat.c: Routine used for combination of calculating 
+ * pair/monopole/dipole forces/energies in various interpolation schemes.
+ * AND eam forces/energies
  ****************************************************************
  *
  * Copyright 2010-2011

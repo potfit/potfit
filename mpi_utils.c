@@ -75,12 +75,16 @@ void shutdown_mpi(void)
 
 #ifdef PAIR
 #define MAX_MPI_COMPONENTS 8
-#elif defined EAM
+#elif defined EAM && !defined COULOMB
 #define MAX_MPI_COMPONENTS 9
 #elif defined ADP
 #define MAX_MPI_COMPONENTS 14
-#elif defined COULOMB
+#elif defined COULOMB && !defined EAM
 #define MAX_MPI_COMPONENTS 12
+#elif defined EAM && defined COULOMB && !defined DIPOLE
+#define MAX_MPI_COMPONENTS 13
+#elif defined EAM && defined DIPOLE
+#define MAX_MPI_COMPONENTS 15
 #endif /* PAIR */
 
 void broadcast_params()
@@ -169,7 +173,7 @@ void broadcast_params()
   blklens[4] = 1;         typen[4] = REAL;        /* absforce */
   blklens[5] = 1;         typen[5] = MPI_INT;     /* conf */
   size=6;
-#if defined EAM || defined ADP
+#if (defined EAM || defined ADP) && !defined DIPOLE
   blklens[6] = 1;         typen[6] = REAL;        /* rho */
   blklens[7] = 1;         typen[7] = REAL;        /* gradF */
   size += 2;
@@ -180,7 +184,7 @@ void broadcast_params()
   blklens[10] = 1;        typen[10] = REAL;       /* nu */
   size += 3;
 #endif /* ADP */
-#ifdef DIPOLE
+#if defined DIPOLE && !defined EAM
   blklens[6] = 1;         typen[6] = MPI_VEKTOR;     /* E_stat */
   blklens[7] = 1;         typen[7] =  MPI_VEKTOR;    /* p_sr */
   blklens[8] = 1;         typen[8] =  MPI_VEKTOR;   /* E_ind */
@@ -189,6 +193,17 @@ void broadcast_params()
   blklens[11] = 1;        typen[11] =  MPI_VEKTOR;   /* E_tot */
   size += 6;
 #endif /* DIPOLE */
+#if defined DIPOLE && defined EAM
+  blklens[6] = 1;         typen[6] = REAL;        /* rho */
+  blklens[7] = 1;         typen[7] = REAL;        /* gradF */
+  blklens[8] = 1;         typen[6] = MPI_VEKTOR;     /* E_stat */
+  blklens[9] = 1;         typen[7] =  MPI_VEKTOR;    /* p_sr */
+  blklens[10] = 1;         typen[8] =  MPI_VEKTOR;   /* E_ind */
+  blklens[11] = 1;         typen[9] =  MPI_VEKTOR;   /* p_ind */
+  blklens[12] = 1;        typen[10] =  MPI_VEKTOR;   /* E_old */
+  blklens[13] = 1;        typen[11] =  MPI_VEKTOR;   /* E_tot */
+  size += 8;
+#endif /* DIPOLE && EAM */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
 
