@@ -44,6 +44,7 @@ void  buck_value(real, real *, real *);
 void  softshell_value(real, real *, real *);
 void  eopp_exp_value(real, real *, real *);
 void  meopp_value(real, real *, real *);
+void  power_value(real, real *, real *);
 void  power_decay_value(real, real *, real *);
 void  exp_decay_value(real, real *, real *);
 void  bjs_value(real, real *, real *);

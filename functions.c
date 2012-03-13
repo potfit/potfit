@@ -62,6 +62,7 @@ void apot_init(void)
   add_pot(softshell, 2);
   add_pot(eopp_exp, 6);
   add_pot(meopp, 7);
+  add_pot(power, 2);
   add_pot(power_decay, 2);
   add_pot(exp_decay, 2);
   add_pot(bjs, 3);
@@ -317,6 +318,24 @@ void meopp_value(real r, real *p, real *f)
   power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
+}
+
+/****************************************************************
+ *
+ * power potential
+ *
+ ****************************************************************/
+
+void power_value(real r, real *p, real *f)
+{
+  static real x, y, power;
+
+  x = r;
+  y = p[1];
+
+  power_1(&power, &x, &y);
+
+  *f = p[0] * power;
 }
 
 /****************************************************************
