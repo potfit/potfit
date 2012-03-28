@@ -254,11 +254,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
     apt->invar_par[size + 2] = (int *)malloc(ntypes * sizeof(int));
 
     for (i = 3; i < 5; i++) {
-      apt->values[size + i] = (real *)malloc(size * sizeof(real));
-      apt->param_name[size + i] = (char **)malloc(size * sizeof(char *));
-      apt->pmin[size + i] = (real *)malloc(size * sizeof(real));
-      apt->pmax[size + i] = (real *)malloc(size * sizeof(real));
-      apt->invar_par[size + i] = (int *)malloc(size * sizeof(int));
+      apt->values[size + i] = (real *)malloc(ncols * sizeof(real));
+      apt->param_name[size + i] = (char **)malloc(ncols * sizeof(char *));
+      apt->pmin[size + i] = (real *)malloc(ncols * sizeof(real));
+      apt->pmax[size + i] = (real *)malloc(ncols * sizeof(real));
+      apt->invar_par[size + i] = (int *)malloc(ncols * sizeof(int));
     }
     apt->charge = apt->values[size];
     apt->dp_kappa = apt->values[size + 1];
@@ -1038,7 +1038,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
 #endif /* COULOMB */
 #ifdef DIPOLE
   apt->total_par += ntypes;
-  apt->total_par += (2 * apt->number);
+  apt->total_par += (2 * ncols);
 #endif /* DIPOLE */
 
   /* initialize function table and write indirect index */
@@ -1183,7 +1183,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
   }
   for (i = apt->number + 3; i < apt->number + 5; i++) {
-    for (j = 0; j < (apt->number); j++) {
+    for (j = 0; j < (ncols); j++) {
       *val = apt->values[i][j];
       val++;
       if (!apt->invar_par[i][j]) {
@@ -2880,6 +2880,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write endpot for IMD with electrostatics */
 #if defined COULOMB && defined APOT
   apot_table_t *apt = &apot_table;
+  int ncols;
+  ncols = ntypes * (ntypes + 1) / 2;
   sprintf(filename, "%s_charges.imd", prefix);
 
   /* open file */
@@ -2922,7 +2924,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fprintf(outfile, "\new_rcut\t\t%f\n", dp_cut);
   fprintf(outfile, "ew_kappa\t\t%f\n", apt->dp_kappa[0]);
   fprintf(outfile, "r_cut\t\t");
-  for (i = 0; i < apt->number; i++)
+  for (i = 0; i < ncols; i++)
     fprintf(outfile, "%f\t", apot_table.end[0]);
   fprintf(outfile, "\n\n");
 
@@ -2931,10 +2933,10 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%f\t", apt->dp_alpha[i]);
   fprintf(outfile, "\ndp_b\t\t");
-  for (i = 0; i < apt->number; i++)
+  for (i = 0; i < ncols; i++)
     fprintf(outfile, "%f\t", apt->dp_b[i]);
   fprintf(outfile, "\ndp_c\t\t");
-  for (i = 0; i < apt->number; i++)
+  for (i = 0; i < ncols; i++)
     fprintf(outfile, "%f\t", apt->dp_c[i]);
   fprintf(outfile, "\n");
 #endif /* DIPOLE */

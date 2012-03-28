@@ -173,7 +173,7 @@ void broadcast_params()
   blklens[4] = 1;         typen[4] = REAL;        /* absforce */
   blklens[5] = 1;         typen[5] = MPI_INT;     /* conf */
   size=6;
-#if (defined EAM || defined ADP) && !defined DIPOLE
+#if (defined EAM && !defined DIPOLE) || defined ADP
   blklens[6] = 1;         typen[6] = REAL;        /* rho */
   blklens[7] = 1;         typen[7] = REAL;        /* gradF */
   size += 2;
@@ -214,7 +214,7 @@ void broadcast_params()
   MPI_Address(&testatom.force, &displs[3]);
   MPI_Address(&testatom.absforce, &displs[4]);
   MPI_Address(&testatom.conf, &displs[5]);
-#if defined EAM || defined ADP
+#if (defined EAM && !defined DIPOLE ) || defined ADP
   MPI_Address(&testatom.rho, &displs[6]);
   MPI_Address(&testatom.gradF, &displs[7]);
 #endif /* EAM || ADP */
@@ -223,7 +223,7 @@ void broadcast_params()
   MPI_Address(&testatom.lambda, &displs[9]);
   MPI_Address(&testatom.nu, &displs[10]);
 #endif /* ADP */
-#ifdef DIPOLE
+#if defined DIPOLE && !defined EAM
   MPI_Address(&testatom.E_stat, &displs[6]);
   MPI_Address(&testatom.p_sr, &displs[7]);
   MPI_Address(&testatom.E_ind, &displs[8]);
@@ -231,6 +231,16 @@ void broadcast_params()
   MPI_Address(&testatom.E_old, &displs[10]);
   MPI_Address(&testatom.E_tot, &displs[11]);
 #endif /* DIPOLE */
+#if defined DIPOLE && defined EAM
+  MPI_Address(&testatom.rho, &displs[6]);
+  MPI_Address(&testatom.gradF, &displs[7]);
+  MPI_Address(&testatom.E_stat, &displs[8]);
+  MPI_Address(&testatom.p_sr, &displs[9]);
+  MPI_Address(&testatom.E_ind, &displs[10]);
+  MPI_Address(&testatom.p_ind, &displs[11]);
+  MPI_Address(&testatom.E_old, &displs[12]);
+  MPI_Address(&testatom.E_tot, &displs[13]);
+#endif /* DIPOLE && EAM */
 
   for (i = 1; i < size; i++) {
     displs[i] -= displs[0];

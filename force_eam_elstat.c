@@ -96,10 +96,14 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
   real  charge[ntypes];
   real  sum_charges;
   real  dp_kappa;
+  int ncols;
+
+  ncols = ntypes * (ntypes + 1) / 2;
+
 #ifdef DIPOLE
   real  dp_alpha[ntypes];
-  real  dp_b[apt->number];
-  real  dp_c[apt->number];
+  real  dp_b[ncols];
+  real  dp_c[ncols];
 #endif /* DIPOLE */
 
   static real rho_sum_loc, rho_sum;
@@ -173,6 +177,12 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
       dp_kappa = 0.;
     }
 
+    /*int k;
+    for(k = 0; k < 71; k++) {
+      printf("%d\t%f\n", k, xi_opt[k]);
+      }
+      error(1, "");*/
+
 #ifdef DIPOLE
     for (i = 0; i < ntypes; i++) {
       if (xi_opt[2 * size + ne + ntypes + i]) {
@@ -181,14 +191,14 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 	dp_alpha[i] = 0.;
       }
     }
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < ncols; i++) {
       if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
 	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
       } else {
 	dp_b[i] = 0.;
       }
-      if (xi_opt[3 * size + ne + 2 * ntypes + i]) {
-	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i];
+      if (xi_opt[2 * size + ne + 2 * ntypes + ncols + i]) {
+	dp_c[i] = xi_opt[2 * size + ne + 2 * ntypes + ncols + i];
       } else {
 	dp_c[i] = 0.;
       }
