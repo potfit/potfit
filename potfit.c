@@ -275,7 +275,7 @@ int main(int argc, char **argv)
 
 #ifdef APOT
 #ifdef MPI
-  MPI_Bcast(opt_pot.table, ndimtot, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(opt_pot.table, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
   update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif /* APOT */

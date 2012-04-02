@@ -95,37 +95,37 @@ void broadcast_params()
   /* Define Structures */
   /* first the easy ones: */
   /* MPI_VEKTOR */
-  MPI_Type_contiguous(3, REAL, &MPI_VEKTOR);
+  MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VEKTOR);
   MPI_Type_commit(&MPI_VEKTOR);
   /* MPI_STENS */
-  MPI_Type_contiguous(6, REAL, &MPI_STENS);
+  MPI_Type_contiguous(6, MPI_DOUBLE, &MPI_STENS);
   MPI_Type_commit(&MPI_STENS);
 
   /* MPI_NEIGH */
   /* *INDENT-OFF* */
   blklens[0] = 1;         typen[0] = MPI_INT;     /* typ */
   blklens[1] = 1;         typen[1] = MPI_INT;     /* nr */
-  blklens[2] = 1;         typen[2] = REAL;        /* r */
+  blklens[2] = 1;         typen[2] = MPI_DOUBLE;        /* r */
   blklens[3] = 1;         typen[3] = MPI_VEKTOR;  /* dist */
   blklens[4] = SLOTS;     typen[4] = MPI_INT;     /* slot */
-  blklens[5] = SLOTS;     typen[5] = REAL;        /* shift */
-  blklens[6] = SLOTS;     typen[6] = REAL;        /* step */
+  blklens[5] = SLOTS;     typen[5] = MPI_DOUBLE;        /* shift */
+  blklens[6] = SLOTS;     typen[6] = MPI_DOUBLE;        /* step */
   blklens[7] = SLOTS;     typen[7] = MPI_INT;     /* col */
   size = 8;
 #ifdef ADP
   blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* rdist */
   blklens[9] = 1;         typen[9] = MPI_STENS;   /* sqrdist */
-  blklens[10] = 1;        typen[10] = REAL;       /* u_val */
-  blklens[11] = 1;        typen[11] = REAL;       /* u_grad */
-  blklens[12] = 1;        typen[12] = REAL;       /* w_val */
-  blklens[13] = 1;        typen[13] = REAL;       /* w_grad */
+  blklens[10] = 1;        typen[10] = MPI_DOUBLE;       /* u_val */
+  blklens[11] = 1;        typen[11] = MPI_DOUBLE;       /* u_grad */
+  blklens[12] = 1;        typen[12] = MPI_DOUBLE;       /* w_val */
+  blklens[13] = 1;        typen[13] = MPI_DOUBLE;       /* w_grad */
   size += 6;
 #endif /* ADP */
 #ifdef COULOMB
-  blklens[8] = 1;         typen[8] = REAL;        /* r^2 */
-  blklens[9] = 1;         typen[9] = REAL;        /* fnval_el */
-  blklens[10] = 1;        typen[10] = REAL;       /* grad_el */
-  blklens[11] = 1;        typen[11] = REAL;       /* ggrad_el */
+  blklens[8] = 1;         typen[8] = MPI_DOUBLE;        /* r^2 */
+  blklens[9] = 1;         typen[9] = MPI_DOUBLE;        /* fnval_el */
+  blklens[10] = 1;        typen[10] = MPI_DOUBLE;       /* grad_el */
+  blklens[11] = 1;        typen[11] = MPI_DOUBLE;       /* ggrad_el */
   size += 4;
 #endif /* COULOMB */
 
@@ -166,18 +166,18 @@ void broadcast_params()
   blklens[1] = 1;         typen[1] = MPI_INT;     /* n_neigh */
   blklens[2] = 1;         typen[2] = MPI_VEKTOR;  /* pos */
   blklens[3] = 1;         typen[3] = MPI_VEKTOR;  /* force */
-  blklens[4] = 1;         typen[4] = REAL;        /* absforce */
+  blklens[4] = 1;         typen[4] = MPI_DOUBLE;        /* absforce */
   blklens[5] = 1;         typen[5] = MPI_INT;     /* conf */
   size=6;
 #if defined EAM || defined ADP
-  blklens[6] = 1;         typen[6] = REAL;        /* rho */
-  blklens[7] = 1;         typen[7] = REAL;        /* gradF */
+  blklens[6] = 1;         typen[6] = MPI_DOUBLE;        /* rho */
+  blklens[7] = 1;         typen[7] = MPI_DOUBLE;        /* gradF */
   size += 2;
 #endif /* EAM || ADP */
 #ifdef ADP
   blklens[8] = 1;         typen[8] = MPI_VEKTOR;  /* mu */
   blklens[9] = 1;         typen[9] = MPI_STENS;   /* lambda */
-  blklens[10] = 1;        typen[10] = REAL;       /* nu */
+  blklens[10] = 1;        typen[10] = MPI_DOUBLE;       /* nu */
   size += 3;
 #endif /* ADP */
 #ifdef DIPOLE
@@ -232,11 +232,11 @@ void broadcast_params()
   MPI_Bcast(&nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
-  MPI_Bcast(&dp_cut, 1, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dp_cut, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
 #ifdef DIPOLE
-  MPI_Bcast(&dp_tol, 1, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&dp_mix, 1, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dp_tol, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dp_mix, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* DIPOLE */
   if (myid > 0) {
     inconf = (int *)malloc(nconf * sizeof(int));
@@ -246,13 +246,13 @@ void broadcast_params()
   }
   MPI_Bcast(inconf, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(force_0, mdim, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(conf_weight, nconf, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(force_0, mdim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(conf_weight, nconf, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&maxneigh, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   /* Broadcast weights... */
-  MPI_Bcast(&eweight, 1, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&sweight, 1, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&eweight, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&sweight, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   /* Broadcast the potential... */
   MPI_Bcast(&format, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -271,15 +271,15 @@ void broadcast_params()
     calc_pot.xcoord = (double *)malloc(calclen * sizeof(double));
     calc_pot.d2tab = (double *)malloc(calclen * sizeof(double));
   }
-  MPI_Bcast(calc_pot.begin, size, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.end, size, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.step, size, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.invstep, size, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.begin, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.end, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.step, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.invstep, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.first, size, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.last, size, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.table, calclen, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.d2tab, calclen, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.xcoord, calclen, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.table, calclen, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.d2tab, calclen, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.xcoord, calclen, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 #ifdef APOT
   MPI_Bcast(&enable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -316,21 +316,21 @@ void broadcast_params()
   }
   MPI_Bcast(smooth_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(invar_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_list, opt_pot.len, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_list, opt_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.n_par, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(rcut, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(rmin, ntypes * ntypes, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.fvalue, apot_table.number, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.end, apot_table.number, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.begin, apot_table.number, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(rcut, ntypes * ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(rmin, ntypes * ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.fvalue, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.end, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.begin, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.idxpot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cp_start, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&have_globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&global_idx, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&apot_table.globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
-  MPI_Bcast(&apot_table.last_charge, 1, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.ratio, 2, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&apot_table.last_charge, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.ratio, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
   if (have_globals) {
     if (myid > 0) {
@@ -395,7 +395,7 @@ void broadcast_params()
   conf_vol = (double *)malloc(myconf * sizeof(double));
   conf_uf = (int *)malloc(myconf * sizeof(double));
   conf_us = (int *)malloc(myconf * sizeof(double));
-  MPI_Scatterv(volumen, conf_len, conf_dist, REAL, conf_vol, myconf, REAL, 0,
+  MPI_Scatterv(volumen, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf, MPI_DOUBLE, 0,
     MPI_COMM_WORLD);
   MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT, conf_uf, myconf, MPI_INT,
     0, MPI_COMM_WORLD);
@@ -448,15 +448,15 @@ void potsync()
   firstcol = paircol + ntypes;
   /* Memory is allocated - just bcast that changed potential... */
   /* bcast begin/end/step/invstep of embedding energy  */
-  MPI_Bcast(calc_pot.begin + firstcol, ntypes, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.end + firstcol, ntypes, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.step + firstcol, ntypes, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.invstep + firstcol, ntypes, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.begin + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.end + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.step + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.invstep + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.first + firstcol, ntypes, MPI_INT, 0, MPI_COMM_WORLD);
   /* bcast table values of transfer fn. and embedding energy */
   firstval = calc_pot.first[paircol];
   nvals = calc_pot.len - firstval;
-  MPI_Bcast(calc_pot.table + firstval, nvals, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.table + firstval, nvals, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 #endif /* !APOT */

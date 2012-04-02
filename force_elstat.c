@@ -131,7 +131,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 #ifdef MPI
     /* exchange potential and flag value */
 #ifndef APOT
-    MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -141,7 +141,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 #ifdef APOT
     if (myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     if (format == 0)
       update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
@@ -835,12 +835,12 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 #ifdef MPI
     /* reduce global sum */
     sum = 0.;
-    MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,	/* forces */
       forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,	/* energies */
-      forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,	/* energies */
+      forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     /* stresses */
     MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
       forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
