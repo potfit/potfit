@@ -40,10 +40,11 @@
  *
  ****************************************************************/
 
-void spline_ed(double xstep, double y[], int n, double yp1, double ypn, double y2[])
+void spline_ed(double xstep, double y[], int n, double yp1, double ypn,
+  double y2[])
 {
   int   i, k;
-  double  p, qn, un;
+  double p, qn, un;
   static double *u = NULL;
   static int nmax = 0;
 
@@ -84,7 +85,7 @@ void spline_ed(double xstep, double y[], int n, double yp1, double ypn, double y
 
 double splint_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  double  a, b, istep, rr, p1, p2, d21, d22;
+  double a, b, istep, rr, p1, p2, d21, d22;
   int   k;
 
   /* check for distances shorter than minimal distance in table */
@@ -115,9 +116,10 @@ double splint_ed(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r, double *grad)
+double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
-  double  a, b, istep, rr, p1, p2, d21, d22;
+  double a, b, istep, rr, p1, p2, d21, d22;
   int   k;
 
   /* check for distances shorter than minimal distance in table */
@@ -156,7 +158,7 @@ double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r, double *gr
 
 double splint_grad_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  double  a, b, istep, rr, p1, p2, d21, d22;
+  double a, b, istep, rr, p1, p2, d21, d22;
   int   k;
 
   /* check for distances shorter than minimal distance in table */
@@ -195,7 +197,7 @@ double splint_grad_ed(pot_table_t *pt, double *xi, int col, double r)
 
 double splint_dir(pot_table_t *pt, double *xi, int k, double b, double step)
 {
-  double  a, p1, p2, d21, d22;
+  double a, p1, p2, d21, d22;
 
   /* indices into potential table */
   a = 1.0 - b;
@@ -217,10 +219,10 @@ double splint_dir(pot_table_t *pt, double *xi, int k, double b, double step)
  *
  ****************************************************************/
 
-double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b, double step,
-  double *grad)
+double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b,
+  double step, double *grad)
 {
-  double  a, p1, p2, d21, d22;
+  double a, p1, p2, d21, d22;
 
   /* indices into potential table */
   a = 1.0 - b;
@@ -244,9 +246,10 @@ double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b, double step
  ****************************************************************/
 
 
-double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b, double step)
+double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b,
+  double step)
 {
-  double  a, p1, p2, d21, d22;
+  double a, p1, p2, d21, d22;
 
   /* indices into potential table */
   a = 1.0 - b;
@@ -267,10 +270,11 @@ double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b, double step
  *
  ****************************************************************/
 
-void spline_ne(double x[], double y[], int n, double yp1, double ypn, double y2[])
+void spline_ne(double x[], double y[], int n, double yp1, double ypn,
+  double y2[])
 {
   int   i, k;
-  double  p, qn, sig, un;
+  double p, qn, sig, un;
   static double *u = NULL;
   static int nmax = 0;
 
@@ -316,7 +320,7 @@ void spline_ne(double x[], double y[], int n, double yp1, double ypn, double y2[
 double splint_ne(pot_table_t *pt, double *xi, int col, double r)
 {
   int   klo, khi, k;
-  double  h, b, a, d22, d21, p1, p2, x1, x2;
+  double h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];
@@ -351,10 +355,11 @@ double splint_ne(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r, double *grad)
+double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
   int   klo, khi, k;
-  double  h, b, a, d22, d21, p1, p2, x1, x2;
+  double h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];
@@ -397,7 +402,7 @@ double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r, double *gr
 double splint_grad_ne(pot_table_t *pt, double *xi, int col, double r)
 {
   int   klo, khi, k;
-  double  h, b, a, d22, d21, p1, p2, x1, x2;
+  double h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];

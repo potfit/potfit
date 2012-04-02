@@ -50,12 +50,12 @@ void  update_calc_table(double *, double *, int);
 
 /* parabolic interpolation */
 #ifdef PARABEL
-double  parab_comb_ed(pot_table_t *, double *, int, double, double *);
-double  parab_grad_ed(pot_table_t *, double *, int, double);
-double  parab_ed(pot_table_t *, double *, int, double);
-double  parab_comb_ne(pot_table_t *, double *, int, double, double *);
-double  parab_grad_ne(pot_table_t *, double *, int, double);
-double  parab_ne(pot_table_t *, double *, int, double);
+double parab_comb_ed(pot_table_t *, double *, int, double, double *);
+double parab_grad_ed(pot_table_t *, double *, int, double);
+double parab_ed(pot_table_t *, double *, int, double);
+double parab_comb_ne(pot_table_t *, double *, int, double, double *);
+double parab_grad_ne(pot_table_t *, double *, int, double);
+double parab_ne(pot_table_t *, double *, int, double);
 #endif /* PARABEL */
 
 /* writing potentials to files */

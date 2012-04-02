@@ -167,7 +167,7 @@ double normdist()
 {
   static int have = 0;
   static double nd2;
-  double  x1, x2, sqr, cnst;
+  double x1, x2, sqr, cnst;
 
   if (!(have)) {
     do {
@@ -251,7 +251,7 @@ void quicksort(double *x, int low, int high, double **p)
 int partition(double *x, int low, int high, int index, double **p)
 {
   int   i, store;
-  double  ind_val = x[index], temp;
+  double ind_val = x[index], temp;
 
   SWAP(x[index], x[high], temp);
   swap_population(p[index], p[high]);
@@ -273,7 +273,7 @@ int partition(double *x, int low, int high, int index, double **p)
 void swap_population(double *a, double *b)
 {
   int   i;
-  double  temp;
+  double temp;
   for (i = 0; i < ndimtot + 2; i++) {
     SWAP(a[i], b[i], temp);
   }

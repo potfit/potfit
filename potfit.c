@@ -111,7 +111,7 @@ int main(int argc, char **argv)
   char  file[255];
   FILE *outfile;
   int   i, j;
-  double  tot, sqr;
+  double tot, sqr;
   double *force;
   double *rms;
   time_t t_begin, t_end;
@@ -441,9 +441,9 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
 
     /* prepare for error calculations */
-    double  f_sum = 0.;
-    double  e_sum = 0.;
-    double  s_sum = 0.;
+    double f_sum = 0.;
+    double e_sum = 0.;
+    double s_sum = 0.;
 
     /* write force deviations */
     if (write_output_files) {

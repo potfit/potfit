@@ -79,9 +79,10 @@ void  add_potential(char *, int, fvalue_pointer);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(double *);
 int   apot_parameters(char *);
-double  apot_grad(double, double *, void (*function) (double, double *, double *));
-double  apot_punish(double *, double *);
-double  cutoff(double, double, double);
+double apot_grad(double, double *, void (*function) (double, double *,
+    double *));
+double apot_punish(double *, double *);
+double cutoff(double, double, double);
 
 #ifdef DEBUG
 void  debug_apot();
@@ -91,10 +92,10 @@ void  debug_apot();
 #ifdef PAIR
 int   swap_chem_pot(int, int);
 int   sort_chem_pot_2d(void);
-double  chemical_potential(int, int *, double *);
-double  chemical_potential_1d(int *, double *);
-double  chemical_potential_2d(int *, double *);
-double  chemical_potential_3d(int *, double *, int);
+double chemical_potential(int, int *, double *);
+double chemical_potential_1d(int *, double *);
+double chemical_potential_2d(int *, double *);
+double chemical_potential_3d(int *, double *, int);
 void  init_chemical_potential(int);
 #endif /* PAIR */
 
@@ -108,7 +109,7 @@ void  elstat_value(double, double, double *, double *, double *);
 void  elstat_shift(double, double, double *, double *, double *);
 #endif /* COULOMB */
 #ifdef DIPOLE
-double  shortrange_value(double, double, double, double);
+double shortrange_value(double, double, double, double);
 void  shortrange_term(double, double, double, double *, double *);
 #endif /* DIPOLE */
 

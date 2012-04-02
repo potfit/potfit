@@ -59,9 +59,9 @@
 
 void randomize_parameter(int n, double *xi, double *v)
 {
-  double  temp, rand;
+  double temp, rand;
   int   done = 0, count = 0;
-  double  min, max;
+  double min, max;
 
   min = apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]];
   max = apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]];
@@ -125,14 +125,14 @@ void anneal(double *xi)
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   auto_T = 0;
   int   loopagain;		/* loop flag */
-  double  T = -1.;		/* Temperature */
-  double  F, Fopt, F2;		/* Fn value */
+  double T = -1.;		/* Temperature */
+  double F, Fopt, F2;		/* Fn value */
   double *Fvar;			/* backlog of Fn vals */
   double *v;			/* step vector */
   double *xopt, *xi2;		/* optimal value */
   double *fxi1;			/* two latest force vectors */
 #ifndef APOT
-  double  width, height;		/* gaussian bump size */
+  double width, height;		/* gaussian bump size */
 #endif /* APOT */
 #ifdef DIPOLE
   FILE *outfile;
@@ -177,8 +177,8 @@ void anneal(double *xi)
     int   e = 0;
     int   u = 10 * ndim;
     int   m1 = 0;
-    double  dF = 0.;
-    double  chi = .8;
+    double dF = 0.;
+    double chi = .8;
 
     printf("Determining optimal starting temperature T ...\n");
     for (e = 0; e < u; e++) {

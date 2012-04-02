@@ -636,7 +636,7 @@ void gljm_value(double r, double *p, double *f)
 
   power_m(3, power, x, y);
 
-  double  temp = exp(-p[11] * power[2]);
+  double temp = exp(-p[11] * power[2]);
 
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
@@ -772,7 +772,7 @@ int apot_check_params(double *params)
 double apot_punish(double *params, double *forces)
 {
   int   i, j;
-  double  x, tmpsum = 0., min, max;
+  double x, tmpsum = 0., min, max;
 
   /* loop over parameters */
   for (i = 0; i < ndim; i++) {
@@ -824,9 +824,10 @@ double apot_punish(double *params, double *forces)
  *
  ****************************************************************/
 
-double apot_grad(double r, double *p, void (*function) (double, double *, double *))
+double apot_grad(double r, double *p, void (*function) (double, double *,
+    double *))
 {
-  double  a, b, h = 0.0001;
+  double a, b, h = 0.0001;
 
   function(r + h, p, &a);
   function(r - h, p, &b);
@@ -911,7 +912,8 @@ void buck_shift(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, double *ggtail)
+void elstat_value(double r, double dp_kappa, double *ftail, double *gtail,
+  double *ggtail)
 {
   static double x[4];
 
@@ -931,8 +933,8 @@ void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, doubl
  *
  ****************************************************************/
 
-void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_tail,
-  double *ggrad_tail)
+void elstat_shift(double r, double dp_kappa, double *fnval_tail,
+  double *grad_tail, double *ggrad_tail)
 {
   static double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
   static double x[3];

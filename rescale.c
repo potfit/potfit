@@ -53,8 +53,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
   double *xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
   atom_t *atom;
   neigh_t *neigh;
-  double  fnval, pos, grad, a;
-  double  min = 1e100, max = -1e100;
+  double fnval, pos, grad, a;
+  double min = 1e100, max = -1e100;
 
   xi = pt->table;
   dimneuxi =
@@ -413,7 +413,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
 void embed_shift(pot_table_t *pt)
 {
-  double  shift;
+  double shift;
   double *xi;
   int   i, j, first;
   xi = pt->table;

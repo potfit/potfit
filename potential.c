@@ -722,11 +722,13 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->invar_par[global_pot] = (int *)malloc((j + 1) * sizeof(int));
     reg_for_free(apt->invar_par[global_pot], "apt->invar_par[%d]", global_pot);
 
-    apt->pmin = (double **)realloc(apt->pmin, (global_pot + 1) * sizeof(double *));
+    apt->pmin =
+      (double **)realloc(apt->pmin, (global_pot + 1) * sizeof(double *));
     apt->pmin[global_pot] = (double *)malloc(j * sizeof(double));
     reg_for_free(apt->pmin[global_pot], "apt->pmin[%d]", global_pot);
 
-    apt->pmax = (double **)realloc(apt->pmax, (global_pot + 1) * sizeof(double *));
+    apt->pmax =
+      (double **)realloc(apt->pmax, (global_pot + 1) * sizeof(double *));
     apt->pmax[global_pot] = (double *)malloc(j * sizeof(double));
     reg_for_free(apt->pmax[global_pot], "apt->pmax[%d]", global_pot);
 
@@ -1852,7 +1854,7 @@ void update_apot_table(double *xi)
 void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
 {
   int   i, j, k, m, n, change;
-  double  f, h = 0;
+  double f, h = 0;
   double *list, *val;
 
   switch (format) {
@@ -1888,7 +1890,7 @@ void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
 		list[j] = val[j];
 	      }
 	    }
-	    if ( do_all || (change && !invar_pot[i])) {
+	    if (do_all || (change && !invar_pot[i])) {
 	      for (j = 0; j < APOT_STEPS; j++) {
 		k = i * APOT_STEPS + (i + 1) * 2 + j;
 		apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
@@ -1936,7 +1938,7 @@ void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
 
 double parab_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  double  rr, istep, chi, p0, p1, p2, dv, d2v;
+  double rr, istep, chi, p0, p1, p2, dv, d2v;
   int   k;
 
   /* renorm to beginning of table */
@@ -1968,7 +1970,7 @@ double parab_ed(pot_table_t *pt, double *xi, int col, double r)
 
 double parab_ne(pot_table_t *pt, double *xi, int col, double r)
 {
-  double  x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
+  double x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
   int   k;
 
   /* renorm to beginning of table */
@@ -2004,7 +2006,7 @@ double parab_ne(pot_table_t *pt, double *xi, int col, double r)
 
 double parab_grad_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  double  rr, istep, chi, p0, p1, p2, dv, d2v;
+  double rr, istep, chi, p0, p1, p2, dv, d2v;
   int   k;
 
   /* renorm to beginning of table */
@@ -2036,7 +2038,7 @@ double parab_grad_ed(pot_table_t *pt, double *xi, int col, double r)
 
 double parab_grad_ne(pot_table_t *pt, double *xi, int col, double r)
 {
-  double  h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
+  double h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
   int   k;
 
   /* renorm to beginning of table */
@@ -2069,9 +2071,10 @@ double parab_grad_ne(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double parab_comb_ed(pot_table_t *pt, double *xi, int col, double r, double *grad)
+double parab_comb_ed(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
-  double  rr, istep, chi, p0, p1, p2, dv, d2v;
+  double rr, istep, chi, p0, p1, p2, dv, d2v;
   int   k;
 
   /* renorm to beginning of table */
@@ -2103,9 +2106,10 @@ double parab_comb_ed(pot_table_t *pt, double *xi, int col, double r, double *gra
  *
  ***************************************************************/
 
-double parab_comb_ne(pot_table_t *pt, double *xi, int col, double r, double *grad)
+double parab_comb_ne(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
-  double  h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
+  double h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
   int   k;
 
   /* renorm to beginning of table */
@@ -2164,7 +2168,7 @@ void write_coulomb_table()
   apot_table_t *apt = &apot_table;
   if (ntypes == 2) {
     int   i, j;
-    double  value, c1;
+    double value, c1;
     FILE *outfile;
     char *filename1 = "Coulomb_00";
     char *filename2 = "Coulomb_01";
@@ -2347,7 +2351,7 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 {
   FILE *outfile = NULL, *outfile2 = NULL;
   int   i, j, flag = 0;
-  double  r;
+  double r;
 
   if (*plotpointfile != '\0')
     flag = 1;
@@ -2513,13 +2517,13 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
   int   i, j, k, m, m2, col1, col2;
-  double  r2, temp;
+  double r2, temp;
   double *r2begin, *r2end, *r2step;
 #ifndef APOT
-  double  temp2;
+  double temp2;
 #endif /* APOT */
 #if defined EAM || defined ADP
-  double  root;
+  double root;
 #endif /* EAM */
   FILE *outfile;
   char  filename[255];
@@ -2951,9 +2955,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifndef APOT
   int   k = 0, l;
 #else
-  double  h;
+  double h;
 #endif /* APOT */
-  double  r, r_step, temp;
+  double r, r_step, temp;
 
   /* open file */
   outfile = fopen(filename, "w");
@@ -3065,7 +3069,7 @@ void write_pot_table_lammps(pot_table_t *pt)
   char  filename[255];
   int   i, j;
   int   k = 0, l;
-  double  dx, r, temp;
+  double dx, r, temp;
 
   /* open file */
   if (strcmp(output_prefix, "") != 0)
@@ -3177,9 +3181,9 @@ void write_pot_table_lammps(pot_table_t *pt)
 void write_altplot_pair(pot_table_t *pt, char *filename)
 {
   int   i, j, k, l;
-  double  r, rmin = 100., rmax = 0., r_step;
+  double r, rmin = 100., rmax = 0., r_step;
 #ifdef EAM
-  double  temp;
+  double temp;
 #endif /* EAM */
   FILE *outfile;
 
@@ -3266,7 +3270,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
 {
   int  *freq;			/* frequency... */
   int   h, i, j, k, l, typ1, typ2, col;
-  double  rr;
+  double rr;
   atom_t *atom;
   neigh_t *neigh;
   FILE *outfile;

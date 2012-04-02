@@ -89,7 +89,7 @@
 double calc_forces_eam(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  double  tmpsum = 0., sum = 0.;
+  double tmpsum = 0., sum = 0.;
   double *xi = NULL;
 
   static double rho_sum_loc, rho_sum;
@@ -212,23 +212,23 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
       int   h, j, k, l;
       int   self, uf;
 #ifdef APOT
-      double  temp_eng;
+      double temp_eng;
 #endif /* APOT */
 #ifdef STRESS
       int   us, stresses;
 #endif /* STRESS */
 
       neigh_t *neigh;
-      double  r;
+      double r;
 
       /* pair variables */
-      double  phi_val, phi_grad;
+      double phi_val, phi_grad;
       vector tmp_force;
 
       /* eam variables */
       int   col_F;
-      double  eam_force;
-      double  rho_val, rho_grad, rho_grad_j;
+      double eam_force;
+      double rho_val, rho_grad, rho_grad_j;
 
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -531,7 +531,8 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     }				/* parallel region */
 #ifdef MPI
     /* Reduce rho_sum */
-    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
+      MPI_COMM_WORLD);
 #else /* MPI */
     rho_sum = rho_sum_loc;
 #endif /* MPI */

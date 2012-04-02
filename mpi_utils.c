@@ -320,7 +320,8 @@ void broadcast_params()
   MPI_Bcast(apot_table.n_par, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(rcut, ntypes * ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(rmin, ntypes * ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.fvalue, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.fvalue, apot_table.number, MPI_DOUBLE, 0,
+    MPI_COMM_WORLD);
   MPI_Bcast(apot_table.end, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.begin, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.idxpot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
@@ -395,8 +396,8 @@ void broadcast_params()
   conf_vol = (double *)malloc(myconf * sizeof(double));
   conf_uf = (int *)malloc(myconf * sizeof(double));
   conf_us = (int *)malloc(myconf * sizeof(double));
-  MPI_Scatterv(volumen, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf, MPI_DOUBLE, 0,
-    MPI_COMM_WORLD);
+  MPI_Scatterv(volumen, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf,
+    MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT, conf_uf, myconf, MPI_INT,
     0, MPI_COMM_WORLD);
   MPI_Scatterv(usestress, conf_len, conf_dist, MPI_INT, conf_us, myconf,

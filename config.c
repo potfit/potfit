@@ -40,7 +40,7 @@
 
 double make_box(void)
 {
-  double  volume;
+  double volume;
 
   /* compute tbox_j such that SPROD(box_i,tbox_j) == delta_ij */
   /* first unnormalized */
@@ -95,7 +95,7 @@ void read_config(char *filename)
 #endif /* APOT */
   FILE *infile;
   fpos_t filepos;
-  double  r, rr, istep, shift, step;
+  double r, rr, istep, shift, step;
   double *mindist;
   sym_tens *stresses;
   vector d, dd, iheight;
@@ -750,8 +750,8 @@ void read_config(char *filename)
 #else
     int   pair_steps = 1000 / 2;
 #endif /* APOT */
-    double  pair_table[paircol * pair_steps];
-    double  pair_dist[paircol];
+    double pair_table[paircol * pair_steps];
+    double pair_dist[paircol];
     int   pos, max_count = 0;
 
     strcpy(pairname, config);
@@ -809,7 +809,7 @@ void read_config(char *filename)
 
   /* assign correct distances to different tables */
 #ifdef APOT
-  double  min = 10.;
+  double min = 10.;
 
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
@@ -933,7 +933,7 @@ void update_slots(void)
 #ifdef ADP
   int   col2, col3;		/* u and w function part */
 #endif /* ADP */
-  double  r, rr;
+  double r, rr;
 
   for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].n_neigh; j++) {

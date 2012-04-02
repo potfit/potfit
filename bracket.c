@@ -35,8 +35,9 @@
 #include "bracket.h"
 #include "utils.h"
 
-void bracket(double *x_lower, double *x_minimum, double *x_upper, double *f_lower,
-  double *f_minimum, double *f_upper, double *f_vec1, double *f_vec2)
+void bracket(double *x_lower, double *x_minimum, double *x_upper,
+  double *f_lower, double *f_minimum, double *f_upper, double *f_vec1,
+  double *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
@@ -49,9 +50,9 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper, double *f_lowe
   volatile double f_left = *f_lower;
   volatile double f_right = *f_upper;
   volatile double f_center;
-  double  x_left = *x_lower;
-  double  x_right = *x_upper;
-  double  x_center;
+  double x_left = *x_lower;
+  double x_right = *x_upper;
+  double x_center;
   static double *vecu = NULL;	/* Vector of location u */
   static double *f_vec3 = NULL;	/* 3rd target vector */
   static double *p_left, *p_right, *p_center, *p_temp;

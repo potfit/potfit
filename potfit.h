@@ -53,12 +53,26 @@
 
 #define FORCE_EPS .1
 
-#define SLOTS 1			/* pair potential = 0 */
-#if defined EAM			/* transfer function = 1 */
-#define SLOTS 2			/* dipole term = 2 */
-#elif defined ADP		/* quadrupole term = 3 */
+/****************************************************************
+ *
+ *  SLOTS: number of different distance tables used in the force calculations
+ *
+ *  pair potential 	= 	0 		PAIR pair distance
+ *  transfer function 	= 	1  		EAM transfer function
+ *  dipole term 	= 	2 		ADP dipole term
+ *  quadrupole term 	= 	3 		ADP quadrupole term
+ *
+ ****************************************************************/
+
+#define SLOTS 1
+
+#if defined EAM
+#undef SLOTS
+#define SLOTS 2
+#elif defined ADP
+#undef SLOTS
 #define SLOTS 4
-#endif /* EAM */
+#endif
 
 /****************************************************************
  *
@@ -71,41 +85,41 @@ typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT } Interaction_T;
 
 typedef struct {
-  double  x;
-  double  y;
-  double  z;
+  double x;
+  double y;
+  double z;
 } vector;
 
 /* This is the order of vasp for stresses */
 typedef struct {
-  double  xx;
-  double  yy;
-  double  zz;
-  double  xy;
-  double  yz;
-  double  zx;
+  double xx;
+  double yy;
+  double zz;
+  double xy;
+  double yz;
+  double zx;
 } sym_tens;
 
 typedef struct {
   int   typ;
   int   nr;
-  double  r;
+  double r;
   vector dist;			/* distance divided by r */
 #ifdef COULOMB
-  double  r2;			/* r^2 */
-  double  fnval_el;		/* stores tail of electrostatic potential */
-  double  grad_el;		/* stores tail of first derivative of electrostatic potential */
-  double  ggrad_el;		/* stores tail of second derivative of electrostatic potential */
+  double r2;			/* r^2 */
+  double fnval_el;		/* stores tail of electrostatic potential */
+  double grad_el;		/* stores tail of first derivative of electrostatic potential */
+  double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
 #endif
   int   slot[SLOTS];
-  double  shift[SLOTS];
-  double  step[SLOTS];
+  double shift[SLOTS];
+  double step[SLOTS];
   int   col[SLOTS];		/* coloumn of interaction for this neighbor */
 #ifdef ADP
   vector rdist;			/* double distance */
   sym_tens sqrdist;		/* double squared distance */
-  double  u_val, u_grad;		/* value and gradient of u(r) */
-  double  w_val, w_grad;		/* value and gradient of w(r) */
+  double u_val, u_grad;		/* value and gradient of u(r) */
+  double w_val, w_grad;		/* value and gradient of w(r) */
 #endif
 } neigh_t;
 
@@ -114,16 +128,16 @@ typedef struct {
   int   n_neigh;
   vector pos;
   vector force;
-  double  absforce;
+  double absforce;
   int   conf;			/* Which configuration... */
 #if defined EAM || defined ADP
-  double  rho;			/* embedding electron density */
-  double  gradF;			/* gradient of embedding fn. */
+  double rho;			/* embedding electron density */
+  double gradF;			/* gradient of embedding fn. */
 #endif
 #ifdef ADP
   vector mu;
   sym_tens lambda;
-  double  nu;
+  double nu;
 #endif
 #ifdef DIPOLE
   vector E_stat;		/* static field-contribution */
@@ -140,15 +154,15 @@ typedef struct {
   int   len;			/* total length of the table */
   int   idxlen;			/* number of changeable potential values */
   int   ncols;			/* number of columns */
-  double *begin;			/* first value in the table */
+  double *begin;		/* first value in the table */
   double *end;			/* last value in the table */
   double *step;			/* table increment */
   double *invstep;		/* inverse of increment */
   int  *first;			/* index of first entry */
   int  *last;			/* index of last entry */
-  double *xcoord;			/* the x-coordinates of sampling points */
-  double *table;			/* the actual data */
-  double *d2tab;			/* second derivatives of table data for spline int */
+  double *xcoord;		/* the x-coordinates of sampling points */
+  double *table;		/* the actual data */
+  double *d2tab;		/* second derivatives of table data for spline int */
   int  *idx;			/* indirect indexing */
 } pot_table_t;
 
@@ -162,7 +176,7 @@ typedef struct {
   int   invar_pots;		/* number of invariant analytic potentials */
   int  *idxpot;			/* indirect index for potentials */
   char **names;			/* name of analytic potentials */
-  double *begin;			/* starting position of potential */
+  double *begin;		/* starting position of potential */
   double *end;			/* end position of potential = cutoff radius */
   int  *n_par;			/* number of parameters for analytic potential */
 
@@ -174,9 +188,9 @@ typedef struct {
   int  *idxparam;		/* indirect index for potential parameters */
   int **invar_par;		/* array of invariant parameters */
   char ***param_name;		/* name of parameters */
-  double **pmin;			/* minimum values for parameters */
+  double **pmin;		/* minimum values for parameters */
   double **values;		/* parameter values for analytic potentials */
-  double **pmax;			/* maximum values for parameters */
+  double **pmax;		/* maximum values for parameters */
 
   /* global parameters */
   int   globals;		/* number of global parameters */
@@ -188,9 +202,9 @@ typedef struct {
 #endif
 
 #ifdef COULOMB
-  double *ratio;			/* stoichiometric ratio */
-  double *charge;			/* charges */
-  double  last_charge;		/* last charge determined on the basis of charge neutrality */
+  double *ratio;		/* stoichiometric ratio */
+  double *charge;		/* charges */
+  double last_charge;		/* last charge determined on the basis of charge neutrality */
   double *dp_kappa;		/* parameter kappa */
   int   sw_kappa;		/* switch for kappa-optimization */
 #endif
@@ -331,7 +345,7 @@ EXTERN int cp_start INIT(0);	/* cp in opt_pot.table */
 EXTERN int global_idx INIT(0);	/* index for global parameters in opt_pot table */
 EXTERN int global_pot INIT(0);	/* number of "potential" for global parameters */
 EXTERN int have_globals INIT(0);	/* do we have global parameters? */
-EXTERN double *calc_list;		/* list of current potential in the calc table */
+EXTERN double *calc_list;	/* list of current potential in the calc table */
 EXTERN double *compnodelist;	/* list of the composition nodes */
 #endif /* APOT */
 
@@ -391,7 +405,7 @@ EXTERN int *idx;
 EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
 EXTERN double *lambda;		/* embedding energy slope... */
-EXTERN double *maxchange;		/* Maximal permissible change */
+EXTERN double *maxchange;	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
 
@@ -443,7 +457,7 @@ void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 
 /* read atomic configuration file [config.c] */
-double  make_box(void);
+double make_box(void);
 void  read_config(char *);
 #ifdef APOT
 void  update_slots(void);	/* new slots */
@@ -451,18 +465,18 @@ void  update_slots(void);	/* new slots */
 
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
-double  calc_forces_pair(double *, double *, int);
+double calc_forces_pair(double *, double *, int);
 #elif defined EAM
-double  calc_forces_eam(double *, double *, int);
+double calc_forces_eam(double *, double *, int);
 #elif defined ADP
-double  calc_forces_adp(double *, double *, int);
+double calc_forces_adp(double *, double *, int);
 #elif defined COULOMB
-double  calc_forces_elstat(double *, double *, int);
+double calc_forces_elstat(double *, double *, int);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
 #ifdef EAM
-double  rescale(pot_table_t *, double, int);
+double rescale(pot_table_t *, double, int);
 void  embed_shift(pot_table_t *);
 #endif /* EAM */
 

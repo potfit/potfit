@@ -44,8 +44,8 @@ void  free_all_pointers();
 vector vec_prod(vector, vector);
 
 /* pRNG with equal or normal distribution */
-double  eqdist();
-double  normdist();
+double eqdist();
+double normdist();
 
 /* different power functions */
 inline int isquare(int);

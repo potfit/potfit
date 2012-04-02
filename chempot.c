@@ -36,7 +36,7 @@
 
 int swap_chem_pot(int i, int j)
 {
-  double  temp;
+  double temp;
 
   if (i != j) {
     SWAP(apot_table.values[apot_table.number][i],
@@ -78,7 +78,7 @@ double chemical_potential_1d(int *n, double *mu)
 double chemical_potential_2d(int *n, double *mu)
 {
   int   i = 0, ntot;
-  double  nfrac;
+  double nfrac;
 
   ntot = n[0] + n[1];
   nfrac = (double)n[1] / ntot;
@@ -91,7 +91,7 @@ double chemical_potential_2d(int *n, double *mu)
     i++;
   }
 
-  double  xl, xr, yl, yr, temp;
+  double xl, xr, yl, yr, temp;
 
   if (i == 0) {
     xl = 0;
@@ -119,7 +119,7 @@ double chemical_potential_2d(int *n, double *mu)
 double chemical_potential_3d(int *n, double *mu, int dim)
 {
   int   i;
-  double  temp = 0;
+  double temp = 0;
 
   for (i = 0; i < dim; i++)
     temp += n[i] * mu[i];

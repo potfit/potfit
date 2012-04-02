@@ -89,17 +89,17 @@
 
 double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 {
-  double  tmpsum, sum = 0.;
+  double tmpsum, sum = 0.;
   int   first, col, ne, size, i;
   double *xi = NULL;
   apot_table_t *apt = &apot_table;
-  double  charge[ntypes];
-  double  sum_charges;
-  double  dp_kappa;
+  double charge[ntypes];
+  double sum_charges;
+  double dp_kappa;
 #ifdef DIPOLE
-  double  dp_alpha[ntypes];
-  double  dp_b[apt->number];
-  double  dp_c[apt->number];
+  double dp_alpha[ntypes];
+  double dp_b[apt->number];
+  double dp_c[apt->number];
 #endif /* DIPOLE */
 
   switch (format) {
@@ -215,7 +215,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, uf, us, stresses;	/* config */
-      double  fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
+      double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
 
@@ -425,9 +425,9 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 
 #ifdef DIPOLE
 	/* T H I R D loop: calculate whole dipole moment for every atom */
-	double  rp, dp_sum;
+	double rp, dp_sum;
 	int   dp_converged = 0, dp_it = 0;
-	double  max_diff = 10;
+	double max_diff = 10;
 
 	while (dp_converged == 0) {
 	  dp_sum = 0;
@@ -550,9 +550,9 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 
 
 	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
-	double  rp_i, rp_j, pp_ij, tmp_1, tmp_2;
-	double  grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail, fnval_sum,
-	  grad_sum;
+	double rp_i, rp_j, pp_ij, tmp_1, tmp_2;
+	double grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail,
+	  fnval_sum, grad_sum;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -752,7 +752,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 
 
 	/* F I F T H  loop: self energy contributions and sum-up force contributions */
-	double  qq, pp;
+	double qq, pp;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;

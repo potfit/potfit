@@ -89,7 +89,7 @@
 double calc_forces_pair(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  double  tmpsum = 0., sum = 0.;
+  double tmpsum = 0., sum = 0.;
   double *xi = NULL;
 
   switch (format) {
@@ -169,7 +169,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
       neigh_t *neigh;
 
       /* pair variables */
-      double  phi_val, phi_grad;
+      double phi_val, phi_grad;
       vector tmp_force;
 
       /* loop over configurations */

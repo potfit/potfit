@@ -52,11 +52,11 @@ void  anneal(double *);
 /* powell least squares [powell_lsq.c] */
 void  powell_lsq(double *);
 int   gamma_init(double **, double **, double *, double *);
-int   gamma_update(double **, double, double, double *, double *, double *, int, int, int,
-  double);
+int   gamma_update(double **, double, double, double *, double *, double *, int,
+  int, int, double);
 void  lineqsys_init(double **, double **, double *, double *, int, int);
 void  lineqsys_update(double **, double **, double *, double *, int, int, int);
 void  copy_matrix(double **, double **, int, int);
 void  copy_vector(double *, double *, int);
 void  matdotvec(double **, double *, double *, int, int);
-double  normalize_vector(double *, int);
+double normalize_vector(double *, int);

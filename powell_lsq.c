@@ -64,10 +64,10 @@ void powell_lsq(double *xi)
   int   i, j, m = 0, n = 0;	/* Simple counting variables */
   double *force_xi;		/* calculated force, alt */
   double **d;			/* Direction vectors */
-  double **gamma;			/* Matrix of derivatives */
+  double **gamma;		/* Matrix of derivatives */
   double **lineqsys;		/* Lin.Eq.Sys. Matrix */
   double **les_inverse;		/* LU decomp. of the lineqsys */
-  double *delta;			/* Vector pointing into correct dir'n */
+  double *delta;		/* Vector pointing into correct dir'n */
   double *delta_norm;		/* Normalized vector delta */
   double *fxi1, *fxi2;		/* two latest force vectors */
 #ifndef ACML			/* work arrays not needed for ACML */
@@ -77,15 +77,15 @@ void powell_lsq(double *xi)
 #endif /* ACML */
   int  *perm_indx;		/* Keeps track of LU pivoting */
   int   breakflag;		/* Breakflag */
-  double  cond = 0.;		/* Condition number dsysvx */
-  double *p, *q;			/* Vectors needed in Powell's algorithm */
-  double  F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
-  double  temp, temp2;		/* as the name indicates: temporary vars */
+  double cond = 0.;		/* Condition number dsysvx */
+  double *p, *q;		/* Vectors needed in Powell's algorithm */
+  double F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
+  double temp, temp2;		/* as the name indicates: temporary vars */
 #ifdef APOT
   int   itemp, itemp2;		/* the same for integer */
 #endif /* APOT */
-  double  ferror = 0.;
-  double  berror = 0.;		/* forward/backward error estimates */
+  double ferror = 0.;
+  double berror = 0.;		/* forward/backward error estimates */
   FILE *ff;			/* Exit flagfile */
 
   d = mat_double(ndim, ndim);
@@ -379,7 +379,7 @@ int gamma_init(double **gamma, double **d, double *xi, double *force_xi)
 {
   static double *force;
   int   i, j;			/* Auxiliary vars: Counters */
-  double  sum, temp, scale, store;	/* Auxiliary var: Sum */
+  double sum, temp, scale, store;	/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
   /*Initialize direction vectors */
   for (i = 0; i < ndim; i++) {
@@ -435,13 +435,13 @@ int gamma_init(double **gamma, double **d, double *xi, double *force_xi)
  *
  ****************************************************************/
 
-int gamma_update(double **gamma, double a, double b, double *fa, double *fb, double *delta,
-  int j, int m, int n, double fmin)
+int gamma_update(double **gamma, double a, double b, double *fa, double *fb,
+  double *delta, int j, int m, int n, double fmin)
 {
   int   i;
-  double  temp;
-  double  sum = 0.;
-  double  mu = 0.;
+  double temp;
+  double sum = 0.;
+  double mu = 0.;
   for (i = 0; i < m; i++) {
     temp = ((fa[i] - fb[i]) / (a - b));
     gamma[i][j] = temp;
@@ -471,8 +471,8 @@ int gamma_update(double **gamma, double a, double b, double *fa, double *fb, dou
  *
  ****************************************************************/
 
-void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce, double *p,
-  int n, int m)
+void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce,
+  double *p, int n, int m)
 {
   int   i, j, k;		/* Auxiliary vars: Counters */
 /*   double  temp; */
@@ -507,8 +507,8 @@ void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce, double
  *
  ****************************************************************/
 
-void lineqsys_update(double **gamma, double **lineqsys, double *force_xi, double *p,
-  int i, int n, int m)
+void lineqsys_update(double **gamma, double **lineqsys, double *force_xi,
+  double *p, int i, int n, int m)
 {
   int   j, k;
   for (k = 0; k < n; k++) {
@@ -584,7 +584,7 @@ void matdotvec(double **a, double *x, double *y, int n, int m)
 double normalize_vector(double *v, int n)
 {
   int   j;
-  double  temp, sum = 0.0;
+  double temp, sum = 0.0;
   for (j = 0; j < n; j++)
     sum += dsquare(v[j]);
   temp = sqrt(sum);

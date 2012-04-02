@@ -56,8 +56,8 @@
 void init_population(double **pop, double *xi, double *cost)
 {
   int   i, j;
-  double  temp, max, min, val;
-  double  fxi[mdim];
+  double temp, max, min, val;
+  double fxi[mdim];
 
   for (i = 0; i < NP; i++) {
     for (j = 0; j < (D - 2); j++)
@@ -107,11 +107,11 @@ void init_population(double **pop, double *xi, double *cost)
 void opposite_check(double **P, double *costP, int init)
 {
   int   i, j;
-  double  fxi[mdim];
-  double  max, min;
-  double  minp[ndim], maxp[ndim];
+  double fxi[mdim];
+  double max, min;
+  double minp[ndim], maxp[ndim];
   static double *tot_cost;	/* cost of two populations */
-  static double **tot_P;		/* two populations */
+  static double **tot_P;	/* two populations */
 
   /* allocate memory if not done yet */
   if (tot_P == NULL) {
@@ -194,21 +194,21 @@ void diff_evo(double *xi)
   int   i, j, k;		/* counters */
   int   count = 0;		/* counter for loops */
   int   jsteps = 0;
-  double  avg = 0.;		/* average sum of squares for all configurations */
-  double  crit = 1000.;		/* treshold for stopping criterion */
-  double  force = 0.;		/* holds the current sum of squares */
-  double  jumprate = JR;
-  double  min = 10e10;		/* current minimum for all configurations */
-  double  max = 0.;		/* current maximum for all configurations */
-  double  temp = 0.;		/* temp storage */
+  double avg = 0.;		/* average sum of squares for all configurations */
+  double crit = 1000.;		/* treshold for stopping criterion */
+  double force = 0.;		/* holds the current sum of squares */
+  double jumprate = JR;
+  double min = 10e10;		/* current minimum for all configurations */
+  double max = 0.;		/* current maximum for all configurations */
+  double temp = 0.;		/* temp storage */
 #ifdef APOT
-  double  pmin = 0.;		/* lower bound for parameter */
-  double  pmax = 0.;		/* upper bound for parameter */
+  double pmin = 0.;		/* lower bound for parameter */
+  double pmax = 0.;		/* upper bound for parameter */
 #endif /* APOT */
   double *best;			/* best configuration */
   double *cost;			/* cost values for all configurations */
   double *fxi;			/* force vector */
-  double *trial;			/* current trial configuration */
+  double *trial;		/* current trial configuration */
   double **x1;			/* current population */
   double **x2;			/* next generation */
   FILE *ff;			/* exit flagfile */
