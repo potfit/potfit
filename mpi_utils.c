@@ -241,8 +241,8 @@ void broadcast_params()
   if (myid > 0) {
     inconf = (int *)malloc(nconf * sizeof(int));
     cnfstart = (int *)malloc(nconf * sizeof(int));
-    force_0 = (real *)malloc(mdim * sizeof(real));
-    conf_weight = (real *)malloc(nconf * sizeof(real));
+    force_0 = (double *)malloc(mdim * sizeof(double));
+    conf_weight = (double *)malloc(nconf * sizeof(double));
   }
   MPI_Bcast(inconf, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
@@ -261,15 +261,15 @@ void broadcast_params()
   size = calc_pot.ncols;
   calclen = calc_pot.len;
   if (myid > 0) {
-    calc_pot.begin = (real *)malloc(size * sizeof(real));
-    calc_pot.end = (real *)malloc(size * sizeof(real));
-    calc_pot.step = (real *)malloc(size * sizeof(real));
-    calc_pot.invstep = (real *)malloc(size * sizeof(real));
+    calc_pot.begin = (double *)malloc(size * sizeof(double));
+    calc_pot.end = (double *)malloc(size * sizeof(double));
+    calc_pot.step = (double *)malloc(size * sizeof(double));
+    calc_pot.invstep = (double *)malloc(size * sizeof(double));
     calc_pot.first = (int *)malloc(size * sizeof(int));
     calc_pot.last = (int *)malloc(size * sizeof(int));
-    calc_pot.table = (real *)malloc(calclen * sizeof(real));
-    calc_pot.xcoord = (real *)malloc(calclen * sizeof(real));
-    calc_pot.d2tab = (real *)malloc(calclen * sizeof(real));
+    calc_pot.table = (double *)malloc(calclen * sizeof(double));
+    calc_pot.xcoord = (double *)malloc(calclen * sizeof(double));
+    calc_pot.d2tab = (double *)malloc(calclen * sizeof(double));
   }
   MPI_Bcast(calc_pot.begin, size, REAL, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.end, size, REAL, 0, MPI_COMM_WORLD);
@@ -298,21 +298,21 @@ void broadcast_params()
       MPI_Bcast(na_type[i], ntypes, MPI_INT, 0, MPI_COMM_WORLD);
   }
   if (myid > 0) {
-    calc_list = (real *)malloc(opt_pot.len * sizeof(real));
+    calc_list = (double *)malloc(opt_pot.len * sizeof(double));
     apot_table.n_par = (int *)malloc(apot_table.number * sizeof(int));
-    apot_table.end = (real *)malloc(apot_table.number * sizeof(real));
-    apot_table.begin = (real *)malloc(apot_table.number * sizeof(real));
+    apot_table.end = (double *)malloc(apot_table.number * sizeof(double));
+    apot_table.begin = (double *)malloc(apot_table.number * sizeof(double));
     apot_table.idxpot = (int *)malloc(apot_table.number * sizeof(int));
 #ifdef COULOMB
-    apot_table.ratio = (real *)malloc(2 * sizeof(real));
+    apot_table.ratio = (double *)malloc(2 * sizeof(double));
 #endif /* COULOMB */
     smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
-    rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
-    rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
+    rcut = (double *)malloc(ntypes * ntypes * sizeof(double));
+    rmin = (double *)malloc(ntypes * ntypes * sizeof(double));
     apot_table.fvalue =
       (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
-    opt_pot.table = (real *)malloc(opt_pot.len * sizeof(real));
+    opt_pot.table = (double *)malloc(opt_pot.len * sizeof(double));
   }
   MPI_Bcast(smooth_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(invar_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
@@ -392,9 +392,9 @@ void broadcast_params()
     }
   }
   broadcast_neighbors();
-  conf_vol = (real *)malloc(myconf * sizeof(real));
-  conf_uf = (int *)malloc(myconf * sizeof(real));
-  conf_us = (int *)malloc(myconf * sizeof(real));
+  conf_vol = (double *)malloc(myconf * sizeof(double));
+  conf_uf = (int *)malloc(myconf * sizeof(double));
+  conf_us = (int *)malloc(myconf * sizeof(double));
   MPI_Scatterv(volumen, conf_len, conf_dist, REAL, conf_vol, myconf, REAL, 0,
     MPI_COMM_WORLD);
   MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT, conf_uf, myconf, MPI_INT,

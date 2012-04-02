@@ -34,29 +34,29 @@
 
 #ifdef EVO
 /* differential evolution [diff_evo.c] */
-void  init_population(real **, real *, real *);
+void  init_population(double **, double *, double *);
 #ifdef APOT
-void  opposite_check(real **, real *, int);
+void  opposite_check(double **, double *, int);
 #endif /* APOT */
-void  diff_evo(real *);
+void  diff_evo(double *);
 #else /* EVO */
 /* simulated annealing [simann.c] */
 #ifdef APOT
-void  randomize_parameter(int, real *, real *);
+void  randomize_parameter(int, double *, double *);
 #else
-void  makebump(real *, real, real, int);
+void  makebump(double *, double, double, int);
 #endif /* APOT */
-void  anneal(real *);
+void  anneal(double *);
 #endif /* EVO */
 
 /* powell least squares [powell_lsq.c] */
-void  powell_lsq(real *);
-int   gamma_init(real **, real **, real *, real *);
-int   gamma_update(real **, real, real, real *, real *, real *, int, int, int,
-  real);
-void  lineqsys_init(real **, real **, real *, real *, int, int);
-void  lineqsys_update(real **, real **, real *, real *, int, int, int);
-void  copy_matrix(real **, real **, int, int);
-void  copy_vector(real *, real *, int);
-void  matdotvec(real **, real *, real *, int, int);
-real  normalize_vector(real *, int);
+void  powell_lsq(double *);
+int   gamma_init(double **, double **, double *, double *);
+int   gamma_update(double **, double, double, double *, double *, double *, int, int, int,
+  double);
+void  lineqsys_init(double **, double **, double *, double *, int, int);
+void  lineqsys_update(double **, double **, double *, double *, int, int, int);
+void  copy_matrix(double **, double **, int, int);
+void  copy_vector(double *, double *, int);
+void  matdotvec(double **, double *, double *, int, int);
+double  normalize_vector(double *, int);

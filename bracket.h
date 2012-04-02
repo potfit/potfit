@@ -37,9 +37,9 @@
 #define ZEPS 1.0e-9
 #define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
-extern real *xicom, *delcom;
+extern double *xicom, *delcom;
 
-void  bracket(real *, real *, real *, real *, real *, real *, real *, real *);
-real  brent(real, real, real, real, real, real *, real *, real *, real *);
+void  bracket(double *, double *, double *, double *, double *, double *, double *, double *);
+double  brent(double, double, double, double, double, double *, double *, double *, double *);
 
-real  linmin(real *, real *, real, real *, real *, real *, real *);
+double  linmin(double *, double *, double, double *, double *, double *, double *);

@@ -86,13 +86,13 @@
  *
  ****************************************************************/
 
-real calc_forces_eam(real *xi_opt, real *forces, int flag)
+double calc_forces_eam(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  real  tmpsum = 0., sum = 0.;
-  real *xi = NULL;
+  double  tmpsum = 0., sum = 0.;
+  double *xi = NULL;
 
-  static real rho_sum_loc, rho_sum;
+  static double rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
 
   switch (format) {
@@ -212,23 +212,23 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       int   h, j, k, l;
       int   self, uf;
 #ifdef APOT
-      real  temp_eng;
+      double  temp_eng;
 #endif /* APOT */
 #ifdef STRESS
       int   us, stresses;
 #endif /* STRESS */
 
       neigh_t *neigh;
-      real  r;
+      double  r;
 
       /* pair variables */
-      real  phi_val, phi_grad;
+      double  phi_val, phi_grad;
       vector tmp_force;
 
       /* eam variables */
       int   col_F;
-      real  eam_force;
-      real  rho_val, rho_grad, rho_grad_j;
+      double  eam_force;
+      double  rho_val, rho_grad, rho_grad_j;
 
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -289,7 +289,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
-	      /* not real force: cohesive energy */
+	      /* not double force: cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
@@ -503,7 +503,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 	/* use forces */
 	/* energy contributions */
-	forces[energy_p + h] /= (real)inconf[h];
+	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 #ifdef COMPAT
 	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
@@ -596,7 +596,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
       /* Calculate averages */
-      rho_sum /= (real)natoms;
+      rho_sum /= (double)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
       tmpsum += dsquare(forces[dummy_p + ntypes]);

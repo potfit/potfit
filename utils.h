@@ -30,11 +30,11 @@
 
 /* vector and matrix allocations */
 int  *vect_int(long dim);
-real *vect_real(long dim);
-real **mat_real(long rowdim, long coldim);
+double *vect_double(long dim);
+double **mat_double(long rowdim, long coldim);
 void  free_vect_int(int *vect);
-void  free_vect_real(real *vect);
-void  free_mat_real(real **matrix);
+void  free_vect_double(double *vect);
+void  free_mat_double(double **matrix);
 
 /* memory management */
 void  reg_for_free(void *p, char *name, ...);
@@ -44,18 +44,18 @@ void  free_all_pointers();
 vector vec_prod(vector, vector);
 
 /* pRNG with equal or normal distribution */
-real  eqdist();
-real  normdist();
+double  eqdist();
+double  normdist();
 
 /* different power functions */
 inline int isquare(int);
-inline real dsquare(real);
-void  power_1(real *, real *, real *);
-void  power_m(int, real *, real *, real *);
+inline double dsquare(double);
+void  power_1(double *, double *, double *);
+void  power_m(int, double *, double *, double *);
 
 #if defined APOT && defined EVO
 /* quicksort for ODE */
-void  quicksort(real *x, int low, int high, real **p);
-int   partition(real *x, int low, int high, int index, real **p);
-void  swap_population(real *a, real *b);
+void  quicksort(double *x, int low, int high, double **p);
+int   partition(double *x, int low, int high, int index, double **p);
+void  swap_population(double *a, double *b);
 #endif /* APOT && EVO */

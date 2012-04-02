@@ -38,9 +38,9 @@
  *
  ****************************************************************/
 
-real make_box(void)
+double make_box(void)
 {
-  real  volume;
+  double  volume;
 
   /* compute tbox_j such that SPROD(box_i,tbox_j) == delta_ij */
   /* first unnormalized */
@@ -95,8 +95,8 @@ void read_config(char *filename)
 #endif /* APOT */
   FILE *infile;
   fpos_t filepos;
-  real  r, rr, istep, shift, step;
-  real *mindist;
+  double  r, rr, istep, shift, step;
+  double *mindist;
   sym_tens *stresses;
   vector d, dd, iheight;
 
@@ -114,7 +114,7 @@ void read_config(char *filename)
   }
 
   /* initialize minimum distance array */
-  mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
+  mindist = (double *)malloc(ntypes * ntypes * sizeof(double));
   if (NULL == mindist)
     error(1, "Cannot allocate memory for minimal distance.");
 
@@ -166,15 +166,15 @@ void read_config(char *filename)
       error(1, "Cannot allocate memory for atoms");
     for (i = 0; i < count; i++)
       atoms[natoms + i].neigh = malloc(1 * sizeof(neigh_t));
-    coheng = (real *)realloc(coheng, (nconf + 1) * sizeof(real));
+    coheng = (double *)realloc(coheng, (nconf + 1) * sizeof(double));
     if (NULL == coheng)
       error(1, "Cannot allocate memory for cohesive energy");
-    conf_weight = (real *)realloc(conf_weight, (nconf + 1) * sizeof(real));
+    conf_weight = (double *)realloc(conf_weight, (nconf + 1) * sizeof(double));
     if (NULL == conf_weight)
       error(1, "Cannot allocate memory for configuration weights");
     else
       conf_weight[nconf] = 1.;
-    volumen = (real *)realloc(volumen, (nconf + 1) * sizeof(real));
+    volumen = (double *)realloc(volumen, (nconf + 1) * sizeof(double));
     if (NULL == volumen)
       error(1, "Cannot allocate memory for volume");
     stress = (sym_tens *)realloc(stress, (nconf + 1) * sizeof(sym_tens));
@@ -688,7 +688,7 @@ void read_config(char *filename)
   reg_for_free(usestress, "usestress");
 
   mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector
-					   3*natoms are real forces,
+					   3*natoms are double forces,
 					   nconf cohesive energies,
 					   6*nconf stress tensor components */
 #if defined EAM || defined ADP
@@ -701,7 +701,7 @@ void read_config(char *filename)
 #endif /* APOT */
 
   /* copy forces into single vector */
-  if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
+  if (NULL == (force_0 = (double *)malloc(mdim * sizeof(double))))
     error(1, "Cannot allocate force vector");
   reg_for_free(force_0, "force_0");
 
@@ -750,8 +750,8 @@ void read_config(char *filename)
 #else
     int   pair_steps = 1000 / 2;
 #endif /* APOT */
-    real  pair_table[paircol * pair_steps];
-    real  pair_dist[paircol];
+    double  pair_table[paircol * pair_steps];
+    double  pair_dist[paircol];
     int   pos, max_count = 0;
 
     strcpy(pairname, config);
@@ -809,7 +809,7 @@ void read_config(char *filename)
 
   /* assign correct distances to different tables */
 #ifdef APOT
-  real  min = 10.;
+  double  min = 10.;
 
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
@@ -933,7 +933,7 @@ void update_slots(void)
 #ifdef ADP
   int   col2, col3;		/* u and w function part */
 #endif /* ADP */
-  real  r, rr;
+  double  r, rr;
 
   for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].n_neigh; j++) {

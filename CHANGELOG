@@ -239,7 +239,7 @@ adp-20100527
 + adp should now be complete, mpi still missing
 
 bzr-20100512
-+ moved files from *_r.* to *.*, all types are real, include header for bracketing
++ moved files from *_r.* to *.*, all types are double, include header for bracketing
 + fix warnings when compiling with debug flag
 + simann now counts all new parameters as an attempt, even if they were out of bounds
 + optimize evo output
@@ -511,7 +511,7 @@ CVS-20081201
 + [APOT] some minor tweaks in the SA-algorithm, mainly for speed purposes
 + [APOT] fixed bug with temporary potential files, now the current potential
   and not the past one is written to the tempfile
-+ new variable real *calc_list that stores the parameters
++ new variable double *calc_list that stores the parameters
   the potential in the calc_table was generated from
 
 CVS-20081126

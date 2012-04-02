@@ -44,18 +44,18 @@ void  read_pot_table4(pot_table_t *, int, int, int *, char *, FILE *);
 /* calculating the potential tables */
 void  init_calc_table(pot_table_t *, pot_table_t *);
 #ifdef APOT
-void  update_apot_table(real *);
-void  update_calc_table(real *, real *, int);
+void  update_apot_table(double *);
+void  update_calc_table(double *, double *, int);
 #endif /* APOT */
 
 /* parabolic interpolation */
 #ifdef PARABEL
-real  parab_comb_ed(pot_table_t *, real *, int, real, real *);
-real  parab_grad_ed(pot_table_t *, real *, int, real);
-real  parab_ed(pot_table_t *, real *, int, real);
-real  parab_comb_ne(pot_table_t *, real *, int, real, real *);
-real  parab_grad_ne(pot_table_t *, real *, int, real);
-real  parab_ne(pot_table_t *, real *, int, real);
+double  parab_comb_ed(pot_table_t *, double *, int, double, double *);
+double  parab_grad_ed(pot_table_t *, double *, int, double);
+double  parab_ed(pot_table_t *, double *, int, double);
+double  parab_comb_ne(pot_table_t *, double *, int, double, double *);
+double  parab_grad_ne(pot_table_t *, double *, int, double);
+double  parab_ne(pot_table_t *, double *, int, double);
 #endif /* PARABEL */
 
 /* writing potentials to files */
@@ -75,6 +75,6 @@ void  write_pairdist(pot_table_t *, char *);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  init_tails(real);
+void  init_tails(double);
 void  write_coulomb_table(void);
 #endif /* COULOMB */

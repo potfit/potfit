@@ -35,17 +35,17 @@
 typedef struct {
   char  name[20];
   char  short_name[20];
-  real  mass;
+  double  mass;
 } element_t;
 
 /* initialize periodic table of elements */
 void  init_elements();
 
 /* get mass from number */
-real  ele_mass_from_number(int num);
+double  ele_mass_from_number(int num);
 
 /* get mass from name */
-real  ele_mass_from_name(char *name);
+double  ele_mass_from_name(char *name);
 
 /* get number from name */
 int   ele_number_from_name(char *name);

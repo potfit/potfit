@@ -86,11 +86,11 @@
  *
  ****************************************************************/
 
-real calc_forces_pair(real *xi_opt, real *forces, int flag)
+double calc_forces_pair(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  real  tmpsum = 0., sum = 0.;
-  real *xi = NULL;
+  double  tmpsum = 0., sum = 0.;
+  double *xi = NULL;
 
   switch (format) {
       case 0:
@@ -169,7 +169,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       neigh_t *neigh;
 
       /* pair variables */
-      real  phi_val, phi_grad;
+      double  phi_val, phi_grad;
       vector tmp_force;
 
       /* loop over configurations */
@@ -231,7 +231,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
-	      /* not real force: cohesive energy */
+	      /* not double force: cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
@@ -281,7 +281,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	}
 
 	/* energy contributions */
-	forces[energy_p + h] /= (real)inconf[h];
+	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 #ifdef COMPAT
 	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);

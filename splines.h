@@ -32,14 +32,14 @@
 #include "potfit.h"
 #endif
 
-void  spline_ed(real, real *, int, real, real, real *);
-real  splint_ed(pot_table_t *, real *, int, real);
-real  splint_grad_ed(pot_table_t *, real *, int, real);
-real  splint_comb_ed(pot_table_t *, real *, int, real, real *);
-real  splint_dir(pot_table_t *, real *, int, real, real);
-real  splint_comb_dir(pot_table_t *, real *, int, real, real, real *);
-real  splint_grad_dir(pot_table_t *, real *, int, real, real);
-void  spline_ne(real *, real *, int, real, real, real *);
-real  splint_ne(pot_table_t *, real *, int, real);
-real  splint_comb_ne(pot_table_t *, real *, int, real, real *);
-real  splint_grad_ne(pot_table_t *, real *, int, real);
+void  spline_ed(double, double *, int, double, double, double *);
+double  splint_ed(pot_table_t *, double *, int, double);
+double  splint_grad_ed(pot_table_t *, double *, int, double);
+double  splint_comb_ed(pot_table_t *, double *, int, double, double *);
+double  splint_dir(pot_table_t *, double *, int, double, double);
+double  splint_comb_dir(pot_table_t *, double *, int, double, double, double *);
+double  splint_grad_dir(pot_table_t *, double *, int, double, double);
+void  spline_ne(double *, double *, int, double, double, double *);
+double  splint_ne(pot_table_t *, double *, int, double);
+double  splint_comb_ne(pot_table_t *, double *, int, double, double *);
+double  splint_grad_ne(pot_table_t *, double *, int, double);

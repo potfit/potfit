@@ -482,7 +482,7 @@ void init_elements()
   element_table[110].mass = 1.0;
 }
 
-real ele_mass_from_number(int num)
+double ele_mass_from_number(int num)
 {
   if (num > N_ELEMENTS || num < 1) {
     return 0.0;
@@ -492,7 +492,7 @@ real ele_mass_from_number(int num)
 
 }
 
-real ele_mass_from_name(char *name)
+double ele_mass_from_name(char *name)
 {
   int   i = 0;
   if (strlen(name) < 3) {

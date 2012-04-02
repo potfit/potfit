@@ -63,7 +63,7 @@ void error(int done, char *msg, ...)
   fflush(stderr);
   if (done == 1) {
 #ifdef MPI
-    real *force = NULL;
+    double *force = NULL;
     /* go wake up other threads */
     calc_forces(calc_pot.table, force, 1);
     fprintf(stderr, "\n");
@@ -111,12 +111,12 @@ int main(int argc, char **argv)
   char  file[255];
   FILE *outfile;
   int   i, j;
-  real  tot, sqr;
-  real *force;
-  real *rms;
+  double  tot, sqr;
+  double *force;
+  double *rms;
   time_t t_begin, t_end;
 #if defined EAM || defined ADP
-  real *totdens = NULL;
+  double *totdens = NULL;
 #endif /* EAM || ADP */
 
 #ifdef MPI
@@ -193,10 +193,10 @@ int main(int argc, char **argv)
 
     /* set spline density corrections to 0 */
 #if defined EAM || defined ADP
-    lambda = (real *)malloc(ntypes * sizeof(real));
+    lambda = (double *)malloc(ntypes * sizeof(double));
     reg_for_free(lambda, "lambda");
 
-    totdens = (real *)malloc(ntypes * sizeof(real));
+    totdens = (double *)malloc(ntypes * sizeof(double));
     reg_for_free(totdens, "totdens");
 
     for (i = 0; i < ntypes; i++)
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
   idx = opt_pot.idx;
 
   /* main force vector, all forces, energies, ... will be stored here */
-  force = (real *)malloc((mdim) * sizeof(real));
+  force = (double *)malloc((mdim) * sizeof(double));
   if (NULL == force)
     error(1, "Could not allocate memory for main force vector.");
   reg_for_free(force, "force");
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif /* APOT */
 #endif /* EAM || ADP */
-  rms = (real *)malloc(3 * sizeof(real));
+  rms = (double *)malloc(3 * sizeof(double));
   if (NULL == rms)
     error(1, "Could not allocate memory for rms errors.");
   reg_for_free(rms, "rms");
@@ -405,7 +405,7 @@ int main(int argc, char **argv)
     }
     fprintf(outfile, "\n");
     for (i = 0; i < ntypes; i++) {
-      totdens[i] /= (real)na_type[nconf][i];
+      totdens[i] /= (double)na_type[nconf][i];
       fprintf(outfile,
 	"Average local electron density at atom sites type %d: %f\n", i,
 	totdens[i]);
@@ -441,9 +441,9 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
 
     /* prepare for error calculations */
-    real  f_sum = 0.;
-    real  e_sum = 0.;
-    real  s_sum = 0.;
+    double  f_sum = 0.;
+    double  e_sum = 0.;
+    double  s_sum = 0.;
 
     /* write force deviations */
     if (write_output_files) {
@@ -768,7 +768,7 @@ int main(int argc, char **argv)
       (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
 	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
     printf("%d force calculations, each took %f seconds\n", fcalls,
-      (real)difftime(t_end, t_begin) / fcalls);
+      (double)difftime(t_end, t_begin) / fcalls);
   }
 
   /* do some cleanups before exiting */

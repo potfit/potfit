@@ -105,12 +105,12 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 	      "Parameter for %s missing in line %d!\nDouble vector of length %u expected!",
 	      param_name, curline, (unsigned)pnum_min);
 	  else
-	    ((real *)param)[i] = atof(str);
+	    ((double *)param)[i] = atof(str);
 	  numread++;
 	}
 	for (i = pnum_min; i < pnum_max; i++) {
 	  if ((str = strtok(NULL, " \t\r\n")) != NULL) {
-	    ((real *)param)[i] = atof(str);
+	    ((double *)param)[i] = atof(str);
 	    numread++;
 	  } else
 	    break;
