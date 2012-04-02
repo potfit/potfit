@@ -75,16 +75,14 @@ void shutdown_mpi(void)
 
 #ifdef PAIR
 #define MAX_MPI_COMPONENTS 8
-#elif defined EAM && !defined COULOMB
-#define MAX_MPI_COMPONENTS 9
 #elif defined ADP
 #define MAX_MPI_COMPONENTS 14
+#elif defined EAM && !defined COULOMB
+#define MAX_MPI_COMPONENTS 9
 #elif defined COULOMB && !defined EAM
 #define MAX_MPI_COMPONENTS 12
-#elif defined EAM && defined COULOMB && !defined DIPOLE
-#define MAX_MPI_COMPONENTS 13
-#elif defined EAM && defined DIPOLE
-#define MAX_MPI_COMPONENTS 15
+#elif defined EAM && defined COULOMB
+#define MAX_MPI_COMPONENTS 14
 #endif /* PAIR */
 
 void broadcast_params()
@@ -196,12 +194,12 @@ void broadcast_params()
 #if defined DIPOLE && defined EAM
   blklens[6] = 1;         typen[6] = REAL;        /* rho */
   blklens[7] = 1;         typen[7] = REAL;        /* gradF */
-  blklens[8] = 1;         typen[6] = MPI_VEKTOR;     /* E_stat */
-  blklens[9] = 1;         typen[7] =  MPI_VEKTOR;    /* p_sr */
-  blklens[10] = 1;         typen[8] =  MPI_VEKTOR;   /* E_ind */
-  blklens[11] = 1;         typen[9] =  MPI_VEKTOR;   /* p_ind */
-  blklens[12] = 1;        typen[10] =  MPI_VEKTOR;   /* E_old */
-  blklens[13] = 1;        typen[11] =  MPI_VEKTOR;   /* E_tot */
+  blklens[8] = 1;         typen[8] = MPI_VEKTOR;     /* E_stat */
+  blklens[9] = 1;         typen[9] =  MPI_VEKTOR;    /* p_sr */
+  blklens[10] = 1;        typen[10] =  MPI_VEKTOR;   /* E_ind */
+  blklens[11] = 1;        typen[11] =  MPI_VEKTOR;   /* p_ind */
+  blklens[12] = 1;        typen[12] =  MPI_VEKTOR;   /* E_old */
+  blklens[13] = 1;        typen[13] =  MPI_VEKTOR;   /* E_tot */
   size += 8;
 #endif /* DIPOLE && EAM */
 
@@ -328,7 +326,7 @@ void broadcast_params()
     apot_table.end = (real *)malloc(apot_table.number * sizeof(real));
     apot_table.begin = (real *)malloc(apot_table.number * sizeof(real));
 #ifdef COULOMB
-    apot_table.ratio = (real *)malloc(2 * sizeof(real));
+    apot_table.ratio = (real *)malloc(ntypes * sizeof(real));
 #endif /* COULOMB */
     smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
@@ -353,7 +351,7 @@ void broadcast_params()
   MPI_Bcast(&apot_table.globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
   MPI_Bcast(&apot_table.last_charge, 1, REAL, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.ratio, 2, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.ratio, ntypes, REAL, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
   if (have_globals) {
     if (myid > 0) {
