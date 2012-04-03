@@ -34,6 +34,7 @@
 #include "potfit.h"
 #undef MAIN
 
+#include "config.h"
 #include "functions.h"
 #include "optimize.h"
 #include "potential.h"

@@ -28,9 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_H
-#include "potfit.h"
-#endif
+#ifndef POTENTIAL_H
+#define POTENTIAL_H
 
 /* reading the potential file */
 void  read_pot_table(pot_table_t *, char *);
@@ -78,3 +77,5 @@ void  write_pairdist(pot_table_t *, char *);
 void  init_tails(double);
 void  write_coulomb_table(void);
 #endif /* COULOMB */
+
+#endif /* POTENTIAL_H */

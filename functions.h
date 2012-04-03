@@ -30,9 +30,8 @@
 
 #ifdef APOT
 
-#ifndef POTFIT_H
-#include "potfit.h"
-#endif
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 /* actual functions for different potentials */
 
@@ -112,5 +111,7 @@ void  elstat_shift(double, double, double *, double *, double *);
 double shortrange_value(double, double, double, double);
 void  shortrange_term(double, double, double, double *, double *);
 #endif /* DIPOLE */
+
+#endif /* FUNCTIONS_H */
 
 #endif /* APOT */

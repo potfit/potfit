@@ -28,6 +28,9 @@
  *
  ****************************************************************/
 
+#ifndef BRACKET_H
+#define BRACKET_H
+
 /* for bracket.c */
 #define CGOLD 0.3819660
 #define MAX_IT 100
@@ -46,3 +49,5 @@ double brent(double, double, double, double, double, double *, double *,
 
 double linmin(double *, double *, double, double *, double *, double *,
   double *);
+
+#endif /* BRACKET_H */

@@ -28,9 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_H
-#include "potfit.h"
-#endif
+#ifndef ELEMENTS_H
+#define ELEMENTS_H
 
 typedef struct {
   char  name[20];
@@ -49,3 +48,5 @@ double ele_mass_from_name(char *name);
 
 /* get number from name */
 int   ele_number_from_name(char *name);
+
+#endif /* ELEMENTS_H */

@@ -28,6 +28,7 @@
  *
  ****************************************************************/
 
+#ifndef POTFIT_H
 #define POTFIT_H
 
 #include <stdarg.h>
@@ -129,6 +130,7 @@ typedef struct {
   vector force;
   double absforce;
   int   conf;			/* Which configuration... */
+  int   contrib;		/* Does this atom contribute to the error sum? */
 #if defined EAM || defined ADP
   double rho;			/* embedding electron density */
   double gradF;			/* gradient of embedding fn. */
@@ -329,6 +331,7 @@ EXTERN double rcutmax INIT(0.);	/* maximum of all cutoff values */
 EXTERN sym_tens *conf_stress;
 EXTERN sym_tens *stress;	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
+EXTERN vector contrib_ll, contrib_ur;
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 /* potential variables */
@@ -455,13 +458,6 @@ void  check_parameters_complete(char *);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 
-/* read atomic configuration file [config.c] */
-double make_box(void);
-void  read_config(char *);
-#ifdef APOT
-void  update_slots(void);	/* new slots */
-#endif /* APOT */
-
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
 double calc_forces_pair(double *, double *, int);
@@ -487,3 +483,5 @@ void  broadcast_params(void);
 void  broadcast_neighbors(void);
 void  potsync(void);
 #endif /* MPI */
+
+#endif /* POTFIT_H */

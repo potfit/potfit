@@ -1,10 +1,10 @@
 /****************************************************************
  *
- * potential.h: potfit spline functions header file
+ * config.h: header file for reading atomic configurations
  *
  ****************************************************************
  *
- * Copyright 2011-2012
+ * Copyright 2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -28,19 +28,18 @@
  *
  ****************************************************************/
 
-#ifndef SPLINES_H
-#define SPLINES_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
-void  spline_ed(double, double *, int, double, double, double *);
-double splint_ed(pot_table_t *, double *, int, double);
-double splint_grad_ed(pot_table_t *, double *, int, double);
-double splint_comb_ed(pot_table_t *, double *, int, double, double *);
-double splint_dir(pot_table_t *, double *, int, double, double);
-double splint_comb_dir(pot_table_t *, double *, int, double, double, double *);
-double splint_grad_dir(pot_table_t *, double *, int, double, double);
-void  spline_ne(double *, double *, int, double, double, double *);
-double splint_ne(pot_table_t *, double *, int, double);
-double splint_comb_ne(pot_table_t *, double *, int, double, double *);
-double splint_grad_ne(pot_table_t *, double *, int, double);
+#ifndef POTFIT_H
+#include "potfit.h"
+#endif /* POTFIT_H */
 
-#endif /* SPLINES_H */
+void  read_config(char *);
+double make_box(void);
+int   does_contribute(vector);
+#ifdef APOT
+void  update_slots(void);
+#endif /* APOT */
+
+#endif /* CONFIG_H */

@@ -28,6 +28,9 @@
  *
  *****************************************************************/
 
+#ifndef UTILS_H
+#define UTILS_H
+
 /* vector and matrix allocations */
 int  *vect_int(long dim);
 double *vect_double(long dim);
@@ -59,3 +62,5 @@ void  quicksort(double *x, int low, int high, double **p);
 int   partition(double *x, int low, int high, int index, double **p);
 void  swap_population(double *a, double *b);
 #endif /* APOT && EVO */
+
+#endif /* UTILS_H */

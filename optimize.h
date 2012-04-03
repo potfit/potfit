@@ -28,9 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_H
-#include "potfit.h"
-#endif
+#ifndef OPTIMIZE_H
+#define OPTIMIZE_H
 
 #ifdef EVO
 /* differential evolution [diff_evo.c] */
@@ -60,3 +59,5 @@ void  copy_matrix(double **, double **, int, int);
 void  copy_vector(double *, double *, int);
 void  matdotvec(double **, double *, double *, int, int);
 double normalize_vector(double *, int);
+
+#endif /* OPTIMIZE_H */

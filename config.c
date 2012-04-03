@@ -30,41 +30,8 @@
 
 #include "potfit.h"
 
+#include "config.h"
 #include "utils.h"
-
-/****************************************************************
- *
- *  compute box transformation matrix
- *
- ****************************************************************/
-
-double make_box(void)
-{
-  double volume;
-
-  /* compute tbox_j such that SPROD(box_i,tbox_j) == delta_ij */
-  /* first unnormalized */
-  tbox_x = vec_prod(box_y, box_z);
-  tbox_y = vec_prod(box_z, box_x);
-  tbox_z = vec_prod(box_x, box_y);
-
-  /* volume */
-  volume = SPROD(box_x, tbox_x);
-  if (0 == volume)
-    error(1, "Box edges are parallel\n");
-
-  /* normalization */
-  tbox_x.x /= volume;
-  tbox_x.y /= volume;
-  tbox_x.z /= volume;
-  tbox_y.x /= volume;
-  tbox_y.y /= volume;
-  tbox_y.z /= volume;
-  tbox_z.x /= volume;
-  tbox_z.y /= volume;
-  tbox_z.z /= volume;
-  return volume;
-}
 
 /****************************************************************
  *
@@ -84,6 +51,7 @@ void read_config(char *filename)
   int   cell_scale[3];
   int   fixed_elements;
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
+  int   have_contrib = 0;
   int   line = 0;
   int   max_type = 0;
   int   sh_dist = 0;		/* short distance flag */
@@ -95,6 +63,7 @@ void read_config(char *filename)
 #endif /* APOT */
   FILE *infile;
   fpos_t filepos;
+  double dtemp;
   double r, rr, istep, shift, step;
   double *mindist;
   sym_tens *stresses;
@@ -207,6 +176,7 @@ void read_config(char *filename)
     cnfstart[nconf] = natoms;
     useforce[nconf] = use_force;
     stresses = stress + nconf;
+    have_contrib = 0;
 
     if (tag_format) {
       do {
@@ -233,6 +203,26 @@ void read_config(char *filename)
 	    h_boxz++;
 	  else
 	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
+	} else if (res[1] == 'B') {
+	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &contrib_ll.x,
+	      &contrib_ll.y, &contrib_ll.z, &contrib_ur.x, &contrib_ur.y,
+	      &contrib_ur.z) == 6) {
+	    if (contrib_ll.x < 0 || contrib_ll.y < 0 || contrib_ll.z < 0)
+	      error(1, "%s: Error in box of contributing atoms, line %d\n",
+		filename, line);
+	    if (contrib_ur.x < 0 || contrib_ur.y < 0 || contrib_ur.z < 0)
+	      error(1, "%s: Error in box of contributing atoms, line %d\n",
+		filename, line);
+	    if (contrib_ll.x > contrib_ur.x)
+	      SWAP(contrib_ll.x, contrib_ur.x, dtemp);
+	    if (contrib_ll.y > contrib_ur.y)
+	      SWAP(contrib_ll.y, contrib_ur.y, dtemp);
+	    if (contrib_ll.z > contrib_ur.z)
+	      SWAP(contrib_ll.z, contrib_ur.z, dtemp);
+	    have_contrib = 1;
+	  } else
+	    error(1, "%s: Error in box of contributing atoms, line %d\n",
+	      filename, line);
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
 	    h_eng++;
@@ -381,6 +371,10 @@ void read_config(char *filename)
 	sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) +
 	dsquare(atom->force.z));
       atom->conf = nconf;
+      if (have_contrib)
+	atom->contrib = does_contribute(atom->pos);
+      else
+	atom->contrib = 1;
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
     }
@@ -913,6 +907,56 @@ void read_config(char *filename)
       "Distances too short, last occurence conf %d, see above for details\n",
       sh_dist);
   return;
+}
+
+/****************************************************************
+ *
+ *  compute box transformation matrix
+ *
+ ****************************************************************/
+
+double make_box(void)
+{
+  double volume;
+
+  /* compute tbox_j such that SPROD(box_i,tbox_j) == delta_ij */
+  /* first unnormalized */
+  tbox_x = vec_prod(box_y, box_z);
+  tbox_y = vec_prod(box_z, box_x);
+  tbox_z = vec_prod(box_x, box_y);
+
+  /* volume */
+  volume = SPROD(box_x, tbox_x);
+  if (0 == volume)
+    error(1, "Box edges are parallel\n");
+
+  /* normalization */
+  tbox_x.x /= volume;
+  tbox_x.y /= volume;
+  tbox_x.z /= volume;
+  tbox_y.x /= volume;
+  tbox_y.y /= volume;
+  tbox_y.z /= volume;
+  tbox_z.x /= volume;
+  tbox_z.y /= volume;
+  tbox_z.z /= volume;
+  return volume;
+}
+
+/****************************************************************
+ *
+ *  check if the atom does contribute to the error sum
+ *
+ ****************************************************************/
+
+int does_contribute(vector pos)
+{
+  if (pos.x >= contrib_ll.x && pos.x <= contrib_ur.x && pos.y >= contrib_ll.y
+    && pos.y <= contrib_ur.y && pos.z >= contrib_ll.z && pos.z <= contrib_ur.z)
+    return 1;
+  else
+    return 0;
+
 }
 
 #ifdef APOT
