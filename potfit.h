@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
 
 #ifdef MPI
 #include <mpi.h>
@@ -90,7 +89,7 @@ typedef struct {
   double z;
 } vector;
 
-/* This is the order of vasp for stresses */
+/* This is the order of VASP for stresses */
 typedef struct {
   double xx;
   double yy;
@@ -105,21 +104,21 @@ typedef struct {
   int   nr;
   double r;
   vector dist;			/* distance divided by r */
-#ifdef COULOMB
-  double r2;			/* r^2 */
-  double fnval_el;		/* stores tail of electrostatic potential */
-  double grad_el;		/* stores tail of first derivative of electrostatic potential */
-  double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
-#endif
   int   slot[SLOTS];
   double shift[SLOTS];
   double step[SLOTS];
   int   col[SLOTS];		/* coloumn of interaction for this neighbor */
 #ifdef ADP
-  vector rdist;			/* double distance */
-  sym_tens sqrdist;		/* double squared distance */
+  vector rdist;			/* real distance */
+  sym_tens sqrdist;		/* real squared distance */
   double u_val, u_grad;		/* value and gradient of u(r) */
   double w_val, w_grad;		/* value and gradient of w(r) */
+#endif
+#ifdef COULOMB
+  double r2;			/* r^2 */
+  double fnval_el;		/* stores tail of electrostatic potential */
+  double grad_el;		/* stores tail of first derivative of electrostatic potential */
+  double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
 #endif
 } neigh_t;
 
