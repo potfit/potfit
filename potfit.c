@@ -442,6 +442,9 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
 
     /* prepare for error calculations */
+#ifdef CONTRIB
+    int   contrib_atoms = 0;
+#endif /* CONTRIB */
     double f_sum = 0.;
     double e_sum = 0.;
     double s_sum = 0.;
@@ -467,7 +470,12 @@ int main(int argc, char **argv)
     strcpy(component[1], "y");
     strcpy(component[2], "z");
     for (i = 0; i < 3 * natoms; i++) {
-      sqr = conf_weight[atoms[i / 3].conf] * dsquare(force[i]);
+#ifdef CONTRIB
+      if (0 == atoms[i / 3].contrib)
+	sqr = 0.;
+      else
+#endif /* CONTRIB */
+	sqr = conf_weight[atoms[i / 3].conf] * dsquare(force[i]);
       f_sum += sqr;
 #ifdef FWEIGHT
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
@@ -675,9 +683,23 @@ int main(int argc, char **argv)
     rms[2] = 0.;		/* stresses */
 
     /* forces */
-    for (i = 0; i < 3 * natoms; i++)
-      rms[0] += dsquare(force[i]);
+    for (i = 0; i < natoms; i++) {
+#ifdef CONTRIB
+      if (atoms[i].contrib) {
+	contrib_atoms++;
+#endif /* CONTRIB */
+	rms[0] += dsquare(force[3 * i + 0]);
+	rms[0] += dsquare(force[3 * i + 1]);
+	rms[0] += dsquare(force[3 * i + 2]);
+#ifdef CONTRIB
+      }
+#endif /* CONTRIB */
+    }
+#ifdef CONTRIB
+    rms[0] = sqrt(rms[0] / (3 * contrib_atoms));
+#else
     rms[0] = sqrt(rms[0] / (3 * natoms));
+#endif /* CONTRIB */
 
     /* energies */
     if (eweight != 0) {

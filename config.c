@@ -208,18 +208,15 @@ void read_config(char *filename)
 	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &contrib_ll.x,
 	      &contrib_ll.y, &contrib_ll.z, &contrib_ur.x, &contrib_ur.y,
 	      &contrib_ur.z) == 6) {
-	    if (contrib_ll.x < 0 || contrib_ll.y < 0 || contrib_ll.z < 0)
-	      error(1, "%s: Error in box of contributing atoms, line %d\n",
-		filename, line);
-	    if (contrib_ur.x < 0 || contrib_ur.y < 0 || contrib_ur.z < 0)
-	      error(1, "%s: Error in box of contributing atoms, line %d\n",
-		filename, line);
-	    if (contrib_ll.x > contrib_ur.x)
+	    if (contrib_ll.x > contrib_ur.x) {
 	      SWAP(contrib_ll.x, contrib_ur.x, dtemp);
-	    if (contrib_ll.y > contrib_ur.y)
+	    }
+	    if (contrib_ll.y > contrib_ur.y) {
 	      SWAP(contrib_ll.y, contrib_ur.y, dtemp);
-	    if (contrib_ll.z > contrib_ur.z)
+	    }
+	    if (contrib_ll.z > contrib_ur.z) {
 	      SWAP(contrib_ll.z, contrib_ur.z, dtemp);
+	    }
 	    have_contrib = 1;
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n",
@@ -959,12 +956,11 @@ double make_box(void)
 
 int does_contribute(vector pos)
 {
-  if (pos.x >= contrib_ll.x && pos.x <= contrib_ur.x && pos.y >= contrib_ll.y
-    && pos.y <= contrib_ur.y && pos.z >= contrib_ll.z && pos.z <= contrib_ur.z)
-    return 1;
-  else
-    return 0;
-
+  if (pos.x >= contrib_ll.x && pos.x <= contrib_ur.x)
+    if (pos.y >= contrib_ll.y && pos.y <= contrib_ur.y)
+      if (pos.z >= contrib_ll.z && pos.z <= contrib_ur.z)
+	return 1;
+  return 0;
 }
 
 #ifdef APOT
