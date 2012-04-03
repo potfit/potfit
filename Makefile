@@ -159,16 +159,15 @@ ifeq (x86_64-icc,${SYSTEM})
 # compiler
   CC_SERIAL     = icc
   CC_MPI        = mpicc
+  OMPI_CC       = icc
+  OMPI_CLINKER  = icc
 
 # general optimization flags
   OPT_FLAGS     += -fast -xHost
 
-  OMPI_CC      = icc
-  OMPI_CLINKER = icc
-
-# debug flags
+# profiling and debug flags
   PROF_FLAGS    += -prof-gen
-  PROF_LIBS 	+= -prof-gen
+  PROF_LIBS     += -prof-gen
   DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
 
 # Intel Math Kernel Library
@@ -195,16 +194,16 @@ ifeq (x86_64-gcc,${SYSTEM})
 # compiler
   CC_SERIAL     = gcc
   CC_MPI        = mpicc
+  OMPI_CC       = gcc
+  OMPI_CLINKER  = gcc
 
 # general optimization flags
   OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused 
 
-  OMPI_CC      	= gcc
-  OMPI_CLINKER 	= gcc
-
-# debug flags
-  PROF_FLAGS    += -pg
-  DEBUG_FLAGS   += -g -Wall # -wd981 -wd1572
+# profiling and debug flags
+  PROF_FLAGS    += -g3 -pg
+  PROF_LIBS     += -g3 -pg
+  DEBUG_FLAGS   += -g3 -Wall
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -234,14 +233,19 @@ endif
 ###########################################################################
 
 ifeq (i686-icc,${SYSTEM})
+# compiler
   CC_SERIAL	= icc
   CC_MPI	= mpicc
   OMPI_CC       = icc
   OMPI_CLINKER  = icc
+
+# general optimization flags
   OPT_FLAGS	+= -fast -xHost
-  DEBUG_FLAGS	+= -g
+
+# profiling and debug flags
   PROF_FLAGS	+= -prof-gen
   PROF_LIBS 	+= -prof-gen
+  DEBUG_FLAGS	+= -g -Wall
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -264,13 +268,19 @@ endif
 endif
 
 ifeq (i686-gcc,${SYSTEM})
+# compiler
   CC_SERIAL	= gcc
   CC_MPI	= mpicc
   OMPI_CC     	= gcc
   OMPI_CLINKER 	= gcc
+
+# general optimization flags
   OPT_FLAGS	+= -O3 -march=native
-  DEBUG_FLAGS	+= -g
+
+# profiling and debug flags
   PROF_FLAGS	+= -g3 -pg
+  PROF_LIBS	+= -g3 -pg
+  DEBUG_FLAGS	+= -g3 -Wall
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -344,9 +354,9 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= bracket.h optimize.h potfit.h potential.h \
+POTFITHDR   	= bracket.h elements.h optimize.h potfit.h potential.h \
 		  random.h  splines.h utils.h
-POTFITSRC 	= bracket.c brent.c config.c linmin.c \
+POTFITSRC 	= bracket.c brent.c config.c elements.c linmin.c \
 		  param.c potential.c potfit.c powell_lsq.c \
 		  random.c simann.c splines.c utils.c
 
@@ -532,6 +542,10 @@ ifneq (,$(findstring fweight,${MAKETARGET}))
 CFLAGS += -DFWEIGHT
 endif
 
+ifneq (,$(findstring contrib,${MAKETARGET}))
+CFLAGS += -DCONTRIB
+endif
+
 ifneq (,$(findstring acml,${MAKETARGET}))
 CFLAGS += -DACML
 endif
@@ -591,12 +605,14 @@ endif
 ${MAKETARGET}: ${OBJECTS}
 	${CC} ${LIBS} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS}
 ifneq (,${STRIP})
+ifeq (,$(findstring prof,${MAKETARGET}))
 ifeq (,$(findstring debug,${MAKETARGET}))
 	${STRIP} --strip-unneeded -R .comment $@
 endif
 endif
+endif
 ifneq (,$(BIN_DIR))
-	${MV} $@ ${BIN_DIR}; rm -f $@
+	${MV} $@ ${BIN_DIR} && rm -f $@
 endif
 
 # First recursion only set the MAKETARGET Variable

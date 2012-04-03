@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -57,52 +57,53 @@
 #define INNERLOOPS 801
 #define TOOBIG 10000
 
-void powell_lsq(real *xi)
+void powell_lsq(double *xi)
 {
   char  uplo[1] = "U";		/* char used in dsysvx */
   char  fact[1] = "N";		/* char used in dsysvx */
   int   i, j, m = 0, n = 0;	/* Simple counting variables */
-  real *force_xi;		/* calculated force, alt */
-  real **d;			/* Direction vectors */
-  real **gamma;			/* Matrix of derivatives */
-  real **lineqsys;		/* Lin.Eq.Sys. Matrix */
-  real **les_inverse;		/* LU decomp. of the lineqsys */
-  real *delta;			/* Vector pointing into correct dir'n */
-  real *delta_norm;		/* Normalized vector delta */
-  real *fxi1, *fxi2;		/* two latest force vectors */
+  double *force_xi;		/* calculated force, alt */
+  double **d;			/* Direction vectors */
+  double **gamma;		/* Matrix of derivatives */
+  double **lineqsys;		/* Lin.Eq.Sys. Matrix */
+  double **les_inverse;		/* LU decomp. of the lineqsys */
+  double *delta;		/* Vector pointing into correct dir'n */
+  double *delta_norm;		/* Normalized vector delta */
+  double *fxi1, *fxi2;		/* two latest force vectors */
 #ifndef ACML			/* work arrays not needed for ACML */
-  real *work;			/* work array to be used by dsysvx */
+  double *work;			/* work array to be used by dsysvx */
   int  *iwork;
   int   worksize;		/* Size of work array (dsysvx) */
 #endif /* ACML */
   int  *perm_indx;		/* Keeps track of LU pivoting */
   int   breakflag;		/* Breakflag */
-  real  cond;			/* Condition number dsysvx */
-  real *p, *q;			/* Vectors needed in Powell's algorithm */
-  real  F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
-  real  temp, temp2;		/* as the name indicates: temporary vars */
+  double cond = 0.;		/* Condition number dsysvx */
+  double *p, *q;		/* Vectors needed in Powell's algorithm */
+  double F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
+  double temp, temp2;		/* as the name indicates: temporary vars */
 #ifdef APOT
   int   itemp, itemp2;		/* the same for integer */
 #endif /* APOT */
-  real  ferror, berror;		/* forward/backward error estimates */
+  double ferror = 0.;
+  double berror = 0.;		/* forward/backward error estimates */
   FILE *ff;			/* Exit flagfile */
 
-  d = mat_real(ndim, ndim);
-  gamma = mat_real(mdim, ndim);
-  lineqsys = mat_real(ndim, ndim);
-  les_inverse = mat_real(ndim, ndim);
+  d = mat_double(ndim, ndim);
+  gamma = mat_double(mdim, ndim);
+  lineqsys = mat_double(ndim, ndim);
+  les_inverse = mat_double(ndim, ndim);
   perm_indx = vect_int(ndim);
-  delta_norm = vect_real(ndimtot);
+  delta_norm = vect_double(ndimtot);
 				 /*==0*/
-  force_xi = vect_real(mdim);
-  p = vect_real(ndim);
-  q = vect_real(ndim);
-  delta = vect_real(ndimtot);	/* ==0 */
-  fxi1 = vect_real(mdim);
-  fxi2 = vect_real(mdim);
+  force_xi = vect_double(mdim);
+  p = vect_double(ndim);
+  q = vect_double(ndim);
+  delta = vect_double(ndimtot);	/* ==0 */
+  fxi1 = vect_double(mdim);
+  fxi2 = vect_double(mdim);
 #ifndef ACML			/* work arrays not needed */
   worksize = 64 * ndim;
-  work = (real *)malloc(worksize * sizeof(real));
+  work = (double *)malloc(worksize * sizeof(double));
   iwork = (int *)malloc(ndim * sizeof(int));
 #endif /* ACML */
 
@@ -345,18 +346,18 @@ void powell_lsq(real *xi)
 #endif /* APOT */
 
   /* Free memory */
-  free_vect_real(delta);
-  free_vect_real(fxi1);
-  free_vect_real(fxi2);
-  free_mat_real(d);
-  free_mat_real(gamma);
-  free_mat_real(lineqsys);
-  free_mat_real(les_inverse);
+  free_vect_double(delta);
+  free_vect_double(fxi1);
+  free_vect_double(fxi2);
+  free_mat_double(d);
+  free_mat_double(gamma);
+  free_mat_double(lineqsys);
+  free_mat_double(les_inverse);
   free_vect_int(perm_indx);
-  free_vect_real(delta_norm);
-  free_vect_real(force_xi);
-  free_vect_real(p);
-  free_vect_real(q);
+  free_vect_double(delta_norm);
+  free_vect_double(force_xi);
+  free_vect_double(p);
+  free_vect_double(q);
 #ifndef ACML
   free(work);
   free(iwork);
@@ -374,11 +375,11 @@ void powell_lsq(real *xi)
  *
  ****************************************************************/
 
-int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
+int gamma_init(double **gamma, double **d, double *xi, double *force_xi)
 {
-  static real *force;
+  static double *force;
   int   i, j;			/* Auxiliary vars: Counters */
-  real  sum, temp, scale, store;	/* Auxiliary var: Sum */
+  double sum, temp, scale, store;	/* Auxiliary var: Sum */
 /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
   /*Initialize direction vectors */
   for (i = 0; i < ndim; i++) {
@@ -387,9 +388,9 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
   }
 /* Initialize gamma by calculating numerical derivatives    */
   if (force == NULL) {
-    force = (real *)malloc(mdim * sizeof(real));
+    force = (double *)malloc(mdim * sizeof(double));
     if (force == NULL)
-      error(1, "Error in real vector allocation");
+      error(1, "Error in double vector allocation");
     for (i = 0; i < mdim; i++)
       force[i] = 0;
     reg_for_free(force, "force from init_gamma");
@@ -434,13 +435,13 @@ int gamma_init(real **gamma, real **d, real *xi, real *force_xi)
  *
  ****************************************************************/
 
-int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
-  int j, int m, int n, real fmin)
+int gamma_update(double **gamma, double a, double b, double *fa, double *fb,
+  double *delta, int j, int m, int n, double fmin)
 {
   int   i;
-  real  temp;
-  real  sum = 0.;
-  real  mu = 0.;
+  double temp;
+  double sum = 0.;
+  double mu = 0.;
   for (i = 0; i < m; i++) {
     temp = ((fa[i] - fb[i]) / (a - b));
     gamma[i][j] = temp;
@@ -470,11 +471,11 @@ int gamma_update(real **gamma, real a, real b, real *fa, real *fb, real *delta,
  *
  ****************************************************************/
 
-void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, real *p,
-  int n, int m)
+void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce,
+  double *p, int n, int m)
 {
   int   i, j, k;		/* Auxiliary vars: Counters */
-/*   real  temp; */
+/*   double  temp; */
   /* calculating vector p (lineqsys . q == P in LinEqSys) */
 
   for (i = 0; i < n; i++) {
@@ -506,8 +507,8 @@ void lineqsys_init(real **gamma, real **lineqsys, real *deltaforce, real *p,
  *
  ****************************************************************/
 
-void lineqsys_update(real **gamma, real **lineqsys, real *force_xi, real *p,
-  int i, int n, int m)
+void lineqsys_update(double **gamma, double **lineqsys, double *force_xi,
+  double *p, int i, int n, int m)
 {
   int   j, k;
   for (k = 0; k < n; k++) {
@@ -531,7 +532,7 @@ void lineqsys_update(real **gamma, real **lineqsys, real *force_xi, real *p,
  *
  ****************************************************************/
 
-void copy_matrix(real **a, real **b, int n, int m)
+void copy_matrix(double **a, double **b, int n, int m)
 {
   int   i, j;
   for (i = 0; i < m; i++) {
@@ -548,7 +549,7 @@ void copy_matrix(real **a, real **b, int n, int m)
  *
  ****************************************************************/
 
-void copy_vector(real *a, real *b, int n)
+void copy_vector(double *a, double *b, int n)
 {
   int   i;
   for (i = 0; i < n; i++)
@@ -563,7 +564,7 @@ void copy_vector(real *a, real *b, int n)
  *
  ****************************************************************/
 
-void matdotvec(real **a, real *x, real *y, int n, int m)
+void matdotvec(double **a, double *x, double *y, int n, int m)
 {
   int   i, j;
   for (i = 0; i < n; i++) {
@@ -580,10 +581,10 @@ void matdotvec(real **a, real *x, real *y, int n, int m)
  *
  ****************************************************************/
 
-real normalize_vector(real *v, int n)
+double normalize_vector(double *v, int n)
 {
   int   j;
-  real  temp, sum = 0.0;
+  double temp, sum = 0.0;
   for (j = 0; j < n; j++)
     sum += dsquare(v[j]);
   temp = sqrt(sum);

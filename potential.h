@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2011
+ * Copyright 2011-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -28,9 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_H
-#include "potfit.h"
-#endif
+#ifndef POTENTIAL_H
+#define POTENTIAL_H
 
 /* reading the potential file */
 void  read_pot_table(pot_table_t *, char *);
@@ -44,18 +43,18 @@ void  read_pot_table4(pot_table_t *, int, int, int *, char *, FILE *);
 /* calculating the potential tables */
 void  init_calc_table(pot_table_t *, pot_table_t *);
 #ifdef APOT
-void  update_apot_table(real *);
-void  update_calc_table(real *, real *, int);
+void  update_apot_table(double *);
+void  update_calc_table(double *, double *, int);
 #endif /* APOT */
 
 /* parabolic interpolation */
 #ifdef PARABEL
-real  parab_comb_ed(pot_table_t *, real *, int, real, real *);
-real  parab_grad_ed(pot_table_t *, real *, int, real);
-real  parab_ed(pot_table_t *, real *, int, real);
-real  parab_comb_ne(pot_table_t *, real *, int, real, real *);
-real  parab_grad_ne(pot_table_t *, real *, int, real);
-real  parab_ne(pot_table_t *, real *, int, real);
+double parab_comb_ed(pot_table_t *, double *, int, double, double *);
+double parab_grad_ed(pot_table_t *, double *, int, double);
+double parab_ed(pot_table_t *, double *, int, double);
+double parab_comb_ne(pot_table_t *, double *, int, double, double *);
+double parab_grad_ne(pot_table_t *, double *, int, double);
+double parab_ne(pot_table_t *, double *, int, double);
 #endif /* PARABEL */
 
 /* writing potentials to files */
@@ -67,6 +66,7 @@ void  write_pot_table4(pot_table_t *, char *);
 #endif /* APOT */
 void  write_pot_table_imd(pot_table_t *, char *);
 void  write_plotpot_pair(pot_table_t *, char *);
+void  write_pot_table_lammps(pot_table_t *);
 void  write_altplot_pair(pot_table_t *, char *);
 #ifdef PDIST
 void  write_pairdist(pot_table_t *, char *);
@@ -74,6 +74,8 @@ void  write_pairdist(pot_table_t *, char *);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  init_tails(real);
+void  init_tails(double);
 void  write_coulomb_table(void);
 #endif /* COULOMB */
+
+#endif /* POTENTIAL_H */

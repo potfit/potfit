@@ -7,7 +7,7 @@
  *
  * Copyright 1996, 1997, 1998, 1999, 2000
  * 	Brian Gough
- * Copyright 2005-2011
+ * Copyright 2005-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -36,34 +36,34 @@
 #include "bracket.h"
 #include "utils.h"
 
-real brent(real ax, real bx, real cx, real fbx, real tol, real *xmin,
-  real *xmin2, real *fxmin, real *fxmin2)
+double brent(double ax, double bx, double cx, double fbx, double tol,
+  double *xmin, double *xmin2, double *fxmin, double *fxmin2)
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin, fxmin2 */
 {
   int   iter, j;
-  real  t2, tolerance;
-  real  midpoint;
-  real  x_left;
-  real  x_right;
-  real  z;
-  real  d = 0.;
-  real  e = 0.;
-  real  u, f_u;
-  real  v;
-  real  w;
-  real  f_v;
-  real  f_w;
-  real  f_z;
-  real  w_lower, w_upper;
-  real *p_w, *p_z, *p_u, *p_temp;
+  double t2, tolerance;
+  double midpoint;
+  double x_left;
+  double x_right;
+  double z;
+  double d = 0.;
+  double e = 0.;
+  double u, f_u;
+  double v;
+  double w;
+  double f_v;
+  double f_w;
+  double f_z;
+  double w_lower, w_upper;
+  double *p_w, *p_z, *p_u, *p_temp;
 
-  static real *vecu = NULL, *fxu = NULL;	/* Vector of location u */
+  static double *vecu = NULL, *fxu = NULL;	/* Vector of location u */
 
-  real  p = 0, q = 0, r = 0;
+  double p = 0, q = 0, r = 0;
   if (fxu == NULL)
-    fxu = vect_real(mdim);
+    fxu = vect_double(mdim);
   if (vecu == NULL)
-    vecu = vect_real(ndimtot);
+    vecu = vect_double(ndimtot);
 
   z = bx;
   f_z = fbx;

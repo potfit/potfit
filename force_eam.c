@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -86,13 +86,13 @@
  *
  ****************************************************************/
 
-real calc_forces_eam(real *xi_opt, real *forces, int flag)
+double calc_forces_eam(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  real  tmpsum = 0., sum = 0.;
-  real *xi = NULL;
+  double tmpsum = 0., sum = 0.;
+  double *xi = NULL;
 
-  static real rho_sum_loc, rho_sum;
+  static double rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
 
   switch (format) {
@@ -122,7 +122,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef MPI
     /* exchange potential and flag value */
 #ifndef APOT
-    MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -132,7 +132,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef APOT
     if (myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
@@ -211,21 +211,24 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
       atom_t *atom;
       int   h, j, k, l;
       int   self, uf;
+#ifdef APOT
+      double temp_eng;
+#endif /* APOT */
 #ifdef STRESS
       int   us, stresses;
 #endif /* STRESS */
 
       neigh_t *neigh;
-      real  r;
+      double r;
 
       /* pair variables */
-      real  phi_val, phi_grad;
+      double phi_val, phi_grad;
       vector tmp_force;
 
       /* eam variables */
       int   col_F;
-      real  eam_force;
-      real  rho_val, rho_grad, rho_grad_j;
+      double eam_force;
+      double rho_val, rho_grad, rho_grad_j;
 
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -286,7 +289,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
-	      /* not real force: cohesive energy */
+	      /* not double force: cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
@@ -368,7 +371,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    atom->rho = calc_pot.begin[col_F];
 #endif /* PARABEL */
 	  }
-#endif /* NOT NORESCALE */
+#endif /* !NORESCALE */
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 #ifdef PARABEL
@@ -376,32 +379,46 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 	    parab_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col_F]) {
+#ifdef APOT
+	    /* calculate analytic value explicitly */
+	    apot_table.fvalue[col_F] (atom->rho,
+	      xi_opt + apot_table.idxpot[col_F], &temp_eng);
+	    forces[energy_p + h] += temp_eng;
+#else
 	    /* linear extrapolation left */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F],
 	      &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
-#ifdef APOT
-	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
 #endif /* APOT */
 	  } else if (atom->rho > calc_pot.end[col_F]) {
+#ifdef APOT
+	    /* calculate analytic value explicitly */
+	    apot_table.fvalue[col_F] (atom->rho,
+	      xi_opt + apot_table.idxpot[col_F], &temp_eng);
+	    forces[energy_p + h] += temp_eng;
+#else
 	    /* and right */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F,
 	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
 	    forces[energy_p + h] +=
 	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
-#ifdef APOT
-	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
 #endif /* APOT */
 	  }
 	  /* and in-between */
 	  else {
-	    forces[energy_p + h] +=
-	      splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+#ifdef APOT
+	    /* calculate small values directly */
+	    if (atom->rho < 0.1) {
+	      apot_table.fvalue[col_F] (atom->rho,
+		xi_opt + apot_table.idxpot[col_F], &temp_eng);
+	      forces[energy_p + h] += temp_eng;
+	    } else
+#endif
+	      forces[energy_p + h] +=
+		splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
 #else
 	  forces[energy_p + h] +=
@@ -486,7 +503,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 
 	/* use forces */
 	/* energy contributions */
-	forces[energy_p + h] /= (real)inconf[h];
+	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 #ifdef COMPAT
 	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
@@ -514,7 +531,8 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
     }				/* parallel region */
 #ifdef MPI
     /* Reduce rho_sum */
-    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
+      MPI_COMM_WORLD);
 #else /* MPI */
     rho_sum = rho_sum_loc;
 #endif /* MPI */
@@ -579,7 +597,7 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
       /* Calculate averages */
-      rho_sum /= (real)natoms;
+      rho_sum /= (double)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
@@ -590,21 +608,21 @@ real calc_forces_eam(real *xi_opt, real *forces, int flag)
 #ifdef MPI
     /* reduce global sum */
     sum = 0.;
-    MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     /* forces */
     MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
       atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
-      forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
+      forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     /* stresses */
     MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
       forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
       MPI_COMM_WORLD);
     /* punishment constraints */
-    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, REAL,
-      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, REAL, 0,
+    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, MPI_DOUBLE,
+      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0,
       MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
 #endif /* MPI */

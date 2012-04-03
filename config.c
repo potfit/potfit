@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -30,41 +30,8 @@
 
 #include "potfit.h"
 
+#include "config.h"
 #include "utils.h"
-
-/****************************************************************
- *
- *  compute box transformation matrix
- *
- ****************************************************************/
-
-real make_box(void)
-{
-  real  volume;
-
-  /* compute tbox_j such that SPROD(box_i,tbox_j) == delta_ij */
-  /* first unnormalized */
-  tbox_x = vec_prod(box_y, box_z);
-  tbox_y = vec_prod(box_z, box_x);
-  tbox_z = vec_prod(box_x, box_y);
-
-  /* volume */
-  volume = SPROD(box_x, tbox_x);
-  if (0 == volume)
-    error(1, "Box edges are parallel\n");
-
-  /* normalization */
-  tbox_x.x /= volume;
-  tbox_x.y /= volume;
-  tbox_x.z /= volume;
-  tbox_y.x /= volume;
-  tbox_y.y /= volume;
-  tbox_y.z /= volume;
-  tbox_z.x /= volume;
-  tbox_z.y /= volume;
-  tbox_z.z /= volume;
-  return volume;
-}
 
 /****************************************************************
  *
@@ -84,6 +51,7 @@ void read_config(char *filename)
   int   cell_scale[3];
   int   fixed_elements;
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
+  int   have_contrib = 0;
   int   line = 0;
   int   max_type = 0;
   int   sh_dist = 0;		/* short distance flag */
@@ -95,8 +63,9 @@ void read_config(char *filename)
 #endif /* APOT */
   FILE *infile;
   fpos_t filepos;
-  real  r, rr, istep, shift, step;
-  real *mindist;
+  double dtemp;
+  double r, rr, istep, shift, step;
+  double *mindist;
   sym_tens *stresses;
   vector d, dd, iheight;
 
@@ -114,7 +83,7 @@ void read_config(char *filename)
   }
 
   /* initialize minimum distance array */
-  mindist = (real *)malloc(ntypes * ntypes * sizeof(real));
+  mindist = (double *)malloc(ntypes * ntypes * sizeof(double));
   if (NULL == mindist)
     error(1, "Cannot allocate memory for minimal distance.");
 
@@ -166,15 +135,15 @@ void read_config(char *filename)
       error(1, "Cannot allocate memory for atoms");
     for (i = 0; i < count; i++)
       atoms[natoms + i].neigh = malloc(1 * sizeof(neigh_t));
-    coheng = (real *)realloc(coheng, (nconf + 1) * sizeof(real));
+    coheng = (double *)realloc(coheng, (nconf + 1) * sizeof(double));
     if (NULL == coheng)
       error(1, "Cannot allocate memory for cohesive energy");
-    conf_weight = (real *)realloc(conf_weight, (nconf + 1) * sizeof(real));
+    conf_weight = (double *)realloc(conf_weight, (nconf + 1) * sizeof(double));
     if (NULL == conf_weight)
       error(1, "Cannot allocate memory for configuration weights");
     else
       conf_weight[nconf] = 1.;
-    volumen = (real *)realloc(volumen, (nconf + 1) * sizeof(real));
+    volumen = (double *)realloc(volumen, (nconf + 1) * sizeof(double));
     if (NULL == volumen)
       error(1, "Cannot allocate memory for volume");
     stress = (sym_tens *)realloc(stress, (nconf + 1) * sizeof(sym_tens));
@@ -207,6 +176,7 @@ void read_config(char *filename)
     cnfstart[nconf] = natoms;
     useforce[nconf] = use_force;
     stresses = stress + nconf;
+    have_contrib = 0;
 
     if (tag_format) {
       do {
@@ -233,6 +203,29 @@ void read_config(char *filename)
 	    h_boxz++;
 	  else
 	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
+#ifdef CONTRIB
+	} else if (res[1] == 'B') {
+	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &contrib_ll.x,
+	      &contrib_ll.y, &contrib_ll.z, &contrib_ur.x, &contrib_ur.y,
+	      &contrib_ur.z) == 6) {
+	    if (contrib_ll.x > contrib_ur.x) {
+	      SWAP(contrib_ll.x, contrib_ur.x, dtemp);
+	    }
+	    if (contrib_ll.y > contrib_ur.y) {
+	      SWAP(contrib_ll.y, contrib_ur.y, dtemp);
+	    }
+	    if (contrib_ll.z > contrib_ur.z) {
+	      SWAP(contrib_ll.z, contrib_ur.z, dtemp);
+	    }
+	    have_contrib = 1;
+	  } else
+	    error(1, "%s: Error in box of contributing atoms, line %d\n",
+	      filename, line);
+#else
+	} else if (res[1] == 'B') {
+	  error(1,
+	    "This binary does not support \"box of contributing particles\".");
+#endif /* CONTRIB */
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
 	    h_eng++;
@@ -381,6 +374,12 @@ void read_config(char *filename)
 	sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) +
 	dsquare(atom->force.z));
       atom->conf = nconf;
+#ifdef CONTRIB
+      if (have_contrib)
+	atom->contrib = does_contribute(atom->pos);
+      else
+	atom->contrib = 1;
+#endif
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
     }
@@ -688,7 +687,7 @@ void read_config(char *filename)
   reg_for_free(usestress, "usestress");
 
   mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector
-					   3*natoms are real forces,
+					   3*natoms are double forces,
 					   nconf cohesive energies,
 					   6*nconf stress tensor components */
 #if defined EAM || defined ADP
@@ -701,7 +700,7 @@ void read_config(char *filename)
 #endif /* APOT */
 
   /* copy forces into single vector */
-  if (NULL == (force_0 = (real *)malloc(mdim * sizeof(real))))
+  if (NULL == (force_0 = (double *)malloc(mdim * sizeof(double))))
     error(1, "Cannot allocate force vector");
   reg_for_free(force_0, "force_0");
 
@@ -750,8 +749,8 @@ void read_config(char *filename)
 #else
     int   pair_steps = 1000 / 2;
 #endif /* APOT */
-    real  pair_table[paircol * pair_steps];
-    real  pair_dist[paircol];
+    double pair_table[paircol * pair_steps];
+    double pair_dist[paircol];
     int   pos, max_count = 0;
 
     strcpy(pairname, config);
@@ -809,7 +808,7 @@ void read_config(char *filename)
 
   /* assign correct distances to different tables */
 #ifdef APOT
-  real  min = 10.;
+  double min = 10.;
 
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
@@ -915,6 +914,55 @@ void read_config(char *filename)
   return;
 }
 
+/****************************************************************
+ *
+ *  compute box transformation matrix
+ *
+ ****************************************************************/
+
+double make_box(void)
+{
+  double volume;
+
+  /* compute tbox_j such that SPROD(box_i,tbox_j) == delta_ij */
+  /* first unnormalized */
+  tbox_x = vec_prod(box_y, box_z);
+  tbox_y = vec_prod(box_z, box_x);
+  tbox_z = vec_prod(box_x, box_y);
+
+  /* volume */
+  volume = SPROD(box_x, tbox_x);
+  if (0 == volume)
+    error(1, "Box edges are parallel\n");
+
+  /* normalization */
+  tbox_x.x /= volume;
+  tbox_x.y /= volume;
+  tbox_x.z /= volume;
+  tbox_y.x /= volume;
+  tbox_y.y /= volume;
+  tbox_y.z /= volume;
+  tbox_z.x /= volume;
+  tbox_z.y /= volume;
+  tbox_z.z /= volume;
+  return volume;
+}
+
+/****************************************************************
+ *
+ *  check if the atom does contribute to the error sum
+ *
+ ****************************************************************/
+
+int does_contribute(vector pos)
+{
+  if (pos.x >= contrib_ll.x && pos.x <= contrib_ur.x)
+    if (pos.y >= contrib_ll.y && pos.y <= contrib_ur.y)
+      if (pos.z >= contrib_ll.z && pos.z <= contrib_ur.z)
+	return 1;
+  return 0;
+}
+
 #ifdef APOT
 
 /****************************************************************
@@ -933,7 +981,7 @@ void update_slots(void)
 #ifdef ADP
   int   col2, col3;		/* u and w function part */
 #endif /* ADP */
-  real  r, rr;
+  double r, rr;
 
   for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].n_neigh; j++) {

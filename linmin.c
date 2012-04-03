@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -31,7 +31,7 @@
 
 /*** rewritten for double precision and zero-offset vectors and matrices 	***/
 /*** adapted to Powell requrirements (return vector instead of value)... 	***/
-/*** adapted to real variables (ITAP standard) by PB, ITAP, 2002-10-24 		***/
+/*** adapted to double variables (ITAP standard) by PB, ITAP, 2002-10-24 		***/
 /*** by Peter Brommer, ITAP, 2002-10-10 					***/
 
 #include "potfit.h"
@@ -41,7 +41,7 @@
 
 #define TOL 1.0e-1
 
-real *xicom, *delcom;
+double *xicom, *delcom;
 
 /****************************************************************
  *
@@ -51,15 +51,15 @@ real *xicom, *delcom;
  *
  ****************************************************************/
 
-real linmin(real xi[], real del[], real fxi1, real *x1, real *x2, real *fret1,
-  real *fret2)
+double linmin(double xi[], double del[], double fxi1, double *x1, double *x2,
+  double *fret1, double *fret2)
 {
   int   j;
-  static real *vecu = NULL;	/* Vector of location u */
-  real  xx, fx, fb, bx, ax;
-  real  fa = fxi1;
-  real  xmin;
-  real  xmin2;
+  static double *vecu = NULL;	/* Vector of location u */
+  double xx, fx, fb, bx, ax;
+  double fa = fxi1;
+  double xmin;
+  double xmin2;
 
   xicom = xi;
   delcom = del;
@@ -68,7 +68,7 @@ real linmin(real xi[], real del[], real fxi1, real *x1, real *x2, real *fret1,
   bx = .1;
 
   if (vecu == NULL)
-    vecu = vect_real(ndimtot);
+    vecu = vect_double(ndimtot);
   for (j = 0; j < ndimtot; j++)
     vecu[j] = xicom[j] + bx * delcom[j];	/*set vecu */
   fb = (*calc_forces) (vecu, fret2, 0);

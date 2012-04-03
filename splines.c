@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -40,15 +40,16 @@
  *
  ****************************************************************/
 
-void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
+void spline_ed(double xstep, double y[], int n, double yp1, double ypn,
+  double y2[])
 {
   int   i, k;
-  real  p, qn, un;
-  static real *u = NULL;
+  double p, qn, un;
+  static double *u = NULL;
   static int nmax = 0;
 
   if (n > nmax) {
-    u = (real *)realloc(u, (n - 1) * sizeof(real));
+    u = (double *)realloc(u, (n - 1) * sizeof(double));
     nmax = n;
   }
   if (yp1 > 0.99e30)
@@ -82,9 +83,9 @@ void spline_ed(real xstep, real y[], int n, real yp1, real ypn, real y2[])
  *
  ****************************************************************/
 
-real splint_ed(pot_table_t *pt, real *xi, int col, real r)
+double splint_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  real  a, b, istep, rr, p1, p2, d21, d22;
+  double a, b, istep, rr, p1, p2, d21, d22;
   int   k;
 
   /* check for distances shorter than minimal distance in table */
@@ -115,9 +116,10 @@ real splint_ed(pot_table_t *pt, real *xi, int col, real r)
  *
  ****************************************************************/
 
-real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
+double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
-  real  a, b, istep, rr, p1, p2, d21, d22;
+  double a, b, istep, rr, p1, p2, d21, d22;
   int   k;
 
   /* check for distances shorter than minimal distance in table */
@@ -154,9 +156,9 @@ real splint_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
  ****************************************************************/
 
 
-real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
+double splint_grad_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  real  a, b, istep, rr, p1, p2, d21, d22;
+  double a, b, istep, rr, p1, p2, d21, d22;
   int   k;
 
   /* check for distances shorter than minimal distance in table */
@@ -193,9 +195,9 @@ real splint_grad_ed(pot_table_t *pt, real *xi, int col, real r)
  *
  ****************************************************************/
 
-real splint_dir(pot_table_t *pt, real *xi, int k, real b, real step)
+double splint_dir(pot_table_t *pt, double *xi, int k, double b, double step)
 {
-  real  a, p1, p2, d21, d22;
+  double a, p1, p2, d21, d22;
 
   /* indices into potential table */
   a = 1.0 - b;
@@ -217,14 +219,12 @@ real splint_dir(pot_table_t *pt, real *xi, int k, real b, real step)
  *
  ****************************************************************/
 
-real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
-  real *grad)
+double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b,
+  double step, double *grad)
 {
-  real  a, p1, p2, d21, d22;
-
+  double a, p1, p2, d21, d22;
 
   /* indices into potential table */
-
   a = 1.0 - b;
   p1 = xi[k];
   d21 = pt->d2tab[k++];
@@ -246,9 +246,10 @@ real splint_comb_dir(pot_table_t *pt, real *xi, int k, real b, real step,
  ****************************************************************/
 
 
-real splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step)
+double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b,
+  double step)
 {
-  real  a, p1, p2, d21, d22;
+  double a, p1, p2, d21, d22;
 
   /* indices into potential table */
   a = 1.0 - b;
@@ -269,15 +270,16 @@ real splint_grad_dir(pot_table_t *pt, real *xi, int k, real b, real step)
  *
  ****************************************************************/
 
-void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
+void spline_ne(double x[], double y[], int n, double yp1, double ypn,
+  double y2[])
 {
   int   i, k;
-  real  p, qn, sig, un;
-  static real *u = NULL;
+  double p, qn, sig, un;
+  static double *u = NULL;
   static int nmax = 0;
 
   if (n > nmax) {
-    u = (real *)realloc(u, (n - 1) * sizeof(real));
+    u = (double *)realloc(u, (n - 1) * sizeof(double));
     nmax = n;
   }
   if (yp1 > 0.99e30)
@@ -315,10 +317,10 @@ void spline_ne(real x[], real y[], int n, real yp1, real ypn, real y2[])
  *
  ****************************************************************/
 
-real splint_ne(pot_table_t *pt, real *xi, int col, real r)
+double splint_ne(pot_table_t *pt, double *xi, int col, double r)
 {
   int   klo, khi, k;
-  real  h, b, a, d22, d21, p1, p2, x1, x2;
+  double h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];
@@ -353,10 +355,11 @@ real splint_ne(pot_table_t *pt, real *xi, int col, real r)
  *
  ****************************************************************/
 
-real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
+double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
   int   klo, khi, k;
-  real  h, b, a, d22, d21, p1, p2, x1, x2;
+  double h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];
@@ -396,10 +399,10 @@ real splint_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
  *
  ****************************************************************/
 
-real splint_grad_ne(pot_table_t *pt, real *xi, int col, real r)
+double splint_grad_ne(pot_table_t *pt, double *xi, int col, double r)
 {
   int   klo, khi, k;
-  real  h, b, a, d22, d21, p1, p2, x1, x2;
+  double h, b, a, d22, d21, p1, p2, x1, x2;
 
   klo = pt->first[col];
   khi = pt->last[col];

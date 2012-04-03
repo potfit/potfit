@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -34,6 +34,7 @@
 #include "potfit.h"
 #undef MAIN
 
+#include "config.h"
 #include "functions.h"
 #include "optimize.h"
 #include "potential.h"
@@ -63,7 +64,7 @@ void error(int done, char *msg, ...)
   fflush(stderr);
   if (done == 1) {
 #ifdef MPI
-    real *force = NULL;
+    double *force = NULL;
     /* go wake up other threads */
     calc_forces(calc_pot.table, force, 1);
     fprintf(stderr, "\n");
@@ -111,12 +112,12 @@ int main(int argc, char **argv)
   char  file[255];
   FILE *outfile;
   int   i, j;
-  real  tot, sqr;
-  real *force;
-  real *rms;
+  double tot, sqr;
+  double *force;
+  double *rms;
   time_t t_begin, t_end;
 #if defined EAM || defined ADP
-  real *totdens = NULL;
+  double *totdens = NULL;
 #endif /* EAM || ADP */
 
 #ifdef MPI
@@ -196,10 +197,10 @@ int main(int argc, char **argv)
 
     /* set spline density corrections to 0 */
 #if defined EAM || defined ADP
-    lambda = (real *)malloc(ntypes * sizeof(real));
+    lambda = (double *)malloc(ntypes * sizeof(double));
     reg_for_free(lambda, "lambda");
 
-    totdens = (real *)malloc(ntypes * sizeof(real));
+    totdens = (double *)malloc(ntypes * sizeof(double));
     reg_for_free(totdens, "totdens");
 
     for (i = 0; i < ntypes; i++)
@@ -250,7 +251,7 @@ int main(int argc, char **argv)
   idx = opt_pot.idx;
 
   /* main force vector, all forces, energies, ... will be stored here */
-  force = (real *)malloc((mdim) * sizeof(real));
+  force = (double *)malloc((mdim) * sizeof(double));
   if (NULL == force)
     error(1, "Could not allocate memory for main force vector.");
   reg_for_free(force, "force");
@@ -271,14 +272,14 @@ int main(int argc, char **argv)
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif /* APOT */
 #endif /* EAM || ADP */
-  rms = (real *)malloc(3 * sizeof(real));
+  rms = (double *)malloc(3 * sizeof(double));
   if (NULL == rms)
     error(1, "Could not allocate memory for rms errors.");
   reg_for_free(rms, "rms");
 
 #ifdef APOT
 #ifdef MPI
-  MPI_Bcast(opt_pot.table, ndimtot, REAL, 0, MPI_COMM_WORLD);
+  MPI_Bcast(opt_pot.table, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
   update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif /* APOT */
@@ -362,6 +363,10 @@ int main(int argc, char **argv)
       write_pot_table_imd(&calc_pot, imdpot);
     if (plot)
       write_plotpot_pair(&calc_pot, plotfile);
+#if defined EAM || defined ADP
+    if (write_lammps)
+      write_pot_table_lammps(&calc_pot);
+#endif /* EAM || ADP */
 #ifdef COULOMB
     /* write coulomb part to plot file */
     //write_coulomb_table();
@@ -404,7 +409,7 @@ int main(int argc, char **argv)
     }
     fprintf(outfile, "\n");
     for (i = 0; i < ntypes; i++) {
-      totdens[i] /= (real)na_type[nconf][i];
+      totdens[i] /= (double)na_type[nconf][i];
       fprintf(outfile,
 	"Average local electron density at atom sites type %d: %f\n", i,
 	totdens[i]);
@@ -440,9 +445,12 @@ int main(int argc, char **argv)
 #endif /* EAM || ADP */
 
     /* prepare for error calculations */
-    real  f_sum = 0.;
-    real  e_sum = 0.;
-    real  s_sum = 0.;
+#ifdef CONTRIB
+    int   contrib_atoms = 0;
+#endif /* CONTRIB */
+    double f_sum = 0.;
+    double e_sum = 0.;
+    double s_sum = 0.;
 
     /* write force deviations */
     if (write_output_files) {
@@ -465,7 +473,12 @@ int main(int argc, char **argv)
     strcpy(component[1], "y");
     strcpy(component[2], "z");
     for (i = 0; i < 3 * natoms; i++) {
-      sqr = conf_weight[atoms[i / 3].conf] * dsquare(force[i]);
+#ifdef CONTRIB
+      if (0 == atoms[i / 3].contrib)
+	sqr = 0.;
+      else
+#endif /* CONTRIB */
+	sqr = conf_weight[atoms[i / 3].conf] * dsquare(force[i]);
       f_sum += sqr;
 #ifdef FWEIGHT
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
@@ -673,9 +686,23 @@ int main(int argc, char **argv)
     rms[2] = 0.;		/* stresses */
 
     /* forces */
-    for (i = 0; i < 3 * natoms; i++)
-      rms[0] += dsquare(force[i]);
+    for (i = 0; i < natoms; i++) {
+#ifdef CONTRIB
+      if (atoms[i].contrib) {
+	contrib_atoms++;
+#endif /* CONTRIB */
+	rms[0] += dsquare(force[3 * i + 0]);
+	rms[0] += dsquare(force[3 * i + 1]);
+	rms[0] += dsquare(force[3 * i + 2]);
+#ifdef CONTRIB
+      }
+#endif /* CONTRIB */
+    }
+#ifdef CONTRIB
+    rms[0] = sqrt(rms[0] / (3 * contrib_atoms));
+#else
     rms[0] = sqrt(rms[0] / (3 * natoms));
+#endif /* CONTRIB */
 
     /* energies */
     if (eweight != 0) {
@@ -767,7 +794,7 @@ int main(int argc, char **argv)
       (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
 	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
     printf("%d force calculations, each took %f seconds\n", fcalls,
-      (real)difftime(t_end, t_begin) / fcalls);
+      (double)difftime(t_end, t_begin) / fcalls);
   }
 
   /* do some cleanups before exiting */

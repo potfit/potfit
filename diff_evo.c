@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2011
+ * Copyright 2009-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -53,11 +53,11 @@
  *
  ****************************************************************/
 
-void init_population(real **pop, real *xi, real *cost)
+void init_population(double **pop, double *xi, double *cost)
 {
   int   i, j;
-  real  temp, max, min, val;
-  real  fxi[mdim];
+  double temp, max, min, val;
+  double fxi[mdim];
 
   for (i = 0; i < NP; i++) {
     for (j = 0; j < (D - 2); j++)
@@ -104,28 +104,28 @@ void init_population(real **pop, real *xi, real *cost)
  *
  ****************************************************************/
 
-void opposite_check(real **P, real *costP, int init)
+void opposite_check(double **P, double *costP, int init)
 {
   int   i, j;
-  real  fxi[mdim];
-  real  max, min;
-  real  minp[ndim], maxp[ndim];
-  static real *tot_cost;	/* cost of two populations */
-  static real **tot_P;		/* two populations */
+  double fxi[mdim];
+  double max, min;
+  double minp[ndim], maxp[ndim];
+  static double *tot_cost;	/* cost of two populations */
+  static double **tot_P;	/* two populations */
 
   /* allocate memory if not done yet */
   if (tot_P == NULL) {
-    tot_P = (real **)malloc(2 * NP * sizeof(real *));
+    tot_P = (double **)malloc(2 * NP * sizeof(double *));
     if (tot_P == NULL)
       error(1, "Could not allocate memory for opposition vector!\n");
     for (i = 0; i < 2 * NP; i++) {
-      tot_P[i] = (real *)malloc(D * sizeof(real));
+      tot_P[i] = (double *)malloc(D * sizeof(double));
       for (j = 0; j < D; j++)
 	tot_P[i][j] = 0.;
     }
   }
   if (tot_cost == NULL)
-    tot_cost = (real *)malloc(2 * NP * sizeof(real));
+    tot_cost = (double *)malloc(2 * NP * sizeof(double));
   for (i = 0; i < 2 * NP; i++)
     tot_cost[i] = 0.;
 
@@ -187,51 +187,51 @@ void opposite_check(real **P, real *costP, int init)
  *
  ****************************************************************/
 
-void diff_evo(real *xi)
+void diff_evo(double *xi)
 {
   int   a, b, c;		/* store randomly picked numbers */
 /*  int   d, e; 			|+ enable this line for more vectors +|*/
   int   i, j, k;		/* counters */
   int   count = 0;		/* counter for loops */
   int   jsteps = 0;
-  real  avg = 0.;		/* average sum of squares for all configurations */
-  real  crit = 1000.;		/* treshold for stopping criterion */
-  real  force = 0.;		/* holds the current sum of squares */
-  real  jumprate = JR;
-  real  min = 10e10;		/* current minimum for all configurations */
-  real  max = 0.;		/* current maximum for all configurations */
-  real  temp = 0.;		/* temp storage */
+  double avg = 0.;		/* average sum of squares for all configurations */
+  double crit = 1000.;		/* treshold for stopping criterion */
+  double force = 0.;		/* holds the current sum of squares */
+  double jumprate = JR;
+  double min = 10e10;		/* current minimum for all configurations */
+  double max = 0.;		/* current maximum for all configurations */
+  double temp = 0.;		/* temp storage */
 #ifdef APOT
-  real  pmin = 0.;		/* lower bound for parameter */
-  real  pmax = 0.;		/* upper bound for parameter */
+  double pmin = 0.;		/* lower bound for parameter */
+  double pmax = 0.;		/* upper bound for parameter */
 #endif /* APOT */
-  real *best;			/* best configuration */
-  real *cost;			/* cost values for all configurations */
-  real *fxi;			/* force vector */
-  real *trial;			/* current trial configuration */
-  real **x1;			/* current population */
-  real **x2;			/* next generation */
+  double *best;			/* best configuration */
+  double *cost;			/* cost values for all configurations */
+  double *fxi;			/* force vector */
+  double *trial;		/* current trial configuration */
+  double **x1;			/* current population */
+  double **x2;			/* next generation */
   FILE *ff;			/* exit flagfile */
 
   if (evo_threshold == 0.)
     return;
 
   /* vector for force calculation */
-  fxi = vect_real(mdim);
+  fxi = vect_double(mdim);
 
   /* vector with new configuration */
-  trial = (real *)malloc(D * sizeof(real));
+  trial = (double *)malloc(D * sizeof(double));
 
   /* allocate memory for all configurations */
-  x1 = (real **)malloc(NP * sizeof(real *));
-  x2 = (real **)malloc(NP * sizeof(real *));
-  best = (real *)malloc(NP * sizeof(real));
-  cost = (real *)malloc(NP * sizeof(real));
+  x1 = (double **)malloc(NP * sizeof(double *));
+  x2 = (double **)malloc(NP * sizeof(double *));
+  best = (double *)malloc(NP * sizeof(double));
+  cost = (double *)malloc(NP * sizeof(double));
   if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
     error(1, "Could not allocate memory for population vector!\n");
   for (i = 0; i < NP; i++) {
-    x1[i] = (real *)malloc(D * sizeof(real));
-    x2[i] = (real *)malloc(D * sizeof(real));
+    x1[i] = (double *)malloc(D * sizeof(double));
+    x2[i] = (double *)malloc(D * sizeof(double));
     if (x1[i] == NULL || x2[i] == NULL)
       error(1, "Could not allocate memory for population vector!\n");
     for (j = 0; j < D; j++) {

@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2010-2011
+ * Copyright 2010-2012
  * 	Institute for Theoretical and Applied Physics
  * 	University of Stuttgart, D-70550 Stuttgart, Germany
  * 	http://potfit.itap.physik.uni-stuttgart.de/
@@ -28,6 +28,9 @@
  *
  ****************************************************************/
 
+#ifndef BRACKET_H
+#define BRACKET_H
+
 /* for bracket.c */
 #define CGOLD 0.3819660
 #define MAX_IT 100
@@ -37,9 +40,14 @@
 #define ZEPS 1.0e-9
 #define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
-extern real *xicom, *delcom;
+extern double *xicom, *delcom;
 
-void  bracket(real *, real *, real *, real *, real *, real *, real *, real *);
-real  brent(real, real, real, real, real, real *, real *, real *, real *);
+void  bracket(double *, double *, double *, double *, double *, double *,
+  double *, double *);
+double brent(double, double, double, double, double, double *, double *,
+  double *, double *);
 
-real  linmin(real *, real *, real, real *, real *, real *, real *);
+double linmin(double *, double *, double, double *, double *, double *,
+  double *);
+
+#endif /* BRACKET_H */

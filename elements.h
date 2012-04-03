@@ -1,10 +1,10 @@
 /****************************************************************
  *
- * potential.h: potfit spline functions header file
+ * elements.h: header file for periodic table
  *
  ****************************************************************
  *
- * Copyright 2011-2012
+ * Copyright 2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -28,19 +28,25 @@
  *
  ****************************************************************/
 
-#ifndef SPLINES_H
-#define SPLINES_H
+#ifndef ELEMENTS_H
+#define ELEMENTS_H
 
-void  spline_ed(double, double *, int, double, double, double *);
-double splint_ed(pot_table_t *, double *, int, double);
-double splint_grad_ed(pot_table_t *, double *, int, double);
-double splint_comb_ed(pot_table_t *, double *, int, double, double *);
-double splint_dir(pot_table_t *, double *, int, double, double);
-double splint_comb_dir(pot_table_t *, double *, int, double, double, double *);
-double splint_grad_dir(pot_table_t *, double *, int, double, double);
-void  spline_ne(double *, double *, int, double, double, double *);
-double splint_ne(pot_table_t *, double *, int, double);
-double splint_comb_ne(pot_table_t *, double *, int, double, double *);
-double splint_grad_ne(pot_table_t *, double *, int, double);
+typedef struct {
+  char  name[20];
+  char  short_name[20];
+  double mass;
+} element_t;
 
-#endif /* SPLINES_H */
+/* initialize periodic table of elements */
+void  init_elements();
+
+/* get mass from number */
+double ele_mass_from_number(int num);
+
+/* get mass from name */
+double ele_mass_from_name(char *name);
+
+/* get number from name */
+int   ele_number_from_name(char *name);
+
+#endif /* ELEMENTS_H */

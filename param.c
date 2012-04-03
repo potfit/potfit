@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -105,12 +105,12 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 	      "Parameter for %s missing in line %d!\nDouble vector of length %u expected!",
 	      param_name, curline, (unsigned)pnum_min);
 	  else
-	    ((real *)param)[i] = atof(str);
+	    ((double *)param)[i] = atof(str);
 	  numread++;
 	}
 	for (i = pnum_min; i < pnum_max; i++) {
 	  if ((str = strtok(NULL, " \t\r\n")) != NULL) {
-	    ((real *)param)[i] = atof(str);
+	    ((double *)param)[i] = atof(str);
 	    numread++;
 	  } else
 	    break;
@@ -350,6 +350,10 @@ void read_paramfile(FILE *pf)
       getparam("stress_weight", &sweight, PARAM_DOUBLE, 1, 1);
     }
 #endif /* STRESS */
+    /* cutoff-radius for long-range interactions */
+    else if (strcasecmp(token, "write_lammps") == 0) {
+      getparam("write_lammps", &write_lammps, PARAM_INT, 1, 1);
+    }
 #ifdef COULOMB
     /* cutoff-radius for long-range interactions */
     else if (strcasecmp(token, "dp_cut") == 0) {

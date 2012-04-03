@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -31,10 +31,12 @@
 
 #include "potfit.h"
 
+#include "elements.h"
 #include "functions.h"
 #include "potential.h"
 #include "splines.h"
 #include "utils.h"
+#include "version.h"
 
 #define NPLOT 1000
 
@@ -53,7 +55,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #ifdef APOT
   apot_table_t *apt = &apot_table;
 #else
-  real *val;
+  double *val;
 #endif /* APOT */
 
   /* open file */
@@ -194,10 +196,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
   /* allocate info block of function table */
   pt->len = 0;
   pt->ncols = size;
-  pt->begin = (real *)malloc(size * sizeof(real));
-  pt->end = (real *)malloc(size * sizeof(real));
-  pt->step = (real *)malloc(size * sizeof(real));
-  pt->invstep = (real *)malloc(size * sizeof(real));
+  pt->begin = (double *)malloc(size * sizeof(double));
+  pt->end = (double *)malloc(size * sizeof(double));
+  pt->step = (double *)malloc(size * sizeof(double));
+  pt->invstep = (double *)malloc(size * sizeof(double));
   pt->first = (int *)malloc(size * sizeof(int));
   pt->last = (int *)malloc(size * sizeof(int));
   nvals = (int *)malloc(size * sizeof(int));
@@ -211,53 +213,53 @@ void read_pot_table(pot_table_t *pt, char *filename)
   apt->total_par = 0;
 
   apt->n_par = (int *)malloc(size * sizeof(int));
-  apt->begin = (real *)malloc(size * sizeof(real));
-  apt->end = (real *)malloc(size * sizeof(real));
+  apt->begin = (double *)malloc(size * sizeof(double));
+  apt->end = (double *)malloc(size * sizeof(double));
   apt->param_name = (char ***)malloc(size * sizeof(char **));
   apt->fvalue = (fvalue_pointer *) malloc(size * sizeof(fvalue_pointer));
 #ifdef PAIR
   if (enable_cp) {
-    apt->values = (real **)malloc((size + 1) * sizeof(real *));
-    apt->values[size] = (real *)malloc(ntypes * sizeof(real));
+    apt->values = (double **)malloc((size + 1) * sizeof(double *));
+    apt->values[size] = (double *)malloc(ntypes * sizeof(double));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
     apt->chempot = apt->values[size];
-    apt->pmin = (real **)malloc((size + 1) * sizeof(real *));
-    apt->pmin[size] = (real *)malloc(ntypes * sizeof(real));
-    apt->pmax = (real **)malloc((size + 1) * sizeof(real *));
-    apt->pmax[size] = (real *)malloc(ntypes * sizeof(real));
+    apt->pmin = (double **)malloc((size + 1) * sizeof(double *));
+    apt->pmin[size] = (double *)malloc(ntypes * sizeof(double));
+    apt->pmax = (double **)malloc((size + 1) * sizeof(double *));
+    apt->pmax[size] = (double *)malloc(ntypes * sizeof(double));
   } else {
 #elif defined COULOMB
   if (1) {
-    apt->ratio = (real *)malloc(ntypes * sizeof(real));
-    apt->values = (real **)malloc((size + 5) * sizeof(real *));
+    apt->ratio = (double *)malloc(ntypes * sizeof(double));
+    apt->values = (double **)malloc((size + 5) * sizeof(double *));
     apt->param_name = (char ***)malloc((size + 5) * sizeof(char **));
-    apt->pmin = (real **)malloc((size + 5) * sizeof(real *));
-    apt->pmax = (real **)malloc((size + 5) * sizeof(real *));
+    apt->pmin = (double **)malloc((size + 5) * sizeof(double *));
+    apt->pmax = (double **)malloc((size + 5) * sizeof(double *));
     apt->invar_par = (int **)malloc((size + 5) * sizeof(int *));
 
-    apt->values[size] = (real *)malloc((ntypes - 1) * sizeof(real));
+    apt->values[size] = (double *)malloc((ntypes - 1) * sizeof(double));
     apt->param_name[size] = (char **)malloc((ntypes - 1) * sizeof(char *));
-    apt->pmin[size] = (real *)malloc((ntypes - 1) * sizeof(real));
-    apt->pmax[size] = (real *)malloc((ntypes - 1) * sizeof(real));
+    apt->pmin[size] = (double *)malloc((ntypes - 1) * sizeof(double));
+    apt->pmax[size] = (double *)malloc((ntypes - 1) * sizeof(double));
     apt->invar_par[size] = (int *)malloc((ntypes - 1) * sizeof(int));
 
-    apt->values[size + 1] = (real *)malloc(sizeof(real));
+    apt->values[size + 1] = (double *)malloc(sizeof(double));
     apt->param_name[size + 1] = (char **)malloc(sizeof(char *));
-    apt->pmin[size + 1] = (real *)malloc(sizeof(real));
-    apt->pmax[size + 1] = (real *)malloc(sizeof(real));
+    apt->pmin[size + 1] = (double *)malloc(sizeof(double));
+    apt->pmax[size + 1] = (double *)malloc(sizeof(double));
     apt->invar_par[size + 1] = (int *)malloc(sizeof(int));
 
-    apt->values[size + 2] = (real *)malloc(ntypes * sizeof(real));
+    apt->values[size + 2] = (double *)malloc(ntypes * sizeof(double));
     apt->param_name[size + 2] = (char **)malloc(ntypes * sizeof(char *));
-    apt->pmin[size + 2] = (real *)malloc(ntypes * sizeof(real));
-    apt->pmax[size + 2] = (real *)malloc(ntypes * sizeof(real));
+    apt->pmin[size + 2] = (double *)malloc(ntypes * sizeof(double));
+    apt->pmax[size + 2] = (double *)malloc(ntypes * sizeof(double));
     apt->invar_par[size + 2] = (int *)malloc(ntypes * sizeof(int));
 
     for (i = 3; i < 5; i++) {
-      apt->values[size + i] = (real *)malloc(ncols * sizeof(real));
+      apt->values[size + i] = (double *)malloc(ncols * sizeof(double));
       apt->param_name[size + i] = (char **)malloc(ncols * sizeof(char *));
-      apt->pmin[size + i] = (real *)malloc(ncols * sizeof(real));
-      apt->pmax[size + i] = (real *)malloc(ncols * sizeof(real));
+      apt->pmin[size + i] = (double *)malloc(ncols * sizeof(double));
+      apt->pmax[size + i] = (double *)malloc(ncols * sizeof(double));
       apt->invar_par[size + i] = (int *)malloc(ncols * sizeof(int));
     }
     apt->charge = apt->values[size];
@@ -269,10 +271,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #endif /* DIPOLE */
   } else {
 #endif /* COULOMB */
-    apt->values = (real **)malloc(size * sizeof(real *));
+    apt->values = (double **)malloc(size * sizeof(double *));
     apt->invar_par = (int **)malloc(size * sizeof(int *));
-    apt->pmin = (real **)malloc(size * sizeof(real *));
-    apt->pmax = (real **)malloc(size * sizeof(real *));
+    apt->pmin = (double **)malloc(size * sizeof(double *));
+    apt->pmax = (double **)malloc(size * sizeof(double *));
 #if defined PAIR || defined COULOMB
   }
 #endif /* PAIR || COULOMB */
@@ -303,10 +305,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
   fclose(infile);
 
   /* compute rcut and rmin */
-  rcut = (real *)malloc(ntypes * ntypes * sizeof(real));
+  rcut = (double *)malloc(ntypes * ntypes * sizeof(double));
   if (NULL == rcut)
     error(1, "Cannot allocate rcut");
-  rmin = (real *)malloc(ntypes * ntypes * sizeof(real));
+  rmin = (double *)malloc(ntypes * ntypes * sizeof(double));
   if (NULL == rmin)
     error(1, "Cannot allocate rmin");
   for (i = 0; i < ntypes; i++)
@@ -335,7 +337,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
 #ifndef APOT
   /* read maximal changes file */
-  maxchange = (real *)malloc(pt->len * sizeof(real));
+  maxchange = (double *)malloc(pt->len * sizeof(double));
   if (usemaxch) {
     /* open file */
     infile = fopen(maxchfile, "r");
@@ -353,6 +355,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #endif /* APOT */
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
+      rcutmin = MIN(rcutmin, rcut[i + ntypes * j]);
       rcutmax = MAX(rcutmax, rcut[i + ntypes * j]);
     }
   }
@@ -429,7 +432,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   int   i, j, k, l, ret_val;
   char  buffer[255], name[255];
   char *token;
-  real *val, *list, temp;
+  double *val, *list, temp;
   fpos_t filepos, startpos;
 
   /* initialize the function table for analytic potentials */
@@ -546,16 +549,16 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     }
     if (compnodes != -1) {
       apt->values[apt->number] =
-	(real *)realloc(apt->values[apt->number],
-	(ntypes + compnodes) * sizeof(real));
+	(double *)realloc(apt->values[apt->number],
+	(ntypes + compnodes) * sizeof(double));
       apt->pmin[apt->number] =
-	(real *)realloc(apt->pmin[apt->number],
-	(ntypes + compnodes) * sizeof(real));
+	(double *)realloc(apt->pmin[apt->number],
+	(ntypes + compnodes) * sizeof(double));
       apt->pmax[apt->number] =
-	(real *)realloc(apt->pmax[apt->number],
-	(ntypes + compnodes) * sizeof(real));
+	(double *)realloc(apt->pmax[apt->number],
+	(ntypes + compnodes) * sizeof(double));
       apt->chempot = apt->values[apt->number];
-      compnodelist = (real *)malloc((ntypes + compnodes) * sizeof(real));
+      compnodelist = (double *)malloc((ntypes + compnodes) * sizeof(double));
 
       for (j = 0; j < compnodes; j++) {
 	if (4 > fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
@@ -716,8 +719,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     reg_for_free(apt->global_idx, "apt->global_idx");
 
     apt->values =
-      (real **)realloc(apt->values, (global_pot + 1) * sizeof(real *));
-    apt->values[global_pot] = (real *)malloc(j * sizeof(real));
+      (double **)realloc(apt->values, (global_pot + 1) * sizeof(double *));
+    apt->values[global_pot] = (double *)malloc(j * sizeof(double));
     reg_for_free(apt->values[global_pot], "apt->values[%d]", global_pot);
 
     apt->invar_par =
@@ -725,12 +728,14 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->invar_par[global_pot] = (int *)malloc((j + 1) * sizeof(int));
     reg_for_free(apt->invar_par[global_pot], "apt->invar_par[%d]", global_pot);
 
-    apt->pmin = (real **)realloc(apt->pmin, (global_pot + 1) * sizeof(real *));
-    apt->pmin[global_pot] = (real *)malloc(j * sizeof(real));
+    apt->pmin =
+      (double **)realloc(apt->pmin, (global_pot + 1) * sizeof(double *));
+    apt->pmin[global_pot] = (double *)malloc(j * sizeof(double));
     reg_for_free(apt->pmin[global_pot], "apt->pmin[%d]", global_pot);
 
-    apt->pmax = (real **)realloc(apt->pmax, (global_pot + 1) * sizeof(real *));
-    apt->pmax[global_pot] = (real *)malloc(j * sizeof(real));
+    apt->pmax =
+      (double **)realloc(apt->pmax, (global_pot + 1) * sizeof(double *));
+    apt->pmax[global_pot] = (double *)malloc(j * sizeof(double));
     reg_for_free(apt->pmax[global_pot], "apt->pmax[%d]", global_pot);
 
     apt->param_name =
@@ -873,16 +878,16 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
     apt->begin[i] = .0001;
 
     /* allocate memory for this parameter */
-    apt->values[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+    apt->values[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
     reg_for_free(apt->values[i], "apt->values[%d]", i);
 
     apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
     reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
 
-    apt->pmin[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+    apt->pmin[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
     reg_for_free(apt->pmin[i], "apt->pmin[%d]", i);
 
-    apt->pmax[i] = (real *)malloc(apt->n_par[i] * sizeof(real));
+    apt->pmax[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
     reg_for_free(apt->pmax[i], "apt->pmax[%d]", i);
 
     apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
@@ -1071,10 +1076,10 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename,
   pt->len += (2 * ncols);
 #endif /* DIPOLE */
 
-  pt->table = (real *)malloc(pt->len * sizeof(real));
+  pt->table = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->table, "pt->table");
 
-  calc_list = (real *)malloc(pt->len * sizeof(real));
+  calc_list = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(calc_list, "calc_list");
 
   pt->idx = (int *)malloc(pt->len * sizeof(int));
@@ -1249,7 +1254,7 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
   char *filename, FILE *infile)
 {
   int   i, j, k, l;
-  real *val;
+  double *val;
 
   /* read the info block of the function table */
   for (i = 0; i < size; i++) {
@@ -1267,11 +1272,11 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->len = pt->first[i] + nvals[i];
   }
   /* allocate the function table */
-  pt->table = (real *)malloc(pt->len * sizeof(real));
+  pt->table = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->table, "pt->table");
-  pt->xcoord = (real *)malloc(pt->len * sizeof(real));
+  pt->xcoord = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->xcoord, "pt->xcoord");
-  pt->d2tab = (real *)malloc(pt->len * sizeof(real));
+  pt->d2tab = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->d2tab, "pt->d2tab");
   pt->idx = (int *)malloc(pt->len * sizeof(int));
   reg_for_free(pt->idx, "pt->idx");
@@ -1477,7 +1482,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
   char *filename, FILE *infile)
 {
   int   i, k, l, j;
-  real *val, *ord;
+  double *val, *ord;
 
   /* read the info block of the function table */
   for (i = 0; i < size; i++) {
@@ -1493,9 +1498,9 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->len = pt->first[i] + nvals[i];
   }
   /* allocate the function table */
-  pt->table = (real *)malloc(pt->len * sizeof(real));
-  pt->xcoord = (real *)malloc(pt->len * sizeof(real));
-  pt->d2tab = (real *)malloc(pt->len * sizeof(real));
+  pt->table = (double *)malloc(pt->len * sizeof(double));
+  pt->xcoord = (double *)malloc(pt->len * sizeof(double));
+  pt->d2tab = (double *)malloc(pt->len * sizeof(double));
   pt->idx = (int *)malloc(pt->len * sizeof(int));
   if ((NULL == pt->table) || (NULL == pt->xcoord) || (NULL == pt->idx)
     || (NULL == pt->d2tab))
@@ -1545,7 +1550,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
 
   }
@@ -1587,7 +1592,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
   }
 
@@ -1628,7 +1633,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
   }
 #endif /* EAM || ADP */
@@ -1671,7 +1676,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
   }
 
@@ -1712,7 +1717,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals,
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((real)nvals[i] - 1);
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1. / pt->step[i];
   }
 #endif /* ADP */
@@ -1739,7 +1744,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 {
 #ifdef APOT
   int   i, j, index, x = 0, size;
-  real *val, f, h;
+  double *val, f, h;
 #endif /* APOT */
 
   switch (format) {
@@ -1757,15 +1762,15 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	  reg_for_free(calct->first, "calct->first");
 	  calct->last = (int *)malloc(size * sizeof(int));
 	  reg_for_free(calct->last, "calct->last");
-	  calct->step = (real *)malloc(size * sizeof(real));
+	  calct->step = (double *)malloc(size * sizeof(double));
 	  reg_for_free(calct->step, "calct->step");
-	  calct->invstep = (real *)malloc(size * sizeof(real));
+	  calct->invstep = (double *)malloc(size * sizeof(double));
 	  reg_for_free(calct->invstep, "calct->invstep");
-	  calct->xcoord = (real *)malloc(calct->len * sizeof(real));
+	  calct->xcoord = (double *)malloc(calct->len * sizeof(double));
 	  reg_for_free(calct->xcoord, "calct->xcoord");
-	  calct->table = (real *)malloc(calct->len * sizeof(real));
+	  calct->table = (double *)malloc(calct->len * sizeof(double));
 	  reg_for_free(calct->table, "calct->table");
-	  calct->d2tab = (real *)malloc(calct->len * sizeof(real));
+	  calct->d2tab = (double *)malloc(calct->len * sizeof(double));
 	  reg_for_free(calct->d2tab, "calct->d2tab");
 	  calct->idx = (int *)malloc(calct->len * sizeof(int));
 	  reg_for_free(calct->idx, "calct->idx");
@@ -1828,7 +1833,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
  *
  ****************************************************************/
 
-void update_apot_table(real *xi)
+void update_apot_table(double *xi)
 {
   int   i = 0, j = 0, m = 0, n = 0;
 
@@ -1852,11 +1857,11 @@ void update_apot_table(real *xi)
  *
  ****************************************************************/
 
-void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
+void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
 {
   int   i, j, k, m, n, change;
-  real  f, h = 0;
-  real *list, *val;
+  double f, h = 0;
+  double *list, *val;
 
   switch (format) {
       case 0:
@@ -1874,7 +1879,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 	    }
 	  }
 	  for (i = 0; i < calc_pot.ncols; i++) {
-	    if (smooth_pot[i] && !invar_pot[i]) {
+	    if (smooth_pot[i] && (do_all || !invar_pot[i])) {
 	      h = *(val + 1 + apot_table.n_par[i]);
 	      if (h == 0)
 		error(1, "The cutoff parameter for potential %d is 0!", i);
@@ -1891,7 +1896,7 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
 		list[j] = val[j];
 	      }
 	    }
-	    if ((change || do_all) && !invar_pot[i]) {
+	    if (do_all || (change && !invar_pot[i])) {
 	      for (j = 0; j < APOT_STEPS; j++) {
 		k = i * APOT_STEPS + (i + 1) * 2 + j;
 		apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
@@ -1937,9 +1942,9 @@ void update_calc_table(real *xi_opt, real *xi_calc, int do_all)
  *
  ****************************************************************/
 
-real parab_ed(pot_table_t *pt, real *xi, int col, real r)
+double parab_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  real  rr, istep, chi, p0, p1, p2, dv, d2v;
+  double rr, istep, chi, p0, p1, p2, dv, d2v;
   int   k;
 
   /* renorm to beginning of table */
@@ -1969,9 +1974,9 @@ real parab_ed(pot_table_t *pt, real *xi, int col, real r)
  *
  ****************************************************************/
 
-real parab_ne(pot_table_t *pt, real *xi, int col, real r)
+double parab_ne(pot_table_t *pt, double *xi, int col, double r)
 {
-  real  x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
+  double x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
   int   k;
 
   /* renorm to beginning of table */
@@ -2005,9 +2010,9 @@ real parab_ne(pot_table_t *pt, real *xi, int col, real r)
  *
  ****************************************************************/
 
-real parab_grad_ed(pot_table_t *pt, real *xi, int col, real r)
+double parab_grad_ed(pot_table_t *pt, double *xi, int col, double r)
 {
-  real  rr, istep, chi, p0, p1, p2, dv, d2v;
+  double rr, istep, chi, p0, p1, p2, dv, d2v;
   int   k;
 
   /* renorm to beginning of table */
@@ -2037,9 +2042,9 @@ real parab_grad_ed(pot_table_t *pt, real *xi, int col, real r)
  *
  ****************************************************************/
 
-real parab_grad_ne(pot_table_t *pt, real *xi, int col, real r)
+double parab_grad_ne(pot_table_t *pt, double *xi, int col, double r)
 {
-  real  h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
+  double h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
   int   k;
 
   /* renorm to beginning of table */
@@ -2072,9 +2077,10 @@ real parab_grad_ne(pot_table_t *pt, real *xi, int col, real r)
  *
  ****************************************************************/
 
-real parab_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
+double parab_comb_ed(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
-  real  rr, istep, chi, p0, p1, p2, dv, d2v;
+  double rr, istep, chi, p0, p1, p2, dv, d2v;
   int   k;
 
   /* renorm to beginning of table */
@@ -2106,9 +2112,10 @@ real parab_comb_ed(pot_table_t *pt, real *xi, int col, real r, real *grad)
  *
  ***************************************************************/
 
-real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
+double parab_comb_ne(pot_table_t *pt, double *xi, int col, double r,
+  double *grad)
 {
-  real  h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
+  double h0, h1, h2, x0, x1, x2, chi0, chi1, chi2, p0, p1, p2;
   int   k;
 
   /* renorm to beginning of table */
@@ -2146,7 +2153,7 @@ real parab_comb_ne(pot_table_t *pt, real *xi, int col, real r, real *grad)
  *
  ****************************************************************/
 
-void init_tails(real dp_kappa)
+void init_tails(double dp_kappa)
 {
   int   i, j;
 
@@ -2167,7 +2174,7 @@ void write_coulomb_table()
   apot_table_t *apt = &apot_table;
   if (ntypes == 2) {
     int   i, j;
-    real  value, c1;
+    double value, c1;
     FILE *outfile;
     char *filename1 = "Coulomb_00";
     char *filename2 = "Coulomb_01";
@@ -2353,7 +2360,7 @@ void write_pot_table3(pot_table_t *pt, char *filename)
 {
   FILE *outfile = NULL, *outfile2 = NULL;
   int   i, j, flag = 0;
-  real  r;
+  double r;
 
   if (*plotpointfile != '\0')
     flag = 1;
@@ -2519,21 +2526,21 @@ void write_pot_table4(pot_table_t *pt, char *filename)
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
   int   i, j, k, m, m2, col1, col2;
-  real  r2, temp;
-  real *r2begin, *r2end, *r2step;
+  double r2, temp;
+  double *r2begin, *r2end, *r2step;
 #ifndef APOT
-  real  temp2;
+  double temp2;
 #endif /* APOT */
 #if defined EAM || defined ADP
-  real  root;
+  double root;
 #endif /* EAM */
   FILE *outfile;
   char  filename[255];
 
   /* allocate memory */
-  r2begin = (real *)malloc(ntypes * ntypes * sizeof(real));
-  r2end = (real *)malloc(ntypes * ntypes * sizeof(real));
-  r2step = (real *)malloc(ntypes * ntypes * sizeof(real));
+  r2begin = (double *)malloc(ntypes * ntypes * sizeof(double));
+  r2end = (double *)malloc(ntypes * ntypes * sizeof(double));
+  r2step = (double *)malloc(ntypes * ntypes * sizeof(double));
   if ((r2begin == NULL) || (r2end == NULL) || (r2step == NULL))
     error(1, "Cannot allocate memory in  write_pot_table_imd");
 
@@ -2959,9 +2966,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifndef APOT
   int   k = 0, l;
 #else
-  real  h;
+  double h;
 #endif /* APOT */
-  real  r, r_step, temp;
+  double r, r_step, temp;
 
   /* open file */
   outfile = fopen(filename, "w");
@@ -3063,6 +3070,120 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
 /****************************************************************
  *
+ *  write potential table for LAMMPS (setfl)
+ *
+ ****************************************************************/
+
+void write_pot_table_lammps(pot_table_t *pt)
+{
+  FILE *outfile;
+  char  filename[255];
+  int   i, j;
+  int   k = 0, l;
+  double dx, r, temp;
+
+  /* open file */
+  if (strcmp(output_prefix, "") != 0)
+    strcpy(filename, output_prefix);
+  else
+    strcpy(filename, endpot);
+  sprintf(filename, "%s.lammps.%s", filename, interaction_name);
+  outfile = fopen(filename, "w");
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
+
+  /* initialize periodic table */
+  init_elements();
+
+  /* write LAMMPS formated header */
+  /* lines 1,2,3 = comments (ignored) */
+  fprintf(outfile, "LAMMPS %s potential generated by potfit\n",
+    interaction_name);
+  fprintf(outfile, "potfit version %s (%s)\n", VERSION_INFO, VERSION_DATE);
+  fprintf(outfile, "-----\n");
+  /* line 4: Nelements Element1 Element2 ... ElementN */
+  fprintf(outfile, "%d", ntypes);
+  for (i = 0; i < ntypes; i++)
+    fprintf(outfile, " %s", elements[i]);
+  fprintf(outfile, "\n");
+  dx = rcutmin / imdpotsteps;
+  /* line 5: Nrho, drho, Nr, dr, cutoff */
+  fprintf(outfile, "%d %f %d %f %f\n", imdpotsteps + 1, dx, imdpotsteps + 1, dx,
+    rcutmin);
+
+  /* one block for every atom type */
+#if defined EAM || defined ADP
+  for (i = 0; i < ntypes; i++) {
+    fprintf(outfile, "%3d %f 0 ???\n", ele_number_from_name(elements[i]),
+      ele_mass_from_name(elements[i]));
+    r = 0.;
+    /* embedding function F(n) */
+    k = paircol + ntypes + i;
+    for (j = 0; j <= imdpotsteps; j++) {
+      fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+      r += dx;
+    }
+    r = 0.;
+    k = paircol + i;
+    /* transfer function rho(r) */
+    for (j = 0; j <= imdpotsteps; j++) {
+      fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+      r += dx;
+    }
+  }
+#endif /* EAM || ADP */
+
+  /* pair potentials */
+  for (i = 0; i < ntypes; i++)
+    for (j = 0; j <= i; j++) {
+      r = 0.;
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
+      for (l = 0; l <= imdpotsteps; l++) {
+	fprintf(outfile, "%e\n", r * splint_ne(pt, pt->table, k, r));
+	r += dx;
+      }
+    }
+
+#ifdef ADP
+  /* dipole distortion */
+  for (i = 0; i < ntypes; i++)
+    for (j = i; j < ntypes; j++) {
+      r = 0.;
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
+      k += paircol + 2 * ntypes;
+      for (l = 0; l <= imdpotsteps; l++) {
+	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+	r += dx;
+      }
+    }
+  /* quadrupole distortion */
+  for (i = 0; i < ntypes; i++)
+    for (j = i; j < ntypes; j++) {
+      r = 0.;
+      k =
+	(i <=
+	j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j +
+	    1)) / 2);
+      k += 2 * (paircol + ntypes);
+      for (l = 0; l <= imdpotsteps; l++) {
+	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+	r += dx;
+      }
+    }
+#endif /* ADP */
+
+  fclose(outfile);
+  printf("Potential in LAMMPS format written to \t%s\n", filename);
+}
+
+/****************************************************************
+ *
  *  write alternate plot version of potential table
  *  (same intervals for all pair and transfer functions)
  *
@@ -3071,9 +3192,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 void write_altplot_pair(pot_table_t *pt, char *filename)
 {
   int   i, j, k, l;
-  real  r, rmin = 100., rmax = 0., r_step;
+  double r, rmin = 100., rmax = 0., r_step;
 #ifdef EAM
-  real  temp;
+  double temp;
 #endif /* EAM */
   FILE *outfile;
 
@@ -3160,7 +3281,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
 {
   int  *freq;			/* frequency... */
   int   h, i, j, k, l, typ1, typ2, col;
-  real  rr;
+  double rr;
   atom_t *atom;
   neigh_t *neigh;
   FILE *outfile;

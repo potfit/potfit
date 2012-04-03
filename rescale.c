@@ -5,7 +5,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2011
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -46,26 +46,26 @@
  *
  ****************************************************************/
 
-real rescale(pot_table_t *pt, real upper, int flag)
+double rescale(pot_table_t *pt, double upper, int flag)
 {
   int   mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign,
     dimneuxi;
-  real *xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
+  double *xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
   atom_t *atom;
   neigh_t *neigh;
-  real  fnval, pos, grad, a;
-  real  min = 1e100, max = -1e100;
+  double fnval, pos, grad, a;
+  double min = 1e100, max = -1e100;
 
   xi = pt->table;
   dimneuxi =
     pt->last[paircol + 2 * ntypes - 1] - pt->last[paircol + ntypes - 1];
-  neuxi = (real *)malloc(dimneuxi * sizeof(real));
-  neuord = (real *)malloc(dimneuxi * sizeof(real));
-  neustep = (real *)malloc(ntypes * sizeof(real));
-  maxrho = (real *)malloc(ntypes * sizeof(real));
-  minrho = (real *)malloc(ntypes * sizeof(real));
-  left = (real *)malloc(ntypes * sizeof(real));
-  right = (real *)malloc(ntypes * sizeof(real));
+  neuxi = (double *)malloc(dimneuxi * sizeof(double));
+  neuord = (double *)malloc(dimneuxi * sizeof(double));
+  neustep = (double *)malloc(ntypes * sizeof(double));
+  maxrho = (double *)malloc(ntypes * sizeof(double));
+  minrho = (double *)malloc(ntypes * sizeof(double));
+  left = (double *)malloc(ntypes * sizeof(double));
+  right = (double *)malloc(ntypes * sizeof(double));
   for (i = 0; i < ntypes; i++) {
     maxrho[i] = -1e100;
     minrho[i] = 1e100;
@@ -198,7 +198,7 @@ real rescale(pot_table_t *pt, real upper, int flag)
   for (i = 0; i < ntypes; i++) {
     col = paircol + ntypes + i;	/* 1. embedding function */
     vals = pt->last[col] - pt->first[col];
-    neustep[i] = (right[i] - left[i]) / (real)vals;
+    neustep[i] = (right[i] - left[i]) / (double)vals;
     pos = left[i];
     for (j = 0; j <= vals; j++) {
       neuxi[h] = splint_ne(pt, xi, col, pos);	/* inter- or extrapolation */
@@ -413,8 +413,8 @@ real rescale(pot_table_t *pt, real upper, int flag)
 
 void embed_shift(pot_table_t *pt)
 {
-  real  shift;
-  real *xi;
+  double shift;
+  double *xi;
   int   i, j, first;
   xi = pt->table;
   for (i = paircol + ntypes; i < paircol + 2 * ntypes; i++) {

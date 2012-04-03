@@ -6,7 +6,7 @@
  *
  * Copyright 1996, 1997, 1998, 1999, 2000
  * 	Fabrice Rossi (gsl/min/bracketing.c)
- * Copyright 2005-2011
+ * Copyright 2005-2012
  * 	Institute for Theoretical and Applied Physics
  * 	University of Stuttgart, D-70550 Stuttgart, Germany
  * 	http://potfit.itap.physik.uni-stuttgart.de/
@@ -35,8 +35,9 @@
 #include "bracket.h"
 #include "utils.h"
 
-void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
-  real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2)
+void bracket(double *x_lower, double *x_minimum, double *x_upper,
+  double *f_lower, double *f_minimum, double *f_upper, double *f_vec1,
+  double *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
@@ -46,23 +47,23 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
      representation in double precision. This behavior might break the
      algorithm.
    */
-  volatile real f_left = *f_lower;
-  volatile real f_right = *f_upper;
-  volatile real f_center;
-  real  x_left = *x_lower;
-  real  x_right = *x_upper;
-  real  x_center;
-  static real *vecu = NULL;	/* Vector of location u */
-  static real *f_vec3 = NULL;	/* 3rd target vector */
-  static real *p_left, *p_right, *p_center, *p_temp;
+  volatile double f_left = *f_lower;
+  volatile double f_right = *f_upper;
+  volatile double f_center;
+  double x_left = *x_lower;
+  double x_right = *x_upper;
+  double x_center;
+  static double *vecu = NULL;	/* Vector of location u */
+  static double *f_vec3 = NULL;	/* 3rd target vector */
+  static double *p_left, *p_right, *p_center, *p_temp;
   int   j;
   int   last = 0;		/* indicates whether upwards is left or right */
   long  nb_eval = 0;
 
   if (vecu == NULL)
-    vecu = vect_real(ndimtot);
+    vecu = vect_double(ndimtot);
   if (f_vec3 == NULL)
-    f_vec3 = vect_real(mdim);
+    f_vec3 = vect_double(mdim);
 
   p_left = f_vec1;
   p_right = f_vec2;
