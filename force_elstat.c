@@ -787,6 +787,9 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	    forces[k + 1] /= FORCE_EPS + atom->absforce;
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
+#ifdef CONTRIB
+	    if (atom->contrib)
+#endif /* CONTRIB */
 	    tmpsum +=
 	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
 	      dsquare(forces[k + 2]));
