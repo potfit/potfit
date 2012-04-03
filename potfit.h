@@ -130,7 +130,9 @@ typedef struct {
   vector force;
   double absforce;
   int   conf;			/* Which configuration... */
+#ifdef CONTRIB
   int   contrib;		/* Does this atom contribute to the error sum? */
+#endif
 #if defined EAM || defined ADP
   double rho;			/* embedding electron density */
   double gradF;			/* gradient of embedding fn. */

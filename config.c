@@ -203,6 +203,7 @@ void read_config(char *filename)
 	    h_boxz++;
 	  else
 	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
+#ifdef CONTRIB
 	} else if (res[1] == 'B') {
 	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &contrib_ll.x,
 	      &contrib_ll.y, &contrib_ll.z, &contrib_ur.x, &contrib_ur.y,
@@ -223,6 +224,11 @@ void read_config(char *filename)
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n",
 	      filename, line);
+#else
+	} else if (res[1] == 'B') {
+	  error(1,
+	    "This binary does not support \"box of contributing particles\".");
+#endif /* CONTRIB */
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
 	    h_eng++;
@@ -371,10 +377,12 @@ void read_config(char *filename)
 	sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) +
 	dsquare(atom->force.z));
       atom->conf = nconf;
+#ifdef CONTRIB
       if (have_contrib)
 	atom->contrib = does_contribute(atom->pos);
       else
 	atom->contrib = 1;
+#endif
       na_type[nconf][atom->typ] += 1;
       max_type = MAX(max_type, atom->typ);
     }

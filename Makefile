@@ -524,6 +524,10 @@ ifneq (,$(findstring fweight,${MAKETARGET}))
 CFLAGS += -DFWEIGHT
 endif
 
+ifneq (,$(findstring contrib,${MAKETARGET}))
+CFLAGS += -DCONTRIB
+endif
+
 ifneq (,$(findstring acml,${MAKETARGET}))
 CFLAGS += -DACML
 endif
