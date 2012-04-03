@@ -87,26 +87,26 @@
  *
  ****************************************************************/
 
-real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
+double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 {
-  real  tmpsum, sum = 0.;
+  double  tmpsum, sum = 0.;
   int   first, col, ne, size, i;
-  real *xi = NULL;
+  double *xi = NULL;
   apot_table_t *apt = &apot_table;
-  real  charge[ntypes];
-  real  sum_charges;
-  real  dp_kappa;
+  double  charge[ntypes];
+  double  sum_charges;
+  double  dp_kappa;
   int ncols;
 
   ncols = ntypes * (ntypes + 1) / 2;
 
 #ifdef DIPOLE
-  real  dp_alpha[ntypes];
-  real  dp_b[ncols];
-  real  dp_c[ncols];
+  double  dp_alpha[ntypes];
+  double  dp_b[ncols];
+  double  dp_c[ncols];
 #endif /* DIPOLE */
 
-  static real rho_sum_loc, rho_sum;
+  static double rho_sum_loc, rho_sum;
   rho_sum_loc = rho_sum = 0.;
 
   switch (format) {
@@ -139,7 +139,7 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 #ifdef MPI
     /* exchange potential and flag value */
 #ifndef APOT
-    MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -149,7 +149,7 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 #ifdef APOT
     if (myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     if (format == 0)
       update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
@@ -262,13 +262,13 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
       int   self;
       vector tmp_force;
       int   h, j, k, l, typ1, typ2, uf, us, stresses;	/* config */
-      real  fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
+      double  fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
-      real  r;
+      double  r;
       int   col_F;
-      real  eam_force;
-      real  rho_val, rho_grad, rho_grad_j;
+      double  eam_force;
+      double  rho_val, rho_grad, rho_grad_j;
 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -563,9 +563,9 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 
 #ifdef DIPOLE
 	/* T H I R D loop: calculate whole dipole moment for every atom */
-	real  rp, dp_sum;
+	double  rp, dp_sum;
 	int   dp_converged = 0, dp_it = 0;
-	real  max_diff = 10;
+	double  max_diff = 10;
 
 	while (dp_converged == 0) {
 	  dp_sum = 0;
@@ -688,8 +688,8 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 
 
 	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
-	real  rp_i, rp_j, pp_ij, tmp_1, tmp_2;
-	real  grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail, fnval_sum,
+	double  rp_i, rp_j, pp_ij, tmp_1, tmp_2;
+	double  grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail, fnval_sum,
 	  grad_sum;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
@@ -890,7 +890,7 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 
 
 	/* F I F T H  loop: self energy contributions and sum-up force contributions */
-	real  qq, pp;
+	double  qq, pp;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -1007,7 +1007,7 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 	  }        	/* end S I X T H loop over atoms */	
 
 	/* whole energy contributions flow into tmpsum */
-	forces[energy_p + h] /= (real)inconf[h];
+	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 #ifdef COMPAT
 	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
@@ -1036,7 +1036,7 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
     }				/* parallel region */
 #ifdef MPI
     /* Reduce rho_sum */
-    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else /* MPI */
     rho_sum = rho_sum_loc;
 #endif /* MPI */
@@ -1073,7 +1073,7 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
       /* Calculate averages */
-      rho_sum /= (real)natoms;
+      rho_sum /= (double)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
@@ -1086,21 +1086,21 @@ real calc_forces_eam_elstat(real *xi_opt, real *forces, int flag)
 #ifdef MPI
     /* reduce global sum */
     sum = 0.;
-    MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     /* forces */
     MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,
       forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
     /* energies */
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,	
-      forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,	
+      forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     /* stresses */
     MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
       forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
       MPI_COMM_WORLD);
     /* punishment constraints */
-    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, REAL,
-      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, REAL, 0,
+    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, MPI_DOUBLE,
+      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0,
       MPI_COMM_WORLD);
     /* no need to pick up dummy constraints - are already @ root */
 #endif /* MPI */

@@ -326,9 +326,9 @@ void meopp_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void power_value(real r, real *p, real *f)
+void power_value(double r, double *p, double *f)
 {
-  static real x, y, power;
+  static double x, y, power;
 
   x = r;
   y = p[1];
