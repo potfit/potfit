@@ -75,15 +75,7 @@ void shutdown_mpi(void)
  *
  ****************************************************************/
 
-#ifdef PAIR
-#define MAX_MPI_COMPONENTS 8
-#elif defined EAM
-#define MAX_MPI_COMPONENTS 9
-#elif defined ADP
-#define MAX_MPI_COMPONENTS 14
-#elif defined COULOMB
-#define MAX_MPI_COMPONENTS 12
-#endif /* PAIR */
+#define MAX_MPI_COMPONENTS 20
 
 void broadcast_params()
 {
@@ -154,11 +146,13 @@ void broadcast_params()
 #endif /* COULOMB */
   /* *INDENT-ON* */
 
+  /* set displacements */
   for (i = 1; i < count; i++) {
     displs[i] -= displs[0];
   }
-  displs[0] = 0;		/* set displacements */
-  MPI_Type_struct(size, blklens, displs, typen, &MPI_NEIGH);
+  displs[0] = 0;
+
+  MPI_Type_create_struct(size, blklens, displs, typen, &MPI_NEIGH);
   MPI_Type_commit(&MPI_NEIGH);
 
   /* MPI_ATOM */
@@ -193,7 +187,6 @@ void broadcast_params()
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
 
-
   count = 0;
   MPI_Address(&testatom.typ, 		&displs[count++]);
   MPI_Address(&testatom.n_neigh, 	&displs[count++]);
@@ -223,12 +216,13 @@ void broadcast_params()
 #endif /* DIPOLE */
   /* *INDENT-ON* */
 
+  /* set displacements */
   for (i = 1; i < count; i++) {
     displs[i] -= displs[0];
   }
-  displs[0] = 0;		/* set displacements */
+  displs[0] = 0;
 
-  MPI_Type_struct(size, blklens, displs, typen, &MPI_ATOM);
+  MPI_Type_create_struct(size, blklens, displs, typen, &MPI_ATOM);
   MPI_Type_commit(&MPI_ATOM);
 
   /* Distribute fundamental parameters */
