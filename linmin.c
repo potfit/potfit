@@ -67,8 +67,10 @@ double linmin(double xi[], double del[], double fxi1, double *x1, double *x2,
   /*saves 1 fcalc... */
   bx = .1;
 
-  if (vecu == NULL)
+  if (vecu == NULL) {
     vecu = vect_double(ndimtot);
+    reg_for_free(vecu, "vecu");
+  }
   for (j = 0; j < ndimtot; j++)
     vecu[j] = xicom[j] + bx * delcom[j];	/*set vecu */
   fb = (*calc_forces) (vecu, fret2, 0);

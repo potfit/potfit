@@ -49,6 +49,8 @@
 
 void apot_init(void)
 {
+  int   i;
+
   add_pot(lj, 2);
   add_pot(eopp, 6);
   add_pot(morse, 3);
@@ -83,6 +85,14 @@ void apot_init(void)
   add_pot(vas, 2);
   add_pot(vpair, 7);
   add_pot(csw2, 4);
+
+  reg_for_free(function_table.name, "function_table.name");
+  reg_for_free(function_table.n_par, "function_table.n_par");
+  reg_for_free(function_table.fvalue, "function_table.fvalue");
+  for (i = 0; i < n_functions; i++)
+    reg_for_free(function_table.name[i], "function_table.name[i]");
+
+  return;
 }
 
 /****************************************************************

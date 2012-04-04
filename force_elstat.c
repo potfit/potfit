@@ -837,8 +837,8 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
     sum = 0.;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR,	/* forces */
-      forces, atom_len, atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,	/* forces */
+      forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
     MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,	/* energies */
       forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     /* stresses */

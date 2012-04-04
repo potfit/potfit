@@ -50,6 +50,7 @@ void spline_ed(double xstep, double y[], int n, double yp1, double ypn,
 
   if (n > nmax) {
     u = (double *)realloc(u, (n - 1) * sizeof(double));
+    u_address = u;
     nmax = n;
   }
   if (yp1 > 0.99e30)
@@ -280,6 +281,7 @@ void spline_ne(double x[], double y[], int n, double yp1, double ypn,
 
   if (n > nmax) {
     u = (double *)realloc(u, (n - 1) * sizeof(double));
+    u_address = u;
     nmax = n;
   }
   if (yp1 > 0.99e30)

@@ -60,10 +60,14 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
   int   last = 0;		/* indicates whether upwards is left or right */
   long  nb_eval = 0;
 
-  if (vecu == NULL)
+  if (vecu == NULL) {
     vecu = vect_double(ndimtot);
-  if (f_vec3 == NULL)
+    reg_for_free(vecu, "vecu");
+  }
+  if (f_vec3 == NULL) {
     f_vec3 = vect_double(mdim);
+    reg_for_free(f_vec3, "f_vec3");
+  }
 
   p_left = f_vec1;
   p_right = f_vec2;

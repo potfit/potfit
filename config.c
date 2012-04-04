@@ -63,7 +63,6 @@ void read_config(char *filename)
 #endif /* APOT */
   FILE *infile;
   fpos_t filepos;
-  double dtemp;
   double r, rr, istep, shift, step;
   double *mindist;
   sym_tens *stresses;
@@ -205,8 +204,13 @@ void read_config(char *filename)
 	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
 #ifdef CONTRIB
 	} else if (strncmp(res + 1, "B_O", 3) == 0) {
+	  if (1 == have_contrib_box) {
+	    error(0, "There can only be one box of contributing atoms\n");
+	    error(1, "This occured in %s on line %d", filename, line);
+	  }
 	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_o.x, &cbox_o.y,
 	      &cbox_o.z) == 3) {
+	    have_contrib_box = 1;
 	    have_contrib++;
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n",
@@ -348,10 +352,8 @@ void read_config(char *filename)
       if (!(h_eng && h_boxx && h_boxy && h_boxz))
 	error(1, "Incomplete box vectors for config %d!", nconf);
 #ifdef CONTRIB
-      if (have_contrib != 4)
+      if (have_contrib_box && have_contrib != 4)
 	error(1, "Incomplete box of contributing atoms for config %d!", nconf);
-      else
-	have_contrib_box = 1;
 #endif /* CONTRIB */
       usestress[nconf] = h_stress;	/* no stress tensor available */
     } else {
@@ -710,6 +712,12 @@ void read_config(char *filename)
   reg_for_free(cnfstart, "cnfstart");
   reg_for_free(useforce, "useforce");
   reg_for_free(usestress, "usestress");
+#ifdef CONTRIB
+  if (n_spheres > 0) {
+    reg_for_free(r_spheres, "sphere radii");
+    reg_for_free(sphere_centers, "sphere centers");
+  }
+#endif
 
   mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector
 					   3*natoms are double forces,
@@ -983,8 +991,8 @@ double make_box(void)
 
 int does_contribute(vector pos)
 {
-  int   i, n_a, n_b, n_c;
-  double r;
+  int   i;
+  double n_a, n_b, n_c, r;
   vector dist;
 
   if (have_contrib_box) {

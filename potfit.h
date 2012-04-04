@@ -31,10 +31,11 @@
 #ifndef POTFIT_H
 #define POTFIT_H
 
+#include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
+#include <string.h>
 
 #ifdef MPI
 #include <mpi.h>
@@ -267,7 +268,7 @@ EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
 EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
 EXTERN MPI_Datatype MPI_STENS;
-EXTERN MPI_Datatype MPI_VEKTOR;
+EXTERN MPI_Datatype MPI_VECTOR;
 #endif /* MPI */
 
 /* general settings (from parameter file) */
@@ -404,6 +405,7 @@ EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints 
 EXTERN char **pointer_names;
 EXTERN int num_pointers INIT(0);
 EXTERN void **all_pointers;
+EXTERN double *u_address;
 
 /* variables needed for atom distribution with mpi */
 #ifdef MPI

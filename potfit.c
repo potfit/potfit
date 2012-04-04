@@ -798,9 +798,10 @@ int main(int argc, char **argv)
 #ifdef MPI
   /* kill MPI */
   shutdown_mpi();
-#else
-  free_all_pointers();
 #endif /* MPI */
+
+  free(u_address);
+  free_all_pointers();
 
   return 0;
 }
