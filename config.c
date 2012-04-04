@@ -204,27 +204,46 @@ void read_config(char *filename)
 	  else
 	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
 #ifdef CONTRIB
-	} else if (res[1] == 'B') {
-	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &contrib_ll.x,
-	      &contrib_ll.y, &contrib_ll.z, &contrib_ur.x, &contrib_ur.y,
-	      &contrib_ur.z) == 6) {
-	    if (contrib_ll.x > contrib_ur.x) {
-	      SWAP(contrib_ll.x, contrib_ur.x, dtemp);
-	    }
-	    if (contrib_ll.y > contrib_ur.y) {
-	      SWAP(contrib_ll.y, contrib_ur.y, dtemp);
-	    }
-	    if (contrib_ll.z > contrib_ur.z) {
-	      SWAP(contrib_ll.z, contrib_ur.z, dtemp);
-	    }
-	    have_contrib = 1;
+	} else if (strncmp(res + 1, "B_O", 3) == 0) {
+	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_o.x, &cbox_o.y,
+	      &cbox_o.z) == 3) {
+	    have_contrib++;
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n",
 	      filename, line);
-#else
-	} else if (res[1] == 'B') {
-	  error(1,
-	    "This binary does not support \"box of contributing particles\".");
+	} else if (strncmp(res + 1, "B_A", 3) == 0) {
+	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_a.x, &cbox_a.y,
+	      &cbox_a.z) == 3) {
+	    have_contrib++;
+	  } else
+	    error(1, "%s: Error in box of contributing atoms, line %d\n",
+	      filename, line);
+	} else if (strncmp(res + 1, "B_B", 3) == 0) {
+	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_b.x, &cbox_b.y,
+	      &cbox_b.z) == 3) {
+	    have_contrib++;
+	  } else
+	    error(1, "%s: Error in box of contributing atoms, line %d\n",
+	      filename, line);
+	} else if (strncmp(res + 1, "B_C", 3) == 0) {
+	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_c.x, &cbox_c.y,
+	      &cbox_c.z) == 3) {
+	    have_contrib++;
+	  } else
+	    error(1, "%s: Error in box of contributing atoms, line %d\n",
+	      filename, line);
+	} else if (strncmp(res + 1, "B_S", 3) == 0) {
+	  sphere_centers =
+	    (vector *)realloc(sphere_centers, (n_spheres + 1) * sizeof(vector));
+	  r_spheres =
+	    (double *)realloc(r_spheres, (n_spheres + 1) * sizeof(double));
+	  if (sscanf(res + 5, "%lf %lf %lf %lf\n", &sphere_centers[n_spheres].x,
+	      &sphere_centers[n_spheres].y, &sphere_centers[n_spheres].z,
+	      &r_spheres[n_spheres]) == 4) {
+	    n_spheres++;
+	  } else
+	    error(1, "%s: Error in sphere of contributing atoms, line %d\n",
+	      filename, line);
 #endif /* CONTRIB */
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
@@ -327,7 +346,13 @@ void read_config(char *filename)
 	}
       } while (res[1] != 'F');
       if (!(h_eng && h_boxx && h_boxy && h_boxz))
-	error(1, "Incomplete force file!");
+	error(1, "Incomplete box vectors for config %d!", nconf);
+#ifdef CONTRIB
+      if (have_contrib != 4)
+	error(1, "Incomplete box of contributing atoms for config %d!", nconf);
+      else
+	have_contrib_box = 1;
+#endif /* CONTRIB */
       usestress[nconf] = h_stress;	/* no stress tensor available */
     } else {
       /* read the box vectors */
@@ -375,7 +400,7 @@ void read_config(char *filename)
 	dsquare(atom->force.z));
       atom->conf = nconf;
 #ifdef CONTRIB
-      if (have_contrib)
+      if (have_contrib_box || n_spheres != 0)
 	atom->contrib = does_contribute(atom->pos);
       else
 	atom->contrib = 1;
@@ -948,6 +973,8 @@ double make_box(void)
   return volume;
 }
 
+#ifdef CONTRIB
+
 /****************************************************************
  *
  *  check if the atom does contribute to the error sum
@@ -956,12 +983,37 @@ double make_box(void)
 
 int does_contribute(vector pos)
 {
-  if (pos.x >= contrib_ll.x && pos.x <= contrib_ur.x)
-    if (pos.y >= contrib_ll.y && pos.y <= contrib_ur.y)
-      if (pos.z >= contrib_ll.z && pos.z <= contrib_ur.z)
-	return 1;
+  int   i, n_a, n_b, n_c;
+  double r;
+  vector dist;
+
+  if (have_contrib_box) {
+    dist.x = pos.x - cbox_o.x;
+    dist.y = pos.y - cbox_o.y;
+    dist.z = pos.z - cbox_o.z;
+    n_a = SPROD(dist, cbox_a);
+    n_b = SPROD(dist, cbox_b);
+    n_c = SPROD(dist, cbox_c);
+    if (n_a >= 0 && n_a <= 1)
+      if (n_b >= 0 && n_b <= 1)
+	if (n_c >= 0 && n_c <= 1)
+	  return 1;
+  }
+
+  for (i = 0; i < n_spheres; i++) {
+    dist.x = (pos.x - sphere_centers[i].x);
+    dist.y = (pos.y - sphere_centers[i].y);
+    dist.z = (pos.z - sphere_centers[i].z);
+    r = SPROD(dist, dist);
+    r = sqrt(r);
+    if (r < r_spheres[i])
+      return 1;
+  }
+
   return 0;
 }
+
+#endif /* CONTRIB */
 
 #ifdef APOT
 

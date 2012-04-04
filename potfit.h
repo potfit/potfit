@@ -321,6 +321,11 @@ EXTERN int have_elements INIT(0);	/* do we have the elements ? */
 EXTERN int maxneigh INIT(0);	/* maximum number of neighbors */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
+#ifdef CONTRIB
+EXTERN int have_contrib_box INIT(0);	/* do we have a box of contrib. atoms? */
+EXTERN int n_spheres INIT(0);	/* number of spheres of contrib. atoms */
+EXTERN double *r_spheres;	/* radii of the spheres of contrib. atoms */
+#endif /* CONTRIB */
 EXTERN double *coheng;		/* Cohesive energy for each config */
 EXTERN double *conf_vol;
 EXTERN double *conf_weight;	/* weight of configuration */
@@ -333,7 +338,11 @@ EXTERN double rcutmax INIT(0.);	/* maximum of all cutoff values */
 EXTERN sym_tens *conf_stress;
 EXTERN sym_tens *stress;	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
-EXTERN vector contrib_ll, contrib_ur;
+#ifdef CONTRIB
+EXTERN vector cbox_o;		/* origin of box of contrib. atoms */
+EXTERN vector cbox_a, cbox_b, cbox_c;	/* box vectors for box of contrib. atoms */
+EXTERN vector *sphere_centers;	/* centers of the spheres of contrib. atoms */
+#endif /* CONTRIB */
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 /* potential variables */
