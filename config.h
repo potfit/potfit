@@ -37,7 +37,11 @@
 
 void  read_config(char *);
 double make_box(void);
+
+#ifdef CONTRIB
 int   does_contribute(vector);
+#endif /* CONTRIB */
+
 #ifdef APOT
 void  update_slots(void);
 #endif /* APOT */

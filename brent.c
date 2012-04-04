@@ -60,10 +60,14 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
   static double *vecu = NULL, *fxu = NULL;	/* Vector of location u */
 
   double p = 0, q = 0, r = 0;
-  if (fxu == NULL)
+  if (fxu == NULL) {
     fxu = vect_double(mdim);
-  if (vecu == NULL)
+    reg_for_free(fxu, "fxu");
+  }
+  if (vecu == NULL) {
     vecu = vect_double(ndimtot);
+    reg_for_free(vecu, "vecu");
+  }
 
   z = bx;
   f_z = fbx;

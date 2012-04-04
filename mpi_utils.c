@@ -32,6 +32,8 @@
 
 #include "potfit.h"
 
+#include "utils.h"
+
 /****************************************************************
  *
  * set up mpi
@@ -96,9 +98,9 @@ void broadcast_params()
 
   /* Define Structures */
   /* first the easy ones: */
-  /* MPI_VEKTOR */
-  MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VEKTOR);
-  MPI_Type_commit(&MPI_VEKTOR);
+  /* MPI_VECTOR */
+  MPI_Type_contiguous(3, MPI_DOUBLE, &MPI_VECTOR);
+  MPI_Type_commit(&MPI_VECTOR);
   /* MPI_STENS */
   MPI_Type_contiguous(6, MPI_DOUBLE, &MPI_STENS);
   MPI_Type_commit(&MPI_STENS);
@@ -109,13 +111,13 @@ void broadcast_params()
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* typ */
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* nr */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* r */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;  	/* dist */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* dist */
   blklens[size] = SLOTS;     	typen[size++] = MPI_INT;    	/* slot */
   blklens[size] = SLOTS;     	typen[size++] = MPI_DOUBLE;     /* shift */
   blklens[size] = SLOTS;     	typen[size++] = MPI_DOUBLE;     /* step */
   blklens[size] = SLOTS;     	typen[size++] = MPI_INT;     	/* col */
 #ifdef ADP
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR; 	/* rdist */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR; 	/* rdist */
   blklens[size] = 1;         	typen[size++] = MPI_STENS;   	/* sqrdist */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* u_val */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* u_grad */
@@ -166,8 +168,8 @@ void broadcast_params()
   size = 0;
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* typ */
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* n_neigh */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;  	/* pos */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;  	/* force */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* pos */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* force */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* absforce */
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* conf */
 #ifdef CONTRIB
@@ -178,27 +180,27 @@ void broadcast_params()
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* gradF */
 #endif /* EAM || ADP */
 #ifdef ADP
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;  	/* mu */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* mu */
   blklens[size] = 1;         	typen[size++] = MPI_STENS;   	/* lambda */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;    	/* nu */
 #endif /* ADP */
 #if defined DIPOLE && !defined EAM
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;    	/* E_stat */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;   	/* p_sr */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;   	/* E_ind */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;   	/* p_ind */
-  blklens[size] = 1;        	typen[size++] = MPI_VEKTOR;   	/* E_old */
-  blklens[size] = 1;        	typen[size++] = MPI_VEKTOR;   	/* E_tot */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;    	/* E_stat */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_sr */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* E_ind */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_ind */
+  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_old */
+  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_tot */
 #endif /* DIPOLE */
 #if defined DIPOLE && defined EAM
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* rho */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* gradF */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;    	/* E_stat */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;   	/* p_sr */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;   	/* E_ind */
-  blklens[size] = 1;         	typen[size++] = MPI_VEKTOR;   	/* p_ind */
-  blklens[size] = 1;        	typen[size++] = MPI_VEKTOR;   	/* E_old */
-  blklens[size] = 1;        	typen[size++] = MPI_VEKTOR;   	/* E_tot */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;    	/* E_stat */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_sr */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* E_ind */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_ind */
+  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_old */
+  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_tot */
 #endif /* DIPOLE && EAM */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
@@ -269,6 +271,10 @@ void broadcast_params()
     cnfstart = (int *)malloc(nconf * sizeof(int));
     force_0 = (double *)malloc(mdim * sizeof(double));
     conf_weight = (double *)malloc(nconf * sizeof(double));
+    reg_for_free(inconf, "inconf");
+    reg_for_free(cnfstart, "cnfstart");
+    reg_for_free(force_0, "force_0");
+    reg_for_free(conf_weight, "conf_weight");
   }
   MPI_Bcast(inconf, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
@@ -296,6 +302,15 @@ void broadcast_params()
     calc_pot.table = (double *)malloc(calclen * sizeof(double));
     calc_pot.xcoord = (double *)malloc(calclen * sizeof(double));
     calc_pot.d2tab = (double *)malloc(calclen * sizeof(double));
+    reg_for_free(calc_pot.begin, "calc_pot.begin");
+    reg_for_free(calc_pot.end, "calc_pot.end");
+    reg_for_free(calc_pot.step, "calc_pot.step");
+    reg_for_free(calc_pot.invstep, "calc_pot.invstep");
+    reg_for_free(calc_pot.first, "calc_pot.first");
+    reg_for_free(calc_pot.last, "calc_pot.last");
+    reg_for_free(calc_pot.table, "calc_pot.table");
+    reg_for_free(calc_pot.xcoord, "calc_pot.xcoord");
+    reg_for_free(calc_pot.d2tab, "calc_pot.d2tab");
   }
   MPI_Bcast(calc_pot.begin, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(calc_pot.end, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -317,8 +332,11 @@ void broadcast_params()
   if (enable_cp) {
     if (myid > 0) {
       na_type = (int **)malloc((nconf + 1) * sizeof(int *));
-      for (i = 0; i < (nconf + 1); i++)
+      for (i = 0; i < (nconf + 1); i++) {
 	na_type[i] = (int *)malloc(ntypes * sizeof(int));
+	reg_for_free(na_type[i], "na_type[%d]", i);
+      }
+      reg_for_free(na_type, "na_type");
     }
     for (i = 0; i < (nconf + 1); i++)
       MPI_Bcast(na_type[i], ntypes, MPI_INT, 0, MPI_COMM_WORLD);
@@ -326,8 +344,8 @@ void broadcast_params()
   if (myid > 0) {
     calc_list = (double *)malloc(opt_pot.len * sizeof(double));
     apot_table.n_par = (int *)malloc(apot_table.number * sizeof(int));
-    apot_table.end = (double *)malloc(apot_table.number * sizeof(double));
     apot_table.begin = (double *)malloc(apot_table.number * sizeof(double));
+    apot_table.end = (double *)malloc(apot_table.number * sizeof(double));
     apot_table.idxpot = (int *)malloc(apot_table.number * sizeof(int));
 #ifdef COULOMB
     apot_table.ratio = (double *)malloc(ntypes * sizeof(double));
@@ -339,6 +357,20 @@ void broadcast_params()
     apot_table.fvalue =
       (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
     opt_pot.table = (double *)malloc(opt_pot.len * sizeof(double));
+    reg_for_free(calc_list, "calc_list");
+    reg_for_free(apot_table.n_par, "apot_table.n_par");
+    reg_for_free(apot_table.begin, "apot_table.begin");
+    reg_for_free(apot_table.end, "apot_table.end");
+    reg_for_free(apot_table.idxpot, "apot_table.idxpot");
+#ifdef COULOMB
+    reg_for_free(apot_table.ratio, "apot_table.ratio");
+#endif
+    reg_for_free(smooth_pot, "smooth_pot");
+    reg_for_free(invar_pot, "invar_pot");
+    reg_for_free(rcut, "rcut");
+    reg_for_free(rmin, "rmin");
+    reg_for_free(apot_table.fvalue, "apot_table.fvalue");
+    reg_for_free(opt_pot.table, "opt_pot.table");
   }
   MPI_Bcast(smooth_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(invar_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
@@ -365,17 +397,26 @@ void broadcast_params()
       apot_table.global_idx =
 	(int ***)malloc(apot_table.globals * sizeof(int **));
       opt_pot.first = (int *)malloc(apot_table.number * sizeof(int));
+      reg_for_free(apot_table.n_glob, "apot_table.n_glob");
+      reg_for_free(apot_table.global_idx, "apot_table.global_idx");
+      reg_for_free(opt_pot.first, "opt_pot.first");
     }
     MPI_Bcast(apot_table.n_glob, apot_table.globals, MPI_INT, 0,
       MPI_COMM_WORLD);
     MPI_Bcast(opt_pot.first, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
     if (myid > 0) {
-      for (i = 0; i < apot_table.globals; i++)
+      for (i = 0; i < apot_table.globals; i++) {
 	apot_table.global_idx[i] =
 	  (int **)malloc(apot_table.n_glob[i] * sizeof(int *));
-      for (i = 0; i < apot_table.globals; i++)
-	for (j = 0; j < apot_table.n_glob[i]; j++)
+	reg_for_free(apot_table.global_idx[i], "apot_table.global_idx[%d]", i);
+      }
+      for (i = 0; i < apot_table.globals; i++) {
+	for (j = 0; j < apot_table.n_glob[i]; j++) {
 	  apot_table.global_idx[i][j] = (int *)malloc(2 * sizeof(int));
+	  reg_for_free(apot_table.global_idx[i][j],
+	    "apot_table.global_idx[%d][%d]", i, j);
+	}
+      }
     }
     for (i = 0; i < apot_table.globals; i++)
       for (j = 0; j < apot_table.n_glob[i]; j++)
@@ -403,6 +444,10 @@ void broadcast_params()
     for (i = 0; i < num_cpus - 1; i++)
       atom_len[i] = atom_dist[i + 1] - atom_dist[i];
     atom_len[num_cpus - 1] = natoms - atom_dist[num_cpus - 1];
+    reg_for_free(atom_len, "atom_len");
+    reg_for_free(atom_dist, "atom_dist");
+    reg_for_free(conf_len, "conf_len");
+    reg_for_free(conf_dist, "conf_dist");
   }
   MPI_Scatter(atom_len, 1, MPI_INT, &myatoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatter(atom_dist, 1, MPI_INT, &firstatom, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -428,6 +473,11 @@ void broadcast_params()
     0, MPI_COMM_WORLD);
   MPI_Scatterv(usestress, conf_len, conf_dist, MPI_INT, conf_us, myconf,
     MPI_INT, 0, MPI_COMM_WORLD);
+
+  reg_for_free(conf_vol, "conf_vol");
+  reg_for_free(conf_uf, "conf_uf");
+  reg_for_free(conf_us, "conf_us");
+  reg_for_free(conf_atoms, "conf_atoms");
 }
 
 /****************************************************************
@@ -449,6 +499,7 @@ void broadcast_neighbors()
     MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (i >= firstatom && i < (firstatom + myatoms)) {
       atom->neigh = (neigh_t *)malloc(neighs * sizeof(neigh_t));
+      reg_for_free(atom->neigh, "atom->neigh");
     }
     for (j = 0; j < neighs; j++) {
       if (myid == 0)
