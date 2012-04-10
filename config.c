@@ -51,7 +51,9 @@ void read_config(char *filename)
   int   cell_scale[3];
   int   fixed_elements;
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
+#ifdef CONTRIB
   int   have_contrib = 0;
+#endif /* CONTRIB */
   int   line = 0;
   int   max_type = 0;
   int   sh_dist = 0;		/* short distance flag */
@@ -175,8 +177,10 @@ void read_config(char *filename)
     cnfstart[nconf] = natoms;
     useforce[nconf] = use_force;
     stresses = stress + nconf;
+#ifdef CONTRIB
     have_contrib = 0;
     have_contrib_box = 0;
+#endif /* CONTRIB */
 
     if (tag_format) {
       do {

@@ -3059,7 +3059,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
 /****************************************************************
  *
- *  write potential table for LAMMPS (setfl)
+ *  write potential table for LAMMPS
+ *  (in DYNAMO multi-element setfl format)
  *
  ****************************************************************/
 
@@ -3103,6 +3104,7 @@ void write_pot_table_lammps(pot_table_t *pt)
   /* one block for every atom type */
 #if defined EAM || defined ADP
   for (i = 0; i < ntypes; i++) {
+    /* atomic number, mass, lattice constant, lattice type */
     fprintf(outfile, "%3d %f 0 ???\n", ele_number_from_name(elements[i]),
       ele_mass_from_name(elements[i]));
     r = 0.;
