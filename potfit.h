@@ -44,7 +44,7 @@
 #include "random.h"
 
 #ifdef APOT
-#define APOT_STEPS 300		/* number of sampling points for analytic pot */
+#define APOT_STEPS 500		/* number of sampling points for analytic pot */
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
 #endif /* APOT */
 

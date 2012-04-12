@@ -328,7 +328,7 @@ void broadcast_params()
     rmin = (double *)malloc(ntypes * ntypes * sizeof(double));
     apot_table.fvalue =
       (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
-    opt_pot.table = (double *)malloc(opt_pot.len * sizeof(double));
+    opt_pot.first = (int *)malloc(apot_table.number * sizeof(int));
     reg_for_free(calc_list, "calc_list");
     reg_for_free(apot_table.n_par, "apot_table.n_par");
     reg_for_free(apot_table.begin, "apot_table.begin");
@@ -342,7 +342,7 @@ void broadcast_params()
     reg_for_free(rcut, "rcut");
     reg_for_free(rmin, "rmin");
     reg_for_free(apot_table.fvalue, "apot_table.fvalue");
-    reg_for_free(opt_pot.table, "opt_pot.table");
+    reg_for_free(opt_pot.first, "opt_pot.first");
   }
   MPI_Bcast(smooth_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(invar_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
@@ -359,6 +359,7 @@ void broadcast_params()
   MPI_Bcast(&have_globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&global_idx, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&apot_table.globals, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(opt_pot.first, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
   MPI_Bcast(&apot_table.last_charge, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.ratio, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -368,14 +369,11 @@ void broadcast_params()
       apot_table.n_glob = (int *)malloc(apot_table.globals * sizeof(int));
       apot_table.global_idx =
 	(int ***)malloc(apot_table.globals * sizeof(int **));
-      opt_pot.first = (int *)malloc(apot_table.number * sizeof(int));
       reg_for_free(apot_table.n_glob, "apot_table.n_glob");
       reg_for_free(apot_table.global_idx, "apot_table.global_idx");
-      reg_for_free(opt_pot.first, "opt_pot.first");
     }
     MPI_Bcast(apot_table.n_glob, apot_table.globals, MPI_INT, 0,
       MPI_COMM_WORLD);
-    MPI_Bcast(opt_pot.first, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
     if (myid > 0) {
       for (i = 0; i < apot_table.globals; i++) {
 	apot_table.global_idx[i] =
