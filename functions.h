@@ -78,8 +78,7 @@ void  add_potential(char *, int, fvalue_pointer);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(double *);
 int   apot_parameters(char *);
-double apot_grad(double, double *, void (*function) (double, double *,
-    double *));
+double apot_grad(double, double *, void (*function) (double, double *, double *));
 double apot_punish(double *, double *);
 double cutoff(double, double, double);
 

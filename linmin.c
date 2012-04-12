@@ -51,8 +51,7 @@ double *xicom, *delcom;
  *
  ****************************************************************/
 
-double linmin(double xi[], double del[], double fxi1, double *x1, double *x2,
-  double *fret1, double *fret2)
+double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, double *fret1, double *fret2)
 {
   int   j;
   static double *vecu = NULL;	/* Vector of location u */

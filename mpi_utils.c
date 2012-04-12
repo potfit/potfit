@@ -59,8 +59,7 @@ void init_mpi(int argc, char **argv)
 void shutdown_mpi(void)
 {
   if (!init_done) {
-    fprintf(stderr,
-      "MPI will be killed, because the initialization is not yet complete.\n");
+    fprintf(stderr, "MPI will be killed, because the initialization is not yet complete.\n");
     fprintf(stderr, "This is not a bug!\n\n");
     fflush(stderr);
     MPI_Abort(MPI_COMM_WORLD, -1);
@@ -326,8 +325,7 @@ void broadcast_params()
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
     rcut = (double *)malloc(ntypes * ntypes * sizeof(double));
     rmin = (double *)malloc(ntypes * ntypes * sizeof(double));
-    apot_table.fvalue =
-      (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
+    apot_table.fvalue = (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
     opt_pot.first = (int *)malloc(apot_table.number * sizeof(int));
     reg_for_free(calc_list, "calc_list");
     reg_for_free(apot_table.n_par, "apot_table.n_par");
@@ -350,8 +348,7 @@ void broadcast_params()
   MPI_Bcast(apot_table.n_par, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(rcut, ntypes * ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(rmin, ntypes * ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.fvalue, apot_table.number, MPI_DOUBLE, 0,
-    MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.fvalue, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.end, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.begin, apot_table.number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(apot_table.idxpot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
@@ -367,24 +364,20 @@ void broadcast_params()
   if (have_globals) {
     if (myid > 0) {
       apot_table.n_glob = (int *)malloc(apot_table.globals * sizeof(int));
-      apot_table.global_idx =
-	(int ***)malloc(apot_table.globals * sizeof(int **));
+      apot_table.global_idx = (int ***)malloc(apot_table.globals * sizeof(int **));
       reg_for_free(apot_table.n_glob, "apot_table.n_glob");
       reg_for_free(apot_table.global_idx, "apot_table.global_idx");
     }
-    MPI_Bcast(apot_table.n_glob, apot_table.globals, MPI_INT, 0,
-      MPI_COMM_WORLD);
+    MPI_Bcast(apot_table.n_glob, apot_table.globals, MPI_INT, 0, MPI_COMM_WORLD);
     if (myid > 0) {
       for (i = 0; i < apot_table.globals; i++) {
-	apot_table.global_idx[i] =
-	  (int **)malloc(apot_table.n_glob[i] * sizeof(int *));
+	apot_table.global_idx[i] = (int **)malloc(apot_table.n_glob[i] * sizeof(int *));
 	reg_for_free(apot_table.global_idx[i], "apot_table.global_idx[%d]", i);
       }
       for (i = 0; i < apot_table.globals; i++) {
 	for (j = 0; j < apot_table.n_glob[i]; j++) {
 	  apot_table.global_idx[i][j] = (int *)malloc(2 * sizeof(int));
-	  reg_for_free(apot_table.global_idx[i][j],
-	    "apot_table.global_idx[%d][%d]", i, j);
+	  reg_for_free(apot_table.global_idx[i][j], "apot_table.global_idx[%d][%d]", i, j);
 	}
       }
     }
@@ -437,12 +430,9 @@ void broadcast_params()
   conf_vol = (double *)malloc(myconf * sizeof(double));
   conf_uf = (int *)malloc(myconf * sizeof(double));
   conf_us = (int *)malloc(myconf * sizeof(double));
-  MPI_Scatterv(volumen, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf,
-    MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT, conf_uf, myconf, MPI_INT,
-    0, MPI_COMM_WORLD);
-  MPI_Scatterv(usestress, conf_len, conf_dist, MPI_INT, conf_us, myconf,
-    MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(volumen, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT, conf_uf, myconf, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(usestress, conf_len, conf_dist, MPI_INT, conf_us, myconf, MPI_INT, 0, MPI_COMM_WORLD);
 
   reg_for_free(conf_vol, "conf_vol");
   reg_for_free(conf_uf, "conf_uf");
