@@ -80,7 +80,7 @@ void read_config(char *filename)
     if (NULL == elements[i])
       error(1, "Cannot allocate memory for %d. element name.\n", i + 1);
     reg_for_free(elements[i], "elements[%d]", i);
-    snprintf(elements[i], 3, "%d\0", i);
+    snprintf(elements[i], 3, "%d", i);
   }
 
   /* initialize minimum distance array */

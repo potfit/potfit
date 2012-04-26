@@ -136,7 +136,8 @@ void powell_lsq(double *xi)
     m = 0;
 
     /* Init gamma */
-    if (i = gamma_init(gamma, d, xi, fxi1)) {
+    i = gamma_init(gamma, d, xi, fx1);
+    if (0 != i) {
 #ifdef EAM
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
@@ -149,7 +150,7 @@ void powell_lsq(double *xi)
 #endif /* EAM */
 
       /* try again */
-      if (i) {
+      if (0 != i) {
 	/* ok, now this is serious, better exit cleanly */
 #ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */

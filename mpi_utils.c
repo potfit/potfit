@@ -326,6 +326,7 @@ void broadcast_params()
     rcut = (double *)malloc(ntypes * ntypes * sizeof(double));
     rmin = (double *)malloc(ntypes * ntypes * sizeof(double));
     apot_table.fvalue = (fvalue_pointer *) malloc(apot_table.number * sizeof(fvalue_pointer));
+    opt_pot.table = (double *)malloc(opt_pot.len * sizeof(double));
     opt_pot.first = (int *)malloc(apot_table.number * sizeof(int));
     reg_for_free(calc_list, "calc_list");
     reg_for_free(apot_table.n_par, "apot_table.n_par");
@@ -340,6 +341,7 @@ void broadcast_params()
     reg_for_free(rcut, "rcut");
     reg_for_free(rmin, "rmin");
     reg_for_free(apot_table.fvalue, "apot_table.fvalue");
+    reg_for_free(opt_pot.table, "opt_pot.first");
     reg_for_free(opt_pot.first, "opt_pot.first");
   }
   MPI_Bcast(smooth_pot, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);

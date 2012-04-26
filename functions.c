@@ -64,6 +64,7 @@ void apot_init(void)
   add_pot(softshell, 2);
   add_pot(eopp_exp, 6);
   add_pot(meopp, 7);
+  add_pot(power, 2);
   add_pot(power_decay, 2);
   add_pot(exp_decay, 2);
   add_pot(bjs, 3);
@@ -322,6 +323,24 @@ void meopp_value(double r, double *p, double *f)
   power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
+}
+
+/****************************************************************
+ *
+ * power potential
+ *
+ ****************************************************************/
+
+void power_value(double r, double *p, double *f)
+{
+  static double x, y, power;
+
+  x = r;
+  y = p[1];
+
+  power_1(&power, &x, &y);
+
+  *f = p[0] * power;
 }
 
 /****************************************************************
@@ -656,7 +675,8 @@ void vas_value(double r, double *p, double *f)
 
 /****************************************************************
  *
- * original pair contributions of vashishta potential (V_2)
+ * original pair contributions of vashishta potential 
+ * (V_2 without second "Coulomb"-term)
  *
  * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
  *
@@ -677,7 +697,7 @@ void vpair_value(double r, double *p, double *f)
   x[5] = p[4] * x[4] + p[5] * x[3];
   x[6] = exp(-r / p[6]);
 
-  *f = 14.4 * (p[0] / x[0] + p[2] * p[3] / r - 0.5 * x[5] / x[2] * x[6]);
+  *f = 14.4 * (p[0] / x[0] - 0.5 * (x[5] / x[2]) * x[6]);
 }
 
 /****************************************************************
