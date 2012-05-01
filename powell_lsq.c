@@ -136,7 +136,7 @@ void powell_lsq(double *xi)
     m = 0;
 
     /* Init gamma */
-    i = gamma_init(gamma, d, xi, fx1);
+    i = gamma_init(gamma, d, xi, fxi1);
     if (0 != i) {
 #ifdef EAM
 #ifndef NORESCALE
