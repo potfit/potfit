@@ -123,7 +123,7 @@
 # i686-gcc  	32bit GNU Compiler
 #
 #SYSTEM 		= x86_64-icc 	# Use this as fallback
-SYSTEM 		= $(shell uname -m)-gcc
+SYSTEM 		= $(shell uname -m)-icc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
@@ -374,21 +374,21 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
 endif
 
-ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-    POTFITSRC      += force_eam_elstat.c
-  else
-    POTFITSRC      += force_elstat.c
-  endif
-endif
+#ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+#  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
+#    POTFITSRC      += force_eam_elstat.c
+#  else
+#    POTFITSRC      += force_elstat.c
+#  endif
+#endif
 
-ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-    POTFITSRC      += force_eam_elstat.c
-  else
-    POTFITSRC      += force_elstat.c
-  endif
-endif
+#ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+#  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
+#    POTFITSRC      += force_eam_elstat.c
+#  else
+#    POTFITSRC      += force_elstat.c
+#  endif
+#endif
 
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
 POTFITSRC      += force_adp.c
