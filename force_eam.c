@@ -581,18 +581,33 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     sum = 0.;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    /* forces */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
-      atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
-    /* energies */
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
-      forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
-    /* punishment constraints */
-    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, MPI_DOUBLE,
-      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (myid == 0) {		/* root node already has data in place */
+      /* forces */
+      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
+	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      /* energies */
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3,
+	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      /* stresses */
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + natoms * 3 + nconf,
+	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      /* punishment constraints */
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3 + 7 * nconf,
+	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    } else {
+      /* forces */
+      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
+	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      /* energies */
+      MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
+	forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      /* stresses */
+      MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
+	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      /* punishment constraints */
+      MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, MPI_DOUBLE,
+	forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
     /* no need to pick up dummy constraints - are already @ root */
 #endif /* MPI */
 
