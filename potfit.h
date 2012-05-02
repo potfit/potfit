@@ -479,11 +479,11 @@ double calc_forces_pair(double *, double *, int);
 #elif defined EAM && !defined COULOMB
 double calc_forces_eam(double *, double *, int);
 #elif defined ADP
-double  calc_forces_adp(double *, double *, int);
+double calc_forces_adp(double *, double *, int);
 #elif defined COULOMB && !defined EAM
-double  calc_forces_elstat(double *, double *, int);
+double calc_forces_elstat(double *, double *, int);
 #elif defined COULOMB && defined EAM
-double  calc_forces_eam_elstat(double *, double *, int);
+double calc_forces_eam_elstat(double *, double *, int);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */

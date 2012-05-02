@@ -143,7 +143,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	  case I_EAM:
 	    npots = ncols + 2 * ntypes;
 	    break;
-          case I_EAM_ELSTAT:
+	  case I_EAM_ELSTAT:
 	    npots = ncols + 2 * ntypes;
 	    break;
 	  case I_ADP:
@@ -566,7 +566,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 #endif /* PAIR */
 
 #ifdef COULOMB
-  int ncols;
+  int   ncols;
   ncols = ntypes * (ntypes + 1) / 2;
 
   fsetpos(infile, &startpos);
@@ -2209,7 +2209,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 #endif /* PAIR */
 
 #ifdef COULOMB
-  int ncols;
+  int   ncols;
   ncols = ntypes * (ntypes + 1) / 2;
 
   fprintf(outfile, "elstat\n");
@@ -2790,7 +2790,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* write endpot for IMD with electrostatics */
 #if defined COULOMB && defined APOT
   apot_table_t *apt = &apot_table;
-  int ncols;
+  int   ncols;
   ncols = ntypes * (ntypes + 1) / 2;
   sprintf(filename, "%s_charges.imd", prefix);
 
