@@ -176,6 +176,9 @@ void read_config(char *filename)
     useforce[nconf] = use_force;
     stresses = stress + nconf;
     have_contrib = 0;
+#ifdef CONTRIB
+    have_contrib_box = 0;
+#endif /* CONTRIB */
 
     if (tag_format) {
       do {

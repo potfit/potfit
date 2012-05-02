@@ -374,6 +374,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #endif /* !NORESCALE */
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
+
 #ifdef PARABEL
 	  forces[energy_p + h] +=
 	    parab_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);

@@ -82,9 +82,9 @@ void shutdown_mpi(void)
 #elif defined EAM && !defined COULOMB
 #define MAX_MPI_COMPONENTS 9
 #elif defined COULOMB && !defined EAM
-#define MAX_MPI_COMPONENTS 12
+#define MAX_MPI_COMPONENTS 13
 #elif defined EAM && defined COULOMB
-#define MAX_MPI_COMPONENTS 14
+#define MAX_MPI_COMPONENTS 15
 #endif /* PAIR */
 
 void broadcast_params()

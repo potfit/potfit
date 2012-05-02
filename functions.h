@@ -65,6 +65,10 @@ void  gljm_value(double, double *, double *);
 void  vas_value(double, double *, double *);
 void  vpair_value(double, double *, double *);
 void  csw2_value(double, double *, double *);
+void  sheng_phi1_value(double, double *, double *);
+void  sheng_phi2_value(double, double *, double *);
+void  sheng_rho_value(double, double *, double *);
+void  sheng_F_value(double, double *, double *);
 
 /* template for new potential function called newpot */
 
