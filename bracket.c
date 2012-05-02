@@ -36,8 +36,7 @@
 #include "utils.h"
 
 void bracket(double *x_lower, double *x_minimum, double *x_upper,
-  double *f_lower, double *f_minimum, double *f_upper, double *f_vec1,
-  double *f_vec2)
+  double *f_lower, double *f_minimum, double *f_upper, double *f_vec1, double *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
@@ -124,8 +123,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	/* Pathological: Search between center and right */
 	/* This means a change from original algorithm */
 #ifdef DEBUG
-	warning(1, "Pathological  @%li %f %f %f! center-right!\n", nb_eval,
-	  x_left, x_center, x_right);
+	warning(1, "Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
 	nb_eval++;
@@ -154,8 +152,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
       if (f_center < f_right) {
 	/* between center and left */
 #ifdef DEBUG
-	warning(1, "Pathological  @%li %f %f %f! center-left!\n", nb_eval,
-	  x_left, x_center, x_right);
+	warning(1, "Pathological  @%li %f %f %f! center-left!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_left = -(x_right - x_left) * CGOLD + x_left;
 	nb_eval++;
@@ -182,8 +179,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	if (last == 2) {
 	  /* go further to left, it goes up towards the right */
 #ifdef DEBUG
-	  warning(1, "Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left,
-	    x_center, x_right);
+	  warning(1, "Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	  x_left = -(x_right - x_left) / CGOLD + x_left;
 	  nb_eval++;
@@ -194,8 +190,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	} else {		/* go further to the right, to left it went up */
 
 #ifdef DEBUG
-	  warning(1, "Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left,
-	    x_center, x_right);
+	  warning(1, "Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	  x_right = (x_right - x_left) / CGOLD + x_right;
 	  nb_eval++;
@@ -209,8 +204,8 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
   } while (nb_eval < MAX_IT);
 #ifdef DEBUG
   error(0, "Problems with bracketing minimum in %li tries:\n", nb_eval);
-  error(1, "F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.\n", x_left, f_left,
-    x_center, f_center, x_right, f_right);
+  error(1, "F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.\n", x_left, f_left, x_center, f_center, x_right,
+    f_right);
 #else /* DEBUG */
   error(1, "Problems with bracketing of minimum, aborting\n");
 #endif /* DEBUG */

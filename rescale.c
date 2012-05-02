@@ -48,8 +48,7 @@
 
 double rescale(pot_table_t *pt, double upper, int flag)
 {
-  int   mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign,
-    dimneuxi;
+  int   mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign, dimneuxi;
   double *xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
   atom_t *atom;
   neigh_t *neigh;
@@ -57,8 +56,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
   double min = 1e100, max = -1e100;
 
   xi = pt->table;
-  dimneuxi =
-    pt->last[paircol + 2 * ntypes - 1] - pt->last[paircol + ntypes - 1];
+  dimneuxi = pt->last[paircol + 2 * ntypes - 1] - pt->last[paircol + ntypes - 1];
   neuxi = (double *)malloc(dimneuxi * sizeof(double));
   neuord = (double *)malloc(dimneuxi * sizeof(double));
   neustep = (double *)malloc(ntypes * sizeof(double));
@@ -80,17 +78,16 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	*(pt->table + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, pt->table + first,
-	pt->last[col] - first + 1, *(pt->table + first - 2), 0.0,
-	pt->d2tab + first);
+	pt->last[col] - first + 1, *(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
   for (col = paircol; col < paircol + ntypes; col++) {	/* rho */
     first = pt->first[col];
     if (format == 3)
-      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-	*(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2), 0.0,
+	pt->d2tab + first);
     else			/* format == 4 ! */
-      spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
-	*(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1, *(xi + first - 2), 0.0,
+	pt->d2tab + first);
   }
   for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {	/* F */
     first = pt->first[col];
@@ -129,18 +126,14 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	  col2 = paircol + typ2;
 	  if (typ2 == typ1) {
 	    if (neigh->r < pt->end[col2]) {
-	      fnval =
-		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
-		neigh->step[1]);
+	      fnval = splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	      atom->rho += fnval;
 	      atoms[neigh->nr].rho += fnval;
 	    }
 	  } else {
 	    col = paircol + typ1;
 	    if (neigh->r < pt->end[col2]) {
-	      atom->rho +=
-		splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
-		neigh->step[1]);
+	      atom->rho += splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	    }
 	    if (neigh->r < pt->end[col])
 	      atoms[neigh->nr].rho += splint(pt, xi, col, neigh->r);
@@ -165,17 +158,15 @@ double rescale(pot_table_t *pt, double upper, int flag)
   /* determine dominant side */
   sign = (max >= -min) ? 1 : -1;
 
-  /* determine new left and right boundary, add 40 per cent... */
+  /* determine new left and right boundary, add 40 percent... */
 
   for (i = 0; i < ntypes; i++) {
     j = paircol + ntypes + i;
     left[i] = minrho[i] - 0.3 * pt->step[j];
     right[i] = maxrho[i] + 0.3 * pt->step[j];
     /* is expansion necessary? */
-    if (flag || minrho[i] - pt->begin[j] < 0.
-      || minrho[i] - pt->begin[j] > .95 * pt->step[j]
-      || maxrho[i] - pt->end[j] > 0
-      || maxrho[i] - pt->end[j] < -.95 * pt->step[j])
+    if (flag || minrho[i] - pt->begin[j] < 0. || minrho[i] - pt->begin[j] > .95 * pt->step[j]
+      || maxrho[i] - pt->end[j] > 0 || maxrho[i] - pt->end[j] < -.95 * pt->step[j])
       flag = 1;
   }
 
@@ -297,11 +288,11 @@ double rescale(pot_table_t *pt, double upper, int flag)
   for (col = paircol; col < paircol + ntypes; col++) {	/* rho */
     first = pt->first[col];
     if (format == 3)
-      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-	*(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2), 0.0,
+	pt->d2tab + first);
     else			/* format == 4 ! */
-      spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
-	*(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1, *(xi + first - 2), 0.0,
+	pt->d2tab + first);
   }
 
   for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {	/* F */
@@ -342,22 +333,18 @@ double rescale(pot_table_t *pt, double upper, int flag)
     for (col2 = col; col2 < ntypes; col2++) {
       for (j = pt->first[i]; j <= pt->last[i]; j++)
 	pt->table[j] += (pt->xcoord[j] < pt->end[paircol + col2]
-	  ? lambda[col] * splint_ne(pt, pt->table, paircol + col2,
-	    pt->xcoord[j])
+	  ? lambda[col] * splint_ne(pt, pt->table, paircol + col2, pt->xcoord[j])
 	  : 0.)
 	  + (pt->xcoord[j] < pt->end[paircol + col]
-	  ? lambda[col2] * splint_ne(pt, pt->table, paircol + col,
-	    pt->xcoord[j])
+	  ? lambda[col2] * splint_ne(pt, pt->table, paircol + col, pt->xcoord[j])
 	  : 0.);
       /* Gradient */
       if (pt->table[pt->first[i] - 2] < 1e29)	/* natural spline */
 	pt->table[pt->first[i] - 2] += (pt->begin[i] < pt->end[paircol + col2]
-	  ? lambda[col] * splint_grad(pt, pt->table, paircol + col2,
-	    pt->begin[i])
+	  ? lambda[col] * splint_grad(pt, pt->table, paircol + col2, pt->begin[i])
 	  : 0.)
 	  + (pt->begin[i] < pt->end[paircol + col]
-	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col,
-	    pt->begin[i])
+	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col, pt->begin[i])
 	  : 0.);
       if (pt->table[pt->first[i] - 1] < 1e29)	/* natural spline */
 	pt->table[pt->first[i] - 1] += (pt->end[i] < pt->end[paircol + col2]
@@ -369,8 +356,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
       i++;
     }
   for (i = 0; i < ntypes; i++) {
-    for (j = pt->first[paircol + ntypes + i];
-      j <= pt->last[paircol + ntypes + i]; j++)
+    for (j = pt->first[paircol + ntypes + i]; j <= pt->last[paircol + ntypes + i]; j++)
       pt->table[j] -= pt->xcoord[j] * lambda[i];
     /* Gradients */
     if (pt->table[pt->first[paircol + ntypes + i] - 2] < 1e29)	/* natural spline */
@@ -388,10 +374,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	*(pt->table + first - 2), 0.0, pt->d2tab + first);
     else			/* format == 4 ! */
       spline_ne(pt->xcoord + first, pt->table + first,
-	pt->last[col] - first + 1, *(pt->table + first - 2), 0.0,
-	pt->d2tab + first);
+	pt->last[col] - first + 1, *(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
-
 
   free(neuxi);
   free(neustep);
@@ -400,8 +384,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
   free(left);
   free(right);
 
-
-  /* Faktor zurückgeben */
+  /* return factor */
   return a;
 }
 

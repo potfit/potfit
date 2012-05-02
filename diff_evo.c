@@ -339,8 +339,7 @@ void diff_evo(double *xi)
 	if (*tempfile != '\0') {
 	  for (j = 0; j < ndim; j++)
 #ifdef APOT
-	    apot_table.values[apot_table.idxpot[j]][apot_table.idxparam[j]] =
-	      trial[idx[j]];
+	    apot_table.values[apot_table.idxpot[j]][apot_table.idxparam[j]] = trial[idx[j]];
 	  write_pot_table(&apot_table, tempfile);
 #else
 	    xi[idx[j]] = trial[idx[j]];
@@ -375,8 +374,7 @@ void diff_evo(double *xi)
     avg = 0.;
     for (i = 0; i < NP; i++)
       avg += cost[i];
-    printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP),
-      max - min);
+    printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP), max - min);
     fflush(stdout);
     for (i = 0; i < NP; i++)
       for (j = 0; j < D; j++)

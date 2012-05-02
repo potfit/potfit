@@ -119,16 +119,11 @@ void add_potential(char *name, int parameter, fvalue_pointer fval)
   }
 
   /* allocate memory */
-  function_table.name =
-    (char **)realloc(function_table.name, (k + 1) * sizeof(char *));
+  function_table.name = (char **)realloc(function_table.name, (k + 1) * sizeof(char *));
   function_table.name[k] = (char *)malloc(255 * sizeof(char));
-  function_table.n_par =
-    (int *)realloc(function_table.n_par, (k + 1) * sizeof(int));
-  function_table.fvalue =
-    (fvalue_pointer *) realloc(function_table.fvalue,
-    (k + 1) * sizeof(fvalue_pointer));
-  if (function_table.name[k] == NULL || function_table.n_par == NULL
-    || function_table.fvalue == NULL)
+  function_table.n_par = (int *)realloc(function_table.n_par, (k + 1) * sizeof(int));
+  function_table.fvalue = (fvalue_pointer *) realloc(function_table.fvalue, (k + 1) * sizeof(fvalue_pointer));
+  if (function_table.name[k] == NULL || function_table.n_par == NULL || function_table.fvalue == NULL)
     error(1, "Could not allocate memory for function_table!");
 
   /* assign values */
@@ -465,9 +460,7 @@ void universal_value(double r, double *p, double *f)
 
   power_m(2, power, x, y);
 
-  *f =
-    p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
-    p[3] * r;
+  *f = p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
 }
 
 /****************************************************************
@@ -519,9 +512,7 @@ void strmm_value(double r, double *p, double *f)
 
   r_0 = r - p[4];
 
-  *f =
-    2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. +
-    p[3] * r_0) * exp(-p[3] * r_0);
+  *f = 2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. + p[3] * r_0) * exp(-p[3] * r_0);
 }
 
 /****************************************************************
@@ -536,8 +527,7 @@ void double_morse_value(double r, double *p, double *f)
 {
   *f =
     (p[0] * (exp(-2. * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) +
-    p[6];
+    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) + p[6];
 }
 
 /****************************************************************
@@ -567,9 +557,7 @@ void poly_5_value(double r, double *p, double *f)
 
   dr = (r - 1.) * (r - 1.);
 
-  *f =
-    p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) +
-    p[4] * (dr * dr) * (r - 1.);
+  *f = p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) + p[4] * (dr * dr) * (r - 1.);
 }
 
 /****************************************************************
@@ -589,8 +577,8 @@ void cbb_value(double r, double *p, double *f)
 
   *f =
     p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
-      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) -
-    2. * exp(-p[10] * (r - p[11])));
+      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2. * exp(-p[10] * (r -
+	p[11])));
 }
 
 /****************************************************************
@@ -691,7 +679,7 @@ void vas_value(double r, double *p, double *f)
 
 /****************************************************************
  *
- * original pair contributions of vashishta potential 
+ * original pair contributions of vashishta potential
  * (V_2 without second "Coulomb"-term)
  *
  * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
@@ -713,7 +701,7 @@ void vpair_value(double r, double *p, double *f)
   x[5] = p[4] * x[4] + p[5] * x[3];
   x[6] = exp(-r / p[6]);
 
-  *f = 14.4 * ( p[0] / x[0] - 0.5 * (x[5] / x[2]) * x[6] );
+  *f = 14.4 * (p[0] / x[0] - 0.5 * (x[5] / x[2]) * x[6]);
 }
 
 /****************************************************************
@@ -916,8 +904,7 @@ double apot_punish(double *params, double *forces)
  *
  ****************************************************************/
 
-double apot_grad(double r, double *p, void (*function) (double, double *,
-    double *))
+double apot_grad(double r, double *p, void (*function) (double, double *, double *))
 {
   double a, b, h = 0.0001;
 
@@ -1004,8 +991,7 @@ void buck_shift(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void elstat_value(double r, double dp_kappa, double *ftail, double *gtail,
-  double *ggtail)
+void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, double *ggtail)
 {
   static double x[4];
 
@@ -1025,8 +1011,7 @@ void elstat_value(double r, double dp_kappa, double *ftail, double *gtail,
  *
  ****************************************************************/
 
-void elstat_shift(double r, double dp_kappa, double *fnval_tail,
-  double *grad_tail, double *ggrad_tail)
+void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_tail, double *ggrad_tail)
 {
   static double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
   static double x[3];
@@ -1077,8 +1062,7 @@ double shortrange_value(double r, double a, double b, double c)
  *
  ****************************************************************/
 
-void shortrange_term(double r, double b, double c, double *srval_tail,
-  double *srgrad_tail)
+void shortrange_term(double r, double b, double c, double *srval_tail, double *srgrad_tail)
 {
   static double x[6];
 
@@ -1114,14 +1098,11 @@ void debug_apot()
   fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
     apot_table.number, apot_table.total_par);
   for (i = 0; i < apot_table.number; i++) {
-    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
-      apot_table.names[i], smooth_pot[i]);
-    fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i],
-      apot_table.end[i]);
+    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1, apot_table.names[i], smooth_pot[i]);
+    fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i], apot_table.end[i]);
     for (j = 0; j < apot_table.n_par[i]; j++) {
       fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
-	apot_table.param_name[i][j], apot_table.values[i][j],
-	apot_table.pmin[i][j], apot_table.pmax[i][j]);
+	apot_table.param_name[i][j], apot_table.values[i][j], apot_table.pmin[i][j], apot_table.pmax[i][j]);
     }
   }
 #ifdef PAIR
@@ -1131,16 +1112,14 @@ void debug_apot()
     fprintf(stderr, "\nchemical potentials:\n");
     for (i = 0; i < ntypes; i++)
       fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, apot_table.chempot[i],
-	apot_table.pmin[apot_table.number][i],
-	apot_table.pmax[apot_table.number][i]);
+	apot_table.pmin[apot_table.number][i], apot_table.pmax[apot_table.number][i]);
     if (compnodes > 0) {
       if (ntypes == 2) {
 	fprintf(stderr, "composition nodes:\n");
 	for (j = 0; j < compnodes; j++)
 	  fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
 	    compnodelist[j], apot_table.chempot[ntypes + j],
-	    apot_table.pmin[apot_table.number][ntypes + j],
-	    apot_table.pmax[apot_table.number][ntypes + j]);
+	    apot_table.pmin[apot_table.number][ntypes + j], apot_table.pmax[apot_table.number][ntypes + j]);
       }
     }
   }
