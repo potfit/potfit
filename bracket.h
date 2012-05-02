@@ -42,12 +42,9 @@
 
 extern double *xicom, *delcom;
 
-void  bracket(double *, double *, double *, double *, double *, double *,
-  double *, double *);
-double brent(double, double, double, double, double, double *, double *,
-  double *, double *);
+void  bracket(double *, double *, double *, double *, double *, double *, double *, double *);
+double brent(double, double, double, double, double, double *, double *, double *, double *);
 
-double linmin(double *, double *, double, double *, double *, double *,
-  double *);
+double linmin(double *, double *, double, double *, double *, double *, double *);
 
 #endif /* BRACKET_H */

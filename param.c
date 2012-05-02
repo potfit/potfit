@@ -60,8 +60,7 @@ int   curline;			/* number of current line */
 
 */
 
-int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
-  int pnum_max)
+int getparam(char *param_name, void *param, param_t ptype, int pnum_min, int pnum_max)
 {
   char *str;
   int   i;
@@ -72,8 +71,7 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
       case PARAM_STR:
 	str = strtok(NULL, " \t\r\n");
 	if (str == NULL)
-	  error(1, "Parameter for %s missing in line %d\nstring expected!",
-	    param_name, curline);
+	  error(1, "Parameter for %s missing in line %d\nstring expected!", param_name, curline);
 	else
 	  strncpy((char *)param, str, pnum_max);
 	numread++;
@@ -129,57 +127,45 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min,
 void check_parameters_complete(char *paramfile)
 {
   if (ntypes <= 0)
-    error(1, "Missing parameter or invalid value in %s : ntypes is \"%d\"",
-      paramfile, ntypes);
+    error(1, "Missing parameter or invalid value in %s : ntypes is \"%d\"", paramfile, ntypes);
 
   if (strcmp(startpot, "\0") == 0)
-    error(1, "Missing parameter or invalid value in %s : startpot is \"%s\"",
-      paramfile, startpot);
+    error(1, "Missing parameter or invalid value in %s : startpot is \"%s\"", paramfile, startpot);
 
   if (strcmp(endpot, "\0") == 0) {
-    warning(1, "endpot is missing in %s, setting it to %s_end", paramfile,
-      startpot);
+    warning(1, "endpot is missing in %s, setting it to %s_end", paramfile, startpot);
     sprintf(endpot, "%s_end", startpot);
   }
 
   if (strcmp(config, "\0") == 0)
-    error(1, "Missing parameter or invalid value in %s : config is \"%s\"",
-      paramfile, config);
+    error(1, "Missing parameter or invalid value in %s : config is \"%s\"", paramfile, config);
 
   if (strcmp(tempfile, "\0") == 0)
-    error(1, "Missing parameter or invalid value in %s : tempfile is \"%s\"",
-      paramfile, tempfile);
+    error(1, "Missing parameter or invalid value in %s : tempfile is \"%s\"", paramfile, tempfile);
 
   if (eweight < 0)
-    error(1, "Missing parameter or invalid value in %s : eng_weight is \"%f\"",
-      paramfile, eweight);
+    error(1, "Missing parameter or invalid value in %s : eng_weight is \"%f\"", paramfile, eweight);
 
 #ifdef STRESS
   if (sweight < 0)
-    error(1,
-      "Missing parameter or invalid value in %s : stress_weight is \"%f\"",
-      paramfile, sweight);
+    error(1, "Missing parameter or invalid value in %s : stress_weight is \"%f\"", paramfile, sweight);
 #endif /* STRESS */
 
   if (writeimd && imdpotsteps <= 0)
-    error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"",
-      paramfile, imdpotsteps);
+    error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"", paramfile, imdpotsteps);
 
 #ifdef APOT
   if (plotmin < 0)
-    error(1, "Missing parameter or invalid value in %s : plotmin is \"%f\"",
-      paramfile, plotmin);
+    error(1, "Missing parameter or invalid value in %s : plotmin is \"%f\"", paramfile, plotmin);
 #ifdef PAIR
   if (enable_cp != 0 && enable_cp != 1)
-    error(1, "Missing parameter or invalid value in %s : enable_cp is \"%d\"",
-      paramfile, enable_cp);
+    error(1, "Missing parameter or invalid value in %s : enable_cp is \"%d\"", paramfile, enable_cp);
 #endif /* PAIR */
 #endif /* APOT */
 
 #ifdef PDIST
   if (strcmp(distfile, "\0") == 0)
-    error(1, "Missing parameter or invalid value in %s : distfile is \"%s\"",
-      paramfile, distfile);
+    error(1, "Missing parameter or invalid value in %s : distfile is \"%s\"", paramfile, distfile);
 #endif /* PDIST */
 }
 

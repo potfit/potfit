@@ -6,6 +6,8 @@ potfit-next (unreleased)
 + add support for writing LAMMPS potentials (EAM and ADP for now)
 + [BUG] fix invariant potentials, should be working correctly now
 + [BUG] fix recognition of elements with a single letter
++ add support for "box of contributing particles"
++ bump copyright to 2012
 
 potfit-0.5 (20111216)
 + fix invariant chemical potentials

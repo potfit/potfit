@@ -410,9 +410,7 @@ int main(int argc, char **argv)
     fprintf(outfile, "\n");
     for (i = 0; i < ntypes; i++) {
       totdens[i] /= (double)na_type[nconf][i];
-      fprintf(outfile,
-	"Average local electron density at atom sites type %d: %f\n", i,
-	totdens[i]);
+      fprintf(outfile, "Average local electron density at atom sites type %d: %f\n", i, totdens[i]);
     }
     if (write_output_files) {
       printf("Local electron density data written to \t%s\n", file);
@@ -422,13 +420,10 @@ int main(int argc, char **argv)
     for (i = 0; i < ntypes; i++) {
 #ifdef NORESCALE
       /* U'(1.) = 0. */
-      lambda[i] =
-	splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i, 1.0);
+      lambda[i] = splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i, 1.0);
 #else
       /* U'(<n>)=0; */
-      lambda[i] =
-	splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i,
-	totdens[i]);
+      lambda[i] = splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i, totdens[i]);
 #endif /* NORESCALE */
       printf("lambda[%d] = %f \n", i, lambda[i]);
     }
@@ -489,17 +484,15 @@ int main(int argc, char **argv)
 	"%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\t%14.8f\n",
 	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
 	sqr, force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
-	force_0[i],
-	(force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i],
-	atoms[i / 3].absforce);
+	force_0[i], (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i], atoms[i / 3].absforce);
 #else
       if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
 	fprintf(outfile, "\n\n");
       if (i == 0)
-	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\t\tf\t\tf0\t\tdf/f0\n");
-      fprintf(outfile, "%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\n",
-	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
-	sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
+	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
+      fprintf(outfile, "%3d:%6d:%s\t%4s\t%e\t%e\t%e\t%e\n", atoms[i / 3].conf,
+	i / 3, component[i % 3], elements[atoms[i / 3].typ], sqr,
+	force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
     if (write_output_files) {
@@ -522,8 +515,7 @@ int main(int argc, char **argv)
 
       if (write_output_files) {
 	fprintf(outfile, "# global energy weight w is %f\n", eweight);
-	fprintf(outfile,
-	  "# nr.\tconf_w\tw*de^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
+	fprintf(outfile, "# nr.\tconf_w\tw*de^2\t\te\t\te0\t\t|e-e0|\t\te-e0\t\tde/e0\n");
       } else {
 	fprintf(outfile, "energy weight is %f\n", eweight);
 	fprintf(outfile, "conf\tconf_w\t(w*de)^2\te\t\te0\t\tde/e0\n");
@@ -540,8 +532,7 @@ int main(int argc, char **argv)
 	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n",
 	    i, conf_weight[i], sqr / conf_weight[i],
 	    force[energy_p + i] + force_0[energy_p + i], force_0[energy_p + i],
-	    fabs(force[energy_p + i]), force[energy_p + i],
-	    force[energy_p + i] / force_0[energy_p + i]);
+	    fabs(force[energy_p + i]), force[energy_p + i], force[energy_p + i] / force_0[energy_p + i]);
 	} else
 	  fprintf(outfile, "%d\t%.4f\t%f\t%f\t%f\t%f\n", i, conf_weight[i], sqr,
 	    force[energy_p + i] + force_0[energy_p + i], force_0[energy_p + i],
@@ -586,8 +577,7 @@ int main(int argc, char **argv)
 	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%6.2f\t%14.8f\t%12.10f\t%12.10f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],
-	  conf_weight[(i - stress_p) / 6], sqr, force[i] + force_0[i],
-	  force_0[i], force[i] / force_0[i]);
+	  conf_weight[(i - stress_p) / 6], sqr, force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
       }
       if (write_output_files) {
 	printf("Stress data written to \t\t\t%s\n", file);
@@ -615,8 +605,7 @@ int main(int argc, char **argv)
     for (i = limit_p; i < dummy_p; i++) {
       sqr = dsquare(force[i]);
       if (write_output_files)
-	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr,
-	  force[i] + force_0[i]);
+	fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr, force[i] + force_0[i]);
       else
 	fprintf(outfile, "%d %f %f %f %f\n", i - limit_p, sqr,
 	  force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
@@ -627,8 +616,7 @@ int main(int argc, char **argv)
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
 	sqr = dsquare(force[i]);
-	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0., sqr,
-	  0., force[i]);
+	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0., sqr, 0., force[i]);
 #else
 	sqr = dsquare(force[i + ntypes]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
@@ -638,8 +626,7 @@ int main(int argc, char **argv)
 #ifdef NORESCALE
       fprintf(outfile, "\nNORESCALE: <n>!=1\n");
       fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
-      fprintf(outfile, "Additional punishment of %f added.\n",
-	dsquare(force[dummy_p + ntypes]));
+      fprintf(outfile, "Additional punishment of %f added.\n", dsquare(force[dummy_p + ntypes]));
 #endif /* NORESCALE */
       printf("Punishment constraints data written to \t%s\n", file);
       fclose(outfile);
@@ -663,8 +650,7 @@ int main(int argc, char **argv)
 	error(1, "Could not open file %s\n", file);
 #ifndef STRESS
       fprintf(outfile,
-	"total error sum %f, count %d (%d forces, %d energies)\n", tot,
-	mdim - 6 * nconf, 3 * natoms, nconf);
+	"total error sum %f, count %d (%d forces, %d energies)\n", tot, mdim - 6 * nconf, 3 * natoms, nconf);
 #else
       fprintf(outfile,
 	"total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
@@ -672,12 +658,12 @@ int main(int argc, char **argv)
 #endif /* STRESS */
     }
 #ifndef STRESS
-    printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
-      mdim - 6 * nconf, 3 * natoms, nconf);
+    printf("total error sum %f, count %d (%d forces, %d energies)\n", tot, mdim - 6 * nconf, 3 * natoms,
+      nconf);
 #else
     printf
-      ("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
-      tot, mdim, 3 * natoms, nconf, 6 * nconf);
+      ("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n", tot, mdim, 3 * natoms, nconf,
+      6 * nconf);
 #endif /* STRESS */
 
     /* calculate the rms errors for forces, energies, stress */
@@ -724,62 +710,52 @@ int main(int argc, char **argv)
     }
 
     if (write_output_files) {
-      fprintf(outfile, "sum of force-errors = %f\t\t( %.3f%% - av: %f)\n",
+      fprintf(outfile, "sum of force-errors = %e\t\t( %.3f%% - av: %f)\n",
 	f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
       if (eweight != 0)
-	fprintf(outfile, "sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
-	  e_sum / tot * 100);
+	fprintf(outfile, "sum of energy-errors = %e\t\t( %.3f%% )\n", e_sum, e_sum / tot * 100);
 #ifdef STRESS
       if (sweight != 0)
-	fprintf(outfile, "sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
-	  s_sum / tot * 100);
+	fprintf(outfile, "sum of stress-errors = %e\t\t( %.3f%% )\n", s_sum, s_sum / tot * 100);
 #endif /* STRESS */
       if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
-	fprintf(outfile,
-	  "\n --> Warning <--\nThis sum contains punishments! Please check your results.\n");
-	fprintf(outfile, "Total sum of punishments = %f\t\t( %.3f%% )\n\n",
-	  tot - f_sum - e_sum - s_sum,
-	  (tot - f_sum - e_sum - s_sum) / tot * 100);
+	fprintf(outfile, "\n --> Warning <--\nThis sum contains punishments! Please check your results.\n");
+	fprintf(outfile, "Total sum of punishments = %e\t\t( %.3f%% )\n\n",
+	  tot - f_sum - e_sum - s_sum, (tot - f_sum - e_sum - s_sum) / tot * 100);
       }
       fprintf(outfile, "rms-errors:\n");
-      fprintf(outfile, "force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
+      fprintf(outfile, "force \t%e\t(%f meV/A)\n", rms[0], rms[0] * 1000);
       if (eweight != 0)
-	fprintf(outfile, "energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
+	fprintf(outfile, "energy \t%e\t(%f meV)\n", rms[1], rms[1] * 1000);
 #ifdef STRESS
       if (sweight != 0)
-	fprintf(outfile, "stress \t%f\t(%f MPa)\n", rms[2],
-	  rms[2] / 160.2 * 1000);
+	fprintf(outfile, "stress \t%e\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif /* STRESS */
       fprintf(outfile, "\n");
-      fprintf(outfile,
-	"\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
-      fprintf(outfile, "RMS:\t%f\t%f\t%f\t%f\n", rms[0] * 1000, rms[1] * 1000,
-	rms[2] / 160.2 * 1000, tot);
+      fprintf(outfile, "\tforce [meV/A]\tenergy [meV]\tstress [MPa]\terror sum\n");
+      fprintf(outfile, "RMS:\t%e\t%e\t%e\t%f\n", rms[0] * 1000, rms[1] * 1000, rms[2] / 160.2 * 1000, tot);
 
     }
-    printf("sum of force-errors = %f\t\t( %.3f%% - av: %f)\n", f_sum,
-      f_sum / tot * 100, f_sum / (3 * natoms));
+    printf("sum of force-errors  = %e\t\t( %.3f%% - av: %e)\n", f_sum, f_sum / tot * 100,
+      f_sum / (3 * natoms));
     if (eweight != 0)
-      printf("sum of energy-errors = %f\t\t( %.3f%% )\n", e_sum,
-	e_sum / tot * 100);
+      printf("sum of energy-errors = %e\t\t( %.3f%% )\n", e_sum, e_sum / tot * 100);
 #ifdef STRESS
     if (sweight != 0)
-      printf("sum of stress-errors = %f\t\t( %.3f%% )\n", s_sum,
-	s_sum / tot * 100);
+      printf("sum of stress-errors = %e\t\t( %.3f%% )\n", s_sum, s_sum / tot * 100);
 #endif /* STRESS */
     if ((tot - f_sum - e_sum - s_sum) > 0.01 && opt == 1) {
-      printf
-	("\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
-      printf("sum of punishments = %f\t\t( %.3f%% )\n\n",
+      printf("\n --> Warning <--\nThis sum contains punishments! Check your results.\n");
+      printf("sum of punishments = %e\t\t( %.3f%% )\n\n",
 	tot - f_sum - e_sum - s_sum, (tot - f_sum - e_sum - s_sum) / tot * 100);
     }
     printf("rms-errors:\n");
-    printf("force \t%f\t(%f meV/A)\n", rms[0], rms[0] * 1000);
+    printf("force \t%e\t(%f meV/A)\n", rms[0], rms[0] * 1000);
     if (eweight != 0)
-      printf("energy \t%f\t(%f meV)\n", rms[1], rms[1] * 1000);
+      printf("energy \t%e\t(%f meV)\n", rms[1], rms[1] * 1000);
 #ifdef STRESS
     if (sweight != 0)
-      printf("stress \t%f\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
+      printf("stress \t%e\t(%f MPa)\n", rms[2], rms[2] / 160.2 * 1000);
 #endif /* STRESS */
     if (write_output_files) {
       fclose(outfile);
@@ -793,8 +769,8 @@ int main(int argc, char **argv)
     printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
       (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
 	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);
-    printf("%d force calculations, each took %f seconds\n", fcalls,
-      (double)difftime(t_end, t_begin) / fcalls);
+    printf("%d force calculations, each took %f seconds\n", fcalls, (double)difftime(t_end,
+	t_begin) / fcalls);
   }
 
   /* do some cleanups before exiting */

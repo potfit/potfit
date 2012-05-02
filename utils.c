@@ -107,15 +107,12 @@ void reg_for_free(void *p, char *name, ...)
 {
   va_list ap;
 
-  pointer_names =
-    (char **)realloc(pointer_names, (num_pointers + 1) * sizeof(char *));
-  pointer_names[num_pointers] =
-    (char *)malloc((strlen(name) + 10) * sizeof(char));
+  pointer_names = (char **)realloc(pointer_names, (num_pointers + 1) * sizeof(char *));
+  pointer_names[num_pointers] = (char *)malloc((strlen(name) + 10) * sizeof(char));
   va_start(ap, name);
   vsprintf(pointer_names[num_pointers], name, ap);
   va_end(ap);
-  all_pointers =
-    (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
+  all_pointers = (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
   all_pointers[num_pointers] = p;
   num_pointers++;
 }

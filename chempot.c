@@ -39,13 +39,10 @@ int swap_chem_pot(int i, int j)
   double temp;
 
   if (i != j) {
-    SWAP(apot_table.values[apot_table.number][i],
-      apot_table.values[apot_table.number][j], temp);
+    SWAP(apot_table.values[apot_table.number][i], apot_table.values[apot_table.number][j], temp);
     SWAP(compnodelist[i - ntypes], compnodelist[j - ntypes], temp);
-    SWAP(apot_table.pmin[apot_table.number][i],
-      apot_table.pmin[apot_table.number][j], temp);
-    SWAP(apot_table.pmax[apot_table.number][i],
-      apot_table.pmax[apot_table.number][j], temp);
+    SWAP(apot_table.pmin[apot_table.number][i], apot_table.pmin[apot_table.number][j], temp);
+    SWAP(apot_table.pmax[apot_table.number][i], apot_table.pmax[apot_table.number][j], temp);
     return 0;
   } else
     return -1;
