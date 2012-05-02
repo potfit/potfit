@@ -2223,7 +2223,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
       apt->dp_alpha[i], apt->pmin[apt->number + 2][i], apt->pmax[apt->number + 2][i]);
-  for (i = 0; i < apt->number; i++) {
+  for (i = 0; i < ncols; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i],
       apt->dp_b[i], apt->pmin[apt->number + 3][i], apt->pmax[apt->number + 3][i]);
   }
