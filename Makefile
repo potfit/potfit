@@ -374,21 +374,17 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
 endif
 
-#ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-#  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-#    POTFITSRC      += force_eam_elstat.c
-#  else
-#    POTFITSRC      += force_elstat.c
-#  endif
-#endif
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+    POTFITSRC      += force_elstat.c
+  endif
+endif
 
-#ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-#  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-#    POTFITSRC      += force_eam_elstat.c
-#  else
-#    POTFITSRC      += force_elstat.c
-#  endif
-#endif
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+    POTFITSRC      += force_elstat.c
+  endif
+endif
 
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
 POTFITSRC      += force_adp.c
