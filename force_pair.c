@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011 Peter Brommer, Franz G"ahler, Daniel Schopf
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -86,11 +86,11 @@
  *
  ****************************************************************/
 
-real calc_forces_pair(real *xi_opt, real *forces, int flag)
+double calc_forces_pair(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  real  tmpsum = 0., sum = 0.;
-  real *xi = NULL;
+  double tmpsum = 0., sum = 0.;
+  double *xi = NULL;
 
   switch (format) {
       case 0:
@@ -118,7 +118,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef MPI
 #ifndef APOT
     /* exchange potential and flag value */
-    MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -128,7 +128,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef APOT
     if (myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
@@ -144,12 +144,10 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       first = calc_pot.first[col];
       if (format == 0 || format == 3)
 	spline_ed(calc_pot.step[col], xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-	  calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-	  calc_pot.d2tab + first);
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
 
 #ifndef MPI
@@ -169,7 +167,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
       neigh_t *neigh;
 
       /* pair variables */
-      real  phi_val, phi_grad;
+      double phi_val, phi_grad;
       vector tmp_force;
 
       /* loop over configurations */
@@ -185,8 +183,7 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 
 #ifdef APOT
 	if (enable_cp)
-	  forces[energy_p + h] +=
-	    chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
+	  forces[energy_p + h] += chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
 #endif /* APOT */
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
@@ -219,19 +216,16 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	      /* fn value and grad are calculated in the same step */
 	      if (uf)
 		phi_val =
-		  splint_comb_dir(&calc_pot, xi, neigh->slot[0],
-		  neigh->shift[0], neigh->step[0], &phi_grad);
+		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
 	      else
-		phi_val =
-		  splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0],
-		  neigh->step[0]);
+		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 	      /* avoid double counting if atom is interacting with a
 	         copy of itself */
 	      if (self) {
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
-	      /* not real force: cohesive energy */
+	      /* not double force: cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
@@ -274,14 +268,16 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
 	    /* sum up forces */
-	    tmpsum +=
-	      conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) +
-	      dsquare(forces[k + 2]));
+#ifdef CONTRIB
+	    if (atom->contrib)
+#endif /* CONTRIB */
+	      tmpsum +=
+		conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
 	  }			/* second loop over atoms */
 	}
 
 	/* energy contributions */
-	forces[energy_p + h] /= (real)inconf[h];
+	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 #ifdef COMPAT
 	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
@@ -319,18 +315,29 @@ real calc_forces_pair(real *xi_opt, real *forces, int flag)
 #ifdef MPI
     /* reduce global sum */
     sum = 0.;
-    MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    /* forces */
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
-      atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
-    /* energies */
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
-      forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
-    /* stresses */
-    MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
-      MPI_COMM_WORLD);
+    if (myid == 0) {		/* root node already has data in place */
+      /* forces */
+      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
+	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      /* energies */
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3,
+	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      /* stresses */
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + natoms * 3 + nconf,
+	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    } else {
+      /* forces */
+      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
+	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      /* energies */
+      MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
+	forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      /* stresses */
+      MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
+	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+    }
 #endif /* MPI */
 
     /* root process exits this function now */

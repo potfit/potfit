@@ -1,13 +1,13 @@
 /****************************************************************
  *
- * bracket.h: header file for bracketing and brent minimization
+ * elements.h: header file for periodic table
  *
  ****************************************************************
  *
- * Copyright 2010-2012
- * 	Institute for Theoretical and Applied Physics
- * 	University of Stuttgart, D-70550 Stuttgart, Germany
- * 	http://potfit.itap.physik.uni-stuttgart.de/
+ * Copyright 2012
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -28,23 +28,25 @@
  *
  ****************************************************************/
 
-#ifndef BRACKET_H
-#define BRACKET_H
+#ifndef ELEMENTS_H
+#define ELEMENTS_H
 
-/* for bracket.c */
-#define CGOLD 0.3819660
-#define MAX_IT 100
+typedef struct {
+  char  name[20];
+  char  short_name[20];
+  double mass;
+} element_t;
 
-/* for brent.c */
-#define ITMAX 100
-#define ZEPS 1.0e-9
-#define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
+/* initialize periodic table of elements */
+void  init_elements();
 
-extern double *xicom, *delcom;
+/* get mass from number */
+double ele_mass_from_number(int num);
 
-void  bracket(double *, double *, double *, double *, double *, double *, double *, double *);
-double brent(double, double, double, double, double, double *, double *, double *, double *);
+/* get mass from name */
+double ele_mass_from_name(char *name);
 
-double linmin(double *, double *, double, double *, double *, double *, double *);
+/* get number from name */
+int   ele_number_from_name(char *name);
 
-#endif /* BRACKET_H */
+#endif /* ELEMENTS_H */

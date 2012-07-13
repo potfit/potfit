@@ -1,7 +1,13 @@
-meam
+potfit-next (unreleased)
 + merge MEAM implementation of Jeremy Nicklas (Ohio State University)
++ add support for writing LAMMPS potentials (EAM and ADP for now)
++ [BUG] fix invariant potentials, should be working correctly now
++ [BUG] fix recognition of elements with a single letter
++ add support for "box of contributing particles"
++ bump copyright to 2012
 
-devel
+potfit-0.5 (20111216)
++ fix invariant chemical potentials
 + errors for short distances are now more clear
 + rms for forces is now calculated correctly
 + fix wrong element detection in config.c
@@ -236,7 +242,7 @@ adp-20100527
 + adp should now be complete, mpi still missing
 
 bzr-20100512
-+ moved files from *_r.* to *.*, all types are real, include header for bracketing
++ moved files from *_r.* to *.*, all types are double, include header for bracketing
 + fix warnings when compiling with debug flag
 + simann now counts all new parameters as an attempt, even if they were out of bounds
 + optimize evo output
@@ -256,8 +262,18 @@ bzr-20100510
 + only save new neighbors, speeds up the optimization significantly
   calculate forces with actio=reactio
 
+<<<<<<< TREE
+=======
+bzr-20100429
++ new functions and loops added for dipole calculation
+
+>>>>>>> MERGE-SOURCE
 bzr-20100426
+<<<<<<< TREE
 + re-add MEAM part
+=======
++ re-add DIPOLE part
+>>>>>>> MERGE-SOURCE
 
 bzr-20100426
 + start migration to bazaar vcs
@@ -508,7 +524,7 @@ CVS-20081201
 + [APOT] some minor tweaks in the SA-algorithm, mainly for speed purposes
 + [APOT] fixed bug with temporary potential files, now the current potential
   and not the past one is written to the tempfile
-+ new variable real *calc_list that stores the parameters
++ new variable double *calc_list that stores the parameters
   the potential in the calc_table was generated from
 
 CVS-20081126

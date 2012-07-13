@@ -16,7 +16,7 @@ typedef enum ParamType {
   PARAM_INT, PARAM_DOUBLE
 } PARAMTYPE;
 
-int curline; /* number of current line */
+int   curline;			/* number of current line */
 
 /******************************************************************************
 *
@@ -48,79 +48,76 @@ int curline; /* number of current line */
 
 */
 
-int getparam(char *param_name, void *param, PARAMTYPE ptype, 
-             int pnum_min, int pnum_max)
+int getparam(char *param_name, void *param, PARAMTYPE ptype, int pnum_min,
+  int pnum_max)
 {
   static char errmsg[256];
   char *str;
-  int i;
-  int numread;
+  int   i;
+  int   numread;
 
   numread = 0;
   if (ptype == PARAM_STR) {
-    str = strtok(NULL," \t\r\n");
+    str = strtok(NULL, " \t\r\n");
     if (str == NULL) {
-      sprintf(errmsg,"Parameter for %s missing in line %u\nstring expected!\n",
-              param_name,curline);
+      sprintf(errmsg, "Parameter for %s missing in line %u\nstring expected!\n",
+	param_name, curline);
       error(errmsg);
-    }
-    else strncpy((char *)param,str,pnum_max);
+    } else
+      strncpy((char *)param, str, pnum_max);
     numread++;
-  }
-  else if (ptype == PARAM_STRPTR) {
-    str = strtok(NULL," \t\r\n");
+  } else if (ptype == PARAM_STRPTR) {
+    str = strtok(NULL, " \t\r\n");
     if (str == NULL) {
-      sprintf(errmsg,"Parameter for %s missing in line %u\nstring expected!\n",
-              param_name,curline);
+      sprintf(errmsg, "Parameter for %s missing in line %u\nstring expected!\n",
+	param_name, curline);
       error(errmsg);
-    }
-    else *((char**)param) = strdup(str);
+    } else
+      *((char **)param) = strdup(str);
     numread++;
-  }
-  else if (ptype == PARAM_INT) {
-    for (i=0; i<pnum_min; i++) {
-      str = strtok(NULL," \t\r\n");
+  } else if (ptype == PARAM_INT) {
+    for (i = 0; i < pnum_min; i++) {
+      str = strtok(NULL, " \t\r\n");
       if (str == NULL) {
-        sprintf(errmsg,"Parameter for %s missing in line %u!\n",
-                param_name,curline);
-        sprintf(errmsg+strlen(errmsg),
-                "Integer vector of length %u expected!\n",(unsigned)pnum_min);
-        error(errmsg);
-      }
-      else ((int*)param)[i] = atoi(str);
+	sprintf(errmsg, "Parameter for %s missing in line %u!\n", param_name,
+	  curline);
+	sprintf(errmsg + strlen(errmsg),
+	  "Integer vector of length %u expected!\n", (unsigned)pnum_min);
+	error(errmsg);
+      } else
+	((int *)param)[i] = atoi(str);
       numread++;
     }
-    for (i=pnum_min; i<pnum_max; i++) {
-      if ((str = strtok(NULL," \t\r\n")) != NULL) {
-        ((int*)param)[i] = atoi(str);
-        numread++;
-      }
-      else break;
+    for (i = pnum_min; i < pnum_max; i++) {
+      if ((str = strtok(NULL, " \t\r\n")) != NULL) {
+	((int *)param)[i] = atoi(str);
+	numread++;
+      } else
+	break;
     }
-  }
-  else if (ptype == PARAM_DOUBLE) {
-    for (i=0; i<pnum_min; i++) {
-      str = strtok(NULL," \t\r\n");
+  } else if (ptype == PARAM_DOUBLE) {
+    for (i = 0; i < pnum_min; i++) {
+      str = strtok(NULL, " \t\r\n");
       if (str == NULL) {
-        sprintf(errmsg,"Parameter for %s missing in line %u!\n",
-                param_name,curline);
-        sprintf(errmsg+strlen(errmsg),"Double vector of length %u expected!\n",
-                (unsigned)pnum_min);
-        error(errmsg);
-      }
-      else ((double*)param)[i] = atof(str);
+	sprintf(errmsg, "Parameter for %s missing in line %u!\n", param_name,
+	  curline);
+	sprintf(errmsg + strlen(errmsg),
+	  "Double vector of length %u expected!\n", (unsigned)pnum_min);
+	error(errmsg);
+      } else
+	((double *)param)[i] = atof(str);
       numread++;
     }
-    for (i=pnum_min; i<pnum_max; i++) {
-      if ((str = strtok(NULL," \t\r\n")) != NULL) {
-        ((double*)param)[i] = atof(str);
-        numread++;
-      }
-      else break;
+    for (i = pnum_min; i < pnum_max; i++) {
+      if ((str = strtok(NULL, " \t\r\n")) != NULL) {
+	((double *)param)[i] = atof(str);
+	numread++;
+      } else
+	break;
     }
   }
   return numread;
-} 
+}
 
 /******************************************************************************
 *
@@ -131,50 +128,52 @@ int getparam(char *param_name, void *param, PARAMTYPE ptype,
 
 void read_paramfile(FILE *pf)
 {
-  char buffer[1024];
+  char  buffer[1024];
   char *token, *res;
 
-  curline=0;
+  curline = 0;
 
   do {
-    res=fgets(buffer,1024,pf);
-    if (NULL == res) break; /* probably EOF reached */
+    res = fgets(buffer, 1024, pf);
+    if (NULL == res)
+      break;			/* probably EOF reached */
     curline++;
-    token = strtok(buffer," \t\r\n");
-    if (NULL == token) continue; /* skip blank lines */
-    if (token[0]=='#') continue; /* skip comments */
+    token = strtok(buffer, " \t\r\n");
+    if (NULL == token)
+      continue;			/* skip blank lines */
+    if (token[0] == '#')
+      continue;			/* skip comments */
 
     /* number of atom types */
-    if (strcasecmp(token,"ntypes")==0) {
-      getparam("ntypes",&ntypes,PARAM_INT,1,1);
-      lambda = (real *) malloc(ntypes * sizeof(real));
+    if (strcasecmp(token, "ntypes") == 0) {
+      getparam("ntypes", &ntypes, PARAM_INT, 1, 1);
+      lambda = (real *)malloc(ntypes * sizeof(real));
 
     }
     /* file with start potential */
-    else if (strcasecmp(token,"startpot")==0) {
-      getparam("startpot",startpot,PARAM_STR,1,255);
+    else if (strcasecmp(token, "startpot") == 0) {
+      getparam("startpot", startpot, PARAM_STR, 1, 255);
     }
     /* file for IMD potential */
-    else if (strcasecmp(token,"imdpot")==0) {
-      getparam("imdpot",imdpot,PARAM_STR,1,255);
+    else if (strcasecmp(token, "imdpot") == 0) {
+      getparam("imdpot", imdpot, PARAM_STR, 1, 255);
     }
     /* file for plotting */
-    else if (strcasecmp(token,"plotfile")==0) {
-	getparam("plotfile",plotfile,PARAM_STR,1,255);
+    else if (strcasecmp(token, "plotfile") == 0) {
+      getparam("plotfile", plotfile, PARAM_STR, 1, 255);
     }
     /* number of steps in IMD potential */
-    else if (strcasecmp(token,"imdpotsteps")==0) {
-      getparam("imdpotsteps",&imdpotsteps,PARAM_INT,1,1);
-    }
-    else if (strcasecmp(token,"lambda")==0) {
-      if (ntypes>=0)
-	getparam("lambda",lambda,PARAM_DOUBLE,ntypes,ntypes);
+    else if (strcasecmp(token, "imdpotsteps") == 0) {
+      getparam("imdpotsteps", &imdpotsteps, PARAM_INT, 1, 1);
+    } else if (strcasecmp(token, "lambda") == 0) {
+      if (ntypes >= 0)
+	getparam("lambda", lambda, PARAM_DOUBLE, ntypes, ntypes);
       else
 	error("Number of species ntypes has to be specified before lambda!");
     }
     /* unknown tag */
     else {
-      fprintf(stderr,"Unknown tag <%s> ignored!\n",token);
+      fprintf(stderr, "Unknown tag <%s> ignored!\n", token);
     }
   } while (!feof(pf));
   fclose(pf);
@@ -189,11 +188,11 @@ void read_paramfile(FILE *pf)
 
 void read_parameters(int argc, char **argv)
 {
-  char msg[255];
+  char  msg[255];
   FILE *pf;
 
   /* check command line */
-  if (argc<2) {
+  if (argc < 2) {
     sprintf(msg, "Usage: %s <paramfile>\n", argv[0]);
     error(msg);
   }
@@ -201,10 +200,10 @@ void read_parameters(int argc, char **argv)
   /* open parameter file, and read it */
   pf = fopen(argv[1], "r");
   if (NULL == pf) {
-    fprintf(stderr, "ERROR: Could not open parameter file %s!\n", argv[1] );
+    fprintf(stderr, "ERROR: Could not open parameter file %s!\n", argv[1]);
     exit(2);
   }
   read_paramfile(pf);
-  printf("Read parameters from file %s\n",argv[1]);
+  printf("Read parameters from file %s\n", argv[1]);
 
 }

@@ -90,15 +90,15 @@
 // DO NOT USE:
 // APOT, PARABEL, MPI, OPENMP, WZERO
 
-real calc_forces_meam(real *xi_opt, real *forces, int flag)
+double calc_forces_meam(double *xi_opt, double *forces, int flag)
 {
   // Set temporary pot table
-  real *xi = xi_opt;
+  double *xi = xi_opt;
 
   // Some useful temp variables
   int   h, col, first;
-  real  rho_sum_loc, tmpsum;
-  real  rho_sum = 0., sum = 0.;
+  double rho_sum_loc, tmpsum;
+  double rho_sum = 0., sum = 0.;
 
   // Only works for format=3 for now
   if (format != 3)
@@ -115,7 +115,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 #ifdef MPI
     // Broadcast the potential and flag to all the procs
     // The flag can be used to kill the slave procs
-    MPI_Bcast(xi, calc_pot.len, REAL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // Potentials have been rescaled so broadcast them
@@ -165,19 +165,19 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
       neigh_t *neigh;		// neighbor type
 
       // Pair variables
-      real  phi_val, phi_grad;
+      double phi_val, phi_grad;
       vector tmp_force;		// x,y,z vector
 
       // Eam variables
       int   col_F;
-      real  eam_force;
+      double eam_force;
 #ifdef NORESCALE
-      real  rho_val;
+      double rho_val;
 #endif
 
       // Meam variables
       int   m, jj, kk, ijk;
-      real  dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k, dfj[3], dfk[3];
+      double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k, dfj[3], dfk[3];
       neigh_t *neigh_j, *neigh_k;
       angl *n_angl;		// angle type
 
@@ -305,8 +305,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	      // to be used in the future when computing forces
 	      // and sum up rho for atom i
 	      atom->rho +=
-		splint_comb_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1],
-		neigh->step[1], &neigh->drho);
+		splint_comb_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1], &neigh->drho);
 	    } else {
 
 	      // If the pair distance does not lie inside rho_typ2
@@ -329,8 +328,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
 	      // Store the f(r_ij) value and the gradient for future use
 	      neigh->f =
-		splint_comb_dir(&calc_pot, xi, neigh->slot[2], neigh->shift[2],
-		neigh->step[2], &neigh->df);
+		splint_comb_dir(&calc_pot, xi, neigh->slot[2], neigh->shift[2], neigh->step[2], &neigh->df);
 	    } else {
 
 	      // Store f and f' = 0 if doesn't lie in boundary
@@ -369,8 +367,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	      // The cos(theta) should always lie inside -1 ... 1
 	      // So store the g and g' without checking bounds
 	      n_angl->g =
-		splint_comb_dir(&calc_pot, xi, n_angl->slot, n_angl->shift,
-		n_angl->step, &n_angl->dg);
+		splint_comb_dir(&calc_pot, xi, n_angl->slot, n_angl->shift, n_angl->step, &n_angl->dg);
 
 	      // Sum up rho piece for atom i caused by j and k
 	      // f_ij * f_ik * m_ijk
@@ -389,8 +386,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	  if (atom->rho < calc_pot.begin[col_F]) {
 
 	    // Punish this potential for having rho lie outside of F
-	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
 
 	    // Set the atomic density to the first rho in the spline F
 	    atom->rho = calc_pot.begin[col_F];
@@ -398,15 +394,13 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	  } else if (atom->rho > calc_pot.end[col_F]) {	// rho is to the right of the spline
 
 	    // Punish this potential for having rho lie outside of F
-	    forces[limit_p + h] +=
-	      DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
 
 	    // Set the atomic density to the last rho in the spline F
 	    atom->rho = calc_pot.end[col_F];
 	  }
 	  // Compute energy piece from F, and store the gradient for later use
-	  forces[energy_p + h] +=
-	    splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 
 #elif defined NORESCALE		// !NORESCALE
 	  // Compute energy, gradient for embedding function F
@@ -415,14 +409,11 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
 	    // Linear extrapolate values to left to get F_i(rho)
 	    // This gets value and grad of initial spline point
-	    rho_val =
-	      splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F],
-	      &atom->gradF);
+	    rho_val = splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F], &atom->gradF);
 
 	    // Sum this to the total energy for this configuration
 	    // Linear extrapolate this energy
-	    forces[energy_p + h] +=
-	      rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
 
 	  } else if (atom->rho > calc_pot.end[col_F]) {	// rho is to the right of the spline
 
@@ -432,13 +423,11 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
 
 	    // Linear extrapolate to the right to get energy
-	    forces[energy_p + h] +=
-	      rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
+	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 	  } else {
 
 	    // Get energy value from within spline and store the grad
-	    forces[energy_p + h] +=
-	      splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+	    forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
 #endif // !NORESCALE
 
@@ -607,7 +596,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
 	// Add in the energy per atom and its weight to the sum
 	// First divide by num atoms
-	forces[energy_p + h] /= (real)inconf[h];
+	forces[energy_p + h] /= (double)inconf[h];
 
 	// Then subtract off the cohesive energy given to use by user
 	forces[energy_p + h] -= force_0[energy_p + h];
@@ -648,7 +637,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 
 #ifdef MPI
     // Reduce the rho_sum into root node
-    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
     rho_sum = rho_sum_loc;
 #endif // MPI
@@ -659,7 +648,7 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 #ifdef NORESCALE
       // Calculate the average rho_sum per atom
       // NOTE: This gauge constraint exists for both EAM and MEAM
-      rho_sum /= (real)natoms;
+      rho_sum /= (double)natoms;
 
       // Another constraint for the gauge conditions
       // this sets the avg rho per atom to 1
@@ -676,23 +665,21 @@ real calc_forces_meam(real *xi_opt, real *forces, int flag)
 #ifdef MPI
     // Reduce the global sum from all the tmpsum's
     sum = 0.;
-    MPI_Reduce(&tmpsum, &sum, 1, REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     // gather forces, energies, stresses
     // forces
-    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VEKTOR, forces, atom_len,
-      atom_dist, MPI_VEKTOR, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
+      atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
     // energies
-    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, REAL,
-      forces + natoms * 3, conf_len, conf_dist, REAL, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
+      forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     // stresses
     MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
-      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0,
-      MPI_COMM_WORLD);
+      forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
     // punishment constraints for going out of bounds for F(rho)
     // only really used when rescaling
-    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, REAL,
-      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, REAL, 0,
-      MPI_COMM_WORLD);
+    MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, MPI_DOUBLE,
+      forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     // no need to pick up dummy constraints - are already @ root
     // they are constraints on F and F'
 #endif // MPI

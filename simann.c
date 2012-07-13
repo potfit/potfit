@@ -4,10 +4,10 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2011 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  *****************************************************************
  *
@@ -57,11 +57,11 @@
  *
  ****************************************************************/
 
-void randomize_parameter(int n, real *xi, real *v)
+void randomize_parameter(int n, double *xi, double *v)
 {
-  real  temp, rand;
+  double temp, rand;
   int   done = 0, count = 0;
-  real  min, max;
+  double min, max;
 
   min = apot_table.pmin[apot_table.idxpot[n]][apot_table.idxparam[n]];
   max = apot_table.pmax[apot_table.idxpot[n]][apot_table.idxparam[n]];
@@ -90,7 +90,7 @@ void randomize_parameter(int n, real *xi, real *v)
  *
  ****************************************************************/
 
-void makebump(real *x, real width, real height, int center)
+void makebump(double *x, double width, double height, int center)
 {
   int   i, j = 0;
 
@@ -99,13 +99,13 @@ void makebump(real *x, real width, real height, int center)
     j++;
   for (i = 0; i <= 4. * width; i++) {
     /* using idx avoids moving fixed points */
-    if ((center + i < ndim) && (idx[center + i] <= opt_pot.last[j])) {
-      x[idx[center + i]] += GAUSS((real)i / width) * height;
+    if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
+      x[idx[center + i]] += GAUSS((double)i / width) * height;
     }
   }
   for (i = 1; i <= 4. * width; i++) {
     if ((center - i >= 0) && (idx[center - i] >= opt_pot.first[j])) {
-      x[idx[center - i]] += GAUSS((real)i / width) * height;
+      x[idx[center - i]] += GAUSS((double)i / width) * height;
     }
   }
   return;
@@ -120,20 +120,20 @@ void makebump(real *x, real width, real height, int center)
  *
  ****************************************************************/
 
-void anneal(real *xi)
+void anneal(double *xi)
 {
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   auto_T = 0;
   int   loopagain;		/* loop flag */
   int   rescaleMe = 1;		/* rescaling flag */
-  real  T = -1.;		/* Temperature */
-  real  F, Fopt, F2;		/* Fn value */
-  real *Fvar;			/* backlog of Fn vals */
-  real *v;			/* step vector */
-  real *xopt, *xi2;		/* optimal value */
-  real *fxi1;			/* two latest force vectors */
+  double T = -1.;		/* Temperature */
+  double F, Fopt, F2;		/* Fn value */
+  double *Fvar;			/* backlog of Fn vals */
+  double *v;			/* step vector */
+  double *xopt, *xi2;		/* optimal value */
+  double *fxi1;			/* two latest force vectors */
 #ifndef APOT
-  real  width, height;		/* gaussian bump size */
+  double width, height;		/* gaussian bump size */
 #endif /* APOT */
 #ifdef DIPOLE
   FILE *outfile;
@@ -154,20 +154,20 @@ void anneal(real *xi)
   if (T == 0. && auto_T != 1)
     return;			/* don't anneal if starttemp equal zero */
 
-  Fvar = vect_real(KMAX + 5 + NEPS);	/* Backlog of old F values */
-  v = vect_real(ndim);
-  xopt = vect_real(ndimtot);
-  xi2 = vect_real(ndimtot);
-  fxi1 = vect_real(mdim);
+  Fvar = vect_double(KMAX + 5 + NEPS);	/* Backlog of old F values */
+  v = vect_double(ndim);
+  xopt = vect_double(ndimtot);
+  xi2 = vect_double(ndimtot);
+  fxi1 = vect_double(mdim);
   naccept = vect_int(ndim);
   // Optimum potential x-coord arrays
   int   col, col2;
-  real *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
-  optbegin = vect_real(ntypes);
-  optend = vect_real(ntypes);
-  optstep = vect_real(ntypes);
-  optinvstep = vect_real(ntypes);
-  optxcoord = vect_real(ndimtot);
+  double *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
+  optbegin = vect_double(ntypes);
+  optend = vect_double(ntypes);
+  optstep = vect_double(ntypes);
+  optinvstep = vect_double(ntypes);
+  optxcoord = vect_double(ndimtot);
 
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
@@ -200,8 +200,8 @@ void anneal(real *xi)
     int   e = 0;
     int   u = 10 * ndim;
     int   m1 = 0;
-    real  dF = 0.;
-    real  chi = .8;
+    double dF = 0.;
+    double chi = .8;
 
     printf("Determining optimal starting temperature T ...\n");
     for (e = 0; e < u; e++) {
@@ -312,20 +312,11 @@ void anneal(real *xi)
       /* Step adjustment */
       for (n = 0; n < ndim; n++) {
 	if (naccept[n] > (0.6 * NSTEP))
-	  v[n] *= (1 + STEPVAR * ((real)naccept[n] / NSTEP - 0.6) / 0.4);
+	  v[n] *= (1 + STEPVAR * ((double)naccept[n] / NSTEP - 0.6) / 0.4);
 	else if (naccept[n] < (0.4 * NSTEP))
-	  v[n] /= (1 + STEPVAR * (0.4 - (real)naccept[n] / NSTEP) / 0.4);
+	  v[n] /= (1 + STEPVAR * (0.4 - (double)naccept[n] / NSTEP) / 0.4);
 	naccept[n] = 0;
       }
-
-#ifdef DIPOLE
-      /* output for "Dipol_Konvergenz_Verlauf" */
-      if (myid == 0) {
-	outfile = fopen(filename, "a");
-	fprintf(outfile, "%d\n", apot_table.sum_t);
-	fclose(outfile);
-      }
-#endif /* DIPOLE */
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
       fflush(stdout);
@@ -334,8 +325,7 @@ void anneal(real *xi)
       if (*flagfile != '\0') {
 	ff = fopen(flagfile, "r");
 	if (NULL != ff) {
-	  printf("Annealing terminated in presence of break flagfile \"%s\"!\n",
-	    flagfile);
+	  printf("Annealing terminated in presence of break flagfile \"%s\"!\n", flagfile);
 	  printf("Temperature was %f, returning optimum configuration\n", T);
 	  for (n = 0; n < ndimtot; n++)
 	    xi[n] = xopt[n];
@@ -435,12 +425,12 @@ void anneal(real *xi)
 #endif /* APOT */
   }
 
-  free_vect_real(Fvar);
-  free_vect_real(v);
-  free_vect_real(xopt);
+  free_vect_double(Fvar);
+  free_vect_double(v);
+  free_vect_double(xopt);
   free_vect_int(naccept);
-  free_vect_real(xi2);
-  free_vect_real(fxi1);
+  free_vect_double(xi2);
+  free_vect_double(fxi1);
   return;
 }
 

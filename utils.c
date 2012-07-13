@@ -4,10 +4,10 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2011 Peter Brommer, Daniel Schopf
+ * Copyright 2002-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://www.itap.physik.uni-stuttgart.de/
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -48,41 +48,46 @@ int  *vect_int(long dim)
   return vect;
 }
 
-real *vect_real(long dim)
+double *vect_double(long dim)
 {
-  real *vect;
+  double *vect;
   int   i;
-  vect = (real *)malloc((size_t) (dim * sizeof(real)));
+  vect = (double *)malloc((size_t) (dim * sizeof(double)));
   if (vect == NULL)
-    error(1, "Error in real vector allocation");
+    error(1, "Error in double vector allocation");
   for (i = 0; i < dim; i++)
     vect[i] = 0.;
   return vect;
 }
 
-real **mat_real(long rowdim, long coldim)
+double **mat_double(long rowdim, long coldim)
 {
   long  i;
-  real **matrix;
+  double **matrix;
 
   /* matrix: array of array of pointers */
   /* matrix: pointer to rows */
-  matrix = (real **)malloc((size_t) rowdim * sizeof(real *));
+  matrix = (double **)malloc((size_t) rowdim * sizeof(double *));
   if (matrix == NULL)
-    error(1, "Error in real matrix row allocation");
+    error(1, "Error in double matrix row allocation");
 
   /* matrix[0]: pointer to elements */
-  matrix[0] = (real *)malloc((size_t) rowdim * coldim * sizeof(real));
+  matrix[0] = (double *)malloc((size_t) rowdim * coldim * sizeof(double));
   if (matrix[0] == NULL)
-    error(1, "Error in real matrix element allocation");
+    error(1, "Error in double matrix element allocation");
 
   for (i = 1; i < rowdim; i++)
     matrix[i] = matrix[i - 1] + coldim;
 
+  int   j, k;
+  for (j = 0; j < rowdim; j++)
+    for (k = 0; k < coldim; k++)
+      matrix[j][k] = 0.;
+
   return matrix;
 }
 
-void free_vect_real(real *vect)
+void free_vect_double(double *vect)
 {
   free(vect);
 }
@@ -92,7 +97,7 @@ void free_vect_int(int *vect)
   free(vect);
 }
 
-void free_mat_real(real **matrix)
+void free_mat_double(double **matrix)
 {
   free(matrix[0]);
   free(matrix);
@@ -102,15 +107,12 @@ void reg_for_free(void *p, char *name, ...)
 {
   va_list ap;
 
-  pointer_names =
-    (char **)realloc(pointer_names, (num_pointers + 1) * sizeof(char *));
-  pointer_names[num_pointers] =
-    (char *)malloc((strlen(name) + 10) * sizeof(char));
+  pointer_names = (char **)realloc(pointer_names, (num_pointers + 1) * sizeof(char *));
+  pointer_names[num_pointers] = (char *)malloc((strlen(name) + 10) * sizeof(char));
   va_start(ap, name);
   vsprintf(pointer_names[num_pointers], name, ap);
   va_end(ap);
-  all_pointers =
-    (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
+  all_pointers = (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
   all_pointers[num_pointers] = p;
   num_pointers++;
 }
@@ -141,28 +143,28 @@ vector vec_prod(vector u, vector v)
 
 /****************************************************************
  *
- *  real eqdist(): Returns an equally distributed random number in [0,1[
+ *  double eqdist(): Returns an equally distributed random number in [0,1[
  * 	Uses dsfmt PRNG to generate a random number.
  *
  ****************************************************************/
 
-inline real eqdist()
+inline double eqdist()
 {
   return dsfmt_genrand_close_open(&dsfmt);
 }
 
 /****************************************************************
  *
- *  real normdist(): Returns a normally distributed random variable
+ *  double normdist(): Returns a normally distributed random variable
  * 	Uses dsfmt PRNG to generate a random number.
  *
  ****************************************************************/
 
-real normdist()
+double normdist()
 {
   static int have = 0;
-  static real nd2;
-  real  x1, x2, sqr, cnst;
+  static double nd2;
+  double x1, x2, sqr, cnst;
 
   if (!(have)) {
     do {
@@ -183,7 +185,7 @@ real normdist()
 
 /****************************************************************
  *
- *  square functions for integer and real values
+ *  square functions for integer and double values
  *
  ****************************************************************/
 
@@ -192,7 +194,7 @@ inline int isquare(int i)
   return i * i;
 }
 
-inline real dsquare(real d)
+inline double dsquare(double d)
 {
   return d * d;
 }
@@ -203,7 +205,7 @@ inline real dsquare(real d)
  *
  ****************************************************************/
 
-void power_1(real *result, real *x, real *y)
+void power_1(double *result, double *x, double *y)
 {
 #ifndef ACML
   vdPow(1, x, y, result);
@@ -212,7 +214,7 @@ void power_1(real *result, real *x, real *y)
 #endif /* ACML */
 }
 
-void power_m(int dim, real *result, real *x, real *y)
+void power_m(int dim, double *result, double *x, double *y)
 {
 #ifndef ACML
   vdPow(dim, x, y, result);
@@ -232,7 +234,7 @@ void power_m(int dim, real *result, real *x, real *y)
  *
  ****************************************************************/
 
-void quicksort(real *x, int low, int high, real **p)
+void quicksort(double *x, int low, int high, double **p)
 {
   int   newIndex;
   if (low < high) {
@@ -243,10 +245,10 @@ void quicksort(real *x, int low, int high, real **p)
   }
 }
 
-int partition(real *x, int low, int high, int index, real **p)
+int partition(double *x, int low, int high, int index, double **p)
 {
   int   i, store;
-  real  ind_val = x[index], temp;
+  double ind_val = x[index], temp;
 
   SWAP(x[index], x[high], temp);
   swap_population(p[index], p[high]);
@@ -265,10 +267,10 @@ int partition(real *x, int low, int high, int index, real **p)
   return store;
 }
 
-void swap_population(real *a, real *b)
+void swap_population(double *a, double *b)
 {
   int   i;
-  real  temp;
+  double temp;
   for (i = 0; i < ndimtot + 2; i++) {
     SWAP(a[i], b[i], temp);
   }
