@@ -51,6 +51,11 @@
 
 /****************************************************************
  *
+ * void randomize_parameter(int n, double *xi, double *v);
+ * 	int n: 		index of the parameter
+ * 	double *xi: 	pointer to all parameters
+ * 	double *v: 	pointer to displacement vector
+ *
  * Function to generate random parameters for analytic potentials.
  * We loop over a new random parameter until we find one inside
  * the predefined range, specified by the user.
@@ -84,9 +89,14 @@ void randomize_parameter(int n, double *xi, double *v)
 
 /****************************************************************
  *
- *  makebump(*x, width, height, center): Displaces equidistant
- *        sampling points of a function. Displacement is given by
- *        gaussian of given width and height.
+ * void makebump(double *x,double width, double height, int center);
+ *      double *x: 	pointer to all parameters
+ *      double width: 	width of the gaussian
+ *      double height: 	height of the gaussian
+ *      int center: 	index of the center point
+ *
+ * Displaces equidistant sampling points of a function.
+ * Displacement is given by gaussian of given width and height.
  *
  ****************************************************************/
 
@@ -115,8 +125,11 @@ void makebump(double *x, double width, double height, int center)
 
 /****************************************************************
  *
- *  anneal(*xi): Anneals a vector xi to minimize a function F(xi).
- *      Algorithm according to Corana et al.
+ * void anneal(double *x);
+ * 	double *x: 	pointer to all parameters
+ *
+ * Anneals a vector xi to minimize a function F(xi).
+ * Algorithm according to Corana et al.
  *
  ****************************************************************/
 
