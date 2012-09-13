@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2008-2011
+ * Copyright 2008-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -49,6 +49,8 @@
 
 void apot_init(void)
 {
+  int   i;
+
   add_pot(lj, 2);
   add_pot(eopp, 6);
   add_pot(morse, 3);
@@ -62,6 +64,7 @@ void apot_init(void)
   add_pot(softshell, 2);
   add_pot(eopp_exp, 6);
   add_pot(meopp, 7);
+  add_pot(power, 2);
   add_pot(power_decay, 2);
   add_pot(exp_decay, 2);
   add_pot(bjs, 3);
@@ -83,6 +86,14 @@ void apot_init(void)
   add_pot(vas, 2);
   add_pot(vpair, 7);
   add_pot(csw2, 4);
+
+  reg_for_free(function_table.name, "function_table.name");
+  reg_for_free(function_table.n_par, "function_table.n_par");
+  reg_for_free(function_table.fvalue, "function_table.fvalue");
+  for (i = 0; i < n_functions; i++)
+    reg_for_free(function_table.name[i], "function_table.name[i]");
+
+  return;
 }
 
 /****************************************************************
@@ -104,16 +115,11 @@ void add_potential(char *name, int parameter, fvalue_pointer fval)
   }
 
   /* allocate memory */
-  function_table.name =
-    (char **)realloc(function_table.name, (k + 1) * sizeof(char *));
+  function_table.name = (char **)realloc(function_table.name, (k + 1) * sizeof(char *));
   function_table.name[k] = (char *)malloc(255 * sizeof(char));
-  function_table.n_par =
-    (int *)realloc(function_table.n_par, (k + 1) * sizeof(int));
-  function_table.fvalue =
-    (fvalue_pointer *) realloc(function_table.fvalue,
-    (k + 1) * sizeof(fvalue_pointer));
-  if (function_table.name[k] == NULL || function_table.n_par == NULL
-    || function_table.fvalue == NULL)
+  function_table.n_par = (int *)realloc(function_table.n_par, (k + 1) * sizeof(int));
+  function_table.fvalue = (fvalue_pointer *) realloc(function_table.fvalue, (k + 1) * sizeof(fvalue_pointer));
+  if (function_table.name[k] == NULL || function_table.n_par == NULL || function_table.fvalue == NULL)
     error(1, "Could not allocate memory for function_table!");
 
   /* assign values */
@@ -183,9 +189,9 @@ int apot_assign_functions(apot_table_t *apt)
  *
  ****************************************************************/
 
-void lj_value(real r, real *p, real *f)
+void lj_value(double r, double *p, double *f)
 {
-  static real sig_d_rad6, sig_d_rad12;
+  static double sig_d_rad6, sig_d_rad12;
 
   sig_d_rad6 = (p[1] * p[1]) / (r * r);
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
@@ -202,9 +208,9 @@ void lj_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void eopp_value(real r, real *p, real *f)
+void eopp_value(double r, double *p, double *f)
 {
-  static real x[2], y[2], power[2];
+  static double x[2], y[2], power[2];
 
   x[0] = r;
   x[1] = r;
@@ -224,7 +230,7 @@ void eopp_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void morse_value(real r, real *p, real *f)
+void morse_value(double r, double *p, double *f)
 {
   *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2])));
 }
@@ -237,9 +243,9 @@ void morse_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void ms_value(real r, real *p, real *f)
+void ms_value(double r, double *p, double *f)
 {
-  static real x;
+  static double x;
 
   x = 1. - r / p[2];
 
@@ -254,9 +260,9 @@ void ms_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void buck_value(real r, real *p, real *f)
+void buck_value(double r, double *p, double *f)
 {
-  static real x, y;
+  static double x, y;
 
   x = (p[1] * p[1]) / (r * r);
   y = x * x * x;
@@ -270,9 +276,9 @@ void buck_value(real r, real *p, real *f)
  *
  *****************************************************************/
 
-void softshell_value(real r, real *p, real *f)
+void softshell_value(double r, double *p, double *f)
 {
-  static real x, y;
+  static double x, y;
 
   x = p[0] / r;
   y = p[1];
@@ -288,9 +294,9 @@ void softshell_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void eopp_exp_value(real r, real *p, real *f)
+void eopp_exp_value(double r, double *p, double *f)
 {
-  static real power;
+  static double power;
 
   power_1(&power, &r, &p[3]);
 
@@ -305,9 +311,9 @@ void eopp_exp_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void meopp_value(real r, real *p, real *f)
+void meopp_value(double r, double *p, double *f)
 {
-  static real x[2], y[2], power[2];
+  static double x[2], y[2], power[2];
 
   x[0] = r - p[6];
   x[1] = r;
@@ -321,13 +327,31 @@ void meopp_value(real r, real *p, real *f)
 
 /****************************************************************
  *
+ * power potential
+ *
+ ****************************************************************/
+
+void power_value(double r, double *p, double *f)
+{
+  static double x, y, power;
+
+  x = r;
+  y = p[1];
+
+  power_1(&power, &x, &y);
+
+  *f = p[0] * power;
+}
+
+/****************************************************************
+ *
  * power_decay potential
  *
  ****************************************************************/
 
-void power_decay_value(real r, real *p, real *f)
+void power_decay_value(double r, double *p, double *f)
 {
-  static real x, y, power;
+  static double x, y, power;
 
   x = 1. / r;
   y = p[1];
@@ -343,7 +367,7 @@ void power_decay_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void exp_decay_value(real r, real *p, real *f)
+void exp_decay_value(double r, double *p, double *f)
 {
   *f = p[0] * exp(-p[1] * r);
 }
@@ -356,9 +380,9 @@ void exp_decay_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void bjs_value(real r, real *p, real *f)
+void bjs_value(double r, double *p, double *f)
 {
-  static real power;
+  static double power;
 
   if (r == 0)
     *f = 0;
@@ -374,7 +398,7 @@ void bjs_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void parabola_value(real r, real *p, real *f)
+void parabola_value(double r, double *p, double *f)
 {
   *f = (r * r) * p[0] + r * p[1] + p[2];
 }
@@ -387,9 +411,9 @@ void parabola_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void csw_value(real r, real *p, real *f)
+void csw_value(double r, double *p, double *f)
 {
-  static real power;
+  static double power;
 
   power_1(&power, &r, &p[3]);
 
@@ -404,9 +428,9 @@ void csw_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void csw2_value(real r, real *p, real *f)
+void csw2_value(double r, double *p, double *f)
 {
-  static real power;
+  static double power;
 
   power_1(&power, &r, &p[3]);
 
@@ -421,9 +445,9 @@ void csw2_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void universal_value(real r, real *p, real *f)
+void universal_value(double r, double *p, double *f)
 {
-  static real x[2], y[2], power[2];
+  static double x[2], y[2], power[2];
 
   x[0] = r;
   x[1] = r;
@@ -432,9 +456,7 @@ void universal_value(real r, real *p, real *f)
 
   power_m(2, power, x, y);
 
-  *f =
-    p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
-    p[3] * r;
+  *f = p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
 }
 
 /****************************************************************
@@ -443,7 +465,7 @@ void universal_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void const_value(real r, real *p, real *f)
+void const_value(double r, double *p, double *f)
 {
   *f = *p;
 }
@@ -456,7 +478,7 @@ void const_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void sqrt_value(real r, real *p, real *f)
+void sqrt_value(double r, double *p, double *f)
 {
   *f = p[0] * sqrt(r / p[1]);
 }
@@ -467,7 +489,7 @@ void sqrt_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void mexp_decay_value(real r, real *p, real *f)
+void mexp_decay_value(double r, double *p, double *f)
 {
   *f = p[0] * exp(-p[1] * (r - p[2]));
 }
@@ -480,15 +502,13 @@ void mexp_decay_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void strmm_value(real r, real *p, real *f)
+void strmm_value(double r, double *p, double *f)
 {
-  static real r_0;
+  static double r_0;
 
   r_0 = r - p[4];
 
-  *f =
-    2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. +
-    p[3] * r_0) * exp(-p[3] * r_0);
+  *f = 2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. + p[3] * r_0) * exp(-p[3] * r_0);
 }
 
 /****************************************************************
@@ -499,12 +519,11 @@ void strmm_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void double_morse_value(real r, real *p, real *f)
+void double_morse_value(double r, double *p, double *f)
 {
   *f =
     (p[0] * (exp(-2. * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) +
-    p[6];
+    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) + p[6];
 }
 
 /****************************************************************
@@ -515,7 +534,7 @@ void double_morse_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void double_exp_value(real r, real *p, real *f)
+void double_exp_value(double r, double *p, double *f)
 {
   *f = (p[0] * exp(-p[1] * dsquare(r - p[2])) + exp(-p[3] * (r - p[4])));
 }
@@ -528,15 +547,13 @@ void double_exp_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void poly_5_value(real r, real *p, real *f)
+void poly_5_value(double r, double *p, double *f)
 {
-  static real dr;
+  static double dr;
 
   dr = (r - 1.) * (r - 1.);
 
-  *f =
-    p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) +
-    p[4] * (dr * dr) * (r - 1.);
+  *f = p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) + p[4] * (dr * dr) * (r - 1.);
 }
 
 /****************************************************************
@@ -547,17 +564,17 @@ void poly_5_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void cbb_value(real r, real *p, real *f)
+void cbb_value(double r, double *p, double *f)
 {
-  static real r6;
+  static double r6;
 
   r6 = r * r * r;
   r6 *= r6;
 
   *f =
     p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
-      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) -
-    2. * exp(-p[10] * (r - p[11])));
+      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2. * exp(-p[10] * (r -
+	p[11])));
 }
 
 /****************************************************************
@@ -566,7 +583,7 @@ void cbb_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void exp_plus_value(real r, real *p, real *f)
+void exp_plus_value(double r, double *p, double *f)
 {
   *f = p[0] * exp(-p[1] * r) + p[2];
 }
@@ -579,11 +596,11 @@ void exp_plus_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void mishin_value(real r, real *p, real *f)
+void mishin_value(double r, double *p, double *f)
 {
-  static real z;
-  static real temp;
-  static real power;
+  static double z;
+  static double temp;
+  static double power;
 
   z = r - p[3];
   temp = exp(-p[5] * r);
@@ -601,9 +618,9 @@ void mishin_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void gen_lj_value(real r, real *p, real *f)
+void gen_lj_value(double r, double *p, double *f)
 {
-  static real x[2], y[2], power[2];
+  static double x[2], y[2], power[2];
 
   x[0] = r / p[3];
   x[1] = x[0];
@@ -623,9 +640,9 @@ void gen_lj_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void gljm_value(real r, real *p, real *f)
+void gljm_value(double r, double *p, double *f)
 {
-  static real x[3], y[3], power[3];
+  static double x[3], y[3], power[3];
 
   x[0] = r / p[3];
   x[1] = x[0];
@@ -636,7 +653,7 @@ void gljm_value(real r, real *p, real *f)
 
   power_m(3, power, x, y);
 
-  real  temp = exp(-p[11] * power[2]);
+  double temp = exp(-p[11] * power[2]);
 
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
@@ -651,22 +668,23 @@ void gljm_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void vas_value(real r, real *p, real *f)
+void vas_value(double r, double *p, double *f)
 {
   *f = exp(p[0] / (r - p[1]));
 }
 
 /****************************************************************
  *
- * original pair contributions of vashishta potential (V_2)
+ * original pair contributions of vashishta potential 
+ * (V_2 without second "Coulomb"-term)
  *
  * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
  *
  ****************************************************************/
 
-void vpair_value(real r, real *p, real *f)
+void vpair_value(double r, double *p, double *f)
 {
-  static real x[7], y, z;
+  static double x[7], y, z;
 
   y = r;
   z = p[1];
@@ -679,7 +697,7 @@ void vpair_value(real r, real *p, real *f)
   x[5] = p[4] * x[4] + p[5] * x[3];
   x[6] = exp(-r / p[6]);
 
-  *f = 14.4 * (p[0] / x[0] + p[2] * p[3] / r - 0.5 * x[5] / x[2] * x[6]);
+  *f = 14.4 * (p[0] / x[0] - 0.5 * (x[5] / x[2]) * x[6]);
 }
 
 /****************************************************************
@@ -699,7 +717,7 @@ void vpair_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void newpot_value(real r, real *p, real *f)
+void newpot_value(double r, double *p, double *f)
 {
   *f = r * p[0] + p[1];
 }
@@ -718,12 +736,12 @@ void newpot_value(real r, real *p, real *f)
  *
  ****************************************************************/
 
-real cutoff(real r, real r0, real h)
+double cutoff(double r, double r0, double h)
 {
   if ((r - r0) > 0)
     return 0;
 
-  static real val;
+  static double val;
 
   val = (r - r0) / h;
   val *= val;
@@ -738,7 +756,7 @@ real cutoff(real r, real r0, real h)
  *
  ****************************************************************/
 
-int apot_check_params(real *params)
+int apot_check_params(double *params)
 {
   int   i, j = 2, k;
 
@@ -769,10 +787,10 @@ int apot_check_params(real *params)
  *
  ****************************************************************/
 
-real apot_punish(real *params, real *forces)
+double apot_punish(double *params, double *forces)
 {
   int   i, j;
-  real  x, tmpsum = 0., min, max;
+  double x, tmpsum = 0., min, max;
 
   /* loop over parameters */
   for (i = 0; i < ndim; i++) {
@@ -824,9 +842,9 @@ real apot_punish(real *params, real *forces)
  *
  ****************************************************************/
 
-real apot_grad(real r, real *p, void (*function) (real, real *, real *))
+double apot_grad(double r, double *p, void (*function) (double, double *, double *))
 {
-  real  a, b, h = 0.0001;
+  double a, b, h = 0.0001;
 
   function(r + h, p, &a);
   function(r - h, p, &b);
@@ -842,9 +860,9 @@ real apot_grad(real r, real *p, void (*function) (real, real *, real *))
  *
  ****************************************************************/
 
-void ms_init(real r, real *pot, real *grad, real *p)
+void ms_init(double r, double *pot, double *grad, double *p)
 {
-  static real x[4];
+  static double x[4];
 
   x[0] = 1 - r / p[2];
   x[1] = exp(p[1] * x[0]);
@@ -861,9 +879,9 @@ void ms_init(real r, real *pot, real *grad, real *p)
  *
  ****************************************************************/
 
-void buck_init(real r, real *pot, real *grad, real *p)
+void buck_init(double r, double *pot, double *grad, double *p)
 {
-  static real x[3];
+  static double x[3];
 
   x[0] = dsquare(p[1]) / dsquare(r);
   x[1] = p[2] * x[0] * x[0] * x[0];
@@ -879,9 +897,9 @@ void buck_init(real r, real *pot, real *grad, real *p)
  *
  ****************************************************************/
 
-void ms_shift(real r, real *p, real *f)
+void ms_shift(double r, double *p, double *f)
 {
-  static real pot, grad, pot_cut, grad_cut;
+  static double pot, grad, pot_cut, grad_cut;
 
   ms_init(r, &pot, &grad, p);
   ms_init(dp_cut, &pot_cut, &grad_cut, p);
@@ -895,9 +913,9 @@ void ms_shift(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void buck_shift(real r, real *p, real *f)
+void buck_shift(double r, double *p, double *f)
 {
-  static real pot, grad, pot_cut, grad_cut;
+  static double pot, grad, pot_cut, grad_cut;
 
   buck_init(r, &pot, &grad, p);
   buck_init(dp_cut, &pot_cut, &grad_cut, p);
@@ -911,9 +929,9 @@ void buck_shift(real r, real *p, real *f)
  *
  ****************************************************************/
 
-void elstat_value(real r, real dp_kappa, real *ftail, real *gtail, real *ggtail)
+void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, double *ggtail)
 {
-  static real x[4];
+  static double x[4];
 
   x[0] = r * r;
   x[1] = dp_kappa * dp_kappa;
@@ -931,11 +949,10 @@ void elstat_value(real r, real dp_kappa, real *ftail, real *gtail, real *ggtail)
  *
  ****************************************************************/
 
-void elstat_shift(real r, real dp_kappa, real *fnval_tail, real *grad_tail,
-  real *ggrad_tail)
+void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_tail, double *ggrad_tail)
 {
-  static real ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
-  static real x[3];
+  static double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
+  static double x[3];
 
   x[0] = r * r;
   x[1] = dp_cut * dp_cut;
@@ -964,9 +981,9 @@ void elstat_shift(real r, real dp_kappa, real *fnval_tail, real *grad_tail,
  *
  ****************************************************************/
 
-real shortrange_value(real r, real a, real b, real c)
+double shortrange_value(double r, double a, double b, double c)
 {
-  static real x[5];
+  static double x[5];
 
   x[0] = b * r;
   x[1] = x[0] * x[0];
@@ -983,10 +1000,9 @@ real shortrange_value(real r, real a, real b, real c)
  *
  ****************************************************************/
 
-void shortrange_term(real r, real b, real c, real *srval_tail,
-  real *srgrad_tail)
+void shortrange_term(double r, double b, double c, double *srval_tail, double *srgrad_tail)
 {
-  static real x[6];
+  static double x[6];
 
   x[0] = b * r;
   x[1] = x[0] * x[0];
@@ -1020,14 +1036,11 @@ void debug_apot()
   fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
     apot_table.number, apot_table.total_par);
   for (i = 0; i < apot_table.number; i++) {
-    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
-      apot_table.names[i], smooth_pot[i]);
-    fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i],
-      apot_table.end[i]);
+    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1, apot_table.names[i], smooth_pot[i]);
+    fprintf(stderr, "begin=%f end=%f\n", apot_table.begin[i], apot_table.end[i]);
     for (j = 0; j < apot_table.n_par[i]; j++) {
       fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
-	apot_table.param_name[i][j], apot_table.values[i][j],
-	apot_table.pmin[i][j], apot_table.pmax[i][j]);
+	apot_table.param_name[i][j], apot_table.values[i][j], apot_table.pmin[i][j], apot_table.pmax[i][j]);
     }
   }
 #ifdef PAIR
@@ -1037,16 +1050,14 @@ void debug_apot()
     fprintf(stderr, "\nchemical potentials:\n");
     for (i = 0; i < ntypes; i++)
       fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, apot_table.chempot[i],
-	apot_table.pmin[apot_table.number][i],
-	apot_table.pmax[apot_table.number][i]);
+	apot_table.pmin[apot_table.number][i], apot_table.pmax[apot_table.number][i]);
     if (compnodes > 0) {
       if (ntypes == 2) {
 	fprintf(stderr, "composition nodes:\n");
 	for (j = 0; j < compnodes; j++)
 	  fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
 	    compnodelist[j], apot_table.chempot[ntypes + j],
-	    apot_table.pmin[apot_table.number][ntypes + j],
-	    apot_table.pmax[apot_table.number][ntypes + j]);
+	    apot_table.pmin[apot_table.number][ntypes + j], apot_table.pmax[apot_table.number][ntypes + j]);
       }
     }
   }
