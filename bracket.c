@@ -6,7 +6,7 @@
  *
  * Copyright 1996, 1997, 1998, 1999, 2000
  * 	Fabrice Rossi (gsl/min/bracketing.c)
- * Copyright 2005-2011
+ * Copyright 2005-2012
  * 	Institute for Theoretical and Applied Physics
  * 	University of Stuttgart, D-70550 Stuttgart, Germany
  * 	http://potfit.itap.physik.uni-stuttgart.de/
@@ -35,8 +35,8 @@
 #include "bracket.h"
 #include "utils.h"
 
-void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
-  real *f_minimum, real *f_upper, real *f_vec1, real *f_vec2)
+void bracket(double *x_lower, double *x_minimum, double *x_upper,
+  double *f_lower, double *f_minimum, double *f_upper, double *f_vec1, double *f_vec2)
 {
   /* The three following variables must be declared volatile to avoid storage
      in extended precision registers available on some architecture. The code
@@ -46,23 +46,27 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
      representation in double precision. This behavior might break the
      algorithm.
    */
-  volatile real f_left = *f_lower;
-  volatile real f_right = *f_upper;
-  volatile real f_center;
-  real  x_left = *x_lower;
-  real  x_right = *x_upper;
-  real  x_center;
-  static real *vecu = NULL;	/* Vector of location u */
-  static real *f_vec3 = NULL;	/* 3rd target vector */
-  static real *p_left, *p_right, *p_center, *p_temp;
+  volatile double f_left = *f_lower;
+  volatile double f_right = *f_upper;
+  volatile double f_center;
+  double x_left = *x_lower;
+  double x_right = *x_upper;
+  double x_center;
+  static double *vecu = NULL;	/* Vector of location u */
+  static double *f_vec3 = NULL;	/* 3rd target vector */
+  static double *p_left, *p_right, *p_center, *p_temp;
   int   j;
   int   last = 0;		/* indicates whether upwards is left or right */
   long  nb_eval = 0;
 
-  if (vecu == NULL)
-    vecu = vect_real(ndimtot);
-  if (f_vec3 == NULL)
-    f_vec3 = vect_real(mdim);
+  if (vecu == NULL) {
+    vecu = vect_double(ndimtot);
+    reg_for_free(vecu, "vecu");
+  }
+  if (f_vec3 == NULL) {
+    f_vec3 = vect_double(mdim);
+    reg_for_free(f_vec3, "f_vec3");
+  }
 
   p_left = f_vec1;
   p_right = f_vec2;
@@ -119,8 +123,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	/* Pathological: Search between center and right */
 	/* This means a change from original algorithm */
 #ifdef DEBUG
-	warning(1, "Pathological  @%li %f %f %f! center-right!\n", nb_eval,
-	  x_left, x_center, x_right);
+	warning(1, "Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
 	nb_eval++;
@@ -149,8 +152,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
       if (f_center < f_right) {
 	/* between center and left */
 #ifdef DEBUG
-	warning(1, "Pathological  @%li %f %f %f! center-left!\n", nb_eval,
-	  x_left, x_center, x_right);
+	warning(1, "Pathological  @%li %f %f %f! center-left!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_left = -(x_right - x_left) * CGOLD + x_left;
 	nb_eval++;
@@ -177,8 +179,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	if (last == 2) {
 	  /* go further to left, it goes up towards the right */
 #ifdef DEBUG
-	  warning(1, "Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left,
-	    x_center, x_right);
+	  warning(1, "Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	  x_left = -(x_right - x_left) / CGOLD + x_left;
 	  nb_eval++;
@@ -189,8 +190,7 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
 	} else {		/* go further to the right, to left it went up */
 
 #ifdef DEBUG
-	  warning(1, "Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left,
-	    x_center, x_right);
+	  warning(1, "Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	  x_right = (x_right - x_left) / CGOLD + x_right;
 	  nb_eval++;
@@ -204,8 +204,8 @@ void bracket(real *x_lower, real *x_minimum, real *x_upper, real *f_lower,
   } while (nb_eval < MAX_IT);
 #ifdef DEBUG
   error(0, "Problems with bracketing minimum in %li tries:\n", nb_eval);
-  error(1, "F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.\n", x_left, f_left,
-    x_center, f_center, x_right, f_right);
+  error(1, "F(%.16g)=%.16g, F(%.16g)=%.16g, F(%.16g)=%.16g.\n", x_left, f_left, x_center, f_center, x_right,
+    f_right);
 #else /* DEBUG */
   error(1, "Problems with bracketing of minimum, aborting\n");
 #endif /* DEBUG */

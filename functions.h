@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2011
+ * Copyright 2011-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -30,46 +30,46 @@
 
 #ifdef APOT
 
-#ifndef POTFIT_H
-#include "potfit.h"
-#endif
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 /* actual functions for different potentials */
 
-void  lj_value(real, real *, real *);
-void  eopp_value(real, real *, real *);
-void  morse_value(real, real *, real *);
-void  ms_value(real, real *, real *);
-void  buck_value(real, real *, real *);
-void  softshell_value(real, real *, real *);
-void  eopp_exp_value(real, real *, real *);
-void  meopp_value(real, real *, real *);
-void  power_decay_value(real, real *, real *);
-void  exp_decay_value(real, real *, real *);
-void  bjs_value(real, real *, real *);
-void  parabola_value(real, real *, real *);
-void  csw_value(real, real *, real *);
-void  universal_value(real, real *, real *);
-void  const_value(real, real *, real *);
-void  sqrt_value(real, real *, real *);
-void  mexp_decay_value(real, real *, real *);
-void  strmm_value(real, real *, real *);
-void  double_morse_value(real, real *, real *);
-void  double_exp_value(real, real *, real *);
-void  poly_5_value(real, real *, real *);
-void  cbb_value(real, real *, real *);
-void  exp_plus_value(real, real *, real *);
-void  mishin_value(real, real *, real *);
-void  gen_lj_value(real, real *, real *);
-void  gljm_value(real, real *, real *);
-void  vas_value(real, real *, real *);
-void  vpair_value(real, real *, real *);
-void  csw2_value(real, real *, real *);
+void  lj_value(double, double *, double *);
+void  eopp_value(double, double *, double *);
+void  morse_value(double, double *, double *);
+void  ms_value(double, double *, double *);
+void  buck_value(double, double *, double *);
+void  softshell_value(double, double *, double *);
+void  eopp_exp_value(double, double *, double *);
+void  meopp_value(double, double *, double *);
+void  power_value(double, double *, double *);
+void  power_decay_value(double, double *, double *);
+void  exp_decay_value(double, double *, double *);
+void  bjs_value(double, double *, double *);
+void  parabola_value(double, double *, double *);
+void  csw_value(double, double *, double *);
+void  universal_value(double, double *, double *);
+void  const_value(double, double *, double *);
+void  sqrt_value(double, double *, double *);
+void  mexp_decay_value(double, double *, double *);
+void  strmm_value(double, double *, double *);
+void  double_morse_value(double, double *, double *);
+void  double_exp_value(double, double *, double *);
+void  poly_5_value(double, double *, double *);
+void  cbb_value(double, double *, double *);
+void  exp_plus_value(double, double *, double *);
+void  mishin_value(double, double *, double *);
+void  gen_lj_value(double, double *, double *);
+void  gljm_value(double, double *, double *);
+void  vas_value(double, double *, double *);
+void  vpair_value(double, double *, double *);
+void  csw2_value(double, double *, double *);
 
 /* template for new potential function called newpot */
 
 /* "newpot" potential */
-void  newpot_value(real, real *, real *);
+void  newpot_value(double, double *, double *);
 
 /* end of template */
 
@@ -77,11 +77,11 @@ void  newpot_value(real, real *, real *);
 void  apot_init(void);
 void  add_potential(char *, int, fvalue_pointer);
 int   apot_assign_functions(apot_table_t *);
-int   apot_check_params(real *);
+int   apot_check_params(double *);
 int   apot_parameters(char *);
-real  apot_grad(real, real *, void (*function) (real, real *, real *));
-real  apot_punish(real *, real *);
-real  cutoff(real, real, real);
+double apot_grad(double, double *, void (*function) (double, double *, double *));
+double apot_punish(double *, double *);
+double cutoff(double, double, double);
 
 #ifdef DEBUG
 void  debug_apot();
@@ -91,25 +91,27 @@ void  debug_apot();
 #ifdef PAIR
 int   swap_chem_pot(int, int);
 int   sort_chem_pot_2d(void);
-real  chemical_potential(int, int *, real *);
-real  chemical_potential_1d(int *, real *);
-real  chemical_potential_2d(int *, real *);
-real  chemical_potential_3d(int *, real *, int);
+double chemical_potential(int, int *, double *);
+double chemical_potential_1d(int *, double *);
+double chemical_potential_2d(int *, double *);
+double chemical_potential_3d(int *, double *, int);
 void  init_chemical_potential(int);
 #endif /* PAIR */
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  ms_init(real, real *, real *, real *);
-void  buck_init(real, real *, real *, real *);
-void  ms_shift(real, real *, real *);
-void  buck_shift(real, real *, real *);
-void  elstat_value(real, real, real *, real *, real *);
-void  elstat_shift(real, real, real *, real *, real *);
+void  ms_init(double, double *, double *, double *);
+void  buck_init(double, double *, double *, double *);
+void  ms_shift(double, double *, double *);
+void  buck_shift(double, double *, double *);
+void  elstat_value(double, double, double *, double *, double *);
+void  elstat_shift(double, double, double *, double *, double *);
 #endif /* COULOMB */
 #ifdef DIPOLE
-real  shortrange_value(real, real, real, real);
-void  shortrange_term(real, real, real, real *, real *);
+double shortrange_value(double, double, double, double);
+void  shortrange_term(double, double, double, double *, double *);
 #endif /* DIPOLE */
+
+#endif /* FUNCTIONS_H */
 
 #endif /* APOT */

@@ -109,26 +109,24 @@ void print_scaling(pot_table_t *pt)
   int   i, col1;
   paircol = (ntypes * (ntypes + 1)) / 2;
   printf("Constraint on rho:\n");
-  printf("rho[%f]\t = %f \t for atom type %d\n",
-	 dummy_r,
-	 splint_ed(pt, pt->table, paircol + DUMMY_COL_RHO, dummy_r),
-	 DUMMY_COL_RHO);
+  printf("rho[%f]\t = %f \t for atom type %d\n", dummy_r, splint_ed(pt,
+      pt->table, paircol + DUMMY_COL_RHO, dummy_r), DUMMY_COL_RHO);
   printf("Constraints on phi:\n");
   col1 = 0;
   for (i = 0; i < ntypes; i++) {
-    printf("phi[%f]\t = %f \t between atoms of type %d\n",
-	   dummy_r, splint_ed(pt, pt->table, col1, dummy_r), i);
+    printf("phi[%f]\t = %f \t between atoms of type %d\n", dummy_r,
+      splint_ed(pt, pt->table, col1, dummy_r), i);
     col1 += ntypes - i;
   }
   printf("Constraints on F:\n");
   col1 = paircol + ntypes;
   for (i = 0; i < ntypes; i++) {
 #ifdef PARABEL
-    printf("F[%f]\t = %f \t for atoms of type %d\n",
-	   0., parab_ed(pt, pt->table, col1, 0.), i);
+    printf("F[%f]\t = %f \t for atoms of type %d\n", 0., parab_ed(pt, pt->table,
+	col1, 0.), i);
 #else
-    printf("F[%f]\t = %f \t for atoms of type %d\n",
-	   0., splint_ed(pt, pt->table, col1, 0.), i);
+    printf("F[%f]\t = %f \t for atoms of type %d\n", 0., splint_ed(pt,
+	pt->table, col1, 0.), i);
 #endif
     col1++;
   }
@@ -167,20 +165,20 @@ void init_splines(pot_table_t *pt)
     if ((grad0 > -1e-20) && (grad0 < 1e-20))
       grad0 = 0.;
 
-    spline_ed(pt->step[col1], pt->table + first,
-	      pt->last[col1] - first + 1, grad0, 0.0, pt->d2tab + first);
+    spline_ed(pt->step[col1], pt->table + first, pt->last[col1] - first + 1,
+      grad0, 0.0, pt->d2tab + first);
   }
   for (col1 = paircol; col1 < paircol + ntypes; col1++) {	/* rho */
     first = pair_pot.first[col1];
-    spline_ed(pt->step[col1], pt->table + first,
-	      pt->last[col1] - first + 1, 1e30, 0.0, pt->d2tab + first);
+    spline_ed(pt->step[col1], pt->table + first, pt->last[col1] - first + 1,
+      1e30, 0.0, pt->d2tab + first);
   }
 
 #ifndef PARABEL
   for (col1 = paircol + ntypes; col1 < paircol + 2 * ntypes; col1++) {	/* F */
     first = pt->first[col1];
-    spline_ed(pt->step[col1], pt->table + first,
-	      pt->last[col1] - first + 1, 0., 1.e30, pt->d2tab + first);
+    spline_ed(pt->step[col1], pt->table + first, pt->last[col1] - first + 1, 0.,
+      1.e30, pt->d2tab + first);
   }
 
   return;
@@ -193,8 +191,7 @@ void init_splines(pot_table_t *pt)
  *
  ***************************************************************************/
 
-void rescale_pot(pot_table_t *pt, real dummy_r, real dummy_rho,
-		 real *dummy_phi)
+void rescale_pot(pot_table_t *pt, real dummy_r, real dummy_rho, real *dummy_phi)
 {
   real  a, r, step, temp;
   int   i, j, k, first, col1;
@@ -221,8 +218,9 @@ void rescale_pot(pot_table_t *pt, real dummy_r, real dummy_rho,
   init_splines(pt);
   col1 = 0;
   for (i = 0; i < ntypes; i++) {
-    b[i] = (dummy_phi[i] - splint_ed(pt, pt->table, col1, dummy_r)) /
-      (2 * splint_ed(pt, pt->table, paircol + i, dummy_r));
+    b[i] =
+      (dummy_phi[i] - splint_ed(pt, pt->table, col1,
+	dummy_r)) / (2 * splint_ed(pt, pt->table, paircol + i, dummy_r));
     col1 += ntypes - i;
     printf("Gauge constant b[%d]:\t%f\n", i, b[i]);
   }

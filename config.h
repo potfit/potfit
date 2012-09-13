@@ -1,13 +1,13 @@
 /****************************************************************
  *
- * bracket.h: header file for bracketing and brent minimization
+ * config.h: header file for reading atomic configurations
  *
  ****************************************************************
  *
- * Copyright 2010-2012
- * 	Institute for Theoretical and Applied Physics
- * 	University of Stuttgart, D-70550 Stuttgart, Germany
- * 	http://potfit.itap.physik.uni-stuttgart.de/
+ * Copyright 2012
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://potfit.itap.physik.uni-stuttgart.de/
  *
  ****************************************************************
  *
@@ -28,23 +28,22 @@
  *
  ****************************************************************/
 
-#ifndef BRACKET_H
-#define BRACKET_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
-/* for bracket.c */
-#define CGOLD 0.3819660
-#define MAX_IT 100
+#ifndef POTFIT_H
+#include "potfit.h"
+#endif /* POTFIT_H */
 
-/* for brent.c */
-#define ITMAX 100
-#define ZEPS 1.0e-9
-#define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
+void  read_config(char *);
+double make_box(void);
 
-extern double *xicom, *delcom;
+#ifdef CONTRIB
+int   does_contribute(vector);
+#endif /* CONTRIB */
 
-void  bracket(double *, double *, double *, double *, double *, double *, double *, double *);
-double brent(double, double, double, double, double, double *, double *, double *, double *);
+#ifdef APOT
+void  update_slots(void);
+#endif /* APOT */
 
-double linmin(double *, double *, double, double *, double *, double *, double *);
-
-#endif /* BRACKET_H */
+#endif /* CONFIG_H */

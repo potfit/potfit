@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2009-2011
+ * Copyright 2009-2012
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -36,16 +36,13 @@
 
 int swap_chem_pot(int i, int j)
 {
-  real  temp;
+  double temp;
 
   if (i != j) {
-    SWAP(apot_table.values[apot_table.number][i],
-      apot_table.values[apot_table.number][j], temp);
+    SWAP(apot_table.values[apot_table.number][i], apot_table.values[apot_table.number][j], temp);
     SWAP(compnodelist[i - ntypes], compnodelist[j - ntypes], temp);
-    SWAP(apot_table.pmin[apot_table.number][i],
-      apot_table.pmin[apot_table.number][j], temp);
-    SWAP(apot_table.pmax[apot_table.number][i],
-      apot_table.pmax[apot_table.number][j], temp);
+    SWAP(apot_table.pmin[apot_table.number][i], apot_table.pmin[apot_table.number][j], temp);
+    SWAP(apot_table.pmax[apot_table.number][i], apot_table.pmax[apot_table.number][j], temp);
     return 0;
   } else
     return -1;
@@ -70,18 +67,18 @@ int sort_chem_pot_2d()
   return 0;
 }
 
-real chemical_potential_1d(int *n, real *mu)
+double chemical_potential_1d(int *n, double *mu)
 {
   return n[0] * mu[0];
 }
 
-real chemical_potential_2d(int *n, real *mu)
+double chemical_potential_2d(int *n, double *mu)
 {
   int   i = 0, ntot;
-  real  nfrac;
+  double nfrac;
 
   ntot = n[0] + n[1];
-  nfrac = (real)n[1] / ntot;
+  nfrac = (double)n[1] / ntot;
 
   if (nfrac == 0 || nfrac == 1 || compnodes == 0) {
     return n[0] * mu[0] + n[1] * mu[1];
@@ -91,7 +88,7 @@ real chemical_potential_2d(int *n, real *mu)
     i++;
   }
 
-  real  xl, xr, yl, yr, temp;
+  double xl, xr, yl, yr, temp;
 
   if (i == 0) {
     xl = 0;
@@ -116,10 +113,10 @@ real chemical_potential_2d(int *n, real *mu)
   return temp * ntot;
 }
 
-real chemical_potential_3d(int *n, real *mu, int dim)
+double chemical_potential_3d(int *n, double *mu, int dim)
 {
   int   i;
-  real  temp = 0;
+  double temp = 0;
 
   for (i = 0; i < dim; i++)
     temp += n[i] * mu[i];
@@ -132,7 +129,7 @@ void init_chemical_potential(int dim)
     sort_chem_pot_2d();
 }
 
-real chemical_potential(int dim, int *n, real *mu)
+double chemical_potential(int dim, int *n, double *mu)
 {
   if (dim == 1)
     return chemical_potential_1d(n, mu);
