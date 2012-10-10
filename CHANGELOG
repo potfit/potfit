@@ -1,4 +1,4 @@
-potfit-next (unreleased)
+potfit-0.5.1 (20120913)
 + add support for writing LAMMPS potentials (EAM and ADP for now)
 + [BUG] fix invariant potentials, should be working correctly now
 + [BUG] fix recognition of elements with a single letter
