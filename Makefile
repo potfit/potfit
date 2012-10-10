@@ -177,7 +177,7 @@ ifeq (x86_64-icc,${SYSTEM})
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/em64t
   CINCLUDE 	+= -I${MKLDIR}/include
-  LIBS 		= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
+  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
 		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
 		   -lmkl_core -Wl,--end-group -lpthread
 endif
@@ -190,7 +190,7 @@ endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
    LIBMPATH 	= ${LIBMDIR}/lib/static
    CINCLUDE     += -I${ACML5DIR}/include -I${LIBMDIR}/include
-   LIBS		= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
+   LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
 endif
 
  export        OMPI_CC OMPI_CLINKER
@@ -205,7 +205,6 @@ ifeq (x86_64-gcc,${SYSTEM})
 
 # general optimization flags
   OPT_FLAGS     += -O3 -march=native -Wno-unused
-  LFLAGS_SERIAL	+=
 
 # profiling and debug flags
   PROF_FLAGS    += -g3 -pg
@@ -216,7 +215,7 @@ ifeq (x86_64-gcc,${SYSTEM})
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/em64t/
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS 		= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
+  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
 		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
@@ -224,12 +223,12 @@ endif
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   CINCLUDE     		+= -I${ACML4DIR}/include
-  LIBS			:= -L${ACML4PATH} -lpthread -lacml -lacml_mv -lm -Wl,--as-needed
+  LIBS			+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
   LIBMPATH 	= ${LIBMDIR}/lib/static
   CINCLUDE     	+= -I${ACML5DIR}/include -I${LIBMDIR}/include
-  LIBS		= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -lm -Wl,--as-needed
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
  export        OMPI_CC OMPI_CLINKER
@@ -261,7 +260,7 @@ ifeq (i686-icc,${SYSTEM})
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/32
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS 		= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
+  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
 		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread
 endif
@@ -269,12 +268,12 @@ endif
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   CINCLUDE     	+= -I$(ACML4DIR)/include
-  LIBS		= -L${ACML4PATH} -lpthread -lacml -lacml_mv
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
   LIBMPATH 	= ${LIBMDIR}/lib/static
   CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS		= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
 endif
 
   export        OMPI_CC OMPI_CLINKER
@@ -299,7 +298,7 @@ ifeq (i686-gcc,${SYSTEM})
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/32
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS		= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
+  LIBS		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
 		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
@@ -307,12 +306,12 @@ endif
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   CINCLUDE     	+= -I$(ACML4DIR)/include
-  LIBS		= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
   LIBMPATH 	= ${LIBMDIR}/lib/static
   CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS		= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
   export        OMPI_CC OMPI_CLINKER
