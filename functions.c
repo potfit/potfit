@@ -675,7 +675,7 @@ void vas_value(double r, double *p, double *f)
 
 /****************************************************************
  *
- * original pair contributions of vashishta potential 
+ * original pair contributions of vashishta potential
  * (V_2 without second "Coulomb"-term)
  *
  * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
@@ -765,6 +765,18 @@ int apot_check_params(double *params)
     /* last parameter of eopp potential is 2 pi periodic */
     if (strcmp(apot_table.names[i], "eopp") == 0) {
       k = j + 5;
+      if (params[k] > 2 * M_PI)
+	do {
+	  params[k] -= 2 * M_PI;
+	} while (params[k] > 2 * M_PI);
+      if (params[k] < 0)
+	do {
+	  params[k] += 2 * M_PI;
+	} while (params[k] < 0);
+    }
+    /* the third parameter of csw2 potential is 2 pi periodic */
+    if (strcmp(apot_table.names[i], "csw2") == 0) {
+      k = j + 2;
       if (params[k] > 2 * M_PI)
 	do {
 	  params[k] -= 2 * M_PI;

@@ -292,7 +292,7 @@ END {
     adp_count = 0;
   }
   if (pot_type == "ADP") {
-    ntypes = (-7/2 + sqrt(49 / 4 + 6 * count))/3;
+    ntypes = (-3.5 + sqrt(49 / 4 + 6 * count))/3;
     pair_count = ntypes * (ntypes + 1) / 2;
     eam_count = 2 * ntypes;
     adp_count = 2 * pair_count;
@@ -300,6 +300,7 @@ END {
 
   if (count != 0) {
     printf "reset;\n" > "plot";
+    printf "set termoption dash;\n" > "plot";
     if (simple)
       printf "set term x11;\n" > "plot";
     printf "set samples 1000;\n" > "plot";
@@ -315,7 +316,7 @@ END {
     for (i = 0; i < pair_count; i++) {
       write_pot(i, pot_name[i], params, "plot");
       if (!simple) {
-	printf " ls 1 lc " i > "plot";
+	printf "lt 0 lc " i+1 > "plot";
       }
       if (i != (pair_count - 1) || eam_count != 0)
 	printf ", " > "plot";
@@ -323,7 +324,7 @@ END {
     if (eam_count != 0) {
       for (i = pair_count; i < (pair_count + ntypes); i++) {
 	write_pot(i, pot_name[i], params, "plot");
-	printf " ls 2 lc "(i - pair_count + 1) > "plot";
+	printf " lc " ntypes*(i-pair_count) + 1 " lt 2" > "plot";
 	if (i != (pair_count + ntypes - 1))
 	  printf ", " > "plot";
 
@@ -362,7 +363,7 @@ END {
     for (i = pair_count + ntypes; i < (pair_count + 2 * ntypes); i++) {
       write_pot(i, pot_name[i], params, "plot_eam");
       if (!simple) {
-	printf " ls 1 lc "(i - pair_count - ntypes) > "plot_eam";
+	printf " lc "(i - pair_count - ntypes + 1) > "plot_eam";
       }
       if (i != (pair_count + 2 * ntypes - 1))
 	printf ", " > "plot_eam";
