@@ -900,7 +900,7 @@ void buck_init(double r, double *pot, double *grad, double *p)
   x[2] = p[0] * exp(-r / p[1]);
 
   *pot = x[2] - x[1];
-  *grad = -x[2] / p[1] + 6 * p[1] * x[1] / r;
+  *grad = -x[2] / p[1] + 6 * x[1] / r;
 }
 
 /****************************************************************
@@ -916,7 +916,7 @@ void ms_shift(double r, double *p, double *f)
   ms_init(r, &pot, &grad, p);
   ms_init(dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - (r - dp_cut) * grad_cut;
 }
 
 /****************************************************************
