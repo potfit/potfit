@@ -1,10 +1,14 @@
 potfit-next (unreleased)
 + merge MEAM implementation of Jeremy Nicklas (Ohio State University)
+
+potfit-0.5.1 (20120913)
 + add support for writing LAMMPS potentials (EAM and ADP for now)
 + [BUG] fix invariant potentials, should be working correctly now
 + [BUG] fix recognition of elements with a single letter
 + add support for "box of contributing particles"
 + bump copyright to 2012
++ [BUG] fix MPI_Gatherv error
++ add support for ACML5
 
 potfit-0.5 (20111216)
 + fix invariant chemical potentials

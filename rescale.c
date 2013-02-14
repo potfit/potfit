@@ -280,7 +280,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
     for (j = paircol + ntypes; j < paircol + 2 * ntypes; j++)
       for (i = pt->first[j]; i <= pt->last[j]; i++) {
 	xi[i] = neuxi[col];
-	//pt->xcoord[i] = neuord[col];
 	col++;
       }
   }

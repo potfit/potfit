@@ -123,7 +123,7 @@
 # i686-gcc  	32bit GNU Compiler
 #
 #SYSTEM 		= x86_64-icc 	# Use this as fallback
-SYSTEM 		= $(shell uname -m)-gcc
+SYSTEM 		= $(shell uname -m)-icc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
@@ -132,8 +132,9 @@ BIN_DIR 	= ${HOME}/bin/i386-linux
 
 # Base directory of your installation of the MKL or ACML
 MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
-ACMLDIR  	= /common/linux/paket/acml4.4.0/ifort64
-#ACMLDIR  	= /opt/acml4.4.0/gfortran64
+ACML4DIR  	= /common/linux/paket/acml4.4.0/ifort64
+ACML5DIR  	= /opt/acml5.2.0/ifort64
+LIBMDIR 	= /opt/amdlibm
 
 ###########################################################################
 #
@@ -141,12 +142,14 @@ ACMLDIR  	= /common/linux/paket/acml4.4.0/ifort64
 #
 ###########################################################################
 
-MV		= $(shell basename `which mv`)
-STRIP 		= $(shell basename `which strip`)
+MV		= $(shell which mv 2> /dev/null)
+STRIP 		= $(shell which strip 2> /dev/null)
 LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
 MKLPATH         = ${MKLDIR}/lib
+ACML4PATH 	= ${ACML4DIR}/lib
+ACML5PATH 	= ${ACML5DIR}/lib
 RELEASE		= 0
 
 ###########################################################################
@@ -180,11 +183,14 @@ ifeq (,$(strip $(findstring acml,${MAKETARGET})))
 endif
 
 # AMD Core Math Library
-ifneq (,$(strip $(findstring acml,${MAKETARGET})))
-   ACMLPATH 	= ${ACMLDIR}/lib
-   CINCLUDE     += -I$(ACMLDIR)/include
-   LD_LIBRARY_PATH +=':$(ACMLPATH):'
-   LIBS		:= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  CINCLUDE 	+= -I${ACML4DIR}/include
+  LIBS		= -L${ACML4PATH} -lpthread -lacml -lacml_mv
+endif
+ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+   LIBMPATH 	= ${LIBMDIR}/lib/static
+   CINCLUDE     += -I${ACML5DIR}/include -I${LIBMDIR}/include
+   LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
 endif
 
  export        OMPI_CC OMPI_CLINKER
@@ -198,7 +204,7 @@ ifeq (x86_64-gcc,${SYSTEM})
   OMPI_CLINKER  = gcc
 
 # general optimization flags
-  OPT_FLAGS     += -O3 -march=native -pipe -Wno-unused 
+  OPT_FLAGS     += -O3 -march=native -Wno-unused
 
 # profiling and debug flags
   PROF_FLAGS    += -g3 -pg
@@ -208,18 +214,21 @@ ifeq (x86_64-gcc,${SYSTEM})
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/em64t/
-  CINCLUDE      = -I${MKLDIR}/include
+  CINCLUDE      += -I${MKLDIR}/include
   LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
 		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library
-ifneq (,$(strip $(findstring acml,${MAKETARGET})))
-  ACMLPATH      = ${ACMLDIR}/lib
-  CINCLUDE     	+= -I$(ACMLDIR)/include
-  LD_LIBRARY_PATH +=':$(ACMLPATH):'
-  LIBS		+= -L${ACMLPATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  CINCLUDE     		+= -I${ACML4DIR}/include
+  LIBS			+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+endif
+ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+  LIBMPATH 	= ${LIBMDIR}/lib/static
+  CINCLUDE     	+= -I${ACML5DIR}/include -I${LIBMDIR}/include
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
  export        OMPI_CC OMPI_CLINKER
@@ -245,23 +254,26 @@ ifeq (i686-icc,${SYSTEM})
 # profiling and debug flags
   PROF_FLAGS	+= -prof-gen
   PROF_LIBS 	+= -prof-gen
-  DEBUG_FLAGS	+= -g -Wall
+  DEBUG_FLAGS	+= -g -Wall -wd981 -wd1572
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/32
-  CINCLUDE      = -I${MKLDIR}/include
+  CINCLUDE      += -I${MKLDIR}/include
   LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
 		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread
 endif
 
 # AMD Core Math Library
-ifneq (,$(strip $(findstring acml,${MAKETARGET})))
-  ACMLPATH      = ${ACMLDIR}/lib
-  CINCLUDE     	+= -I$(ACMLDIR)/include
-  LD_LIBRARY_PATH +=':$(ACMLPATH):'
-  LIBS		+= -L${ACMLPATH} -lpthread -lacml -lacml_mv
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  CINCLUDE     	+= -I$(ACML4DIR)/include
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv
+endif
+ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+  LIBMPATH 	= ${LIBMDIR}/lib/static
+  CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
 endif
 
   export        OMPI_CC OMPI_CLINKER
@@ -275,7 +287,7 @@ ifeq (i686-gcc,${SYSTEM})
   OMPI_CLINKER 	= gcc
 
 # general optimization flags
-  OPT_FLAGS	+= -O3 -march=native
+  OPT_FLAGS	+= -O3 -march=native -Wno-unused
 
 # profiling and debug flags
   PROF_FLAGS	+= -g3 -pg
@@ -285,18 +297,21 @@ ifeq (i686-gcc,${SYSTEM})
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   MKLPATH       = ${MKLDIR}/lib/32
-  CINCLUDE      = -I${MKLDIR}/include
+  CINCLUDE      += -I${MKLDIR}/include
   LIBS		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
 		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library
-ifneq (,$(strip $(findstring acml,${MAKETARGET})))
-  ACMLPATH      = ${ACMLDIR}/lib
-  CINCLUDE     	+= -I$(ACMLDIR)/include
-  LD_LIBRARY_PATH +=':$(ACMLPATH):'
-  LIBS		+= -L${ACMLPATH} -lpthread -lacml -lacml_mv -Wl,--as-needed 
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  CINCLUDE     	+= -I$(ACML4DIR)/include
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+endif
+ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+  LIBMPATH 	= ${LIBMDIR}/lib/static
+  CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
   export        OMPI_CC OMPI_CLINKER
@@ -539,8 +554,21 @@ ifneq (,$(findstring contrib,${MAKETARGET}))
 CFLAGS += -DCONTRIB
 endif
 
+# force acml4 or acml5 over acml
 ifneq (,$(findstring acml,${MAKETARGET}))
-CFLAGS += -DACML
+ifeq (,$(findstring acml4,${MAKETARGET}))
+ifeq (,$(findstring acml5,${MAKETARGET}))
+ERROR += The acml target is obsolete. Please use acml4 or acml5.
+endif
+endif
+endif
+
+ifneq (,$(findstring acml4,${MAKETARGET}))
+CFLAGS += -DACML -DACML4
+endif
+
+ifneq (,$(findstring acml5,${MAKETARGET}))
+CFLAGS += -DACML -DACML5
 endif
 
 ifneq (,$(findstring noresc,${MAKETARGET}))
@@ -556,10 +584,10 @@ OBJECTS := $(subst .c,.o,${SOURCES})
 #
 ###########################################################################
 
-ifeq (Found,$(shell if `which bzr >& /dev/null`; then echo Found; fi))
-	BAZAAR = 1
+ifneq (,$(shell `which bzr 2> /dev/null`))
+  BAZAAR = 1
 else
-	BAZAAR = 0
+  BAZAAR = 0
 endif
 
 ###########################################################################
@@ -570,7 +598,6 @@ endif
 
 # all objects depend on headers
 ${OBJECTS}: ${HEADERS}
-
 
 # How to compile *.c files
 # special rules for force computation
@@ -598,14 +625,16 @@ endif
 ${MAKETARGET}: ${OBJECTS}
 	${CC} ${LIBS} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS}
 ifneq (,${STRIP})
-ifeq (,$(findstring prof,${MAKETARGET}))
-ifeq (,$(findstring debug,${MAKETARGET}))
+  ifeq (,$(findstring prof,${MAKETARGET}))
+    ifeq (,$(findstring debug,${MAKETARGET}))
 	${STRIP} --strip-unneeded -R .comment $@
+    endif
+  endif
 endif
-endif
-endif
-ifneq (,$(BIN_DIR))
+ifneq (,${BIN_DIR})
+  ifneq (,${MV})
 	${MV} $@ ${BIN_DIR} && rm -f $@
+  endif
 endif
 
 # First recursion only set the MAKETARGET Variable

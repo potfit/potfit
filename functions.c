@@ -675,7 +675,7 @@ void vas_value(double r, double *p, double *f)
 
 /****************************************************************
  *
- * original pair contributions of vashishta potential 
+ * original pair contributions of vashishta potential
  * (V_2 without second "Coulomb"-term)
  *
  * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
@@ -765,6 +765,18 @@ int apot_check_params(double *params)
     /* last parameter of eopp potential is 2 pi periodic */
     if (strcmp(apot_table.names[i], "eopp") == 0) {
       k = j + 5;
+      if (params[k] > 2 * M_PI)
+	do {
+	  params[k] -= 2 * M_PI;
+	} while (params[k] > 2 * M_PI);
+      if (params[k] < 0)
+	do {
+	  params[k] += 2 * M_PI;
+	} while (params[k] < 0);
+    }
+    /* the third parameter of csw2 potential is 2 pi periodic */
+    if (strcmp(apot_table.names[i], "csw2") == 0) {
+      k = j + 2;
       if (params[k] > 2 * M_PI)
 	do {
 	  params[k] -= 2 * M_PI;
@@ -888,7 +900,7 @@ void buck_init(double r, double *pot, double *grad, double *p)
   x[2] = p[0] * exp(-r / p[1]);
 
   *pot = x[2] - x[1];
-  *grad = -x[2] / p[1] + 6 * p[1] * x[1] / r;
+  *grad = -x[2] / p[1] + 6 * x[1] / r;
 }
 
 /****************************************************************
@@ -904,7 +916,7 @@ void ms_shift(double r, double *p, double *f)
   ms_init(r, &pot, &grad, p);
   ms_init(dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - (r - dp_cut) * grad_cut;
 }
 
 /****************************************************************

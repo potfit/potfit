@@ -340,7 +340,7 @@ void read_paramfile(FILE *pf)
       getparam("stress_weight", &sweight, PARAM_DOUBLE, 1, 1);
     }
 #endif /* STRESS */
-    /* cutoff-radius for long-range interactions */
+    /* write final potential in lammps format */
     else if (strcasecmp(token, "write_lammps") == 0) {
       getparam("write_lammps", &write_lammps, PARAM_INT, 1, 1);
     }

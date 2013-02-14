@@ -30,8 +30,10 @@
 
 #ifndef ACML
 #include <mkl_vml.h>
-#else
+#elif defined ACML4
 #include <acml_mv.h>
+#elif defined ACML5
+#include <amdlibm.h>
 #endif /* ACML */
 
 #include "potfit.h"
@@ -156,7 +158,6 @@ inline double eqdist()
 /****************************************************************
  *
  *  double normdist(): Returns a normally distributed random variable
- * 	Uses dsfmt PRNG to generate a random number.
  *
  ****************************************************************/
 
@@ -209,8 +210,10 @@ void power_1(double *result, double *x, double *y)
 {
 #ifndef ACML
   vdPow(1, x, y, result);
-#else
+#elif defined ACML4
   *result = fastpow(*x, *y);
+#elif defined ACML5
+  *result = pow(*x, *y);
 #endif /* ACML */
 }
 
@@ -218,10 +221,15 @@ void power_m(int dim, double *result, double *x, double *y)
 {
 #ifndef ACML
   vdPow(dim, x, y, result);
-#else
+#elif defined ACML4
   int   i;
   for (i = 0; i < dim; i++) {
     *(result + i) = fastpow(*(x + i), *(y + i));
+  }
+#elif defined ACML5
+  int   i;
+  for (i = 0; i < dim; i++) {
+    *(result + i) = pow(*(x + i), *(y + i));
   }
 #endif /* ACML */
 }
