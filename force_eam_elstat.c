@@ -857,19 +857,20 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
 
 	  /* sum-up: whole force contributions flow into tmpsum */
-	  if (uf) {
-#ifdef FWEIGHT
-	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
-#endif /* FWEIGHT */
-#ifdef CONTRIB
-	    if (atom->contrib)
-#endif /* CONTRIB */
-	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
-	  }
+/*          if (uf) {*/
+/*#ifdef FWEIGHT*/
+/*             Weigh by absolute value of force */
+/*            forces[k] /= FORCE_EPS + atom->absforce;*/
+/*            forces[k + 1] /= FORCE_EPS + atom->absforce;*/
+/*            forces[k + 2] /= FORCE_EPS + atom->absforce;*/
+/*#endif |+ FWEIGHT +|*/
+/*#ifdef CONTRIB*/
+/*            if (atom->contrib)*/
+/*#endif |+ CONTRIB +|*/
+/*              tmpsum +=*/
+/*                conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));*/
+/*            printf("tmpsum = %f (forces)\n",tmpsum);*/
+/*          }*/
 
 	}			/* end F I F T H loop over atoms */
 
@@ -938,6 +939,9 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
 	    /* sum up forces  */
+#ifdef CONTRIB
+	    if (atom->contrib)
+#endif /* CONTRIB */
 	    tmpsum += conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
 	  }
 	}
@@ -986,6 +990,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
     }
 #endif /* APOT */
 
+#ifndef NOPUNISH
     if (myid == 0) {
       int   g;
       for (g = 0; g < ntypes; g++) {
@@ -1014,6 +1019,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
       tmpsum += dsquare(forces[dummy_p + ntypes]);
 #endif /* NORESCALE */
     }
+#endif /* NOPUNISH */
 
     /* only root process */
     sum = tmpsum;		/* global sum = local sum  */
