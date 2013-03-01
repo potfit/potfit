@@ -83,7 +83,7 @@
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
-typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT } Interaction_T;
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT } Interaction_T;
 
 typedef struct {
   double x;
@@ -252,12 +252,14 @@ typedef struct {
 /* define interaction type */
 #ifdef PAIR
 EXTERN Interaction_T interaction INIT(I_PAIR);
-#elif defined EAM
+#elif defined EAM && !defined COULOMB
 EXTERN Interaction_T interaction INIT(I_EAM);
 #elif defined ADP
 EXTERN Interaction_T interaction INIT(I_ADP);
-#elif defined COULOMB
+#elif defined COULOMB && !defined EAM
 EXTERN Interaction_T interaction INIT(I_ELSTAT);
+#elif defined COULOMB && defined EAM
+EXTERN Interaction_T interaction INIT(I_EAM_ELSTAT);
 #endif /* interaction type */
 
 /* system variables */
@@ -381,7 +383,7 @@ EXTERN int mdim INIT(0);
 EXTERN int ndim INIT(0);
 EXTERN int ndimtot INIT(0);
 EXTERN int paircol INIT(0);	/* How manc columns for pair potential */
-EXTERN double d_eps INIT(0.);
+EXTERN double d_eps INIT(1e-6);
 
 /* general variables */
 EXTERN int firstatom INIT(0);
@@ -474,12 +476,14 @@ void  read_paramfile(FILE *);
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
 double calc_forces_pair(double *, double *, int);
-#elif defined EAM
+#elif defined EAM && !defined COULOMB
 double calc_forces_eam(double *, double *, int);
 #elif defined ADP
 double calc_forces_adp(double *, double *, int);
-#elif defined COULOMB
+#elif defined COULOMB && !defined EAM
 double calc_forces_elstat(double *, double *, int);
+#elif defined COULOMB && defined EAM
+double calc_forces_eam_elstat(double *, double *, int);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */

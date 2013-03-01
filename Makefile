@@ -380,15 +380,25 @@ POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-POTFITSRC      += force_eam.c
+  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+    POTFITSRC      += force_eam_elstat.c
+  else ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+    POTFITSRC      += force_eam_elstat.c
+  else
+    POTFITSRC      += force_eam.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-POTFITSRC      += force_elstat.c
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+    POTFITSRC      += force_elstat.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-POTFITSRC      += force_elstat.c
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+    POTFITSRC      += force_elstat.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
@@ -446,9 +456,11 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 endif
 
 # COULOMB
-ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-  ifneq (,$(findstring 1,${INTERACTION}))
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))		   
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))		   
+  ifneq (,$(findstring 1,${INTERACTION}))			   
   ERROR += More than one potential model specified
+  endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += COULOMB does not support tabulated potentials (yet)
@@ -459,8 +471,10 @@ endif
 
 # DIPOLE
 ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))	
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
+  endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += DIPOLE does not support tabulated potentials (yet)

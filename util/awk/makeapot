@@ -98,7 +98,7 @@ function write_pot(name)
     print "type "name;
     print "cutoff "co;
     do_smooth=0;
-    if (match(name,"_sc$",arr)>0) {
+    if (match(name,"_sc$")>0) {
 	gsub("_sc$","",name);
 	do_smooth=1;
     }
@@ -269,6 +269,6 @@ BEGIN{
 	if (i!=(total_pot-1))
 		printf "\n";
     }
-    
+
 }
 

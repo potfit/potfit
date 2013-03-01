@@ -86,6 +86,10 @@ void apot_init(void)
   add_pot(vas, 2);
   add_pot(vpair, 7);
   add_pot(csw2, 4);
+  add_pot(sheng_phi1, 5);
+  add_pot(sheng_phi2, 4);
+  add_pot(sheng_rho, 5);
+  add_pot(sheng_F, 4);
 
   reg_for_free(function_table.name, "function_table.name");
   reg_for_free(function_table.n_par, "function_table.n_par");
@@ -675,7 +679,7 @@ void vas_value(double r, double *p, double *f)
 
 /****************************************************************
  *
- * original pair contributions of vashishta potential 
+ * original pair contributions of vashishta potential
  * (V_2 without second "Coulomb"-term)
  *
  * http://dx.doi.org/doi:10.1016/0022-3093(94)90351-4
@@ -698,6 +702,64 @@ void vpair_value(double r, double *p, double *f)
   x[6] = exp(-r / p[6]);
 
   *f = 14.4 * (p[0] / x[0] - 0.5 * (x[5] / x[2]) * x[6]);
+}
+
+/****************************************************************
+ *
+ * analytical fits to sheng-aluminum-EAM-potential
+ *
+ ****************************************************************/
+
+void sheng_phi1_value(double r, double *p, double *f)
+{
+  static double x, y, z;
+  
+  x = - p[1] * r * r;
+  y = r - p[4];
+  z = - p[3] * y * y;
+  
+  *f = p[0] * exp(x) + p[2] * exp(z);
+}
+
+void sheng_phi2_value(double r, double *p, double *f)
+{
+  static double x, y, z;
+  
+  x = - p[1] * r * r;
+  y = r - p[3];
+  z = p[2] * p[2] + y * y;
+  
+  *f = p[0] * exp(x) + p[2] / z;
+}
+
+void sheng_rho_value(double r, double *p, double *f)
+{
+  static double sig_d_rad6, sig_d_rad12, x, y, power;
+  static int h, k;
+
+  h = (r>1.45) ? 1:0;
+  k = (r<=1.45) ? 1:0;
+
+  x = r;
+  y = p[1];
+  power_1(&power, &x, &y);
+
+  sig_d_rad6 = (p[4] * p[4]) / (r * r);
+  sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
+  sig_d_rad12 = dsquare(sig_d_rad6);
+
+  *f = (p[0] * power + p[2])*k + (4. * p[3] * (sig_d_rad12 - sig_d_rad6))*h;
+}
+
+void sheng_F_value(double r, double *p, double *f)
+{
+  static double x, y, power;
+  
+  x = r;
+  y = p[1];
+  power_1(&power, &x, &y);
+
+  *f = p[0] * power + p[2]*r + p[3];
 }
 
 /****************************************************************
@@ -765,6 +827,18 @@ int apot_check_params(double *params)
     /* last parameter of eopp potential is 2 pi periodic */
     if (strcmp(apot_table.names[i], "eopp") == 0) {
       k = j + 5;
+      if (params[k] > 2 * M_PI)
+	do {
+	  params[k] -= 2 * M_PI;
+	} while (params[k] > 2 * M_PI);
+      if (params[k] < 0)
+	do {
+	  params[k] += 2 * M_PI;
+	} while (params[k] < 0);
+    }
+    /* the third parameter of csw2 potential is 2 pi periodic */
+    if (strcmp(apot_table.names[i], "csw2") == 0) {
+      k = j + 2;
       if (params[k] > 2 * M_PI)
 	do {
 	  params[k] -= 2 * M_PI;
@@ -888,7 +962,7 @@ void buck_init(double r, double *pot, double *grad, double *p)
   x[2] = p[0] * exp(-r / p[1]);
 
   *pot = x[2] - x[1];
-  *grad = -x[2] / p[1] + 6 * p[1] * x[1] / r;
+  *grad = -x[2] / p[1] + 6 * x[1] / r;
 }
 
 /****************************************************************
@@ -904,7 +978,7 @@ void ms_shift(double r, double *p, double *f)
   ms_init(r, &pot, &grad, p);
   ms_init(dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - (r - dp_cut) * grad_cut;
 }
 
 /****************************************************************

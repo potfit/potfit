@@ -135,15 +135,18 @@ int main(int argc, char **argv)
 #ifdef PAIR
   calc_forces = calc_forces_pair;
   strcpy(interaction_name, "PAIR");
-#elif defined EAM
+#elif defined EAM && !defined COULOMB
   calc_forces = calc_forces_eam;
   strcpy(interaction_name, "EAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
   strcpy(interaction_name, "ADP");
-#elif defined COULOMB
+#elif defined COULOMB && !defined EAM
   calc_forces = calc_forces_elstat;
   strcpy(interaction_name, "ELSTAT");
+#elif defined COULOMB && defined EAM
+  calc_forces = calc_forces_eam_elstat;
+  strcpy(interaction_name, "EAM_ELSTAT");
 #endif /* PAIR */
 
   /* read the parameters and the potential file */
@@ -350,7 +353,7 @@ int main(int argc, char **argv)
     if (opt) {
       write_pot_table(&opt_pot, endpot);
 #else
-    tot = calc_forces(opt_pot.table, force, 0);
+      tot = calc_forces(opt_pot.table, force, 0);
     if (opt) {
       write_pot_table(&apot_table, endpot);
 #endif /* !APOT */
@@ -707,7 +710,7 @@ int main(int argc, char **argv)
     }
 
     if (write_output_files) {
-      fprintf(outfile, "sum of force-errors = %e\t\t( %.3f%% - av: %f)\n",
+      fprintf(outfile, "sum of force-errors  = %e\t\t( %.3f%% - av: %f)\n",
 	f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
       if (eweight != 0)
 	fprintf(outfile, "sum of energy-errors = %e\t\t( %.3f%% )\n", e_sum, e_sum / tot * 100);
