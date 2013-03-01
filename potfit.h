@@ -383,7 +383,7 @@ EXTERN int mdim INIT(0);
 EXTERN int ndim INIT(0);
 EXTERN int ndimtot INIT(0);
 EXTERN int paircol INIT(0);	/* How manc columns for pair potential */
-EXTERN double d_eps INIT(0.);
+EXTERN double d_eps INIT(1e-6);
 
 /* general variables */
 EXTERN int firstatom INIT(0);

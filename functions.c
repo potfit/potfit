@@ -836,6 +836,18 @@ int apot_check_params(double *params)
 	  params[k] += 2 * M_PI;
 	} while (params[k] < 0);
     }
+    /* the third parameter of csw2 potential is 2 pi periodic */
+    if (strcmp(apot_table.names[i], "csw2") == 0) {
+      k = j + 2;
+      if (params[k] > 2 * M_PI)
+	do {
+	  params[k] -= 2 * M_PI;
+	} while (params[k] > 2 * M_PI);
+      if (params[k] < 0)
+	do {
+	  params[k] += 2 * M_PI;
+	} while (params[k] < 0);
+    }
 
     /* jump to next potential */
     j += 2 + apot_parameters(apot_table.names[i]) + smooth_pot[i];
@@ -950,7 +962,7 @@ void buck_init(double r, double *pot, double *grad, double *p)
   x[2] = p[0] * exp(-r / p[1]);
 
   *pot = x[2] - x[1];
-  *grad = -x[2] / p[1] + 6 * p[1] * x[1] / r;
+  *grad = -x[2] / p[1] + 6 * x[1] / r;
 }
 
 /****************************************************************
@@ -966,7 +978,7 @@ void ms_shift(double r, double *p, double *f)
   ms_init(r, &pot, &grad, p);
   ms_init(dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - (r - dp_cut) * grad_cut;
 }
 
 /****************************************************************

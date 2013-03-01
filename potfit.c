@@ -710,7 +710,7 @@ int main(int argc, char **argv)
     }
 
     if (write_output_files) {
-      fprintf(outfile, "sum of force-errors = %e\t\t( %.3f%% - av: %f)\n",
+      fprintf(outfile, "sum of force-errors  = %e\t\t( %.3f%% - av: %f)\n",
 	f_sum, f_sum / tot * 100, f_sum / (3 * natoms));
       if (eweight != 0)
 	fprintf(outfile, "sum of energy-errors = %e\t\t( %.3f%% )\n", e_sum, e_sum / tot * 100);
