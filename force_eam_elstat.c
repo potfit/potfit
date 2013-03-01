@@ -1,11 +1,11 @@
 /****************************************************************
  *
- * force_elstat.c: Routine used for calculating pair/monopole/dipole
- *     forces/energies in various interpolation schemes.
- *
+ * force_eam_elstat.c: Routine used for combination of calculating
+ * pair/monopole/dipole forces/energies in various interpolation schemes.
+ * AND eam forces/energies
  ****************************************************************
  *
- * Copyright 2010-2012
+ * Copyright 2010-2011
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -29,7 +29,7 @@
  *
  ****************************************************************/
 
-#if defined COULOMB && !defined EAM
+#if defined COULOMB && defined EAM
 
 #include "potfit.h"
 
@@ -87,7 +87,7 @@
  *
  ****************************************************************/
 
-double calc_forces_elstat(double *xi_opt, double *forces, int flag)
+double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 {
   double tmpsum, sum = 0.;
   int   first, col, ne, size, i;
@@ -96,11 +96,18 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
   double charge[ntypes];
   double sum_charges;
   double dp_kappa;
+  int   ncols;
+
+  ncols = ntypes * (ntypes + 1) / 2;
+
 #ifdef DIPOLE
   double dp_alpha[ntypes];
-  double dp_b[apt->number];
-  double dp_c[apt->number];
+  double dp_b[ncols];
+  double dp_c[ncols];
 #endif /* DIPOLE */
+
+  static double rho_sum_loc, rho_sum;
+  rho_sum_loc = rho_sum = 0.;
 
   switch (format) {
       case 0:
@@ -120,6 +127,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
+    rho_sum_loc = 0.;
 
 #if defined APOT && !defined MPI
     if (format == 0) {
@@ -169,6 +177,12 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
       dp_kappa = 0.;
     }
 
+    /*int k;
+       for(k = 0; k < 71; k++) {
+       printf("%d\t%f\n", k, xi_opt[k]);
+       }
+       error(1, ""); */
+
 #ifdef DIPOLE
     for (i = 0; i < ntypes; i++) {
       if (xi_opt[2 * size + ne + ntypes + i]) {
@@ -177,14 +191,14 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	dp_alpha[i] = 0.;
       }
     }
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < ncols; i++) {
       if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
 	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
       } else {
 	dp_b[i] = 0.;
       }
-      if (xi_opt[3 * size + ne + 2 * ntypes + i]) {
-	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i];
+      if (xi_opt[2 * size + ne + 2 * ntypes + ncols + i]) {
+	dp_c[i] = xi_opt[2 * size + ne + 2 * ntypes + ncols + i];
       } else {
 	dp_c[i] = 0.;
       }
@@ -192,6 +206,8 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 #endif /* DIPOLE */
 
     /* init second derivatives for splines */
+
+    /* pair potentials */
     for (col = 0; col < paircol; col++) {
       first = calc_pot.first[col];
       if (format == 3 || format == 0) {
@@ -202,6 +218,31 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
       }
     }
+
+    /* rho */
+    for (col = paircol; col < paircol + ntypes; col++) {
+      first = calc_pot.first[col];
+      if (format == 0 || format == 3)
+	spline_ed(calc_pot.step[col], xi + first,
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+      else			/* format >= 4 ! */
+	spline_ne(calc_pot.xcoord + first, xi + first,
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+    }
+
+    /* F */
+    for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {
+      first = calc_pot.first[col];
+      /* gradient at left boundary matched to square root function,
+         when 0 not in domain(F), else natural spline */
+      if (format == 0 || format == 3)
+	spline_ed(calc_pot.step[col], xi + first,
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
+      else			/* format >= 4 ! */
+	spline_ne(calc_pot.xcoord + first, xi + first,
+	  calc_pot.last[col] - first + 1, *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
+    }
+
 
 #ifndef MPI
     myconf = nconf;
@@ -216,6 +257,10 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
       double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
+      double r;
+      int   col_F;
+      double eam_force;
+      double rho_val, rho_grad, rho_grad_j;
 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -225,6 +270,9 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	forces[energy_p + h] = 0.;
 	for (i = 0; i < 6; i++)
 	  forces[stress_p + 6 * h + i] = 0.;
+
+	/* set limiting constraints */
+	forces[limit_p + h] = -force_0[limit_p + h];
 
 #ifdef DIPOLE
 	/* reset dipoles and fields: LOOP Z E R O */
@@ -252,10 +300,13 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	    forces[k + 1] = 0.;
 	    forces[k + 2] = 0.;
 	  }
+	  /* reset atomic density */
+	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
 	}			/* end F I R S T LOOP */
 
 	/* S E C O N D loop: calculate short-range and monopole forces,
-	   calculate static field- and dipole-contributions */
+	   calculate static field- and dipole-contributions,
+	   calculate atomic densities */
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  typ1 = atom->typ;
@@ -406,7 +457,73 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 
 	    }
 
+	    /* calculate atomic densities */
+	    if (atom->typ == neigh->typ) {
+	      /* then transfer(a->b)==transfer(b->a) */
+	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
+		rho_val = splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
+		atom->rho += rho_val;
+		/* avoid double counting if atom is interacting with a
+		   copy of itself */
+		if (!self) {
+		  conf_atoms[neigh->nr - firstatom].rho += rho_val;
+		}
+	      }
+	    } else {
+	      /* transfer(a->b)!=transfer(b->a) */
+	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
+		atom->rho += splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
+	      }
+	      /* cannot use slot/shift to access splines */
+	      if (neigh->r < calc_pot.end[paircol + atom->typ])
+		conf_atoms[neigh->nr - firstatom].rho += splint(&calc_pot, xi, paircol + atom->typ, neigh->r);
+	    }
+
 	  }			/* loop over neighbours */
+
+	  col_F = paircol + ntypes + atom->typ;	/* column of F */
+	  if (atom->rho > calc_pot.end[col_F]) {
+	    /* then punish target function -> bad potential */
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+	    atom->rho = calc_pot.end[col_F];
+	  }
+
+	  if (atom->rho < calc_pot.begin[col_F]) {
+	    /* then punish target function -> bad potential */
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    atom->rho = calc_pot.begin[col_F];
+	  }
+
+	  /* embedding energy, embedding gradient */
+	  /* contribution to cohesive energy is F(n) */
+#ifdef NORESCALE
+	  if (atom->rho < calc_pot.begin[col_F]) {
+	    /* linear extrapolation left */
+	    rho_val = splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F], &atom->gradF);
+	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+#ifdef APOT
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+#endif /* APOT */
+	  } else if (atom->rho > calc_pot.end[col_F]) {
+	    /* and right */
+	    rho_val =
+	      splint_comb(&calc_pot, xi, col_F,
+	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
+	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
+#ifdef APOT
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+#endif /* APOT */
+	  }
+	  /* and in-between */
+	  else {
+	    forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+	  }
+#else
+	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+#endif /* NORESCALE */
+	  /* sum up rho */
+	  rho_sum_loc += atom->rho;
+
 	}			/* end S E C O N D loop over atoms */
 
 #ifdef DIPOLE
@@ -666,16 +783,18 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 		  tmp_force.x =
 		    grad_1 * neigh->r * neigh->dist.x -
 		    tmp_2 * (grad_2 * neigh->r * neigh->dist.x -
-		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.x -
-		    rp_j * neigh->r * atom->p_ind.x);
+		    rp_i * neigh->r * conf_atoms[neigh->nr -
+		      firstatom].p_ind.x - rp_j * neigh->r * atom->p_ind.x);
 		  tmp_force.y =
-		    grad_1 * neigh->r * neigh->dist.y - tmp_2 * (grad_2 * neigh->r * neigh->dist.y -
-		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.y -
-		    rp_j * neigh->r * atom->p_ind.y);
+		    grad_1 * neigh->r * neigh->dist.y -
+		    tmp_2 * (grad_2 * neigh->r * neigh->dist.y -
+		    rp_i * neigh->r * conf_atoms[neigh->nr -
+		      firstatom].p_ind.y - rp_j * neigh->r * atom->p_ind.y);
 		  tmp_force.z =
-		    grad_1 * neigh->r * neigh->dist.z - tmp_2 * (grad_2 * neigh->r * neigh->dist.z -
-		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.z -
-		    rp_j * neigh->r * atom->p_ind.z);
+		    grad_1 * neigh->r * neigh->dist.z -
+		    tmp_2 * (grad_2 * neigh->r * neigh->dist.z -
+		    rp_i * neigh->r * conf_atoms[neigh->nr -
+		      firstatom].p_ind.z - rp_j * neigh->r * atom->p_ind.z);
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
 		  forces[k + 2] -= tmp_force.z;
@@ -738,23 +857,96 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 
 
 	  /* sum-up: whole force contributions flow into tmpsum */
-	  if (uf) {
+/*          if (uf) {*/
+/*#ifdef FWEIGHT*/
+/*             Weigh by absolute value of force */
+/*            forces[k] /= FORCE_EPS + atom->absforce;*/
+/*            forces[k + 1] /= FORCE_EPS + atom->absforce;*/
+/*            forces[k + 2] /= FORCE_EPS + atom->absforce;*/
+/*#endif |+ FWEIGHT +|*/
+/*#ifdef CONTRIB*/
+/*            if (atom->contrib)*/
+/*#endif |+ CONTRIB +|*/
+/*              tmpsum +=*/
+/*                conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));*/
+/*            printf("tmpsum = %f (forces)\n",tmpsum);*/
+/*          }*/
+
+	}			/* end F I F T H loop over atoms */
+
+
+	/* S I X T H  loop: EAM force */
+	if (uf) {		/* only required if we calc forces */
+	  for (i = 0; i < inconf[h]; i++) {
+	    atom = conf_atoms + i + cnfstart[h] - firstatom;
+	    k = 3 * (cnfstart[h] + i);
+	    for (j = 0; j < atom->n_neigh; j++) {
+	      /* loop over neighbors */
+	      neigh = atom->neigh + j;
+	      /* In small cells, an atom might interact with itself */
+	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+	      col_F = paircol + ntypes + atom->typ;	/* column of F */
+	      r = neigh->r;
+	      /* are we within reach? */
+	      if ((r < calc_pot.end[neigh->col[1]])
+		|| (r < calc_pot.end[col_F - ntypes])) {
+		rho_grad =
+		  (r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot,
+		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.;
+		if (atom->typ == neigh->typ)	/* use actio = reactio */
+		  rho_grad_j = rho_grad;
+		else
+		  rho_grad_j =
+		    (r < calc_pot.end[col_F - ntypes]) ? splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.;
+		/* now we know everything - calculate forces */
+		eam_force = (rho_grad * atom->gradF + rho_grad_j * conf_atoms[(neigh->nr) - firstatom].gradF);
+		/* avoid double counting if atom is interacting with a
+		   copy of itself */
+		if (self)
+		  eam_force *= 0.5;
+		tmp_force.x = neigh->dist.x * eam_force;
+		tmp_force.y = neigh->dist.y * eam_force;
+		tmp_force.z = neigh->dist.z * eam_force;
+		forces[k] += tmp_force.x;
+		forces[k + 1] += tmp_force.y;
+		forces[k + 2] += tmp_force.z;
+		/* actio = reactio */
+		l = 3 * neigh->nr;
+		forces[l] -= tmp_force.x;
+		forces[l + 1] -= tmp_force.y;
+		forces[l + 2] -= tmp_force.z;
+#ifdef STRESS
+		/* and stresses */
+		if (us) {
+		  tmp_force.x *= neigh->r;
+		  tmp_force.y *= neigh->r;
+		  tmp_force.z *= neigh->r;
+		  stresses = stress_p + 6 * h;
+		  forces[stresses] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		}
+#endif /* STRESS */
+	      }			/* within reach */
+	    }			/* loop over neighbours */
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
 	    forces[k] /= FORCE_EPS + atom->absforce;
 	    forces[k + 1] /= FORCE_EPS + atom->absforce;
 	    forces[k + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
+	    /* sum up forces  */
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
+	    tmpsum += conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
 	  }
+	}
 
-	}			/* end F I F T H loop over atoms */
-
-
+	/* end S I X T H loop over atoms */
 	/* whole energy contributions flow into tmpsum */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
@@ -779,8 +971,16 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	  }
 	}
 #endif /* STRESS */
+	/* limiting constraints per configuration */
+	tmpsum += conf_weight[h] * dsquare(forces[limit_p + h]);
       }				/* end M A I N loop over configurations */
     }				/* parallel region */
+#ifdef MPI
+    /* Reduce rho_sum */
+    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#else /* MPI */
+    rho_sum = rho_sum_loc;
+#endif /* MPI */
 
     /* dummy constraints (global) */
 #ifdef APOT
@@ -790,6 +990,38 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
     }
 #endif /* APOT */
 
+#ifndef NOPUNISH
+    if (myid == 0) {
+      int   g;
+      for (g = 0; g < ntypes; g++) {
+#ifdef NORESCALE
+	/* clear field */
+	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
+	/* NEW: Constraint on U': U'(1.)=0; */
+	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
+#else /* NOTHING */
+	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
+/* constraints on U`(n) */
+	forces[dummy_p + g] =
+	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
+	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
+	  - force_0[dummy_p + g];
+#endif /* NORESCALE */
+	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
+	tmpsum += dsquare(forces[dummy_p + g]);
+      }				/* loop over types */
+#ifdef NORESCALE
+      /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
+      /* Calculate averages */
+      rho_sum /= (double)natoms;
+      /* ATTN: if there are invariant potentials, things might be problematic */
+      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+      tmpsum += dsquare(forces[dummy_p + ntypes]);
+#endif /* NORESCALE */
+    }
+#endif /* NOPUNISH */
+
+    /* only root process */
     sum = tmpsum;		/* global sum = local sum  */
 
 #ifdef MPI
@@ -807,6 +1039,9 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
       /* stresses */
       MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + natoms * 3 + nconf,
 	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      /* punishment constraints */
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3 + 7 * nconf,
+	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     } else {
       /* forces */
       MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
@@ -817,7 +1052,11 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
       /* stresses */
       MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
 	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      /* punishment constraints */
+      MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, MPI_DOUBLE,
+	forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
+    /* no need to pick up dummy constraints - are already @ root */
 #endif /* MPI */
 
     /* root process exits this function now */
@@ -838,4 +1077,5 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
   return -1.;
 }
 
-#endif /* COULOMB */
+
+#endif /* COULOMB && EAM */

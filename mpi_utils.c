@@ -166,7 +166,7 @@ void broadcast_params()
 #ifdef CONTRIB
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* contrib */
 #endif /* CONTRIB */
-#if defined EAM || defined ADP
+#if (defined EAM && !defined DIPOLE) || defined ADP
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* rho */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* gradF */
 #endif /* EAM || ADP */
@@ -175,7 +175,7 @@ void broadcast_params()
   blklens[size] = 1;         	typen[size++] = MPI_STENS;   	/* lambda */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;    	/* nu */
 #endif /* ADP */
-#ifdef DIPOLE
+#if defined DIPOLE && !defined EAM
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;    	/* E_stat */
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_sr */
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* E_ind */
@@ -183,6 +183,16 @@ void broadcast_params()
   blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_old */
   blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_tot */
 #endif /* DIPOLE */
+#if defined DIPOLE && defined EAM
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* rho */
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* gradF */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;    	/* E_stat */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_sr */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* E_ind */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_ind */
+  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_old */
+  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_tot */
+#endif /* DIPOLE && EAM */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
 
@@ -196,7 +206,7 @@ void broadcast_params()
 #ifdef CONTRIB
   MPI_Address(&testatom.contrib, 	&displs[count++]);
 #endif /* CONTRIB */
-#if defined EAM || defined ADP
+#if (defined EAM && !defined DIPOLE ) || defined ADP
   MPI_Address(&testatom.rho, 		&displs[count++]);
   MPI_Address(&testatom.gradF, 		&displs[count++]);
 #endif /* EAM || ADP */
@@ -205,7 +215,7 @@ void broadcast_params()
   MPI_Address(&testatom.lambda, 	&displs[count++]);
   MPI_Address(&testatom.nu, 		&displs[count++]);
 #endif /* ADP */
-#ifdef DIPOLE
+#if defined DIPOLE && !defined EAM
   MPI_Address(&testatom.E_stat, 	&displs[count++]);
   MPI_Address(&testatom.p_sr, 		&displs[count++]);
   MPI_Address(&testatom.E_ind, 		&displs[count++]);
@@ -213,6 +223,17 @@ void broadcast_params()
   MPI_Address(&testatom.E_old, 		&displs[count++]);
   MPI_Address(&testatom.E_tot, 		&displs[count++]);
 #endif /* DIPOLE */
+#if defined DIPOLE && defined EAM
+  MPI_Address(&testatom.rho, 		&displs[count++]);
+  MPI_Address(&testatom.gradF, 		&displs[count++]);
+  MPI_Address(&testatom.E_stat, 	&displs[count++]);
+  MPI_Address(&testatom.p_sr, 		&displs[count++]);
+  MPI_Address(&testatom.E_ind, 		&displs[count++]);
+  MPI_Address(&testatom.p_ind, 		&displs[count++]);
+  MPI_Address(&testatom.E_old, 		&displs[count++]);
+  MPI_Address(&testatom.E_tot, 		&displs[count++]);
+#endif /* DIPOLE && EAM */
+
   /* *INDENT-ON* */
 
   /* set displacements */
@@ -319,7 +340,7 @@ void broadcast_params()
     apot_table.end = (double *)malloc(apot_table.number * sizeof(double));
     apot_table.idxpot = (int *)malloc(apot_table.number * sizeof(int));
 #ifdef COULOMB
-    apot_table.ratio = (double *)malloc(2 * sizeof(double));
+    apot_table.ratio = (double *)malloc(ntypes * sizeof(double));
 #endif /* COULOMB */
     smooth_pot = (int *)malloc(apot_table.number * sizeof(int));
     invar_pot = (int *)malloc(apot_table.number * sizeof(int));
@@ -361,7 +382,7 @@ void broadcast_params()
   MPI_Bcast(opt_pot.first, apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
   MPI_Bcast(&apot_table.last_charge, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(apot_table.ratio, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(apot_table.ratio, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
   if (have_globals) {
     if (myid > 0) {

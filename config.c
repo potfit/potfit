@@ -936,9 +936,9 @@ int does_contribute(vector pos)
     dist.x = pos.x - cbox_o.x;
     dist.y = pos.y - cbox_o.y;
     dist.z = pos.z - cbox_o.z;
-    n_a = SPROD(dist, cbox_a);
-    n_b = SPROD(dist, cbox_b);
-    n_c = SPROD(dist, cbox_c);
+    n_a = SPROD(dist, cbox_a) / SPROD(cbox_a,cbox_a);
+    n_b = SPROD(dist, cbox_b) / SPROD(cbox_b,cbox_b);
+    n_c = SPROD(dist, cbox_c) / SPROD(cbox_c,cbox_c);
     if (n_a >= 0 && n_a <= 1)
       if (n_b >= 0 && n_b <= 1)
 	if (n_c >= 0 && n_c <= 1)
