@@ -456,9 +456,9 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
 endif
 
 # COULOMB
-ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))		   
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))		   
-  ifneq (,$(findstring 1,${INTERACTION}))			   
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
   endif
@@ -471,7 +471,7 @@ endif
 
 # DIPOLE
 ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))	
+  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
@@ -587,10 +587,10 @@ OBJECTS := $(subst .c,.o,${SOURCES})
 #
 ###########################################################################
 
-ifneq (,$(shell `which bzr 2> /dev/null`))
-  BAZAAR = 1
+ifneq (,$(shell `which git 2> /dev/null`))
+  GIT = 1
 else
-  BAZAAR = 0
+  GIT = 0
 endif
 
 ###########################################################################
@@ -663,15 +663,14 @@ else
 ifneq (,${MAKETARGET})
 	@echo "${WARNING}"
 ifeq (0,${RELEASE})
-ifeq (1,${BAZAAR})
-	@echo -e "Writing bazaar data to version.h\n"
+ifeq (1,${GIT})
+	@echo -e "Writing git data to version.h\n"
 	@rm -f version.h
-	@bzr version-info --custom \
-	--template="#define VERSION_INFO \"potfit-{branch_nick} (r{revno})\"\n" > version.h
-	@bzr version-info --custom \
-	--template="#define VERSION_DATE \"{build_date}\"\n" >> version.h
+
+	@echo -e "#define VERSION_INFO \"potfit-git (r"`git rev-list HEAD | wc -l`")\"\n" > version.h
+	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 else
-	@echo -e "Writing fake bazaar data to version.h\n"
+	@echo -e "Writing fake git data to version.h\n"
 	@rm -f version.h
 	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
 	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
