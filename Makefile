@@ -131,9 +131,15 @@ BIN_DIR 	= ${HOME}/bin/i386-linux
 #BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
-MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
-ACML4DIR  	= /common/linux/paket/acml4.4.0/ifort64
-ACML5DIR  	= /opt/acml5.2.0/ifort64
+
+# ITAP settings
+#MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
+#ACML4DIR  	= /common/linux/paket/acml4.4.0/gfortran64
+
+# General settings
+MKLDIR          = /opt/intel/composer_xe_2013.3.163/mkl
+ACML4DIR  	= /opt/acml4.4.0/gfortran64
+ACML5DIR  	= /opt/acml5.3.0/gfortran64
 LIBMDIR 	= /opt/amdlibm
 
 ###########################################################################
@@ -147,7 +153,6 @@ STRIP 		= $(shell which strip 2> /dev/null)
 LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
-MKLPATH         = ${MKLDIR}/lib
 ACML4PATH 	= ${ACML4DIR}/lib
 ACML5PATH 	= ${ACML5DIR}/lib
 RELEASE		= 0
@@ -175,10 +180,8 @@ ifeq (x86_64-icc,${SYSTEM})
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
-  MKLPATH       = ${MKLDIR}/lib/em64t
   CINCLUDE 	+= -I${MKLDIR}/include
-  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
-		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
+  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
 		   -lmkl_core -Wl,--end-group -lpthread
 endif
 
@@ -213,17 +216,15 @@ ifeq (x86_64-gcc,${SYSTEM})
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
-  MKLPATH       = ${MKLDIR}/lib/em64t/
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
-		   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
-  CINCLUDE     		+= -I${ACML4DIR}/include
-  LIBS			+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+  CINCLUDE     	+= -I${ACML4DIR}/include
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
   LIBMPATH 	= ${LIBMDIR}/lib/static
@@ -258,10 +259,8 @@ ifeq (i686-icc,${SYSTEM})
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
-  MKLPATH       = ${MKLDIR}/lib/32
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS 		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
-		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
+  LIBS 		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread
 endif
 
@@ -296,10 +295,8 @@ ifeq (i686-gcc,${SYSTEM})
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
-  MKLPATH       = ${MKLDIR}/lib/32
   CINCLUDE      += -I${MKLDIR}/include
-  LIBS		+= -L${MKLPATH} ${MKLPATH}/libmkl_solver_sequential.a \
-		   -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
+  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
@@ -626,7 +623,7 @@ endif
 
 # How to link
 ${MAKETARGET}: ${OBJECTS}
-	${CC} ${LIBS} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS}
+	${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
 ifneq (,${STRIP})
   ifeq (,$(findstring prof,${MAKETARGET}))
     ifeq (,$(findstring debug,${MAKETARGET}))
