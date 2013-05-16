@@ -127,20 +127,21 @@ SYSTEM 		= $(shell uname -m)-icc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
-BIN_DIR 	= ${HOME}/bin/i386-linux
+BIN_DIR 	= ${HOME}/bin
 #BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
 
-# ITAP settings
-#MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
-#ACML4DIR  	= /common/linux/paket/acml4.4.0/gfortran64
-
 # General settings
 MKLDIR          = /opt/intel/composer_xe_2013.3.163/mkl
-ACML4DIR  	= /opt/acml4.4.0/gfortran64
+ACML4DIR  	= /opt/acml4.4.0/gfortran34
 ACML5DIR  	= /opt/acml5.3.0/gfortran64
 LIBMDIR 	= /opt/amdlibm
+
+# ITAP settings
+#BIN_DIR 	= ${HOME}/bin/i386-linux
+#MKLDIR          = /common/linux/paket/intel/compiler-11.0/cc/mkl
+#ACML4DIR  	= /common/linux/paket/acml4.4.0/gfortran64
 
 ###########################################################################
 #
@@ -267,12 +268,12 @@ endif
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   CINCLUDE     	+= -I$(ACML4DIR)/include
-  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
   LIBMPATH 	= ${LIBMDIR}/lib/static
   CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml
 endif
 
   export        OMPI_CC OMPI_CLINKER
@@ -303,12 +304,12 @@ endif
 # AMD Core Math Library
 ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   CINCLUDE     	+= -I$(ACML4DIR)/include
-  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -Wl,--as-needed
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
   LIBMPATH 	= ${LIBMDIR}/lib/static
   CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -Wl,--as-needed
 endif
 
   export        OMPI_CC OMPI_CLINKER

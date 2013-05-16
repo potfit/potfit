@@ -1,4 +1,6 @@
 *.o
+*.swp
+*~
 version.h
 tags
 cscope.out

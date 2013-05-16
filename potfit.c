@@ -353,7 +353,7 @@ int main(int argc, char **argv)
     if (opt) {
       write_pot_table(&opt_pot, endpot);
 #else
-      tot = calc_forces(opt_pot.table, force, 0);
+    tot = calc_forces(opt_pot.table, force, 0);
     if (opt) {
       write_pot_table(&apot_table, endpot);
 #endif /* !APOT */
