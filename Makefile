@@ -175,8 +175,8 @@ ifeq (x86_64-icc,${SYSTEM})
   OPT_FLAGS     += -fast -xHost
 
 # profiling and debug flags
-  PROF_FLAGS    += -prof-gen
-  PROF_LIBS     += -prof-gen
+  PROF_FLAGS    += --profile-functions
+  PROF_LIBS     += --profile-functions
   DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
 
 # Intel Math Kernel Library
