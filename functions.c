@@ -78,7 +78,8 @@ void apot_init(void)
   add_pot(double_morse, 7);
   add_pot(double_exp, 5);
   add_pot(poly_5, 5);
-  add_pot(cbb, 12);
+  add_pot(kawamura, 9);
+  add_pot(kawamura_mix, 12);
   add_pot(exp_plus, 3);
   add_pot(mishin, 6);
   add_pot(gen_lj, 5);
@@ -562,25 +563,34 @@ void poly_5_value(double r, double *p, double *f)
 
 /****************************************************************
  *
- * cbb potential, from C. B. Basak
+ * kawamura potential
  *
- * http://dx.doi.org/10.1016/S0925-8388(03)00350-5
+ * http://dx.doi.org/10.1016/S0925-8388(00)00806-9
  *
  ****************************************************************/
 
-void cbb_value(double r, double *p, double *f)
-{
+void kawamura_value(double r, double *p, double *f) {
   static double r6;
 
   r6 = r * r * r;
   r6 *= r6;
 
-  *f =
-    p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] +
-      p[6])) - p[7] * p[8] / r6 + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2. * exp(-p[10] * (r -
-	p[11])));
+  *f = p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] + p[6])) - p[7] * p[8] / r6;
+
+  return;
 }
 
+void kawamura_mix_value(double r, double *p, double *f) {
+  static double r6;
+
+  r6 = r * r * r;
+  r6 *= r6;
+
+  *f = p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] + p[6])) - p[7] * p[8] / r6
+    + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2. * exp(-p[10] * (r - p[11])));
+
+  return;
+}
 /****************************************************************
  *
  * exp_plus potential
