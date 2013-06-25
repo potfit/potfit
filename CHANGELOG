@@ -1,3 +1,8 @@
+potfit-0.5.3 (20130625)
++ fix building in 32bit environments
++ support latest versions of icc and mkl
++ renamed cbb potential to kawamura
+
 potfit-0.5.2 (20130301)
 + EAM potentials can now be used together with electrostatics (COULOMB or DIPOLE)
 + fixed bug in rescale for pot 4 (reported by Andreas Ruehl)
