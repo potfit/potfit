@@ -321,8 +321,8 @@ void anneal(double *xi)
 	printf("Force after rescaling %f\n", F);
       }
 #endif /* !APOT && ( EAM || ADP ) && !NORESCALE */
-
     }
+
     /*Temp adjustment */
     T *= TEMPVAR;
     k++;

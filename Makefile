@@ -134,7 +134,7 @@ BIN_DIR 	= ${HOME}/bin
 
 # General settings
 MKLDIR          = /opt/intel/composer_xe_2013.3.163/mkl
-ACML4DIR  	= /opt/acml4.4.0/gfortran34
+ACML4DIR  	= /opt/acml4.4.0/gfortran64
 ACML5DIR  	= /opt/acml5.3.0/gfortran64
 LIBMDIR 	= /opt/amdlibm
 
