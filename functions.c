@@ -569,7 +569,8 @@ void poly_5_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void kawamura_value(double r, double *p, double *f) {
+void kawamura_value(double r, double *p, double *f)
+{
   static double r6;
 
   r6 = r * r * r;
@@ -580,7 +581,8 @@ void kawamura_value(double r, double *p, double *f) {
   return;
 }
 
-void kawamura_mix_value(double r, double *p, double *f) {
+void kawamura_mix_value(double r, double *p, double *f)
+{
   static double r6;
 
   r6 = r * r * r;
@@ -591,6 +593,7 @@ void kawamura_mix_value(double r, double *p, double *f) {
 
   return;
 }
+
 /****************************************************************
  *
  * exp_plus potential
