@@ -1,7 +1,7 @@
 ############################################################################
 #
 # potfit -- The ITAP Force Matching Program
-# 	Copyright 2002-2011
+# 	Copyright 2002-2013
 #
 # 	Institute for Theoretical and Applied Physics,
 # 	University of Stuttgart, D-70550 Stuttgart, Germany

@@ -4,7 +4,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2012
+ * Copyright 2002-2013
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.itap.physik.uni-stuttgart.de/
@@ -322,6 +322,7 @@ void anneal(double *xi)
       }
 #endif /* !APOT && ( EAM || ADP ) && !NORESCALE */
     }
+/*    exit(EXIT_FAILURE);*/
 
     /*Temp adjustment */
     T *= TEMPVAR;
