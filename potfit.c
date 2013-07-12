@@ -116,9 +116,9 @@ int main(int argc, char **argv)
   double *force;
   double *rms;
   time_t t_begin, t_end;
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
   double *totdens = NULL;
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
 
 #ifdef MPI
   init_mpi(argc, argv);
@@ -147,6 +147,9 @@ int main(int argc, char **argv)
 #elif defined COULOMB && defined EAM
   calc_forces = calc_forces_eam_elstat;
   strcpy(interaction_name, "EAM_ELSTAT");
+#elif defined MEAM
+  calc_forces = calc_forces_meam;
+  strcpy(interaction_name, "MEAM");
 #endif /* PAIR */
 
   /* read the parameters and the potential file */
@@ -196,7 +199,7 @@ int main(int argc, char **argv)
 #endif /* APOT */
 
     /* set spline density corrections to 0 */
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
     lambda = (double *)malloc(ntypes * sizeof(double));
     reg_for_free(lambda, "lambda");
 
@@ -208,7 +211,7 @@ int main(int argc, char **argv)
 #ifndef NORESCALE
 /*    rescale(&opt_pot, 1., 1);	|+ rescale now... +|*/
 #endif /* NORESCALE */
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
     init_done = 1;
 
     /* properly initialize random number generator */
@@ -259,19 +262,19 @@ int main(int argc, char **argv)
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
   stress_p = energy_p + nconf;
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
   punish_par_p = dummy_p + 2 * ntypes;
   punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
-#endif /* APOT */
-#else
+#endif
+#else /* EAM || ADP || MEAM */
 #ifdef APOT
   punish_par_p = stress_p + 6 * nconf;
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif /* APOT */
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
   rms = (double *)malloc(3 * sizeof(double));
   if (NULL == rms)
     error(1, "Could not allocate memory for rms errors.");
@@ -386,7 +389,7 @@ int main(int argc, char **argv)
     }
 #endif /* !APOT */
 
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
     if (write_output_files) {
@@ -403,8 +406,16 @@ int main(int argc, char **argv)
       totdens[i] = 0.;
     }
     fprintf(outfile, "#    atomtype\trho\n");
+#if defined MEAM
+    fprintf(outfile, "#    atomtype\trho\trho_eam\trho_meam\n");
+#endif
     for (i = 0; i < natoms; i++) {
+#if defined EAM || defined ADP
       fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].typ, atoms[i].rho);
+#elif defined MEAM
+      fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, atoms[i].typ, atoms[i].rho,
+	atoms[i].rho_eam, atoms[i].rho - atoms[i].rho_eam);
+#endif
       totdens[atoms[i].typ] += atoms[i].rho;
     }
     fprintf(outfile, "\n");
@@ -437,7 +448,7 @@ int main(int argc, char **argv)
       write_pot_table_imd(&opt_pot, imdpot);
 #endif /* NEWSCALE */
 #endif /* !MPI */
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
 
     /* prepare for error calculations */
 #ifdef CONTRIB
@@ -587,8 +598,7 @@ int main(int argc, char **argv)
       printf("Stress data not written (stress weight was 0).\n");
     }
 #endif /* STRESS */
-
-#if ( defined EAM || defined ADP ) && !defined NOPUNISH
+#if ( defined EAM || defined ADP || defined MEAM ) && !defined NOPUNISH
     /* write EAM punishments */
     if (write_output_files) {
       strcpy(file, output_prefix);

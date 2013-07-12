@@ -1,3 +1,6 @@
+potfit-next (unreleased)
++ merge MEAM implementation of Jeremy Nicklas (Ohio State University)
+
 potfit-0.5.3 (20130625)
 + fix building in 32bit environments
 + support latest versions of icc and mkl
@@ -274,11 +277,18 @@ bzr-20100510
 + only save new neighbors, speeds up the optimization significantly
   calculate forces with actio=reactio
 
+<<<<<<< TREE
+=======
 bzr-20100429
 + new functions and loops added for dipole calculation
 
+>>>>>>> MERGE-SOURCE
 bzr-20100426
+<<<<<<< TREE
++ re-add MEAM part
+=======
 + re-add DIPOLE part
+>>>>>>> MERGE-SOURCE
 
 bzr-20100426
 + start migration to bazaar vcs
@@ -289,6 +299,9 @@ bzr-20100426
 	merged smooth.c into functions.c
 	remove MEAM, ADP and DIPOLE parts
 	remove all references to format5
+
+bzr-20100429
++ new functions and loops added for dipole calculation
 
 CVS-20100422
 + final updates

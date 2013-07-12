@@ -374,11 +374,13 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c linmin.c \
 		  random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-POTFITSRC      += force_pair.c
+  POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+    POTFITSRC      += force_meam.c
+  else ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
     POTFITSRC      += force_eam_elstat.c
   else ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
     POTFITSRC      += force_eam_elstat.c
@@ -400,21 +402,24 @@ ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
 endif
 
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-POTFITSRC      += force_adp.c
+  POTFITSRC      += force_adp.c
 endif
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-POTFITHDR      += functions.h
-POTFITSRC      += functions.c
-ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-POTFITSRC      += chempot.c
-endif
+  POTFITHDR      += functions.h
+  POTFITSRC      += functions.c
+  ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+    POTFITSRC      += chempot.c
+  endif
 else
-POTFITSRC      += rescale.c
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+    POTFITSRC 	+= rescale_meam.c
+  else
+    POTFITSRC      += rescale.c
 endif
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
-POTFITSRC      += diff_evo.c
+  POTFITSRC      += diff_evo.c
 endif
 
 MPISRC          = mpi_utils.c
@@ -449,8 +454,15 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
   ERROR += More than one potential model specified
   endif
-  CFLAGS  += -DEAM
-  INTERACTION = 1
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+    CFLAGS  += -DMEAM
+    ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+      ERROR += MEAM does not support analytic potentials (yet)
+    endif
+  else
+    CFLAGS  += -DEAM
+  endif
+INTERACTION = 1
 endif
 
 # COULOMB

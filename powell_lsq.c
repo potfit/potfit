@@ -108,10 +108,8 @@ void powell_lsq(double *xi)
 #endif /* ACML */
 
   /* clear delta */
-  for (i = 0; i < ndimtot; i++) {
+  for (i = 0; i < ndimtot; i++)
     delta[i] = 0.;
-/*    printf("%f\n",xi[i]);*/
-  }
 
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
@@ -138,7 +136,7 @@ void powell_lsq(double *xi)
     /* Init gamma */
     i = gamma_init(gamma, d, xi, fxi1);
     if (0 != i) {
-#ifdef EAM
+#if defined EAM || defined MEAM
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
       warning(1, "F does not depend on xi[%d], trying to rescale!\n", idx[i - 1]);
@@ -290,7 +288,9 @@ void powell_lsq(double *xi)
 	break;
       }
     }
-#if defined EAM && !defined NORESCALE
+    // WARNING: This rescaling is not necessary for EAM. Causes more problems.
+#if defined xEAM || defined xMEAM
+#ifndef NORESCALE
     /* Check for rescaling... every fourth step */
     if ((n % 4) == 0) {
       temp = rescale(&opt_pot, 1., 0);
@@ -300,8 +300,8 @@ void powell_lsq(double *xi)
 	F = calc_forces(xi, fxi1, 2);
       }
     }
-#endif /* EAM && !NORESCALE */
-
+#endif /* NORESCALE */
+#endif /* EAM */
     /* write temp file  */
     if (*tempfile != '\0') {
 #ifndef APOT

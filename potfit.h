@@ -41,6 +41,10 @@
 #include <mpi.h>
 #endif /* MPI */
 
+#ifdef MEAM
+#define MAXNEIGH 130
+#endif
+
 #include "random.h"
 
 #ifdef APOT
@@ -48,9 +52,9 @@
 #define APOT_PUNISH 10e6	/* general value for apot punishments */
 #endif /* APOT */
 
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
 #define DUMMY_WEIGHT 100.
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
 
 #define FORCE_EPS .1
 
@@ -70,6 +74,9 @@
 #if defined EAM
 #undef SLOTS
 #define SLOTS 2
+#elif defined MEAM
+#undef SLOTS
+#define SLOTS 3
 #elif defined ADP
 #undef SLOTS
 #define SLOTS 4
@@ -83,7 +90,7 @@
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
-typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT } Interaction_T;
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT, I_MEAM } Interaction_T;
 
 typedef struct {
   double x;
@@ -122,7 +129,25 @@ typedef struct {
   double grad_el;		/* stores tail of first derivative of electrostatic potential */
   double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
 #endif
+#ifdef MEAM
+  double recip;
+  double f;
+  double df;
+  double drho;
+#endif
 } neigh_t;
+
+#ifdef MEAM
+typedef struct {
+  double cos;
+  int   slot;
+  double shift;
+  double step;
+
+  double g;
+  double dg;
+} angl;
+#endif
 
 typedef struct {
   int   typ;
@@ -134,15 +159,19 @@ typedef struct {
 #ifdef CONTRIB
   int   contrib;		/* Does this atom contribute to the error sum? */
 #endif
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
   double rho;			/* embedding electron density */
   double gradF;			/* gradient of embedding fn. */
-#endif
+#endif				/* EAM || ADP || MEAM */
 #ifdef ADP
   vector mu;
   sym_tens lambda;
   double nu;
-#endif
+#endif				/* ADP */
+#ifdef MEAM
+  double rho_eam;		// Store EAM density
+  angl *angl_part;
+#endif				/* MEAM */
 #ifdef DIPOLE
   vector E_stat;		/* static field-contribution */
   vector p_sr;			/* short-range dipole moment */
@@ -260,6 +289,8 @@ EXTERN Interaction_T interaction INIT(I_ADP);
 EXTERN Interaction_T interaction INIT(I_ELSTAT);
 #elif defined COULOMB && defined EAM
 EXTERN Interaction_T interaction INIT(I_EAM_ELSTAT);
+#elif defined MEAM
+EXTERN Interaction_T interaction INIT(I_MEAM);
 #endif /* interaction type */
 
 /* system variables */
@@ -268,6 +299,7 @@ EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+EXTERN MPI_Datatype MPI_ANGL;
 EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
 EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VECTOR;
@@ -281,6 +313,7 @@ EXTERN char flagfile[255] INIT("\0");	/* break if file exists */
 EXTERN char imdpot[255] INIT("\0");	/* file for IMD potential */
 EXTERN char maxchfile[255] INIT("\0");	/* file with maximal changes */
 EXTERN char output_prefix[255] INIT("\0");	/* prefix for all output files */
+EXTERN char output_lammps[255] INIT("\0");	/* lammps output files */
 EXTERN char plotfile[255] INIT("\0");	/* file for plotting */
 EXTERN char plotpointfile[255] INIT("\0");	/* write points for plotting */
 EXTERN char startpot[255] INIT("\0");	/* file with start potential */
@@ -291,6 +324,7 @@ EXTERN int opt INIT(0);		/* optimization flag */
 EXTERN int seed INIT(4);	/* seed for RNG */
 EXTERN int usemaxch INIT(0);	/* use maximal changes file */
 EXTERN int write_output_files INIT(0);
+EXTERN int write_lammps_files INIT(0);
 EXTERN int write_pair INIT(0);
 EXTERN int writeimd INIT(0);
 EXTERN int write_lammps INIT(0);	/* write output also in LAMMPS format */
@@ -394,10 +428,10 @@ EXTERN int myconf INIT(0);
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
 #ifdef APOT
 EXTERN int punish_par_p INIT(0);	/* pointer to parameter punishment contraints */
 EXTERN int punish_pot_p INIT(0);	/* pointer to potential punishment constraints */
@@ -484,10 +518,12 @@ double calc_forces_adp(double *, double *, int);
 double calc_forces_elstat(double *, double *, int);
 #elif defined COULOMB && defined EAM
 double calc_forces_eam_elstat(double *, double *, int);
+#elif defined MEAM
+double calc_forces_meam(double *, double *, int);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
-#ifdef EAM
+#if defined EAM || defined MEAM
 double rescale(pot_table_t *, double, int);
 void  embed_shift(pot_table_t *);
 #endif /* EAM */
@@ -498,6 +534,7 @@ void  init_mpi(int, char **);
 void  shutdown_mpi(void);
 void  broadcast_params(void);
 void  broadcast_neighbors(void);
+void  broadcast_angles(void);
 void  potsync(void);
 #endif /* MPI */
 

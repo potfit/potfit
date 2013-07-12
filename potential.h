@@ -65,6 +65,7 @@ void  write_pot_table3(pot_table_t *, char *);
 void  write_pot_table4(pot_table_t *, char *);
 #endif /* APOT */
 void  write_pot_table_imd(pot_table_t *, char *);
+void  write_pot_table_lammps(pot_table_t *);
 void  write_plotpot_pair(pot_table_t *, char *);
 void  write_pot_table_lammps(pot_table_t *);
 void  write_altplot_pair(pot_table_t *, char *);

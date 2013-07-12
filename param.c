@@ -235,6 +235,10 @@ void read_paramfile(FILE *pf)
       getparam("output_prefix", output_prefix, PARAM_STR, 1, 255);
       if (strcmp(output_prefix, "") != 0)
 	write_output_files = 1;
+    } else if (strcasecmp(token, "output_lammps") == 0) {
+      getparam("output_lammps", output_lammps, PARAM_STR, 1, 255);
+      if (strcmp(output_lammps, "") != 0)
+	write_lammps_files = 1;
     }
     /* file for IMD potential */
     else if (strcasecmp(token, "imdpot") == 0) {

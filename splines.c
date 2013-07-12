@@ -329,6 +329,59 @@ double splint_ne(pot_table_t *pt, double *xi, int col, double r)
   return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
 }
 
+/******************************************************************************
+ *
+ * splint_ne_lin: interpolates the function with splines,
+ *                linear extrapolation (nonequidistant x[i])
+ *
+ *****************************************************************************/
+
+double splint_ne_lin(pot_table_t *pt, double *xi, int col, double r)
+{
+  int   klo, khi, k;
+  double h, b, a, d22, d21, p1, p2, x1, x2;
+  double grad;
+
+  klo = pt->first[col];
+  khi = pt->last[col];
+
+  /* Find index by bisection */
+  while (khi - klo > 1) {
+    k = (khi + klo) >> 1;
+    if (pt->xcoord[k] > r)
+      khi = k;
+    else
+      klo = k;
+  }
+  x1 = pt->xcoord[klo];
+  x2 = pt->xcoord[khi];
+  h = x2 - x1;
+  p1 = xi[klo];
+  p2 = xi[khi];
+  d21 = pt->d2tab[klo];
+  d22 = pt->d2tab[khi];
+
+/*   if (h == 0.0) error("Bad xa input to routine splint"); */
+  b = (r - x1) / h;
+  a = (1. - b);
+
+  if (r < pt->begin[col]) {
+    b = 0.;
+    a = 1.;
+    grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+    return p1 + grad * (r - x1);
+  } else if (r > pt->end[col]) {
+    b = 1.;
+    a = 0.;
+    grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+    return p2 + grad * (r - x2);
+  }
+
+  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
+
+}
+
+
 /****************************************************************
  *
  * splint_comb_ne: calculates spline interpolation of a function (return value)

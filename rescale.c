@@ -257,7 +257,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
       else
 	grad = 1.e30;
       if (xi[pt->first[i] - 1] < 1.e30)
-	xi[pt->first[i] - 2] = -xi[pt->first[i] - 2] / a;
+	xi[pt->first[i] - 2] = -xi[pt->first[i] - 1] / a;
       else
 	xi[pt->first[i] - 2] = 1.e30;
       xi[pt->first[i] - 1] = grad;

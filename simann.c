@@ -138,6 +138,7 @@ void anneal(double *xi)
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   auto_T = 0;
   int   loopagain;		/* loop flag */
+  int   rescaleMe = 1;		/* rescaling flag */
   double T = -1.;		/* Temperature */
   double F, Fopt, F2;		/* Fn value */
   double *Fvar;			/* backlog of Fn vals */
@@ -172,6 +173,14 @@ void anneal(double *xi)
   xi2 = vect_double(ndimtot);
   fxi1 = vect_double(mdim);
   naccept = vect_int(ndim);
+  // Optimum potential x-coord arrays
+  int   col, col2;
+  double *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
+  optbegin = vect_double(ntypes);
+  optend = vect_double(ntypes);
+  optstep = vect_double(ntypes);
+  optinvstep = vect_double(ntypes);
+  optxcoord = vect_double(ndimtot);
 
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
@@ -184,7 +193,21 @@ void anneal(double *xi)
   }
   F = (*calc_forces) (xi, fxi1, 0);
   Fopt = F;
+  // Need to save xcoord of this F potential because we use the
+  // optimum potential in the future, and the current potential
+  // could be rescaled differently from the optimum
+  col2 = 0;
+  for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
+    optbegin[col2] = opt_pot.begin[col];
+    optend[col2] = opt_pot.end[col];
+    optstep[col2] = opt_pot.step[col];
+    optinvstep[col2] = opt_pot.invstep[col];
 
+    // Loop through each spline knot of F
+    for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
+      optxcoord[n] = opt_pot.xcoord[n];
+    ++col2;
+  }
   /* determine optimum temperature for annealing */
   if (auto_T) {
     int   e = 0;
@@ -263,6 +286,23 @@ void anneal(double *xi)
 	    if (F2 < Fopt) {
 	      for (n = 0; n < ndimtot; n++)
 		xopt[n] = xi2[n];
+
+	      // Need to save xcoord of this F potential because we use the
+	      // optimum potential in the future, and the current potential
+	      // could be rescaled differently from the optimum
+	      col2 = 0;
+	      for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
+		optbegin[col2] = opt_pot.begin[col];
+		optend[col2] = opt_pot.end[col];
+		optstep[col2] = opt_pot.step[col];
+		optinvstep[col2] = opt_pot.invstep[col];
+
+		// Loop through each spline knot of F
+		for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
+		  optxcoord[n] = opt_pot.xcoord[n];
+
+		++col2;
+	      }
 	      Fopt = F2;
 	      if (*tempfile != '\0') {
 #ifndef APOT
@@ -309,20 +349,19 @@ void anneal(double *xi)
 	  break;
 	}
       }
-#if !defined APOT && ( defined EAM || defined ADP ) && !defined NORESCALE
+#if !defined APOT && ( defined EAM || defined ADP || defined MEAM ) && !defined NORESCALE
       /* Check for rescaling... every tenth step */
-      if ((m % 10) == 0) {
+      if (((m + 1) % 10 == 0) && (rescaleMe == 1)) {
 	/* Was rescaling necessary ? */
-	printf("Force before rescaling %f\n", F);
 	if (rescale(&opt_pot, 1., 0) != 0.) {
 	  /* wake other threads and sync potentials */
+	  printf("F before rescale = %f\n", F);
 	  F = (*calc_forces) (xi, fxi1, 2);
+	  printf("F after rescale = %f\n", F);
 	}
-	printf("Force after rescaling %f\n", F);
       }
-#endif /* !APOT && ( EAM || ADP ) && !NORESCALE */
+#endif /* !APOT && ( EAM || ADP || MEAM ) && !NORESCALE */
     }
-/*    exit(EXIT_FAILURE);*/
 
     /*Temp adjustment */
     T *= TEMPVAR;
@@ -337,13 +376,56 @@ void anneal(double *xi)
       for (n = 0; n < ndimtot; n++)
 	xi[n] = xopt[n];
       F = Fopt;
+#ifdef MEAM
+      // Need to put back xcoord of optimum F potential
+      col2 = 0;
+      for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
+	opt_pot.begin[col] = optbegin[col2];
+	opt_pot.end[col] = optend[col2];
+	opt_pot.step[col] = optstep[col2];
+	opt_pot.invstep[col] = optinvstep[col2];
+
+	// Loop through each spline knot of F
+	for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
+	  opt_pot.xcoord[n] = optxcoord[n];
+
+	++col2;
+      }
+
+      /* wake other threads and sync potentials */
+      F = (*calc_forces) (xi, fxi1, 2);
+
+#endif
+
       loopagain = 1;
+
+      // Turn off rescaling
+      rescaleMe = 0;
     }
   } while (k < KMAX && loopagain);
   for (n = 0; n < ndimtot; n++) {
     xi[n] = xopt[n];
   }
 
+#ifdef MEAM
+  // Need to put back xcoord of optimum F potential
+  col2 = 0;
+  for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
+    opt_pot.begin[col] = optbegin[col2];
+    opt_pot.end[col] = optend[col2];
+    opt_pot.step[col] = optstep[col2];
+    opt_pot.invstep[col] = optinvstep[col2];
+
+    // Loop through each spline knot of F
+    for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
+      opt_pot.xcoord[n] = optxcoord[n];
+
+    ++col2;
+  }
+
+  // wake other threads and sync potentials
+  F = (*calc_forces) (xi, fxi1, 2);
+#endif
   printf("Finished annealing, starting powell minimization ...\n");
 
   F = Fopt;

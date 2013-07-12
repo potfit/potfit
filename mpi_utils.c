@@ -82,6 +82,9 @@ void broadcast_params()
   MPI_Aint displs[MAX_MPI_COMPONENTS];
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
+#ifdef MEAM
+  angl  testangl;
+#endif
   atom_t testatom;
   int   calclen, size, i, j, each, odd, count;
 
@@ -119,6 +122,12 @@ void broadcast_params()
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* grad_el */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* ggrad_el */
 #endif /* COULOMB */
+#ifdef MEAM
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;   	/* recip */
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;     /* f */
+  blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* df */
+  blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* drho */
+#endif /* MEAM */
 
   count = 0;
   MPI_Address(&testneigh.typ, 		&displs[count++]);
@@ -143,6 +152,12 @@ void broadcast_params()
   MPI_Address(&testneigh.grad_el, 	&displs[count++]);
   MPI_Address(&testneigh.ggrad_el, 	&displs[count++]);
 #endif /* COULOMB */
+#ifdef MEAM
+  MPI_Address(&testneigh.recip, 	&displs[count++]);
+  MPI_Address(&testneigh.f, 		&displs[count++]);
+  MPI_Address(&testneigh.df, 		&displs[count++]);
+  MPI_Address(&testneigh.drho, 		&displs[count++]);
+#endif /* MEAM */
   /* *INDENT-ON* */
 
   /* set displacements */
@@ -153,6 +168,36 @@ void broadcast_params()
 
   MPI_Type_create_struct(size, blklens, displs, typen, &MPI_NEIGH);
   MPI_Type_commit(&MPI_NEIGH);
+
+#ifdef MEAM
+  /* MPI_ANGL */
+  /* *INDENT-OFF* */
+  size = 0;
+  blklens[size] = 1; 		typen[size++] = MPI_DOUBLE;    	/* cos */
+  blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* slot */
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* shift */
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* step */
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;   	/* g */
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* dg */
+
+  count = 0;
+  MPI_Address(&testangl.cos, 		&displs[count++]);
+  MPI_Address(&testangl.slot, 		&displs[count++]);
+  MPI_Address(&testangl.shift, 		&displs[count++]);
+  MPI_Address(&testangl.step, 		&displs[count++]);
+  MPI_Address(&testangl.g, 		&displs[count++]);
+  MPI_Address(&testangl.dg, 		&displs[count++]);
+  /* *INDENT-ON* */
+
+  /* set displacements */
+  for (i = 1; i < count; i++) {
+    displs[i] -= displs[0];
+  }
+  displs[0] = 0;
+
+  MPI_Type_struct(size, blklens, displs, typen, &MPI_ANGL);
+  MPI_Type_commit(&MPI_ANGL);
+#endif /* MEAM */
 
   /* MPI_ATOM */
   /* *INDENT-OFF* */
@@ -195,6 +240,7 @@ void broadcast_params()
 #endif /* DIPOLE && EAM */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
+  /* DO NOT BROADCAST ANGLES !!! DYNAMIC ALLOCATION */
 
   count = 0;
   MPI_Address(&testatom.typ, 		&displs[count++]);
@@ -450,6 +496,9 @@ void broadcast_params()
     }
   }
   broadcast_neighbors();
+#ifdef MEAM
+  broadcast_angles();
+#endif /* MEAM */
   conf_vol = (double *)malloc(myconf * sizeof(double));
   conf_uf = (int *)malloc(myconf * sizeof(double));
   conf_us = (int *)malloc(myconf * sizeof(double));
@@ -496,6 +545,48 @@ void broadcast_neighbors()
 }
 
 #ifndef APOT
+#ifdef MEAM
+
+/***************************************************************************
+ *
+ * scatter dynamic angle table
+ *
+ **************************************************************************/
+
+void broadcast_angles()
+{
+  int   i, j, neighs, nangles;
+  angl  angle;
+  atom_t *atom;
+
+  for (i = 0; i < natoms; ++i) {
+    atom = conf_atoms + i - firstatom;
+
+    if (myid == 0)
+      neighs = atoms[i].n_neigh;
+
+    nangles = (neighs * (neighs - 1)) / 2;
+
+    MPI_Bcast(&nangles, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (i >= firstatom && i < (firstatom + myatoms)) {
+      atom->angl_part = (angl *) malloc(nangles * sizeof(angl));
+    }
+
+    for (j = 0; j < nangles; ++j) {
+      if (myid == 0)
+	angle = atoms[i].angl_part[j];
+
+      MPI_Bcast(&angle, 1, MPI_ANGL, 0, MPI_COMM_WORLD);
+
+      if (i >= firstatom && i < (firstatom + myatoms)) {
+	atom->angl_part[j] = angle;
+      }
+    }
+  }
+}
+
+#endif /* MEAM */
 
 /****************************************************************
  *
