@@ -690,7 +690,7 @@ endif
 ###########################################################################
 
 clean:
-	rm -f *.o *.u *~ \#* *.V *.T *.O *.il
+	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h
 
 help:
 	@echo "Usage: make potfit[_<parallel>][_<option>[_<option>...]]"
