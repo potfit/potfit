@@ -1334,7 +1334,7 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals, char *fil
 	l++;
     }
   }
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
 
 #ifdef ADP
   /* read ADP dipole function u(r) */
@@ -2238,14 +2238,14 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
     /* transfer functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
 #ifdef ADP
     /* dipole terms */
     for (i = 0; i < ntypes; i++)
@@ -2256,6 +2256,15 @@ void write_pot_table0(apot_table_t *apt, char *filename)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
 #endif /* ADP */
+#ifdef MEAM
+    /* f terms */
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+    /* g terms */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+#endif /* MEAM */
   }
   if (have_invar) {
     fprintf(outfile, "\n#I");
@@ -2895,7 +2904,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col1 += i < j ? i * ntypes + j - m : j * ntypes + i - m2;
       col2 = i * ntypes + j;
       /* Extrapolation possible  */
+#ifdef APOT
+      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
+#else
       r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+#endif /* APOT */
       r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2], r2step[col2]);
@@ -2915,7 +2928,15 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       col2 = i * ntypes + j;
       r2 = r2begin[col2];
       for (k = 0; k < imdpotsteps; k++) {
+#ifdef APOT
+	apot_table.fvalue[col1] (sqrt(r2), apot_table.values[col1], &temp);
+	temp =
+	  smooth_pot[col1] ? temp * cutoff(sqrt(r2), apot_table.end[col1],
+	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
 	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
+#endif /* APOT */
 	r2 += r2step[col2];
       }
       fprintf(outfile, "%.16e\n", 0.0);
@@ -2924,7 +2945,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   }
 
   fclose(outfile);
-  printf("IMD MEAM f potential data written to %s\n", filename);
+  printf("IMD MEAM f potential data written to\t%s\n", filename);
 
   /* write g(cos) for MEAM */
   sprintf(filename, "%s_g_meam.imd.pt", prefix);
@@ -2957,7 +2978,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     fprintf(outfile, "\n");
   }
   fclose(outfile);
-  printf("IMD MEAM f potential data written to %s\n", filename);
+  printf("IMD MEAM g potential data written to\t%s\n", filename);
 #endif /* MEAM */
 
   free(r2begin);

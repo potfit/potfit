@@ -416,6 +416,7 @@ else
     POTFITSRC 	+= rescale_meam.c
   else
     POTFITSRC      += rescale.c
+  endif
 endif
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
@@ -445,32 +446,29 @@ INTERACTION = 0
 
 # pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
-CFLAGS += -DPAIR
-INTERACTION = 1
+  CFLAGS += -DPAIR
+  INTERACTION = 1
 endif
 
 # embedded atom method (EAM) potentials
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
-  ERROR += More than one potential model specified
+    ERROR += More than one potential model specified
   endif
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
     CFLAGS  += -DMEAM
-    ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-      ERROR += MEAM does not support analytic potentials (yet)
-    endif
   else
     CFLAGS  += -DEAM
   endif
-INTERACTION = 1
+  INTERACTION = 1
 endif
 
 # COULOMB
 ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
   ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-  ifneq (,$(findstring 1,${INTERACTION}))
-  ERROR += More than one potential model specified
-  endif
+    ifneq (,$(findstring 1,${INTERACTION}))
+      ERROR += More than one potential model specified
+    endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += COULOMB does not support tabulated potentials (yet)
@@ -482,9 +480,9 @@ endif
 # DIPOLE
 ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
   ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-  ifneq (,$(findstring 1,${INTERACTION}))
-  ERROR += More than one potential model specified
-  endif
+    ifneq (,$(findstring 1,${INTERACTION}))
+      ERROR += More than one potential model specified
+    endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += DIPOLE does not support tabulated potentials (yet)
@@ -496,19 +494,14 @@ endif
 # angular dependent potentials (ADP)
 ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
-  ERROR += More than one potential model specified
+    ERROR += More than one potential model specified
   endif
   CFLAGS  += -DADP
   INTERACTION = 1
 endif
 
 ifneq (,$(findstring 0,${INTERACTION}))
-ERROR += No interaction model specified
-endif
-
-# COMPAT - compatibility mode for old (w*d)^2
-ifneq (,$(findstring compat,${MAKETARGET}))
-CFLAGS += -DCOMPAT
+  ERROR += No interaction model specified
 endif
 
 # EVO - for differential evolution
@@ -518,7 +511,7 @@ endif
 
 # APOT - for analytic potentials
 ifneq (,$(findstring apot,${MAKETARGET}))
-CFLAGS += -DAPOT -DNORESCALE
+CFLAGS += -DAPOT
 endif
 
 # Stress

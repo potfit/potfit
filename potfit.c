@@ -229,14 +229,9 @@ int main(int argc, char **argv)
     free(array);
 #undef R_SIZE
 #undef RAND_MAX
-
-#ifdef COMPAT
-    warning(0, "You are running in compatibility mode!\n");
-    warning(1, "energy and stress weights will also be squared!\n");
-#endif
   }
 
-  /* initialize the remaining parameters and assign the atoms */
+/* initialize the remaining parameters and assign the atoms */
 #ifdef MPI
   MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
   broadcast_params();		/* let the others know what's going on */
@@ -257,10 +252,13 @@ int main(int argc, char **argv)
   force = (double *)malloc((mdim) * sizeof(double));
   if (NULL == force)
     error(1, "Could not allocate memory for main force vector.");
+  for (i = 0;i < mdim; i++)
+    force[i] = 0.0;
   reg_for_free(force, "force");
 
   /* starting positions for the force vector */
   energy_p = 3 * natoms;
+#ifdef STRESS
   stress_p = energy_p + nconf;
 #if defined EAM || defined ADP || defined MEAM
   limit_p = stress_p + 6 * nconf;
@@ -275,6 +273,22 @@ int main(int argc, char **argv)
   punish_pot_p = punish_par_p + apot_table.total_par;
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
+#else /* STRESS */
+#if defined EAM || defined ADP || defined MEAM
+  limit_p = energy_p + nconf;
+  dummy_p = limit_p + nconf;
+#ifdef APOT
+  punish_par_p = dummy_p + 2 * ntypes;
+  punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
+#endif
+#else /* EAM || ADP || MEAM */
+#ifdef APOT
+  punish_par_p = energy_p + nconf;
+  punish_pot_p = punish_par_p + apot_table.total_par;
+#endif /* APOT */
+#endif /* EAM || ADP || MEAM */
+#endif /* STRESS */
+
   rms = (double *)malloc(3 * sizeof(double));
   if (NULL == rms)
     error(1, "Could not allocate memory for rms errors.");
@@ -533,11 +547,7 @@ int main(int argc, char **argv)
       }
 
       for (i = 0; i < nconf; i++) {
-#ifdef COMPAT
-	sqr = conf_weight[i] * dsquare(eweight * force[energy_p + i]);
-#else
 	sqr = conf_weight[i] * eweight * dsquare(force[energy_p + i]);
-#endif /* COMPAT */
 	e_sum += sqr;
 	if (write_output_files) {
 	  fprintf(outfile, "%3d\t%6.2f\t%10.6f\t%13.10f\t%13.10f\t%f\t%f\t%f\n",
@@ -580,11 +590,7 @@ int main(int argc, char **argv)
       fprintf(outfile, "#\tconf_w\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
       for (i = stress_p; i < stress_p + 6 * nconf; i++) {
-#ifdef COMPAT
-	sqr = conf_weight[(i - stress_p) / 6] * dsquare(sweight * force[i]);
-#else
 	sqr = conf_weight[(i - stress_p) / 6] * sweight * dsquare(force[i]);
-#endif /* COMPAT */
 	s_sum += sqr;
 	fprintf(outfile, "%3d-%s\t%6.2f\t%14.8f\t%12.10f\t%12.10f\t%14.8f\n",
 	  (i - stress_p) / 6, component[(i - stress_p) % 6],

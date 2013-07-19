@@ -41,11 +41,17 @@
 #include <mpi.h>
 #endif /* MPI */
 
-#ifdef MEAM
-#define MAXNEIGH 130
-#endif
-
 #include "random.h"
+
+/* general flag for threebody potentials (Tersoff, SW, ..., ???) */
+#ifdef MEAM
+#define THREEBODY
+#endif /* MEAM */
+
+/* always define NORESCALE for analytic potentials */
+#ifdef APOT
+#define NORESCALE
+#endif
 
 #ifdef APOT
 #define APOT_STEPS 500		/* number of sampling points for analytic pot */
@@ -112,6 +118,7 @@ typedef struct {
   int   typ;
   int   nr;
   double r;
+  double inv_r;
   vector dist;			/* distance divided by r */
   int   slot[SLOTS];
   double shift[SLOTS];
@@ -130,10 +137,12 @@ typedef struct {
   double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
 #endif
 #ifdef MEAM
-  double recip;
   double f;
   double df;
   double drho;
+#endif
+#ifdef THREEBODY
+  int contrib;
 #endif
 } neigh_t;
 
@@ -169,8 +178,8 @@ typedef struct {
   double nu;
 #endif				/* ADP */
 #ifdef MEAM
-  double rho_eam;		// Store EAM density
-  angl *angl_part;
+  double rho_eam;		/* Store EAM density */
+  int num_angl;
 #endif				/* MEAM */
 #ifdef DIPOLE
   vector E_stat;		/* static field-contribution */
@@ -181,6 +190,9 @@ typedef struct {
   vector E_tot;			/* temporary induced field */
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
+#ifdef MEAM
+  angl *angl_part; 		/* dynamic array for angular neighbors */
+#endif /* MEAM */
 } atom_t;
 
 typedef struct {

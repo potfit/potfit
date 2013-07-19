@@ -232,8 +232,10 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
+#ifdef STRESS
 	for (i = 0; i < 6; i++)
 	  forces[stress_p + 6 * h + i] = 0.;
+#endif /* STRESS */
 
 	/* set limiting constraints */
 	forces[limit_p + h] = -force_0[limit_p + h];
@@ -254,7 +256,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  /* reset atomic density */
 	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
 	}
-	/* end first loop */
+	/* end of first loop */
 
 	/* 2nd loop: calculate pair forces and energies, atomic densities. */
 	for (i = 0; i < inconf[h]; i++) {
@@ -280,6 +282,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
+
 	      /* not double force: cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
@@ -483,23 +486,14 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-#ifdef COMPAT
-	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
-#else
 	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
-#endif /* COMPAT */
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum +=
-#ifdef COMPAT
-	      conf_weight[h] * dsquare(sweight * forces[stress_p + 6 * h + i]);
-#else
-	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
-#endif /* COMPAT */
+	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -623,11 +617,10 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
       } else
 	return sum;
     }
-
   }
 
   /* once a non-root process arrives here, all is done. */
-  return -1.;
+  return -1.0;
 }
 
 #endif /* EAM */

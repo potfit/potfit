@@ -202,8 +202,7 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
     myconf = nconf;
 #endif /* MPI */
 
-    /* region containing loop over configurations,
-       also OMP-parallelized region */
+    /* region containing loop over configurations */
     {
       atom_t *atom;
       int   h, j, k, l;
@@ -669,23 +668,14 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-#ifdef COMPAT
-	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
-#else
 	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
-#endif /* COMPAT */
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum +=
-#ifdef COMPAT
-	      conf_weight[h] * dsquare(sweight * forces[stress_p + 6 * h + i]);
-#else
-	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
-#endif /* COMPAT */
+	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */

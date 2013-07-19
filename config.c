@@ -51,6 +51,7 @@ void read_config(char *filename)
   int   cell_scale[3];
   int   fixed_elements;
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
+  int   have_small_box = 0;
 #ifdef CONTRIB
   int   have_contrib = 0;
 #endif /* CONTRIB */
@@ -69,11 +70,11 @@ void read_config(char *filename)
   double *mindist;
   sym_tens *stresses;
   vector d, dd, iheight;
-#ifdef MEAM
+#ifdef THREEBODY
   int   ijk;
   int   nnn;
   double ccos;
-#endif /* MEAM */
+#endif /* THREEBODY */
 
   /* initialize elements array */
   elements = (char **)malloc(ntypes * sizeof(char *));
@@ -130,6 +131,13 @@ void read_config(char *filename)
       if (1 > sscanf(buffer, "%d", &count))
 	error(1, "Unexpected end of file in %s", filename);
     }
+#ifndef THREEBODY
+/*    if (2 > count)*/
+/*      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);*/
+#else
+/*    if (3 > count)*/
+/*      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);*/
+#endif /* THREEBODY */
     /* increase memory for this many additional atoms */
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
     if (NULL == atoms)
@@ -400,6 +408,9 @@ void read_config(char *filename)
     cell_scale[1] = (int)ceil(rcutmax * iheight.y);
     cell_scale[2] = (int)ceil(rcutmax * iheight.z);
 
+    if (cell_scale[0] > 1 || cell_scale[1] > 1 || cell_scale[2] > 1)
+      have_small_box = 1;
+
 #ifdef DEBUG
     fprintf(stderr, "Checking cell size for configuration %d:\n", nconf);
     fprintf(stderr, "Box dimensions:\n");
@@ -420,11 +431,12 @@ void read_config(char *filename)
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
       atoms[i].n_neigh = 0;
-#ifdef MEAM
+    /* loop over all atoms for threebody interactions */
+#ifdef THREEBODY
       for (j = natoms; j < natoms + count; j++) {
 #else
       for (j = i; j < natoms + count; j++) {
-#endif /* MEAM */
+#endif /* THREEBODY */
 	d.x = atoms[j].pos.x - atoms[i].pos.x;
 	d.y = atoms[j].pos.y - atoms[i].pos.y;
 	d.z = atoms[j].pos.z - atoms[i].pos.z;
@@ -455,9 +467,7 @@ void read_config(char *filename)
 		atoms[i].neigh[k].typ = typ2;
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
-#ifdef MEAM
-		atoms[i].neigh[k].recip = 1 / r;
-#endif /* MEAM */
+		atoms[i].neigh[k].inv_r = 1.0 / r;
 		atoms[i].neigh[k].dist = dd;
 #ifdef COULOMB
 		atoms[i].neigh[k].r2 = r * r;
@@ -473,6 +483,12 @@ void read_config(char *filename)
 		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
 		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
+#ifdef THREEBODY
+		if ( (0 != ix) || (0 != iy) || (0 != iz) )
+		  atoms[i].neigh[k].contrib = 0;
+		else
+		  atoms[i].neigh[k].contrib = 1;
+#endif /* THREEBODY */
 		atoms[i].n_neigh++;
 
 		col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
@@ -481,6 +497,7 @@ void read_config(char *filename)
 		mindist[col] = MIN(mindist[col], r);
 
 		/* pre-compute index and shift into potential table */
+
 		/* pair potential */
 		if (!sh_dist) {
 		  if (format == 0 || format == 3) {
@@ -520,6 +537,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[0] = shift;
 		  atoms[i].neigh[k].slot[0] = slot;
 		  atoms[i].neigh[k].step[0] = step;
+
 #if defined EAM || defined ADP || defined MEAM
 		  /* transfer function */
 		  col = paircol + typ2;
@@ -561,17 +579,17 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[1] = shift;
 		  atoms[i].neigh[k].slot[1] = slot;
 		  atoms[i].neigh[k].step[1] = step;
-#endif
-#if defined MEAM
-		  // Store slots and stuff for f(r_ij)
-		  col =
-		    (typ1 <= typ2) ? paircol + 2 * ntypes + typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-		    : paircol + 2 * ntypes + typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+#endif /* EAM || ADP || MEAM */
+
+#ifdef MEAM
+		  /* Store slots and stuff for f(r_ij) */
+		  col = paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
 		  atoms[i].neigh[k].col[2] = col;
-		  if (format == 3) {
+		  if (0 == format || 3 == format) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
-		      printf("%f %f %d %d %d\n", r, calc_pot.begin[col], col, typ1, typ2);
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
 		      fflush(stdout);
 		      error(1, "short distance in config.c!");
 		    }
@@ -592,11 +610,6 @@ void read_config(char *filename)
 			klo = slot;
 		    }
 		    slot = klo;
-		    /* Check if we are at the last index - we should be lower */
-		    /* should be impossible anyway */
-		    /*   if (slot>=calc_pot.last[col]) {  */
-		    /*    klo--;khi--; */
-		    /*  } */
 		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
 		    shift = (r - calc_pot.xcoord[klo]) / step;
 
@@ -701,15 +714,16 @@ void read_config(char *filename)
       maxneigh = MAX(maxneigh, atoms[i].n_neigh);
       reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
     }
-    /* compute the angl part */
+
+    /* compute the angular part */
 #ifdef MEAM
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].n_neigh;
-      // Set size of angles for each atom to conserve mem
-      atoms[i].angl_part = malloc(((nnn * (nnn - 1)) / 2) * sizeof(angl));
+      /* Set size of angles for each atom to conserve mem */
+      atoms[i].angl_part = (angl *)malloc(((nnn * (nnn - 1)) / 2) * sizeof(angl));
       ijk = 0;
-      for (j = 0; j < nnn - 1; ++j) {
-	for (k = j + 1; k < nnn; ++k) {
+      for (j = 0; j < nnn - 1; j++) {
+	for (k = j + 1; k < nnn; k++) {
 	  ccos =
 	    atoms[i].neigh[j].dist.x * atoms[i].neigh[k].dist.x +
 	    atoms[i].neigh[j].dist.y * atoms[i].neigh[k].dist.y +
@@ -719,11 +733,11 @@ void read_config(char *filename)
 
 	  col = 2 * paircol + 2 * ntypes + atoms[i].typ;
 
-	  if (format == 3) {
-	    if (ccos > 2) {
-	      printf("%f %f %d %d %d\n", ccos, calc_pot.begin[col], col, typ1, typ2);
+	  if (0 == format || 3 == format) {
+	    if ((fabs(ccos) - 1.0) > 1e-10) {
+	      printf("%.20f %f %d %d %d\n", ccos, calc_pot.begin[col], col, typ1, typ2);
 	      fflush(stdout);
-	      error(1, "wrong cos, it is strange!");
+	      error(1, "cos out of range, it is strange!");
 	    }
 	    istep = calc_pot.invstep[col];
 	    slot = (int)((ccos + 1) * istep);
@@ -731,22 +745,22 @@ void read_config(char *filename)
 	    slot += calc_pot.first[col];
 	    step = calc_pot.step[col];
 
-	    // Don't want lower bound spline knot to be final knot or upper
-	    // bound knot will cause trouble since it goes beyond the array
-	    if (slot == calc_pot.last[col]) {
+	    /* Don't want lower bound spline knot to be final knot or upper
+	       bound knot will cause trouble since it goes beyond the array */
+	    if (slot >= calc_pot.last[col]) {
 	      slot--;
-	      shift = 1.0;
+	      shift += 1.0;
 	    }
 	  }
 
 	  atoms[i].angl_part[ijk].shift = shift;
 	  atoms[i].angl_part[ijk].slot = slot;
 	  atoms[i].angl_part[ijk].step = step;
-	  //        ang = fopen("/home/sstar/potfit/ang.txt", "a");
-	  //        fclose(ang);
-	  ++ijk;
+	  ijk++;
 	}
       }
+      atoms[i].num_angl = ijk;
+      reg_for_free(atoms[i].angl_part, "angl part atom %d", i);
     }
 #endif /* MEAM */
 
@@ -761,6 +775,11 @@ void read_config(char *filename)
   if ((max_type + 1) < ntypes) {
     error(0, "There are less than %d atom types in your configurations!\n", ntypes);
     error(1, "Please adjust \"ntypes\" in your parameter file.", ntypes);
+  }
+
+  if (0 != have_small_box) {
+    warning(0, "The box size of at least one configuration is smaller than the cutoff distance.\n");
+    warning(1, "Using additional periodic images for energy and force calculations.");
   }
 
   reg_for_free(atoms, "atoms");
@@ -779,18 +798,26 @@ void read_config(char *filename)
   }
 #endif
 
-  mdim = 3 * natoms + 7 * nconf;	/* mdim is dimension of force vector
-					   3*natoms are double forces,
-					   nconf cohesive energies,
-					   6*nconf stress tensor components */
+  /* mdim is dimension of force vector
+     3*natoms forces,
+     nconf cohesive energies,
+     6*nconf stress tensor components */
+  mdim = 3 * natoms + nconf;
+#ifdef STRESS
+  mdim += 6 * nconf;
+#endif /* STRESS */
+
 #if defined EAM || defined ADP || defined MEAM
   mdim += nconf;		/* nconf limiting constraints */
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
 #endif /* EAM || ADP || MEAM */
-#ifdef APOT
-  mdim += opt_pot.idxlen;	/* 1 slot for each analytic parameter -> punishment */
-  mdim += apot_table.number + 1;	/* 1 slot for each analytic potential -> punishment */
-#endif /* APOT */
+
+#if defined APOT && !defined NOPUNISH
+  /* 1 slot for each analytic parameter -> punishment */
+  mdim += opt_pot.idxlen;
+  /* 1 slot for each analytic potential -> punishment */
+  mdim += apot_table.number + 1;
+#endif /* APOT && !NOPUNISH */
 
   /* copy forces into single vector */
   if (NULL == (force_0 = (double *)malloc(mdim * sizeof(double))))
@@ -806,6 +833,7 @@ void read_config(char *filename)
   for (i = 0; i < nconf; i++) {	/* then cohesive energies */
     force_0[k++] = coheng[i];
   }
+
 #ifdef STRESS
   for (i = 0; i < nconf; i++) {	/* then stresses */
     if (usestress[i]) {
@@ -820,10 +848,8 @@ void read_config(char *filename)
 	force_0[k++] = 0.;
     }
   }
-#else
-  for (i = 0; i < 6 * nconf; i++)
-    force_0[k++] = 0.;
 #endif /* STRESS */
+
 #if defined EAM || defined ADP || defined MEAM
   for (i = 0; i < nconf; i++)
     force_0[k++] = 0.;		/* punishment rho out of bounds */
@@ -831,16 +857,23 @@ void read_config(char *filename)
     /* XXX and U'(n_mean)=0  */
     force_0[k++] = 0.;
   }
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
+
+#if defined APOT && !defined NOPUNISH
+  for (i = 0; i <opt_pot.idxlen; i++)
+    force_0[k++] = 0.0;
+  for (i = 0; i < apot_table.number + 1; i++)
+    force_0[k++] = 0.0;
+#endif /* APOT && !NOPUNISH */
 
   /* write pair distribution file */
-  if (write_pair == 1) {
+  if (1 == write_pair) {
     char  pairname[255];
     FILE *pairfile;
 #ifdef APOT
     int   pair_steps = APOT_STEPS / 2;
 #else
-    int   pair_steps = 1000 / 2;
+    int   pair_steps = 500;
 #endif /* APOT */
     double pair_table[paircol * pair_steps];
     double pair_dist[paircol];
@@ -900,7 +933,8 @@ void read_config(char *filename)
 #ifdef APOT
   double min = 10.;
 
-  for (i = 0; i < ntypes; i++)
+  /* pair potentials */
+  for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
       if (mindist[k] == 99)
@@ -911,14 +945,19 @@ void read_config(char *filename)
       calc_pot.begin[k] = mindist[k] * 0.95;
       min = MIN(min, mindist[k]);
     }
-#if defined EAM || defined ADP
+  }
+
+  /* transfer functions */
+#if defined EAM || defined ADP || defined MEAM
   for (i = 0; i < ntypes; i++) {
     j = i + ntypes * (ntypes + 1) / 2;
     apot_table.begin[j] = min * 0.95;
     opt_pot.begin[j] = min * 0.95;
     calc_pot.begin[j] = min * 0.95;
   }
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
+
+  /* dipole and quadrupole functions */
 #ifdef ADP
   for (i = 0; i < paircol; i++) {
     apot_table.begin[paircol + 2 * ntypes + i] = min * 0.95;
@@ -929,6 +968,25 @@ void read_config(char *filename)
     calc_pot.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
   }
 #endif /* ADP */
+
+  /* f_ij and g_i */
+#ifdef MEAM
+  for (i = 0; i < paircol; i++) {
+    apot_table.begin[paircol + 2 * ntypes + i] = min * 0.95;
+    opt_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
+    calc_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
+  }
+  for (i = 0;i < ntypes; i++) {
+    j = 2 * paircol + 2 * ntypes + i;
+    apot_table.begin[j] = -1.1;
+    opt_pot.begin[j] = -1.1;
+    calc_pot.begin[j] = -1.1;
+    apot_table.end[j] = 1.1;
+    opt_pot.end[j] = 1.1;
+    calc_pot.end[j] = 1.1;
+  }
+#endif /* MEAM */
+
   /* recalculate step, invstep and xcoord for new tables */
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] = (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
@@ -1081,9 +1139,12 @@ void update_slots(void)
 {
   int   i, j;
   int   col0;			/* pair potential part */
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
   int   col1;			/* transfer function part */
 #endif /* EAM || ADP */
+#ifdef MEAM
+  int  col2, col_g; 		/* f_ij and g_i */
+#endif /* MEAM */
 #ifdef ADP
   int   col2, col3;		/* u and w function part */
 #endif /* ADP */
@@ -1104,10 +1165,11 @@ void update_slots(void)
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[0] += calc_pot.first[col0];
       }
-#if defined EAM || defined ADP
+
+#if defined EAM || defined ADP || defined MEAM
       /* update slots for eam transfer functions, slot 1 */
       col1 = atoms[i].neigh[j].col[1];
-      if (r < calc_pot.end[col0]) {
+      if (r < calc_pot.end[col1]) {
 	rr = r - calc_pot.begin[col1];
 	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col1]);
 	atoms[i].neigh[j].step[1] = calc_pot.step[col1];
@@ -1116,7 +1178,22 @@ void update_slots(void)
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[1] += calc_pot.first[col1];
       }
-#endif /* EAM || ADP */
+#endif /* EAM || ADP || MEAM */
+
+#ifdef MEAM
+      /* update slots for MEAM f functions, slot 2 */
+      col2 = atoms[i].neigh[j].col[2];
+      if (r < calc_pot.end[col2]) {
+	rr = r - calc_pot.begin[col2];
+	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col2]);
+	atoms[i].neigh[j].step[2] = calc_pot.step[col2];
+	atoms[i].neigh[j].shift[2] =
+	  (rr - atoms[i].neigh[j].slot[2] * calc_pot.step[col2]) * calc_pot.invstep[col2];
+	/* move slot to the right potential */
+	atoms[i].neigh[j].slot[2] += calc_pot.first[col2];
+      }
+#endif /* MEAM */
+
 #ifdef ADP
       /* update slots for adp dipole functions, slot 2 */
       col2 = atoms[i].neigh[j].col[2];
@@ -1142,8 +1219,29 @@ void update_slots(void)
 	atoms[i].neigh[j].slot[3] += calc_pot.first[col3];
       }
 #endif /* ADP */
+
+    /* end loop over all neighbors */
     }
+
+#ifdef MEAM
+    /* update angular slots */
+    for (j = 0; j < atoms[i].num_angl; j++) {
+      col_g = 2 * paircol + 2 * ntypes + atoms[i].typ;
+      if (r > calc_pot.begin[col_g] && r < calc_pot.end[col_g]) {
+	rr = r - calc_pot.begin[col_g];
+	atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col_g]);
+	atoms[i].angl_part[j].step = calc_pot.step[col_g];
+	atoms[i].angl_part[j].shift =
+	  (rr - atoms[i].angl_part[j].slot * calc_pot.step[col_g]) * calc_pot.invstep[col_g];
+	/* move slot to the right potential */
+	atoms[i].angl_part[j].slot += calc_pot.first[col_g];
+      }
+    }
+#endif /* MEAM */
+
+  /* end loop over all atoms */
   }
+
 }
 
 #endif /* APOT */

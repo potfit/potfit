@@ -178,13 +178,16 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
+#ifdef STRESS
 	for (i = 0; i < 6; i++)
 	  forces[stress_p + 6 * h + i] = 0.;
+#endif /* STRESS */
 
 #ifdef APOT
 	if (enable_cp)
 	  forces[energy_p + h] += chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
 #endif /* APOT */
+
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
@@ -279,23 +282,14 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
-#ifdef COMPAT
-	tmpsum += conf_weight[h] * dsquare(eweight * forces[energy_p + h]);
-#else
 	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
-#endif /* COMPAT */
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
 	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
 	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum +=
-#ifdef COMPAT
-	      conf_weight[h] * dsquare(sweight * forces[stress_p + 6 * h + i]);
-#else
-	      conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
-#endif /* COMPAT */
+	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
 	  }
 	}
 #endif /* STRESS */

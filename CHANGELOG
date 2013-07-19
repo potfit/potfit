@@ -1,5 +1,6 @@
 potfit-next (unreleased)
 + merge MEAM implementation of Jeremy Nicklas (Ohio State University)
++ remove compatibility mode
 
 potfit-0.5.3 (20130625)
 + fix building in 32bit environments

@@ -138,7 +138,9 @@ void anneal(double *xi)
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   auto_T = 0;
   int   loopagain;		/* loop flag */
+#ifndef APOT
   int   rescaleMe = 1;		/* rescaling flag */
+#endif /* APOT */
   double T = -1.;		/* Temperature */
   double F, Fopt, F2;		/* Fn value */
   double *Fvar;			/* backlog of Fn vals */
@@ -173,6 +175,7 @@ void anneal(double *xi)
   xi2 = vect_double(ndimtot);
   fxi1 = vect_double(mdim);
   naccept = vect_int(ndim);
+#ifndef APOT
   // Optimum potential x-coord arrays
   int   col, col2;
   double *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
@@ -181,6 +184,7 @@ void anneal(double *xi)
   optstep = vect_double(ntypes);
   optinvstep = vect_double(ntypes);
   optxcoord = vect_double(ndimtot);
+#endif /* APOT */
 
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
@@ -193,6 +197,7 @@ void anneal(double *xi)
   }
   F = (*calc_forces) (xi, fxi1, 0);
   Fopt = F;
+#ifndef APOT
   // Need to save xcoord of this F potential because we use the
   // optimum potential in the future, and the current potential
   // could be rescaled differently from the optimum
@@ -208,6 +213,7 @@ void anneal(double *xi)
       optxcoord[n] = opt_pot.xcoord[n];
     ++col2;
   }
+#endif /* APOT */
   /* determine optimum temperature for annealing */
   if (auto_T) {
     int   e = 0;
@@ -287,6 +293,7 @@ void anneal(double *xi)
 	      for (n = 0; n < ndimtot; n++)
 		xopt[n] = xi2[n];
 
+#ifndef APOT
 	      // Need to save xcoord of this F potential because we use the
 	      // optimum potential in the future, and the current potential
 	      // could be rescaled differently from the optimum
@@ -303,6 +310,7 @@ void anneal(double *xi)
 
 		++col2;
 	      }
+#endif /* APOT */
 	      Fopt = F2;
 	      if (*tempfile != '\0') {
 #ifndef APOT
@@ -376,7 +384,7 @@ void anneal(double *xi)
       for (n = 0; n < ndimtot; n++)
 	xi[n] = xopt[n];
       F = Fopt;
-#ifdef MEAM
+#if defined MEAM && !defined APOT
       // Need to put back xcoord of optimum F potential
       col2 = 0;
       for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
@@ -395,19 +403,18 @@ void anneal(double *xi)
       /* wake other threads and sync potentials */
       F = (*calc_forces) (xi, fxi1, 2);
 
-#endif
-
-      loopagain = 1;
-
       // Turn off rescaling
       rescaleMe = 0;
+#endif /* MEAM && !APOT */
+
+      loopagain = 1;
     }
   } while (k < KMAX && loopagain);
   for (n = 0; n < ndimtot; n++) {
     xi[n] = xopt[n];
   }
 
-#ifdef MEAM
+#if defined MEAM && !defined APOT
   // Need to put back xcoord of optimum F potential
   col2 = 0;
   for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
@@ -425,7 +432,7 @@ void anneal(double *xi)
 
   // wake other threads and sync potentials
   F = (*calc_forces) (xi, fxi1, 2);
-#endif
+#endif /* MEAM && !APOT */
   printf("Finished annealing, starting powell minimization ...\n");
 
   F = Fopt;

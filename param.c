@@ -362,8 +362,7 @@ void read_paramfile(FILE *pf)
 #endif /* DIPOLE */
     /* unknown tag */
     else {
-      fprintf(stderr, "Unknown tag <%s> ignored!\n", token);
-      fflush(stderr);
+      fprintf(stderr, "Unknown tag <%s> in parameter file ignored!\n", token);
     }
   } while (!feof(pf));
 }
