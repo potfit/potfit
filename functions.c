@@ -7,7 +7,7 @@
  * Copyright 2002-2013
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://potfit.itap.physik.uni-stuttgart.de/
+ *	http://potfit.sourceforge.net/
  *
  ****************************************************************
  *
@@ -778,9 +778,10 @@ void sheng_F_value(double r, double *p, double *f)
 /****************************************************************
  *
  * template for new potential function called mypotential
- * for further information plase have a look at the online documentation
  *
- * http://potfit.itap.physik.uni-stuttgart.de/
+ * for further information plase have a look at the online
+ * documentation available at
+ * 	http://potfit.sourceforge.net/
  *
  ****************************************************************/
 

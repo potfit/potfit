@@ -9,7 +9,7 @@
  * Copyright 2002-2013
  * 	Institute for Theoretical and Applied Physics
  * 	University of Stuttgart, D-70550 Stuttgart, Germany
- * 	http://potfit.itap.physik.uni-stuttgart.de/
+ *	http://potfit.sourceforge.net/
  *
  ****************************************************************
  *
