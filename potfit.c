@@ -252,7 +252,7 @@ int main(int argc, char **argv)
   force = (double *)malloc((mdim) * sizeof(double));
   if (NULL == force)
     error(1, "Could not allocate memory for main force vector.");
-  for (i = 0;i < mdim; i++)
+  for (i = 0; i < mdim; i++)
     force[i] = 0.0;
   reg_for_free(force, "force");
 

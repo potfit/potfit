@@ -142,7 +142,7 @@ typedef struct {
   double drho;
 #endif
 #ifdef THREEBODY
-  int contrib;
+  int   contrib;
 #endif
 } neigh_t;
 
@@ -179,7 +179,7 @@ typedef struct {
 #endif				/* ADP */
 #ifdef MEAM
   double rho_eam;		/* Store EAM density */
-  int num_angl;
+  int   num_angl;
 #endif				/* MEAM */
 #ifdef DIPOLE
   vector E_stat;		/* static field-contribution */
@@ -191,8 +191,8 @@ typedef struct {
 #endif
   neigh_t *neigh;		/* dynamic array for neighbors */
 #ifdef MEAM
-  angl *angl_part; 		/* dynamic array for angular neighbors */
-#endif /* MEAM */
+  angl *angl_part;		/* dynamic array for angular neighbors */
+#endif				/* MEAM */
 } atom_t;
 
 typedef struct {

@@ -31,14 +31,14 @@
 #ifndef SPLINES_H
 #define SPLINES_H
 
-void   spline_ed(double, double *, int, double, double, double *);
+void  spline_ed(double, double *, int, double, double, double *);
 double splint_ed(pot_table_t *, double *, int, double);
 double splint_grad_ed(pot_table_t *, double *, int, double);
 double splint_comb_ed(pot_table_t *, double *, int, double, double *);
 double splint_dir(pot_table_t *, double *, int, double, double);
 double splint_comb_dir(pot_table_t *, double *, int, double, double, double *);
 double splint_grad_dir(pot_table_t *, double *, int, double, double);
-void   spline_ne(double *, double *, int, double, double, double *);
+void  spline_ne(double *, double *, int, double, double, double *);
 double splint_ne(pot_table_t *, double *, int, double);
 double splint_ne_lin(pot_table_t *, double *, int, double);
 double splint_comb_ne(pot_table_t *, double *, int, double, double *);

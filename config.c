@@ -431,7 +431,7 @@ void read_config(char *filename)
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
       atoms[i].n_neigh = 0;
-    /* loop over all atoms for threebody interactions */
+      /* loop over all atoms for threebody interactions */
 #ifdef THREEBODY
       for (j = natoms; j < natoms + count; j++) {
 #else
@@ -484,7 +484,7 @@ void read_config(char *filename)
 		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
 #ifdef THREEBODY
-		if ( (0 != ix) || (0 != iy) || (0 != iz) )
+		if ((0 != ix) || (0 != iy) || (0 != iz))
 		  atoms[i].neigh[k].contrib = 0;
 		else
 		  atoms[i].neigh[k].contrib = 1;
@@ -720,7 +720,7 @@ void read_config(char *filename)
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].n_neigh;
       /* Set size of angles for each atom to conserve mem */
-      atoms[i].angl_part = (angl *)malloc(((nnn * (nnn - 1)) / 2) * sizeof(angl));
+      atoms[i].angl_part = (angl *) malloc(((nnn * (nnn - 1)) / 2) * sizeof(angl));
       ijk = 0;
       for (j = 0; j < nnn - 1; j++) {
 	for (k = j + 1; k < nnn; k++) {
@@ -860,7 +860,7 @@ void read_config(char *filename)
 #endif /* EAM || ADP || MEAM */
 
 #if defined APOT && !defined NOPUNISH
-  for (i = 0; i <opt_pot.idxlen; i++)
+  for (i = 0; i < opt_pot.idxlen; i++)
     force_0[k++] = 0.0;
   for (i = 0; i < apot_table.number + 1; i++)
     force_0[k++] = 0.0;
@@ -976,7 +976,7 @@ void read_config(char *filename)
     opt_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
     calc_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
   }
-  for (i = 0;i < ntypes; i++) {
+  for (i = 0; i < ntypes; i++) {
     j = 2 * paircol + 2 * ntypes + i;
     apot_table.begin[j] = -1.1;
     opt_pot.begin[j] = -1.1;
@@ -1143,7 +1143,7 @@ void update_slots(void)
   int   col1;			/* transfer function part */
 #endif /* EAM || ADP */
 #ifdef MEAM
-  int  col2, col_g; 		/* f_ij and g_i */
+  int   col2, col_g;		/* f_ij and g_i */
 #endif /* MEAM */
 #ifdef ADP
   int   col2, col3;		/* u and w function part */
@@ -1165,7 +1165,6 @@ void update_slots(void)
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[0] += calc_pot.first[col0];
       }
-
 #if defined EAM || defined ADP || defined MEAM
       /* update slots for eam transfer functions, slot 1 */
       col1 = atoms[i].neigh[j].col[1];
@@ -1220,7 +1219,7 @@ void update_slots(void)
       }
 #endif /* ADP */
 
-    /* end loop over all neighbors */
+      /* end loop over all neighbors */
     }
 
 #ifdef MEAM
@@ -1239,7 +1238,7 @@ void update_slots(void)
     }
 #endif /* MEAM */
 
-  /* end loop over all atoms */
+    /* end loop over all atoms */
   }
 
 }

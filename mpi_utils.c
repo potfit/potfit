@@ -539,7 +539,7 @@ void broadcast_neighbors()
     MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (i >= firstatom && i < (firstatom + myatoms)) {
       atom->neigh = (neigh_t *)malloc(neighs * sizeof(neigh_t));
-      reg_for_free(atom->neigh, "broadcast atom[%d]->neigh",i);
+      reg_for_free(atom->neigh, "broadcast atom[%d]->neigh", i);
     }
     for (j = 0; j < neighs; j++) {
       if (myid == 0)
@@ -573,7 +573,7 @@ void broadcast_angles()
     MPI_Bcast(&nangles, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (i >= firstatom && i < (firstatom + myatoms)) {
       atom->angl_part = (angl *) malloc(nangles * sizeof(angl));
-      reg_for_free(atom->angl_part, "broadcast atom[%d]->angle_part",i);
+      reg_for_free(atom->angl_part, "broadcast atom[%d]->angle_part", i);
     }
     for (j = 0; j < nangles; ++j) {
       if (myid == 0)
