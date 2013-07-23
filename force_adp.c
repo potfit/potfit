@@ -244,8 +244,10 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 	/* reset energies and stresses */
 	forces[energy_p + h] = 0.;
+#ifdef STRESS
 	for (i = 0; i < 6; i++)
 	  forces[stress_p + 6 * h + i] = 0.;
+#endif /* STRESS */
 
 	/* set limiting constraints */
 	forces[limit_p + h] = -force_0[limit_p + h];

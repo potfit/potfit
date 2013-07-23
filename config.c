@@ -132,11 +132,11 @@ void read_config(char *filename)
 	error(1, "Unexpected end of file in %s", filename);
     }
 #ifndef THREEBODY
-/*    if (2 > count)*/
-/*      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);*/
+    if (2 > count)
+      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);
 #else
-/*    if (3 > count)*/
-/*      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);*/
+    if (3 > count)
+      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);
 #endif /* THREEBODY */
     /* increase memory for this many additional atoms */
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
@@ -716,7 +716,7 @@ void read_config(char *filename)
     }
 
     /* compute the angular part */
-#ifdef MEAM
+#ifdef THREEBODY
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].n_neigh;
       /* Set size of angles for each atom to conserve mem */
@@ -762,7 +762,7 @@ void read_config(char *filename)
       atoms[i].num_angl = ijk;
       reg_for_free(atoms[i].angl_part, "angl part atom %d", i);
     }
-#endif /* MEAM */
+#endif /* THREEBODY */
 
 /* increment natoms and configuration number */
     natoms += count;
@@ -969,13 +969,14 @@ void read_config(char *filename)
   }
 #endif /* ADP */
 
-  /* f_ij and g_i */
 #ifdef MEAM
+  /* f_ij */
   for (i = 0; i < paircol; i++) {
     apot_table.begin[paircol + 2 * ntypes + i] = min * 0.95;
     opt_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
     calc_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
   }
+  /* g_i */
   for (i = 0; i < ntypes; i++) {
     j = 2 * paircol + 2 * ntypes + i;
     apot_table.begin[j] = -1.1;
@@ -991,6 +992,7 @@ void read_config(char *filename)
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] = (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
     calc_pot.invstep[i] = 1. / calc_pot.step[i];
+    printf("i=%d step %f invstep %f\n", i, calc_pot.step[i], calc_pot.invstep[i]);
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
@@ -1219,27 +1221,24 @@ void update_slots(void)
       }
 #endif /* ADP */
 
-      /* end loop over all neighbors */
-    }
+    }				/* end loop over all neighbors */
+  }				/* end loop over all atoms */
 
-#ifdef MEAM
-    /* update angular slots */
+#ifdef THREEBODY
+  /* update angular slots */
+  for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].num_angl; j++) {
       col_g = 2 * paircol + 2 * ntypes + atoms[i].typ;
-      if (r > calc_pot.begin[col_g] && r < calc_pot.end[col_g]) {
-	rr = r - calc_pot.begin[col_g];
-	atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col_g]);
-	atoms[i].angl_part[j].step = calc_pot.step[col_g];
-	atoms[i].angl_part[j].shift =
-	  (rr - atoms[i].angl_part[j].slot * calc_pot.step[col_g]) * calc_pot.invstep[col_g];
-	/* move slot to the right potential */
-	atoms[i].angl_part[j].slot += calc_pot.first[col_g];
-      }
+      rr = atoms[i].angl_part[j].cos - calc_pot.begin[col_g];
+      atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col_g]);
+      atoms[i].angl_part[j].step = calc_pot.step[col_g];
+      atoms[i].angl_part[j].shift =
+	(rr - atoms[i].angl_part[j].slot * calc_pot.step[col_g]) * calc_pot.invstep[col_g];
+      /* move slot to the right potential */
+      atoms[i].angl_part[j].slot += calc_pot.first[col_g];
     }
-#endif /* MEAM */
-
-    /* end loop over all atoms */
   }
+#endif /* THREEBODY */
 
 }
 

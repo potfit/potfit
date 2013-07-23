@@ -89,15 +89,19 @@
  *
  ****************************************************************/
 
-// DO NOT USE:
-// APOT, PARABEL, MPI, OPENMP, WZERO
+/****************************************************************
+ *
+ * DOES NOT WORK WITH THE FOLLOWING FLAGS:
+ * PARABEL, WZERO
+ *
+ ****************************************************************/
 
 double calc_forces_meam(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
   double *xi = NULL;
 
-  // Some useful temp variables
+  /* Some useful temp variables */
   static double tmpsum = 0.0, sum = 0.0;
   static double rho_sum = 0.0, rho_sum_loc = 0.0;
 
@@ -161,7 +165,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
       /* Pointer to first entry */
       first = calc_pot.first[col];
 
-      /* Get 2nd derivatives
+      /* Initialize 2nd derivatives
          step = width of spline knots (known as h)
          xi+first = array with spline values
          calc_pot.last[col1] - first + 1 = num of spline pts
@@ -205,7 +209,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 
       /* MEAM variables */
       int   m, jj, kk, ijk;
-      double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;	/*, dfj[3], dfk[3]; */
+      double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
       vector dfj, dfk;
       neigh_t *neigh_j, *neigh_k;
       angl *n_angl;
@@ -242,20 +246,20 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	    forces[k] = 0.0;
 	    forces[k + 1] = 0.0;
 	    forces[k + 2] = 0.0;
-	  }
+	  }			/* uf */
 	  /* Reset the density for each atom */
 	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
-	}
+	}			/* i */
 	/* END OF FIRST LOOP */
 
 	/* SECOND LOOP: Calculate pair forces and energies, atomic densities */
-	for (i = 0; i < inconf[h]; ++i) {
+	for (i = 0; i < inconf[h]; i++) {
 	  /* Set pointer to temp atom pointer */
 	  atom = conf_atoms + (cnfstart[h] - firstatom + i);
 	  /* Skip every 3 spots for force array */
 	  k = 3 * (cnfstart[h] + i);
 	  /* Loop over neighbors */
-	  for (j = 0; j < atom->n_neigh; ++j) {
+	  for (j = 0; j < atom->n_neigh; j++) {
 	    /* Set pointer to temp neighbor pointer */
 	    neigh = atom->neigh + j;
 	    /* In small cells, an atom might interact with itself */
@@ -302,23 +306,27 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
 		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
 		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
-		}
+		}		/* us */
 #endif /* STRESS */
-	      }
+	      }			/* uf */
 	    }
-	    /* END IF STMNT: NEIGH LIES INSIDE CUTOFF FOR PAIR POTENTIAL */
 
+
+
+
+
+
+	    /* r < cutoff */
+	    /* END IF STMNT: NEIGH LIES INSIDE CUTOFF FOR PAIR POTENTIAL */
 	    /* Find the correct column in the potential table for atomic density, rho_ij
 	       paircol = number of pair potential columns
 	       Binary Alloy: paircol = 3 (3 pair potentials with index 0, 1, 2)
 	       index of densitiy functions: 3 = rho_A, 4 = rho_B
 	       where A, B are atom type for the neighbor */
-
 	    /* Compute rho rho value and sum them up
 	       Need to play tricks so that rho values are put in the correct
 	       columns if alloy. If atom j is A or B, fn value needs to be
 	       in correct rho_A or rho_B respectively, it doesn't depend on atom i. */
-
 	    /* Check that atom j lies inside rho_typ2 */
 	    if (neigh->r < calc_pot.end[neigh->col[1]]) {
 	      /* Store gradient in the neighbor for the pair r_ij
@@ -330,7 +338,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	      /* If the pair distance does not lie inside rho_typ2
 	         We set the grad to 0 so it doesn't sum into the net force */
 	      neigh->drho = 0.0;
-	    }
+	    }			/* r < cutoff */
 
 	    /* Compute the f_ij values and store the fn and grad in each neighbor struct for easy access later */
 
