@@ -166,7 +166,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     }
 
     /* F */
-#ifndef PARABEL
+#ifndef PARABOLA
     /* if we have parabolic interpolation, we don't need that */
     for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {
       first = calc_pot.first[col];
@@ -193,7 +193,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #endif /* WZERO */
 	  calc_pot.d2tab + first);
     }
-#endif /* PARABEL */
+#endif /* PARABOLA */
 
 #ifndef MPI
     myconf = nconf;
@@ -344,26 +344,26 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
-#ifndef PARABEL
-/* then we use the final value, with PARABEL: extrapolate */
+#ifndef PARABOLA
+/* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.end[col_F];
-#endif /* PARABEL */
+#endif /* PARABOLA */
 	  }
 
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
-#ifndef PARABEL
-/* then we use the final value, with PARABEL: extrapolate */
+#ifndef PARABOLA
+/* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.begin[col_F];
-#endif /* PARABEL */
+#endif /* PARABOLA */
 	  }
 #endif /* !NORESCALE */
 
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 
-#ifdef PARABEL
+#ifdef PARABOLA
 	  forces[energy_p + h] += parab_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 #elif defined(NORESCALE)
 	  if (atom->rho < calc_pot.begin[col_F]) {
@@ -520,8 +520,8 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     if (myid == 0) {
       int   g;
       for (g = 0; g < ntypes; g++) {
-	/* PARABEL, WZERO, NORESC - different behaviour */
-#ifdef PARABEL
+	/* PARABOLA, WZERO, NORESC - different behaviour */
+#ifdef PARABOLA
 /* constraints on U(n) */
 	forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * parab(&calc_pot, xi, paircol + ntypes + g, 0.)
 	  - force_0[dummy_p + ntypes + g];

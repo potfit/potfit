@@ -186,21 +186,21 @@ int main(int argc, char **argv)
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
       write_pot_table = write_pot_table3;
-#ifdef PARABEL
+#ifdef PARABOLA
       parab = parab_ed;
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
-#endif /* PARABEL */
+#endif /* PARABOLA */
     } else if (format >= 4) {
       splint = splint_ne;
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
       write_pot_table = write_pot_table4;
-#ifdef PARABEL
+#ifdef PARABOLA
       parab = parab_ne;
       parab_comb = parab_comb_ne;
       parab_grad = parab_grad_ne;
-#endif /* PARABEL */
+#endif /* PARABOLA */
     }
 #endif /* APOT */
 
@@ -323,11 +323,11 @@ int main(int argc, char **argv)
       splint_comb = splint_comb_ed;
       splint_grad = splint_grad_ed;
       write_pot_table = write_pot_table3;
-#ifdef PARABEL
+#ifdef PARABOLA
       parab = parab_ed;
       parab_comb = parab_comb_ed;
       parab_grad = parab_grad_ed;
-#endif /* PARABEL */
+#endif /* PARABOLA */
 #endif /* !APOT */
     } else if (format >= 4) {
 #ifndef APOT
@@ -335,11 +335,11 @@ int main(int argc, char **argv)
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
       write_pot_table = write_pot_table4;
-#ifdef PARABEL
+#ifdef PARABOLA
       parab = parab_ne;
       parab_comb = parab_comb_ne;
       parab_grad = parab_grad_ne;
-#endif /* PARABEL */
+#endif /* PARABOLA */
 #endif /* !APOT */
     }
 

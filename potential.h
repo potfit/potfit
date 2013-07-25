@@ -48,14 +48,14 @@ void  update_calc_table(double *, double *, int);
 #endif /* APOT */
 
 /* parabolic interpolation */
-#ifdef PARABEL
+#ifdef PARABOLA
 double parab_comb_ed(pot_table_t *, double *, int, double, double *);
 double parab_grad_ed(pot_table_t *, double *, int, double);
 double parab_ed(pot_table_t *, double *, int, double);
 double parab_comb_ne(pot_table_t *, double *, int, double, double *);
 double parab_grad_ne(pot_table_t *, double *, int, double);
 double parab_ne(pot_table_t *, double *, int, double);
-#endif /* PARABEL */
+#endif /* PARABOLA */
 
 /* writing potentials to files */
 #ifdef APOT

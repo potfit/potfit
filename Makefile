@@ -368,10 +368,10 @@ endif
 ###########################################################################
 
 POTFITHDR   	= bracket.h elements.h optimize.h potfit.h potential.h \
-		  random.h  splines.h utils.h
+		  random.h splines.h utils.h
 POTFITSRC 	= bracket.c brent.c config.c elements.c linmin.c \
-		  param.c potential.c potfit.c powell_lsq.c \
-		  random.c simann.c splines.c utils.c
+		  param.c potential_input.c potential_output.c potfit.c \
+		  powell_lsq.c random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
   POTFITSRC      += force_pair.c
@@ -429,6 +429,10 @@ endif
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
   POTFITSRC      += diff_evo.c
+endif
+
+ifneq (,$(strip $(findstring parab,${MAKETARGET})))
+  POTFITSRC      += parabola.c
 endif
 
 MPISRC          = mpi_utils.c
@@ -561,7 +565,7 @@ WARNING += "limit is now mandatory -- "
 endif
 
 ifneq (,$(findstring parab,${MAKETARGET}))
-CFLAGS += -DPARABEL
+CFLAGS += -DPARABOLA
 endif
 
 ifneq (,$(findstring wzero,${MAKETARGET}))
