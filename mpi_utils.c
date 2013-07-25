@@ -82,9 +82,9 @@ void broadcast_params()
   MPI_Aint displs[MAX_MPI_COMPONENTS];
   MPI_Datatype typen[MAX_MPI_COMPONENTS];
   neigh_t testneigh;
-#ifdef MEAM
+#ifdef THREEBODY
   angl  testangl;
-#endif
+#endif /* THREEBODY */
   atom_t testatom;
   int   calclen, size, i, j, each, odd, count;
 
@@ -169,7 +169,7 @@ void broadcast_params()
   MPI_Type_create_struct(size, blklens, displs, typen, &MPI_NEIGH);
   MPI_Type_commit(&MPI_NEIGH);
 
-#ifdef MEAM
+#ifdef THREEBODY
   /* MPI_ANGL */
   /* *INDENT-OFF* */
   size = 0;
@@ -197,7 +197,7 @@ void broadcast_params()
 
   MPI_Type_struct(size, blklens, displs, typen, &MPI_ANGL);
   MPI_Type_commit(&MPI_ANGL);
-#endif /* MEAM */
+#endif /* THREEBODY */
 
   /* MPI_ATOM */
   /* *INDENT-OFF* */
@@ -238,10 +238,12 @@ void broadcast_params()
   blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_old */
   blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_tot */
 #endif /* DIPOLE && EAM */
+#ifdef THREEBODY
+  blklens[size] = 1;         	typen[size++] = MPI_INT;    	/* num_angl */
 #ifdef MEAM
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* rho_eam */
-  blklens[size] = 1;         	typen[size++] = MPI_INT;    	/* num_angl */
 #endif /* MEAM */
+#endif /* THREEBODY */
 
   /* DO NOT BROADCAST NEIGHBORS !!! DYNAMIC ALLOCATION */
   /* DO NOT BROADCAST ANGLES !!! DYNAMIC ALLOCATION */
@@ -283,10 +285,12 @@ void broadcast_params()
   MPI_Address(&testatom.E_old, 		&displs[count++]);
   MPI_Address(&testatom.E_tot, 		&displs[count++]);
 #endif /* DIPOLE && EAM */
+#ifdef THREEBODY
+  MPI_Address(&testatom.num_angl, 	&displs[count++]);
 #ifdef MEAM
   MPI_Address(&testatom.rho_eam,	&displs[count++]);
-  MPI_Address(&testatom.num_angl, 	&displs[count++]);
 #endif /* MEAM */
+#endif /* THREEBODY */
 
   /* *INDENT-ON* */
 
@@ -504,9 +508,9 @@ void broadcast_params()
     }
   }
   broadcast_neighbors();
-#ifdef MEAM
+#ifdef THREEBODY
   broadcast_angles();
-#endif /* MEAM */
+#endif /* THREEBODY */
   conf_vol = (double *)malloc(myconf * sizeof(double));
   conf_uf = (int *)malloc(myconf * sizeof(double));
   conf_us = (int *)malloc(myconf * sizeof(double));
@@ -552,7 +556,7 @@ void broadcast_neighbors()
   }
 }
 
-#ifdef MEAM
+#ifdef THREEBODY
 
 /***************************************************************************
  *
@@ -586,7 +590,7 @@ void broadcast_angles()
   }
 }
 
-#endif /* MEAM */
+#endif /* THREEBODY */
 
 #ifndef APOT
 

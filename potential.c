@@ -152,6 +152,12 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	  case I_MEAM:
 	    npots = 2 * ncols + 3 * ntypes;
 	    break;
+	  case I_STIWEB:
+	    npots = 2 * ncols + 1;
+	    break;
+	  case I_TERSOFF:
+	    npots = ncols;
+	    break;
 	  default:
 	    npots = ncols;
       }

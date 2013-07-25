@@ -150,6 +150,12 @@ int main(int argc, char **argv)
 #elif defined MEAM
   calc_forces = calc_forces_meam;
   strcpy(interaction_name, "MEAM");
+#elif defined STIWEB
+  calc_forces = calc_forces_stiweb;
+  strcpy(interaction_name, "STIWEB");
+#elif defined TERSOFF
+  calc_forces = calc_forces_tersoff;
+  strcpy(interaction_name, "TERSOFF");
 #endif /* PAIR */
 
   /* read the parameters and the potential file */

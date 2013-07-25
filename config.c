@@ -440,8 +440,8 @@ void read_config(char *filename)
 	d.x = atoms[j].pos.x - atoms[i].pos.x;
 	d.y = atoms[j].pos.y - atoms[i].pos.y;
 	d.z = atoms[j].pos.z - atoms[i].pos.z;
-	for (ix = -cell_scale[0]; ix <= cell_scale[0]; ix++)
-	  for (iy = -cell_scale[1]; iy <= cell_scale[1]; iy++)
+	for (ix = -cell_scale[0]; ix <= cell_scale[0]; ix++) {
+	  for (iy = -cell_scale[1]; iy <= cell_scale[1]; iy++) {
 	    for (iz = -cell_scale[2]; iz <= cell_scale[2]; iz++) {
 	      if ((i == j) && (ix == 0) && (iy == 0) && (iz == 0))
 		continue;
@@ -707,9 +707,55 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].slot[3] = slot;
 		  atoms[i].neigh[k].step[3] = step;
 #endif /* ADP */
+
+#ifdef STIWEB
+		  /* Store slots and stuff for exp. function */
+		  col = paircol + atoms[i].neigh[k].col[0];
+		  atoms[i].neigh[k].col[1] = col;
+		  if (0 == format || 3 == format) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[1] = shift;
+		  atoms[i].neigh[k].slot[1] = slot;
+		  atoms[i].neigh[k].step[1] = step;
+#endif /* STIWEB */
+
 		}
 	      }
 	    }
+	  }
+	}
       }
       maxneigh = MAX(maxneigh, atoms[i].n_neigh);
       reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
@@ -732,13 +778,13 @@ void read_config(char *filename)
 	  atoms[i].angl_part[ijk].cos = ccos;
 
 	  col = 2 * paircol + 2 * ntypes + atoms[i].typ;
-
 	  if (0 == format || 3 == format) {
 	    if ((fabs(ccos) - 1.0) > 1e-10) {
 	      printf("%.20f %f %d %d %d\n", ccos, calc_pot.begin[col], col, typ1, typ2);
 	      fflush(stdout);
 	      error(1, "cos out of range, it is strange!");
 	    }
+#ifndef STIWEB
 	    istep = calc_pot.invstep[col];
 	    slot = (int)((ccos + 1) * istep);
 	    shift = ((ccos + 1) - slot * calc_pot.step[col]) * istep;
@@ -751,6 +797,7 @@ void read_config(char *filename)
 	      slot--;
 	      shift += 1.0;
 	    }
+#endif /* !STIWEB */
 	  }
 
 	  atoms[i].angl_part[ijk].shift = shift;
@@ -992,7 +1039,6 @@ void read_config(char *filename)
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] = (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
     calc_pot.invstep[i] = 1. / calc_pot.step[i];
-    printf("i=%d step %f invstep %f\n", i, calc_pot.step[i], calc_pot.invstep[i]);
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];
@@ -1145,11 +1191,14 @@ void update_slots(void)
   int   col1;			/* transfer function part */
 #endif /* EAM || ADP */
 #ifdef MEAM
-  int   col2, col_g;		/* f_ij and g_i */
+  int   col2
 #endif /* MEAM */
 #ifdef ADP
   int   col2, col3;		/* u and w function part */
 #endif /* ADP */
+#if defined THREEBODY && !defined STIWEB
+  int  col_g;
+#endif /* THREEBODY */
   double r, rr;
 
   for (i = 0; i < natoms; i++) {
@@ -1224,7 +1273,7 @@ void update_slots(void)
     }				/* end loop over all neighbors */
   }				/* end loop over all atoms */
 
-#ifdef THREEBODY
+#if defined THREEBODY && !defined STIWEB
   /* update angular slots */
   for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].num_angl; j++) {
@@ -1239,6 +1288,18 @@ void update_slots(void)
     }
   }
 #endif /* THREEBODY */
+
+#ifdef STIWEB
+  /* make sure the pair potentials in different slots have the same cutoff */
+  for (i = 0; i < paircol;i++) {
+    if (apot_table.end[i] != apot_table.end[paircol + i]) {
+      error(0, "The two- and threebody term for the %d. interaction have different cutoff radii.\n",i+1);
+      error(1, "Please fix this is your potential file\n");
+    }
+  }
+
+  apot_table.sw.init = 0;
+#endif /* STIWEB */
 
 }
 

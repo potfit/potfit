@@ -92,6 +92,12 @@ void apot_init(void)
   add_pot(sheng_rho, 5);
   add_pot(sheng_F, 4);
 
+#ifdef STIWEB
+  add_pot(stiweb_2, 6);
+  add_pot(stiweb_3, 2);
+  add_pot(lambda, ntypes*ntypes);
+#endif
+
   reg_for_free(function_table.name, "function_table.name");
   reg_for_free(function_table.n_par, "function_table.n_par");
   reg_for_free(function_table.fvalue, "function_table.fvalue");
@@ -774,6 +780,52 @@ void sheng_F_value(double r, double *p, double *f)
 
   *f = p[0] * power + p[2] * r + p[3];
 }
+
+#ifdef STIWEB
+
+/****************************************************************
+ *
+ * Stillinger-Weber pair potential
+ *
+ ****************************************************************/
+
+void stiweb_2_value(double r, double *p, double *f)
+{
+  static double x[2], y[2], power[2];
+
+  x[0] = r;
+  x[1] = r;
+  y[0] = -p[2];
+  y[1] = -p[3];
+
+  power_m(2, power, x, y);
+
+  *f = (p[0]*power[0] - p[1]*power[1])*exp(p[4] / (r - p[5]));
+}
+
+/****************************************************************
+ *
+ * Stillinger-Weber exp functions for threebody potential
+ *
+ ****************************************************************/
+
+void stiweb_3_value(double r, double *p, double *f)
+{
+  *f = exp(p[0] / (r - p[1]));
+}
+
+/****************************************************************
+ *
+ * pseudo Stillinger-Weber potential function to store lamda values
+ *
+ ****************************************************************/
+
+void lambda_value(double r, double *p, double *f)
+{
+  *f = 0.0 * r;
+}
+
+#endif /* STIWEB */
 
 /****************************************************************
  *

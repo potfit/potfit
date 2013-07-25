@@ -71,6 +71,12 @@ void  sheng_phi2_value(double, double *, double *);
 void  sheng_rho_value(double, double *, double *);
 void  sheng_F_value(double, double *, double *);
 
+#ifdef STIWEB
+void  stiweb_2_value(double, double *, double *);
+void  stiweb_3_value(double, double *, double *);
+void  lambda_value(double, double *, double *);
+#endif /* STIWEB */
+
 /* template for new potential function called newpot */
 
 /* "newpot" potential */

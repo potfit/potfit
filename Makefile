@@ -405,6 +405,14 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
   POTFITSRC      += force_adp.c
 endif
 
+ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
+  POTFITSRC      += force_stiweb.c
+endif
+
+ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
+  POTFITSRC      += force_tersoff.c
+endif
+
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
   POTFITHDR      += functions.h
   POTFITSRC      += functions.c
@@ -497,6 +505,30 @@ ifneq (,$(strip $(findstring adp,${MAKETARGET})))
     ERROR += More than one potential model specified
   endif
   CFLAGS  += -DADP
+  INTERACTION = 1
+endif
+
+# Stillinger-Weber potentials (STIWEB)
+ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+    ERROR += More than one potential model specified
+  endif
+  ifeq (,$(findstring apot,${MAKETARGET}))
+    ERROR += STIWEB does not work without the apot flag
+  endif
+  CFLAGS  += -DSTIWEB
+  INTERACTION = 1
+endif
+
+# Tersoff potentials (TERSOFF)
+ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+    ERROR += More than one potential model specified
+  endif
+  ifeq (,$(findstring apot,${MAKETARGET}))
+    ERROR += TERSOFF does not work without the apot flag
+  endif
+  CFLAGS  += -DTERSOFF
   INTERACTION = 1
 endif
 

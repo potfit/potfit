@@ -43,10 +43,10 @@
 
 #include "random.h"
 
-/* general flag for threebody potentials (Tersoff, SW, ..., ???) */
-#ifdef MEAM
+/* general flag for threebody potentials (MEAM, Tersoff, SW, ...) */
+#if defined MEAM || defined STIWEB
 #define THREEBODY
-#endif /* MEAM */
+#endif /* MEAM || TERSOFF || STIWEB */
 
 /* always define NORESCALE for analytic potentials */
 #ifdef APOT
@@ -77,7 +77,7 @@
 
 #define SLOTS 1
 
-#if defined EAM
+#if defined EAM || defined STIWEB
 #undef SLOTS
 #define SLOTS 2
 #elif defined MEAM
@@ -96,7 +96,7 @@
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
-typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT, I_MEAM } Interaction_T;
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT, I_MEAM, I_STIWEB, I_TERSOFF } Interaction_T;
 
 typedef struct {
   double x;
@@ -137,16 +137,16 @@ typedef struct {
   double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
 #endif
 #ifdef MEAM
-  double f;
-  double df;
   double drho;
 #endif
 #ifdef THREEBODY
+  double f;
+  double df;
   int   contrib;
 #endif
 } neigh_t;
 
-#ifdef MEAM
+#ifdef THREEBODY
 typedef struct {
   double cos;
   int   slot;
@@ -156,6 +156,22 @@ typedef struct {
   double g;
   double dg;
 } angl;
+#endif
+
+#ifdef STIWEB
+/* pointers to access Stillinger-Weber parameters directly */
+typedef struct {
+  int init;
+  double **A;
+  double **B;
+  double **p;
+  double **q;
+  double **delta;
+  double **a1;
+  double **gamma;
+  double **a2;
+  double ****lambda;
+} sw_t;
 #endif
 
 typedef struct {
@@ -176,11 +192,14 @@ typedef struct {
   vector mu;
   sym_tens lambda;
   double nu;
-#endif				/* ADP */
+#endif
+#ifdef THREEBODY
+  int   num_angl;
 #ifdef MEAM
   double rho_eam;		/* Store EAM density */
-  int   num_angl;
-#endif				/* MEAM */
+#endif
+#endif
+
 #ifdef DIPOLE
   vector E_stat;		/* static field-contribution */
   vector p_sr;			/* short-range dipole moment */
@@ -189,10 +208,11 @@ typedef struct {
   vector E_old;			/* stored old induced field */
   vector E_tot;			/* temporary induced field */
 #endif
+
   neigh_t *neigh;		/* dynamic array for neighbors */
-#ifdef MEAM
+#ifdef THREEBODY
   angl *angl_part;		/* dynamic array for angular neighbors */
-#endif				/* MEAM */
+#endif
 } atom_t;
 
 typedef struct {
@@ -259,6 +279,10 @@ typedef struct {
   double *dp_c;			/* parameter for short-range-dipole-moment */
 #endif
 
+#ifdef STIWEB
+  sw_t sw;
+#endif
+
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
 } apot_table_t;
 
@@ -303,6 +327,10 @@ EXTERN Interaction_T interaction INIT(I_ELSTAT);
 EXTERN Interaction_T interaction INIT(I_EAM_ELSTAT);
 #elif defined MEAM
 EXTERN Interaction_T interaction INIT(I_MEAM);
+#elif defined STIWEB
+EXTERN Interaction_T interaction INIT(I_STIWEB);
+#elif defined TERSOFF
+EXTERN Interaction_T interaction INIT(I_TERSOFF);
 #endif /* interaction type */
 
 /* system variables */
@@ -311,8 +339,9 @@ EXTERN int num_cpus INIT(1);	/* How many cpus are there */
 #ifdef MPI
 EXTERN MPI_Datatype MPI_ATOM;
 EXTERN MPI_Datatype MPI_NEIGH;
+#ifdef THREEBODY
 EXTERN MPI_Datatype MPI_ANGL;
-EXTERN MPI_Datatype MPI_TRANSMIT_NEIGHBOR;
+#endif
 EXTERN MPI_Datatype MPI_STENS;
 EXTERN MPI_Datatype MPI_VECTOR;
 #endif /* MPI */
@@ -532,6 +561,11 @@ double calc_forces_elstat(double *, double *, int);
 double calc_forces_eam_elstat(double *, double *, int);
 #elif defined MEAM
 double calc_forces_meam(double *, double *, int);
+#elif defined STIWEB
+double calc_forces_stiweb(double *, double *, int);
+void update_stiweb_pointers(double *);
+#elif defined TERSOFF
+double calc_forces_tersoff(double *, double *, int);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
