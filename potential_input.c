@@ -150,7 +150,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	    npots = 2 * ncols + 1;
 	    break;
 	  case I_TERSOFF:
-	    npots = ncols;
+	    npots = ntypes * ntypes;
 	    break;
 	  default:
 	    npots = ncols;
@@ -1088,6 +1088,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     global_idx += (ntypes + compnodes - apt->invar_par[apt->number][ntypes]);
   }
 #endif /* PAIR */
+
 #ifdef COULOMB
   i = apt->number;
   for (j = 0; j < (ntypes - 1); j++) {
@@ -1116,7 +1117,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     pt->idxlen -= apt->invar_par[i][0];
   }
   pt->idxlen += ntypes;
-#endif
+#endif /* COULOMB */
+
 #ifdef DIPOLE
   i = apt->number + 2;
   for (j = 0; j < (ntypes); j++) {
@@ -1174,6 +1176,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   if (opt)
     warning(1, "Gauge degrees of freedom are NOT fixed!");
 #endif /* NOPUNISH */
+
+  check_apot_functions();
 
   init_calc_table(pt, &calc_pot);
   return;
@@ -1432,7 +1436,7 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals, char *fil
       if ((!invar_pot[i]) && (j < nvals[i] - 1 && (j != 0 || i != ncols + 2 * ntypes)))
 #else
       if (!invar_pot[i])
-#endif //MEAMf
+#endif /* MEAMf */
 	pt->idx[k++] = l++;
       else
 	l++;
@@ -1472,6 +1476,7 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals, char *fil
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
 
+  return;
 }
 
 /****************************************************************
@@ -1734,6 +1739,8 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals, char *fil
 
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
+
+  return;
 }
 
 #endif /* APOT */
@@ -1829,6 +1836,8 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	calct->idx = optt->idx;
 #endif /* APOT */
   }
+
+  return;
 }
 
 #ifdef APOT
@@ -1854,6 +1863,8 @@ void update_apot_table(double *xi)
       }
     }
   }
+
+  return;
 }
 
 /****************************************************************
@@ -1868,59 +1879,59 @@ void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
   double f, h = 0;
   double *list, *val;
 
-	  val = xi_opt;
-	  list = calc_list + 2;
-	  /* copy global parameters to the right positions */
-	  if (have_globals) {
-	    for (i = 0; i < apot_table.globals; i++) {
-	      for (j = 0; j < apot_table.n_glob[i]; j++) {
-		m = apot_table.global_idx[i][j][0];
-		n = apot_table.global_idx[i][j][1];
-		*(val + opt_pot.first[m] + n) = *(val + global_idx + i);
-	      }
-	    }
-	  }
-	  for (i = 0; i < calc_pot.ncols; i++) {
-	    if (smooth_pot[i] && (do_all || !invar_pot[i])) {
-	      h = *(val + 1 + apot_table.n_par[i]);
-	      if (h == 0)
-		error(1, "The cutoff parameter for potential %d is 0!", i);
-	    }
+  val = xi_opt;
+  list = calc_list + 2;
+  /* copy global parameters to the right positions */
+  if (have_globals) {
+    for (i = 0; i < apot_table.globals; i++) {
+      for (j = 0; j < apot_table.n_glob[i]; j++) {
+	m = apot_table.global_idx[i][j][0];
+	n = apot_table.global_idx[i][j][1];
+	*(val + opt_pot.first[m] + n) = *(val + global_idx + i);
+      }
+    }
+  }
+  for (i = 0; i < calc_pot.ncols; i++) {
+    if (smooth_pot[i] && (do_all || !invar_pot[i])) {
+      h = *(val + 1 + apot_table.n_par[i]);
+      if (h == 0)
+	error(1, "The cutoff parameter for potential %d is 0!", i);
+    }
 
-	    (*val) = apot_grad(calc_pot.begin[i], val + 2, apot_table.fvalue[i]);
-	    val += 2;
-	    /* check if something has changed */
-	    change = 0;
-	    for (j = 0; j < apot_table.n_par[i]; j++) {
-	      if (list[j] != val[j]) {
-		change = 1;
-		list[j] = val[j];
-	      }
-	    }
-	    if (do_all || (change && !invar_pot[i])) {
-	      for (j = 0; j < APOT_STEPS; j++) {
-		k = i * APOT_STEPS + (i + 1) * 2 + j;
-		apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
-		*(xi_calc + k) = smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k], apot_table.end[i], h) : f;
-		if (isnan(f) || isnan(*(xi_calc + k))) {
+    (*val) = apot_grad(calc_pot.begin[i], val + 2, apot_table.fvalue[i]);
+    val += 2;
+    /* check if something has changed */
+    change = 0;
+    for (j = 0; j < apot_table.n_par[i]; j++) {
+      if (list[j] != val[j]) {
+	change = 1;
+	list[j] = val[j];
+      }
+    }
+    if (do_all || (change && !invar_pot[i])) {
+      for (j = 0; j < APOT_STEPS; j++) {
+	k = i * APOT_STEPS + (i + 1) * 2 + j;
+	apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
+	*(xi_calc + k) = smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k], apot_table.end[i], h) : f;
+	if (isnan(f) || isnan(*(xi_calc + k))) {
 #ifdef DEBUG
-		  error(0, "Potential value was nan or inf. Aborting.\n");
-		  error(0, "This occured in potential %d (%s)\n", i, apot_table.names[i]);
-		  error(0, "at distance r=%f with the parameters:\n", calc_pot.xcoord[k]);
-		  for (m = 0; m < apot_table.n_par[i]; m++)
-		    error(0, "%s %f\n", apot_table.param_name[i][m], *(val + m));
-		  if (smooth_pot[i])
-		    error(0, "h %f\n", h);
+	  error(0, "Potential value was nan or inf. Aborting.\n");
+	  error(0, "This occured in potential %d (%s)\n", i, apot_table.names[i]);
+	  error(0, "at distance r=%f with the parameters:\n", calc_pot.xcoord[k]);
+	  for (m = 0; m < apot_table.n_par[i]; m++)
+	    error(0, "%s %f\n", apot_table.param_name[i][m], *(val + m));
+	  if (smooth_pot[i])
+	    error(0, "h %f\n", h);
 #endif /* DEBUG */
-		  error(1, "Potential value was nan or inf. Aborting.\n");
-		}
-	      }
-	    }
-	    val += apot_table.n_par[i];
-	    list += apot_table.n_par[i] + 2;
-	  }
+	  error(1, "Potential value was nan or inf. Aborting.\n");
+	}
+      }
+    }
+    val += apot_table.n_par[i];
+    list += apot_table.n_par[i] + 2;
+  }
 
-	  return;
+  return;
 }
 
 #endif /* APOT */

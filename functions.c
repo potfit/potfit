@@ -95,8 +95,13 @@ void apot_init(void)
 #ifdef STIWEB
   add_pot(stiweb_2, 6);
   add_pot(stiweb_3, 2);
-  add_pot(lambda, ntypes*ntypes);
-#endif
+  add_pot(lambda, ntypes * ntypes);
+#endif /* STIWEB */
+
+#ifdef TERSOFF
+  add_pot(tersoff_pot, 11);
+  add_pot(tersoff_mix, 2);
+#endif /* TERSOFF */
 
   reg_for_free(function_table.name, "function_table.name");
   reg_for_free(function_table.n_par, "function_table.n_par");
@@ -184,6 +189,46 @@ int apot_assign_functions(apot_table_t *apt)
   }
 
   return 0;
+}
+
+/****************************************************************
+ *
+ * check for special functions needed by certain potential models
+ *
+ ****************************************************************/
+
+void check_apot_functions(void)
+{
+  /* paircol is not yet defined at this point */
+  int   pcol = (ntypes * (ntypes + 1)) / 2;
+
+#ifdef STIWEB
+  int   i;
+
+  /* check for the correct function types for SW potential */
+  for (i = 0; i < pcol; i++) {
+    if (strcmp(apot_table.names[i], "stiweb_2") != 0)
+      error(1, "Only stiweb_2 potential is allowed for the %d. potential!\n", i + 1);
+    if (strcmp(apot_table.names[pcol + i], "stiweb_3") != 0)
+      error(1, "Only stiweb_3 potential is allowed for the %d. potential!\n", pcol + i + 1);
+  }
+  if (strcmp(apot_table.names[2 * pcol], "lambda") != 0)
+    error(1, "The last potential for Stillinger-Weber has to be of the \"lambda\" type!\n");
+
+  /* make sure the cutoff parameters (a1,a2) can be optimized correctly */
+  for (i = 0; i < pcol; i++) {
+    if (apot_table.pmax[i][5] > apot_table.end[i]) {
+      error(0, "The upper bound for the parameter a1 exceeds the cutoff radius in potential %d.\n", i + 1);
+      error(1, "a1 needs to be less or equal to the potential cutoff.\n");
+    }
+    if (apot_table.pmax[pcol + i][1] > apot_table.end[pcol + i]) {
+      error(0, "The upper bound for the parameter a2 exceeds the cutoff radius in potential %d.\n", i + 1);
+      error(1, "a1 needs to be less or equal to the potential cutoff.\n");
+    }
+  }
+#endif /* STIWEB */
+
+  return;
 }
 
 /****************************************************************
@@ -478,7 +523,7 @@ void universal_value(double r, double *p, double *f)
 
 void const_value(double r, double *p, double *f)
 {
-  *f = *p;
+  *f = *p + 0.0 * r;
 }
 
 /****************************************************************
@@ -800,7 +845,7 @@ void stiweb_2_value(double r, double *p, double *f)
 
   power_m(2, power, x, y);
 
-  *f = (p[0]*power[0] - p[1]*power[1])*exp(p[4] / (r - p[5]));
+  *f = (p[0] * power[0] - p[1] * power[1]) * exp(p[4] / (r - p[5]));
 }
 
 /****************************************************************
@@ -822,10 +867,36 @@ void stiweb_3_value(double r, double *p, double *f)
 
 void lambda_value(double r, double *p, double *f)
 {
-  *f = 0.0 * r;
+  *f = 0.0 * r * p[0];
 }
 
 #endif /* STIWEB */
+
+#ifdef TERSOFF
+
+/****************************************************************
+ *
+ * pseudo Stillinger-Weber potential function to store lamda values
+ *
+ ****************************************************************/
+
+void tersoff_pot_value(double r, double *p, double *f)
+{
+  *f = 0.0 * r * p[0];
+}
+
+/****************************************************************
+ *
+ * pseudo Stillinger-Weber potential function to store lamda values
+ *
+ ****************************************************************/
+
+void tersoff_mix_value(double r, double *p, double *f)
+{
+  *f = 0.0 * r * p[0];
+}
+
+#endif /* TERSOFF */
 
 /****************************************************************
  *

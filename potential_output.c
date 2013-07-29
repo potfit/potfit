@@ -426,6 +426,86 @@ void write_pot_table4(pot_table_t *pt, char *filename)
  *
  ****************************************************************/
 
+#ifdef STIWEB
+
+void write_pot_table_imd(pot_table_t *pt, char *prefix)
+{
+  int   i;
+  char  filename[255];
+  FILE *outfile;
+
+  /* pair potential part (over r^2) */
+  sprintf(filename, "%s.pot", prefix);
+  /* open file */
+  outfile = fopen(filename, "w");
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
+
+  /* write warning header */
+  fprintf(outfile, "# WARNING:\n");
+  fprintf(outfile, "# DO NOT USE THIS FILE AS A POTENTIAL FILE IN IMD !!!!!\n");
+  fprintf(outfile, "# COPY THE CONTENTS OF THIS FILE INTO THE IMD PARAMETER FILE\n\n");
+
+  /* A_ij */
+  fprintf(outfile, "stiweb_a\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][0]);
+  fprintf(outfile, "\n");
+
+  /* B_ij */
+  fprintf(outfile, "stiweb_b\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][1]);
+  fprintf(outfile, "\n");
+
+  /* p_ij */
+  fprintf(outfile, "stiweb_p\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][2]);
+  fprintf(outfile, "\n");
+
+  /* q_ij */
+  fprintf(outfile, "stiweb_q\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][3]);
+  fprintf(outfile, "\n");
+
+  /* delta_ij */
+  fprintf(outfile, "stiweb_de\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][4]);
+  fprintf(outfile, "\n");
+
+  /* a1_ij */
+  fprintf(outfile, "stiweb_a1\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][5]);
+  fprintf(outfile, "\n");
+
+  /* gamma_ij */
+  fprintf(outfile, "stiweb_ga\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[paircol + i][0]);
+  fprintf(outfile, "\n");
+
+  /* a2_ij */
+  fprintf(outfile, "stiweb_a2\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[paircol + i][1]);
+  fprintf(outfile, "\n");
+
+  /* lambda_ijk */
+  fprintf(outfile, "stiweb_la\t");
+  for (i = 0; i < ntypes * ntypes; i++)
+    fprintf(outfile, " %f", apot_table.values[apot_table.number - 1][i]);
+  fprintf(outfile, "\n");
+
+  fclose(outfile);
+  printf("Parameters for IMD potential written to\t%s\n", filename);
+}
+
+#else
+
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
   int   i, j, k, m, m2, col1, col2;
@@ -953,6 +1033,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif /* COULOMB && APOT */
 }
 
+#endif /* STIWEB */
+
 /****************************************************************
  *
  *  write plot version of potential table
@@ -1108,19 +1190,90 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 /****************************************************************
  *
  *  write potential table for LAMMPS
- *  (in DYNAMO multi-element setfl format)
  *
  ****************************************************************/
+
+#ifdef STIWEB
 
 void write_pot_table_lammps(pot_table_t *pt)
 {
   FILE *outfile;
   char  filename[255];
+  int   i, j, k;
+  int   col;
+
+  /* check if final potential is LAMMPS compliant (a1==a2) */
+  if (apot_table.values[0][5] != apot_table.values[paircol][1]) {
+    warning(0, "Your potential is not supported by LAMMPS.\n");
+    warning(0, "Please ensure that the values a1 and a2 are the same,\n");
+    warning(1, "  either by using global parameters or by fixing them.\n");
+
+    return;
+  }
+
+  /* open file */
+  if (strcmp(output_prefix, "") != 0)
+    strcpy(filename, output_prefix);
+  else
+    strcpy(filename, endpot);
+  sprintf(filename, "%s.lammps.sw", filename);
+  outfile = fopen(filename, "w");
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
+
+  /* initialize periodic table */
+  init_elements();
+  update_stiweb_pointers(opt_pot.table);
+
+  fprintf(outfile, "#\tepsilon\n");
+
+  /* write data, one line per triple of elements */
+  for (i = 0; i < ntypes; i++) {
+    for (j = 0; j < ntypes; j++) {
+      for (k = 0; k < ntypes; k++) {
+	col = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+	fprintf(outfile, "%s %s %s", elements[i], elements[j], elements[k]);
+	fprintf(outfile, " %f", 1.0);
+	fprintf(outfile, " %f", 1.0);
+	fprintf(outfile, " %f", apot_table.values[col][5]);
+	fprintf(outfile, " %f", *apot_table.sw.lambda[i][j][k]);
+	fprintf(outfile, " %f", apot_table.values[paircol + col][0]);
+	fprintf(outfile, " %f", -1. / 3.);
+	fprintf(outfile, " %f", apot_table.values[col][1]);
+	fprintf(outfile, " %f", apot_table.values[col][0] / apot_table.values[col][1]);
+	fprintf(outfile, " %f", apot_table.values[col][2]);
+	fprintf(outfile, " %f", apot_table.values[col][3]);
+	fprintf(outfile, " %f", 0.0);
+	fprintf(outfile, "\n");
+      }
+    }
+  }
+
+
+  fclose(outfile);
+  printf("Potential in LAMMPS format written to \t%s\n", filename);
+
+  return;
+}
+
+#else
+
+ /* in DYNAMO multi-element setfl format */
+void write_pot_table_lammps(pot_table_t *pt)
+{
+#ifdef COULOMB
+  printf("Potential in LAMMPS format is not available for coulomb interactions.\n");
+  return;
+#elif defined DIPOLE
+  printf("Potential in LAMMPS format is not available for coulomb interactions.\n");
+  return;
+#else /* COULOMB */
+
+  FILE *outfile;
+  char  filename[255];
   int   i, j;
   int   k = 0, l;
   double dx, r;
-
-  /* CHECK IF WE CAN WRITE IT !!! */
 
   /* open file */
   if (strcmp(output_prefix, "") != 0)
@@ -1209,7 +1362,13 @@ void write_pot_table_lammps(pot_table_t *pt)
 
   fclose(outfile);
   printf("Potential in LAMMPS format written to \t%s\n", filename);
+
+  return;
+
+#endif /* COULOMB */
 }
+
+#endif /* STIWEB */
 
 /****************************************************************
  *

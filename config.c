@@ -212,7 +212,9 @@ void read_config(char *filename)
 	    h_boxz++;
 	  else
 	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
+
 #ifdef CONTRIB
+	  /* box of contributing particles */
 	} else if (strncmp(res + 1, "B_O", 3) == 0) {
 	  if (1 == have_contrib_box) {
 	    error(0, "There can only be one box of contributing atoms\n");
@@ -238,6 +240,8 @@ void read_config(char *filename)
 	    have_contrib++;
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
+
+	  /* sphere of contributing particles */
 	} else if (strncmp(res + 1, "B_S", 3) == 0) {
 	  sphere_centers = (vector *)realloc(sphere_centers, (n_spheres + 1) * sizeof(vector));
 	  r_spheres = (double *)realloc(r_spheres, (n_spheres + 1) * sizeof(double));
@@ -247,14 +251,20 @@ void read_config(char *filename)
 	  } else
 	    error(1, "%s: Error in sphere of contributing atoms, line %d\n", filename, line);
 #endif /* CONTRIB */
+
+	  /* energy */
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
 	    h_eng++;
 	  else
 	    error(1, "%s: Error in energy on line %d\n", filename, line);
+
+	  /* configuration weight */
 	} else if (res[1] == 'W') {
 	  if (sscanf(res + 3, "%lf\n", &(conf_weight[nconf])) != 1)
 	    error(1, "%s: Error in configuration weight on line %d\n", filename, line);
+
+	  /* chemical elements */
 	} else if (res[1] == 'C') {
 	  fgetpos(infile, &filepos);
 	  if (!have_elements) {
@@ -327,7 +337,7 @@ void read_config(char *filename)
 	  }
 	  fsetpos(infile, &filepos);
 	}
-
+#ifdef STRESS
 	/* read stress */
 	else if (res[1] == 'S') {
 	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
@@ -336,6 +346,8 @@ void read_config(char *filename)
 	  else
 	    error(1, "Error in stress tensor on line %d\n", line);
 	}
+#endif /* STRESS */
+
       } while (res[1] != 'F');
       if (!(h_eng && h_boxx && h_boxy && h_boxz))
 	error(1, "Incomplete box vectors for config %d!", nconf);
@@ -469,13 +481,13 @@ void read_config(char *filename)
 		atoms[i].neigh[k].r = r;
 		atoms[i].neigh[k].inv_r = 1.0 / r;
 		atoms[i].neigh[k].dist = dd;
+		atoms[i].neigh[k].rdist.x = dd.x * r;
+		atoms[i].neigh[k].rdist.y = dd.y * r;
+		atoms[i].neigh[k].rdist.z = dd.z * r;
 #ifdef COULOMB
 		atoms[i].neigh[k].r2 = r * r;
 #endif /* COULOMB */
 #ifdef ADP
-		atoms[i].neigh[k].rdist.x = dd.x * r;
-		atoms[i].neigh[k].rdist.y = dd.y * r;
-		atoms[i].neigh[k].rdist.z = dd.z * r;
 		atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
 		atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
 		atoms[i].neigh[k].sqrdist.zz = dd.z * dd.z * r * r;
@@ -765,11 +777,11 @@ void read_config(char *filename)
 #ifdef THREEBODY
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].n_neigh;
-      /* Set size of angles for each atom to conserve mem */
-      atoms[i].angl_part = (angl *) malloc(((nnn * (nnn - 1)) / 2) * sizeof(angl));
       ijk = 0;
       for (j = 0; j < nnn - 1; j++) {
+	atoms[i].neigh[j].ijk_start = ijk;
 	for (k = j + 1; k < nnn; k++) {
+	  atoms[i].angl_part = (angl *) realloc(atoms[i].angl_part, (ijk + 1) * sizeof(angl));
 	  ccos =
 	    atoms[i].neigh[j].dist.x * atoms[i].neigh[k].dist.x +
 	    atoms[i].neigh[j].dist.y * atoms[i].neigh[k].dist.y +
@@ -784,7 +796,7 @@ void read_config(char *filename)
 	      fflush(stdout);
 	      error(1, "cos out of range, it is strange!");
 	    }
-#ifndef STIWEB
+#ifdef MEAM
 	    istep = calc_pot.invstep[col];
 	    slot = (int)((ccos + 1) * istep);
 	    shift = ((ccos + 1) - slot * calc_pot.step[col]) * istep;
@@ -797,12 +809,13 @@ void read_config(char *filename)
 	      slot--;
 	      shift += 1.0;
 	    }
-#endif /* !STIWEB */
+#endif /* !MEAM */
 	  }
-
+#ifdef MEAM
 	  atoms[i].angl_part[ijk].shift = shift;
 	  atoms[i].angl_part[ijk].slot = slot;
 	  atoms[i].angl_part[ijk].step = step;
+#endif /* MEAM */
 	  ijk++;
 	}
       }
@@ -1185,20 +1198,7 @@ int does_contribute(vector pos)
 
 void update_slots(void)
 {
-  int   i, j;
-  int   col0;			/* pair potential part */
-#if defined EAM || defined ADP || defined MEAM
-  int   col1;			/* transfer function part */
-#endif /* EAM || ADP */
-#ifdef MEAM
-  int   col2
-#endif /* MEAM */
-#ifdef ADP
-  int   col2, col3;		/* u and w function part */
-#endif /* ADP */
-#if defined THREEBODY && !defined STIWEB
-  int  col_g;
-#endif /* THREEBODY */
+  int   col, i, j;
   double r, rr;
 
   for (i = 0; i < natoms; i++) {
@@ -1206,101 +1206,100 @@ void update_slots(void)
       r = atoms[i].neigh[j].r;
 
       /* update slots for pair potential part, slot 0 */
-      col0 = atoms[i].neigh[j].col[0];
-      if (r < calc_pot.end[col0]) {
-	rr = r - calc_pot.begin[col0];
-	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col0]);
-	atoms[i].neigh[j].step[0] = calc_pot.step[col0];
+      col = atoms[i].neigh[j].col[0];
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[0] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[0] = calc_pot.step[col];
 	atoms[i].neigh[j].shift[0] =
-	  (rr - atoms[i].neigh[j].slot[0] * calc_pot.step[col0]) * calc_pot.invstep[col0];
+	  (rr - atoms[i].neigh[j].slot[0] * calc_pot.step[col]) * calc_pot.invstep[col];
 	/* move slot to the right potential */
-	atoms[i].neigh[j].slot[0] += calc_pot.first[col0];
+	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
       }
 #if defined EAM || defined ADP || defined MEAM
       /* update slots for eam transfer functions, slot 1 */
-      col1 = atoms[i].neigh[j].col[1];
-      if (r < calc_pot.end[col1]) {
-	rr = r - calc_pot.begin[col1];
-	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col1]);
-	atoms[i].neigh[j].step[1] = calc_pot.step[col1];
+      col = atoms[i].neigh[j].col[1];
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[1] = calc_pot.step[col];
 	atoms[i].neigh[j].shift[1] =
-	  (rr - atoms[i].neigh[j].slot[1] * calc_pot.step[col1]) * calc_pot.invstep[col1];
+	  (rr - atoms[i].neigh[j].slot[1] * calc_pot.step[col]) * calc_pot.invstep[col];
 	/* move slot to the right potential */
-	atoms[i].neigh[j].slot[1] += calc_pot.first[col1];
+	atoms[i].neigh[j].slot[1] += calc_pot.first[col];
       }
 #endif /* EAM || ADP || MEAM */
 
 #ifdef MEAM
       /* update slots for MEAM f functions, slot 2 */
-      col2 = atoms[i].neigh[j].col[2];
-      if (r < calc_pot.end[col2]) {
-	rr = r - calc_pot.begin[col2];
-	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col2]);
-	atoms[i].neigh[j].step[2] = calc_pot.step[col2];
+      col = atoms[i].neigh[j].col[2];
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[2] = calc_pot.step[col];
 	atoms[i].neigh[j].shift[2] =
-	  (rr - atoms[i].neigh[j].slot[2] * calc_pot.step[col2]) * calc_pot.invstep[col2];
+	  (rr - atoms[i].neigh[j].slot[2] * calc_pot.step[col]) * calc_pot.invstep[col];
 	/* move slot to the right potential */
-	atoms[i].neigh[j].slot[2] += calc_pot.first[col2];
+	atoms[i].neigh[j].slot[2] += calc_pot.first[col];
       }
 #endif /* MEAM */
 
 #ifdef ADP
       /* update slots for adp dipole functions, slot 2 */
-      col2 = atoms[i].neigh[j].col[2];
-      if (r < calc_pot.end[col2]) {
-	rr = r - calc_pot.begin[col2];
-	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col2]);
-	atoms[i].neigh[j].step[2] = calc_pot.step[col2];
+      col = atoms[i].neigh[j].col[2];
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[2] = calc_pot.step[col];
 	atoms[i].neigh[j].shift[2] =
-	  (rr - atoms[i].neigh[j].slot[2] * calc_pot.step[col2]) * calc_pot.invstep[col2];
+	  (rr - atoms[i].neigh[j].slot[2] * calc_pot.step[col]) * calc_pot.invstep[col];
 	/* move slot to the right potential */
-	atoms[i].neigh[j].slot[2] += calc_pot.first[col2];
+	atoms[i].neigh[j].slot[2] += calc_pot.first[col];
       }
 
       /* update slots for adp quadrupole functions, slot 3 */
-      col3 = atoms[i].neigh[j].col[3];
-      if (r < calc_pot.end[col3]) {
-	rr = r - calc_pot.begin[col3];
-	atoms[i].neigh[j].slot[3] = (int)(rr * calc_pot.invstep[col3]);
-	atoms[i].neigh[j].step[3] = calc_pot.step[col3];
+      col = atoms[i].neigh[j].col[3];
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[3] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[3] = calc_pot.step[col];
 	atoms[i].neigh[j].shift[3] =
-	  (rr - atoms[i].neigh[j].slot[3] * calc_pot.step[col3]) * calc_pot.invstep[col3];
+	  (rr - atoms[i].neigh[j].slot[3] * calc_pot.step[col]) * calc_pot.invstep[col];
 	/* move slot to the right potential */
-	atoms[i].neigh[j].slot[3] += calc_pot.first[col3];
+	atoms[i].neigh[j].slot[3] += calc_pot.first[col];
       }
 #endif /* ADP */
 
     }				/* end loop over all neighbors */
   }				/* end loop over all atoms */
 
-#if defined THREEBODY && !defined STIWEB
+#ifdef THREEBODY
   /* update angular slots */
   for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].num_angl; j++) {
-      col_g = 2 * paircol + 2 * ntypes + atoms[i].typ;
-      rr = atoms[i].angl_part[j].cos - calc_pot.begin[col_g];
-      atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col_g]);
-      atoms[i].angl_part[j].step = calc_pot.step[col_g];
+      col = 2 * paircol + 2 * ntypes + atoms[i].typ;
+      rr = atoms[i].angl_part[j].cos - calc_pot.begin[col];
+#ifdef MEAM
+      atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col]);
+      atoms[i].angl_part[j].step = calc_pot.step[col];
       atoms[i].angl_part[j].shift =
-	(rr - atoms[i].angl_part[j].slot * calc_pot.step[col_g]) * calc_pot.invstep[col_g];
+	(rr - atoms[i].angl_part[j].slot * calc_pot.step[col]) * calc_pot.invstep[col];
       /* move slot to the right potential */
-      atoms[i].angl_part[j].slot += calc_pot.first[col_g];
+      atoms[i].angl_part[j].slot += calc_pot.first[col];
+#endif /* MEAM */
     }
   }
 #endif /* THREEBODY */
 
 #ifdef STIWEB
-  /* make sure the pair potentials in different slots have the same cutoff */
-  for (i = 0; i < paircol;i++) {
-    if (apot_table.end[i] != apot_table.end[paircol + i]) {
-      error(0, "The two- and threebody term for the %d. interaction have different cutoff radii.\n",i+1);
-      error(1, "Please fix this is your potential file\n");
-    }
-  }
-
   apot_table.sw.init = 0;
 #endif /* STIWEB */
 
+#ifdef TERSOFF
+  apot_table.tersoff.init = 0;
+#endif /* TERSOFF */
+
+  return;
 }
 
 #endif /* APOT */

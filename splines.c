@@ -40,7 +40,7 @@
  *
  ****************************************************************/
 
-void spline_ed(double xstep, double y[], int n, double yp1, double ypn, double y2[])
+void spline_ed(double xstep, double *y, int n, double yp1, double ypn, double *y2)
 {
   int   i, k;
   double p, qn, un;
@@ -256,7 +256,7 @@ double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b, double step
  *
  ****************************************************************/
 
-void spline_ne(double x[], double y[], int n, double yp1, double ypn, double y2[])
+void spline_ne(double *x, double *y, int n, double yp1, double ypn, double *y2)
 {
   int   i, k;
   double p, qn, sig, un;

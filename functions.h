@@ -77,6 +77,11 @@ void  stiweb_3_value(double, double *, double *);
 void  lambda_value(double, double *, double *);
 #endif /* STIWEB */
 
+#ifdef TERSOFF
+void  tersoff_pot_value(double, double *, double *);
+void  tersoff_mix_value(double, double *, double *);
+#endif /* TERSOFF */
+
 /* template for new potential function called newpot */
 
 /* "newpot" potential */
@@ -90,6 +95,7 @@ void  add_potential(char *, int, fvalue_pointer);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(double *);
 int   apot_parameters(char *);
+void  check_apot_functions(void);
 double apot_grad(double, double *, void (*function) (double, double *, double *));
 double apot_punish(double *, double *);
 double cutoff(double, double, double);

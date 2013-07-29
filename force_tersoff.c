@@ -88,74 +88,36 @@
 
 double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 {
-  int   first, col, i;
-  double tmpsum = 0., sum = 0.;
-  double *xi = NULL;
+  int   col, i;
+  double tmpsum = 0.0, sum = 0.0;
+  const tersoff_t *tersoff = &apot_table.tersoff;
 
-  switch (format) {
-      case 0:
-	xi = calc_pot.table;
-	break;
-      case 3:			/* fall through */
-      case 4:
-	xi = xi_opt;		/* calc-table is opt-table */
-	break;
-      case 5:
-	xi = calc_pot.table;	/* we need to update the calc-table */
-  }
+#ifndef MPI
+  myconf = nconf;
+#endif /* !MPI */
 
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
 
-#if defined APOT && !defined MPI
-    if (format == 0) {
-      apot_check_params(xi_opt);
-      update_calc_table(xi_opt, xi, 0);
-    }
-#endif /* APOT && !MPI */
+#ifndef MPI
+    apot_check_params(xi_opt);
+#endif /* !MPI */
 
 #ifdef MPI
-#ifndef APOT
-    /* exchange potential and flag value */
-    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
 
-#ifdef APOT
     if (myid == 0)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    update_calc_table(xi_opt, xi, 0);
-#else /* APOT */
-    /* if flag==2 then the potential parameters have changed -> sync */
-    if (flag == 2)
-      potsync();
-#endif /* APOT */
 #endif /* MPI */
 
-    /* init second derivatives for splines */
+    update_tersoff_pointers(xi_opt);
 
-    /* pair potentials */
-    for (col = 0; col < paircol; col++) {
-      first = calc_pot.first[col];
-      if (format == 0 || format == 3)
-	spline_ed(calc_pot.step[col], xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-      else			/* format >= 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-    }
-
-#ifndef MPI
-    myconf = nconf;
-#endif /* MPI */
-
-    /* region containing loop over configurations,
-       also OMP-parallelized region */
+    /* region containing loop over configurations */
     {
       atom_t *atom;
       int   h, j, k, l;
@@ -164,10 +126,11 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
       int   us, stresses;
 #endif /* STRESS */
 
-      neigh_t *neigh;
+      neigh_t *neigh_j;
 
       /* pair variables */
       double phi_val, phi_grad;
+      double cut_tmp, cut_tmp_j;
       vector tmp_force;
 
       /* loop over configurations */
@@ -199,63 +162,36 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	}
 	/* end first loop */
 
-	/* 2nd loop: calculate pair forces and energies */
+	/* 2nd loop: calculate cutoff function f_c for all neighbors */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  k = 3 * (cnfstart[h] + i);
 	  /* loop over neighbors */
 	  for (j = 0; j < atom->n_neigh; j++) {
-	    neigh = atom->neigh + j;
-	    /* In small cells, an atom might interact with itself */
-	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+	    neigh_j = atom->neigh + j;
+	    col = neigh_j->col[0];
 
-	    /* pair potential part */
-	    if (neigh->r < calc_pot.end[neigh->col[0]]) {
-	      /* fn value and grad are calculated in the same step */
-	      if (uf)
-		phi_val =
-		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
-	      else
-		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
-	      /* avoid double counting if atom is interacting with a
-	         copy of itself */
-	      if (self) {
-		phi_val *= 0.5;
-		phi_grad *= 0.5;
-	      }
-	      /* not double force: cohesive energy */
-	      forces[energy_p + h] += phi_val;
-
-	      if (uf) {
-		tmp_force.x = neigh->dist.x * phi_grad;
-		tmp_force.y = neigh->dist.y * phi_grad;
-		tmp_force.z = neigh->dist.z * phi_grad;
-		forces[k] += tmp_force.x;
-		forces[k + 1] += tmp_force.y;
-		forces[k + 2] += tmp_force.z;
-		/* actio = reactio */
-		l = 3 * neigh->nr;
-		forces[l] -= tmp_force.x;
-		forces[l + 1] -= tmp_force.y;
-		forces[l + 2] -= tmp_force.z;
-#ifdef STRESS
-		/* also calculate pair stresses */
-		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
-		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
-		}
-#endif /* STRESS */
-	      }
+	    cut_tmp = M_PI / (*(tersoff->S[col]) - *(tersoff->R[col]));
+	    cut_tmp_j = cut_tmp * (neigh_j->r - *(tersoff->R[col]));
+	    if (neigh_j->r < *(tersoff->R[col])) {
+	      neigh_j->f = 1.0;
+	      neigh_j->df = 0.0;
+	    } else if (neigh_j->r > *(tersoff->S[col])) {
+	      neigh_j->f = 0.0;
+	      neigh_j->df = 0.0;
+	    } else {
+	      neigh_j->f = 0.5 * (1.0 + cos(cut_tmp_j));
+	      neigh_j->df = -0.5 * cut_tmp * sin(cut_tmp_j);
 	    }
-	  }			/* loop over neighbours */
+	  }			/* loop over neighbors */
+
+	  for (j = 0; j < atom->n_neigh; j++) {
+	    neigh_j = atom->neigh + j;
+	    col = neigh_j->col[0];
+
+	    if (0.0 == *(tersoff->B[col]))
+	      continue;
+	  }
 
 /*then we can calculate contribution of forces right away */
 	  if (uf) {
@@ -345,6 +281,78 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
   /* once a non-root process arrives here, all is done. */
   return -1.;
+}
+
+void update_tersoff_pointers(double *xi)
+{
+  int   i, j, k;
+  int   index = 2;
+  tersoff_t *tersoff = &apot_table.tersoff;
+
+  /* allocate if this has not been done */
+  if (0 == tersoff->init) {
+    tersoff->A = (double **)malloc(paircol * sizeof(double *));
+    tersoff->B = (double **)malloc(paircol * sizeof(double *));
+    tersoff->lambda = (double **)malloc(paircol * sizeof(double *));
+    tersoff->mu = (double **)malloc(paircol * sizeof(double *));
+    tersoff->gamma = (double **)malloc(paircol * sizeof(double *));
+    tersoff->n = (double **)malloc(paircol * sizeof(double *));
+    tersoff->c = (double **)malloc(paircol * sizeof(double *));
+    tersoff->d = (double **)malloc(paircol * sizeof(double *));
+    tersoff->h = (double **)malloc(paircol * sizeof(double *));
+    tersoff->S = (double **)malloc(paircol * sizeof(double *));
+    tersoff->R = (double **)malloc(paircol * sizeof(double *));
+    tersoff->chi = (double **)malloc(paircol * sizeof(double *));
+    tersoff->omega = (double **)malloc(paircol * sizeof(double *));
+    for (i = 0; i < paircol; i++) {
+      tersoff->A[i] = NULL;
+      tersoff->B[i] = NULL;
+      tersoff->lambda[i] = NULL;
+      tersoff->mu[i] = NULL;
+      tersoff->gamma[i] = NULL;
+      tersoff->n[i] = NULL;
+      tersoff->c[i] = NULL;
+      tersoff->d[i] = NULL;
+      tersoff->h[i] = NULL;
+      tersoff->S[i] = NULL;
+      tersoff->R[i] = NULL;
+      tersoff->chi[i] = NULL;
+      tersoff->omega[i] = NULL;
+    }
+    tersoff->init = 1;
+    tersoff->one = 1.0;
+  }
+
+  /* update only if the address has changed */
+  if (tersoff->A[0] != xi + index) {
+    /* set the pair parameters */
+    for (i = 0; i < paircol; i++) {
+      tersoff->A[i] = xi + index++;
+      tersoff->B[i] = xi + index++;
+      tersoff->lambda[i] = xi + index++;
+      tersoff->mu[i] = xi + index++;
+      tersoff->gamma[i] = xi + index++;
+      tersoff->n[i] = xi + index++;
+      tersoff->c[i] = xi + index++;
+      tersoff->d[i] = xi + index++;
+      tersoff->h[i] = xi + index++;
+      tersoff->S[i] = xi + index++;
+      tersoff->R[i] = xi + index++;
+      index += 2;
+    }
+    for (i = 0; i < paircol; i++) {
+      if (0 == (i % ntypes)) {
+	tersoff->chi[i] = &tersoff->one;
+	tersoff->omega[i] = &tersoff->one;
+      } else {
+	tersoff->chi[i] = xi + index++;
+	tersoff->omega[i] = xi + index++;
+	index += 2;
+      }
+    }
+  }
+
+  return;
 }
 
 #endif /* TERSOFF */

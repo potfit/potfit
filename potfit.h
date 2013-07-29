@@ -44,7 +44,7 @@
 #include "random.h"
 
 /* general flag for threebody potentials (MEAM, Tersoff, SW, ...) */
-#if defined MEAM || defined STIWEB
+#if defined MEAM || defined STIWEB || defined TERSOFF
 #define THREEBODY
 #endif /* MEAM || TERSOFF || STIWEB */
 
@@ -96,7 +96,9 @@
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
-typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT, I_MEAM, I_STIWEB, I_TERSOFF } Interaction_T;
+typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT, I_MEAM, I_STIWEB,
+  I_TERSOFF
+} Interaction_T;
 
 typedef struct {
   double x;
@@ -120,12 +122,12 @@ typedef struct {
   double r;
   double inv_r;
   vector dist;			/* distance divided by r */
+  vector rdist;			/* real distance */
   int   slot[SLOTS];
   double shift[SLOTS];
   double step[SLOTS];
   int   col[SLOTS];		/* coloumn of interaction for this neighbor */
 #ifdef ADP
-  vector rdist;			/* real distance */
   sym_tens sqrdist;		/* real squared distance */
   double u_val, u_grad;		/* value and gradient of u(r) */
   double w_val, w_grad;		/* value and gradient of w(r) */
@@ -143,6 +145,7 @@ typedef struct {
   double f;
   double df;
   int   contrib;
+  int   ijk_start;
 #endif
 } neigh_t;
 
@@ -161,7 +164,7 @@ typedef struct {
 #ifdef STIWEB
 /* pointers to access Stillinger-Weber parameters directly */
 typedef struct {
-  int init;
+  int   init;
   double **A;
   double **B;
   double **p;
@@ -173,6 +176,28 @@ typedef struct {
   double ****lambda;
 } sw_t;
 #endif
+
+#ifdef TERSOFF
+/* pointers to access Stillinger-Weber parameters directly */
+typedef struct {
+  int   init;
+  double **A;
+  double **B;
+  double **lambda;
+  double **mu;
+  double **gamma;
+  double **n;
+  double **c;
+  double **d;
+  double **h;
+  double **S;
+  double **R;
+  double **chi;
+  double **omega;
+  double one;
+} tersoff_t;
+#endif
+
 
 typedef struct {
   int   typ;
@@ -280,7 +305,11 @@ typedef struct {
 #endif
 
 #ifdef STIWEB
-  sw_t sw;
+  sw_t  sw;
+#endif
+
+#ifdef TERSOFF
+  tersoff_t tersoff;
 #endif
 
   fvalue_pointer *fvalue;	/* function pointers for analytic potentials */
@@ -563,9 +592,10 @@ double calc_forces_eam_elstat(double *, double *, int);
 double calc_forces_meam(double *, double *, int);
 #elif defined STIWEB
 double calc_forces_stiweb(double *, double *, int);
-void update_stiweb_pointers(double *);
+void  update_stiweb_pointers(double *);
 #elif defined TERSOFF
 double calc_forces_tersoff(double *, double *, int);
+void  update_tersoff_pointers(double *);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
