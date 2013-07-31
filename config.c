@@ -495,12 +495,6 @@ void read_config(char *filename)
 		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
 		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
-#ifdef THREEBODY
-		if ((0 != ix) || (0 != iy) || (0 != iz))
-		  atoms[i].neigh[k].contrib = 0;
-		else
-		  atoms[i].neigh[k].contrib = 1;
-#endif /* THREEBODY */
 		atoms[i].n_neigh++;
 
 		col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
@@ -778,9 +772,20 @@ void read_config(char *filename)
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].n_neigh;
       ijk = 0;
+      atoms[i].angl_part = (angl *) malloc(sizeof(angl));
+#ifdef TERSOFF
+      for (j = 0; j < nnn; j++) {
+#else
       for (j = 0; j < nnn - 1; j++) {
+#endif /* TERSOFF */
 	atoms[i].neigh[j].ijk_start = ijk;
+#ifdef TERSOFF
+	for (k = 0; k < nnn; k++) {
+	  if (j == k)
+	    continue;
+#else
 	for (k = j + 1; k < nnn; k++) {
+#endif /* TERSOFF */
 	  atoms[i].angl_part = (angl *) realloc(atoms[i].angl_part, (ijk + 1) * sizeof(angl));
 	  ccos =
 	    atoms[i].neigh[j].dist.x * atoms[i].neigh[k].dist.x +
@@ -1277,9 +1282,9 @@ void update_slots(void)
   /* update angular slots */
   for (i = 0; i < natoms; i++) {
     for (j = 0; j < atoms[i].num_angl; j++) {
-      col = 2 * paircol + 2 * ntypes + atoms[i].typ;
-      rr = atoms[i].angl_part[j].cos - calc_pot.begin[col];
+      rr = atoms[i].angl_part[j].cos + 1.1;
 #ifdef MEAM
+      col = 2 * paircol + 2 * ntypes + atoms[i].typ;
       atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col]);
       atoms[i].angl_part[j].step = calc_pot.step[col];
       atoms[i].angl_part[j].shift =

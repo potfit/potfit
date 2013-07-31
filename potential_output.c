@@ -31,6 +31,7 @@
 #include "potfit.h"
 
 #include "elements.h"
+#include "functions.h"
 #include "potential.h"
 #include "splines.h"
 #include "utils.h"
@@ -426,13 +427,16 @@ void write_pot_table4(pot_table_t *pt, char *filename)
  *
  ****************************************************************/
 
-#ifdef STIWEB
+#if defined STIWEB || defined TERSOFF
 
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
   int   i;
   char  filename[255];
   FILE *outfile;
+
+  /* access pt to shut up compiler warnings */
+  i = pt->len;
 
   /* pair potential part (over r^2) */
   sprintf(filename, "%s.pot", prefix);
@@ -441,11 +445,20 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   if (NULL == outfile)
     error(1, "Could not open file %s\n", filename);
 
+  fprintf(outfile, "# IMD potential file written by potfit %s\n#\n", VERSION_INFO);
+#ifdef STIWEB
+  fprintf(outfile, "# This is a Stillinger-Weber potential. Compile IMD with the stiweb option.\n#\n");
+#endif /* STIWEB */
+#ifdef TERSOFF
+  fprintf(outfile, "# This is a Tersoff potential. Compile IMD with the tersoff2 option.\n#\n");
+#endif /* TERSOFF */
+
   /* write warning header */
   fprintf(outfile, "# WARNING:\n");
   fprintf(outfile, "# DO NOT USE THIS FILE AS A POTENTIAL FILE IN IMD !!!!!\n");
   fprintf(outfile, "# COPY THE CONTENTS OF THIS FILE INTO THE IMD PARAMETER FILE\n\n");
 
+#ifdef STIWEB
   /* A_ij */
   fprintf(outfile, "stiweb_a\t");
   for (i = 0; i < paircol; i++)
@@ -499,6 +512,91 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   for (i = 0; i < ntypes * ntypes; i++)
     fprintf(outfile, " %f", apot_table.values[apot_table.number - 1][i]);
   fprintf(outfile, "\n");
+#endif /* STIWEB */
+
+#ifdef TERSOFF
+  /* A_ij */
+  fprintf(outfile, "ters_a\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][0]);
+  fprintf(outfile, "\n");
+
+  /* B_ij */
+  fprintf(outfile, "ters_b\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][1]);
+  fprintf(outfile, "\n");
+
+  /* lambda_ij */
+  fprintf(outfile, "ters_la\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][2]);
+  fprintf(outfile, "\n");
+
+  /* mu_ij */
+  fprintf(outfile, "ters_mu\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][3]);
+  fprintf(outfile, "\n");
+
+  /* gamma_ij */
+  fprintf(outfile, "ters_ga\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][4]);
+  fprintf(outfile, "\n");
+
+  /* n_ij */
+  fprintf(outfile, "ters_n\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][5]);
+  fprintf(outfile, "\n");
+
+  /* c_ij */
+  fprintf(outfile, "ters_c\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][6]);
+  fprintf(outfile, "\n");
+
+  /* d_ij */
+  fprintf(outfile, "ters_d\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][7]);
+  fprintf(outfile, "\n");
+
+  /* h_ij */
+  fprintf(outfile, "ters_h\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][8]);
+  fprintf(outfile, "\n");
+
+  /* r_cut = S_ij */
+  fprintf(outfile, "ters_r_cut\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][9]);
+  fprintf(outfile, "\n");
+
+  /* r_0 = R_ij */
+  fprintf(outfile, "ters_r0\t\t");
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %f", apot_table.values[i][10]);
+  fprintf(outfile, "\n");
+
+  /* chi and omega only for mixing potentials */
+  if (ntypes > 1) {
+
+    /* chi_ij, chi_ii = 1.0 */
+    fprintf(outfile, "ters_chi\t\t");
+    for (i = 0; i < ntypes * (ntypes - 1) / 2.0; i++)
+      fprintf(outfile, " %f", apot_table.values[paircol + i][0]);
+    fprintf(outfile, "\n");
+
+    /* omega_ij, chi_ii = 1.0 */
+    fprintf(outfile, "ters_om\t\t");
+    for (i = 0; i < ntypes * (ntypes - 1) / 2.0; i++)
+      fprintf(outfile, " %f", apot_table.values[paircol + i][1]);
+    fprintf(outfile, "\n");
+  }
+#endif /* TERSOFF */
 
   fclose(outfile);
   printf("Parameters for IMD potential written to\t%s\n", filename);
@@ -1052,6 +1150,9 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #endif /* APOT */
   double r, r_step, temp;
 
+  /* access pt to shut up compiler warnings */
+  i = pt->len;
+
   /* open file */
   outfile = fopen(filename, "w");
   if (NULL == outfile)
@@ -1193,15 +1294,25 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
  *
  ****************************************************************/
 
-#ifdef STIWEB
+#if defined STIWEB || defined TERSOFF
 
 void write_pot_table_lammps(pot_table_t *pt)
 {
   FILE *outfile;
   char  filename[255];
   int   i, j, k;
-  int   col;
+  int   col_j;
 
+  if (!have_elements) {
+    warning(0, "There are no elements listed in you configuration file.\n");
+    warning(1, "A LAMMPS potential cannot be written without them.\n");
+    return;
+  }
+
+  /* access pt to shut up compiler warnings */
+  i = pt->len;
+
+#ifdef STIWEB
   /* check if final potential is LAMMPS compliant (a1==a2) */
   if (apot_table.values[0][5] != apot_table.values[paircol][1]) {
     warning(0, "Your potential is not supported by LAMMPS.\n");
@@ -1210,45 +1321,96 @@ void write_pot_table_lammps(pot_table_t *pt)
 
     return;
   }
+#endif /* STIWEB */
 
   /* open file */
   if (strcmp(output_prefix, "") != 0)
     strcpy(filename, output_prefix);
   else
     strcpy(filename, endpot);
+#ifdef STIWEB
   sprintf(filename, "%s.lammps.sw", filename);
+#endif /* STIWEB */
+#ifdef TERSOFF
+  sprintf(filename, "%s.lammps.tersoff", filename);
+#endif /* TERSOFF */
   outfile = fopen(filename, "w");
   if (NULL == outfile)
     error(1, "Could not open file %s\n", filename);
 
   /* initialize periodic table */
   init_elements();
+#ifdef STIWEB
   update_stiweb_pointers(opt_pot.table);
+#endif /* STIWEB */
+#ifdef TERSOFF
+  update_tersoff_pointers(opt_pot.table);
+#endif /* TERSOFF */
 
+  /* write header data */
+#ifdef STIWEB
   fprintf(outfile, "#\tepsilon\n");
+#endif /* STIWEB */
+#ifdef TERSOFF
+  fprintf(outfile, "#\tepsilon\n");
+#endif /* TERSOFF */
 
   /* write data, one line per triple of elements */
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
       for (k = 0; k < ntypes; k++) {
-	col = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+	col_j = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
 	fprintf(outfile, "%s %s %s", elements[i], elements[j], elements[k]);
+#ifdef STIWEB
+	/* TODO: scaling ??? */
 	fprintf(outfile, " %f", 1.0);
 	fprintf(outfile, " %f", 1.0);
-	fprintf(outfile, " %f", apot_table.values[col][5]);
-	fprintf(outfile, " %f", *apot_table.sw.lambda[i][j][k]);
-	fprintf(outfile, " %f", apot_table.values[paircol + col][0]);
+	fprintf(outfile, " %f", apot_table.values[col_j][5]);
+	fprintf(outfile, " %f", *(apot_table.sw.lambda[i][j][k]));
+	fprintf(outfile, " %f", apot_table.values[paircol + col_j][0]);
 	fprintf(outfile, " %f", -1. / 3.);
-	fprintf(outfile, " %f", apot_table.values[col][1]);
-	fprintf(outfile, " %f", apot_table.values[col][0] / apot_table.values[col][1]);
-	fprintf(outfile, " %f", apot_table.values[col][2]);
-	fprintf(outfile, " %f", apot_table.values[col][3]);
+	fprintf(outfile, " %f", apot_table.values[col_j][1]);
+	fprintf(outfile, " %f", apot_table.values[col_j][0] / apot_table.values[col_j][1]);
+	fprintf(outfile, " %f", apot_table.values[col_j][2]);
+	fprintf(outfile, " %f", apot_table.values[col_j][3]);
 	fprintf(outfile, " %f", 0.0);
+#endif /* STIWEB */
+#ifdef TERSOFF
+	/* potfit calculates the Tersoff_2 potential model */
+	/* lammps requires the parameters in Tersoff_1 format */
+	/* m has no effect, set it to 1.0 */
+	fprintf(outfile, " %f", 1.0);
+	/* gamma_ijk = omega_ik */
+	fprintf(outfile, " %f", *(apot_table.tersoff.omega[col_j]));
+	/* lambda3 = 0 */
+	fprintf(outfile, " %f", 0.0);
+	/* c */
+	fprintf(outfile, " %f", apot_table.values[col_j][6]);
+	/* d */
+	fprintf(outfile, " %f", apot_table.values[col_j][7]);
+	/* costheta0 = h */
+	fprintf(outfile, " %f", apot_table.values[col_j][8]);
+	/* n */
+	fprintf(outfile, " %f", apot_table.values[col_j][5]);
+	/* beta */
+	fprintf(outfile, " %f", apot_table.values[col_j][4]);
+	/* lambda2 */
+	fprintf(outfile, " %f", apot_table.values[col_j][3]);
+	/* B (includes chi) */
+	fprintf(outfile, " %f", apot_table.values[col_j][1] * *(apot_table.tersoff.chi[col_j]));
+	/* R */
+	fprintf(outfile, " %f", 0.5 * (apot_table.values[col_j][9] + apot_table.values[col_j][10]));
+	/* D */
+	fprintf(outfile, " %f", 0.5 * (apot_table.values[col_j][9] - apot_table.values[col_j][10]));
+	/* lambda1 */
+	fprintf(outfile, " %f", apot_table.values[col_j][2]);
+	/* A */
+	fprintf(outfile, " %f", apot_table.values[col_j][0]);
+#endif /* TERSOFF */
 	fprintf(outfile, "\n");
       }
     }
   }
-
 
   fclose(outfile);
   printf("Potential in LAMMPS format written to \t%s\n", filename);

@@ -88,7 +88,6 @@
 
 double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 {
-  int   col, i;
   double tmpsum = 0.0, sum = 0.0;
   const tersoff_t *tersoff = &apot_table.tersoff;
 
@@ -119,19 +118,37 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      atom_t *atom;
-      int   h, j, k, l;
+      atom_t *atom;		/* pointer to current atom */
+      neigh_t *neigh_j;		/* pointer to current neighbor j (first neighbor loop) */
+      neigh_t *neigh_k;		/* pointer to current neighbor k (second neighbor loop) */
+      angl *n_angl;		/* pointer to current angular table */
+      int   h;			/* counter for configurations */
+      int   i;			/* counter for atoms */
+      int   j;			/* counter for neighbors (first loop) */
+      int   k;			/* counter for neighbors (second loop) */
+      int   n_i;		/* index number of the ith atom */
+      int   n_j;		/* index number of the jth atom */
+      int   n_k;		/* index number of the kth atom */
       int   self, uf;
 #ifdef STRESS
       int   us, stresses;
 #endif /* STRESS */
 
-      neigh_t *neigh_j;
+      int   col_j, col_k;
+      int   ijk;
 
       /* pair variables */
-      double phi_val, phi_grad;
+      double phi_val, phi_grad, phi_a;
       double cut_tmp, cut_tmp_j;
-      vector tmp_force;
+      double tmp_jk;
+      double cos_theta, g_theta;
+      double tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_grad, tmp;
+      double tmp_j2, tmp_k2;
+      double b_ij;
+      vector force_j, tmp_force;
+      double zeta;
+      vector dzeta_i, dzeta_j;
+      vector dcos_j, dcos_k;
 
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
@@ -140,80 +157,285 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	us = conf_us[h - firstconf];
 #endif /* STRESS */
 	/* reset energies and stresses */
-	forces[energy_p + h] = 0.;
+	forces[energy_p + h] = 0.0;
 #ifdef STRESS
 	for (i = 0; i < 6; i++)
-	  forces[stress_p + 6 * h + i] = 0.;
+	  forces[stress_p + 6 * h + i] = 0.0;
 #endif /* STRESS */
 
-	/* first loop over atoms: reset forces, densities */
+	/* first loop over all atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k] = -force_0[k];
-	    forces[k + 1] = -force_0[k + 1];
-	    forces[k + 2] = -force_0[k + 2];
+	    n_i = 3 * (cnfstart[h] + i);
+	    forces[n_i + 0] = -force_0[n_i + 0];
+	    forces[n_i + 1] = -force_0[n_i + 1];
+	    forces[n_i + 2] = -force_0[n_i + 2];
 	  } else {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k] = 0.;
-	    forces[k + 1] = 0.;
-	    forces[k + 2] = 0.;
+	    n_i = 3 * (cnfstart[h] + i);
+	    forces[n_i + 0] = 0.0;
+	    forces[n_i + 1] = 0.0;
+	    forces[n_i + 2] = 0.0;
 	  }
 	}
-	/* end first loop */
+	/* end first loop over all atoms */
 
-	/* 2nd loop: calculate cutoff function f_c for all neighbors */
+	/* second loop: calculate cutoff function f_c for all neighbors */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  k = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (cnfstart[h] + i);
+
 	  /* loop over neighbors */
 	  for (j = 0; j < atom->n_neigh; j++) {
 	    neigh_j = atom->neigh + j;
-	    col = neigh_j->col[0];
+	    col_j = neigh_j->col[0];
+	    /* check if we are within the cutoff range */
+	    if (neigh_j->r < *(tersoff->S[col_j])) {
+	      self = (neigh_j->nr == i + cnfstart[h]) ? 1 : 0;
 
-	    cut_tmp = M_PI / (*(tersoff->S[col]) - *(tersoff->R[col]));
-	    cut_tmp_j = cut_tmp * (neigh_j->r - *(tersoff->R[col]));
-	    if (neigh_j->r < *(tersoff->R[col])) {
-	      neigh_j->f = 1.0;
-	      neigh_j->df = 0.0;
-	    } else if (neigh_j->r > *(tersoff->S[col])) {
+	      /* calculate cutoff function f_c and store it for every neighbor */
+	      cut_tmp = M_PI / (*(tersoff->S[col_j]) - *(tersoff->R[col_j]));
+	      cut_tmp_j = cut_tmp * (neigh_j->r - *(tersoff->R[col_j]));
+	      if (neigh_j->r < *(tersoff->R[col_j])) {
+		neigh_j->f = 1.0;
+		neigh_j->df = 0.0;
+	      } else {
+		neigh_j->f = 0.5 * (1.0 + cos(cut_tmp_j));
+		neigh_j->df = -0.5 * cut_tmp * sin(cut_tmp_j);
+	      }
+
+	      /* calculate pair part f_c*A*exp(-lambda*r) and the derivative */
+	      tmp = exp(-*(tersoff->lambda[col_j]) * neigh_j->r);
+	      phi_val = neigh_j->f * *(tersoff->A[col_j]) * tmp;
+	      phi_grad = neigh_j->df - *(tersoff->lambda[col_j]) * neigh_j->f;
+	      phi_grad *= *(tersoff->A[col_j]) * tmp;
+
+	      /* avoid double counting if atom is interacting with a copy of itself */
+	      if (self) {
+		phi_val *= 0.5;
+		phi_grad *= 0.5;
+	      }
+
+	      /* only half cohesive energy because we have a full neighbor list */
+	      forces[energy_p + h] += 0.5 * phi_val;
+
+	      if (uf) {
+		/* calculate pair forces */
+		tmp_force.x = neigh_j->dist.x * phi_grad;
+		tmp_force.y = neigh_j->dist.y * phi_grad;
+		tmp_force.z = neigh_j->dist.z * phi_grad;
+		forces[n_i + 0] += tmp_force.x;
+		forces[n_i + 1] += tmp_force.y;
+		forces[n_i + 2] += tmp_force.z;
+#ifdef STRESS
+		/* also calculate pair stresses */
+		if (us) {
+		  stresses = stress_p + 6 * h;
+		  forces[stresses + 0] -= 0.5 * neigh_j->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= 0.5 * neigh_j->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= 0.5 * neigh_j->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= 0.5 * neigh_j->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= 0.5 * neigh_j->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= 0.5 * neigh_j->rdist.z * tmp_force.x;
+		}
+#endif /* STRESS */
+	      }
+	    } else {
 	      neigh_j->f = 0.0;
 	      neigh_j->df = 0.0;
-	    } else {
-	      neigh_j->f = 0.5 * (1.0 + cos(cut_tmp_j));
-	      neigh_j->df = -0.5 * cut_tmp * sin(cut_tmp_j);
 	    }
 	  }			/* loop over neighbors */
 
+	  /* loop over neighbors */
+	  /* calculate threebody part */
 	  for (j = 0; j < atom->n_neigh; j++) {
 	    neigh_j = atom->neigh + j;
-	    col = neigh_j->col[0];
+	    col_j = neigh_j->col[0];
+	    /* check if we are within the cutoff range */
+	    if (neigh_j->r < *(tersoff->S[col_j])) {
+	      ijk = neigh_j->ijk_start;
+	      n_j = 3 * neigh_j->nr;
 
-	    if (0.0 == *(tersoff->B[col]))
-	      continue;
+	      /* skip neighbor if coefficient is zero */
+	      if (0.0 == *(tersoff->B[col_j]))
+		continue;
+
+	      /* reset variables for each neighbor */
+	      zeta = 0.0;
+	      dzeta_i.x = 0.0;
+	      dzeta_i.y = 0.0;
+	      dzeta_i.z = 0.0;
+	      dzeta_j.x = 0.0;
+	      dzeta_j.y = 0.0;
+	      dzeta_j.z = 0.0;
+
+	      /* inner loop over neighbors */
+	      for (k = 0; k < atom->n_neigh; k++) {
+		if (k == j)
+		  continue;
+		neigh_k = atom->neigh + k;
+		col_k = neigh_k->col[0];
+		n_angl = atom->angl_part + ijk++;
+		if (neigh_k->r < *(tersoff->S[col_k])) {
+
+		  tmp_jk = 1.0 / (neigh_j->r * neigh_k->r);
+		  cos_theta = n_angl->cos;
+
+		  tmp_1 = *(tersoff->h[col_j]) - cos_theta;
+		  tmp_2 = 1.0 / (tersoff->d2[col_j] + tmp_1 * tmp_1);
+		  g_theta = 1.0 + tersoff->c2[col_j] / tersoff->d2[col_j] - tersoff->c2[col_j] * tmp_2;
+
+		  /* zeta */
+		  zeta += neigh_k->f * *(tersoff->omega[col_k]) * g_theta;
+
+		  tmp_j2 = cos_theta / (neigh_j->r * neigh_j->r);
+		  tmp_k2 = cos_theta / (neigh_k->r * neigh_k->r);
+
+		  dcos_j.x = tmp_jk * neigh_k->rdist.x - tmp_j2 * neigh_j->rdist.x;
+		  dcos_j.y = tmp_jk * neigh_k->rdist.y - tmp_j2 * neigh_j->rdist.y;
+		  dcos_j.z = tmp_jk * neigh_k->rdist.z - tmp_j2 * neigh_j->rdist.z;
+
+		  dcos_k.x = tmp_jk * neigh_j->rdist.x - tmp_k2 * neigh_k->rdist.x;
+		  dcos_k.y = tmp_jk * neigh_j->rdist.y - tmp_k2 * neigh_k->rdist.y;
+		  dcos_k.z = tmp_jk * neigh_j->rdist.z - tmp_k2 * neigh_k->rdist.z;
+
+		  tmp_3 = 2.0 * tersoff->c2[col_j] * tmp_1 * tmp_2 * tmp_2 * neigh_k->f *
+		    *(tersoff->omega[col_k]);
+
+		  tmp_grad = neigh_k->df / neigh_k->r * g_theta * *(tersoff->omega[col_k]);
+
+		  neigh_k->dzeta.x = tmp_grad * neigh_k->rdist.x - tmp_3 * dcos_k.x;
+		  neigh_k->dzeta.y = tmp_grad * neigh_k->rdist.y - tmp_3 * dcos_k.y;
+		  neigh_k->dzeta.z = tmp_grad * neigh_k->rdist.z - tmp_3 * dcos_k.z;
+
+		  dzeta_i.x -= neigh_k->dzeta.x;
+		  dzeta_i.y -= neigh_k->dzeta.y;
+		  dzeta_i.z -= neigh_k->dzeta.z;
+
+		  dzeta_j.x -= tmp_3 * dcos_j.x;
+		  dzeta_j.y -= tmp_3 * dcos_j.y;
+		  dzeta_j.z -= tmp_3 * dcos_j.z;
+		}
+	      }			/* k */
+
+	      phi_a = 0.5 * *(tersoff->B[col_j]) * exp(-*(tersoff->mu[col_j]) * neigh_j->r);
+
+	      tmp_4 = pow((*(tersoff->gamma[col_j]) * zeta), *(tersoff->n[col_j]));
+	      b_ij = pow(1.0 + tmp_4, -1.0 / (2.0 * *(tersoff->n[col_j])));
+
+	      phi_val = -b_ij * phi_a;
+
+	      forces[energy_p + h] += neigh_j->f * phi_val;
+
+	      if (0.0 == zeta)
+		tmp_5 = 0.0;
+	      else
+		tmp_5 = -b_ij * neigh_j->f * phi_a * tmp_4 / (2.0 * zeta * (1.0 + tmp_4));
+	      tmp_6 =
+		(neigh_j->f * phi_a * *(tersoff->mu[col_j]) * b_ij + neigh_j->df * phi_val) / neigh_j->r;
+
+	      force_j.x = -tmp_6 * neigh_j->rdist.x + tmp_5 * dzeta_j.x;
+	      force_j.y = -tmp_6 * neigh_j->rdist.y + tmp_5 * dzeta_j.y;
+	      force_j.z = -tmp_6 * neigh_j->rdist.z + tmp_5 * dzeta_j.z;
+
+	      for (k = 0; k < atom->n_neigh; k++) {
+		if (k != j) {
+		  neigh_k = atom->neigh + k;
+		  col_k = neigh_k->col[0];
+		  if (neigh_k->r < *(tersoff->S[col_k])) {
+		    n_k = 3 * neigh_k->nr;
+		    /* update force on particle k */
+		    forces[n_k + 0] += tmp_5 * neigh_k->dzeta.x;
+		    forces[n_k + 1] += tmp_5 * neigh_k->dzeta.y;
+		    forces[n_k + 2] += tmp_5 * neigh_k->dzeta.z;
+
+		    /* Distribute stress among atoms */
+#ifdef STRESS
+		    if (us) {
+		      stresses = stress_p + 6 * h;
+		      tmp = neigh_k->rdist.x * tmp_5 * neigh_k->dzeta.x;
+		      forces[stresses + 0] -= tmp;
+		      tmp = neigh_k->rdist.y * tmp_5 * neigh_k->dzeta.y;
+		      forces[stresses + 1] -= tmp;
+		      tmp = neigh_k->rdist.z * tmp_5 * neigh_k->dzeta.z;
+		      forces[stresses + 2] -= tmp;
+		      tmp =
+			0.5 * tmp_5 * (neigh_k->rdist.x * neigh_k->dzeta.y +
+			neigh_k->rdist.y * neigh_k->dzeta.x);
+		      forces[stresses + 3] -= tmp;
+		      tmp =
+			0.5 * tmp_5 * (neigh_k->rdist.y * neigh_k->dzeta.z +
+			neigh_k->rdist.z * neigh_k->dzeta.y);
+		      forces[stresses + 4] -= tmp;
+		      tmp =
+			0.5 * tmp_5 * (neigh_k->rdist.z * neigh_k->dzeta.x +
+			neigh_k->rdist.x * neigh_k->dzeta.z);
+		      forces[stresses + 5] -= tmp;
+		    }
+#endif /* STRESS */
+
+		  }
+		}		/* k!=j */
+	      }			/* k loop */
+
+	      /* update force on particle j */
+	      forces[n_j + 0] += force_j.x;
+	      forces[n_j + 1] += force_j.y;
+	      forces[n_j + 2] += force_j.z;
+
+	      /* update force on particle i */
+	      forces[n_i + 0] += tmp_5 * dzeta_i.x - force_j.x;
+	      forces[n_i + 1] += tmp_5 * dzeta_i.y - force_j.y;
+	      forces[n_i + 2] += tmp_5 * dzeta_i.z - force_j.z;
+
+#ifdef STRESS			/* Distribute stress among atoms */
+	      if (us) {
+		stresses = stress_p + 6 * h;
+		tmp = neigh_j->rdist.x * force_j.x;
+		forces[stresses + 0] -= tmp;
+		tmp = neigh_j->rdist.y * force_j.y;
+		forces[stresses + 1] -= tmp;
+		tmp = neigh_j->rdist.z * force_j.z;
+		forces[stresses + 2] -= tmp;
+		tmp = 0.5 * (neigh_j->rdist.x * force_j.y + neigh_j->rdist.y * force_j.x);
+		forces[stresses + 3] -= tmp;
+		tmp = 0.5 * (neigh_j->rdist.y * force_j.z + neigh_j->rdist.z * force_j.y);
+		forces[stresses + 4] -= tmp;
+		tmp = 0.5 * (neigh_j->rdist.z * force_j.x + neigh_j->rdist.x * force_j.z);
+		forces[stresses + 5] -= tmp;
+	      }
+#endif /* STRESS */
+
+	    }			/* j */
 	  }
+	}
+	/* end second loop over all atoms */
 
-/*then we can calculate contribution of forces right away */
-	  if (uf) {
+	/* third loop over all atoms, sum up forces */
+	if (uf) {
+	  for (i = 0; i < inconf[h]; i++) {
+	    n_i = 3 * (cnfstart[h] + i);
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 1] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
+
 	    /* sum up forces */
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
-	  }			/* second loop over atoms */
+	      tmpsum += conf_weight[h] *
+		(dsquare(forces[n_i]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
+	  }
 	}
+	/* end third loop over all atoms */
 
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -224,22 +446,20 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	  }
 	}
 #endif /* STRESS */
-	/* limiting constraints per configuration */
+
       }				/* loop over configurations */
     }				/* parallel region */
 
-    /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (myid == 0) {
+    if (myid == 0)
       tmpsum += apot_punish(xi_opt, forces);
-    }
 #endif /* APOT */
 
     sum = tmpsum;		/* global sum = local sum  */
 #ifdef MPI
     /* reduce global sum */
-    sum = 0.;
+    sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     if (myid == 0) {		/* root node already has data in place */
@@ -277,7 +497,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	return sum;
     }
 
-  }
+  }				/* end of infinite loop */
 
   /* once a non-root process arrives here, all is done. */
   return -1.;
@@ -285,7 +505,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
 void update_tersoff_pointers(double *xi)
 {
-  int   i, j, k;
+  int   i;
   int   index = 2;
   tersoff_t *tersoff = &apot_table.tersoff;
 
@@ -304,6 +524,8 @@ void update_tersoff_pointers(double *xi)
     tersoff->R = (double **)malloc(paircol * sizeof(double *));
     tersoff->chi = (double **)malloc(paircol * sizeof(double *));
     tersoff->omega = (double **)malloc(paircol * sizeof(double *));
+    tersoff->c2 = (double *)malloc(paircol * sizeof(double));
+    tersoff->d2 = (double *)malloc(paircol * sizeof(double));
     for (i = 0; i < paircol; i++) {
       tersoff->A[i] = NULL;
       tersoff->B[i] = NULL;
@@ -318,6 +540,8 @@ void update_tersoff_pointers(double *xi)
       tersoff->R[i] = NULL;
       tersoff->chi[i] = NULL;
       tersoff->omega[i] = NULL;
+      tersoff->c2[i] = 0.0;
+      tersoff->d2[i] = 0.0;
     }
     tersoff->init = 1;
     tersoff->one = 1.0;
@@ -350,6 +574,12 @@ void update_tersoff_pointers(double *xi)
 	index += 2;
       }
     }
+  }
+
+  /* calculate c2 and d2 */
+  for (i = 0; i < paircol; i++) {
+    tersoff->c2[i] = *(tersoff->c[i]) * *(tersoff->c[i]);
+    tersoff->d2[i] = *(tersoff->d[i]) * *(tersoff->d[i]);
   }
 
   return;

@@ -201,10 +201,9 @@ void check_apot_functions(void)
 {
   /* paircol is not yet defined at this point */
   int   pcol = (ntypes * (ntypes + 1)) / 2;
-
-#ifdef STIWEB
   int   i;
 
+#ifdef STIWEB
   /* check for the correct function types for SW potential */
   for (i = 0; i < pcol; i++) {
     if (strcmp(apot_table.names[i], "stiweb_2") != 0)
@@ -227,6 +226,27 @@ void check_apot_functions(void)
     }
   }
 #endif /* STIWEB */
+
+#ifdef TERSOFF
+  /* check for the correct function types for SW potential */
+  for (i = 0; i < pcol; i++) {
+    if (strcmp(apot_table.names[i], "tersoff_pot") != 0)
+      error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
+  }
+  for (i = 0; i < ntypes * (ntypes - 1) / 2.0; i++) {
+    if (strcmp(apot_table.names[pcol + i], "tersoff_mix") != 0)
+      error(1, "Only tersoff_mix potential is allowed for the %d. potential!\n", i + 1);
+  }
+
+  /* make sure the cutoff parameters (R, S) can be optimized correctly */
+  for (i = 0; i < pcol; i++) {
+    if (apot_table.pmax[i][9] < apot_table.pmin[i][10]) {
+      error(0, "The upper bound for the parameter S is smaller than the lower bound\n");
+      error(0, "for the parameter R in potential %d.\n", i + 1);
+      error(1, "Please change it, that the condition R < S can be fulfilled.\n");
+    }
+  }
+#endif /* TERSOFF */
 
   return;
 }
@@ -958,6 +978,9 @@ double cutoff(double r, double r0, double h)
 int apot_check_params(double *params)
 {
   int   i, j = 2, k;
+#ifdef TERSOFF
+  double temp;
+#endif /* TERSOFF */
 
   for (i = 0; i < apot_table.number; i++) {
 
@@ -973,6 +996,7 @@ int apot_check_params(double *params)
 	  params[k] += 2 * M_PI;
 	} while (params[k] < 0);
     }
+
     /* the third parameter of csw2 potential is 2 pi periodic */
     if (strcmp(apot_table.names[i], "csw2") == 0) {
       k = j + 2;
@@ -985,10 +1009,24 @@ int apot_check_params(double *params)
 	  params[k] += 2 * M_PI;
 	} while (params[k] < 0);
     }
+#ifdef TERSOFF
+    /* the parameter S has to be greater than the parameter R */
+    /* switch them if this is not the case */
+    if (strcmp(apot_table.names[i], "tersoff_pot") == 0) {
+      k = j + 9;
+      if (params[k] < params[k + 1]) {
+	temp = params[k];
+	params[k] = params[k + 1];
+	params[k + 1] = temp;
+      }
+    }
+#endif /* TERSOFF */
 
     /* jump to next potential */
     j += 2 + apot_parameters(apot_table.names[i]) + smooth_pot[i];
+
   }
+
   return 0;
 }
 
@@ -1003,7 +1041,7 @@ double apot_punish(double *params, double *forces)
   int   i, j;
   double x, tmpsum = 0., min, max;
 
-  /* loop over parameters */
+  /* loop over individual parameters */
   for (i = 0; i < ndim; i++) {
     min = apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]];
     max = apot_table.pmax[apot_table.idxpot[i]][apot_table.idxparam[i]];

@@ -123,11 +123,17 @@ void broadcast_params()
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* grad_el */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* ggrad_el */
 #endif /* COULOMB */
-#ifdef MEAM
+#ifdef THREEBODY
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;     /* f */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* df */
-  blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* drho */
+  blklens[size] = 1;        	typen[size++] = MPI_INT;     	/* ijk_start */
+#endif /* THREEBODY */
+#ifdef MEAM
+  blklens[size] = 1; 		types[size++] = MPI_DOUBLE; 	/* drho */
 #endif /* MEAM */
+#ifdef TERSOFF
+  blklens[size] = 1; 		types[size++] = MPI_VECTOR; 	/* dzeta */
+#endif /* TERSOFF */
 
   count = 0;
   MPI_Address(&testneigh.typ, 		&displs[count++]);
@@ -153,11 +159,18 @@ void broadcast_params()
   MPI_Address(&testneigh.grad_el, 	&displs[count++]);
   MPI_Address(&testneigh.ggrad_el, 	&displs[count++]);
 #endif /* COULOMB */
-#ifdef MEAM
+#ifdef THREEBODY
   MPI_Address(&testneigh.f, 		&displs[count++]);
   MPI_Address(&testneigh.df, 		&displs[count++]);
+  MPI_Address(&testneigh.ijk_start, 	&displs[count++]);
+#endif /* THREEBODY */
+#ifdef MEAM
   MPI_Address(&testneigh.drho, 		&displs[count++]);
 #endif /* MEAM */
+#ifdef TERSOFF
+  MPI_Address(&testneigh.dzeta, 	&displs[count++]);
+#endif /* MEAM */
+
   /* *INDENT-ON* */
 
   /* set displacements */
@@ -174,19 +187,23 @@ void broadcast_params()
   /* *INDENT-OFF* */
   size = 0;
   blklens[size] = 1; 		typen[size++] = MPI_DOUBLE;    	/* cos */
+#ifdef MEAM
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* slot */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* shift */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* step */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;   	/* g */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* dg */
+#endif /* MEAM */
 
   count = 0;
   MPI_Address(&testangl.cos, 		&displs[count++]);
+#ifdef MEAM
   MPI_Address(&testangl.slot, 		&displs[count++]);
   MPI_Address(&testangl.shift, 		&displs[count++]);
   MPI_Address(&testangl.step, 		&displs[count++]);
   MPI_Address(&testangl.g, 		&displs[count++]);
   MPI_Address(&testangl.dg, 		&displs[count++]);
+#endif /* MEAM */
   /* *INDENT-ON* */
 
   /* set displacements */

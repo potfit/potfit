@@ -127,37 +127,47 @@ typedef struct {
   double shift[SLOTS];
   double step[SLOTS];
   int   col[SLOTS];		/* coloumn of interaction for this neighbor */
+
 #ifdef ADP
   sym_tens sqrdist;		/* real squared distance */
   double u_val, u_grad;		/* value and gradient of u(r) */
   double w_val, w_grad;		/* value and gradient of w(r) */
 #endif
+
 #ifdef COULOMB
   double r2;			/* r^2 */
   double fnval_el;		/* stores tail of electrostatic potential */
   double grad_el;		/* stores tail of first derivative of electrostatic potential */
   double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
 #endif
-#ifdef MEAM
-  double drho;
-#endif
+
 #ifdef THREEBODY
   double f;
   double df;
-  int   contrib;
   int   ijk_start;
 #endif
+
+#ifdef MEAM
+  double drho;
+#endif
+
+#ifdef TERSOFF
+  vector dzeta;
+#endif
+
 } neigh_t;
 
 #ifdef THREEBODY
 typedef struct {
   double cos;
+#ifdef MEAM
   int   slot;
   double shift;
   double step;
 
   double g;
   double dg;
+#endif
 } angl;
 #endif
 
@@ -178,7 +188,7 @@ typedef struct {
 #endif
 
 #ifdef TERSOFF
-/* pointers to access Stillinger-Weber parameters directly */
+/* pointers to access Tersoff parameters directly */
 typedef struct {
   int   init;
   double **A;
@@ -194,10 +204,11 @@ typedef struct {
   double **R;
   double **chi;
   double **omega;
+  double *c2;
+  double *d2;
   double one;
 } tersoff_t;
 #endif
-
 
 typedef struct {
   int   typ;
@@ -206,18 +217,22 @@ typedef struct {
   vector force;
   double absforce;
   int   conf;			/* Which configuration... */
+
 #ifdef CONTRIB
   int   contrib;		/* Does this atom contribute to the error sum? */
 #endif
+
 #if defined EAM || defined ADP || defined MEAM
   double rho;			/* embedding electron density */
   double gradF;			/* gradient of embedding fn. */
 #endif				/* EAM || ADP || MEAM */
+
 #ifdef ADP
   vector mu;
   sym_tens lambda;
   double nu;
 #endif
+
 #ifdef THREEBODY
   int   num_angl;
 #ifdef MEAM

@@ -74,9 +74,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
       if ((str = strchr(buffer + 3, '\n')) != NULL)
 	*str = '\0';
       if (strcmp(buffer + 3, interaction_name) != 0) {
-	error(0, "Wrong potential type!\n");
-	error(0, "This binary only supports %s-potentials.\n", interaction_name);
-	error(1, "Your potential file contains a %s-potential.\n", buffer + 3);
+	error(0, "Wrong potential type found in potential file!\n");
+	error(0, "This binary only supports %s potentials.\n", interaction_name);
+	error(1, "Your potential file contains a %s potential.\n", buffer + 3);
       }
     }
     /* invariant potentials */
@@ -160,8 +160,8 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	printf("Using %s potentials from file \"%s\".\n", interaction_name, filename);
 	fflush(stdout);
       } else {
-	error(0, "Wrong number of data columns in file \"%s\",\n", filename);
-	error(1, "should be %d for %s, but are %d.", npots, interaction_name, size);
+	error(0, "Wrong number of data columns in %s potential file \"%s\".\n", interaction_name, filename);
+	error(1, "For ntypes=%d there should be %d, but there are %d.", ntypes, npots, size);
       }
       /* recognized format? */
       if ((format != 0) && (format != 3) && (format != 4))

@@ -95,6 +95,8 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 
 #ifndef MPI
   myconf = nconf;
+  /* access flag to shut up compiler warnings */
+  i = flag;
 #endif /* !MPI */
 
   /* This is the start of an infinite loop */
@@ -325,27 +327,35 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 		      + force_j.y * neigh_j->rdist.x + force_k.y * neigh_k->rdist.x);
 		  }
 #endif /* STRESS */
+
 		}
 	      }			/* kk */
 	    }
 	  }			/* jj */
+	}
+	/* end second loop over all atoms */
 
-/*then we can calculate contribution of forces right away */
-	  if (uf) {
+	/* third loop over all atoms, sum up forces */
+	int   n_i;
+	if (uf) {
+	  for (i = 0; i < inconf[h]; i++) {
+	    n_i = 3 * (cnfstart[h] + i);
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 1] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
+
 	    /* sum up forces */
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
-	  }			/* second loop over atoms */
+	      tmpsum += conf_weight[h] *
+		(dsquare(forces[n_i]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
+	  }
 	}
+	/* end third loop over all atoms */
 
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];

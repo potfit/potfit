@@ -214,9 +214,6 @@ int main(int argc, char **argv)
 
     for (i = 0; i < ntypes; i++)
       lambda[i] = 0.;
-#ifndef NORESCALE
-/*    rescale(&opt_pot, 1., 1);	|+ rescale now... +|*/
-#endif /* NORESCALE */
 #endif /* EAM || ADP || MEAM */
     init_done = 1;
 
@@ -351,8 +348,10 @@ int main(int argc, char **argv)
 #endif /* !APOT */
   } else {			/* root thread does minimization */
 #ifdef MPI
-    if (num_cpus > nconf)
-      warning(1, "You are using more cpus than you have configurations!");
+    if (num_cpus > nconf) {
+      warning(0, "You are using more cpus than you have configurations!");
+      warning(1, "While this will not do any harm, you are wasting %d CPUs\n", num_cpus - nconf);
+    }
 #endif /* MPI */
     time(&t_begin);
     if (opt) {
@@ -608,6 +607,7 @@ int main(int argc, char **argv)
       printf("Stress data not written (stress weight was 0).\n");
     }
 #endif /* STRESS */
+
 #if ( defined EAM || defined ADP || defined MEAM ) && !defined NOPUNISH
     /* write EAM punishments */
     if (write_output_files) {
@@ -657,7 +657,6 @@ int main(int argc, char **argv)
 	fprintf(outfile, "%s\t%f\t%f\n", elements[i - dummy_p], sqr, force[i]);
       }
     }
-/*    }*/
 #endif /* (EAM || ADP) && !NOPUNISH */
 
     /* final error report */
@@ -687,9 +686,9 @@ int main(int argc, char **argv)
 #endif /* STRESS */
 
     /* calculate the rms errors for forces, energies, stress */
-    rms[0] = 0.;		/* rms rms for forces */
-    rms[1] = 0.;		/* energies */
-    rms[2] = 0.;		/* stresses */
+    rms[0] = 0.0;		/* rms rms for forces */
+    rms[1] = 0.0;		/* energies */
+    rms[2] = 0.0;		/* stresses */
 
     /* forces */
     for (i = 0; i < natoms; i++) {
