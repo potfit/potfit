@@ -963,10 +963,7 @@ void read_config(char *filename)
 	typ1 = atoms[i].typ;
 	for (j = 0; j < atoms[i].n_neigh; j++) {
 	  typ2 = atoms[i].neigh[j].typ;
-	  col =
-	    (typ1 <=
-	    typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2) : typ2 * ntypes + typ1 - ((typ2 * (typ2 +
-		1)) / 2);
+	  col = atoms[i].neigh[j].col[0];
 	  if (col == k) {
 	    pos = (int)(atoms[i].neigh[j].r / pair_dist[k]);
 #ifdef DEBUG

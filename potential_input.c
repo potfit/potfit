@@ -919,10 +919,10 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	      fsetpos(infile, &filepos);
 	    }
 	  } else {
-	    if (strcmp(apt->param_name[i][j], "type") == 0) {
+	    if (strcmp(apt->param_name[i][j], "type") == 0 || ret_val == EOF) {
 	      error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", i + 1, apt->names[i],
 		filename);
-	      error(1, "You specified %d parameters, but needed are %d.\n", j, apt->n_par[i]);
+	      error(1, "You specified %d parameter(s), but required are %d.\n", j, apt->n_par[i]);
 	    }
 	    error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
 	  }

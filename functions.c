@@ -95,7 +95,7 @@ void apot_init(void)
 #ifdef STIWEB
   add_pot(stiweb_2, 6);
   add_pot(stiweb_3, 2);
-  add_pot(lambda, ntypes * ntypes);
+  add_pot(lambda, 0.5 * ntypes * ntypes * (ntypes + 1));
 #endif /* STIWEB */
 
 #ifdef TERSOFF

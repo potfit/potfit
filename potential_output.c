@@ -447,10 +447,10 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 
   fprintf(outfile, "# IMD potential file written by potfit %s\n#\n", VERSION_INFO);
 #ifdef STIWEB
-  fprintf(outfile, "# This is a Stillinger-Weber potential. Compile IMD with the stiweb option.\n#\n");
+  fprintf(outfile, "# This is a Stillinger-Weber potential. Compile IMD with the 'stiweb' option.\n#\n");
 #endif /* STIWEB */
 #ifdef TERSOFF
-  fprintf(outfile, "# This is a Tersoff potential. Compile IMD with the tersoff2 option.\n#\n");
+  fprintf(outfile, "# This is a Tersoff potential. Compile IMD with the 'tersoff2' option.\n#\n");
 #endif /* TERSOFF */
 
   /* write warning header */
@@ -508,9 +508,12 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fprintf(outfile, "\n");
 
   /* lambda_ijk */
+  /* strange format (e.g. binary): 000, 100, 001, 101, 011, 111 */
+  int j;
   fprintf(outfile, "stiweb_la\t");
-  for (i = 0; i < ntypes * ntypes; i++)
-    fprintf(outfile, " %f", apot_table.values[apot_table.number - 1][i]);
+  for (j = 0; j < paircol; j++)
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %f", apot_table.values[apot_table.number - 1][i * paircol + j]);
   fprintf(outfile, "\n");
 #endif /* STIWEB */
 
