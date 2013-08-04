@@ -123,19 +123,19 @@
 # i686-gcc  	32bit GNU Compiler
 #
 #SYSTEM 		= x86_64-icc 	# Use this as fallback
-SYSTEM 		= $(shell uname -m)-icc
+SYSTEM 		= $(shell uname -m)-gcc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
-BIN_DIR 	= ${HOME}/bin
-#BIN_DIR 	=
+#BIN_DIR 	= ${HOME}/bin/i386-linux
+BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
 
 # General settings
 MKLDIR          = /opt/intel/composer_xe_2013.3.163/mkl
 ACML4DIR  	= /opt/acml4.4.0/gfortran64
-ACML5DIR  	= /opt/acml5.3.0/gfortran64
+ACML5DIR  	= /opt/acml5.3.1/gfortran64
 LIBMDIR 	= /opt/amdlibm
 
 # ITAP settings
@@ -228,7 +228,7 @@ ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib/static
+  LIBMPATH 	= ${LIBMDIR}/lib64
   CINCLUDE     	+= -I${ACML5DIR}/include -I${LIBMDIR}/include
   LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif

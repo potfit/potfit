@@ -6,6 +6,7 @@ potfit-next (unreleased)
 	[testing is not finished yet, small boxes especially]
 + add Tersoff potential (option tersoff)
 	[early stage, testing required]
++ update diagnostic messages and errors to be more clear
 
 potfit-0.5.3 (20130625)
 + fix building in 32bit environments

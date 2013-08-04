@@ -110,6 +110,8 @@ void read_config(char *filename)
   if (NULL == infile)
     error(1, "Could not open file %s\n", filename);
 
+  printf("Reading the config file >> %s << and calculating neighbor lists ... ", filename);
+
   /* read configurations until the end of the file */
   do {
     res = fgets(buffer, 1024, infile);
@@ -836,6 +838,35 @@ void read_config(char *filename)
   } while (!feof(infile));
   fclose(infile);
 
+  printf("done\n");
+
+  /* calculate the total number of the atom types */
+  na_type = (int **)realloc(na_type, (nconf + 1) * sizeof(int *));
+  reg_for_free(na_type, "na_type");
+  if (NULL == na_type)
+    error(1, "Cannot allocate memory for na_type");
+  na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
+  reg_for_free(na_type[nconf], "na_type[%d]", nconf);
+  for (i = 0; i < ntypes; i++)
+    na_type[nconf][i] = 0;
+
+  for (i = 0; i < nconf; i++)
+    for (j = 0; j < ntypes; j++)
+      na_type[nconf][j] += na_type[i][j];
+
+  /* print diagnostic message and close file */
+  printf("\nRead %d configurations (%d with forces, %d with stresses)\n", nconf, w_force, w_stress);
+  printf("with a total of %d atoms (", natoms);
+  for (i = 0; i < ntypes; i++) {
+    if (have_elements)
+      printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i], 100. * na_type[nconf][i] / natoms);
+    else
+      printf("%d type %d (%.2f%%)", na_type[nconf][i], i, 100. * na_type[nconf][i] / natoms);
+    if (i != (ntypes - 1))
+      printf(", ");
+  }
+  printf(").\n");
+
   /* be pedantic about too large ntypes */
   if ((max_type + 1) < ntypes) {
     error(0, "There are less than %d atom types in your configurations!\n", ntypes);
@@ -1082,33 +1113,6 @@ void read_config(char *filename)
 
   free(mindist);
 
-  /* calculate the total number of the atom types */
-  na_type = (int **)realloc(na_type, (nconf + 1) * sizeof(int *));
-  reg_for_free(na_type, "na_type");
-  if (NULL == na_type)
-    error(1, "Cannot allocate memory for na_type");
-  na_type[nconf] = (int *)malloc(ntypes * sizeof(int));
-  reg_for_free(na_type[nconf], "na_type[%d]", nconf);
-  for (i = 0; i < ntypes; i++)
-    na_type[nconf][i] = 0;
-
-  for (i = 0; i < nconf; i++)
-    for (j = 0; j < ntypes; j++)
-      na_type[nconf][j] += na_type[i][j];
-
-  /* print diagnostic message and close file */
-  printf("Read %d configurations (%d with forces, %d with stresses)\n", nconf, w_force, w_stress);
-  printf("with a total of %d atoms (", natoms);
-  for (i = 0; i < ntypes; i++) {
-    if (have_elements)
-      printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i], 100. * na_type[nconf][i] / natoms);
-    else
-      printf("%d type %d (%.2f%%)", na_type[nconf][i], i, 100. * na_type[nconf][i] / natoms);
-    if (i != (ntypes - 1))
-      printf(", ");
-  }
-
-  printf(")\nfrom file \"%s\".\n\n", filename);
   if (sh_dist)
     error(1, "Distances too short, last occurence conf %d, see above for details\n", sh_dist);
   return;

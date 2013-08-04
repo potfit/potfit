@@ -57,6 +57,8 @@ void read_pot_table(pot_table_t *pt, char *filename)
   if (NULL == infile)
     error(1, "Could not open file %s\n", filename);
 
+  printf("Starting to read the potential file:\n", filename);
+
   /* read the header */
   do {
     /* read one line */
@@ -131,6 +133,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	error(1, "potfit binary compiled without tabulated potential support.\n");
 #endif /* !APOT */
 
+      if (format != 0)
+        printf(" - Potential file format %d detected\n", format);
+      else
+        printf(" - Potential file format %d (analytic potentials) detected\n", format);
+
       ncols = ntypes * (ntypes + 1) / 2;
       /* right number of columns? */
       switch (interaction) {
@@ -157,7 +164,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
       }
 
       if (size == npots) {
-	printf("Using %s potentials from file \"%s\".\n", interaction_name, filename);
+	printf(" - Using %d %s potentials to calculate forces\n", npots, interaction_name);
 	fflush(stdout);
       } else {
 	error(0, "Wrong number of data columns in %s potential file \"%s\".\n", interaction_name, filename);
@@ -185,10 +192,6 @@ void read_pot_table(pot_table_t *pt, char *filename)
   /* do we have a format in the header? */
   if (!have_format)
     error(1, "Format not specified in header of file %s", filename);
-  else if (format != 0)
-    printf("Potential file format %d detected.\n", format);
-  else
-    printf("Potential file format %d (analytic potentials) detected.\n", format);
 
   /* allocate info block of function table */
   pt->len = 0;
@@ -285,6 +288,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     || (apt->values == NULL))
     error(1, "Cannot allocate info block for analytic potential table %s", filename);
 #endif /* APOT */
+
   switch (format) {
 #ifdef APOT
       case 0:
@@ -298,7 +302,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
 	read_pot_table4(pt, size, ncols, nvals, filename, infile);
 #endif /* APOT */
   }
+
   fclose(infile);
+
+  printf("Reading potential file >> %s << ... done\n",filename);
 
   /* compute rcut and rmin */
   rcut = (double *)malloc(ntypes * ntypes * sizeof(double));
@@ -517,7 +524,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       }
       strcpy(apt->param_name[i][j], buffer);
     }
-    printf("Enabled chemical potentials.\n");
+    printf(" - Enabled %d chemical potential(s)\n", ntypes);
 
     /* disable composition nodes for now */
 #ifdef CN
@@ -617,6 +624,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   }
   reg_for_free(apt->param_name[apt->number + 1][0], "apt->param_name[%d][%d]", apt->number + 1, 0);
   apt->sw_kappa = apt->invar_par[apt->number + 1][0];
+#ifndef DIPOLE
+  printf(" - Read elstat table\n");
+#endif /* !DIPOLE */
 #endif /* COULOMB */
 
 #ifdef DIPOLE
@@ -659,6 +669,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     }
     reg_for_free(apt->param_name[apt->number + 4][i], "apt->param_name[%d][%d]", apt->number + 4, i);
   }
+
+  printf(" - Read elstat table\n");
 #endif /* DIPOLE */
 
   /* skip to global section */
@@ -774,6 +786,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	}
       }
     }
+
+    printf(" - Read %d global parameter(s)\n", apt->globals);
   }
 
   /* skip to actual potentials */
@@ -955,6 +969,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	}
       }
     }
+
+    printf(" - Successfully read %d potential table(s)\n", apt->number);
   }
 
 #ifdef COULOMB
