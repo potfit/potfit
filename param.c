@@ -189,7 +189,7 @@ void read_parameters(int argc, char **argv)
     error(1, "Could not open parameter file \"%s\".\n", argv[1]);
   read_paramfile(pf);
   fclose(pf);
-  printf("Reading parameter file >> %s << ... ",argv[1]);
+  printf("Reading parameter file >> %s << ... ", argv[1]);
   check_parameters_complete(argv[1]);
   printf("done\n");
 }

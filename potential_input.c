@@ -134,9 +134,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
 #endif /* !APOT */
 
       if (format != 0)
-        printf(" - Potential file format %d detected\n", format);
+	printf(" - Potential file format %d detected\n", format);
       else
-        printf(" - Potential file format %d (analytic potentials) detected\n", format);
+	printf(" - Potential file format %d (analytic potentials) detected\n", format);
 
       ncols = ntypes * (ntypes + 1) / 2;
       /* right number of columns? */
@@ -305,7 +305,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
   fclose(infile);
 
-  printf("Reading potential file >> %s << ... done\n",filename);
+  printf("Reading potential file >> %s << ... done\n", filename);
 
   /* compute rcut and rmin */
   rcut = (double *)malloc(ntypes * ntypes * sizeof(double));

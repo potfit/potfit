@@ -472,9 +472,11 @@ void read_config(char *filename)
 		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf, r);
 		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n",
 		    i - natoms, type1, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
-		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n", j - natoms, type2, dd.x, dd.y, dd.z);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n", j - natoms, type2, dd.x, dd.y,
+		    dd.z);
 		}
-		atoms[i].neigh = (neigh_t *)realloc(atoms[i].neigh, (atoms[i].num_neigh + 1) * sizeof(neigh_t));
+		atoms[i].neigh =
+		  (neigh_t *)realloc(atoms[i].neigh, (atoms[i].num_neigh + 1) * sizeof(neigh_t));
 		dd.x /= r;
 		dd.y /= r;
 		dd.z /= r;
@@ -489,12 +491,12 @@ void read_config(char *filename)
 		atoms[i].neigh[k].dist.y = dd.y * r;
 		atoms[i].neigh[k].dist.z = dd.z * r;
 #ifdef ADP
-		atoms[i].neigh[k].sqdist.xx = dd.x * dd.x * r * r;
-		atoms[i].neigh[k].sqdist.yy = dd.y * dd.y * r * r;
-		atoms[i].neigh[k].sqdist.zz = dd.z * dd.z * r * r;
-		atoms[i].neigh[k].sqdist.yz = dd.y * dd.z * r * r;
-		atoms[i].neigh[k].sqdist.zx = dd.z * dd.x * r * r;
-		atoms[i].neigh[k].sqdist.xy = dd.x * dd.y * r * r;
+		atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
+		atoms[i].neigh[k].sqrdist.zz = dd.z * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.yz = dd.y * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
 		atoms[i].num_neigh++;
 

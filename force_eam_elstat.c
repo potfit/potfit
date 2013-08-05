@@ -248,12 +248,12 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
     myconf = nconf;
 #endif /* MPI */
 
-    /* region containing loop over configurations,
-       also OMP-parallelized region */
+    /* region containing loop over configurations */
     {
       int   self;
       vector tmp_force;
-      int   h, j, k, l, type1, type2, uf, us, stresses;	/* config */
+      int   h, j, type1, type2, uf, us, stresses;
+      int   n_i, n_j;
       double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
@@ -265,11 +265,16 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
+#ifdef STRESS
 	us = conf_us[h - firstconf];
+#endif /* STRESS */
 	/* reset energies and stresses */
-	forces[energy_p + h] = 0.;
+	forces[energy_p + h] = 0.0;
+#ifdef STRESS
+	stresses = stress_p + 6 * h;
 	for (i = 0; i < 6; i++)
-	  forces[stress_p + 6 * h + i] = 0.;
+	  forces[stresses + i] = 0.0;
+#endif /* STRESS */
 
 	/* set limiting constraints */
 	forces[limit_p + h] = -force_0[limit_p + h];
@@ -278,27 +283,26 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	/* reset dipoles and fields: LOOP Z E R O */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  atom->E_stat.x = 0.;
-	  atom->E_stat.y = 0.;
-	  atom->E_stat.z = 0.;
-	  atom->p_sr.x = 0.;
-	  atom->p_sr.y = 0.;
-	  atom->p_sr.z = 0.;
+	  atom->E_stat.x = 0.0;
+	  atom->E_stat.y = 0.0;
+	  atom->E_stat.z = 0.0;
+	  atom->p_sr.x = 0.0;
+	  atom->p_sr.y = 0.0;
+	  atom->p_sr.z = 0.0;
 	}
 #endif /* DIPOLE */
 
 	/* F I R S T LOOP OVER ATOMS: reset forces, dipoles */
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
+	  n_i = 3 * (cnfstart[h] + i);
 	  if (uf) {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k] = -force_0[k];
-	    forces[k + 1] = -force_0[k + 1];
-	    forces[k + 2] = -force_0[k + 2];
+	    forces[n_i + 0] = -force_0[n_i + 0];
+	    forces[n_i + 1] = -force_0[n_i + 1];
+	    forces[n_i + 2] = -force_0[n_i + 2];
 	  } else {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k] = 0.;
-	    forces[k + 1] = 0.;
-	    forces[k + 2] = 0.;
+	    forces[n_i + 0] = 0.0;
+	    forces[n_i + 1] = 0.0;
+	    forces[n_i + 2] = 0.0;
 	  }
 	  /* reset atomic density */
 	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
@@ -310,24 +314,21 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  type1 = atom->type;
-	  k = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (cnfstart[h] + i);
 	  for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	    neigh = atom->neigh + j;
 	    type2 = neigh->type;
 	    col = neigh->col[0];
 
 	    /* updating tail-functions - only necessary with variing kappa */
-	    if (!apt->sw_kappa) {
+	    if (!apt->sw_kappa)
 	      elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el, &neigh->grad_el, &neigh->ggrad_el);
-	    }
 
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 
 	    /* calculate short-range forces */
 	    if (neigh->r < calc_pot.end[col]) {
-
-
 	      if (uf) {
 		fnval =
 		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &grad);
@@ -335,8 +336,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		fnval = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 	      }
 
-	      /* avoid double counting if atom is interacting with a
-	         copy of itself */
+	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
 		fnval *= 0.5;
 		grad *= 0.5;
@@ -347,20 +347,18 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		tmp_force.x = neigh->dist_r.x * grad;
 		tmp_force.y = neigh->dist_r.y * grad;
 		tmp_force.z = neigh->dist_r.z * grad;
-		forces[k] += tmp_force.x;
-		forces[k + 1] += tmp_force.y;
-		forces[k + 2] += tmp_force.z;
+		forces[n_i + 0] += tmp_force.x;
+		forces[n_i + 1] += tmp_force.y;
+		forces[n_i + 2] += tmp_force.z;
 		/* actio = reactio */
-		l = 3 * neigh->nr;
-		forces[l] -= tmp_force.x;
-		forces[l + 1] -= tmp_force.y;
-		forces[l + 2] -= tmp_force.z;
-
+		n_j = 3 * neigh->nr;
+		forces[n_j + 0] -= tmp_force.x;
+		forces[n_j + 1] -= tmp_force.y;
+		forces[n_j + 2] -= tmp_force.z;
 #ifdef STRESS
 		/* calculate pair stresses */
 		if (us) {
-		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
 		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
 		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
 		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
@@ -372,8 +370,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	    }
 
 	    /* calculate monopole forces */
-	    if (neigh->r < dp_cut && (charge[type1]
-		|| charge[type2])) {
+	    if (neigh->r < dp_cut && (charge[type1] || charge[type2])) {
 
 	      fnval_tail = neigh->fnval_el;
 	      grad_tail = neigh->grad_el;
@@ -400,20 +397,18 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		tmp_force.x = neigh->dist.x * grad;
 		tmp_force.y = neigh->dist.y * grad;
 		tmp_force.z = neigh->dist.z * grad;
-		forces[k] += tmp_force.x;
-		forces[k + 1] += tmp_force.y;
-		forces[k + 2] += tmp_force.z;
+		forces[n_i + 0] += tmp_force.x;
+		forces[n_i + 1] += tmp_force.y;
+		forces[n_i + 2] += tmp_force.z;
 		/* actio = reactio */
-		l = 3 * neigh->nr;
-		forces[l] -= tmp_force.x;
-		forces[l + 1] -= tmp_force.y;
-		forces[l + 2] -= tmp_force.z;
-
+		n_j = 3 * neigh->nr;
+		forces[n_j + 0] -= tmp_force.x;
+		forces[n_j + 1] -= tmp_force.y;
+		forces[n_j + 2] -= tmp_force.z;
 #ifdef STRESS
 		/* calculate coulomb stresses */
 		if (us) {
-		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
 		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
 		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
 		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
@@ -470,7 +465,8 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	      }
 	      /* cannot use slot/shift to access splines */
 	      if (neigh->r < calc_pot.end[paircol + atom->type])
-		conf_atoms[neigh->nr - firstatom].rho += splint(&calc_pot, xi, paircol + atom->type, neigh->r);
+		conf_atoms[neigh->nr - firstatom].rho +=
+		  splint(&calc_pot, xi, paircol + atom->type, neigh->r);
 	    }
 
 	  }			/* loop over neighbours */
@@ -636,7 +632,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  type1 = atom->type;
-	  k = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (cnfstart[h] + i);
 	  for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	    neigh = atom->neigh + j;
 	    type2 = neigh->type;
@@ -682,20 +678,19 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		  tmp_force.x = neigh->dist_r.x * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.x * grad_2;
 		  tmp_force.y = neigh->dist_r.y * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.y * grad_2;
 		  tmp_force.z = neigh->dist_r.z * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.z * grad_2;
-		  forces[k] -= tmp_force.x;
-		  forces[k + 1] -= tmp_force.y;
-		  forces[k + 2] -= tmp_force.z;
+		  forces[n_i + 0] -= tmp_force.x;
+		  forces[n_i + 1] -= tmp_force.y;
+		  forces[n_i + 2] -= tmp_force.z;
 		  /* actio = reactio */
-		  l = 3 * neigh->nr;
-		  forces[l] += tmp_force.x;
-		  forces[l + 1] += tmp_force.y;
-		  forces[l + 2] += tmp_force.z;
+		  n_j = 3 * neigh->nr;
+		  forces[n_j + 0] += tmp_force.x;
+		  forces[n_j + 1] += tmp_force.y;
+		  forces[n_j + 2] += tmp_force.z;
 
 #ifdef STRESS
 		  /* calculate stresses */
 		  if (us) {
-		    stresses = stress_p + 6 * h;
-		    forces[stresses] += neigh->dist.x * tmp_force.x;
+		    forces[stresses + 0] += neigh->dist.x * tmp_force.x;
 		    forces[stresses + 1] += neigh->dist.y * tmp_force.y;
 		    forces[stresses + 2] += neigh->dist.z * tmp_force.z;
 		    forces[stresses + 3] += neigh->dist.x * tmp_force.y;
@@ -729,20 +724,19 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		  tmp_force.x = neigh->dist_r.x * grad_1 + atom->p_ind.x * grad_2;
 		  tmp_force.y = neigh->dist_r.y * grad_1 + atom->p_ind.y * grad_2;
 		  tmp_force.z = neigh->dist_r.z * grad_1 + atom->p_ind.z * grad_2;
-		  forces[k] += tmp_force.x;
-		  forces[k + 1] += tmp_force.y;
-		  forces[k + 2] += tmp_force.z;
+		  forces[n_i + 0] += tmp_force.x;
+		  forces[n_i + 1] += tmp_force.y;
+		  forces[n_i + 2] += tmp_force.z;
 		  /* actio = reactio */
-		  l = 3 * neigh->nr;
-		  forces[l] -= tmp_force.x;
-		  forces[l + 1] -= tmp_force.y;
-		  forces[l + 2] -= tmp_force.z;
+		  n_j = 3 * neigh->nr;
+		  forces[n_j + 0] -= tmp_force.x;
+		  forces[n_j + 1] -= tmp_force.y;
+		  forces[n_j + 2] -= tmp_force.z;
 
 #ifdef STRESS
 		  /* calculate stresses */
 		  if (us) {
-		    stresses = stress_p + 6 * h;
-		    forces[stresses] -= neigh->dist.x * tmp_force.x;
+		    forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
 		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
 		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
 		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
@@ -752,7 +746,6 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 		}
 	      }
-
 
 	      /* dipole-dipole contributions */
 	      if (dp_alpha[type1] && dp_alpha[type2]) {
@@ -781,21 +774,20 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		  tmp_force.z =
 		    grad_1 * neigh->dist.z -
 		    tmp_2 * (grad_2 * neigh->dist.z - rp_i * neigh->r *
-			conf_atoms[neigh->nr - firstatom].p_ind.z - rp_j * neigh->r * atom->p_ind.z);
-		  forces[k] -= tmp_force.x;
-		  forces[k + 1] -= tmp_force.y;
-		  forces[k + 2] -= tmp_force.z;
+		    conf_atoms[neigh->nr - firstatom].p_ind.z - rp_j * neigh->r * atom->p_ind.z);
+		  forces[n_i + 0] -= tmp_force.x;
+		  forces[n_i + 1] -= tmp_force.y;
+		  forces[n_i + 2] -= tmp_force.z;
 		  /* actio = reactio */
-		  l = 3 * neigh->nr;
-		  forces[l] += tmp_force.x;
-		  forces[l + 1] += tmp_force.y;
-		  forces[l + 2] += tmp_force.z;
+		  n_j = 3 * neigh->nr;
+		  forces[n_j + 0] += tmp_force.x;
+		  forces[n_j + 1] += tmp_force.y;
+		  forces[n_j + 2] += tmp_force.z;
 
 #ifdef STRESS
 		  /* calculate stresses */
 		  if (us) {
-		    stresses = stress_p + 6 * h;
-		    forces[stresses] += neigh->dist.x * tmp_force.x;
+		    forces[stresses + 0] += neigh->dist.x * tmp_force.x;
 		    forces[stresses + 1] += neigh->dist.y * tmp_force.y;
 		    forces[stresses + 2] += neigh->dist.z * tmp_force.z;
 		    forces[stresses + 3] += neigh->dist.x * tmp_force.y;
@@ -817,7 +809,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  type1 = atom->type;
-	  k = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (cnfstart[h] + i);
 
 	  /* self energy contributions */
 	  if (charge[type1]) {
@@ -863,7 +855,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	if (uf) {		/* only required if we calc forces */
 	  for (i = 0; i < inconf[h]; i++) {
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
-	    k = 3 * (cnfstart[h] + i);
+	    n_i = 3 * (cnfstart[h] + i);
 	    for (j = 0; j < atom->num_neigh; j++) {
 	      /* loop over neighbors */
 	      neigh = atom->neigh + j;
@@ -891,19 +883,18 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		tmp_force.x = neigh->dist_r.x * eam_force;
 		tmp_force.y = neigh->dist_r.y * eam_force;
 		tmp_force.z = neigh->dist_r.z * eam_force;
-		forces[k] += tmp_force.x;
-		forces[k + 1] += tmp_force.y;
-		forces[k + 2] += tmp_force.z;
+		forces[n_i + 0] += tmp_force.x;
+		forces[n_i + 1] += tmp_force.y;
+		forces[n_i + 2] += tmp_force.z;
 		/* actio = reactio */
-		l = 3 * neigh->nr;
-		forces[l] -= tmp_force.x;
-		forces[l + 1] -= tmp_force.y;
-		forces[l + 2] -= tmp_force.z;
+		n_j = 3 * neigh->nr;
+		forces[n_j + 0] -= tmp_force.x;
+		forces[n_j + 1] -= tmp_force.y;
+		forces[n_j + 2] -= tmp_force.z;
 #ifdef STRESS
 		/* and stresses */
 		if (us) {
-		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
 		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
 		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
 		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
@@ -915,16 +906,17 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	    }			/* loop over neighbours */
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 1] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
 	    /* sum up forces  */
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
 	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
+		conf_weight[h] * (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i +
+		    2]));
 	  }
 	}
 
@@ -938,9 +930,9 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	/* whole stress contributions flow into tmpsum */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
-	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
+	    forces[stresses + i] /= conf_vol[h - firstconf];
+	    forces[stresses + i] -= force_0[stresses + i];
+	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
 	  }
 	}
 #endif /* STRESS */

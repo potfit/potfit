@@ -660,11 +660,11 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.x -
 		    rp_j * neigh->r * atom->p_ind.x);
 		  tmp_force.y =
-		    grad_1 * neigh->dist.y - tmp_2 * (grad_2 * neigh->rdist.y -
+		    grad_1 * neigh->dist.y - tmp_2 * (grad_2 * neigh->dist.y -
 		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.y -
 		    rp_j * neigh->r * atom->p_ind.y);
 		  tmp_force.z =
-		    grad_1 * neigh->dist.z - tmp_2 * (grad_2 * neigh->rdist.z -
+		    grad_1 * neigh->dist.z - tmp_2 * (grad_2 * neigh->dist.z -
 		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.z -
 		    rp_j * neigh->r * atom->p_ind.z);
 		  forces[k] -= tmp_force.x;

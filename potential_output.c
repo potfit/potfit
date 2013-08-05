@@ -510,7 +510,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 
   /* lambda_ijk */
   /* strange format (e.g. binary): 000, 100, 001, 101, 011, 111 */
-  int j;
+  int   j;
   fprintf(outfile, "stiweb_la\t");
   for (j = 0; j < paircol; j++)
     for (i = 0; i < ntypes; i++)

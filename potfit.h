@@ -135,18 +135,18 @@ typedef struct {
 
 typedef struct {
   /* neighbor properties */
-  int   type; 			/* type of neighboring atom */
-  int   nr; 			/* number of neighboring atom */
-  double r; 			/* r */
+  int   type;			/* type of neighboring atom */
+  int   nr;			/* number of neighboring atom */
+  double r;			/* r */
   double r2;			/* r^2 */
-  double inv_r; 		/* 1/r */
+  double inv_r;			/* 1/r */
   vector dist;			/* real distance */
   vector dist_r;		/* distance divided by r */
 
   /* data to access the spline tables at the correct position */
-  int   slot[SLOTS]; 		/* the slot, belonging to the neighbor distance */
-  double shift[SLOTS]; 		/* how far into the slot we have to go, in [0..1] */
-  double step[SLOTS]; 		/* step size */
+  int   slot[SLOTS];		/* the slot, belonging to the neighbor distance */
+  double shift[SLOTS];		/* how far into the slot we have to go, in [0..1] */
+  double step[SLOTS];		/* step size */
   int   col[SLOTS];		/* coloumn of interaction for this neighbor */
 
 #ifdef ADP
