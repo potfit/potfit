@@ -123,7 +123,8 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
     /* region containing loop over configurations */
     {
       atom_t *atom;
-      int   h, j, k, l;
+      int   h, j, k;
+      int   n_i, n_j, n_k;
       int   self, uf;
 #ifdef STRESS
       int   us, stresses;
@@ -139,7 +140,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
       vector tmp_force;
 
       /* threebody variables */
-      int   jj, kk, m, ijk;
+      int   ijk;
       double lambda;
       neigh_t *neigh_k;
       angl *n_angl;
@@ -155,22 +156,22 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	forces[energy_p + h] = 0.0;
 #ifdef STRESS
 	us = conf_us[h - firstconf];
+	stresses = stress_p + 6 * h;
 	for (i = 0; i < 6; i++)
-	  forces[stress_p + 6 * h + i] = 0.0;
+	  forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
+	  n_i = 3 * (cnfstart[h] + i);
 	  if (uf) {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k + 0] = -force_0[k];
-	    forces[k + 1] = -force_0[k + 1];
-	    forces[k + 2] = -force_0[k + 2];
+	    forces[n_i + 0] = -force_0[n_i + 0];
+	    forces[n_i + 1] = -force_0[n_i + 1];
+	    forces[n_i + 2] = -force_0[n_i + 2];
 	  } else {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k + 0] = 0.0;
-	    forces[k + 1] = 0.0;
-	    forces[k + 2] = 0.0;
+	    forces[n_i + 0] = 0.0;
+	    forces[n_i + 1] = 0.0;
+	    forces[n_i + 2] = 0.0;
 	  }
 	}
 	/* end first loop */
@@ -178,7 +179,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	/* 2nd loop: calculate pair forces and energies */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  k = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (cnfstart[h] + i);
 	  /* loop over neighbors */
 	  for (j = 0; j < atom->num_neigh; j++) {
 	    neigh_j = atom->neigh + j;
@@ -216,13 +217,12 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 		tmp_force.x = neigh_j->dist_r.x * v2_grad;
 		tmp_force.y = neigh_j->dist_r.y * v2_grad;
 		tmp_force.z = neigh_j->dist_r.z * v2_grad;
-		forces[k] += tmp_force.x;
-		forces[k + 1] += tmp_force.y;
-		forces[k + 2] += tmp_force.z;
+		forces[n_i + 0] += tmp_force.x;
+		forces[n_i + 1] += tmp_force.y;
+		forces[n_i + 2] += tmp_force.z;
 #ifdef STRESS
 		/* also calculate pair stresses */
 		if (us) {
-		  stresses = stress_p + 6 * h;
 		  forces[stresses + 0] -= 0.5 * neigh_j->dist.x * tmp_force.x;
 		  forces[stresses + 1] -= 0.5 * neigh_j->dist.y * tmp_force.y;
 		  forces[stresses + 2] -= 0.5 * neigh_j->dist.z * tmp_force.z;
@@ -250,27 +250,27 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	  }			/* loop over neighbors j */
 
 	  /* loop over all neighbors */
-	  for (jj = 0; jj < atom->num_neigh - 1; jj++) {
+	  for (j = 0; j < atom->num_neigh - 1; j++) {
 	    /* Get pointer to neighbor j */
-	    neigh_j = atom->neigh + jj;
+	    neigh_j = atom->neigh + j;
 	    ijk = neigh_j->ijk_start;
 	    /* Force location for atom j */
-	    l = 3 * neigh_j->nr;
+	    n_j = 3 * neigh_j->nr;
 	    /* check if we are inside the cutoff radius */
 	    if (neigh_j->r < *(sw->a2[neigh_j->col[0]])) {
 	      /* loop over remaining neighbors */
-	      for (kk = jj + 1; kk < atom->num_neigh; kk++) {
+	      for (k = j + 1; k < atom->num_neigh; k++) {
 		/* Store pointer to angular part (g) */
 		n_angl = atom->angl_part + ijk++;
 		/* Get pointer to neighbor k */
-		neigh_k = atom->neigh + kk;
+		neigh_k = atom->neigh + k;
 		/* store lambda for atom triple i,j,k */
 		lambda = *(sw->lambda[atom->type][neigh_j->type][neigh_k->type]);
 		/* shortcut for types without threebody interaction */
 		if (0.0 == lambda)
 		  continue;
 		/* Force location for atom k */
-		m = 3 * neigh_k->nr;
+		n_k = 3 * neigh_k->nr;
 		/* check if we are inside the cutoff radius */
 		if (neigh_k->r < *(sw->a2[neigh_k->col[0]])) {
 		  /* potential term */
@@ -284,60 +284,58 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 		  tmp_grad1 = lambda * neigh_j->f * neigh_k->f * 2 * tmp;
 		  tmp_grad2 = lambda * tmp * tmp;
 
-		  tmp_jj = 1.0 / (neigh_j->r * neigh_j->r);
+		  tmp_jj = 1.0 / (neigh_j->r2);
 		  tmp_jk = 1.0 / (neigh_j->r * neigh_k->r);
-		  tmp_kk = 1.0 / (neigh_k->r * neigh_k->r);
+		  tmp_kk = 1.0 / (neigh_k->r2);
 		  tmp_1 = tmp_grad2 * neigh_j->df * neigh_k->f - tmp_grad1 * n_angl->cos * tmp_jj;
 		  tmp_2 = tmp_grad1 * tmp_jk;
 
-		  force_j.x = tmp_1 * neigh_j->dist.x + tmp_2 * neigh_k->rdist.x;
-		  force_j.y = tmp_1 * neigh_j->dist.y + tmp_2 * neigh_k->rdist.y;
-		  force_j.z = tmp_1 * neigh_j->dist.z + tmp_2 * neigh_k->rdist.z;
+		  force_j.x = tmp_1 * neigh_j->dist.x + tmp_2 * neigh_k->dist.x;
+		  force_j.y = tmp_1 * neigh_j->dist.y + tmp_2 * neigh_k->dist.y;
+		  force_j.z = tmp_1 * neigh_j->dist.z + tmp_2 * neigh_k->dist.z;
 
 		  tmp_1 = tmp_grad2 * neigh_k->df * neigh_j->f - tmp_grad1 * n_angl->cos * tmp_kk;
-		  force_k.x = tmp_1 * neigh_k->dist.x + tmp_2 * neigh_j->rdist.x;
-		  force_k.y = tmp_1 * neigh_k->dist.y + tmp_2 * neigh_j->rdist.y;
-		  force_k.z = tmp_1 * neigh_k->dist.z + tmp_2 * neigh_j->rdist.z;
+		  force_k.x = tmp_1 * neigh_k->dist.x + tmp_2 * neigh_j->dist.x;
+		  force_k.y = tmp_1 * neigh_k->dist.y + tmp_2 * neigh_j->dist.y;
+		  force_k.z = tmp_1 * neigh_k->dist.z + tmp_2 * neigh_j->dist.z;
 
 		  /* update force on particle i */
-		  forces[k] += force_j.x + force_k.x;
-		  forces[k + 1] += force_j.y + force_k.y;
-		  forces[k + 2] += force_j.z + force_k.z;
+		  forces[n_i + 0] += force_j.x + force_k.x;
+		  forces[n_i + 1] += force_j.y + force_k.y;
+		  forces[n_i + 2] += force_j.z + force_k.z;
 
 		  /* update force on particle j */
-		  forces[l] -= force_j.x;
-		  forces[l + 1] -= force_j.y;
-		  forces[l + 2] -= force_j.z;
+		  forces[n_j + 0] -= force_j.x;
+		  forces[n_j + 1] -= force_j.y;
+		  forces[n_j + 2] -= force_j.z;
 
 		  /* update force on particle k */
-		  forces[m] -= force_k.x;
-		  forces[m + 1] -= force_k.y;
-		  forces[m + 2] -= force_k.z;
+		  forces[n_k + 0] -= force_k.x;
+		  forces[n_k + 1] -= force_k.y;
+		  forces[n_k + 2] -= force_k.z;
 
 #ifdef STRESS			/* Distribute stress among atoms */
 		  if (us) {
-		    stresses = stress_p + 6 * h;
-		    forces[stresses + 0] += force_j.x * neigh_j->dist.x + force_k.x * neigh_k->rdist.x;
-		    forces[stresses + 1] += force_j.y * neigh_j->dist.y + force_k.y * neigh_k->rdist.y;
-		    forces[stresses + 2] += force_j.z * neigh_j->dist.z + force_k.z * neigh_k->rdist.z;
-		    forces[stresses + 3] += 0.5 * (force_j.x * neigh_j->dist.y + force_k.x * neigh_k->rdist.y
-		      + force_j.y * neigh_j->dist.x + force_k.y * neigh_k->rdist.x);
-		    forces[stresses + 4] += 0.5 * (force_j.y * neigh_j->dist.z + force_k.y * neigh_k->rdist.z
-		      + force_j.z * neigh_j->dist.y + force_k.z * neigh_k->rdist.y);
-		    forces[stresses + 5] += 0.5 * (force_j.z * neigh_j->dist.x + force_k.z * neigh_k->rdist.x
-		      + force_j.x * neigh_j->dist.z + force_k.x * neigh_k->rdist.z);
+		    forces[stresses + 0] += force_j.x * neigh_j->dist.x + force_k.x * neigh_k->dist.x;
+		    forces[stresses + 1] += force_j.y * neigh_j->dist.y + force_k.y * neigh_k->dist.y;
+		    forces[stresses + 2] += force_j.z * neigh_j->dist.z + force_k.z * neigh_k->dist.z;
+		    forces[stresses + 3] += 0.5 * (force_j.x * neigh_j->dist.y + force_k.x * neigh_k->dist.y
+		      + force_j.y * neigh_j->dist.x + force_k.y * neigh_k->dist.x);
+		    forces[stresses + 4] += 0.5 * (force_j.y * neigh_j->dist.z + force_k.y * neigh_k->dist.z
+		      + force_j.z * neigh_j->dist.y + force_k.z * neigh_k->dist.y);
+		    forces[stresses + 5] += 0.5 * (force_j.z * neigh_j->dist.x + force_k.z * neigh_k->dist.x
+		      + force_j.x * neigh_j->dist.z + force_k.x * neigh_k->dist.z);
 		  }
 #endif /* STRESS */
 
 		}
-	      }			/* kk */
+	      }			/* k */
 	    }
-	  }			/* jj */
+	  }			/* j */
 	}
 	/* end second loop over all atoms */
 
 	/* third loop over all atoms, sum up forces */
-	int   n_i;
 	if (uf) {
 	  for (i = 0; i < inconf[h]; i++) {
 	    n_i = 3 * (cnfstart[h] + i);
@@ -353,7 +351,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	    if (atom->contrib)
 #endif /* CONTRIB */
 	      tmpsum += conf_weight[h] *
-		(dsquare(forces[n_i]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
+		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }
 	}
 	/* end third loop over all atoms */
@@ -366,9 +364,9 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
-	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
+	    forces[stresses + i] /= conf_vol[h - firstconf];
+	    forces[stresses + i] -= force_0[stresses + i];
+	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
 	  }
 	}
 #endif /* STRESS */

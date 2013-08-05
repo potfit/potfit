@@ -483,7 +483,7 @@ ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
     endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
-    ERROR += COULOMB does not support tabulated potentials (yet)
+    ERROR += COULOMB does not support tabulated potentials
   endif
   CFLAGS  += -DCOULOMB
   INTERACTION = 1
@@ -497,7 +497,7 @@ ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
     endif
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
-    ERROR += DIPOLE does not support tabulated potentials (yet)
+    ERROR += DIPOLE does not support tabulated potentials
   endif
   CFLAGS  += -DCOULOMB -DDIPOLE
   INTERACTION = 1

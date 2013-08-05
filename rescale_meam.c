@@ -28,11 +28,14 @@
  *
  *****************************************************************/
 
+#if !defined NORESCALE && !defined APOT
+
 #include "potfit.h"
+#include "splines.h"
 
 /* Doesn't make much sense without EAM or MEAM */
 
-#if ( defined EAM || defined MEAM ) && !defined NORESCALE
+#ifdef MEAM
 
 /****************************************************************
 *
@@ -44,7 +47,7 @@
 
 double rescale(pot_table_t *pt, double upper, int flag)
 {
-  int   i, j, h, col, col2, typ1, typ2, mincol, maxcol, first, dimnewxi, vals, sign;
+  int   i, j, h, col, col2, type1, type2, mincol, maxcol, first, dimnewxi, vals, sign;
   double min = 1e100, max = -1e100;
   double pos, grad, a;
   double *xi, *newxi, *neword, *newstep, *maxrho, *minrho, *left, *right;
@@ -55,7 +58,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
   int   jj, kk, ijk;
   angl *n_angl;
   neigh_t *neigh_j, *neigh_k;
-
 #endif // MEAM
 
   // Set potential array in xi
@@ -125,7 +127,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
       atom = atoms + i + cnfstart[h];
 
       // Get type of atom i
-      typ1 = atom->typ;
+      type1 = atom->type;
 
       // LOOP OVER EACH NEIGHBOR OF ATOM i
       for (j = 0; j < atom->num_neigh; ++j) {
@@ -134,11 +136,11 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	neigh = atom->neigh + j;
 
 	// Store type of neighbor
-	typ2 = neigh->typ;
+	type2 = neigh->type;
 
 	// BEGIN COMPUTING rho values contributed from rho_ij
 	// Store rho_ij column that is used for neighbor
-	col2 = paircol + typ2;
+	col2 = paircol + type2;
 
 	// Check that neighbor lies in range of rho_ij potential
 	if (neigh->r < pt->end[col2]) {
@@ -150,8 +152,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	// BEGIN COMPUTING rho values for f_ij potential
 	// Get column for atom j (it behaves similarly to pair potential, phi)
 	// just offset by "paircol + 2*ntypes"
-	col2 = (typ1 <= typ2) ? paircol + 2 * ntypes + typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-	  : paircol + 2 * ntypes + typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+	col2 = (type1 <= type2) ? paircol + 2 * ntypes + type1 * ntypes + type2 - ((type1 * (type1 + 1)) / 2)
+	  : paircol + 2 * ntypes + type2 * ntypes + type1 - ((type2 * (type2 + 1)) / 2);
 
 	// Check that neighbor lies in range of f_ij potential
 	if (neigh->r < pt->end[col2]) {
@@ -204,11 +206,11 @@ double rescale(pot_table_t *pt, double upper, int flag)
       atom = atoms + i + cnfstart[h];
 
       // Get type of atom i
-      typ1 = atom->typ;
+      type1 = atom->type;
 
       // Store max/min rho for this column of F seen by atom i
-      maxrho[typ1] = MAX(maxrho[typ1], atom->rho);
-      minrho[typ1] = MIN(minrho[typ1], atom->rho);
+      maxrho[type1] = MAX(maxrho[type1], atom->rho);
+      minrho[type1] = MIN(minrho[type1], atom->rho);
     }
   }				// END OF LOOP OVER CONFIGURATIONS
 
@@ -598,5 +600,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
   return a;
 }
 
+#endif /* MEAM */
 
-#endif // (MEAM || EAM) && !NORESCALE
+#endif /* !NORESCALE || !APOT */

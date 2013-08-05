@@ -611,11 +611,8 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
   int   i, j, k, m, m2, col1, col2;
-  double r2, temp;
+  double r2, temp, temp2;
   double *r2begin, *r2end, *r2step;
-#ifndef APOT
-  double temp2;
-#endif /* APOT */
 #if defined EAM || defined ADP || defined MEAM
   double root;
 #endif /* EAM */

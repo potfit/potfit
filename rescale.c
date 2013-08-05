@@ -118,11 +118,11 @@ double rescale(pot_table_t *pt, double upper, int flag)
       atoms[cnfstart[h] + i].rho = 0.0;
     for (i = 0; i < inconf[h]; i++) {
       atom = atoms + i + cnfstart[h];
-      typ1 = atom->typ;
+      typ1 = atom->type;
       for (j = 0; j < atom->num_neigh; j++) {
 	neigh = atom->neigh + j;
 	if (neigh->nr > i + cnfstart[h]) {
-	  typ2 = neigh->typ;
+	  typ2 = neigh->type;
 	  col2 = paircol + typ2;
 	  if (typ2 == typ1) {
 	    if (neigh->r < pt->end[col2]) {

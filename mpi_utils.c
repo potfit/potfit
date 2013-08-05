@@ -86,7 +86,10 @@ void broadcast_params()
   angl  testangl;
 #endif /* THREEBODY */
   atom_t testatom;
-  int   calclen, size, i, j, each, odd, count;
+  int   calclen, size, i, each, odd, count;
+#ifdef APOT
+  int   j;
+#endif /* APOT */
 
   /* Define Structures */
   /* first the easy ones: */
