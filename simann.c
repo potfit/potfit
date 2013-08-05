@@ -150,10 +150,6 @@ void anneal(double *xi)
 #ifndef APOT
   double width, height;		/* gaussian bump size */
 #endif /* APOT */
-#ifdef DIPOLE
-  FILE *outfile;
-  char *filename = "Dipole.convergency";
-#endif /* DIPOLE */
   FILE *ff;			/* exit flagfile */
   int  *naccept;		/* number of accepted changes in dir */
 

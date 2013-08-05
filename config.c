@@ -47,7 +47,7 @@ void read_config(char *filename)
   char *tmp, *res_tmp;
   int   count;
   int   i, j, k, ix, iy, iz;
-  int   typ1, typ2, col, slot, klo, khi;
+  int   type1, type2, col, slot, klo, khi;
   int   cell_scale[3];
   int   fixed_elements;
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
@@ -111,6 +111,7 @@ void read_config(char *filename)
     error(1, "Could not open file %s\n", filename);
 
   printf("Reading the config file >> %s << and calculating neighbor lists ... ", filename);
+  fflush(stdout);
 
   /* read configurations until the end of the file */
   do {
@@ -389,13 +390,13 @@ void read_config(char *filename)
     for (i = 0; i < count; i++) {
       k = 3 * (natoms + i);
       atom = atoms + natoms + i;
-      if (7 > fscanf(infile, "%d %lf %lf %lf %lf %lf %lf\n", &(atom->typ),
+      if (7 > fscanf(infile, "%d %lf %lf %lf %lf %lf %lf\n", &(atom->type),
 	  &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), &(atom->force.x), &(atom->force.y),
 	  &(atom->force.z)))
 	error(1, "Corrupt configuration file on line %d\n", line + 1);
       line++;
-      if (atom->typ >= ntypes || atom->typ < 0)
-	error(1, "Corrupt configuration file on line %d: Incorrect atom type (%d)\n", line, atom->typ);
+      if (atom->type >= ntypes || atom->type < 0)
+	error(1, "Corrupt configuration file on line %d: Incorrect atom type (%d)\n", line, atom->type);
       atom->absforce = sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) + dsquare(atom->force.z));
       atom->conf = nconf;
 #ifdef CONTRIB
@@ -404,8 +405,8 @@ void read_config(char *filename)
       else
 	atom->contrib = 1;
 #endif
-      na_type[nconf][atom->typ] += 1;
-      max_type = MAX(max_type, atom->typ);
+      na_type[nconf][atom->type] += 1;
+      max_type = MAX(max_type, atom->type);
     }
     /* check cell size */
     /* inverse height in direction */
@@ -444,7 +445,7 @@ void read_config(char *filename)
 
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
-      atoms[i].n_neigh = 0;
+      atoms[i].num_neigh = 0;
       /* loop over all atoms for threebody interactions */
 #ifdef THREEBODY
       for (j = natoms; j < natoms + count; j++) {
@@ -463,32 +464,30 @@ void read_config(char *filename)
 	      dd.y = d.y + ix * box_x.y + iy * box_y.y + iz * box_z.y;
 	      dd.z = d.z + ix * box_x.z + iy * box_y.z + iz * box_z.z;
 	      r = sqrt(SPROD(dd, dd));
-	      typ1 = atoms[i].typ;
-	      typ2 = atoms[j].typ;
-	      if (r <= rcut[typ1 * ntypes + typ2]) {
-		if (r <= rmin[typ1 * ntypes + typ2]) {
+	      type1 = atoms[i].type;
+	      type2 = atoms[j].type;
+	      if (r <= rcut[type1 * ntypes + type2]) {
+		if (r <= rmin[type1 * ntypes + type2]) {
 		  sh_dist = nconf;
 		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf, r);
 		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n",
-		    i - natoms, typ1, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
-		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n", j - natoms, typ2, dd.x, dd.y, dd.z);
+		    i - natoms, type1, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n", j - natoms, type2, dd.x, dd.y, dd.z);
 		}
-		atoms[i].neigh = (neigh_t *)realloc(atoms[i].neigh, (atoms[i].n_neigh + 1) * sizeof(neigh_t));
+		atoms[i].neigh = (neigh_t *)realloc(atoms[i].neigh, (atoms[i].num_neigh + 1) * sizeof(neigh_t));
 		dd.x /= r;
 		dd.y /= r;
 		dd.z /= r;
-		k = atoms[i].n_neigh;
-		atoms[i].neigh[k].typ = typ2;
+		k = atoms[i].num_neigh;
+		atoms[i].neigh[k].type = type2;
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
+		atoms[i].neigh[k].r2 = r * r;
 		atoms[i].neigh[k].inv_r = 1.0 / r;
-		atoms[i].neigh[k].dist = dd;
+		atoms[i].neigh[k].dist_r = dd;
 		atoms[i].neigh[k].rdist.x = dd.x * r;
 		atoms[i].neigh[k].rdist.y = dd.y * r;
 		atoms[i].neigh[k].rdist.z = dd.z * r;
-#ifdef COULOMB
-		atoms[i].neigh[k].r2 = r * r;
-#endif /* COULOMB */
 #ifdef ADP
 		atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
 		atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
@@ -497,10 +496,10 @@ void read_config(char *filename)
 		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
 		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
-		atoms[i].n_neigh++;
+		atoms[i].num_neigh++;
 
-		col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-		  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+		col = (type1 <= type2) ? type1 * ntypes + type2 - ((type1 * (type1 + 1)) / 2)
+		  : type2 * ntypes + type1 - ((type2 * (type2 + 1)) / 2);
 		atoms[i].neigh[k].col[0] = col;
 		mindist[col] = MIN(mindist[col], r);
 
@@ -548,7 +547,7 @@ void read_config(char *filename)
 
 #if defined EAM || defined ADP || defined MEAM
 		  /* transfer function */
-		  col = paircol + typ2;
+		  col = paircol + type2;
 		  atoms[i].neigh[k].col[1] = col;
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
@@ -765,14 +764,14 @@ void read_config(char *filename)
 	  }
 	}
       }
-      maxneigh = MAX(maxneigh, atoms[i].n_neigh);
+      maxneigh = MAX(maxneigh, atoms[i].num_neigh);
       reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
     }
 
     /* compute the angular part */
 #ifdef THREEBODY
     for (i = natoms; i < natoms + count; i++) {
-      nnn = atoms[i].n_neigh;
+      nnn = atoms[i].num_neigh;
       ijk = 0;
       atoms[i].angl_part = (angl *) malloc(sizeof(angl));
 #ifdef TERSOFF
@@ -790,16 +789,16 @@ void read_config(char *filename)
 #endif /* TERSOFF */
 	  atoms[i].angl_part = (angl *) realloc(atoms[i].angl_part, (ijk + 1) * sizeof(angl));
 	  ccos =
-	    atoms[i].neigh[j].dist.x * atoms[i].neigh[k].dist.x +
-	    atoms[i].neigh[j].dist.y * atoms[i].neigh[k].dist.y +
-	    atoms[i].neigh[j].dist.z * atoms[i].neigh[k].dist.z;
+	    atoms[i].neigh[j].dist_r.x * atoms[i].neigh[k].dist_r.x +
+	    atoms[i].neigh[j].dist_r.y * atoms[i].neigh[k].dist_r.y +
+	    atoms[i].neigh[j].dist_r.z * atoms[i].neigh[k].dist_r.z;
 
 	  atoms[i].angl_part[ijk].cos = ccos;
 
-	  col = 2 * paircol + 2 * ntypes + atoms[i].typ;
+	  col = 2 * paircol + 2 * ntypes + atoms[i].type;
 	  if (0 == format || 3 == format) {
 	    if ((fabs(ccos) - 1.0) > 1e-10) {
-	      printf("%.20f %f %d %d %d\n", ccos, calc_pot.begin[col], col, typ1, typ2);
+	      printf("%.20f %f %d %d %d\n", ccos, calc_pot.begin[col], col, type1, type2);
 	      fflush(stdout);
 	      error(1, "cos out of range, it is strange!");
 	    }
@@ -991,9 +990,9 @@ void read_config(char *filename)
 
     for (k = 0; k < paircol; k++) {
       for (i = 0; i < natoms; i++) {
-	typ1 = atoms[i].typ;
-	for (j = 0; j < atoms[i].n_neigh; j++) {
-	  typ2 = atoms[i].neigh[j].typ;
+	type1 = atoms[i].type;
+	for (j = 0; j < atoms[i].num_neigh; j++) {
+	  type2 = atoms[i].neigh[j].type;
 	  col = atoms[i].neigh[j].col[0];
 	  if (col == k) {
 	    pos = (int)(atoms[i].neigh[j].r / pair_dist[k]);
@@ -1136,7 +1135,7 @@ double make_box(void)
 
   /* volume */
   volume = SPROD(box_x, tbox_x);
-  if (0 == volume)
+  if (0.0 == volume)
     error(1, "Box edges are parallel\n");
 
   /* normalization */
@@ -1208,7 +1207,7 @@ void update_slots(void)
   double r, rr;
 
   for (i = 0; i < natoms; i++) {
-    for (j = 0; j < atoms[i].n_neigh; j++) {
+    for (j = 0; j < atoms[i].num_neigh; j++) {
       r = atoms[i].neigh[j].r;
 
       /* update slots for pair potential part, slot 0 */
@@ -1285,7 +1284,7 @@ void update_slots(void)
     for (j = 0; j < atoms[i].num_angl; j++) {
       rr = atoms[i].angl_part[j].cos + 1.1;
 #ifdef MEAM
-      col = 2 * paircol + 2 * ntypes + atoms[i].typ;
+      col = 2 * paircol + 2 * ntypes + atoms[i].type;
       atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col]);
       atoms[i].angl_part[j].step = calc_pot.step[col];
       atoms[i].angl_part[j].shift =

@@ -31,6 +31,16 @@
 #ifndef POTFIT_H
 #define POTFIT_H
 
+#ifdef __INTEL_COMPILER
+
+/* remark #981: operands are evaluated in unspecified order */
+#pragma warning(disable:981)
+
+/* remark #1572: floating-point equality and inequality comparisons are unreliable */
+#pragma warning(disable:1572)
+
+#endif /* __INTEL_COMPILER */
+
 #include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -96,7 +106,14 @@
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
 
-typedef enum Interaction_T { I_PAIR, I_EAM, I_ADP, I_ELSTAT, I_EAM_ELSTAT, I_MEAM, I_STIWEB,
+typedef enum Interaction_T {
+  I_PAIR,
+  I_EAM,
+  I_ADP,
+  I_ELSTAT,
+  I_EAM_ELSTAT,
+  I_MEAM,
+  I_STIWEB,
   I_TERSOFF
 } Interaction_T;
 
@@ -117,15 +134,19 @@ typedef struct {
 } sym_tens;
 
 typedef struct {
-  int   typ;
-  int   nr;
-  double r;
-  double inv_r;
-  vector dist;			/* distance divided by r */
+  /* neighbor properties */
+  int   type; 			/* type of neighboring atom */
+  int   nr; 			/* number of neighboring atom */
+  double r; 			/* r */
+  double r2;			/* r^2 */
+  double inv_r; 		/* 1/r */
+  vector dist_r;		/* distance divided by r */
   vector rdist;			/* real distance */
-  int   slot[SLOTS];
-  double shift[SLOTS];
-  double step[SLOTS];
+
+  /* data to access the spline tables at the correct position */
+  int   slot[SLOTS]; 		/* the slot, belonging to the neighbor distance */
+  double shift[SLOTS]; 		/* how far into the slot we have to go, in [0..1] */
+  double step[SLOTS]; 		/* step size */
   int   col[SLOTS];		/* coloumn of interaction for this neighbor */
 
 #ifdef ADP
@@ -135,7 +156,6 @@ typedef struct {
 #endif
 
 #ifdef COULOMB
-  double r2;			/* r^2 */
   double fnval_el;		/* stores tail of electrostatic potential */
   double grad_el;		/* stores tail of first derivative of electrostatic potential */
   double ggrad_el;		/* stores tail of second derivative of electrostatic potential */
@@ -154,7 +174,6 @@ typedef struct {
 #ifdef TERSOFF
   vector dzeta;
 #endif
-
 } neigh_t;
 
 #ifdef THREEBODY
@@ -211,8 +230,8 @@ typedef struct {
 #endif
 
 typedef struct {
-  int   typ;
-  int   n_neigh;
+  int   type;
+  int   num_neigh;
   vector pos;
   vector force;
   double absforce;
@@ -233,13 +252,6 @@ typedef struct {
   double nu;
 #endif
 
-#ifdef THREEBODY
-  int   num_angl;
-#ifdef MEAM
-  double rho_eam;		/* Store EAM density */
-#endif
-#endif
-
 #ifdef DIPOLE
   vector E_stat;		/* static field-contribution */
   vector p_sr;			/* short-range dipole moment */
@@ -247,6 +259,13 @@ typedef struct {
   vector p_ind;			/* induced dipole moment */
   vector E_old;			/* stored old induced field */
   vector E_tot;			/* temporary induced field */
+#endif
+
+#ifdef THREEBODY
+  int   num_angl;
+#ifdef MEAM
+  double rho_eam;		/* Store EAM density */
+#endif
 #endif
 
   neigh_t *neigh;		/* dynamic array for neighbors */

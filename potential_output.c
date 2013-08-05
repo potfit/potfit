@@ -52,7 +52,7 @@ void init_tails(double dp_kappa)
   int   i, j;
 
   for (i = 0; i < natoms; i++)
-    for (j = 0; j < atoms[i].n_neigh; j++)
+    for (j = 0; j < atoms[i].num_neigh; j++)
       elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
 	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
 }
@@ -78,7 +78,7 @@ void write_coulomb_table()
 
     outfile = fopen(filename1, "a");
     for (i = 0; i < natoms; i++) {
-      for (j = 0; j < atoms[i].n_neigh; j++) {
+      for (j = 0; j < atoms[i].num_neigh; j++) {
 	value = apt->charge[0] * apt->charge[0] * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
       }
@@ -87,7 +87,7 @@ void write_coulomb_table()
 
     outfile = fopen(filename2, "a");
     for (i = 0; i < natoms; i++) {
-      for (j = 0; j < atoms[i].n_neigh; j++) {
+      for (j = 0; j < atoms[i].num_neigh; j++) {
 	value = apt->charge[0] * c1 * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
       }
@@ -96,7 +96,7 @@ void write_coulomb_table()
 
     outfile = fopen(filename3, "a");
     for (i = 0; i < natoms; i++) {
-      for (j = 0; j < atoms[i].n_neigh; j++) {
+      for (j = 0; j < atoms[i].num_neigh; j++) {
 	value = c1 * c1 * atoms[i].neigh[j].fnval_el;
 	fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
       }
@@ -188,9 +188,6 @@ void write_pot_table0(apot_table_t *apt, char *filename)
 #endif /* PAIR */
 
 #ifdef COULOMB
-  int   ncols;
-  ncols = ntypes * (ntypes + 1) / 2;
-
   fprintf(outfile, "elstat\n");
   for (i = 0; i < ntypes - 1; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
@@ -198,7 +195,10 @@ void write_pot_table0(apot_table_t *apt, char *filename)
   fprintf(outfile, "charge_%s\t %f\n", elements[ntypes - 1], apt->last_charge);
   fprintf(outfile, "%s\t\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][0],
     apt->dp_kappa[0], apt->pmin[apt->number + 1][0], apt->pmax[apt->number + 1][0]);
+
 #ifdef DIPOLE
+  int   ncols = ntypes * (ntypes + 1) / 2;
+
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
       apt->dp_alpha[i], apt->pmin[apt->number + 2][i], apt->pmax[apt->number + 2][i]);
@@ -211,6 +211,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
       apt->dp_c[i], apt->pmin[apt->number + 4][i], apt->pmax[apt->number + 4][i]);
   }
 #endif /* DIPOLE */
+
   fprintf(outfile, "\n");
 #endif /* COULOMB */
 
@@ -1426,11 +1427,12 @@ void write_pot_table_lammps(pot_table_t *pt)
  /* in DYNAMO multi-element setfl format */
 void write_pot_table_lammps(pot_table_t *pt)
 {
+/* TODO: ??? */
 #ifdef COULOMB
   printf("Potential in LAMMPS format is not available for coulomb interactions.\n");
   return;
 #elif defined DIPOLE
-  printf("Potential in LAMMPS format is not available for coulomb interactions.\n");
+  printf("Potential in LAMMPS format is not available for dipole interactions.\n");
   return;
 #else /* COULOMB */
 
@@ -1673,7 +1675,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
       typ1 = atom->typ;
 
       /* pair potentials */
-      for (j = 0; j < atom->n_neigh; j++) {
+      for (j = 0; j < atom->num_neigh; j++) {
 	neigh = atom->neigh + j;
 	typ2 = neigh->typ;
 	col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)

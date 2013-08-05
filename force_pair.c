@@ -104,6 +104,11 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	xi = calc_pot.table;	/* we need to update the calc-table */
   }
 
+#ifndef MPI
+  /* shut up compiler warning about unused variable */
+  i = flag;
+#endif /* MPI */
+
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
@@ -154,11 +159,11 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
     myconf = nconf;
 #endif /* MPI */
 
-    /* region containing loop over configurations,
-       also OMP-parallelized region */
+    /* region containing loop over configurations */
     {
       atom_t *atom;
-      int   h, j, k, l;
+      int   h, j;
+      int   n_i, n_j;
       int   self, uf;
 #ifdef STRESS
       int   us, stresses;
@@ -177,10 +182,11 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	us = conf_us[h - firstconf];
 #endif /* STRESS */
 	/* reset energies and stresses */
-	forces[energy_p + h] = 0.;
+	forces[energy_p + h] = 0.0;
 #ifdef STRESS
+	stresses = stress_p + 6 * h;
 	for (i = 0; i < 6; i++)
-	  forces[stress_p + 6 * h + i] = 0.;
+	  forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
 #ifdef APOT
@@ -191,15 +197,15 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
 	  if (uf) {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k] = -force_0[k];
-	    forces[k + 1] = -force_0[k + 1];
-	    forces[k + 2] = -force_0[k + 2];
+	    n_i = 3 * (cnfstart[h] + i);
+	    forces[n_i + 0] = -force_0[n_i + 0];
+	    forces[n_i + 1] = -force_0[n_i + 1];
+	    forces[n_i + 2] = -force_0[n_i + 2];
 	  } else {
-	    k = 3 * (cnfstart[h] + i);
-	    forces[k] = 0.;
-	    forces[k + 1] = 0.;
-	    forces[k + 2] = 0.;
+	    n_i = 3 * (cnfstart[h] + i);
+	    forces[n_i + 0] = 0.0;
+	    forces[n_i + 1] = 0.0;
+	    forces[n_i + 2] = 0.0;
 	  }
 	}
 	/* end first loop */
@@ -207,9 +213,9 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	/* 2nd loop: calculate pair forces and energies */
 	for (i = 0; i < inconf[h]; i++) {
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  k = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (cnfstart[h] + i);
 	  /* loop over neighbors */
-	  for (j = 0; j < atom->n_neigh; j++) {
+	  for (j = 0; j < atom->num_neigh; j++) {
 	    neigh = atom->neigh + j;
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
@@ -232,30 +238,26 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
-		tmp_force.x = neigh->dist.x * phi_grad;
-		tmp_force.y = neigh->dist.y * phi_grad;
-		tmp_force.z = neigh->dist.z * phi_grad;
-		forces[k] += tmp_force.x;
-		forces[k + 1] += tmp_force.y;
-		forces[k + 2] += tmp_force.z;
+		tmp_force.x = neigh->dist_r.x * phi_grad;
+		tmp_force.y = neigh->dist_r.y * phi_grad;
+		tmp_force.z = neigh->dist_r.z * phi_grad;
+		forces[n_i + 0] += tmp_force.x;
+		forces[n_i + 1] += tmp_force.y;
+		forces[n_i + 2] += tmp_force.z;
 		/* actio = reactio */
-		l = 3 * neigh->nr;
-		forces[l] -= tmp_force.x;
-		forces[l + 1] -= tmp_force.y;
-		forces[l + 2] -= tmp_force.z;
+		n_j = 3 * neigh->nr;
+		forces[n_j + 0] -= tmp_force.x;
+		forces[n_j + 1] -= tmp_force.y;
+		forces[n_j + 2] -= tmp_force.z;
 #ifdef STRESS
 		/* also calculate pair stresses */
 		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
-		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
@@ -266,16 +268,16 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	  if (uf) {
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
-	    forces[k] /= FORCE_EPS + atom->absforce;
-	    forces[k + 1] /= FORCE_EPS + atom->absforce;
-	    forces[k + 2] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 1] /= FORCE_EPS + atom->absforce;
+	    forces[n_i + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
+
 	    /* sum up forces */
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[k]) + dsquare(forces[k + 1]) + dsquare(forces[k + 2]));
+	      tmpsum += conf_weight[h] * (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }			/* second loop over atoms */
 	}
 
@@ -287,9 +289,9 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stress_p + 6 * h + i] /= conf_vol[h - firstconf];
-	    forces[stress_p + 6 * h + i] -= force_0[stress_p + 6 * h + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stress_p + 6 * h + i]);
+	    forces[stresses + i] /= conf_vol[h - firstconf];
+	    forces[stresses + i] -= force_0[stresses + i];
+	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -349,7 +351,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
   }
 
   /* once a non-root process arrives here, all is done. */
-  return -1.;
+  return -1.0;
 }
 
 #endif /* PAIR */

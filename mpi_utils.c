@@ -100,17 +100,18 @@ void broadcast_params()
   /* MPI_NEIGH */
   /* *INDENT-OFF* */
   size = 0;
-  blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* typ */
+  blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* type */
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* nr */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* r */
+  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* r2 */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;   	/* inv_r */
-  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* dist */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* dist_r */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* rdist */
   blklens[size] = SLOTS;     	typen[size++] = MPI_INT;    	/* slot */
   blklens[size] = SLOTS;     	typen[size++] = MPI_DOUBLE;     /* shift */
   blklens[size] = SLOTS;     	typen[size++] = MPI_DOUBLE;     /* step */
   blklens[size] = SLOTS;     	typen[size++] = MPI_INT;     	/* col */
 #ifdef ADP
-  blklens[size] = 1;         	typen[size++] = MPI_VECTOR; 	/* rdist */
   blklens[size] = 1;         	typen[size++] = MPI_STENS;   	/* sqrdist */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* u_val */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* u_grad */
@@ -118,7 +119,6 @@ void broadcast_params()
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* w_grad */
 #endif /* ADP */
 #ifdef COULOMB
-  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;     /* r^2 */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;     /* fnval_el */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* grad_el */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* ggrad_el */
@@ -129,24 +129,25 @@ void broadcast_params()
   blklens[size] = 1;        	typen[size++] = MPI_INT;     	/* ijk_start */
 #endif /* THREEBODY */
 #ifdef MEAM
-  blklens[size] = 1; 		types[size++] = MPI_DOUBLE; 	/* drho */
+  blklens[size] = 1; 		typen[size++] = MPI_DOUBLE; 	/* drho */
 #endif /* MEAM */
 #ifdef TERSOFF
-  blklens[size] = 1; 		types[size++] = MPI_VECTOR; 	/* dzeta */
+  blklens[size] = 1; 		typen[size++] = MPI_VECTOR; 	/* dzeta */
 #endif /* TERSOFF */
 
   count = 0;
-  MPI_Address(&testneigh.typ, 		&displs[count++]);
+  MPI_Address(&testneigh.type, 		&displs[count++]);
   MPI_Address(&testneigh.nr, 		&displs[count++]);
   MPI_Address(&testneigh.r, 		&displs[count++]);
+  MPI_Address(&testneigh.r2, 		&displs[count++]);
   MPI_Address(&testneigh.inv_r, 	&displs[count++]);
-  MPI_Address(&testneigh.dist, 		&displs[count++]);
+  MPI_Address(&testneigh.dist_r,	&displs[count++]);
+  MPI_Address(&testneigh.rdist, 	&displs[count++]);
   MPI_Address(testneigh.slot, 		&displs[count++]);
   MPI_Address(testneigh.shift, 		&displs[count++]);
   MPI_Address(testneigh.step, 		&displs[count++]);
   MPI_Address(testneigh.col, 		&displs[count++]);
 #ifdef ADP
-  MPI_Address(&testneigh.rdist, 	&displs[count++]);
   MPI_Address(&testneigh.sqrdist, 	&displs[count++]);
   MPI_Address(&testneigh.u_val, 	&displs[count++]);
   MPI_Address(&testneigh.u_grad, 	&displs[count++]);
@@ -154,7 +155,6 @@ void broadcast_params()
   MPI_Address(&testneigh.w_grad, 	&displs[count++]);
 #endif /* ADP */
 #ifdef COULOMB
-  MPI_Address(&testneigh.r2, 		&displs[count++]);
   MPI_Address(&testneigh.fnval_el, 	&displs[count++]);
   MPI_Address(&testneigh.grad_el, 	&displs[count++]);
   MPI_Address(&testneigh.ggrad_el, 	&displs[count++]);
@@ -219,8 +219,8 @@ void broadcast_params()
   /* MPI_ATOM */
   /* *INDENT-OFF* */
   size = 0;
-  blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* typ */
-  blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* n_neigh */
+  blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* type */
+  blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* num_neigh */
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* pos */
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* force */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* absforce */
@@ -228,16 +228,16 @@ void broadcast_params()
 #ifdef CONTRIB
   blklens[size] = 1;         	typen[size++] = MPI_INT;     	/* contrib */
 #endif /* CONTRIB */
-#if (defined EAM && !defined DIPOLE) || defined ADP || defined MEAM
+#if defined EAM || defined ADP || defined MEAM
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* rho */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* gradF */
-#endif /* (EAM && !DIPOLE) || ADP || MEAM */
+#endif /* EAM || ADP || MEAM */
 #ifdef ADP
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* mu */
   blklens[size] = 1;         	typen[size++] = MPI_STENS;   	/* lambda */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;    	/* nu */
 #endif /* ADP */
-#if defined DIPOLE && !defined EAM
+#if defined DIPOLE
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;    	/* E_stat */
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_sr */
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* E_ind */
@@ -245,16 +245,6 @@ void broadcast_params()
   blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_old */
   blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_tot */
 #endif /* DIPOLE */
-#if defined DIPOLE && defined EAM
-  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* rho */
-  blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* gradF */
-  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;    	/* E_stat */
-  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_sr */
-  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* E_ind */
-  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;   	/* p_ind */
-  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_old */
-  blklens[size] = 1;        	typen[size++] = MPI_VECTOR;   	/* E_tot */
-#endif /* DIPOLE && EAM */
 #ifdef THREEBODY
   blklens[size] = 1;         	typen[size++] = MPI_INT;    	/* num_angl */
 #ifdef MEAM
@@ -266,8 +256,8 @@ void broadcast_params()
   /* DO NOT BROADCAST ANGLES !!! DYNAMIC ALLOCATION */
 
   count = 0;
-  MPI_Address(&testatom.typ, 		&displs[count++]);
-  MPI_Address(&testatom.n_neigh, 	&displs[count++]);
+  MPI_Address(&testatom.type, 		&displs[count++]);
+  MPI_Address(&testatom.num_neigh, 	&displs[count++]);
   MPI_Address(&testatom.pos, 		&displs[count++]);
   MPI_Address(&testatom.force, 		&displs[count++]);
   MPI_Address(&testatom.absforce, 	&displs[count++]);
@@ -275,7 +265,7 @@ void broadcast_params()
 #ifdef CONTRIB
   MPI_Address(&testatom.contrib, 	&displs[count++]);
 #endif /* CONTRIB */
-#if (defined EAM && !defined DIPOLE ) || defined ADP || defined MEAM
+#if defined EAM || defined ADP || defined MEAM
   MPI_Address(&testatom.rho, 		&displs[count++]);
   MPI_Address(&testatom.gradF, 		&displs[count++]);
 #endif /* EAM || ADP */
@@ -284,7 +274,7 @@ void broadcast_params()
   MPI_Address(&testatom.lambda, 	&displs[count++]);
   MPI_Address(&testatom.nu, 		&displs[count++]);
 #endif /* ADP */
-#if defined DIPOLE && !defined EAM
+#ifdef DIPOLE
   MPI_Address(&testatom.E_stat, 	&displs[count++]);
   MPI_Address(&testatom.p_sr, 		&displs[count++]);
   MPI_Address(&testatom.E_ind, 		&displs[count++]);
@@ -292,16 +282,6 @@ void broadcast_params()
   MPI_Address(&testatom.E_old, 		&displs[count++]);
   MPI_Address(&testatom.E_tot, 		&displs[count++]);
 #endif /* DIPOLE */
-#if defined DIPOLE && defined EAM
-  MPI_Address(&testatom.rho, 		&displs[count++]);
-  MPI_Address(&testatom.gradF, 		&displs[count++]);
-  MPI_Address(&testatom.E_stat, 	&displs[count++]);
-  MPI_Address(&testatom.p_sr, 		&displs[count++]);
-  MPI_Address(&testatom.E_ind, 		&displs[count++]);
-  MPI_Address(&testatom.p_ind, 		&displs[count++]);
-  MPI_Address(&testatom.E_old, 		&displs[count++]);
-  MPI_Address(&testatom.E_tot, 		&displs[count++]);
-#endif /* DIPOLE && EAM */
 #ifdef THREEBODY
   MPI_Address(&testatom.num_angl, 	&displs[count++]);
 #ifdef MEAM
@@ -556,7 +536,7 @@ void broadcast_neighbors()
   for (i = 0; i < natoms; i++) {
     atom = conf_atoms + i - firstatom;
     if (myid == 0)
-      neighs = atoms[i].n_neigh;
+      neighs = atoms[i].num_neigh;
     MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (i >= firstatom && i < (firstatom + myatoms)) {
       atom->neigh = (neigh_t *)malloc(neighs * sizeof(neigh_t));
@@ -583,7 +563,7 @@ void broadcast_neighbors()
 
 void broadcast_angles()
 {
-  int   i, j, neighs, nangles;
+  int   i, j, nangles;
   angl  angle;
   atom_t *atom;
 

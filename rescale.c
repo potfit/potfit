@@ -119,7 +119,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
     for (i = 0; i < inconf[h]; i++) {
       atom = atoms + i + cnfstart[h];
       typ1 = atom->typ;
-      for (j = 0; j < atom->n_neigh; j++) {
+      for (j = 0; j < atom->num_neigh; j++) {
 	neigh = atom->neigh + j;
 	if (neigh->nr > i + cnfstart[h]) {
 	  typ2 = neigh->typ;

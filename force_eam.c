@@ -263,7 +263,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  k = 3 * (cnfstart[h] + i);
 	  /* loop over neighbors */
-	  for (j = 0; j < atom->n_neigh; j++) {
+	  for (j = 0; j < atom->num_neigh; j++) {
 	    neigh = atom->neigh + j;
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
@@ -287,9 +287,9 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
-		tmp_force.x = neigh->dist.x * phi_grad;
-		tmp_force.y = neigh->dist.y * phi_grad;
-		tmp_force.z = neigh->dist.z * phi_grad;
+		tmp_force.x = neigh->dist_r.x * phi_grad;
+		tmp_force.y = neigh->dist_r.y * phi_grad;
+		tmp_force.z = neigh->dist_r.z * phi_grad;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -301,23 +301,20 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		/* also calculate pair stresses */
 		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses] -= neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
 	    }
 
 	    /* calculate atomic densities */
-	    if (atom->typ == neigh->typ) {
+	    if (atom->type == neigh->type) {
 	      /* then transfer(a->b)==transfer(b->a) */
 	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
 		rho_val = splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
@@ -334,12 +331,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		atom->rho += splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	      }
 	      /* cannot use slot/shift to access splines */
-	      if (neigh->r < calc_pot.end[paircol + atom->typ])
-		conf_atoms[neigh->nr - firstatom].rho += splint(&calc_pot, xi, paircol + atom->typ, neigh->r);
+	      if (neigh->r < calc_pot.end[paircol + atom->type])
+		conf_atoms[neigh->nr - firstatom].rho += splint(&calc_pot, xi, paircol + atom->type, neigh->r);
 	    }
 	  }			/* loop over neighbors */
 
-	  col_F = paircol + ntypes + atom->typ;	/* column of F */
+	  col_F = paircol + ntypes + atom->type;	/* column of F */
 #ifndef NORESCALE
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
@@ -415,12 +412,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  for (i = 0; i < inconf[h]; i++) {
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    k = 3 * (cnfstart[h] + i);
-	    for (j = 0; j < atom->n_neigh; j++) {
+	    for (j = 0; j < atom->num_neigh; j++) {
 	      /* loop over neighbors */
 	      neigh = atom->neigh + j;
 	      /* In small cells, an atom might interact with itself */
 	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-	      col_F = paircol + ntypes + atom->typ;	/* column of F */
+	      col_F = paircol + ntypes + atom->type;	/* column of F */
 	      r = neigh->r;
 	      /* are we within reach? */
 	      if ((r < calc_pot.end[neigh->col[1]])
@@ -428,7 +425,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		rho_grad =
 		  (r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot,
 		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.;
-		if (atom->typ == neigh->typ)	/* use actio = reactio */
+		if (atom->type == neigh->type)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
 		  rho_grad_j =
@@ -439,9 +436,9 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		   copy of itself */
 		if (self)
 		  eam_force *= 0.5;
-		tmp_force.x = neigh->dist.x * eam_force;
-		tmp_force.y = neigh->dist.y * eam_force;
-		tmp_force.z = neigh->dist.z * eam_force;
+		tmp_force.x = neigh->dist_r.x * eam_force;
+		tmp_force.y = neigh->dist_r.y * eam_force;
+		tmp_force.z = neigh->dist_r.z * eam_force;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -453,16 +450,13 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		/* and stresses */
 		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses] -= neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }			/* within reach */

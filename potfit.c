@@ -354,7 +354,7 @@ int main(int argc, char **argv)
     }
 #endif /* MPI */
     time(&t_begin);
-    if (opt) {
+    if (opt && ndim != 0) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
 #ifdef EVO
@@ -365,6 +365,8 @@ int main(int argc, char **argv)
       printf("\nStarting powell minimization ...\n");
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
+    } else if (ndim == 0) {
+      printf("\nOptimization disabled due to 0 free parameters. Calculating errors.\n");
     } else {
       printf("\nOptimization disabled. Calculating errors.\n\n");
     }
@@ -381,16 +383,12 @@ int main(int argc, char **argv)
 #endif /* !APOT */
       printf("\nPotential in format %d written to file \t%s\n", format, endpot);
     }
-    if (writeimd)
+    if (1 == writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
-    if (plot)
+    if (1 == plot)
       write_plotpot_pair(&calc_pot, plotfile);
     if (1 == write_lammps)
       write_pot_table_lammps(&calc_pot);
-#ifdef COULOMB
-    /* write coulomb part to plot file */
-    //write_coulomb_table();
-#endif /* COULOMB */
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
@@ -428,9 +426,9 @@ int main(int argc, char **argv)
 #endif
     for (i = 0; i < natoms; i++) {
 #if defined EAM || defined ADP
-      fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].typ, atoms[i].rho);
+      fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].type, atoms[i].rho);
 #elif defined MEAM
-      fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, atoms[i].typ, atoms[i].rho,
+      fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, atoms[i].type, atoms[i].rho,
 	atoms[i].rho_eam, atoms[i].rho - atoms[i].rho_eam);
 #endif
       totdens[atoms[i].typ] += atoms[i].rho;
@@ -519,7 +517,7 @@ int main(int argc, char **argv)
       if (i == 0)
 	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\n");
       fprintf(outfile, "%3d:%6d:%s\t%4s\t%e\t%e\t%e\t%e\n", atoms[i / 3].conf,
-	i / 3, component[i % 3], elements[atoms[i / 3].typ], sqr,
+	i / 3, component[i % 3], elements[atoms[i / 3].type], sqr,
 	force[i] + force_0[i], force_0[i], force[i] / force_0[i]);
 #endif /* FWEIGHT */
     }
@@ -784,7 +782,7 @@ int main(int argc, char **argv)
 #endif /* MPI */
   }
 
-  if (opt && myid == 0) {
+  if (opt && myid == 0 && ndim > 0) {
     printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
       (int)difftime(t_end, t_begin) / 3600, ((int)difftime(t_end,
 	  t_begin) % 3600) / 60, (int)difftime(t_end, t_begin) % 60);

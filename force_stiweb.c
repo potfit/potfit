@@ -140,6 +140,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 
       /* threebody variables */
       int   jj, kk, m, ijk;
+      double lambda;
       neigh_t *neigh_k;
       angl *n_angl;
       double v3_val, tmp_grad1, tmp_grad2;
@@ -179,7 +180,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
 	  k = 3 * (cnfstart[h] + i);
 	  /* loop over neighbors */
-	  for (j = 0; j < atom->n_neigh; j++) {
+	  for (j = 0; j < atom->num_neigh; j++) {
 	    neigh_j = atom->neigh + j;
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh_j->nr == i + cnfstart[h]) ? 1 : 0;
@@ -212,9 +213,9 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	      forces[energy_p + h] += 0.5 * v2_val;
 
 	      if (uf) {
-		tmp_force.x = neigh_j->dist.x * v2_grad;
-		tmp_force.y = neigh_j->dist.y * v2_grad;
-		tmp_force.z = neigh_j->dist.z * v2_grad;
+		tmp_force.x = neigh_j->dist_r.x * v2_grad;
+		tmp_force.y = neigh_j->dist_r.y * v2_grad;
+		tmp_force.z = neigh_j->dist_r.z * v2_grad;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -249,7 +250,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	  }			/* loop over neighbors j */
 
 	  /* loop over all neighbors */
-	  for (jj = 0; jj < atom->n_neigh - 1; jj++) {
+	  for (jj = 0; jj < atom->num_neigh - 1; jj++) {
 	    /* Get pointer to neighbor j */
 	    neigh_j = atom->neigh + jj;
 	    ijk = neigh_j->ijk_start;
@@ -258,13 +259,15 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 	    /* check if we are inside the cutoff radius */
 	    if (neigh_j->r < *(sw->a2[neigh_j->col[0]])) {
 	      /* loop over remaining neighbors */
-	      for (kk = jj + 1; kk < atom->n_neigh; kk++) {
+	      for (kk = jj + 1; kk < atom->num_neigh; kk++) {
 		/* Store pointer to angular part (g) */
 		n_angl = atom->angl_part + ijk++;
 		/* Get pointer to neighbor k */
 		neigh_k = atom->neigh + kk;
+		/* store lambda for atom triple i,j,k */
+		lambda = *(sw->lambda[atom->type][neigh_j->type][neigh_k->type]);
 		/* shortcut for types without threebody interaction */
-		if (0.0 == *(sw->lambda[atom->typ][neigh_j->typ][neigh_k->typ]))
+		if (0.0 == lambda)
 		  continue;
 		/* Force location for atom k */
 		m = 3 * neigh_k->nr;
@@ -272,16 +275,14 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 		if (neigh_k->r < *(sw->a2[neigh_k->col[0]])) {
 		  /* potential term */
 		  tmp = n_angl->cos + 1.0 / 3.0;
-		  v3_val = *(sw->lambda[atom->typ][neigh_j->typ][neigh_k->typ]) *
-		    neigh_j->f * neigh_k->f * tmp * tmp;
+		  v3_val = lambda * neigh_j->f * neigh_k->f * tmp * tmp;
 
 		  /* total potential */
 		  forces[energy_p + h] += v3_val;
 
 		  /* forces */
-		  tmp_grad1 = *(sw->lambda[atom->typ][neigh_j->typ][neigh_k->typ])
-		    * neigh_j->f * neigh_k->f * 2 * tmp;
-		  tmp_grad2 = *(sw->lambda[atom->typ][neigh_j->typ][neigh_k->typ]) * tmp * tmp;
+		  tmp_grad1 = lambda * neigh_j->f * neigh_k->f * 2 * tmp;
+		  tmp_grad2 = lambda * tmp * tmp;
 
 		  tmp_jj = 1.0 / (neigh_j->r * neigh_j->r);
 		  tmp_jk = 1.0 / (neigh_j->r * neigh_k->r);
@@ -429,7 +430,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 
 void update_stiweb_pointers(double *xi)
 {
-  int   i, j, k, col;
+  int   i, j, k;
   double *index = xi + 2;
   sw_t *sw = &apot_table.sw;
 

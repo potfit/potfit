@@ -253,7 +253,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
     {
       int   self;
       vector tmp_force;
-      int   h, j, k, l, typ1, typ2, uf, us, stresses;	/* config */
+      int   h, j, k, l, type1, type2, uf, us, stresses;	/* config */
       double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j, p_sr_tail;
       atom_t *atom;
       neigh_t *neigh;
@@ -309,11 +309,11 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	   calculate atomic densities */
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  typ1 = atom->typ;
+	  type1 = atom->type;
 	  k = 3 * (cnfstart[h] + i);
-	  for (j = 0; j < atom->n_neigh; j++) {	/* neighbors */
+	  for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	    neigh = atom->neigh + j;
-	    typ2 = neigh->typ;
+	    type2 = neigh->type;
 	    col = neigh->col[0];
 
 	    /* updating tail-functions - only necessary with variing kappa */
@@ -344,9 +344,9 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	      forces[energy_p + h] += fnval;
 
 	      if (uf) {
-		tmp_force.x = neigh->dist.x * grad;
-		tmp_force.y = neigh->dist.y * grad;
-		tmp_force.z = neigh->dist.z * grad;
+		tmp_force.x = neigh->dist_r.x * grad;
+		tmp_force.y = neigh->dist_r.y * grad;
+		tmp_force.z = neigh->dist_r.z * grad;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -359,36 +359,33 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		/* calculate pair stresses */
 		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses] -= neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
 	    }
 
 	    /* calculate monopole forces */
-	    if (neigh->r < dp_cut && (charge[typ1]
-		|| charge[typ2])) {
+	    if (neigh->r < dp_cut && (charge[type1]
+		|| charge[type2])) {
 
 	      fnval_tail = neigh->fnval_el;
 	      grad_tail = neigh->grad_el;
 
-	      grad_i = charge[typ2] * grad_tail;
-	      if (typ1 == typ2) {
+	      grad_i = charge[type2] * grad_tail;
+	      if (type1 == type2) {
 		grad_j = grad_i;
 	      } else {
-		grad_j = charge[typ1] * grad_tail;
+		grad_j = charge[type1] * grad_tail;
 	      }
-	      fnval = charge[typ1] * charge[typ2] * fnval_tail;
-	      grad = charge[typ1] * grad_i;
+	      fnval = charge[type1] * charge[type2] * fnval_tail;
+	      grad = charge[type1] * grad_i;
 
 	      if (self) {
 		grad_i *= 0.5;
@@ -400,9 +397,9 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	      forces[energy_p + h] += fnval;
 
 	      if (uf) {
-		tmp_force.x = neigh->dist.x * grad * neigh->r;
-		tmp_force.y = neigh->dist.y * grad * neigh->r;
-		tmp_force.z = neigh->dist.z * grad * neigh->r;
+		tmp_force.x = neigh->rdist.x * grad;
+		tmp_force.y = neigh->rdist.y * grad;
+		tmp_force.z = neigh->rdist.z * grad;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -415,50 +412,47 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		/* calculate coulomb stresses */
 		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses] -= neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
 #ifdef DIPOLE
 	      /* calculate static field-contributions */
-	      atom->E_stat.x += neigh->dist.x * neigh->r * grad_i;
-	      atom->E_stat.y += neigh->dist.y * neigh->r * grad_i;
-	      atom->E_stat.z += neigh->dist.z * neigh->r * grad_i;
+	      atom->E_stat.x += neigh->rdist.x * grad_i;
+	      atom->E_stat.y += neigh->rdist.y * grad_i;
+	      atom->E_stat.z += neigh->rdist.z * grad_i;
 
-	      conf_atoms[neigh->nr - firstatom].E_stat.x -= neigh->dist.x * neigh->r * grad_j;
-	      conf_atoms[neigh->nr - firstatom].E_stat.y -= neigh->dist.y * neigh->r * grad_j;
-	      conf_atoms[neigh->nr - firstatom].E_stat.z -= neigh->dist.z * neigh->r * grad_j;
+	      conf_atoms[neigh->nr - firstatom].E_stat.x -= neigh->rdist.x * grad_j;
+	      conf_atoms[neigh->nr - firstatom].E_stat.y -= neigh->rdist.y * grad_j;
+	      conf_atoms[neigh->nr - firstatom].E_stat.z -= neigh->rdist.z * grad_j;
 
 	      /* calculate short-range dipoles */
-	      if (dp_alpha[typ1] && dp_b[col] && dp_c[col]) {
+	      if (dp_alpha[type1] && dp_b[col] && dp_c[col]) {
 		p_sr_tail =
-		  grad_tail * neigh->r * shortrange_value(neigh->r, dp_alpha[typ1], dp_b[col], dp_c[col]);
-		atom->p_sr.x += charge[typ2] * neigh->dist.x * p_sr_tail;
-		atom->p_sr.y += charge[typ2] * neigh->dist.y * p_sr_tail;
-		atom->p_sr.z += charge[typ2] * neigh->dist.z * p_sr_tail;
+		  grad_tail * neigh->r * shortrange_value(neigh->r, dp_alpha[type1], dp_b[col], dp_c[col]);
+		atom->p_sr.x += charge[type2] * neigh->dist_r.x * p_sr_tail;
+		atom->p_sr.y += charge[type2] * neigh->dist_r.y * p_sr_tail;
+		atom->p_sr.z += charge[type2] * neigh->dist_r.z * p_sr_tail;
 	      }
-	      if (dp_alpha[typ2] && dp_b[col] && dp_c[col] && !self) {
+	      if (dp_alpha[type2] && dp_b[col] && dp_c[col] && !self) {
 		p_sr_tail =
-		  grad_tail * neigh->r * shortrange_value(neigh->r, dp_alpha[typ2], dp_b[col], dp_c[col]);
-		conf_atoms[neigh->nr - firstatom].p_sr.x -= charge[typ1] * neigh->dist.x * p_sr_tail;
-		conf_atoms[neigh->nr - firstatom].p_sr.y -= charge[typ1] * neigh->dist.y * p_sr_tail;
-		conf_atoms[neigh->nr - firstatom].p_sr.z -= charge[typ1] * neigh->dist.z * p_sr_tail;
+		  grad_tail * neigh->r * shortrange_value(neigh->r, dp_alpha[type2], dp_b[col], dp_c[col]);
+		conf_atoms[neigh->nr - firstatom].p_sr.x -= charge[type1] * neigh->dist_r.x * p_sr_tail;
+		conf_atoms[neigh->nr - firstatom].p_sr.y -= charge[type1] * neigh->dist_r.y * p_sr_tail;
+		conf_atoms[neigh->nr - firstatom].p_sr.z -= charge[type1] * neigh->dist_r.z * p_sr_tail;
 	      }
 #endif /* DIPOLE */
 
 	    }
 
 	    /* calculate atomic densities */
-	    if (atom->typ == neigh->typ) {
+	    if (atom->type == neigh->type) {
 	      /* then transfer(a->b)==transfer(b->a) */
 	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
 		rho_val = splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
@@ -475,13 +469,13 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		atom->rho += splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	      }
 	      /* cannot use slot/shift to access splines */
-	      if (neigh->r < calc_pot.end[paircol + atom->typ])
-		conf_atoms[neigh->nr - firstatom].rho += splint(&calc_pot, xi, paircol + atom->typ, neigh->r);
+	      if (neigh->r < calc_pot.end[paircol + atom->type])
+		conf_atoms[neigh->nr - firstatom].rho += splint(&calc_pot, xi, paircol + atom->type, neigh->r);
 	    }
 
 	  }			/* loop over neighbours */
 
-	  col_F = paircol + ntypes + atom->typ;	/* column of F */
+	  col_F = paircol + ntypes + atom->type;	/* column of F */
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
@@ -536,8 +530,8 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	  dp_sum = 0;
 	  for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
-	    typ1 = atom->typ;
-	    if (dp_alpha[typ1]) {
+	    type1 = atom->type;
+	    if (dp_alpha[type1]) {
 
 	      if (dp_it) {
 		/* note: mixing parameter is different from that on in IMD */
@@ -550,9 +544,9 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		atom->E_tot.z = atom->E_ind.z + atom->E_stat.z;
 	      }
 
-	      atom->p_ind.x = dp_alpha[typ1] * atom->E_tot.x + atom->p_sr.x;
-	      atom->p_ind.y = dp_alpha[typ1] * atom->E_tot.y + atom->p_sr.y;
-	      atom->p_ind.z = dp_alpha[typ1] * atom->E_tot.z + atom->p_sr.z;
+	      atom->p_ind.x = dp_alpha[type1] * atom->E_tot.x + atom->p_sr.x;
+	      atom->p_ind.y = dp_alpha[type1] * atom->E_tot.y + atom->p_sr.y;
+	      atom->p_ind.z = dp_alpha[type1] * atom->E_tot.z + atom->p_sr.z;
 
 	      atom->E_old.x = atom->E_ind.x;
 	      atom->E_old.y = atom->E_ind.y;
@@ -566,32 +560,32 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
 	  for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
-	    typ1 = atom->typ;
-	    for (j = 0; j < atom->n_neigh; j++) {	/* neighbors */
+	    type1 = atom->type;
+	    for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	      neigh = atom->neigh + j;
-	      typ2 = neigh->typ;
+	      type2 = neigh->type;
 	      col = neigh->col[0];
 	      /* In small cells, an atom might interact with itself */
 	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 
-	      if (neigh->r < dp_cut && dp_alpha[typ1] && dp_alpha[typ2]) {
+	      if (neigh->r < dp_cut && dp_alpha[type1] && dp_alpha[type2]) {
 
-		rp = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist);
+		rp = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist_r);
 		atom->E_ind.x +=
-		  neigh->grad_el * (3 * rp * neigh->dist.x - conf_atoms[neigh->nr - firstatom].p_ind.x);
+		  neigh->grad_el * (3 * rp * neigh->dist_r.x - conf_atoms[neigh->nr - firstatom].p_ind.x);
 		atom->E_ind.y +=
-		  neigh->grad_el * (3 * rp * neigh->dist.y - conf_atoms[neigh->nr - firstatom].p_ind.y);
+		  neigh->grad_el * (3 * rp * neigh->dist_r.y - conf_atoms[neigh->nr - firstatom].p_ind.y);
 		atom->E_ind.z +=
-		  neigh->grad_el * (3 * rp * neigh->dist.z - conf_atoms[neigh->nr - firstatom].p_ind.z);
+		  neigh->grad_el * (3 * rp * neigh->dist_r.z - conf_atoms[neigh->nr - firstatom].p_ind.z);
 
 		if (!self) {
-		  rp = SPROD(atom->p_ind, neigh->dist);
+		  rp = SPROD(atom->p_ind, neigh->dist_r);
 		  conf_atoms[neigh->nr - firstatom].E_ind.x +=
-		    neigh->grad_el * (3 * rp * neigh->dist.x - atom->p_ind.x);
+		    neigh->grad_el * (3 * rp * neigh->dist_r.x - atom->p_ind.x);
 		  conf_atoms[neigh->nr - firstatom].E_ind.y +=
-		    neigh->grad_el * (3 * rp * neigh->dist.y - atom->p_ind.y);
+		    neigh->grad_el * (3 * rp * neigh->dist_r.y - atom->p_ind.y);
 		  conf_atoms[neigh->nr - firstatom].E_ind.z +=
-		    neigh->grad_el * (3 * rp * neigh->dist.z - atom->p_ind.z);
+		    neigh->grad_el * (3 * rp * neigh->dist_r.z - atom->p_ind.z);
 		}
 	      }
 	    }
@@ -599,11 +593,11 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
 	  for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
-	    typ1 = atom->typ;
-	    if (dp_alpha[typ1]) {
-	      dp_sum += dsquare(dp_alpha[typ1] * (atom->E_old.x - atom->E_ind.x));
-	      dp_sum += dsquare(dp_alpha[typ1] * (atom->E_old.y - atom->E_ind.y));
-	      dp_sum += dsquare(dp_alpha[typ1] * (atom->E_old.z - atom->E_ind.z));
+	    type1 = atom->type;
+	    if (dp_alpha[type1]) {
+	      dp_sum += dsquare(dp_alpha[type1] * (atom->E_old.x - atom->E_ind.x));
+	      dp_sum += dsquare(dp_alpha[type1] * (atom->E_old.y - atom->E_ind.y));
+	      dp_sum += dsquare(dp_alpha[type1] * (atom->E_old.z - atom->E_ind.z));
 	    }
 	  }
 
@@ -615,11 +609,11 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	      dp_converged = 1;
 	      for (i = 0; i < inconf[h]; i++) {	/* atoms */
 		atom = conf_atoms + i + cnfstart[h] - firstatom;
-		typ1 = atom->typ;
-		if (dp_alpha[typ1]) {
-		  atom->p_ind.x = dp_alpha[typ1] * atom->E_stat.x + atom->p_sr.x;
-		  atom->p_ind.y = dp_alpha[typ1] * atom->E_stat.y + atom->p_sr.y;
-		  atom->p_ind.z = dp_alpha[typ1] * atom->E_stat.z + atom->p_sr.z;
+		type1 = atom->type;
+		if (dp_alpha[type1]) {
+		  atom->p_ind.x = dp_alpha[type1] * atom->E_stat.x + atom->p_sr.x;
+		  atom->p_ind.y = dp_alpha[type1] * atom->E_stat.y + atom->p_sr.y;
+		  atom->p_ind.z = dp_alpha[type1] * atom->E_stat.z + atom->p_sr.z;
 		  atom->E_ind.x = atom->E_stat.x;
 		  atom->E_ind.y = atom->E_stat.y;
 		  atom->E_ind.z = atom->E_stat.z;
@@ -641,16 +635,16 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	double grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail, fnval_sum, grad_sum;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  typ1 = atom->typ;
+	  type1 = atom->type;
 	  k = 3 * (cnfstart[h] + i);
-	  for (j = 0; j < atom->n_neigh; j++) {	/* neighbors */
+	  for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	    neigh = atom->neigh + j;
-	    typ2 = neigh->typ;
+	    type2 = neigh->type;
 	    col = neigh->col[0];
 
 	    /* In small cells, an atom might interact with itself */
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-	    if (neigh->r < dp_cut && (dp_alpha[typ1] || dp_alpha[typ2])) {
+	    if (neigh->r < dp_cut && (dp_alpha[type1] || dp_alpha[type2])) {
 
 	      fnval_tail = -neigh->grad_el;
 	      grad_tail = -neigh->ggrad_el;
@@ -667,7 +661,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	      }
 
 	      /* monopole-dipole contributions */
-	      if (charge[typ1] && dp_alpha[typ2]) {
+	      if (charge[type1] && dp_alpha[type2]) {
 
 		if (dp_b[col] && dp_c[col]) {
 		  fnval_sum = fnval_tail + srval;
@@ -677,17 +671,17 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		  grad_sum = grad_tail;
 		}
 
-		rp_j = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist);
-		fnval = charge[typ1] * rp_j * fnval_sum * neigh->r;
-		grad_1 = charge[typ1] * rp_j * grad_sum * neigh->r2;
-		grad_2 = charge[typ1] * fnval_sum;
+		rp_j = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist_r);
+		fnval = charge[type1] * rp_j * fnval_sum * neigh->r;
+		grad_1 = charge[type1] * rp_j * grad_sum * neigh->r2;
+		grad_2 = charge[type1] * fnval_sum;
 
 		forces[energy_p + h] -= fnval;
 
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.x * grad_2;
-		  tmp_force.y = neigh->dist.y * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.y * grad_2;
-		  tmp_force.z = neigh->dist.z * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.z * grad_2;
+		  tmp_force.x = neigh->dist_r.x * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.x * grad_2;
+		  tmp_force.y = neigh->dist_r.y * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.y * grad_2;
+		  tmp_force.z = neigh->dist_r.z * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.z * grad_2;
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
 		  forces[k + 2] -= tmp_force.z;
@@ -700,16 +694,13 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		  /* calculate stresses */
 		  if (us) {
-		    tmp_force.x *= neigh->r;
-		    tmp_force.y *= neigh->r;
-		    tmp_force.z *= neigh->r;
 		    stresses = stress_p + 6 * h;
-		    forces[stresses] += neigh->dist.x * tmp_force.x;
-		    forces[stresses + 1] += neigh->dist.y * tmp_force.y;
-		    forces[stresses + 2] += neigh->dist.z * tmp_force.z;
-		    forces[stresses + 3] += neigh->dist.x * tmp_force.y;
-		    forces[stresses + 4] += neigh->dist.y * tmp_force.z;
-		    forces[stresses + 5] += neigh->dist.z * tmp_force.x;
+		    forces[stresses] += neigh->rdist.x * tmp_force.x;
+		    forces[stresses + 1] += neigh->rdist.y * tmp_force.y;
+		    forces[stresses + 2] += neigh->rdist.z * tmp_force.z;
+		    forces[stresses + 3] += neigh->rdist.x * tmp_force.y;
+		    forces[stresses + 4] += neigh->rdist.y * tmp_force.z;
+		    forces[stresses + 5] += neigh->rdist.z * tmp_force.x;
 		  }
 #endif /* STRESS */
 		}
@@ -717,7 +708,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
 
 	      /* dipole-monopole contributions */
-	      if (dp_alpha[typ2] && charge[typ2]) {
+	      if (dp_alpha[type2] && charge[type2]) {
 
 		if (dp_b[col] && dp_c[col]) {
 		  fnval_sum = fnval_tail + srval;
@@ -727,17 +718,17 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		  grad_sum = grad_tail;
 		}
 
-		rp_i = SPROD(atom->p_ind, neigh->dist);
-		fnval = charge[typ2] * rp_i * fnval_sum * neigh->r;
-		grad_1 = charge[typ2] * rp_i * grad_sum * neigh->r2;
-		grad_2 = charge[typ2] * fnval_sum;
+		rp_i = SPROD(atom->p_ind, neigh->dist_r);
+		fnval = charge[type2] * rp_i * fnval_sum * neigh->r;
+		grad_1 = charge[type2] * rp_i * grad_sum * neigh->r2;
+		grad_2 = charge[type2] * fnval_sum;
 
 		forces[energy_p + h] += fnval;
 
 		if (uf) {
-		  tmp_force.x = neigh->dist.x * grad_1 + atom->p_ind.x * grad_2;
-		  tmp_force.y = neigh->dist.y * grad_1 + atom->p_ind.y * grad_2;
-		  tmp_force.z = neigh->dist.z * grad_1 + atom->p_ind.z * grad_2;
+		  tmp_force.x = neigh->dist_r.x * grad_1 + atom->p_ind.x * grad_2;
+		  tmp_force.y = neigh->dist_r.y * grad_1 + atom->p_ind.y * grad_2;
+		  tmp_force.z = neigh->dist_r.z * grad_1 + atom->p_ind.z * grad_2;
 		  forces[k] += tmp_force.x;
 		  forces[k + 1] += tmp_force.y;
 		  forces[k + 2] += tmp_force.z;
@@ -750,16 +741,13 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		  /* calculate stresses */
 		  if (us) {
-		    tmp_force.x *= neigh->r;
-		    tmp_force.y *= neigh->r;
-		    tmp_force.z *= neigh->r;
 		    stresses = stress_p + 6 * h;
-		    forces[stresses] -= neigh->dist.x * tmp_force.x;
-		    forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		    forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		    forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		    forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		    forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		    forces[stresses] -= neigh->rdist.x * tmp_force.x;
+		    forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		    forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		    forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		    forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		    forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		  }
 #endif /* STRESS */
 		}
@@ -767,7 +755,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
 
 	      /* dipole-dipole contributions */
-	      if (dp_alpha[typ1] && dp_alpha[typ2]) {
+	      if (dp_alpha[type1] && dp_alpha[type2]) {
 
 		pp_ij = SPROD(atom->p_ind, conf_atoms[neigh->nr - firstatom].p_ind);
 		tmp_1 = 3 * rp_i * rp_j;
@@ -781,20 +769,19 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
 		if (uf) {
 		  tmp_force.x =
-		    grad_1 * neigh->r * neigh->dist.x -
-		    tmp_2 * (grad_2 * neigh->r * neigh->dist.x -
+		    grad_1 * neigh->rdist.x -
+		    tmp_2 * (grad_2 * neigh->rdist.x -
 		    rp_i * neigh->r * conf_atoms[neigh->nr -
 		      firstatom].p_ind.x - rp_j * neigh->r * atom->p_ind.x);
 		  tmp_force.y =
-		    grad_1 * neigh->r * neigh->dist.y -
-		    tmp_2 * (grad_2 * neigh->r * neigh->dist.y -
+		    grad_1 * neigh->rdist.y -
+		    tmp_2 * (grad_2 * neigh->rdist.y -
 		    rp_i * neigh->r * conf_atoms[neigh->nr -
 		      firstatom].p_ind.y - rp_j * neigh->r * atom->p_ind.y);
 		  tmp_force.z =
-		    grad_1 * neigh->r * neigh->dist.z -
-		    tmp_2 * (grad_2 * neigh->r * neigh->dist.z -
-		    rp_i * neigh->r * conf_atoms[neigh->nr -
-		      firstatom].p_ind.z - rp_j * neigh->r * atom->p_ind.z);
+		    grad_1 * neigh->rdist.z -
+		    tmp_2 * (grad_2 * neigh->rdist.z - rp_i * neigh->r *
+			conf_atoms[neigh->nr - firstatom].p_ind.z - rp_j * neigh->r * atom->p_ind.z);
 		  forces[k] -= tmp_force.x;
 		  forces[k + 1] -= tmp_force.y;
 		  forces[k + 2] -= tmp_force.z;
@@ -807,16 +794,13 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		  /* calculate stresses */
 		  if (us) {
-		    tmp_force.x *= neigh->r;
-		    tmp_force.y *= neigh->r;
-		    tmp_force.z *= neigh->r;
 		    stresses = stress_p + 6 * h;
-		    forces[stresses] += neigh->dist.x * tmp_force.x;
-		    forces[stresses + 1] += neigh->dist.y * tmp_force.y;
-		    forces[stresses + 2] += neigh->dist.z * tmp_force.z;
-		    forces[stresses + 3] += neigh->dist.x * tmp_force.y;
-		    forces[stresses + 4] += neigh->dist.y * tmp_force.z;
-		    forces[stresses + 5] += neigh->dist.z * tmp_force.x;
+		    forces[stresses] += neigh->rdist.x * tmp_force.x;
+		    forces[stresses + 1] += neigh->rdist.y * tmp_force.y;
+		    forces[stresses + 2] += neigh->rdist.z * tmp_force.z;
+		    forces[stresses + 3] += neigh->rdist.x * tmp_force.y;
+		    forces[stresses + 4] += neigh->rdist.y * tmp_force.z;
+		    forces[stresses + 5] += neigh->rdist.z * tmp_force.x;
 		  }
 #endif /* STRESS */
 		}
@@ -832,23 +816,23 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	double qq, pp;
 	for (i = 0; i < inconf[h]; i++) {	/* atoms */
 	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  typ1 = atom->typ;
+	  type1 = atom->type;
 	  k = 3 * (cnfstart[h] + i);
 
 	  /* self energy contributions */
-	  if (charge[typ1]) {
-	    qq = charge[typ1] * charge[typ1];
+	  if (charge[type1]) {
+	    qq = charge[type1] * charge[type1];
 	    fnval = dp_eps * dp_kappa * qq / sqrt(M_PI);
 	    forces[energy_p + h] -= fnval;
 	  }
 #ifdef DIPOLE
-	  if (dp_alpha[typ1]) {
+	  if (dp_alpha[type1]) {
 	    pp = SPROD(atom->p_ind, atom->p_ind);
-	    fnval = pp / (2 * dp_alpha[typ1]);
+	    fnval = pp / (2 * dp_alpha[type1]);
 	    forces[energy_p + h] += fnval;
 	  }
 	  /* alternative dipole self energy including kappa-dependence */
-	  //if (dp_alpha[typ1]) {
+	  //if (dp_alpha[type1]) {
 	  // pp = SPROD(atom->p_ind, atom->p_ind);
 	  // fnval = kkk * pp / sqrt(M_PI);
 	  // forces[energy_p + h] += fnval;
@@ -880,12 +864,12 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	  for (i = 0; i < inconf[h]; i++) {
 	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    k = 3 * (cnfstart[h] + i);
-	    for (j = 0; j < atom->n_neigh; j++) {
+	    for (j = 0; j < atom->num_neigh; j++) {
 	      /* loop over neighbors */
 	      neigh = atom->neigh + j;
 	      /* In small cells, an atom might interact with itself */
 	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-	      col_F = paircol + ntypes + atom->typ;	/* column of F */
+	      col_F = paircol + ntypes + atom->type;	/* column of F */
 	      r = neigh->r;
 	      /* are we within reach? */
 	      if ((r < calc_pot.end[neigh->col[1]])
@@ -893,7 +877,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		rho_grad =
 		  (r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot,
 		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.;
-		if (atom->typ == neigh->typ)	/* use actio = reactio */
+		if (atom->type == neigh->type)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
 		  rho_grad_j =
@@ -904,9 +888,9 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		   copy of itself */
 		if (self)
 		  eam_force *= 0.5;
-		tmp_force.x = neigh->dist.x * eam_force;
-		tmp_force.y = neigh->dist.y * eam_force;
-		tmp_force.z = neigh->dist.z * eam_force;
+		tmp_force.x = neigh->dist_r.x * eam_force;
+		tmp_force.y = neigh->dist_r.y * eam_force;
+		tmp_force.z = neigh->dist_r.z * eam_force;
 		forces[k] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
@@ -918,16 +902,13 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		/* and stresses */
 		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses] -= neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }			/* within reach */

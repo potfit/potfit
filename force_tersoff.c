@@ -185,7 +185,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	  n_i = 3 * (cnfstart[h] + i);
 
 	  /* loop over neighbors */
-	  for (j = 0; j < atom->n_neigh; j++) {
+	  for (j = 0; j < atom->num_neigh; j++) {
 	    neigh_j = atom->neigh + j;
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
@@ -220,9 +220,9 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
 	      if (uf) {
 		/* calculate pair forces */
-		tmp_force.x = neigh_j->dist.x * phi_grad;
-		tmp_force.y = neigh_j->dist.y * phi_grad;
-		tmp_force.z = neigh_j->dist.z * phi_grad;
+		tmp_force.x = neigh_j->dist_r.x * phi_grad;
+		tmp_force.y = neigh_j->dist_r.y * phi_grad;
+		tmp_force.z = neigh_j->dist_r.z * phi_grad;
 		forces[n_i + 0] += tmp_force.x;
 		forces[n_i + 1] += tmp_force.y;
 		forces[n_i + 2] += tmp_force.z;
@@ -247,7 +247,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
 	  /* loop over neighbors */
 	  /* calculate threebody part */
-	  for (j = 0; j < atom->n_neigh; j++) {
+	  for (j = 0; j < atom->num_neigh; j++) {
 	    neigh_j = atom->neigh + j;
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
@@ -269,7 +269,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	      dzeta_j.z = 0.0;
 
 	      /* inner loop over neighbors */
-	      for (k = 0; k < atom->n_neigh; k++) {
+	      for (k = 0; k < atom->num_neigh; k++) {
 		if (k == j)
 		  continue;
 		neigh_k = atom->neigh + k;
@@ -337,7 +337,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	      force_j.y = -tmp_6 * neigh_j->rdist.y + tmp_5 * dzeta_j.y;
 	      force_j.z = -tmp_6 * neigh_j->rdist.z + tmp_5 * dzeta_j.z;
 
-	      for (k = 0; k < atom->n_neigh; k++) {
+	      for (k = 0; k < atom->num_neigh; k++) {
 		if (k != j) {
 		  neigh_k = atom->neigh + k;
 		  col_k = neigh_k->col[0];

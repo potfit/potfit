@@ -95,7 +95,7 @@ void apot_init(void)
 #ifdef STIWEB
   add_pot(stiweb_2, 6);
   add_pot(stiweb_3, 2);
-  add_pot(lambda, 0.5 * ntypes * ntypes * (ntypes + 1));
+  add_pot(lambda, (int)(0.5 * ntypes * ntypes * (ntypes + 1)));
 #endif /* STIWEB */
 
 #ifdef TERSOFF
@@ -199,11 +199,11 @@ int apot_assign_functions(apot_table_t *apt)
 
 void check_apot_functions(void)
 {
+#ifdef STIWEB
   /* paircol is not yet defined at this point */
   int   pcol = (ntypes * (ntypes + 1)) / 2;
   int   i;
 
-#ifdef STIWEB
   /* check for the correct function types for SW potential */
   for (i = 0; i < pcol; i++) {
     if (strcmp(apot_table.names[i], "stiweb_2") != 0)
@@ -228,6 +228,10 @@ void check_apot_functions(void)
 #endif /* STIWEB */
 
 #ifdef TERSOFF
+  /* paircol is not yet defined at this point */
+  int   pcol = (ntypes * (ntypes + 1)) / 2;
+  int   i;
+
   /* check for the correct function types for SW potential */
   for (i = 0; i < pcol; i++) {
     if (strcmp(apot_table.names[i], "tersoff_pot") != 0)

@@ -186,7 +186,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
       /* Temp variables */
       atom_t *atom;		// atom type
       int   h, j, k, l;
-      int   self, uf;
+      int   uf;
 #ifdef APOT
       double temp_eng;
 #endif /* APOT */
@@ -205,7 +205,6 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
       /* EAM variables */
       int   col_F;
       double eam_force;
-      double rho_val, rho_grad, rho_grad_j;
 
       /* MEAM variables */
       int   m, jj, kk, ijk;
@@ -259,11 +258,9 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	  /* Skip every 3 spots for force array */
 	  k = 3 * (cnfstart[h] + i);
 	  /* Loop over neighbors */
-	  for (j = 0; j < atom->n_neigh; j++) {
+	  for (j = 0; j < atom->num_neigh; j++) {
 	    /* Set pointer to temp neighbor pointer */
 	    neigh = atom->neigh + j;
-	    /* In small cells, an atom might interact with itself */
-	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 	    /* Find the correct column in the potential table for pair potential: phi_ij
 	       For Binary Alloy: 0 = phi_AA, 1 = (phi_AB or phi_BA), 2 = phi_BB
 	       where typ = A = 0 and typ = B = 1 */
@@ -286,35 +283,27 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 
 	      if (uf) {
 		/* Compute tmp force values */
-		tmp_force.x = neigh->dist.x * phi_grad;
-		tmp_force.y = neigh->dist.y * phi_grad;
-		tmp_force.z = neigh->dist.z * phi_grad;
+		tmp_force.x = neigh->dist_r.x * phi_grad;
+		tmp_force.y = neigh->dist_r.y * phi_grad;
+		tmp_force.z = neigh->dist_r.z * phi_grad;
 		/* Add in force on atom i from atom j */
-		forces[k] += tmp_force.x;
+		forces[k + 0] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
 #ifdef STRESS
 		if (us) {
 		  /* also calculate pair stresses */
-		  tmp_force.x *= 0.5 * neigh->r;
-		  tmp_force.y *= 0.5 * neigh->r;
-		  tmp_force.z *= 0.5 * neigh->r;
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses + 0] -= 0.5 * neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= 0.5 * neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= 0.5 * neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= 0.5 * neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= 0.5 * neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= 0.5 * neigh->rdist.z * tmp_force.x;
 		}		/* us */
 #endif /* STRESS */
 	      }			/* uf */
 	    }
-
-
-
-
-
 
 	    /* r < cutoff */
 	    /* END IF STMNT: NEIGH LIES INSIDE CUTOFF FOR PAIR POTENTIAL */
@@ -375,12 +364,12 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	  /* count number of angles */
 	  ijk = 0;
 
-	  for (jj = 0; jj < atom->n_neigh - 1; jj++) {
+	  for (jj = 0; jj < atom->num_neigh - 1; jj++) {
 
 	    /* Get pointer to neighbor jj */
 	    neigh_j = atom->neigh + jj;
 
-	    for (kk = jj + 1; kk < atom->n_neigh; kk++) {
+	    for (kk = jj + 1; kk < atom->num_neigh; kk++) {
 
 	      /* Store pointer to angular part (g) */
 	      n_angl = atom->angl_part + ijk++;
@@ -400,7 +389,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	  }
 
 	  // Column for embedding function, F
-	  col_F = paircol + ntypes + atom->typ;
+	  col_F = paircol + ntypes + atom->type;
 
 #ifndef NORESCALE
 	  // Compute energy, gradient for embedding function F
@@ -479,7 +468,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 
 	  if (uf) {
 	    /* Loop over neighbors */
-	    for (j = 0; j < atom->n_neigh; ++j) {
+	    for (j = 0; j < atom->num_neigh; ++j) {
 
 	      /* Set pointer to temp neighbor pointer and record type */
 	      neigh = atom->neigh + j;
@@ -495,33 +484,30 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 		eam_force = neigh->drho * atom->gradF;
 
 		/* Multiply the eamforce with x/r to get real force */
-		tmp_force.x = neigh->dist.x * eam_force;
-		tmp_force.y = neigh->dist.y * eam_force;
-		tmp_force.z = neigh->dist.z * eam_force;
+		tmp_force.x = neigh->dist_r.x * eam_force;
+		tmp_force.y = neigh->dist_r.y * eam_force;
+		tmp_force.z = neigh->dist_r.z * eam_force;
 
 		/* Sum up forces acting on atom i from atom j */
-		forces[k] += tmp_force.x;
+		forces[k + 0] += tmp_force.x;
 		forces[k + 1] += tmp_force.y;
 		forces[k + 2] += tmp_force.z;
 
 		/* Subtract off forces acting on atom j from atom i */
 		l = 3 * neigh->nr;
-		forces[l] -= tmp_force.x;
+		forces[l + 0] -= tmp_force.x;
 		forces[l + 1] -= tmp_force.y;
 		forces[l + 2] -= tmp_force.z;
 
 #ifdef STRESS
 		if (us) {
-		  tmp_force.x *= neigh->r;
-		  tmp_force.y *= neigh->r;
-		  tmp_force.z *= neigh->r;
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }			// END IF STMT: Inside reach of rho cutoff
@@ -534,7 +520,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	    // N(N-1)/2 possible combinations
 	    // Used in computing angular part g_ijk
 	    ijk = 0;		// count number of angles
-	    for (jj = 0; jj < atom->n_neigh - 1; jj++) {
+	    for (jj = 0; jj < atom->num_neigh - 1; jj++) {
 
 	      // Get pointer to neighbor j
 	      neigh_j = atom->neigh + jj;
@@ -542,7 +528,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	      // Force location for atom j
 	      l = 3 * neigh_j->nr;
 
-	      for (kk = jj + 1; kk < atom->n_neigh; kk++) {
+	      for (kk = jj + 1; kk < atom->num_neigh; kk++) {
 
 		// Store pointer to angular part (g)
 		n_angl = atom->angl_part + ijk;
@@ -563,13 +549,13 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 		vv3j = dV3j - vlj * n_angl->cos;
 		vv3k = dV3k - vlk * n_angl->cos;
 
-		dfj.x = vv3j * neigh_j->dist.x + vlj * neigh_k->dist.x;
-		dfj.y = vv3j * neigh_j->dist.y + vlj * neigh_k->dist.y;
-		dfj.z = vv3j * neigh_j->dist.z + vlj * neigh_k->dist.z;
+		dfj.x = vv3j * neigh_j->dist_r.x + vlj * neigh_k->dist_r.x;
+		dfj.y = vv3j * neigh_j->dist_r.y + vlj * neigh_k->dist_r.y;
+		dfj.z = vv3j * neigh_j->dist_r.z + vlj * neigh_k->dist_r.z;
 
-		dfk.x = vv3k * neigh_k->dist.x + vlk * neigh_j->dist.x;
-		dfk.y = vv3k * neigh_k->dist.y + vlk * neigh_j->dist.y;
-		dfk.z = vv3k * neigh_k->dist.z + vlk * neigh_j->dist.z;
+		dfk.x = vv3k * neigh_k->dist_r.x + vlk * neigh_j->dist_r.x;
+		dfk.y = vv3k * neigh_k->dist_r.y + vlk * neigh_j->dist_r.y;
+		dfk.z = vv3k * neigh_k->dist_r.z + vlk * neigh_j->dist_r.z;
 
 		// Force on atom i from j and k
 		forces[k] += atom->gradF * (dfj.x + dfk.x);
@@ -588,28 +574,27 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 
 #ifdef STRESS
 		// Force from j on atom i (guessing here)
-		tmp_force.x = atom->gradF * dfj.x * neigh_j->r;
-		tmp_force.y = atom->gradF * dfj.y * neigh_j->r;
-		tmp_force.z = atom->gradF * dfj.z * neigh_j->r;
+		tmp_force.x = atom->gradF * dfj.x;
+		tmp_force.y = atom->gradF * dfj.y;
+		tmp_force.z = atom->gradF * dfj.z;
 		stresses = stress_p + 6 * h;
-		forces[stresses] -= neigh_j->dist.x * tmp_force.x;
-		forces[stresses + 1] -= neigh_j->dist.y * tmp_force.y;
-		forces[stresses + 2] -= neigh_j->dist.z * tmp_force.z;
-		forces[stresses + 3] -= neigh_j->dist.x * tmp_force.y;
-		forces[stresses + 4] -= neigh_j->dist.y * tmp_force.z;
-		forces[stresses + 5] -= neigh_j->dist.z * tmp_force.x;
+		forces[stresses + 0] -= neigh_j->rdist.x * tmp_force.x;
+		forces[stresses + 1] -= neigh_j->rdist.y * tmp_force.y;
+		forces[stresses + 2] -= neigh_j->rdist.z * tmp_force.z;
+		forces[stresses + 3] -= neigh_j->rdist.x * tmp_force.y;
+		forces[stresses + 4] -= neigh_j->rdist.y * tmp_force.z;
+		forces[stresses + 5] -= neigh_j->rdist.z * tmp_force.x;
 
 		// Force from k on atom i (also guessing here)
-		tmp_force.x = atom->gradF * dfk.x * neigh_k->r;
-		tmp_force.y = atom->gradF * dfk.y * neigh_k->r;
-		tmp_force.z = atom->gradF * dfk.z * neigh_k->r;
-		stresses = stress_p + 6 * h;
-		forces[stresses] -= neigh_k->dist.x * tmp_force.x;
-		forces[stresses + 1] -= neigh_k->dist.y * tmp_force.y;
-		forces[stresses + 2] -= neigh_k->dist.z * tmp_force.z;
-		forces[stresses + 3] -= neigh_k->dist.x * tmp_force.y;
-		forces[stresses + 4] -= neigh_k->dist.y * tmp_force.z;
-		forces[stresses + 5] -= neigh_k->dist.z * tmp_force.x;
+		tmp_force.x = atom->gradF * dfk.x;
+		tmp_force.y = atom->gradF * dfk.y;
+		tmp_force.z = atom->gradF * dfk.z;
+		forces[stresses + 0] -= neigh_k->rdist.x * tmp_force.x;
+		forces[stresses + 1] -= neigh_k->rdist.y * tmp_force.y;
+		forces[stresses + 2] -= neigh_k->rdist.z * tmp_force.z;
+		forces[stresses + 3] -= neigh_k->rdist.x * tmp_force.y;
+		forces[stresses + 4] -= neigh_k->rdist.y * tmp_force.z;
+		forces[stresses + 5] -= neigh_k->rdist.z * tmp_force.x;
 #endif // STRESS
 
 		ijk++;

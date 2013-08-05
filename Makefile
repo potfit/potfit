@@ -123,12 +123,12 @@
 # i686-gcc  	32bit GNU Compiler
 #
 #SYSTEM 		= x86_64-icc 	# Use this as fallback
-SYSTEM 		= $(shell uname -m)-gcc
+SYSTEM 		= $(shell uname -m)-icc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
-#BIN_DIR 	= ${HOME}/bin/i386-linux
-BIN_DIR 	=
+BIN_DIR 	= ${HOME}/bin/i386-linux
+#BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
 
@@ -177,7 +177,7 @@ ifeq (x86_64-icc,${SYSTEM})
 # profiling and debug flags
   PROF_FLAGS    += --profile-functions
   PROF_LIBS     += --profile-functions
-  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
+  DEBUG_FLAGS   += -g -Wall
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
@@ -192,7 +192,7 @@ ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   LIBS		= -L${ACML4PATH} -lpthread -lacml -lacml_mv
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-   LIBMPATH 	= ${LIBMDIR}/lib/static
+   LIBMPATH 	= ${LIBMDIR}/lib64
    CINCLUDE     += -I${ACML5DIR}/include -I${LIBMDIR}/include
    LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
 endif

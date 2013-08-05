@@ -57,7 +57,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
   if (NULL == infile)
     error(1, "Could not open file %s\n", filename);
 
-  printf("Starting to read the potential file:\n", filename);
+  printf("Starting to read the potential file:\n");
 
   /* read the header */
   do {
@@ -576,9 +576,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 #endif /* PAIR */
 
 #ifdef COULOMB
-  int   ncols;
-  ncols = ntypes * (ntypes + 1) / 2;
-
   fsetpos(infile, &startpos);
   /* skip to electrostatic section */
   do {
@@ -630,6 +627,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 #endif /* COULOMB */
 
 #ifdef DIPOLE
+  int   ncols = ntypes * (ntypes + 1) / 2;
+
   for (i = 0; i < ntypes; i++) {
     apt->param_name[apt->number + 2][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
@@ -970,8 +969,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       }
     }
 
-    printf(" - Successfully read %d potential table(s)\n", apt->number);
   }
+  printf(" - Successfully read %d potential table(s)\n", apt->number);
 
 #ifdef COULOMB
   apt->total_ne_par = apt->total_par;

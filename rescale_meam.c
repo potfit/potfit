@@ -128,7 +128,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
       typ1 = atom->typ;
 
       // LOOP OVER EACH NEIGHBOR OF ATOM i
-      for (j = 0; j < atom->n_neigh; ++j) {
+      for (j = 0; j < atom->num_neigh; ++j) {
 
 	// Store neighbor to temp variable
 	neigh = atom->neigh + j;
@@ -172,11 +172,11 @@ double rescale(pot_table_t *pt, double upper, int flag)
       // N(N-1)/2 possible combinations
       // Used in computing angular part g_ijk
       ijk = 0;			// count number of angles
-      for (jj = 0; jj < atom->n_neigh - 1; ++jj) {
+      for (jj = 0; jj < atom->num_neigh - 1; ++jj) {
 
 	// Get pointer to neighbor jj
 	neigh_j = atom->neigh + jj;
-	for (kk = jj + 1; kk < atom->n_neigh; ++kk) {
+	for (kk = jj + 1; kk < atom->num_neigh; ++kk) {
 
 	  // Store pointer to angular part (g)
 	  n_angl = atom->angl_part + ijk;
