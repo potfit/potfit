@@ -115,6 +115,7 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min, int pnu
 	}
 	break;
   }
+
   return numread;
 }
 
@@ -167,6 +168,8 @@ void check_parameters_complete(char *paramfile)
   if (strcmp(distfile, "\0") == 0)
     error(1, "Missing parameter or invalid value in %s : distfile is \"%s\"", paramfile, distfile);
 #endif /* PDIST */
+
+  return;
 }
 
 /****************************************************************
@@ -192,6 +195,8 @@ void read_parameters(int argc, char **argv)
   printf("Reading parameter file >> %s << ... ", argv[1]);
   check_parameters_complete(argv[1]);
   printf("done\n");
+
+  return;
 }
 
 /****************************************************************
@@ -366,4 +371,6 @@ void read_paramfile(FILE *pf)
       fprintf(stderr, "Unknown tag <%s> in parameter file ignored!\n", token);
     }
   } while (!feof(pf));
+
+  return;
 }

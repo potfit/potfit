@@ -278,6 +278,8 @@ void lj_value(double r, double *p, double *f)
   sig_d_rad12 = dsquare(sig_d_rad6);
 
   *f = 4. * p[0] * (sig_d_rad12 - sig_d_rad6);
+
+  return;
 }
 
 /****************************************************************
@@ -300,6 +302,8 @@ void eopp_value(double r, double *p, double *f)
   power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
+
+  return;
 }
 
 /****************************************************************
@@ -313,6 +317,8 @@ void eopp_value(double r, double *p, double *f)
 void morse_value(double r, double *p, double *f)
 {
   *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2])));
+
+  return;
 }
 
 /****************************************************************
@@ -330,6 +336,8 @@ void ms_value(double r, double *p, double *f)
   x = 1. - r / p[2];
 
   *f = p[0] * (exp(p[1] * x) - 2. * exp((p[1] * x) / 2.));
+
+  return;
 }
 
 /****************************************************************
@@ -348,6 +356,8 @@ void buck_value(double r, double *p, double *f)
   y = x * x * x;
 
   *f = p[0] * exp(-r / p[1]) - p[2] * y;
+
+  return;
 }
 
 /****************************************************************
@@ -364,6 +374,8 @@ void softshell_value(double r, double *p, double *f)
   y = p[1];
 
   power_1(f, &x, &y);
+
+  return;
 }
 
 /****************************************************************
@@ -381,6 +393,8 @@ void eopp_exp_value(double r, double *p, double *f)
   power_1(&power, &r, &p[3]);
 
   *f = p[0] * exp(-p[1] * r) + (p[2] / power) * cos(p[4] * r + p[5]);
+
+  return;
 }
 
 /****************************************************************
@@ -403,6 +417,8 @@ void meopp_value(double r, double *p, double *f)
   power_m(2, power, x, y);
 
   *f = p[0] / power[0] + (p[2] / power[1]) * cos(p[4] * r + p[5]);
+
+  return;
 }
 
 /****************************************************************
@@ -421,6 +437,8 @@ void power_value(double r, double *p, double *f)
   power_1(&power, &x, &y);
 
   *f = p[0] * power;
+
+  return;
 }
 
 /****************************************************************
@@ -439,6 +457,8 @@ void power_decay_value(double r, double *p, double *f)
   power_1(&power, &x, &y);
 
   *f = p[0] * power;
+
+  return;
 }
 
 /****************************************************************
@@ -450,6 +470,8 @@ void power_decay_value(double r, double *p, double *f)
 void exp_decay_value(double r, double *p, double *f)
 {
   *f = p[0] * exp(-p[1] * r);
+
+  return;
 }
 
 /****************************************************************
@@ -470,6 +492,8 @@ void bjs_value(double r, double *p, double *f)
     power_1(&power, &r, &p[1]);
     *f = p[0] * (1. - p[1] * log(r)) * power + p[2] * r;
   }
+
+  return;
 }
 
 /****************************************************************
@@ -481,6 +505,8 @@ void bjs_value(double r, double *p, double *f)
 void parabola_value(double r, double *p, double *f)
 {
   *f = (r * r) * p[0] + r * p[1] + p[2];
+
+  return;
 }
 
 /****************************************************************
@@ -498,6 +524,8 @@ void csw_value(double r, double *p, double *f)
   power_1(&power, &r, &p[3]);
 
   *f = (1. + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
+
+  return;
 }
 
 /****************************************************************
@@ -515,6 +543,8 @@ void csw2_value(double r, double *p, double *f)
   power_1(&power, &r, &p[3]);
 
   *f = (1. + p[0] * cos(p[1] * r + p[2])) / power;
+
+  return;
 }
 
 /****************************************************************
@@ -537,6 +567,8 @@ void universal_value(double r, double *p, double *f)
   power_m(2, power, x, y);
 
   *f = p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
+
+  return;
 }
 
 /****************************************************************
@@ -548,6 +580,8 @@ void universal_value(double r, double *p, double *f)
 void const_value(double r, double *p, double *f)
 {
   *f = *p + 0.0 * r;
+
+  return;
 }
 
 /****************************************************************
@@ -561,6 +595,8 @@ void const_value(double r, double *p, double *f)
 void sqrt_value(double r, double *p, double *f)
 {
   *f = p[0] * sqrt(r / p[1]);
+
+  return;
 }
 
 /****************************************************************
@@ -572,6 +608,8 @@ void sqrt_value(double r, double *p, double *f)
 void mexp_decay_value(double r, double *p, double *f)
 {
   *f = p[0] * exp(-p[1] * (r - p[2]));
+
+  return;
 }
 
 /****************************************************************
@@ -589,6 +627,8 @@ void strmm_value(double r, double *p, double *f)
   r_0 = r - p[4];
 
   *f = 2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. + p[3] * r_0) * exp(-p[3] * r_0);
+
+  return;
 }
 
 /****************************************************************
@@ -604,6 +644,8 @@ void double_morse_value(double r, double *p, double *f)
   *f =
     (p[0] * (exp(-2. * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2]))) +
     p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) + p[6];
+
+  return;
 }
 
 /****************************************************************
@@ -617,6 +659,8 @@ void double_morse_value(double r, double *p, double *f)
 void double_exp_value(double r, double *p, double *f)
 {
   *f = (p[0] * exp(-p[1] * dsquare(r - p[2])) + exp(-p[3] * (r - p[4])));
+
+  return;
 }
 
 /****************************************************************
@@ -634,6 +678,8 @@ void poly_5_value(double r, double *p, double *f)
   dr = (r - 1.) * (r - 1.);
 
   *f = p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) + p[4] * (dr * dr) * (r - 1.);
+
+  return;
 }
 
 /****************************************************************
@@ -678,6 +724,8 @@ void kawamura_mix_value(double r, double *p, double *f)
 void exp_plus_value(double r, double *p, double *f)
 {
   *f = p[0] * exp(-p[1] * r) + p[2];
+
+  return;
 }
 
 /****************************************************************
@@ -700,6 +748,8 @@ void mishin_value(double r, double *p, double *f)
   power_1(&power, &z, &p[4]);
 
   *f = p[0] * power * temp * (1. + p[1] * temp) + p[2];
+
+  return;
 }
 
 /****************************************************************
@@ -722,6 +772,8 @@ void gen_lj_value(double r, double *p, double *f)
   power_m(2, power, x, y);
 
   *f = p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4];
+
+  return;
 }
 
 /****************************************************************
@@ -750,6 +802,8 @@ void gljm_value(double r, double *p, double *f)
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
     p[5] * (p[6] * power[2] * temp * (1. + p[7] * temp) + p[8]);
+
+  return;
 }
 
 /****************************************************************
@@ -763,6 +817,8 @@ void gljm_value(double r, double *p, double *f)
 void vas_value(double r, double *p, double *f)
 {
   *f = exp(p[0] / (r - p[1]));
+
+  return;
 }
 
 /****************************************************************
@@ -790,6 +846,8 @@ void vpair_value(double r, double *p, double *f)
   x[6] = exp(-r / p[6]);
 
   *f = 14.4 * (p[0] / x[0] - 0.5 * (x[5] / x[2]) * x[6]);
+
+  return;
 }
 
 /****************************************************************
@@ -807,6 +865,8 @@ void sheng_phi1_value(double r, double *p, double *f)
   z = -p[3] * y * y;
 
   *f = p[0] * exp(x) + p[2] * exp(z);
+
+  return;
 }
 
 void sheng_phi2_value(double r, double *p, double *f)
@@ -818,6 +878,8 @@ void sheng_phi2_value(double r, double *p, double *f)
   z = p[2] * p[2] + y * y;
 
   *f = p[0] * exp(x) + p[2] / z;
+
+  return;
 }
 
 void sheng_rho_value(double r, double *p, double *f)
@@ -837,6 +899,8 @@ void sheng_rho_value(double r, double *p, double *f)
   sig_d_rad12 = dsquare(sig_d_rad6);
 
   *f = (p[0] * power + p[2]) * k + (4. * p[3] * (sig_d_rad12 - sig_d_rad6)) * h;
+
+  return;
 }
 
 void sheng_F_value(double r, double *p, double *f)
@@ -848,6 +912,8 @@ void sheng_F_value(double r, double *p, double *f)
   power_1(&power, &x, &y);
 
   *f = p[0] * power + p[2] * r + p[3];
+
+  return;
 }
 
 #ifdef STIWEB
@@ -870,6 +936,8 @@ void stiweb_2_value(double r, double *p, double *f)
   power_m(2, power, x, y);
 
   *f = (p[0] * power[0] - p[1] * power[1]) * exp(p[4] / (r - p[5]));
+
+  return;
 }
 
 /****************************************************************
@@ -881,6 +949,8 @@ void stiweb_2_value(double r, double *p, double *f)
 void stiweb_3_value(double r, double *p, double *f)
 {
   *f = exp(p[0] / (r - p[1]));
+
+  return;
 }
 
 /****************************************************************
@@ -892,6 +962,8 @@ void stiweb_3_value(double r, double *p, double *f)
 void lambda_value(double r, double *p, double *f)
 {
   *f = 0.0 * r * p[0];
+
+  return;
 }
 
 #endif /* STIWEB */
@@ -907,6 +979,8 @@ void lambda_value(double r, double *p, double *f)
 void tersoff_pot_value(double r, double *p, double *f)
 {
   *f = 0.0 * r * p[0];
+
+  return;
 }
 
 /****************************************************************
@@ -918,6 +992,8 @@ void tersoff_pot_value(double r, double *p, double *f)
 void tersoff_mix_value(double r, double *p, double *f)
 {
   *f = 0.0 * r * p[0];
+
+  return;
 }
 
 #endif /* TERSOFF */
@@ -943,6 +1019,8 @@ void tersoff_mix_value(double r, double *p, double *f)
 void newpot_value(double r, double *p, double *f)
 {
   *f = r * p[0] + p[1];
+
+  return;
 }
 
 /* end of template */
@@ -1124,6 +1202,8 @@ void ms_init(double r, double *pot, double *grad, double *p)
 
   *pot = p[0] * (x[1] - 2 * x[2]);
   *grad = x[3] * (-x[1] + x[2]);
+
+  return;
 }
 
 /****************************************************************
@@ -1142,6 +1222,8 @@ void buck_init(double r, double *pot, double *grad, double *p)
 
   *pot = x[2] - x[1];
   *grad = -x[2] / p[1] + 6 * x[1] / r;
+
+  return;
 }
 
 /****************************************************************
@@ -1158,6 +1240,8 @@ void ms_shift(double r, double *p, double *f)
   ms_init(dp_cut, &pot_cut, &grad_cut, p);
 
   *f = pot - pot_cut - (r - dp_cut) * grad_cut;
+
+  return;
 }
 
 /****************************************************************
@@ -1174,6 +1258,8 @@ void buck_shift(double r, double *p, double *f)
   buck_init(dp_cut, &pot_cut, &grad_cut, p);
 
   *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+
+  return;
 }
 
 /****************************************************************
@@ -1194,6 +1280,8 @@ void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, doubl
   *ftail = dp_eps * erfc(dp_kappa * r) / r;
   *gtail = -(*ftail + x[2] * x[3]) / x[0];
   *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
+
+  return;
 }
 
 /****************************************************************
@@ -1222,6 +1310,8 @@ void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_ta
   *grad_tail -= x[2] * ggtail_cut / 2;
   *ggrad_tail = ggtail - ggtail_cut;
 #endif /* DIPOLE */
+
+  return;
 }
 
 #endif /* COULOMB */
@@ -1266,6 +1356,8 @@ void shortrange_term(double r, double b, double c, double *srval_tail, double *s
 
   *srval_tail = c * x[4] * x[5] / dp_eps;
   *srgrad_tail = -c * b * x[3] * x[5] / (24 * dp_eps * r);
+
+  return;
 }
 
 #endif /* DIPOLE */
@@ -1316,6 +1408,8 @@ void debug_apot()
   }
 #endif /* PAIR */
   exit(EXIT_FAILURE);
+
+  return;
 }
 
 #endif /* DEBUG */

@@ -473,7 +473,7 @@ EXTERN double *conf_weight;	/* weight of configuration */
 EXTERN double *force_0;		/* the forces we aim at */
 EXTERN double *rcut;
 EXTERN double *rmin;
-EXTERN double *volumen;		/* Volume of cell */
+EXTERN double *volume;		/* volume of cell */
 EXTERN double rcutmin INIT(999.);	/* minimum of all cutoff values */
 EXTERN double rcutmax INIT(0.);	/* maximum of all cutoff values */
 EXTERN sym_tens *conf_stress;

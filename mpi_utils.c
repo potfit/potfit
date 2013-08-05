@@ -514,7 +514,7 @@ void broadcast_params()
   conf_vol = (double *)malloc(myconf * sizeof(double));
   conf_uf = (int *)malloc(myconf * sizeof(double));
   conf_us = (int *)malloc(myconf * sizeof(double));
-  MPI_Scatterv(volumen, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(volume, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT, conf_uf, myconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatterv(usestress, conf_len, conf_dist, MPI_INT, conf_us, myconf, MPI_INT, 0, MPI_COMM_WORLD);
 

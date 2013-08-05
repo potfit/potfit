@@ -119,14 +119,14 @@ void read_config(char *filename)
     line++;
     if (NULL == res)
       error(1, "Unexpected end of file in %s", filename);
-    if (res[0] == '#') {	/* new file type */
+    if (res[0] == '#') {	/* new file format (with tags) */
       tag_format = 1;
       h_eng = h_stress = h_boxx = h_boxy = h_boxz = 0;
       if (res[1] == 'N') {	/* Atom number line */
 	if (sscanf(res + 3, "%d %d", &count, &use_force) < 2)
 	  error(1, "%s: Error in atom number specification on line %d\n", filename, line);
       } else
-	error(1, "%s: Error - number of atoms missing on line %d\n", filename, line);
+	error(1, "%s: Number of atoms missing on line %d\n", filename, line);
     } else {
       /* number of atoms in this configuration */
       tag_format = 0;
@@ -134,6 +134,8 @@ void read_config(char *filename)
       if (1 > sscanf(buffer, "%d", &count))
 	error(1, "Unexpected end of file in %s", filename);
     }
+
+    /* check if there are enough atoms, 2 for pair and 3 for manybody potentials */
 #ifndef THREEBODY
     if (2 > count)
       error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);
@@ -141,12 +143,13 @@ void read_config(char *filename)
     if (3 > count)
       error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);
 #endif /* THREEBODY */
+
     /* increase memory for this many additional atoms */
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
     if (NULL == atoms)
       error(1, "Cannot allocate memory for atoms");
     for (i = 0; i < count; i++)
-      atoms[natoms + i].neigh = malloc(1 * sizeof(neigh_t));
+      atoms[natoms + i].neigh = malloc(sizeof(neigh_t));
     coheng = (double *)realloc(coheng, (nconf + 1) * sizeof(double));
     if (NULL == coheng)
       error(1, "Cannot allocate memory for cohesive energy");
@@ -154,9 +157,9 @@ void read_config(char *filename)
     if (NULL == conf_weight)
       error(1, "Cannot allocate memory for configuration weights");
     else
-      conf_weight[nconf] = 1.;
-    volumen = (double *)realloc(volumen, (nconf + 1) * sizeof(double));
-    if (NULL == volumen)
+      conf_weight[nconf] = 1.0;
+    volume = (double *)realloc(volume, (nconf + 1) * sizeof(double));
+    if (NULL == volume)
       error(1, "Cannot allocate memory for volume");
     stress = (sym_tens *)realloc(stress, (nconf + 1) * sizeof(sym_tens));
     if (NULL == stress)
@@ -384,11 +387,10 @@ void read_config(char *filename)
     if (useforce[nconf])
       w_force++;
 
-    volumen[nconf] = make_box();
+    volume[nconf] = make_box();
 
     /* read the atoms */
     for (i = 0; i < count; i++) {
-      k = 3 * (natoms + i);
       atom = atoms + natoms + i;
       if (7 > fscanf(infile, "%d %lf %lf %lf %lf %lf %lf\n", &(atom->type),
 	  &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), &(atom->force.x), &(atom->force.y),
@@ -408,6 +410,7 @@ void read_config(char *filename)
       na_type[nconf][atom->type] += 1;
       max_type = MAX(max_type, atom->type);
     }
+
     /* check cell size */
     /* inverse height in direction */
     iheight.x = sqrt(SPROD(tbox_x, tbox_x));
@@ -882,7 +885,7 @@ void read_config(char *filename)
   reg_for_free(atoms, "atoms");
   reg_for_free(coheng, "coheng");
   reg_for_free(conf_weight, "conf_weight");
-  reg_for_free(volumen, "volumen");
+  reg_for_free(volume, "volume");
   reg_for_free(stress, "stress");
   reg_for_free(inconf, "inconf");
   reg_for_free(cnfstart, "cnfstart");

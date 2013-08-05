@@ -55,6 +55,8 @@ void init_tails(double dp_kappa)
     for (j = 0; j < atoms[i].num_neigh; j++)
       elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
 	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+
+  return;
 }
 
 /****************************************************************
@@ -105,6 +107,8 @@ void write_coulomb_table()
   } else {
     printf("Coulomb-outfiles are only available in case of two atom types.");
   }
+
+  return;
 }
 
 #endif /* COULOMB */
@@ -130,14 +134,20 @@ void write_pot_table0(apot_table_t *apt, char *filename)
   /* write header */
   fprintf(outfile, "#F 0 %d", apt->number);
   fprintf(outfile, "\n#T %s", interaction_name);
+
   if (have_elements) {
+    /* write elements */
     fprintf(outfile, "\n#C");
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
+
+    /* write order of the interactions */
     fprintf(outfile, "\n##");
+    /* pair potentials */
     for (i = 0; i < ntypes; i++)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+
 #if defined EAM || defined ADP || defined MEAM
     /* transfer functions */
     for (i = 0; i < ntypes; i++)
@@ -146,6 +156,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
 #endif /* EAM || ADP || MEAM */
+
 #ifdef ADP
     /* dipole terms */
     for (i = 0; i < ntypes; i++)
@@ -156,6 +167,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
 #endif /* ADP */
+
 #ifdef MEAM
     /* f terms */
     for (i = 0; i < ntypes; i++)
@@ -165,24 +177,52 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
 #endif /* MEAM */
+
+#ifdef STIWEB
+    /* stiweb_3 terms */
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+    /* lambda terms */
+    int k = 0;
+    for (i = 0; i < ntypes; i++)
+      for (j = 0; j < ntypes; j++)
+	for (k = j; k < ntypes; k++)
+          fprintf(outfile, " %s-%s-%s", elements[i],elements[j],elements[k]);
+#endif /* STIWEB */
+
+#ifdef TERSOFF
+    /* mixing terms */
+    for (i = 0; i < ntypes; i++)
+      for (j = i + 1; j < ntypes; j++)
+	fprintf(outfile, " %s-%s", elements[i], elements[j]);
+#endif /* TERSOFF */
+
   }
+
+  /* write invariant switch for individual potentials */
   if (have_invar) {
     fprintf(outfile, "\n#I");
     for (i = 0; i < apt->number; i++)
       fprintf(outfile, " %d", invar_pot[i]);
   }
+
+  /* end tag */
   fprintf(outfile, "\n#E\n\n");
 
 #ifdef PAIR
+  /* write chemical potentials if enabled */
   if (enable_cp) {
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, "cp_%s %.10f %.2f %.2f\n", elements[i], apt->chempot[i],
 	apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
+#ifdef CN
     if (compnodes > 0)
       fprintf(outfile, "cn %d\n", compnodes);
     for (j = 0; j < compnodes; j++)
       fprintf(outfile, "%.2f %.10f %.2f %.2f\n", compnodelist[j],
 	apt->chempot[ntypes + j], apt->pmin[apt->number][ntypes + j], apt->pmax[apt->number][ntypes + j]);
+#endif /* CN */
     fprintf(outfile, "\n");
   }
 #endif /* PAIR */
@@ -197,16 +237,14 @@ void write_pot_table0(apot_table_t *apt, char *filename)
     apt->dp_kappa[0], apt->pmin[apt->number + 1][0], apt->pmax[apt->number + 1][0]);
 
 #ifdef DIPOLE
-  int   ncols = ntypes * (ntypes + 1) / 2;
-
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
       apt->dp_alpha[i], apt->pmin[apt->number + 2][i], apt->pmax[apt->number + 2][i]);
-  for (i = 0; i < ncols; i++) {
+  for (i = 0; i < paircol; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i],
       apt->dp_b[i], apt->pmin[apt->number + 3][i], apt->pmax[apt->number + 3][i]);
   }
-  for (i = 0; i < ncols; i++) {
+  for (i = 0; i < paircol; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 4][i],
       apt->dp_c[i], apt->pmin[apt->number + 4][i], apt->pmax[apt->number + 4][i]);
   }
@@ -215,6 +253,7 @@ void write_pot_table0(apot_table_t *apt, char *filename)
   fprintf(outfile, "\n");
 #endif /* COULOMB */
 
+  /* write globals section */
   if (have_globals) {
     fprintf(outfile, "global\t%d\n", apt->globals);
     for (i = 0; i < apt->globals; i++)
@@ -245,6 +284,8 @@ void write_pot_table0(apot_table_t *apt, char *filename)
       fprintf(outfile, "\n");
   }
   fclose(outfile);
+
+  return;
 }
 
 #else /* APOT */

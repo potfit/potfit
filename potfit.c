@@ -44,65 +44,6 @@
 
 /****************************************************************
  *
- *  error -- complain and abort
- *
- ****************************************************************/
-
-void error(int done, char *msg, ...)
-{
-  static int begin = 0;
-  va_list ap;
-
-  fflush(stderr);
-  if (begin == 0) {
-    fprintf(stderr, "\n--> ERROR <--\n");
-    begin = 1;
-  }
-  va_start(ap, msg);
-  vfprintf(stderr, msg, ap);
-  va_end(ap);
-  fflush(stderr);
-  if (done == 1) {
-#ifdef MPI
-    double *force = NULL;
-    /* go wake up other threads */
-    calc_forces(calc_pot.table, force, 1);
-    fprintf(stderr, "\n");
-    shutdown_mpi();
-#endif /* MPI */
-    fprintf(stderr, "\n");
-    exit(EXIT_FAILURE);
-  }
-}
-
-/****************************************************************
- *
- *  warning -- just complain, don't abort
- *
- ****************************************************************/
-
-void warning(int done, char *msg, ...)
-{
-  static int begin = 0;
-  va_list ap;
-
-  fflush(stdout);
-  if (begin == 0) {
-    fprintf(stderr, "\n--> WARNING <--\n");
-    begin = 1;
-  }
-  va_start(ap, msg);
-  vfprintf(stderr, msg, ap);
-  va_end(ap);
-  if (done == 1) {
-    fprintf(stderr, "\n");
-    begin = 0;
-  }
-  fflush(stderr);
-}
-
-/****************************************************************
- *
  *  main
  *
  ****************************************************************/
@@ -114,7 +55,7 @@ int main(int argc, char **argv)
   int   i, j;
   double tot, sqr;
   double *force;
-  double *rms;
+  double rms[3];
   time_t t_begin, t_end;
 #if defined EAM || defined ADP || defined MEAM
   double *totdens = NULL;
@@ -167,6 +108,7 @@ int main(int argc, char **argv)
 #ifdef STRESS
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
+
 #ifdef COULOMB
     if (apot_table.sw_kappa)
       init_tails(apot_table.dp_kappa[0]);
@@ -213,8 +155,9 @@ int main(int argc, char **argv)
     reg_for_free(totdens, "totdens");
 
     for (i = 0; i < ntypes; i++)
-      lambda[i] = 0.;
+      lambda[i] = 0.0;
 #endif /* EAM || ADP || MEAM */
+
     init_done = 1;
 
     /* properly initialize random number generator */
@@ -243,10 +186,11 @@ int main(int argc, char **argv)
   /* Identify subset of atoms/volumes belonging to individual process
      with complete set of atoms/volumes */
   conf_atoms = atoms;
-  conf_vol = volumen;
+  conf_vol = volume;
   conf_uf = useforce;
   conf_us = usestress;
 #endif /* MPI */
+
   ndim = opt_pot.idxlen;
   ndimtot = opt_pot.len;
   idx = opt_pot.idx;
@@ -291,11 +235,6 @@ int main(int argc, char **argv)
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
 #endif /* STRESS */
-
-  rms = (double *)malloc(3 * sizeof(double));
-  if (NULL == rms)
-    error(1, "Could not allocate memory for rms errors.");
-  reg_for_free(rms, "rms");
 
 #ifdef APOT
 #ifdef MPI
@@ -469,9 +408,9 @@ int main(int argc, char **argv)
 #ifdef CONTRIB
     int   contrib_atoms = 0;
 #endif /* CONTRIB */
-    double f_sum = 0.;
-    double e_sum = 0.;
-    double s_sum = 0.;
+    double f_sum = 0.0;
+    double e_sum = 0.0;
+    double s_sum = 0.0;
 
     /* write force deviations */
     if (write_output_files) {
@@ -496,7 +435,7 @@ int main(int argc, char **argv)
     for (i = 0; i < 3 * natoms; i++) {
 #ifdef CONTRIB
       if (0 == atoms[i / 3].contrib)
-	sqr = 0.;
+	sqr = 0.0;
       else
 #endif /* CONTRIB */
 	sqr = conf_weight[atoms[i / 3].conf] * dsquare(force[i]);
@@ -567,6 +506,7 @@ int main(int argc, char **argv)
     } else {
       printf("Energy data not written (energy weight was 0).\n");
     }
+
 #ifdef STRESS
     /* write stress deviations */
     if (sweight != 0) {
@@ -712,7 +652,7 @@ int main(int argc, char **argv)
       for (i = 0; i < nconf; i++)
 	rms[1] += dsquare(force[3 * natoms + i]);
       if (isnan(rms[1]))
-	rms[1] = 0;
+	rms[1] = 0.0;
       rms[1] = sqrt(rms[1] / nconf);
     }
 
@@ -722,7 +662,7 @@ int main(int argc, char **argv)
 	for (j = 0; j < 6; j++)
 	  rms[2] += dsquare(force[3 * natoms + nconf + 6 * i + j]);
       if (isnan(rms[2]))
-	rms[2] = 0;
+	rms[2] = 0.0;
       rms[2] = sqrt(rms[2] / (6 * nconf));
     }
 
@@ -800,4 +740,63 @@ int main(int argc, char **argv)
   free_all_pointers();
 
   return 0;
+}
+
+/****************************************************************
+ *
+ *  error -- complain and abort
+ *
+ ****************************************************************/
+
+void error(int done, char *msg, ...)
+{
+  static int begin = 0;
+  va_list ap;
+
+  fflush(stderr);
+  if (begin == 0) {
+    fprintf(stderr, "\n--> ERROR <--\n");
+    begin = 1;
+  }
+  va_start(ap, msg);
+  vfprintf(stderr, msg, ap);
+  va_end(ap);
+  fflush(stderr);
+  if (done == 1) {
+#ifdef MPI
+    double *force = NULL;
+    /* go wake up other threads */
+    calc_forces(calc_pot.table, force, 1);
+    fprintf(stderr, "\n");
+    shutdown_mpi();
+#endif /* MPI */
+    fprintf(stderr, "\n");
+    exit(EXIT_FAILURE);
+  }
+}
+
+/****************************************************************
+ *
+ *  warning -- just complain, don't abort
+ *
+ ****************************************************************/
+
+void warning(int done, char *msg, ...)
+{
+  static int begin = 0;
+  va_list ap;
+
+  fflush(stdout);
+  if (begin == 0) {
+    fprintf(stderr, "\n--> WARNING <--\n");
+    begin = 1;
+  }
+  va_start(ap, msg);
+  vfprintf(stderr, msg, ap);
+  va_end(ap);
+  if (done == 1) {
+    fprintf(stderr, "\n");
+    begin = 0;
+  }
+  fflush(stderr);
 }
