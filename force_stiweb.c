@@ -223,12 +223,12 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 		/* also calculate pair stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= 0.5 * neigh_j->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= 0.5 * neigh_j->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= 0.5 * neigh_j->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= 0.5 * neigh_j->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= 0.5 * neigh_j->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= 0.5 * neigh_j->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= 0.5 * neigh_j->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= 0.5 * neigh_j->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= 0.5 * neigh_j->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= 0.5 * neigh_j->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= 0.5 * neigh_j->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= 0.5 * neigh_j->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
@@ -290,14 +290,14 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 		  tmp_1 = tmp_grad2 * neigh_j->df * neigh_k->f - tmp_grad1 * n_angl->cos * tmp_jj;
 		  tmp_2 = tmp_grad1 * tmp_jk;
 
-		  force_j.x = tmp_1 * neigh_j->rdist.x + tmp_2 * neigh_k->rdist.x;
-		  force_j.y = tmp_1 * neigh_j->rdist.y + tmp_2 * neigh_k->rdist.y;
-		  force_j.z = tmp_1 * neigh_j->rdist.z + tmp_2 * neigh_k->rdist.z;
+		  force_j.x = tmp_1 * neigh_j->dist.x + tmp_2 * neigh_k->rdist.x;
+		  force_j.y = tmp_1 * neigh_j->dist.y + tmp_2 * neigh_k->rdist.y;
+		  force_j.z = tmp_1 * neigh_j->dist.z + tmp_2 * neigh_k->rdist.z;
 
 		  tmp_1 = tmp_grad2 * neigh_k->df * neigh_j->f - tmp_grad1 * n_angl->cos * tmp_kk;
-		  force_k.x = tmp_1 * neigh_k->rdist.x + tmp_2 * neigh_j->rdist.x;
-		  force_k.y = tmp_1 * neigh_k->rdist.y + tmp_2 * neigh_j->rdist.y;
-		  force_k.z = tmp_1 * neigh_k->rdist.z + tmp_2 * neigh_j->rdist.z;
+		  force_k.x = tmp_1 * neigh_k->dist.x + tmp_2 * neigh_j->rdist.x;
+		  force_k.y = tmp_1 * neigh_k->dist.y + tmp_2 * neigh_j->rdist.y;
+		  force_k.z = tmp_1 * neigh_k->dist.z + tmp_2 * neigh_j->rdist.z;
 
 		  /* update force on particle i */
 		  forces[k] += force_j.x + force_k.x;
@@ -317,15 +317,15 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 #ifdef STRESS			/* Distribute stress among atoms */
 		  if (us) {
 		    stresses = stress_p + 6 * h;
-		    forces[stresses + 0] += force_j.x * neigh_j->rdist.x + force_k.x * neigh_k->rdist.x;
-		    forces[stresses + 1] += force_j.y * neigh_j->rdist.y + force_k.y * neigh_k->rdist.y;
-		    forces[stresses + 2] += force_j.z * neigh_j->rdist.z + force_k.z * neigh_k->rdist.z;
-		    forces[stresses + 3] += 0.5 * (force_j.x * neigh_j->rdist.y + force_k.x * neigh_k->rdist.y
-		      + force_j.y * neigh_j->rdist.x + force_k.y * neigh_k->rdist.x);
-		    forces[stresses + 4] += 0.5 * (force_j.y * neigh_j->rdist.z + force_k.y * neigh_k->rdist.z
-		      + force_j.z * neigh_j->rdist.y + force_k.z * neigh_k->rdist.y);
-		    forces[stresses + 5] += 0.5 * (force_j.z * neigh_j->rdist.x + force_k.z * neigh_k->rdist.x
-		      + force_j.x * neigh_j->rdist.z + force_k.x * neigh_k->rdist.z);
+		    forces[stresses + 0] += force_j.x * neigh_j->dist.x + force_k.x * neigh_k->rdist.x;
+		    forces[stresses + 1] += force_j.y * neigh_j->dist.y + force_k.y * neigh_k->rdist.y;
+		    forces[stresses + 2] += force_j.z * neigh_j->dist.z + force_k.z * neigh_k->rdist.z;
+		    forces[stresses + 3] += 0.5 * (force_j.x * neigh_j->dist.y + force_k.x * neigh_k->rdist.y
+		      + force_j.y * neigh_j->dist.x + force_k.y * neigh_k->rdist.x);
+		    forces[stresses + 4] += 0.5 * (force_j.y * neigh_j->dist.z + force_k.y * neigh_k->rdist.z
+		      + force_j.z * neigh_j->dist.y + force_k.z * neigh_k->rdist.y);
+		    forces[stresses + 5] += 0.5 * (force_j.z * neigh_j->dist.x + force_k.z * neigh_k->rdist.x
+		      + force_j.x * neigh_j->dist.z + force_k.x * neigh_k->rdist.z);
 		  }
 #endif /* STRESS */
 

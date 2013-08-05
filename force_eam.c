@@ -302,12 +302,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		/* also calculate pair stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
@@ -451,12 +451,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		/* and stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }			/* within reach */

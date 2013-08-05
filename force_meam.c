@@ -294,12 +294,12 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 		if (us) {
 		  /* also calculate pair stresses */
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= 0.5 * neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= 0.5 * neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= 0.5 * neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= 0.5 * neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= 0.5 * neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= 0.5 * neigh->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= 0.5 * neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= 0.5 * neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= 0.5 * neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= 0.5 * neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= 0.5 * neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= 0.5 * neigh->dist.z * tmp_force.x;
 		}		/* us */
 #endif /* STRESS */
 	      }			/* uf */
@@ -502,12 +502,12 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }			// END IF STMT: Inside reach of rho cutoff
@@ -578,23 +578,23 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 		tmp_force.y = atom->gradF * dfj.y;
 		tmp_force.z = atom->gradF * dfj.z;
 		stresses = stress_p + 6 * h;
-		forces[stresses + 0] -= neigh_j->rdist.x * tmp_force.x;
-		forces[stresses + 1] -= neigh_j->rdist.y * tmp_force.y;
-		forces[stresses + 2] -= neigh_j->rdist.z * tmp_force.z;
-		forces[stresses + 3] -= neigh_j->rdist.x * tmp_force.y;
-		forces[stresses + 4] -= neigh_j->rdist.y * tmp_force.z;
-		forces[stresses + 5] -= neigh_j->rdist.z * tmp_force.x;
+		forces[stresses + 0] -= neigh_j->dist.x * tmp_force.x;
+		forces[stresses + 1] -= neigh_j->dist.y * tmp_force.y;
+		forces[stresses + 2] -= neigh_j->dist.z * tmp_force.z;
+		forces[stresses + 3] -= neigh_j->dist.x * tmp_force.y;
+		forces[stresses + 4] -= neigh_j->dist.y * tmp_force.z;
+		forces[stresses + 5] -= neigh_j->dist.z * tmp_force.x;
 
 		// Force from k on atom i (also guessing here)
 		tmp_force.x = atom->gradF * dfk.x;
 		tmp_force.y = atom->gradF * dfk.y;
 		tmp_force.z = atom->gradF * dfk.z;
-		forces[stresses + 0] -= neigh_k->rdist.x * tmp_force.x;
-		forces[stresses + 1] -= neigh_k->rdist.y * tmp_force.y;
-		forces[stresses + 2] -= neigh_k->rdist.z * tmp_force.z;
-		forces[stresses + 3] -= neigh_k->rdist.x * tmp_force.y;
-		forces[stresses + 4] -= neigh_k->rdist.y * tmp_force.z;
-		forces[stresses + 5] -= neigh_k->rdist.z * tmp_force.x;
+		forces[stresses + 0] -= neigh_k->dist.x * tmp_force.x;
+		forces[stresses + 1] -= neigh_k->dist.y * tmp_force.y;
+		forces[stresses + 2] -= neigh_k->dist.z * tmp_force.z;
+		forces[stresses + 3] -= neigh_k->dist.x * tmp_force.y;
+		forces[stresses + 4] -= neigh_k->dist.y * tmp_force.z;
+		forces[stresses + 5] -= neigh_k->dist.z * tmp_force.x;
 #endif // STRESS
 
 		ijk++;

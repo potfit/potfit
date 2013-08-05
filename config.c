@@ -485,16 +485,16 @@ void read_config(char *filename)
 		atoms[i].neigh[k].r2 = r * r;
 		atoms[i].neigh[k].inv_r = 1.0 / r;
 		atoms[i].neigh[k].dist_r = dd;
-		atoms[i].neigh[k].rdist.x = dd.x * r;
-		atoms[i].neigh[k].rdist.y = dd.y * r;
-		atoms[i].neigh[k].rdist.z = dd.z * r;
+		atoms[i].neigh[k].dist.x = dd.x * r;
+		atoms[i].neigh[k].dist.y = dd.y * r;
+		atoms[i].neigh[k].dist.z = dd.z * r;
 #ifdef ADP
-		atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
-		atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
-		atoms[i].neigh[k].sqrdist.zz = dd.z * dd.z * r * r;
-		atoms[i].neigh[k].sqrdist.yz = dd.y * dd.z * r * r;
-		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
-		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
+		atoms[i].neigh[k].sqdist.xx = dd.x * dd.x * r * r;
+		atoms[i].neigh[k].sqdist.yy = dd.y * dd.y * r * r;
+		atoms[i].neigh[k].sqdist.zz = dd.z * dd.z * r * r;
+		atoms[i].neigh[k].sqdist.yz = dd.y * dd.z * r * r;
+		atoms[i].neigh[k].sqdist.zx = dd.z * dd.x * r * r;
+		atoms[i].neigh[k].sqdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
 		atoms[i].num_neigh++;
 

@@ -105,14 +105,14 @@ void broadcast_params()
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* r */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;    	/* r2 */
   blklens[size] = 1;         	typen[size++] = MPI_DOUBLE;   	/* inv_r */
+  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* dist */
   blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* dist_r */
-  blklens[size] = 1;         	typen[size++] = MPI_VECTOR;  	/* rdist */
   blklens[size] = SLOTS;     	typen[size++] = MPI_INT;    	/* slot */
   blklens[size] = SLOTS;     	typen[size++] = MPI_DOUBLE;     /* shift */
   blklens[size] = SLOTS;     	typen[size++] = MPI_DOUBLE;     /* step */
   blklens[size] = SLOTS;     	typen[size++] = MPI_INT;     	/* col */
 #ifdef ADP
-  blklens[size] = 1;         	typen[size++] = MPI_STENS;   	/* sqrdist */
+  blklens[size] = 1;         	typen[size++] = MPI_STENS;   	/* sqdist */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* u_val */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* u_grad */
   blklens[size] = 1;        	typen[size++] = MPI_DOUBLE;     /* w_val */
@@ -141,14 +141,14 @@ void broadcast_params()
   MPI_Address(&testneigh.r, 		&displs[count++]);
   MPI_Address(&testneigh.r2, 		&displs[count++]);
   MPI_Address(&testneigh.inv_r, 	&displs[count++]);
+  MPI_Address(&testneigh.dist, 		&displs[count++]);
   MPI_Address(&testneigh.dist_r,	&displs[count++]);
-  MPI_Address(&testneigh.rdist, 	&displs[count++]);
   MPI_Address(testneigh.slot, 		&displs[count++]);
   MPI_Address(testneigh.shift, 		&displs[count++]);
   MPI_Address(testneigh.step, 		&displs[count++]);
   MPI_Address(testneigh.col, 		&displs[count++]);
 #ifdef ADP
-  MPI_Address(&testneigh.sqrdist, 	&displs[count++]);
+  MPI_Address(&testneigh.sqdist, 	&displs[count++]);
   MPI_Address(&testneigh.u_val, 	&displs[count++]);
   MPI_Address(&testneigh.u_grad, 	&displs[count++]);
   MPI_Address(&testneigh.w_val, 	&displs[count++]);

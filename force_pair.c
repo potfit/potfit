@@ -252,12 +252,12 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		/* also calculate pair stresses */
 		if (us) {
-		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }

@@ -230,12 +230,12 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 		/* also calculate pair stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= 0.5 * neigh_j->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= 0.5 * neigh_j->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= 0.5 * neigh_j->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= 0.5 * neigh_j->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= 0.5 * neigh_j->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= 0.5 * neigh_j->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= 0.5 * neigh_j->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= 0.5 * neigh_j->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= 0.5 * neigh_j->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= 0.5 * neigh_j->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= 0.5 * neigh_j->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= 0.5 * neigh_j->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
@@ -290,22 +290,22 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 		  tmp_j2 = cos_theta / (neigh_j->r * neigh_j->r);
 		  tmp_k2 = cos_theta / (neigh_k->r * neigh_k->r);
 
-		  dcos_j.x = tmp_jk * neigh_k->rdist.x - tmp_j2 * neigh_j->rdist.x;
-		  dcos_j.y = tmp_jk * neigh_k->rdist.y - tmp_j2 * neigh_j->rdist.y;
-		  dcos_j.z = tmp_jk * neigh_k->rdist.z - tmp_j2 * neigh_j->rdist.z;
+		  dcos_j.x = tmp_jk * neigh_k->dist.x - tmp_j2 * neigh_j->rdist.x;
+		  dcos_j.y = tmp_jk * neigh_k->dist.y - tmp_j2 * neigh_j->rdist.y;
+		  dcos_j.z = tmp_jk * neigh_k->dist.z - tmp_j2 * neigh_j->rdist.z;
 
-		  dcos_k.x = tmp_jk * neigh_j->rdist.x - tmp_k2 * neigh_k->rdist.x;
-		  dcos_k.y = tmp_jk * neigh_j->rdist.y - tmp_k2 * neigh_k->rdist.y;
-		  dcos_k.z = tmp_jk * neigh_j->rdist.z - tmp_k2 * neigh_k->rdist.z;
+		  dcos_k.x = tmp_jk * neigh_j->dist.x - tmp_k2 * neigh_k->rdist.x;
+		  dcos_k.y = tmp_jk * neigh_j->dist.y - tmp_k2 * neigh_k->rdist.y;
+		  dcos_k.z = tmp_jk * neigh_j->dist.z - tmp_k2 * neigh_k->rdist.z;
 
 		  tmp_3 = 2.0 * tersoff->c2[col_j] * tmp_1 * tmp_2 * tmp_2 * neigh_k->f *
 		    *(tersoff->omega[col_k]);
 
 		  tmp_grad = neigh_k->df / neigh_k->r * g_theta * *(tersoff->omega[col_k]);
 
-		  neigh_k->dzeta.x = tmp_grad * neigh_k->rdist.x - tmp_3 * dcos_k.x;
-		  neigh_k->dzeta.y = tmp_grad * neigh_k->rdist.y - tmp_3 * dcos_k.y;
-		  neigh_k->dzeta.z = tmp_grad * neigh_k->rdist.z - tmp_3 * dcos_k.z;
+		  neigh_k->dzeta.x = tmp_grad * neigh_k->dist.x - tmp_3 * dcos_k.x;
+		  neigh_k->dzeta.y = tmp_grad * neigh_k->dist.y - tmp_3 * dcos_k.y;
+		  neigh_k->dzeta.z = tmp_grad * neigh_k->dist.z - tmp_3 * dcos_k.z;
 
 		  dzeta_i.x -= neigh_k->dzeta.x;
 		  dzeta_i.y -= neigh_k->dzeta.y;
@@ -333,9 +333,9 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 	      tmp_6 =
 		(neigh_j->f * phi_a * *(tersoff->mu[col_j]) * b_ij + neigh_j->df * phi_val) / neigh_j->r;
 
-	      force_j.x = -tmp_6 * neigh_j->rdist.x + tmp_5 * dzeta_j.x;
-	      force_j.y = -tmp_6 * neigh_j->rdist.y + tmp_5 * dzeta_j.y;
-	      force_j.z = -tmp_6 * neigh_j->rdist.z + tmp_5 * dzeta_j.z;
+	      force_j.x = -tmp_6 * neigh_j->dist.x + tmp_5 * dzeta_j.x;
+	      force_j.y = -tmp_6 * neigh_j->dist.y + tmp_5 * dzeta_j.y;
+	      force_j.z = -tmp_6 * neigh_j->dist.z + tmp_5 * dzeta_j.z;
 
 	      for (k = 0; k < atom->num_neigh; k++) {
 		if (k != j) {
@@ -352,23 +352,23 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 #ifdef STRESS
 		    if (us) {
 		      stresses = stress_p + 6 * h;
-		      tmp = neigh_k->rdist.x * tmp_5 * neigh_k->dzeta.x;
+		      tmp = neigh_k->dist.x * tmp_5 * neigh_k->dzeta.x;
 		      forces[stresses + 0] -= tmp;
-		      tmp = neigh_k->rdist.y * tmp_5 * neigh_k->dzeta.y;
+		      tmp = neigh_k->dist.y * tmp_5 * neigh_k->dzeta.y;
 		      forces[stresses + 1] -= tmp;
-		      tmp = neigh_k->rdist.z * tmp_5 * neigh_k->dzeta.z;
+		      tmp = neigh_k->dist.z * tmp_5 * neigh_k->dzeta.z;
 		      forces[stresses + 2] -= tmp;
 		      tmp =
-			0.5 * tmp_5 * (neigh_k->rdist.x * neigh_k->dzeta.y +
-			neigh_k->rdist.y * neigh_k->dzeta.x);
+			0.5 * tmp_5 * (neigh_k->dist.x * neigh_k->dzeta.y +
+			neigh_k->dist.y * neigh_k->dzeta.x);
 		      forces[stresses + 3] -= tmp;
 		      tmp =
-			0.5 * tmp_5 * (neigh_k->rdist.y * neigh_k->dzeta.z +
-			neigh_k->rdist.z * neigh_k->dzeta.y);
+			0.5 * tmp_5 * (neigh_k->dist.y * neigh_k->dzeta.z +
+			neigh_k->dist.z * neigh_k->dzeta.y);
 		      forces[stresses + 4] -= tmp;
 		      tmp =
-			0.5 * tmp_5 * (neigh_k->rdist.z * neigh_k->dzeta.x +
-			neigh_k->rdist.x * neigh_k->dzeta.z);
+			0.5 * tmp_5 * (neigh_k->dist.z * neigh_k->dzeta.x +
+			neigh_k->dist.x * neigh_k->dzeta.z);
 		      forces[stresses + 5] -= tmp;
 		    }
 #endif /* STRESS */
@@ -390,17 +390,17 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 #ifdef STRESS			/* Distribute stress among atoms */
 	      if (us) {
 		stresses = stress_p + 6 * h;
-		tmp = neigh_j->rdist.x * force_j.x;
+		tmp = neigh_j->dist.x * force_j.x;
 		forces[stresses + 0] -= tmp;
-		tmp = neigh_j->rdist.y * force_j.y;
+		tmp = neigh_j->dist.y * force_j.y;
 		forces[stresses + 1] -= tmp;
-		tmp = neigh_j->rdist.z * force_j.z;
+		tmp = neigh_j->dist.z * force_j.z;
 		forces[stresses + 2] -= tmp;
-		tmp = 0.5 * (neigh_j->rdist.x * force_j.y + neigh_j->rdist.y * force_j.x);
+		tmp = 0.5 * (neigh_j->dist.x * force_j.y + neigh_j->rdist.y * force_j.x);
 		forces[stresses + 3] -= tmp;
-		tmp = 0.5 * (neigh_j->rdist.y * force_j.z + neigh_j->rdist.z * force_j.y);
+		tmp = 0.5 * (neigh_j->dist.y * force_j.z + neigh_j->rdist.z * force_j.y);
 		forces[stresses + 4] -= tmp;
-		tmp = 0.5 * (neigh_j->rdist.z * force_j.x + neigh_j->rdist.x * force_j.z);
+		tmp = 0.5 * (neigh_j->dist.z * force_j.x + neigh_j->rdist.x * force_j.z);
 		forces[stresses + 5] -= tmp;
 	      }
 #endif /* STRESS */

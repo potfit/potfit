@@ -322,12 +322,12 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		/* also calculate pair stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
@@ -344,13 +344,13 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		neigh->u_val *= 0.5;
 		neigh->u_grad *= 0.5;
 	      }
-	      tmp = neigh->u_val * neigh->rdist.x;
+	      tmp = neigh->u_val * neigh->dist.x;
 	      atom->mu.x += tmp;
 	      conf_atoms[neigh->nr - firstatom].mu.x -= tmp;
-	      tmp = neigh->u_val * neigh->rdist.y;
+	      tmp = neigh->u_val * neigh->dist.y;
 	      atom->mu.y += tmp;
 	      conf_atoms[neigh->nr - firstatom].mu.y -= tmp;
-	      tmp = neigh->u_val * neigh->rdist.z;
+	      tmp = neigh->u_val * neigh->dist.z;
 	      atom->mu.z += tmp;
 	      conf_atoms[neigh->nr - firstatom].mu.z -= tmp;
 	    }
@@ -367,23 +367,23 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		neigh->w_grad *= 0.5;
 	      }
 	      /* diagonal elements */
-	      tmp = neigh->w_val * neigh->sqrdist.xx;
+	      tmp = neigh->w_val * neigh->sqdist.xx;
 	      atom->lambda.xx += tmp;
 	      conf_atoms[neigh->nr - firstatom].lambda.xx += tmp;
-	      tmp = neigh->w_val * neigh->sqrdist.yy;
+	      tmp = neigh->w_val * neigh->sqdist.yy;
 	      atom->lambda.yy += tmp;
 	      conf_atoms[neigh->nr - firstatom].lambda.yy += tmp;
-	      tmp = neigh->w_val * neigh->sqrdist.zz;
+	      tmp = neigh->w_val * neigh->sqdist.zz;
 	      atom->lambda.zz += tmp;
 	      conf_atoms[neigh->nr - firstatom].lambda.zz += tmp;
 	      /* offdiagonal elements */
-	      tmp = neigh->w_val * neigh->sqrdist.yz;
+	      tmp = neigh->w_val * neigh->sqdist.yz;
 	      atom->lambda.yz += tmp;
 	      conf_atoms[neigh->nr - firstatom].lambda.yz += tmp;
-	      tmp = neigh->w_val * neigh->sqrdist.zx;
+	      tmp = neigh->w_val * neigh->sqdist.zx;
 	      atom->lambda.zx += tmp;
 	      conf_atoms[neigh->nr - firstatom].lambda.zx += tmp;
-	      tmp = neigh->w_val * neigh->sqrdist.xy;
+	      tmp = neigh->w_val * neigh->sqdist.xy;
 	      atom->lambda.xy += tmp;
 	      conf_atoms[neigh->nr - firstatom].lambda.xy += tmp;
 	    }
@@ -541,12 +541,12 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		/* and stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }			/* within reach */
@@ -561,7 +561,7 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		  u_force.y *= 0.5;
 		  u_force.z *= 0.5;
 		}
-		tmp = SPROD(u_force, neigh->rdist) * neigh->u_grad;
+		tmp = SPROD(u_force, neigh->dist) * neigh->u_grad;
 		tmp_force.x = u_force.x * neigh->u_val + tmp * neigh->dist_r.x;
 		tmp_force.y = u_force.y * neigh->u_val + tmp * neigh->dist_r.y;
 		tmp_force.z = u_force.z * neigh->u_val + tmp * neigh->dist_r.z;
@@ -577,12 +577,12 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		/* and stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
@@ -604,16 +604,16 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		  w_force.xy *= 0.5;
 		}
 		tmp_vect.x =
-		  w_force.xx * neigh->rdist.x + w_force.xy * neigh->rdist.y + w_force.zx * neigh->rdist.z;
+		  w_force.xx * neigh->dist.x + w_force.xy * neigh->rdist.y + w_force.zx * neigh->rdist.z;
 		tmp_vect.y =
-		  w_force.xy * neigh->rdist.x + w_force.yy * neigh->rdist.y + w_force.yz * neigh->rdist.z;
+		  w_force.xy * neigh->dist.x + w_force.yy * neigh->rdist.y + w_force.yz * neigh->rdist.z;
 		tmp_vect.z =
-		  w_force.zx * neigh->rdist.x + w_force.yz * neigh->rdist.y + w_force.zz * neigh->rdist.z;
+		  w_force.zx * neigh->dist.x + w_force.yz * neigh->rdist.y + w_force.zz * neigh->rdist.z;
 		nu = (atom->nu + conf_atoms[(neigh->nr) - firstatom].nu) / 3.0;
 		f1 = 2.0 * neigh->w_val;
 		f2 =
 		  (SPROD(tmp_vect,
-		    neigh->rdist) - nu * neigh->r * neigh->r) * neigh->w_grad - nu * f1 * neigh->r;
+		    neigh->dist) - nu * neigh->r * neigh->r) * neigh->w_grad - nu * f1 * neigh->r;
 		tmp_force.x = f1 * tmp_vect.x + f2 * neigh->dist_r.x;
 		tmp_force.y = f1 * tmp_vect.y + f2 * neigh->dist_r.y;
 		tmp_force.z = f1 * tmp_vect.z + f2 * neigh->dist_r.z;
@@ -629,12 +629,12 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 		/* and stresses */
 		if (us) {
 		  stresses = stress_p + 6 * h;
-		  forces[stresses + 0] -= neigh->rdist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->rdist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->rdist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->rdist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->rdist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->rdist.z * tmp_force.x;
+		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
+		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
+		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
+		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
+		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
+		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
 		}
 #endif /* STRESS */
 	      }
