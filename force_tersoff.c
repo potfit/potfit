@@ -147,6 +147,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
       double b_ij;
       vector force_j, tmp_force;
       double zeta;
+      double tmp_pow_1, tmp_pow_2;
       vector dzeta_i, dzeta_j;
       vector dcos_j, dcos_k;
 
@@ -319,8 +320,12 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
 	      phi_a = 0.5 * *(tersoff->B[col_j]) * exp(-*(tersoff->mu[col_j]) * neigh_j->r);
 
-	      tmp_4 = pow((*(tersoff->gamma[col_j]) * zeta), *(tersoff->n[col_j]));
-	      b_ij = pow(1.0 + tmp_4, -1.0 / (2.0 * *(tersoff->n[col_j])));
+	      tmp_pow_1 = *(tersoff->gamma[col_j]) * zeta;
+	      power_1(&tmp_4, &tmp_pow_1, tersoff->n[col_j]);
+
+	      tmp_pow_1 = 1.0 + tmp_4;
+	      tmp_pow_2 = -1.0 / (2.0 * *(tersoff->n[col_j]));
+	      power_1(&b_ij, &tmp_pow_1, &tmp_pow_2);
 
 	      phi_val = -b_ij * phi_a;
 

@@ -1,10 +1,15 @@
-#!/bin/sh
-####################################################################
+#!/usr/bin/env python
+################################################################
 #
-#   Copyright 2003-2010 Peter Brommer, Daniel Schopf
+# vasp2force.py:
+#   convert vasp output data into potfit reference configurations
+#
+################################################################
+#
+#   Copyright 2013
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
-#             http://www.itap.physik.uni-stuttgart.de/
+#             http://potfit.sourceforge.net/
 #
 #################################################################
 #
@@ -25,248 +30,266 @@
 #
 #################################################################
 
-wdir=`pwd`
-list_types="0";
-new_list="0";
-f_arg="0";
-s_arg="0";
-e_file="";
-saeng="0 0 0";
-mycat="cat";
-weight="1";
-declare -a type_list;
+import argparse
+import gzip
+import os
+import sys
 
-# get command line options
-while getopts 'c:e:flrs:w:?h' OPTION
-do
-    case $OPTION in
-	c) c_string="$OPTARG";
-            ;;
-	e) e_file="$OPTARG";
-            ;;
-	l) list_types="1";
-      	    ;;
-	f) f_arg="1";
-	    ;;
-	s) s_arg="$OPTARG";
-	    ;;
-	r) scan_recursive="1";
-	    ;;
-	w) weight="$OPTARG";
-	    ;;
-	?) printf "\nUsage: %s: [-c list] [-e file] [-f] [-l] [-r] [-s list] <OUTCAR files>\n" $(basename $0) >&2
-            printf "\n <OUTCAR files> is an optional list of files, if not given" >&2
-	    printf "\n all files starting with OUTCAR will be scanned" >&2
-	    printf "\n (it is possible to read gzipped files ending with .gz)\n" >&2
-	    printf "\n -c <list>\t\tlist of chemical species to use\n" >&2
-	    printf "\t\t\t(eg. \"vasp2force.sh -c Al=0,Mn=1,Pd=2\")\n" >&2
-            printf " -e <file>\t\tspecify file to read single atom energies from\n" >&2
-	    printf "\t\t\tif not found, \"0\" will be used for every atom type\n" >&2
-	    printf " -f\t\t\tonly use the final configuration from OUTCAR\n" >&2
-	    printf " -l\t\t\tlist all chemical species found in OUTCAR and exit\n" >&2
-	    printf " -r\t\t\tscan recursively for OUTCAR files\n" >&2
-	    printf " -s <list>\t\tcomma separated list of configurations to use\n" >&2
-	    printf " -w <weight>\t\tchange weight for all configurations to <weight>\n" >&2
-	    exit 2
-	    ;;
-    esac
-done
+# walk directory (recursively) and return all OUTCAR* files
+def get_outcar_files(directory, recursive):
+    sys.stderr.write('Searching directory %s for OUTCAR* files ...\n' % directory)
+    outcars = []
+    if not recursive:
+        for item in os.listdir(directory):
+            if item.startswith('OUTCAR'):
+                outcars.append(os.path.join(directory,item))
+    else:
+        for root, SubFolders, files in os.walk(directory):
+            for item in files:
+                if item.startswith('OUTCAR'):
+                    outcars.append(os.path.join(root,item))
+    if len(outcars) == 0:
+        sys.stderr.write('Could not find any OUTCAR files in this directory.\n')
+    else:
+        sys.stderr.write('Found the following files:\n')
+        sys.stderr.write('  {}\n'.format(('\n  ').join(outcars)))
+        return outcars
+    return outcars
 
-# shift arguments by options and get the rest as $outcars
-shift $(($OPTIND-1))
-outcars="$*";
+# scans an outcar file and returns a list with
+# - number of configurations
+# - atom types
+def scan_outcar_file(file_handle):
+    # first try TOTAL-FORCE
+    configs = 0
+    atom_types = []
+    titel = []
+    potcar = []
+    ipt = []
+    for line in file_handle:
+        if 'TOTAL-FORCE' in line:
+            configs += 1
+        if 'VRHFIN' in line:
+            atom_types.append(line.split()[1].replace('=','').replace(':',''))
+        if 'TITEL' in line:
+            titel.append(line.split()[3][0:2])
+        if 'POTCAR' in line:
+            potcar.append(line.split()[2][0:2])
+        if 'ions per type' in line:
+            ipt = [int(s) for s in line.split()[4:]]
+    potcar = uniq(potcar)
+    if atom_types:
+        return [configs, atom_types, ipt]
+    elif titel:
+        return [configs, titel, ipt]
+    elif potcar:
+        return [configs, potcar, ipt]
+    else:
+        sys.stderr.write('Could not determine atom types in file %s.\n' % filename)
+        sys.exit()
 
-# if no outcars are given, search for them (recursively)
-if [ "$outcars" == "" ]; then
-    echo "No input files given on the command line. Searching for OUTCAR* ..." >&2;
-    if [ "$scan_recursive" == "1" ]; then
-    for i in `find . -name OUTCAR\* -print`; do
-	outcars="${outcars} $i";
-    done
-    else
-    for i in `find . -maxdepth 1 -name OUTCAR\* -print`; do
-	outcars="${outcars} `basename $i`";
-    done
-    fi
-    if [ "$outcars" != "" ]; then
-	echo "Found the following files:$outcars" >&2;
-    else
-	echo "Could not find any OUTCAR files in this directory, aborting."
-	break;
-    fi
-fi
 
-for file in $outcars; do
-    if [ ! -f $file ]; then
-	continue;
-    fi
-    mycat="cat";
-    zipped=`echo $file | awk 'sub(/\.gz$/,""){print $0}'`
-    if [ "$zipped" != "" ]; then
-	mycat="zcat";
-    fi
-    count=`$mycat $file | grep -c "TOTAL-FORCE"`;
-    pr_conf="0";
-    if [ "$f_arg" == "1" ]; then
-	pr_conf="${pr_conf},$count";
-    fi
-    if [ "$s_arg" != "0" ]; then
-	pr_conf="${pr_conf},$s_arg";
-    fi
-    types=`$mycat $file | grep VRHFIN | wc -l`;
-    if [ $types != "0" ]; then
-	name=(`$mycat $file | grep VRHFIN | awk '{ sub("=",""); sub(":",""); print $2; }'`);
-    	if [ "$list_types" == "1" ]; then
-	    echo "Found $types atom types in $count configurations in $file:";
-	    for (( i=0; $i<$types; i++ )); do
-		echo ${name[$i]} "= "$i;
-	    done
-	fi
-    else
-	types=`$mycat $file | grep TITEL | wc -l`;
-	if [ $types != "0" ]; then
-	    name=(`$mycat $file | grep TITEL | awk '{print $4; }'`);
-    	    if [ "$list_types" == "1" ]; then
-		echo "Found $types atom types in $count configurations in $file:";
-		for (( i=0; $i<$types; i++ )); do
-		    echo ${name[$i]} "= "$i;
-		done
-	    fi
-	else
-	    types=`$mycat $file | grep POTCAR | wc -l`;
-	    types=$(($types/2));
-		name=(`$mycat $file | grep POTCAR | awk '{print $3; }'`);
-		if [ "$list_types" == "1" ]; then
-		echo "Found $types atom types in $count configurations in $file:";
-		for (( i=0; $i<$types; i++ )); do
-		    echo ${name[$i]} "= "$i;
-		done
-	    fi
-	fi
-    fi
-    if [ "$list_types" != "1" ]; then
-	echo "There are $count configurations in $file" >&2
-	if [ "$e_file" != "" ]; then
-		if [ -f $e_file ]; then
-		    saeng=`cat $e_file`;
-		else
-		    printf "Warning: $e_file could not be found - using 0 instead\n" >&2;
-		fi
-	fi
+# return unique list without changing the order
+# from http://stackoverflow.com/questions/480214
+def uniq(seq):
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in seq if x not in seen and not seen_add(x)]
 
-	if [ "X$pr_conf" == "X0" ]; then
-	    pr_conf=1;
-	    for (( i=2; $i<=$count; i++ )); do
-		pr_conf="${pr_conf},$i";
-	    done
-	fi
-	if [ ${#name[*]} != ${types} ]; then
-		temp_c=${#name[*]};
-		for (( i=${types};i<$temp_c;i++ )); do
-			unset name[$i];
-		done
-	fi
-	name_array=$( printf "%s," "${name[@]}" )
-	$mycat $file | awk -v pr_conf="${pr_conf}" -v wdir="${wdir}" -v poscar="${poscar}" -v saeng="$saeng" -v name="$name_array" -v c_string="$c_string" -v file="$file" -v recursive="$scan_recursive" -v weight="$weight" '  BEGIN {
-    OFMT="%11.7g"
-#Select confs to print
-    count=0;
-    split(pr_conf,pr_arr,",");
-    sub(/,$/,"",name);
-    n_names=split(name,names,",")
-    n_elements=split(c_string,el_names,",");
-    sub(/=./,"",c_string);
-    if (n_names>n_elements && c_string != "") {
-	print "\nERROR:" > "/dev/stderr";
-        print "There are more elements in the configuration than specified on the command line." > "/dev/stderr";
-	print "Found "n_names" ("name") in "file" but expected only "n_elements" ("c_string")." > "/dev/stderr";
-	exit;
-    }
-    if (c_string != "") {
-	    asort(el_names);
-	    for (i in el_names) {
-		    split(el_names[i],temp,"=");
-		    el_array[temp[1]]=temp[2];
-		    el_inv_array[temp[2]]=temp[1];
-	    }
-	    for (i in el_names) {
-	    el_number[names[i]]=el_array[names[i]];
-    		}
-    }
-    for (i in pr_arr) pr_flag[pr_arr[i]]++;
-    single_energy=0.;
-    split(saeng,sae);
-  };
-  /ions per type/ {
-    ntypes = split($0,a) - 4;
-    for (i=1;i<=ntypes;i++) a[i]=a[i+4];
-    for (i=1; i<=ntypes; i++) single_energy += a[i]*sae[i];
-    for (i=2; i<=ntypes; i++) a[i]+=a[i-1];
-    j=1; for (i=1; i<=a[ntypes]; i++) { if (i>a[j]) j++; b[i]=j-1; }
-    }
-# Marker for energy is two spaces between energy and without.
-# Correct energy is energy(sigma->0)
-  /energy  without/ {
-    energy=($7-single_energy)/a[ntypes];
-    delete stress;
-  }
-# Find box vectors
-  /VOLUME and BASIS/ {
-    for (i=1;i<=4;i++) getline;
-    getline boxx; getline boxy; getline boxz;
-    gsub("-"," -",boxx);
-    gsub("-"," -",boxy);
-    gsub("-"," -",boxz);
-    split(boxx,boxx_v);
-    split(boxy,boxy_v);
-    split(boxz,boxz_v);
-    scale=1.0;
-}
-  ($2=="kB") {
-     for (i=1;i<=6;i++) stress[i]=$(i+2)/1602.;
-}
-  ($2=="TOTAL-FORCE") {
-     count++;
-     if (count in pr_flag) {
-       print "#N",a[ntypes],1; #flag indicates whether to use forces or not
-       printf "#C";
-       if (c_string == "") {
-       for (j=1;j<=ntypes;j++)
-	       printf " %s",names[j];
-       } else {
-       for (j=1;j<=n_elements;j++) {
-		printf " %s",el_inv_array[j-1];
-	}
-       }
-       printf "\n";
-       ("readlink -f "file) | getline x;
+parser = argparse.ArgumentParser(
+#    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description = '''Converts vasp output data into potfit reference configurations.''')
 
-       print "## force file generated from file "x;
+parser.add_argument('-c', type=str, required=False, help='list of chemical species to use, e.g. -c Mg=0,Zn=1')
+parser.add_argument('-e', type=str, required=False, help='file with single atom energies (NYI)')
+parser.add_argument('-f', '--final', action='store_true', help='use only the final configuration from OUTCAR')
+parser.add_argument('-l', '--list', action='store_true', help='list all chemical species and exit')
+parser.add_argument('-r', '--recursive', action='store_true', help='scan recursively for OUTCAR files')
+parser.add_argument('-s', '--configs', type=str, help='comma separated list of configurations to use')
+parser.add_argument('-w', '--weight', type=float, default=1.0, help='set configuration weight for all configurations')
+parser.add_argument('files', type=str, nargs='*', help='list of OUTCAR files (plain or gzipped)')
 
-       printf "#X %13.8f %13.8f %13.8f\n",boxx_v[1]*scale,\
-                   boxx_v[2]*scale,boxx_v[3]*scale;
-       printf "#Y %13.8f %13.8f %13.8f\n",boxy_v[1]*scale,\
-                   boxy_v[2]*scale,boxy_v[3]*scale;
-       printf "#Z %13.8f %13.8f %13.8f\n",boxz_v[1]*scale,\
-                   boxz_v[2]*scale,boxz_v[3]*scale;
-       printf("#W %f\n",weight) ;
-       printf("#E %.10f\n",energy) ;
-       if ( 1 in stress )
-         print "#S",stress[1],stress[2],stress[3],stress[4],stress[5],stress[6];
-       print "#F";
-     }
-     getline; getline;
-     for (i=1; i<=a[ntypes]; i++) {
-	     if (c_string == "") {
-       if (count in pr_flag)
-	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n",
-	       b[i],$1,$2,$3,$4,$5,$6);
-       } else {
-       if (count in pr_flag)
-	   printf("%d %11.7g %11.7g %11.7g %11.7g %11.7g %11.7g\n",
-	       el_number[names[b[i]+1]],$1,$2,$3,$4,$5,$6);
-       }
-     getline; }
-  };'
-    fi
-done
+args = parser.parse_args()
+
+# Check for sane arguments
+if args.weight < 0:
+    sys.stderr.write("The weight needs to be positive!\n")
+    sys.exit()
+
+# determine all OUTCAR files
+outcars = []
+if not args.files:
+    outcars = get_outcar_files('.',args.recursive)
+for item in args.files:
+    if os.path.isdir(item):
+        outcars += get_outcar_files(item, args.recursive)
+    else:
+        outcars.append(os.path.abspath(item))
+
+# remove duplicate entries from the outcars table
+outcars = uniq(outcars)
+
+# read metadata from all outcar files
+data= []
+max_types = 1
+for item in outcars:
+    if item.endswith('.gz'):
+        f = gzip.open(item, 'rb')
+    else:
+        f = open(item, 'r')
+    data.append(scan_outcar_file(f))
+    f.close()
+    max_types = max(max_types, len(data[-1][1]))
+
+# print list of all files and exit
+if args.list:
+    print ""
+    for i in range(len(outcars)):
+        print "Found {} atom types in {} configurations in file {}:".format(len(data[i][1]), data[i][0], outcars[i])
+        for j in range(len(data[i][1])):
+            sys.stdout.write(" {}={}".format(data[i][1][j],j))
+        print ""
+    sys.exit()
+
+# TODO: account for SAE file
+if args.e:
+    sys.stderr.write("\nSingle atom energies are (not yet) supported\n")
+    sys.exit()
+
+# check the config string for sound values
+configs = []
+if args.configs:
+    for item in args.configs.split(','):
+        if not item:
+            sys.stderr.write("ERROR: Could not read the -s string.\n")
+            sys.exit()
+        if len(item.split('-')) == 1:
+            try:
+                configs.append(int(item))
+            except:
+                sys.stderr.write("ERROR: Could not read the -s string.\n")
+                sys.exit()
+        else:
+            if len(item.split('-')) != 2:
+                sys.stderr.write("ERROR: Could not read the -s string.\n")
+                sys.exit()
+            else:
+                items = item.split('-')
+                try:
+                    val_min = int(items[0])
+                    val_max = int(items[1])
+                except:
+                    sys.stderr.write("ERROR: Could not read the -s string.\n")
+                    sys.exit()
+                if val_min > val_max:
+                    val_min = val_max
+                    val_max = int(items[0])
+                for i in range(val_min,val_max+1):
+                    configs.append(i)
+
+for i in range(len(data)):
+    item = data[i]
+    if configs and int(configs[-1]) > int(item[0]):
+        sys.stderr.write('\nThere are only %s configurations in %s.\n' % (item[0],outcars[i]))
+        sys.stderr.write('Please adjust your -s string!\n')
+        sys.exit()
+
+# check the types string
+types = dict()
+numbers = dict()
+if args.c:
+    if len(args.c.split(',')) > max_types:
+        sys.stderr.write("\nERROR: There are too many items in you -c string!\n")
+        sys.exit()
+    if len(args.c.split(',')) < max_types:
+        sys.stderr.write("\nERROR: There are not enough items in you -c string!\n")
+        sys.exit()
+    for item in args.c.split(','):
+        if len(item.split('=')) != 2:
+            sys.stderr.write("\nERROR: Could not read the -c string.\n")
+            sys.stderr.write("Maybe a missing or extra '=' sign?\n")
+            sys.exit()
+        else:
+            try:
+                name = str(item.split('=')[0])
+                number = int(item.split('=')[1])
+            except:
+                sys.stderr.write("\nERROR: Could not read the -c string\n")
+                sys.exit()
+            if number >= max_types:
+                sys.stderr.write("\nERROR: The atom type for %s is invalid!\n" % name)
+                sys.exit()
+            if name in types:
+                sys.stderr.write("\nERROR: Duplicate atom type found in -c string\n")
+                sys.exit()
+            if number in numbers:
+                sys.stderr.write("\nERROR: Duplicate atom number found in -c string\n")
+                sys.exit()
+            types[name] = number
+            numbers[number] = name
+
+for i in range(len(outcars)):
+    if outcars[i].endswith('.gz'):
+        f = gzip.open(outcars[i], 'rb')
+    else:
+        f = open(outcars[i], 'r')
+    natoms = sum(data[i][2])
+    count = 0
+    line = f.readline()
+    while line != '':
+        line = f.readline()
+        if 'Iteration' in line:
+            energy = 0
+            box_x = []
+            box_y = []
+            box_z = []
+            stress = []
+        if 'energy  without' in line:
+            energy = float(line.split()[6]) / natoms
+        if 'VOLUME and BASIS' in line:
+            for do in range(5):
+                line = f.readline()
+            box_x = [float(s) for s in line.replace('-',' -').split()[0:3]]
+            line = f.readline()
+            box_y = [float(s) for s in line.replace('-',' -').split()[0:3]]
+            line = f.readline()
+            box_z = [float(s) for s in line.replace('-',' -').split()[0:3]]
+        if 'in kB' in line:
+            stress = [float(s)/1602 for s in line.split()[2:8]]
+        if 'TOTAL-FORCE' in line:
+            count += 1
+            line = f.readline()
+            if count in configs or (args.final and count == data[i][0]):
+                print "#N %s 1" % natoms
+                sys.stdout.write("#C")
+                if args.c:
+                    sys.stdout.write(" %s" % numbers[0])
+                    for j in range(1,max_types):
+                        sys.stdout.write(' %s' % numbers[j])
+                else:
+                    sys.stdout.write(" %s" % data[i][1][0])
+                    for j in range(1,max_types):
+                        sys.stdout.write(' %s' % data[i][1][j])
+                sys.stdout.write("\n")
+                print "## force file generated from file %s" % outcars[i]
+                print "#X {:13.8f} {:13.8f} {:13.8f}".format(box_x[0],box_x[1],box_x[2])
+                print "#Y {:13.8f} {:13.8f} {:13.8f}".format(box_y[0],box_y[1],box_y[2])
+                print "#Z {:13.8f} {:13.8f} {:13.8f}".format(box_z[0],box_z[1],box_z[2])
+                print "#W {:f}".format(args.weight)
+                print "#E {:.10f}".format(energy)
+                if stress:
+                    sys.stdout.write("#S")
+                    for num in range(6):
+                        sys.stdout.write(' {:8.7g}'.format(stress[num]))
+                    sys.stdout.write('\n')
+                print "#F"
+                for num in range(len(data[i][2])):
+                    for k in range(data[i][2][num]):
+                        line = [float(s) for s in f.readline().split()[0:6]]
+                        if args.c:
+                            sys.stdout.write('{} '.format(types[data[i][1][nim]]))
+                        else:
+                            sys.stdout.write('{} '.format(num))
+                        sys.stdout.write("{:11.7g} {:11.7g} {:11.7g}".format(line[0],line[1],line[2]))
+                        sys.stdout.write(" {:11.7g} {:11.7g} {:11.7g}\n".format(line[3],line[4],line[5]))
+    f.close()

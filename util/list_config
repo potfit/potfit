@@ -1,10 +1,15 @@
-#!/bin/sh
-#################################################################
+#!/usr/bin/env python
+################################################################
 #
-#   Copyright 2009-2010 Daniel Schopf
+# list_config.py:
+#   prints a brief list of all configurations in a potfit config file
+#
+################################################################
+#
+#   Copyright 2013
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
-#             http://www.itap.physik.uni-stuttgart.de/
+#             http://potfit.sourceforge.net/
 #
 #################################################################
 #
@@ -25,47 +30,54 @@
 #
 #################################################################
 
-if [ $# -eq 0 ]; then
-	echo "Usage: list_config.sh FILENAME"
-	exit
-elif [ $# -ge 2 ]; then
-	echo "More then 1 file given on command line. Only $1 will be interpreted"
-	echo
-fi
-if [ ! -e "$1" ]; then
-	echo "File $1 does not exists, aborting"
-	echo
-	exit 2;
-fi
-grep -n -e \#N -e generated -e \#F -e \#W $1 | awk -v file=$1 'BEGIN{i=0}
-{
-	gsub(":"," ");
-	line=$1;
-	n_atoms=$3;
-	getline;
-	gsub(":"," ");
-	printf "%3d: ",i;
-	if ($2=="#F") {
-		printf "no information found in %s\n",file;
-		printf "\t with %d atoms, starting at line %d\n",n_atoms,line;
-		i++;
-	}
-	else if ($2=="#W") {
-		printf "no information found in %s\n",file;
-		printf "\t with %d atoms, weight %d, starting at line %d\n",n_atoms,$3,line;
-		i++;
-                getline;
-	}
-	else if ($2=="##") {
-		printf "generated from %s\n",$8;
-		getline;
-		gsub(":"," ");
-		if ($2=="#W") {
-		printf "\t with %d atoms, weight %d, starting at line %d\n",n_atoms,$3,line;
-		getline;
-		}
-		else
-		printf "\t with %d atoms, starting at line %d\n",n_atoms,line;
-		i++;
-	}
-}'
+import argparse
+import os
+import sys
+
+parser = argparse.ArgumentParser(description='Prints a brief list of all configurations in a potfit config file.')
+parser.add_argument('filename', type=str, help='name of the potfit config file')
+args = parser.parse_args()
+
+# open configuration file
+try:
+    f = open(args.filename)
+except IOError as e:
+    sys.stderr.write("Could not open the configuration file:\n")
+    sys.stderr.write("%s\n" % e)
+    sys.exit()
+
+data_N = []
+data_C = []
+data_W = []
+origin = []
+lines = []
+i = 1
+
+for line in f:
+    if line[0] == '#':
+        temp = line.strip().split()
+        if line[1] == 'N':
+            data_N.append(int(temp[1]))
+            data_C.append([])
+            data_W.append(1)
+            origin.append([])
+            lines.append(i)
+        if line[1] == 'C':
+            data_C[-1] = temp[1:]
+        if line[1] == 'W':
+            data_W[-1] = float(temp[1])
+        if line[1] == '#' and 'generated' in line:
+            origin[-1] = line
+    i += 1
+
+for i in range(len(data_N)):
+    if origin[i] == '':
+        source = 'source unknown'
+    else:
+        source = 'generated from {}'.format(origin[i].strip().split()[6])
+    if not data_C[i]:
+        elements = 'unknown types'
+    else:
+        elements = (', ').join(data_C[i])
+    print "{:3}: {}".format(i,source)
+    print "\tcontaining {} atoms ({}), weight {}, starting on line {}".format(data_N[i],elements,data_W[i],lines[i])

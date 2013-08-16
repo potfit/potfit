@@ -1,12 +1,10 @@
 potfit-next (unreleased)
 + merge MEAM implementation of Jeremy Nicklas (Ohio State University)
-	[untested for the lack of a reference implementation]
-+ remove compatibility mode
 + add Stillinger-Weber potential (option stiweb)
-	[testing is not finished yet, small boxes especially]
 + add Tersoff potential (option tersoff)
-	[early stage, testing required]
++ remove compatibility mode
 + update diagnostic messages and errors to be more clear
++ most of the helper scripts in the util directory have been rewritten in python
 
 potfit-0.5.3 (20130625)
 + fix building in 32bit environments

@@ -138,10 +138,12 @@ void read_config(char *filename)
     /* check if there are enough atoms, 2 for pair and 3 for manybody potentials */
 #ifndef THREEBODY
     if (2 > count)
-      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);
+      error(1, "The configuration %d (starting on line %d) has not enough atoms. Please remove it.",
+	nconf + 1, line);
 #else
     if (3 > count)
-      error(1, "The configuration %d (line %d) has not enough atoms. Please remove it.", nconf + 1, line);
+      error(1, "The configuration %d (starting on line %d) has not enough atoms. Please remove it.",
+	nconf + 1, line);
 #endif /* THREEBODY */
 
     /* increase memory for this many additional atoms */

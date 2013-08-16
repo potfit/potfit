@@ -184,11 +184,11 @@ void write_pot_table0(apot_table_t *apt, char *filename)
       for (j = i; j < ntypes; j++)
 	fprintf(outfile, " %s-%s", elements[i], elements[j]);
     /* lambda terms */
-    int k = 0;
+    int   k = 0;
     for (i = 0; i < ntypes; i++)
       for (j = 0; j < ntypes; j++)
 	for (k = j; k < ntypes; k++)
-          fprintf(outfile, " %s-%s-%s", elements[i],elements[j],elements[k]);
+	  fprintf(outfile, " %s-%s-%s", elements[i], elements[j], elements[k]);
 #endif /* STIWEB */
 
 #ifdef TERSOFF
@@ -480,14 +480,18 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* access pt to shut up compiler warnings */
   i = pt->len;
 
-  /* pair potential part (over r^2) */
-  sprintf(filename, "%s.pot", prefix);
+#ifdef STIWEB
+  sprintf(filename, "%s.sw.pot", prefix);
+#endif /* STIWEB */
+#ifdef TERSOFF
+  sprintf(filename, "%s.tersoff.pot", prefix);
+#endif /* TERSOFF */
   /* open file */
   outfile = fopen(filename, "w");
   if (NULL == outfile)
     error(1, "Could not open file %s\n", filename);
 
-  fprintf(outfile, "# IMD potential file written by potfit %s\n#\n", VERSION_INFO);
+  fprintf(outfile, "# IMD potential file written by %s\n#\n", VERSION_INFO);
 #ifdef STIWEB
   fprintf(outfile, "# This is a Stillinger-Weber potential. Compile IMD with the 'stiweb' option.\n#\n");
 #endif /* STIWEB */
@@ -504,49 +508,49 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* A_ij */
   fprintf(outfile, "stiweb_a\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][0]);
+    fprintf(outfile, " %g", apot_table.values[i][0]);
   fprintf(outfile, "\n");
 
   /* B_ij */
   fprintf(outfile, "stiweb_b\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][1]);
+    fprintf(outfile, " %g", apot_table.values[i][1]);
   fprintf(outfile, "\n");
 
   /* p_ij */
   fprintf(outfile, "stiweb_p\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][2]);
+    fprintf(outfile, " %g", apot_table.values[i][2]);
   fprintf(outfile, "\n");
 
   /* q_ij */
   fprintf(outfile, "stiweb_q\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][3]);
+    fprintf(outfile, " %g", apot_table.values[i][3]);
   fprintf(outfile, "\n");
 
   /* delta_ij */
   fprintf(outfile, "stiweb_de\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][4]);
+    fprintf(outfile, " %g", apot_table.values[i][4]);
   fprintf(outfile, "\n");
 
   /* a1_ij */
   fprintf(outfile, "stiweb_a1\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][5]);
+    fprintf(outfile, " %g", apot_table.values[i][5]);
   fprintf(outfile, "\n");
 
   /* gamma_ij */
   fprintf(outfile, "stiweb_ga\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[paircol + i][0]);
+    fprintf(outfile, " %g", apot_table.values[paircol + i][0]);
   fprintf(outfile, "\n");
 
   /* a2_ij */
   fprintf(outfile, "stiweb_a2\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[paircol + i][1]);
+    fprintf(outfile, " %g", apot_table.values[paircol + i][1]);
   fprintf(outfile, "\n");
 
   /* lambda_ijk */
@@ -555,7 +559,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fprintf(outfile, "stiweb_la\t");
   for (j = 0; j < paircol; j++)
     for (i = 0; i < ntypes; i++)
-      fprintf(outfile, " %f", apot_table.values[apot_table.number - 1][i * paircol + j]);
+      fprintf(outfile, " %g", apot_table.values[apot_table.number - 1][i * paircol + j]);
   fprintf(outfile, "\n");
 #endif /* STIWEB */
 
@@ -563,67 +567,67 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   /* A_ij */
   fprintf(outfile, "ters_a\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][0]);
+    fprintf(outfile, " %g", apot_table.values[i][0]);
   fprintf(outfile, "\n");
 
   /* B_ij */
   fprintf(outfile, "ters_b\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][1]);
+    fprintf(outfile, " %g", apot_table.values[i][1]);
   fprintf(outfile, "\n");
 
   /* lambda_ij */
   fprintf(outfile, "ters_la\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][2]);
+    fprintf(outfile, " %g", apot_table.values[i][2]);
   fprintf(outfile, "\n");
 
   /* mu_ij */
   fprintf(outfile, "ters_mu\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][3]);
+    fprintf(outfile, " %g", apot_table.values[i][3]);
   fprintf(outfile, "\n");
 
   /* gamma_ij */
   fprintf(outfile, "ters_ga\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][4]);
+    fprintf(outfile, " %g", apot_table.values[i][4]);
   fprintf(outfile, "\n");
 
   /* n_ij */
   fprintf(outfile, "ters_n\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][5]);
+    fprintf(outfile, " %g", apot_table.values[i][5]);
   fprintf(outfile, "\n");
 
   /* c_ij */
   fprintf(outfile, "ters_c\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][6]);
+    fprintf(outfile, " %g", apot_table.values[i][6]);
   fprintf(outfile, "\n");
 
   /* d_ij */
   fprintf(outfile, "ters_d\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][7]);
+    fprintf(outfile, " %g", apot_table.values[i][7]);
   fprintf(outfile, "\n");
 
   /* h_ij */
   fprintf(outfile, "ters_h\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][8]);
+    fprintf(outfile, " %g", apot_table.values[i][8]);
   fprintf(outfile, "\n");
 
   /* r_cut = S_ij */
   fprintf(outfile, "ters_r_cut\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][9]);
+    fprintf(outfile, " %g", apot_table.values[i][9]);
   fprintf(outfile, "\n");
 
   /* r_0 = R_ij */
   fprintf(outfile, "ters_r0\t\t");
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %f", apot_table.values[i][10]);
+    fprintf(outfile, " %g", apot_table.values[i][10]);
   fprintf(outfile, "\n");
 
   /* chi and omega only for mixing potentials */
@@ -632,13 +636,13 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     /* chi_ij, chi_ii = 1.0 */
     fprintf(outfile, "ters_chi\t\t");
     for (i = 0; i < ntypes * (ntypes - 1) / 2.0; i++)
-      fprintf(outfile, " %f", apot_table.values[paircol + i][0]);
+      fprintf(outfile, " %g", apot_table.values[paircol + i][0]);
     fprintf(outfile, "\n");
 
     /* omega_ij, chi_ii = 1.0 */
     fprintf(outfile, "ters_om\t\t");
     for (i = 0; i < ntypes * (ntypes - 1) / 2.0; i++)
-      fprintf(outfile, " %f", apot_table.values[paircol + i][1]);
+      fprintf(outfile, " %g", apot_table.values[paircol + i][1]);
     fprintf(outfile, "\n");
   }
 #endif /* TERSOFF */
@@ -1391,10 +1395,24 @@ void write_pot_table_lammps(pot_table_t *pt)
 
   /* write header data */
 #ifdef STIWEB
-  fprintf(outfile, "#\tepsilon\n");
+  fprintf(outfile, "# Stillinger-Weber parameters fitted with %s\n", VERSION_INFO);
+  fprintf(outfile, "# these entries are in LAMMPS \"metal\" units:\n");
+  fprintf(outfile, "#   epsilon = eV; sigma = Angstroms\n");
+  fprintf(outfile, "#   other quantities are unitless\n\n");
+  fprintf(outfile, "# format of a single entry (one or more lines):\n");
+  fprintf(outfile, "#   element_1 element_2 element_3\n");
+  fprintf(outfile, "#   epsilon sigma a lambda gamma costheta0 A B p q tol\n\n");
+
+  double epsilon, sigma, scale_p, scale_q;
 #endif /* STIWEB */
 #ifdef TERSOFF
-  fprintf(outfile, "#\tepsilon\n");
+  fprintf(outfile, "# Tersoff parameters fitted with %s\n", VERSION_INFO);
+  fprintf(outfile, "# these entries are in LAMMPS \"metal\" units:\n");
+  fprintf(outfile, "#   A,B = eV; lambda1,2,3 = 1/Angstroms; R,D = Angstroms\n");
+  fprintf(outfile, "#   other quantities are unitless\n\n");
+  fprintf(outfile, "# format of a single entry (one or more lines):\n");
+  fprintf(outfile, "#   element_1 element_2 element_3\n");
+  fprintf(outfile, "#   m, gamma, lambda3, c, d, costheta0, n, beta, lambda2, B, R, D, lambda1, A\n\n");
 #endif /* TERSOFF */
 
   /* write data, one line per triple of elements */
@@ -1404,50 +1422,70 @@ void write_pot_table_lammps(pot_table_t *pt)
 	col_j = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
 	fprintf(outfile, "%s %s %s", elements[i], elements[j], elements[k]);
 #ifdef STIWEB
-	/* TODO: scaling ??? */
-	fprintf(outfile, " %f", 1.0);
-	fprintf(outfile, " %f", 1.0);
-	fprintf(outfile, " %f", apot_table.values[col_j][5]);
-	fprintf(outfile, " %f", *(apot_table.sw.lambda[i][j][k]));
-	fprintf(outfile, " %f", apot_table.values[paircol + col_j][0]);
-	fprintf(outfile, " %f", -1. / 3.);
-	fprintf(outfile, " %f", apot_table.values[col_j][1]);
-	fprintf(outfile, " %f", apot_table.values[col_j][0] / apot_table.values[col_j][1]);
-	fprintf(outfile, " %f", apot_table.values[col_j][2]);
-	fprintf(outfile, " %f", apot_table.values[col_j][3]);
-	fprintf(outfile, " %f", 0.0);
+	/* calculate scaling factors */
+	/* energy scaling factor */
+	epsilon = 1.0;
+	/* distance scaling factor */
+	sigma = apot_table.values[col_j][4];
+	power_1(&scale_p, &sigma, &apot_table.values[col_j][2]);
+	power_1(&scale_q, &sigma, &apot_table.values[col_j][3]);
+	scale_p = 1.0 / (epsilon * scale_p);
+	scale_q = 1.0 / (epsilon * scale_q);
+	/* epsilon */
+	fprintf(outfile, " %g", epsilon);
+	/* sigma */
+	fprintf(outfile, " %g", sigma);
+	/* a */
+	fprintf(outfile, " %g", apot_table.values[col_j][5] / sigma);
+	/* lambda */
+	fprintf(outfile, " %g", *(apot_table.sw.lambda[i][j][k]) / epsilon);
+	/* gamma */
+	fprintf(outfile, " %g", apot_table.values[paircol + col_j][0] / sigma);
+	/* costheta0 */
+	fprintf(outfile, " %g", -1. / 3.);
+	/* A */
+	fprintf(outfile, " %g", apot_table.values[col_j][1] * scale_q);
+	/* B */
+	fprintf(outfile, " %g",
+	  apot_table.values[col_j][0] * scale_p / apot_table.values[col_j][1] / scale_q);
+	/* p */
+	fprintf(outfile, " %g", apot_table.values[col_j][2]);
+	/* q */
+	fprintf(outfile, " %g", apot_table.values[col_j][3]);
+	/* tol */
+	fprintf(outfile, " %g", 0.0);
 #endif /* STIWEB */
 #ifdef TERSOFF
 	/* potfit calculates the Tersoff_2 potential model */
 	/* lammps requires the parameters in Tersoff_1 format */
 	/* m has no effect, set it to 1.0 */
-	fprintf(outfile, " %f", 1.0);
+	fprintf(outfile, " %g", 1.0);
 	/* gamma_ijk = omega_ik */
-	fprintf(outfile, " %f", *(apot_table.tersoff.omega[col_j]));
+	fprintf(outfile, " %g", *(apot_table.tersoff.omega[col_j]));
 	/* lambda3 = 0 */
-	fprintf(outfile, " %f", 0.0);
+	fprintf(outfile, " %g", 0.0);
 	/* c */
-	fprintf(outfile, " %f", apot_table.values[col_j][6]);
+	fprintf(outfile, " %g", apot_table.values[col_j][6]);
 	/* d */
-	fprintf(outfile, " %f", apot_table.values[col_j][7]);
+	fprintf(outfile, " %g", apot_table.values[col_j][7]);
 	/* costheta0 = h */
-	fprintf(outfile, " %f", apot_table.values[col_j][8]);
+	fprintf(outfile, " %g", apot_table.values[col_j][8]);
 	/* n */
-	fprintf(outfile, " %f", apot_table.values[col_j][5]);
+	fprintf(outfile, " %g", apot_table.values[col_j][5]);
 	/* beta */
-	fprintf(outfile, " %f", apot_table.values[col_j][4]);
+	fprintf(outfile, " %g", apot_table.values[col_j][4]);
 	/* lambda2 */
-	fprintf(outfile, " %f", apot_table.values[col_j][3]);
+	fprintf(outfile, " %g", apot_table.values[col_j][3]);
 	/* B (includes chi) */
-	fprintf(outfile, " %f", apot_table.values[col_j][1] * *(apot_table.tersoff.chi[col_j]));
+	fprintf(outfile, " %g", apot_table.values[col_j][1] * *(apot_table.tersoff.chi[col_j]));
 	/* R */
-	fprintf(outfile, " %f", 0.5 * (apot_table.values[col_j][9] + apot_table.values[col_j][10]));
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] + apot_table.values[col_j][10]));
 	/* D */
-	fprintf(outfile, " %f", 0.5 * (apot_table.values[col_j][9] - apot_table.values[col_j][10]));
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] - apot_table.values[col_j][10]));
 	/* lambda1 */
-	fprintf(outfile, " %f", apot_table.values[col_j][2]);
+	fprintf(outfile, " %g", apot_table.values[col_j][2]);
 	/* A */
-	fprintf(outfile, " %f", apot_table.values[col_j][0]);
+	fprintf(outfile, " %g", apot_table.values[col_j][0]);
 #endif /* TERSOFF */
 	fprintf(outfile, "\n");
       }

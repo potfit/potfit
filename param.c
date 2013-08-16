@@ -256,11 +256,13 @@ void read_paramfile(FILE *pf)
       getparam("plotfile", plotfile, PARAM_STR, 1, 255);
       plot = 1;
     }
+#ifndef APOT
     /* file for maximal change */
     else if (strcasecmp(token, "maxchfile") == 0) {
       getparam("maxchfile", maxchfile, PARAM_STR, 1, 255);
       usemaxch = 1;
     }
+#endif /* !APOT */
 #ifdef PDIST
     /* file for pair distribution */
     else if (strcasecmp(token, "distfile") == 0) {
