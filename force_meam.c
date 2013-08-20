@@ -206,6 +206,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
       /* EAM variables */
       int   col_F;
       double eam_force;
+      double rho_val;
 
       /* MEAM variables */
       int   ijk;

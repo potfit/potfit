@@ -89,7 +89,7 @@
 double calc_forces_pair(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  double tmpsum = 0., sum = 0.;
+  double tmpsum = 0.0, sum = 0.0;
   double *xi = NULL;
 
   switch (format) {
@@ -104,17 +104,12 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	xi = calc_pot.table;	/* we need to update the calc-table */
   }
 
-#ifndef MPI
-  /* shut up compiler warning about unused variable */
-  i = flag;
-#endif /* MPI */
-
   /* This is the start of an infinite loop */
   while (1) {
-    tmpsum = 0.;		/* sum of squares of local process */
+    tmpsum = 0.0;		/* sum of squares of local process */
 
 #if defined APOT && !defined MPI
-    if (format == 0) {
+    if (0 == format) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
@@ -127,17 +122,17 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (flag == 1)
+    if (1 == flag)
       break;			/* Exception: flag 1 means clean up */
 
 #ifdef APOT
-    if (myid == 0)
+    if (0 == myid)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
-    if (flag == 2)
+    if (2 == flag)
       potsync();
 #endif /* APOT */
 #endif /* MPI */
@@ -164,7 +159,8 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
       atom_t *atom;
       int   h, j;
       int   n_i, n_j;
-      int   self, uf;
+      int   self;
+      int   uf;
 #ifdef STRESS
       int   us, stresses;
 #endif /* STRESS */
@@ -234,7 +230,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
-	      /* not double force: cohesive energy */
+	      /* add cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
 	      if (uf) {
@@ -261,10 +257,10 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 		}
 #endif /* STRESS */
 	      }
-	    }
-	  }			/* loop over neighbours */
+	    }			/* neighbor in range */
+	  }			/* loop over all neighbors */
 
-/*then we can calculate contribution of forces right away */
+	  /* then we can calculate contribution of forces right away */
 	  if (uf) {
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
@@ -277,16 +273,16 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i +
-		    2]));
-	  }			/* second loop over atoms */
-	}
+	      tmpsum += conf_weight[h] *
+		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
+	  }
+	}			/* second loop over atoms */
 
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -297,22 +293,21 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	  }
 	}
 #endif /* STRESS */
-	/* limiting constraints per configuration */
+
       }				/* loop over configurations */
     }				/* parallel region */
 
     /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (myid == 0) {
+    if (0 == myid) {
       tmpsum += apot_punish(xi_opt, forces);
     }
 #endif /* APOT */
 
-    sum = tmpsum;		/* global sum = local sum  */
 #ifdef MPI
     /* reduce global sum */
-    sum = 0.;
+    sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     if (myid == 0) {		/* root node already has data in place */
@@ -336,10 +331,12 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
 	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
     }
+#else
+    sum = tmpsum;		/* global sum = local sum  */
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (myid == 0) {
+    if (0 == myid) {
       fcalls++;			/* Increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
@@ -350,7 +347,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 	return sum;
     }
 
-  }
+  }				/* end of infinite loop */
 
   /* once a non-root process arrives here, all is done. */
   return -1.0;

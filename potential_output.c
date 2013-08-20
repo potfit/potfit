@@ -1748,12 +1748,12 @@ void write_pairdist(pot_table_t *pt, char *filename)
   for (h = firstconf; h < firstconf + myconf; h++) {
     for (i = 0; i < inconf[h]; i++) {
       atom = atoms + i + cnfstart[h];
-      typ1 = atom->typ;
+      typ1 = atom->type;
 
       /* pair potentials */
       for (j = 0; j < atom->num_neigh; j++) {
 	neigh = atom->neigh + j;
-	typ2 = neigh->typ;
+	typ2 = neigh->type;
 	col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
 	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 	/* this has already been calculated */

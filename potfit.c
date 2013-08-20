@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 #ifdef APOT
   punish_par_p = dummy_p + 2 * ntypes;
   punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
-#endif
+#endif /* APOT */
 #else /* EAM || ADP || MEAM */
 #ifdef APOT
   punish_par_p = stress_p + 6 * nconf;
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 #ifdef APOT
   punish_par_p = dummy_p + 2 * ntypes;
   punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
-#endif
+#endif /* APOT */
 #else /* EAM || ADP || MEAM */
 #ifdef APOT
   punish_par_p = energy_p + nconf;
@@ -360,17 +360,17 @@ int main(int argc, char **argv)
       totdens[i] = 0.;
     }
     fprintf(outfile, "#    atomtype\trho\n");
-#if defined MEAM
+#ifdef MEAM
     fprintf(outfile, "#    atomtype\trho\trho_eam\trho_meam\n");
-#endif
+#endif /* MEAM */
     for (i = 0; i < natoms; i++) {
 #if defined EAM || defined ADP
       fprintf(outfile, "%d\t%d\t%f\n", i, atoms[i].type, atoms[i].rho);
 #elif defined MEAM
       fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, atoms[i].type, atoms[i].rho,
 	atoms[i].rho_eam, atoms[i].rho - atoms[i].rho_eam);
-#endif
-      totdens[atoms[i].typ] += atoms[i].rho;
+#endif /* EAM || ADP */
+      totdens[atoms[i].type] += atoms[i].rho;
     }
     fprintf(outfile, "\n");
     for (i = 0; i < ntypes; i++) {
@@ -447,7 +447,7 @@ int main(int argc, char **argv)
 	fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
       fprintf(outfile,
 	"%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\t%14.8f\n",
-	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].typ],
+	atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].type],
 	sqr, force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
 	force_0[i], (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i], atoms[i / 3].absforce);
 #else
@@ -595,7 +595,7 @@ int main(int argc, char **argv)
 	fprintf(outfile, "%s\t%f\t%f\n", elements[i - dummy_p], sqr, force[i]);
       }
     }
-#endif /* (EAM || ADP) && !NOPUNISH */
+#endif /* (EAM || ADP || MEAM) && !NOPUNISH */
 
     /* final error report */
     printf("\n###### error report ######\n");
@@ -612,7 +612,7 @@ int main(int argc, char **argv)
       fprintf(outfile,
 	"total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
 	tot, mdim, 3 * natoms, nconf, 6 * nconf);
-#endif /* STRESS */
+#endif /* !STRESS */
     }
 #ifndef STRESS
     printf("total error sum %f, count %d (%d forces, %d energies)\n", tot, mdim - 6 * nconf, 3 * natoms,
@@ -621,7 +621,7 @@ int main(int argc, char **argv)
     printf
       ("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n", tot, mdim, 3 * natoms, nconf,
       6 * nconf);
-#endif /* STRESS */
+#endif /* !STRESS */
 
     /* calculate the rms errors for forces, energies, stress */
     rms[0] = 0.0;		/* rms rms for forces */

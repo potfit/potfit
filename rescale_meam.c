@@ -38,12 +38,12 @@
 #ifdef MEAM
 
 /****************************************************************
-*
-* rescale: Routine used to automatically rescale
-*     EAM potential. Flag indicates whether to force update...
-*     upper is upper limit of electron density.
-*
-*****************************************************************/
+ *
+ * rescale: Routine used to automatically rescale
+ *     EAM potential. Flag indicates whether to force update...
+ *     upper is upper limit of electron density.
+ *
+ ****************************************************************/
 
 double rescale(pot_table_t *pt, double upper, int flag)
 {
@@ -60,15 +60,15 @@ double rescale(pot_table_t *pt, double upper, int flag)
   neigh_t *neigh_j, *neigh_k;
 #endif // MEAM
 
-  // Set potential array in xi
+  /* Set potential array in xi */
   xi = pt->table;
 
-  // Last index of F(type n) - Last index of rho(type n)
-  // The total number of splines and gradients for F and all of its
-  // types for an alloy
+  /* Last index of F(type n) - Last index of rho(type n)
+     The total number of splines and gradients for F and all of its
+     types for an alloy */
   dimnewxi = pt->last[paircol + 2 * ntypes - 1] - pt->last[paircol + ntypes - 1];
 
-  // Allocate memory for dynamic arrays that will store the new F
+  /* Allocate memory for dynamic arrays that will store the new F */
   newxi = (double *)malloc(dimnewxi * sizeof(double));	// Size of F array
   neword = (double *)malloc(dimnewxi * sizeof(double));	// Size of F array
   newstep = (double *)malloc(ntypes * sizeof(double));	// # of cols of F
@@ -90,13 +90,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
   // Initialize the 2nd derivs for splines, so that we can interpolate
   // in the future
-#ifdef EAM
-  for (col = 0; col < paircol + 2 * ntypes; ++col) {
-
-#else // MEAM
   for (col = 0; col < 2 * paircol + 3 * ntypes; ++col) {
 
-#endif // EAM
     // Pointer to first entry
     first = pt->first[col];
 
@@ -148,7 +143,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	  // Compute rho value and store it for atom i
 	  atom->rho += splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	}
-#ifdef MEAM
 	// BEGIN COMPUTING rho values for f_ij potential
 	// Get column for atom j (it behaves similarly to pair potential, phi)
 	// just offset by "paircol + 2*ntypes"
@@ -166,10 +160,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	  neigh->f = 0;
 	}
 
-#endif // MEAM
       }				// END OF LOOP OVER NEIGHBORS
 
-#ifdef MEAM
       // Loop over every angle formed by neighbors
       // N(N-1)/2 possible combinations
       // Used in computing angular part g_ijk
@@ -196,7 +188,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	  ++ijk;
 	}			// END OF INNER LOOP OVER TRIPLETS
       }				// END OF OUTER LOOP OVER TRIPLETS
-#endif // MEAM
     }				// END OF LOOP OVER ATOM i
 
     // BEGIN LOOP OVER EACH ATOM i FINDING MAX/MIN RHO
@@ -601,5 +592,4 @@ double rescale(pot_table_t *pt, double upper, int flag)
 }
 
 #endif /* MEAM */
-
 #endif /* !NORESCALE || !APOT */

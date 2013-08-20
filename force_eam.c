@@ -89,11 +89,11 @@
 double calc_forces_eam(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  double tmpsum = 0., sum = 0.;
+  double tmpsum = 0.0, sum = 0.0;
   double *xi = NULL;
 
   static double rho_sum_loc, rho_sum;
-  rho_sum_loc = rho_sum = 0.;
+  rho_sum_loc = rho_sum = 0.0;
 
   switch (format) {
       case 0:
@@ -109,34 +109,34 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 
   /* This is the start of an infinite loop */
   while (1) {
-    tmpsum = 0.;		/* sum of squares of local process */
-    rho_sum_loc = 0.;
+    tmpsum = 0.0;		/* sum of squares of local process */
+    rho_sum_loc = 0.0;
 
 #if defined APOT && !defined MPI
-    if (format == 0) {
+    if (0 == format) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
 #endif /* APOT && !MPI */
 
 #ifdef MPI
-    /* exchange potential and flag value */
 #ifndef APOT
+    /* exchange potential and flag value */
     MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (flag == 1)
+    if (1 == flag)
       break;			/* Exception: flag 1 means clean up */
 
 #ifdef APOT
-    if (myid == 0)
+    if (0 == myid)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
-    if (flag == 2)
+    if (2 == flag)
       potsync();
 #endif /* APOT */
 #endif /* MPI */
@@ -162,22 +162,22 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
       first = calc_pot.first[col];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
-      if (format == 0 || format == 3)
+      if (0 == format || 3 == format)
 	spline_ed(calc_pot.step[col], xi + first, calc_pot.last[col] - first + 1,
 #ifdef WZERO
-	  ((calc_pot.begin[col] <= 0.) ? *(xi + first - 2)
-	    : .5 / xi[first]), ((calc_pot.end[col] >= 0.) ? *(xi + first - 1)
-	    : -.5 / xi[calc_pot.last[col]]),
+	  ((calc_pot.begin[col] <= 0.0) ? *(xi + first - 2)
+	    : 0.5 / xi[first]), ((calc_pot.end[col] >= 0.0) ? *(xi + first - 1)
+	    : -0.5 / xi[calc_pot.last[col]]),
 #else /* WZERO: F is natural spline in any case */
 	  *(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
-	  calc_pot.d2tab + first);	/* XXX */
+	  calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first, calc_pot.last[col] - first + 1,
 #ifdef WZERO
-	  (calc_pot.begin[col] <= 0. ? *(xi + first - 2)
-	    : .5 / xi[first]), (calc_pot.end[col] >= 0. ? *(xi + first - 1)
-	    : -.5 / xi[calc_pot.last[col]]),
+	  (calc_pot.begin[col] <= 0.0 ? *(xi + first - 2)
+	    : 0.5 / xi[first]), (calc_pot.end[col] >= 0.0 ? *(xi + first - 1)
+	    : -0.5 / xi[calc_pot.last[col]]),
 #else /* WZERO */
 	  *(xi + first - 2), *(xi + first - 1),
 #endif /* WZERO */
@@ -189,13 +189,13 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     myconf = nconf;
 #endif /* MPI */
 
-    /* region containing loop over configurations,
-       also OMP-parallelized region */
+    /* region containing loop over configurations */
     {
       atom_t *atom;
       int   h, j;
       int   n_i, n_j;
-      int   self, uf;
+      int   self;
+      int   uf;
 #ifdef APOT
       double temp_eng;
 #endif /* APOT */
@@ -331,7 +331,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #ifndef NORESCALE
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
 #ifndef PARABOLA
 /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.end[col_F];
@@ -340,7 +340,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 #ifndef PARABOLA
 /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.begin[col_F];
@@ -460,9 +460,8 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i +
-		    2]));
+	      tmpsum += conf_weight[h] *
+		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }			/* third loop over atoms */
 	}
 
