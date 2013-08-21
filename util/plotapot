@@ -85,10 +85,10 @@ def make_partition(interaction, n):
     else:
         return 0
 
-def write_gnuplot_header(f, prefix, xra = [0, 6], yra = 'auto'):
+def write_gnuplot_header(f, index, prefix, xra = [0, 6], yra = 'auto'):
     f.write('reset;\n')
     f.write('set termoption solid;\n')
-    width = len(partition[0])
+    width = len(partition[index])
     if args.t and not args.p:
         f.write('set term %s title \'%s\' size %s,%s\n' % (args.t, prefix + ' potentials', width*size[0], size[1]))
     else:
@@ -116,8 +116,11 @@ def write_gnuplot_data(f, index, offset, title_string):
                 if pot_table[j].do_smooth != 0:
                     f.write(')')
                 f.write(' w l')
-                f.write(' t \'%s\'' % title_string[j - count])
+                f.write(' t \'%s\'' % title_string[j])
                 f.write(' lt 0 lw 2 lc %s' % (j+1-count))
+                if index == 0 and args.pair_dist_file:
+                    f.write(', \'%s\' i %s axes x1y2 w steps lw 1.2 lc %s t \'g(r) %s\'' %
+                            (args.pair_dist_file, j, (j+1-count), title_string[j]))
                 if j < count + partition[index][i] - 1:
                     f.write(', \\\n\t')
             f.write(';\n')
@@ -131,8 +134,11 @@ def write_gnuplot_data(f, index, offset, title_string):
             if pot_table[i].do_smooth != 0:
                 f.write(')')
             f.write(' w l')
-            f.write(' t \'%s\'' % title_string[i - count])
+            f.write(' t \'%s\'' % title_string[i-count])
             f.write(' lt 0 lw 2 lc %s' % (i+1-count))
+            if index == 0 and args.pair_dist_file:
+                f.write(', \'%s\' i %s axes x1y2 w steps lw 1.2 lc %s t \'g(r) %s\'' %
+                        (args.pair_dist_file, i-count, (i+1-count), title_string[i-count]))
             if i < count + partition[index][0] - 1:
                 f.write(', \\\n\t')
         f.write(';\n')
@@ -202,6 +208,8 @@ while line != '':
             if name.endswith('_sc'):
                 do_smooth = 1
                 name = name[:-3]
+            if name == 'pohlong':
+                name = 'bjs'
             try:
                 pot_table.append(getattr(functions, name)())
             except:
@@ -265,42 +273,42 @@ for i in range(num_atom_types):
 
 # write pair potentials
 f = open('plot_pair', 'w')
-write_gnuplot_header(f, 'pair', yra=[-.3,.5])
+write_gnuplot_header(f, 0, 'pair', yra=[-.3,.5])
 write_gnuplot_data(f, 0, 0, title_pair)
 f.close()
 
 # write eam potentials
 if interaction in ['eam', 'adp', 'meam']:
     f = open('plot_transfer', 'w')
-    write_gnuplot_header(f, 'transfer', yra=[-.3,.5])
+    write_gnuplot_header(f, 1, 'transfer', yra=[-.3,.5])
     write_gnuplot_data(f, 1, pair_col, title_transfer)
     f.close()
 
     f = open('plot_embedding', 'w')
-    write_gnuplot_header(f, 'embedding')
+    write_gnuplot_header(f, 2, 'embedding')
     write_gnuplot_data(f, 2, pair_col + num_atom_types, title_transfer)
     f.close()
 
 # write adp potentials
 if interaction == 'adp':
     f = open('plot_upot', 'w')
-    write_gnuplot_header(f, 'dipole', yra=[-.3,.5])
+    write_gnuplot_header(f, 3, 'dipole', yra=[-.3,.5])
     write_gnuplot_data(f, 3, pair_col + 2 * num_atom_types, title_pair)
     f.close()
 
     f = open('plot_wpot', 'w')
-    write_gnuplot_header(f, 'quadrupole', yra=[-.3,.5])
+    write_gnuplot_header(f, 4, 'quadrupole', yra=[-.3,.5])
     write_gnuplot_data(f, 4, 2 * pair_col + 2 * num_atom_types, title_pair)
     f.close()
 
 if interaction == 'meam':
     f = open('plot_f', 'w')
-    write_gnuplot_header(f, 'f', yra=[-.3,.5])
+    write_gnuplot_header(f, 3, 'f', yra=[-.3,.5])
     write_gnuplot_data(f, 3, pair_col + 2 * num_atom_types, title_pair)
     f.close()
 
     f = open('plot_g', 'w')
-    write_gnuplot_header(f, 'g', xra=[-1.1,1.1])
+    write_gnuplot_header(f, 4, 'g', xra=[-1.1,1.1])
     write_gnuplot_data(f, 4, 2 * pair_col + 2 * num_atom_types, title_pair)
     f.close()
 

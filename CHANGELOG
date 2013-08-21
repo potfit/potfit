@@ -1,4 +1,4 @@
-potfit-next (unreleased)
+potfit-0.6.0 (20130821)
 + merge MEAM implementation of Jeremy Nicklas (Ohio State University)
 + add Stillinger-Weber potential (option stiweb)
 + add Tersoff potential (option tersoff)
