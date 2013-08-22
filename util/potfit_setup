@@ -1,0 +1,147 @@
+#!/usr/bin/env python
+################################################################
+#
+# potfit_setup:
+#   create a simple potfit parameter file
+#
+################################################################
+#
+#   Copyright 2013
+#             Institute for Theoretical and Applied Physics
+#             University of Stuttgart, D-70550 Stuttgart, Germany
+#             http://potfit.sourceforge.net/
+#
+#################################################################
+#
+#   This file is part of potfit.
+#
+#   potfit is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   potfit is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+#
+#################################################################
+
+import argparse
+import os
+import sys
+
+my_epilog = 'The prefix takes precedence over the -c and -p switches.'
+my_epilog += 'If the <prefix>.pot and <prefix>.config files are not found, the values of -c and -p are checked.'
+
+parser = argparse.ArgumentParser(
+        description='Create a simple potfit parameter file from scratch.', epilog = my_epilog)
+parser.add_argument('-c', metavar='config file', dest='config',
+        type=str, help='name of the potfit configuration file')
+parser.add_argument('-p', metavar='potential file', dest='potfile',
+        type=str, help='name of the potfit potential file')
+parser.add_argument('-s', metavar='prefix', dest='prefix',
+        type=str, help='prefix for all files')
+args = parser.parse_args()
+
+# check for files with prefix
+if args.prefix:
+    try:
+        f = open(args.prefix+'.pot')
+        f.close()
+        potfile = args.prefix + '.pot'
+    except:
+        potfile = ''
+    try:
+        f = open(args.prefix+'.config')
+        f.close()
+        configfile = args.prefix + '.config'
+    except:
+        configfile = ''
+    prefix = args.prefix
+else:
+    potfile = ''
+    configfile = ''
+    prefix = 'dummy'
+
+if not potfile and args.potfile:
+    try:
+        f = open(args.potfile)
+        f.close()
+        potfit = args.potfile
+    except:
+        pass
+else:
+    potfile = prefix + '.pot'
+
+if not configfile and args.config:
+    try:
+        f = open(args.config)
+        f.close()
+        configfile = args.config
+    except:
+        pass
+else:
+    configfile = prefix + '.config'
+
+
+# try to read the number of atom types from config file
+ntypes = 0
+interaction = ''
+my_format = -1
+try:
+    f = open(configfile)
+    for line in f:
+        if line[0] != '#':
+            data = line.split()[0]
+            try:
+                ntypes = max(ntypes,int(data)+1)
+            except:
+                pass
+    f.close()
+    f = open(potfile)
+    for line in f:
+        if line.startswith('#F'):
+            my_format = int(line.split()[1])
+        if line.startswith('#T'):
+            interaction = line.split()[1]
+    f.close()
+except:
+    pass
+
+# write parameter file to stdout
+out = sys.stdout.write
+out('nytpes\t\t%s\n' % ntypes)
+out('config\t\t%s\n' % configfile)
+out('startpot\t%s\n' % potfile)
+out('endpot\t\t%s\n' % (potfile + '_end'))
+out('tempfile\t%s\n' % (prefix + '.tmp'))
+out('\n')
+out('imdpot\t\t%s\n' % (prefix + '.imd'))
+out('plotfile\t%s\n' % (prefix + '.plot'))
+out('flagfile\t%s\n' % 'STOP')
+out('\n')
+out('write_pair\t%s\n' % 1)
+out('write_lammps\t%s\n' % 1)
+if my_format == 0:
+    out('plotmin\t\t%s\n' % 0.1)
+    if interaction.lower() == 'pair':
+        out('enable_cp\t%s\n' % 0)
+if my_format in [3, 4]:
+    out('plotpointfile\t%s\n' % (prefix + '.plotpt'))
+    out('distfile\t%s\n' % (prefix + '.dist'))
+    out('maxchfile\t%s\n' % (prefix + '.maxch'))
+out('\n')
+out('imdpotsteps\t%s\n' % 5000)
+out('output_prefix\t%s\n' % prefix)
+out('\n')
+out('opt\t\t%s\n' % 1)
+out('anneal_temp\t%s\n' % 'auto')
+out('eng_weight\t%s\n' % 100)
+out('stress_weight\t%s\n' % 10)
+out('seed\t\t%s\n' % 42)
+if my_format == 0:
+    out('apot_punish\t%s\n' % 0)

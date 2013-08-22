@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ################################################################
 #
-# list_config.py:
+# list_config:
 #   prints a brief list of all configurations in a potfit config file
 #
 ################################################################

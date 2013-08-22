@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ################################################################
 #
-# makeapot.py:
+# makeapot:
 #   create an analytic potential file for potfit
 #
 ################################################################

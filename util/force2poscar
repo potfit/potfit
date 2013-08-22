@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ################################################################
 #
-# force2poscar.py:
+# force2poscar:
 #   convert a potfit configuration (force file) into
 #   a VASP POSCAR file
 #
