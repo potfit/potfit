@@ -31,6 +31,7 @@
 #include "potfit.h"
 
 #include "elements.h"
+#include "utils.h"
 
 #define N_ELEMENTS 110
 
@@ -480,6 +481,10 @@ void init_elements()
   strcpy(element_table[110].name, "Mix");
   strcpy(element_table[110].short_name, "X");
   element_table[110].mass = 1.0;
+
+  reg_for_free(element_table, "element_table");
+
+  return;
 }
 
 double ele_mass_from_number(int num)
@@ -489,7 +494,6 @@ double ele_mass_from_number(int num)
   } else {
     return element_table[num].mass;
   }
-
 }
 
 double ele_mass_from_name(char *name)
@@ -504,6 +508,7 @@ double ele_mass_from_name(char *name)
       if (strcmp(name, element_table[i].name) == 0)
 	return element_table[i].mass;
   }
+
   return 0;
 }
 

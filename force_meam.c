@@ -211,7 +211,6 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #endif /* NORESCALE && !APOT */
 
       /* MEAM variables */
-      int   ijk;
       double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
       vector dfj, dfk;
       angl *n_angl;

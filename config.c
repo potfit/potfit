@@ -150,8 +150,10 @@ void read_config(char *filename)
     atoms = (atom_t *)realloc(atoms, (natoms + count) * sizeof(atom_t));
     if (NULL == atoms)
       error(1, "Cannot allocate memory for atoms");
-    for (i = 0; i < count; i++)
-      atoms[natoms + i].neigh = malloc(sizeof(neigh_t));
+    for (i = 0; i < count; i++) {
+      atoms[natoms + i].neigh = (neigh_t *)malloc(sizeof(neigh_t));
+      reg_for_free(atoms[natoms + i].neigh, "test neigh");
+    }
     coheng = (double *)realloc(coheng, (nconf + 1) * sizeof(double));
     if (NULL == coheng)
       error(1, "Cannot allocate memory for cohesive energy");
@@ -186,7 +188,7 @@ void read_config(char *filename)
     if (NULL == na_type[nconf])
       error(1, "Cannot allocate memory for na_type");
 
-    for (i=natoms;i<natoms+count;i++) {
+    for (i = natoms; i < natoms + count; i++) {
       atoms[i].type = 0;
       atoms[i].num_neigh = 0;
       atoms[i].pos.x = 0.0;
@@ -552,7 +554,7 @@ void read_config(char *filename)
 		dd.x /= r;
 		dd.y /= r;
 		dd.z /= r;
-		k = atoms[i].num_neigh;
+		k = atoms[i].num_neigh++;
 		atoms[i].neigh[k].type = type2;
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
@@ -570,7 +572,6 @@ void read_config(char *filename)
 		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
 		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
-		atoms[i].num_neigh++;
 
 		col = (type1 <= type2) ? type1 * ntypes + type2 - ((type1 * (type1 + 1)) / 2)
 		  : type2 * ntypes + type1 - ((type2 * (type2 + 1)) / 2);

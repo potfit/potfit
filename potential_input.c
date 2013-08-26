@@ -172,7 +172,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
       }
       /* recognized format? */
       if ((format != 0) && (format != 3) && (format != 4))
-	error(1, "Unrecognized format specified for file %s", filename);
+	error(1, "Unrecognized potential format specified for file %s", filename);
       gradient = (int *)malloc(size * sizeof(int));
       invar_pot = (int *)malloc(size * sizeof(int));
 #ifdef APOT
@@ -191,7 +191,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
   /* do we have a format in the header? */
   if (!have_format)
-    error(1, "Format not specified in header of file %s", filename);
+    error(1, "Format not specified in header of potential file %s", filename);
 
   /* allocate info block of function table */
   pt->len = 0;
@@ -458,6 +458,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     apt->names = (char **)realloc(apt->names, (i + 1) * sizeof(char *));
     apt->names[i] = (char *)malloc(20 * sizeof(char));
     strcpy(apt->names[i], "chemical potentials");
+    reg_for_free(apt->names[i], "apt->names[%d] (chem_pot)", i);
 
     apt->invar_par = (int **)realloc(apt->invar_par, (i + 1) * sizeof(int *));
     apt->invar_par[i] = (int *)malloc((ntypes + 1) * sizeof(int));
@@ -695,6 +696,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     apt->names = (char **)realloc(apt->names, (global_pot + 1) * sizeof(char *));
     apt->names[global_pot] = (char *)malloc(20 * sizeof(char));
     strcpy(apt->names[global_pot], "global parameters");
+    reg_for_free(apt->names[global_pot], "apt->names[%d] (global_pot)", global_pot);
 
     apt->n_glob = (int *)malloc(apt->globals * sizeof(int));
     reg_for_free(apt->n_glob, "apt->n_glob");
@@ -971,6 +973,15 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
   }
   printf(" - Successfully read %d potential table(s)\n", apt->number);
+
+  /* clean up globals table */
+  if (have_globals) {
+    for (i = 0; i < apt->globals; i++) {
+      reg_for_free(apt->global_idx[i], "apt->global_idx[%d]", i);
+      for (j = 0; j < apt->n_glob[i]; j++)
+	reg_for_free(apt->global_idx[i][j], "apt->global_idx[%d][%d]", i, j);
+    }
+  }
 
 #ifdef COULOMB
   apt->total_ne_par = apt->total_par;

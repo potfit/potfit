@@ -71,7 +71,7 @@ int getparam(char *param_name, void *param, param_t ptype, int pnum_min, int pnu
       case PARAM_STR:
 	str = strtok(NULL, " \t\r\n");
 	if (str == NULL)
-	  error(1, "Parameter for %s missing in line %d\nstring expected!", param_name, curline);
+	  error(1, "Parameter for %s missing in line %d\nString expected!", param_name, curline);
 	else
 	  strncpy((char *)param, str, pnum_max);
 	numread++;
