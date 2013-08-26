@@ -186,6 +186,73 @@ void read_config(char *filename)
     if (NULL == na_type[nconf])
       error(1, "Cannot allocate memory for na_type");
 
+    for (i=natoms;i<natoms+count;i++) {
+      atoms[i].type = 0;
+      atoms[i].num_neigh = 0;
+      atoms[i].pos.x = 0.0;
+      atoms[i].pos.y = 0.0;
+      atoms[i].pos.z = 0.0;
+      atoms[i].force.x = 0.0;
+      atoms[i].force.y = 0.0;
+      atoms[i].force.z = 0.0;
+      atoms[i].absforce = 0.0;
+      atoms[i].conf = 0;
+
+#ifdef CONTRIB
+      atoms[i].contrib = 0;
+#endif /* CONTRIB */
+
+#if defined EAM || defined ADP || defined MEAM
+      atoms[i].rho = 0.0;
+      atoms[i].gradF = 0.0;
+#endif /* EAM || ADP || MEAM */
+
+#ifdef ADP
+      atoms[i].mu.x = 0.0;
+      atoms[i].mu.y = 0.0;
+      atoms[i].mu.z = 0.0;
+      atoms[i].lambda.xx = 0.0;
+      atoms[i].lambda.yy = 0.0;
+      atoms[i].lambda.zz = 0.0;
+      atoms[i].lambda.xy = 0.0;
+      atoms[i].lambda.yz = 0.0;
+      atoms[i].lambda.xz = 0.0;
+#endif /* ADP */
+
+#ifdef DIPOLE
+      atoms[i].E_stat.x = 0.0;
+      atoms[i].E_stat.y = 0.0;
+      atoms[i].E_stat.z = 0.0;
+      atoms[i].p_sr.x = 0.0;
+      atoms[i].p_sr.y = 0.0;
+      atoms[i].p_sr.z = 0.0;
+      atoms[i].E_ind.x = 0.0;
+      atoms[i].E_ind.y = 0.0;
+      atoms[i].E_ind.z = 0.0;
+      atoms[i].p_ind.x = 0.0;
+      atoms[i].p_ind.y = 0.0;
+      atoms[i].p_ind.z = 0.0;
+      atoms[i].E_old.x = 0.0;
+      atoms[i].E_old.y = 0.0;
+      atoms[i].E_old.z = 0.0;
+      atoms[i].E_tot.x = 0.0;
+      atoms[i].E_tot.y = 0.0;
+      atoms[i].E_tot.z = 0.0;
+#endif /* DIPOLE */
+
+#ifdef THREEBODY
+      atoms[i].num_angl = 0;
+#ifdef MEAM
+      atoms[i].rho_eam = 0.0;
+#endif /* MEAM */
+#endif /* MANYBODY */
+
+      atoms[i].neigh = NULL;
+#ifdef THREEBODY
+      atoms[i].angl_part = NULL;
+#endif /* THREEBODY */
+    }
+
     for (i = 0; i < ntypes; i++)
       na_type[nconf][i] = 0;
 
