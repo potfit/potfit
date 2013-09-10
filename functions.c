@@ -146,6 +146,8 @@ void add_potential(char *name, int parameter, fvalue_pointer fval)
   function_table.fvalue[k] = fval;
 
   n_functions++;
+
+  return;
 }
 
 /****************************************************************

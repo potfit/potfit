@@ -218,7 +218,7 @@ void read_config(char *filename)
       atoms[i].lambda.zz = 0.0;
       atoms[i].lambda.xy = 0.0;
       atoms[i].lambda.yz = 0.0;
-      atoms[i].lambda.xz = 0.0;
+      atoms[i].lambda.zx = 0.0;
 #endif /* ADP */
 
 #ifdef DIPOLE
@@ -1015,17 +1015,17 @@ void read_config(char *filename)
       force_0[k++] = stress[i].zx;
     } else {
       for (j = 0; j < 6; j++)
-	force_0[k++] = 0.;
+	force_0[k++] = 0.0;
     }
   }
 #endif /* STRESS */
 
 #if defined EAM || defined ADP || defined MEAM
   for (i = 0; i < nconf; i++)
-    force_0[k++] = 0.;		/* punishment rho out of bounds */
+    force_0[k++] = 0.0;		/* punishment rho out of bounds */
   for (i = 0; i < 2 * ntypes; i++) {	/* constraint on U(n=0):=0 */
     /* XXX and U'(n_mean)=0  */
-    force_0[k++] = 0.;
+    force_0[k++] = 0.0;
   }
 #endif /* EAM || ADP || MEAM */
 
@@ -1055,13 +1055,12 @@ void read_config(char *filename)
     fprintf(pairfile, "# radial distribution file for %d potential(s)\n", paircol);
 
     for (i = 0; i < paircol * pair_steps; i++)
-      pair_table[i] = 0.;
+      pair_table[i] = 0.0;
 
     for (i = 0; i < ntypes; i++)
       for (k = 0; k < ntypes; k++)
-	pair_dist[(i <=
-	    k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i - (k * (k +
-	      1) / 2)] = rcut[i * ntypes + k] / pair_steps;
+	pair_dist[(i <= k) ? i * ntypes + k - (i * (i + 1) / 2) : k * ntypes + i - (k * (k + 1) / 2)] =
+	  rcut[i * ntypes + k] / pair_steps;
 
     for (k = 0; k < paircol; k++) {
       for (i = 0; i < natoms; i++) {

@@ -147,7 +147,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     /* [paircol, ..., paircol + ntypes - 1] = transfer function */
     for (col = 0; col < paircol + ntypes; col++) {
       first = calc_pot.first[col];
-      if (format == 0 || format == 3)
+      if (0 == format || 3 == format)
 	spline_ed(calc_pot.step[col], xi + first,
 	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
       else			/* format >= 4 ! */
@@ -203,11 +203,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
       int   us, stresses;
 #endif /* STRESS */
 
+      /* pointer for neighbor table */
       neigh_t *neigh;
-      double r;
 
       /* pair variables */
       double phi_val, phi_grad;
+      double r;
       vector tmp_force;
 
       /* eam variables */
@@ -267,16 +268,16 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
 	      else
 		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
-	      /* avoid double counting if atom is interacting with a
-	         copy of itself */
+	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
 
-	      /* not double force: cohesive energy */
+	      /* add cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
+	      /* calculate forces */
 	      if (uf) {
 		tmp_force.x = neigh->dist_r.x * phi_grad;
 		tmp_force.y = neigh->dist_r.y * phi_grad;
@@ -303,6 +304,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	      }
 	    }
 
+	    /* neighbor in range */
 	    /* calculate atomic densities */
 	    if (atom->type == neigh->type) {
 	      /* then transfer(a->b)==transfer(b->a) */
@@ -325,7 +327,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		conf_atoms[neigh->nr - firstatom].rho +=
 		  splint(&calc_pot, xi, paircol + atom->type, neigh->r);
 	    }
-	  }			/* loop over neighbors */
+	  }			/* loop over all neighbors */
 
 	  col_F = paircol + ntypes + atom->type;	/* column of F */
 #ifndef NORESCALE
@@ -333,7 +335,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
 #ifndef PARABOLA
-/* then we use the final value, with PARABOLA: extrapolate */
+	    /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.end[col_F];
 #endif /* PARABOLA */
 	  }
@@ -342,7 +344,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 #ifndef PARABOLA
-/* then we use the final value, with PARABOLA: extrapolate */
+	    /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.begin[col_F];
 #endif /* PARABOLA */
 	  }
@@ -374,7 +376,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #else
 	    /* and right */
 	    rho_val =
-	      splint_comb(&calc_pot, xi, col_F, calc_pot.end[col_F] - .5 * calc_pot.step[col_F],
+	      splint_comb(&calc_pot, xi, col_F, calc_pot.end[col_F] - 0.5 * calc_pot.step[col_F],
 	      &atom->gradF);
 	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 #endif /* APOT */
@@ -414,7 +416,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	      if ((r < calc_pot.end[neigh->col[1]]) || (r < calc_pot.end[col_F - ntypes])) {
 		rho_grad =
 		  (r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot, xi, neigh->slot[1],
-		  neigh->shift[1], neigh->step[1]) : 0.;
+		  neigh->shift[1], neigh->step[1]) : 0.0;
 		if (atom->type == neigh->type)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
@@ -422,8 +424,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		    (r < calc_pot.end[col_F - ntypes]) ? splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.;
 		/* now we know everything - calculate forces */
 		eam_force = (rho_grad * atom->gradF + rho_grad_j * conf_atoms[(neigh->nr) - firstatom].gradF);
-		/* avoid double counting if atom is interacting with a
-		   copy of itself */
+		/* avoid double counting if atom is interacting with a copy of itself */
 		if (self)
 		  eam_force *= 0.5;
 		tmp_force.x = neigh->dist_r.x * eam_force;
@@ -450,12 +451,14 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 	      }			/* within reach */
 	    }			/* loop over neighbours */
+
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
 	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
 	    forces[n_i + 1] /= FORCE_EPS + atom->absforce;
 	    forces[n_i + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
+
 	    /* sum up forces  */
 #ifdef CONTRIB
 	    if (atom->contrib)
@@ -470,6 +473,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
@@ -486,6 +490,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     }				/* parallel region */
 #ifdef MPI
     /* Reduce rho_sum */
+    rho_sum = 0.0;
     MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else /* MPI */
     rho_sum = rho_sum_loc;
@@ -494,19 +499,19 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (myid == 0) {
+    if (0 == myid) {
       tmpsum += apot_punish(xi_opt, forces);
     }
 #endif /* APOT */
 
 #ifndef NOPUNISH
-    if (myid == 0) {
+    if (0 == myid) {
       int   g;
       for (g = 0; g < ntypes; g++) {
 	/* PARABOLA, WZERO, NORESC - different behaviour */
 #ifdef PARABOLA
 /* constraints on U(n) */
-	forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * parab(&calc_pot, xi, paircol + ntypes + g, 0.)
+	forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * parab(&calc_pot, xi, paircol + ntypes + g, 0.0)
 	  - force_0[dummy_p + ntypes + g];
 /* constraints on U`(n) */
 	forces[dummy_p + g] =
@@ -514,30 +519,30 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g])) -
 	  force_0[dummy_p + g];
 #elif defined(WZERO)
-	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
+	if (calc_pot.begin[paircol + ntypes + g] <= 0.0)
 	  /* 0 in domain of U(n) */
 /* constraints on U(n) */
-	  forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * splint(&calc_pot, xi, paircol + ntypes + g, 0.)
+	  forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * splint(&calc_pot, xi, paircol + ntypes + g, 0.0)
 	    - force_0[dummy_p + ntypes + g];
 	else
 	  /* 0 not in domain of U(n) */
-	  forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
+	  forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 /* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
-	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
+	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #elif defined(NORESCALE)
 	/* clear field */
-	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
+	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
-	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
+	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.0);
 #else /* NOTHING */
-	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
+	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 /* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
-	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
+	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #endif /* Dummy constraints */
 	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
@@ -548,20 +553,18 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
       /* Calculate averages */
       rho_sum /= (double)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
-      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
 #endif /* NORESCALE */
     }				/* only root process */
 #endif /* !NOPUNISH */
-
-    sum = tmpsum;		/* global sum = local sum  */
 
 #ifdef MPI
     /* reduce global sum */
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (myid == 0) {		/* root node already has data in place */
+    if (0 == myid) {		/* root node already has data in place */
       /* forces */
       MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
 	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
@@ -589,10 +592,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     /* no need to pick up dummy constraints - are already @ root */
+#else
+    sum = tmpsum;		/* global sum = local sum  */
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (myid == 0) {
+    if (0 == myid) {
       fcalls++;			/* Increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
@@ -602,7 +607,8 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
       } else
 	return sum;
     }
-  }
+
+  }				/* end of infinite loop */
 
   /* once a non-root process arrives here, all is done. */
   return -1.0;

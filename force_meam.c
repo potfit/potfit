@@ -140,17 +140,17 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (flag == 1)
+    if (1 == flag)
       break;			/* Exception: flag 1 means clean up */
 
 #ifdef APOT
-    if (myid == 0)
+    if (0 == myid)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
 #else
     /* if flag==2 then the potential parameters have changed -> sync */
-    if (flag == 2)
+    if (2 == flag)
       potsync();
 #endif /* APOT */
 #endif /* MPI */
@@ -184,7 +184,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
     /* region containing loop over configurations */
     {
       /* Temp variables */
-      atom_t *atom;		// atom type
+      atom_t *atom;		/* atom pointer */
       int   h, j, k;
       int   n_i, n_j, n_k;
       int   uf;

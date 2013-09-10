@@ -64,6 +64,7 @@ int  *vect_int(long dim)
     error(1, "Error in integer vector allocation");
   for (i = 0; i < dim; i++)
     vect[i] = 0;
+
   return vect;
 }
 
@@ -75,7 +76,8 @@ double *vect_double(long dim)
   if (vect == NULL)
     error(1, "Error in double vector allocation");
   for (i = 0; i < dim; i++)
-    vect[i] = 0.;
+    vect[i] = 0.0;
+
   return vect;
 }
 
@@ -101,7 +103,7 @@ double **mat_double(long rowdim, long coldim)
   int   j, k;
   for (j = 0; j < rowdim; j++)
     for (k = 0; k < coldim; k++)
-      matrix[j][k] = 0.;
+      matrix[j][k] = 0.0;
 
   return matrix;
 }
@@ -109,17 +111,23 @@ double **mat_double(long rowdim, long coldim)
 void free_vect_double(double *vect)
 {
   free(vect);
+
+  return;
 }
 
 void free_vect_int(int *vect)
 {
   free(vect);
+
+  return;
 }
 
 void free_mat_double(double **matrix)
 {
   free(matrix[0]);
   free(matrix);
+
+  return;
 }
 
 void reg_for_free(void *p, char *name, ...)
@@ -134,6 +142,8 @@ void reg_for_free(void *p, char *name, ...)
   all_pointers = (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
   all_pointers[num_pointers] = p;
   num_pointers++;
+
+  return;
 }
 
 void free_all_pointers()
@@ -146,6 +156,8 @@ void free_all_pointers()
   }
   free(all_pointers);
   free(pointer_names);
+
+  return;
 }
 
 /* vector product */
@@ -276,6 +288,8 @@ void quicksort(double *x, int low, int high, double **p)
     quicksort(x, low, newIndex - 1, p);
     quicksort(x, newIndex + 1, high, p);
   }
+
+  return;
 }
 
 int partition(double *x, int low, int high, int index, double **p)
@@ -307,6 +321,8 @@ void swap_population(double *a, double *b)
   for (i = 0; i < ndimtot + 2; i++) {
     SWAP(a[i], b[i], temp);
   }
+
+  return;
 }
 
 #endif /* APOT && EVO */

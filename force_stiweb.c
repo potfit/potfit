@@ -40,7 +40,7 @@
 
 /****************************************************************
  *
- *  compute forces using pair potentials with spline interpolation
+ *  compute forces using Stillinger-Weber potentials with spline interpolation
  *
  *  returns sum of squares of differences between calculated and reference
  *     values
@@ -130,7 +130,10 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
       int   us, stresses;
 #endif /* STRESS */
 
-      neigh_t *neigh_j;
+      /* pointer for neighbor tables */
+      neigh_t *neigh_j, *neigh_k;
+      /* pointer for angular neighbor table */
+      angl *n_angl;
 
       /* pair variables */
       double phi_r, phi_a, inv_c, f_cut;
@@ -142,8 +145,6 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
       /* threebody variables */
       int   ijk;
       double lambda;
-      neigh_t *neigh_k;
-      angl *n_angl;
       double v3_val, tmp_grad1, tmp_grad2;
       double tmp_jj, tmp_jk, tmp_kk;
       double tmp_1, tmp_2;
@@ -281,7 +282,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 		  forces[energy_p + h] += v3_val;
 
 		  /* forces */
-		  tmp_grad1 = lambda * neigh_j->f * neigh_k->f * 2 * tmp;
+		  tmp_grad1 = lambda * neigh_j->f * neigh_k->f * 2.0 * tmp;
 		  tmp_grad2 = lambda * tmp * tmp;
 
 		  tmp_jj = 1.0 / (neigh_j->r2);
@@ -376,17 +377,15 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 
     /* dummy constraints (global) */
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (myid == 0) {
+    if (0 == myid) {
       tmpsum += apot_punish(xi_opt, forces);
     }
-
-    sum = tmpsum;		/* global sum = local sum  */
 #ifdef MPI
     /* reduce global sum */
-    sum = 0.;
+    sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (myid == 0) {		/* root node already has data in place */
+    if (0 == myid) {		/* root node already has data in place */
       /* forces */
       MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
 	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
@@ -407,10 +406,12 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
 	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
     }
+#else
+    sum = tmpsum;		/* global sum = local sum  */
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (myid == 0) {
+    if (0 == myid) {
       fcalls++;			/* Increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG

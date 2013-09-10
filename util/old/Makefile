@@ -2,7 +2,7 @@ CC     = gcc
 CFLAGS = -g -O -DEAM -DNEWSCALE -DPOTSCALE
 BINDIR = ${HOME}/bin/${HOSTTYPE}
 
-AWKSCRIPTS = genpot.awk add_type.awk combine_eam.awk plotapot compnodes.awk osix2potfit
+AWKSCRIPTS = genpot.awk add_type.awk combine_eam.awk compnodes.awk osix2potfit
 
 POTSCALESRC = param.c potential.c splines.c potscale.c
 POTSCALEHDR = potscale.h

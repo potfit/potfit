@@ -40,7 +40,7 @@ int   curline;			/* number of current line */
 
 /* parameters:
 
-   param_name ... parametername (for error messages)
+   param_name ... parameter name (for error messages)
    param ........ address of the variable for that parameter
    ptype ........ type of parameter
                   the following are possible:
@@ -56,9 +56,7 @@ int   curline;			/* number of current line */
 		  values are registered, the reading process is stopped; there
 		  will be no error if at least pnum_min values were read.)
 
-   return value . the number of parameters read is returned
-
-*/
+   return value . the number of parameters read is returned */
 
 int getparam(char *param_name, void *param, param_t ptype, int pnum_min, int pnum_max)
 {

@@ -89,8 +89,10 @@
 double calc_forces_pair(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
-  double tmpsum = 0.0, sum = 0.0;
   double *xi = NULL;
+
+  /* Some useful temp variables */
+  static double tmpsum = 0.0, sum = 0.0;
 
   switch (format) {
       case 0:
@@ -142,7 +144,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
     /* pair potentials */
     for (col = 0; col < paircol; col++) {
       first = calc_pot.first[col];
-      if (format == 0 || format == 3)
+      if (0 == format || 3 == format)
 	spline_ed(calc_pot.step[col], xi + first,
 	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
       else			/* format >= 4 ! */
@@ -165,6 +167,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
       int   us, stresses;
 #endif /* STRESS */
 
+      /* pointer for neighbor table */
       neigh_t *neigh;
 
       /* pair variables */
@@ -224,15 +227,17 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
 	      else
 		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
-	      /* avoid double counting if atom is interacting with a
-	         copy of itself */
+
+	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
 		phi_val *= 0.5;
 		phi_grad *= 0.5;
 	      }
+
 	      /* add cohesive energy */
 	      forces[energy_p + h] += phi_val;
 
+	      /* calculate forces */
 	      if (uf) {
 		tmp_force.x = neigh->dist_r.x * phi_grad;
 		tmp_force.y = neigh->dist_r.y * phi_grad;
@@ -310,7 +315,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (myid == 0) {		/* root node already has data in place */
+    if (0 == myid) {		/* root node already has data in place */
       /* forces */
       MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
 	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);

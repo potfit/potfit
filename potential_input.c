@@ -982,7 +982,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	reg_for_free(apt->global_idx[i][j], "apt->global_idx[%d][%d]", i, j);
     }
   }
-
 #ifdef COULOMB
   apt->total_ne_par = apt->total_par;
 #endif /* COULOMB */
