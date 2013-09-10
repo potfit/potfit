@@ -138,30 +138,36 @@ void read_pot_table(pot_table_t *pt, char *filename)
       else
 	printf(" - Potential file format %d (analytic potentials) detected\n", format);
 
+      /* number of pair potentials is always n(n+1)/2 */
       ncols = ntypes * (ntypes + 1) / 2;
-      /* right number of columns? */
-      switch (interaction) {
-	  case I_EAM:
+
+      /* only pair potentials for
+       * - pair interactions
+       * - coulomb interactions
+       * - dipole interactions
+       */
+      npots = ncols;
+
+      /* more potentials for other interactions */
+#ifdef EAM
+#ifndef TBEAM
 	    npots = ncols + 2 * ntypes;
-	    break;
-	  case I_EAM_ELSTAT:
-	    npots = ncols + 2 * ntypes;
-	    break;
-	  case I_ADP:
+#else
+	    npots = ncols + 4 * ntypes;
+#endif /* TBEAM */
+#endif /* EAM */
+#ifdef ADP
 	    npots = 3 * ncols + 2 * ntypes;
-	    break;
-	  case I_MEAM:
+#endif /* ADP */
+#ifdef MEAM
 	    npots = 2 * ncols + 3 * ntypes;
-	    break;
-	  case I_STIWEB:
+#endif /* MEAM */
+#ifdef STIWEB
 	    npots = 2 * ncols + 1;
-	    break;
-	  case I_TERSOFF:
+#endif /* STIWEB */
+#ifdef TERSOFF
 	    npots = ntypes * ntypes;
-	    break;
-	  default:
-	    npots = ncols;
-      }
+#endif /* TERSOFF */
 
       if (size == npots) {
 	printf(" - Using %d %s potentials to calculate forces\n", npots, interaction_name);

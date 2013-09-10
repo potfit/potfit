@@ -28,9 +28,9 @@
  *
  ****************************************************************/
 
-#if defined EAM && !defined COULOMB
-
 #include "potfit.h"
+
+#if defined EAM && !defined COULOMB
 
 #include "functions.h"
 #include "potential.h"
