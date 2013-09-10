@@ -58,6 +58,11 @@
 #define THREEBODY
 #endif /* MEAM || TERSOFF || STIWEB */
 
+/* define EAM if TBEAM is defined */
+#ifdef TBEAM
+#define EAM
+#endif /* TBEAM */
+
 /* always define NORESCALE for analytic potentials */
 #ifdef APOT
 #define NORESCALE
@@ -128,17 +133,6 @@
  ****************************************************************/
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
-
-typedef enum Interaction_T {
-  I_PAIR,
-  I_EAM,
-  I_ADP,
-  I_ELSTAT,
-  I_EAM_ELSTAT,
-  I_MEAM,
-  I_STIWEB,
-  I_TERSOFF
-} Interaction_T;
 
 typedef struct {
   double x;
@@ -400,25 +394,6 @@ typedef struct {
 #define INIT(data)		/* skip initialization otherwise */
 #endif /* MAIN */
 
-/* define interaction type */
-#ifdef PAIR
-EXTERN Interaction_T interaction INIT(I_PAIR);
-#elif defined EAM && !defined COULOMB
-EXTERN Interaction_T interaction INIT(I_EAM);
-#elif defined ADP
-EXTERN Interaction_T interaction INIT(I_ADP);
-#elif defined COULOMB && !defined EAM
-EXTERN Interaction_T interaction INIT(I_ELSTAT);
-#elif defined COULOMB && defined EAM
-EXTERN Interaction_T interaction INIT(I_EAM_ELSTAT);
-#elif defined MEAM
-EXTERN Interaction_T interaction INIT(I_MEAM);
-#elif defined STIWEB
-EXTERN Interaction_T interaction INIT(I_STIWEB);
-#elif defined TERSOFF
-EXTERN Interaction_T interaction INIT(I_TERSOFF);
-#endif /* interaction type */
-
 /* system variables */
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
 EXTERN int num_cpus INIT(1);	/* How many cpus are there */
@@ -510,7 +485,6 @@ EXTERN vector *sphere_centers;	/* centers of the spheres of contrib. atoms */
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 /* potential variables */
-EXTERN char interaction_name[10] INIT("\0");
 EXTERN int *gradient;		/* Gradient of potential fns.  */
 EXTERN int *invar_pot;
 EXTERN int format INIT(-1);	/* format of potential table */
@@ -637,21 +611,33 @@ void  read_paramfile(FILE *);
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
 double calc_forces_pair(double *, double *, int);
+EXTERN const char interaction_name[5] INIT("PAIR");
 #elif defined EAM && !defined COULOMB
 double calc_forces_eam(double *, double *, int);
+#ifndef TBEAM
+EXTERN const char interaction_name[4] INIT("EAM");
+#else
+EXTERN const char interaction_name[6] INIT("TBEAM");
+#endif /* TBEAM */
 #elif defined ADP
 double calc_forces_adp(double *, double *, int);
+EXTERN const char interaction_name[4] INIT("ADP")
 #elif defined COULOMB && !defined EAM
 double calc_forces_elstat(double *, double *, int);
+EXTERN const char interaction_name[7] INIT("ELSTAT");
 #elif defined COULOMB && defined EAM
 double calc_forces_eam_elstat(double *, double *, int);
+EXTERN const char interaction_name[11] INIT("EAM_ELSTAT");
 #elif defined MEAM
 double calc_forces_meam(double *, double *, int);
+EXTERN const char interaction_name[5] INIT("MEAM");
 #elif defined STIWEB
 double calc_forces_stiweb(double *, double *, int);
+EXTERN const char interaction_name[7] INIT("STIWEB");
 void  update_stiweb_pointers(double *);
 #elif defined TERSOFF
 double calc_forces_tersoff(double *, double *, int);
+EXTERN const char interaction_name[8] INIT("TERSOFF");
 void  update_tersoff_pointers(double *);
 #endif /* interaction type */
 

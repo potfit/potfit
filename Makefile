@@ -469,6 +469,8 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   endif
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
     CFLAGS  += -DMEAM
+  else ifneq (,$(strip $(findstring tbeam,${MAKETARGET})))
+    CFLAGS  += -DTBEAM
   else
     CFLAGS  += -DEAM
   endif

@@ -75,28 +75,20 @@ int main(int argc, char **argv)
   /* assign correct force routine */
 #ifdef PAIR
   calc_forces = calc_forces_pair;
-  strcpy(interaction_name, "PAIR");
 #elif defined EAM && !defined COULOMB
   calc_forces = calc_forces_eam;
-  strcpy(interaction_name, "EAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
-  strcpy(interaction_name, "ADP");
 #elif defined COULOMB && !defined EAM
   calc_forces = calc_forces_elstat;
-  strcpy(interaction_name, "ELSTAT");
 #elif defined COULOMB && defined EAM
   calc_forces = calc_forces_eam_elstat;
-  strcpy(interaction_name, "EAM_ELSTAT");
 #elif defined MEAM
   calc_forces = calc_forces_meam;
-  strcpy(interaction_name, "MEAM");
 #elif defined STIWEB
   calc_forces = calc_forces_stiweb;
-  strcpy(interaction_name, "STIWEB");
 #elif defined TERSOFF
   calc_forces = calc_forces_tersoff;
-  strcpy(interaction_name, "TERSOFF");
 #endif /* PAIR */
 
   /* read the parameters and the potential file */
