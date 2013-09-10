@@ -151,22 +151,22 @@ void read_pot_table(pot_table_t *pt, char *filename)
       /* more potentials for other interactions */
 #ifdef EAM
 #ifndef TBEAM
-	    npots = ncols + 2 * ntypes;
+      npots = ncols + 2 * ntypes;
 #else
-	    npots = ncols + 4 * ntypes;
+      npots = ncols + 4 * ntypes;
 #endif /* TBEAM */
 #endif /* EAM */
 #ifdef ADP
-	    npots = 3 * ncols + 2 * ntypes;
+      npots = 3 * ncols + 2 * ntypes;
 #endif /* ADP */
 #ifdef MEAM
-	    npots = 2 * ncols + 3 * ntypes;
+      npots = 2 * ncols + 3 * ntypes;
 #endif /* MEAM */
 #ifdef STIWEB
-	    npots = 2 * ncols + 1;
+      npots = 2 * ncols + 1;
 #endif /* STIWEB */
 #ifdef TERSOFF
-	    npots = ntypes * ntypes;
+      npots = ntypes * ntypes;
 #endif /* TERSOFF */
 
       if (size == npots) {
