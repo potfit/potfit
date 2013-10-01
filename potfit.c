@@ -72,32 +72,35 @@ int main(int argc, char **argv)
 #endif /* MPI */
   }
 
-  /* assign correct force routine */
+  /* assign correct force routine depending on interaction */
+
+  /* do we have any coulomb interactions */
+#ifdef COULOMB
+
+#ifndef EAM
+  calc_forces = calc_forces_elstat;
+#else
+  calc_forces = calc_forces_eam_elstat;
+#endif /* !EAM */
+
+  /* plain atomic interactions */
+#else /* COULOMB */
+
 #ifdef PAIR
   calc_forces = calc_forces_pair;
-  strcpy(interaction_name, "PAIR");
-#elif defined EAM && !defined COULOMB
+#elif defined EAM
   calc_forces = calc_forces_eam;
-  strcpy(interaction_name, "EAM");
 #elif defined ADP
   calc_forces = calc_forces_adp;
-  strcpy(interaction_name, "ADP");
-#elif defined COULOMB && !defined EAM
-  calc_forces = calc_forces_elstat;
-  strcpy(interaction_name, "ELSTAT");
-#elif defined COULOMB && defined EAM
-  calc_forces = calc_forces_eam_elstat;
-  strcpy(interaction_name, "EAM_ELSTAT");
 #elif defined MEAM
   calc_forces = calc_forces_meam;
-  strcpy(interaction_name, "MEAM");
 #elif defined STIWEB
   calc_forces = calc_forces_stiweb;
-  strcpy(interaction_name, "STIWEB");
 #elif defined TERSOFF
   calc_forces = calc_forces_tersoff;
-  strcpy(interaction_name, "TERSOFF");
 #endif /* PAIR */
+
+#endif /* COULOMB */
 
   /* read the parameters and the potential file */
   if (myid == 0) {
