@@ -173,13 +173,22 @@ void anneal(double *xi)
   naccept = vect_int(ndim);
 #ifndef APOT
   // Optimum potential x-coord arrays
-  int   col, col2;
+  int   col, col2, f_start, optarrsize, optxarrsize;
   double *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
-  optbegin = vect_double(ntypes);
-  optend = vect_double(ntypes);
-  optstep = vect_double(ntypes);
-  optinvstep = vect_double(ntypes);
-  optxcoord = vect_double(ndimtot);
+  
+#ifndef TBEAM   /* EAM etc */
+  optarrsize = ntypes;  
+  optxarrsize = ndimtot;
+#else   /* TBEAM */  
+  optarrsize = 2 * ntypes;
+  optxarrsize = ndimtot;
+#endif /* END EAM or TBEAM */ 
+  
+  optbegin = vect_double(optarrsize);
+  optend = vect_double(optarrsize);
+  optstep = vect_double(optarrsize);
+  optinvstep = vect_double(optarrsize);
+  optxcoord = vect_double(optxarrsize);
 #endif /* APOT */
 
   /* init step vector and optimum vector */
@@ -193,12 +202,24 @@ void anneal(double *xi)
   }
   F = (*calc_forces) (xi, fxi1, 0);
   Fopt = F;
+  printf("F1: %f \n",F);
 #ifndef APOT
   // Need to save xcoord of this F potential because we use the
   // optimum potential in the future, and the current potential
   // could be rescaled differently from the optimum
+#ifndef TBEAM   /* EAM etc */
+  f_start =  ntypes * (ntypes + 3) / 2 ;
+#else   /* TBEAM */  
+  if(ntypes == 1){
+    f_start = ntypes * (ntypes + 3) / 2 + 1;
+  }else{
+    f_start = ntypes * (ntypes + 1);
+  }
+#endif /* END EAM or TBEAM */    
+  
+  /* EAM etc F and TBEAM D-Band contribution */
   col2 = 0;
-  for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
+  for (col = f_start; col < f_start + ntypes; ++col) {
     optbegin[col2] = opt_pot.begin[col];
     optend[col2] = opt_pot.end[col];
     optstep[col2] = opt_pot.step[col];
@@ -209,6 +230,23 @@ void anneal(double *xi)
       optxcoord[n] = opt_pot.xcoord[n];
     ++col2;
   }
+  
+#ifdef TBEAM   /* TBEAM */
+  /* TBEAM S-Band contribution */
+  //col2 = 0;
+  for (col = f_start + ntypes; col < f_start + 2 * ntypes; ++col) {
+    optbegin[col2] = opt_pot.begin[col];
+    optend[col2] = opt_pot.end[col];
+    optstep[col2] = opt_pot.step[col];
+    optinvstep[col2] = opt_pot.invstep[col];
+
+    // Loop through each spline knot of F
+    for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
+      optxcoord[n] = opt_pot.xcoord[n];
+    ++col2;
+  }
+#endif /* END EAM or TBEAM */   
+  
 #endif /* APOT */
   /* determine optimum temperature for annealing */
   if (auto_T) {
@@ -276,6 +314,7 @@ void anneal(double *xi)
 	  makebump(xi2, width, height, h);
 #endif /* APOT */
 	  F2 = (*calc_forces) (xi2, fxi1, 0);
+	  printf("F2: %f \n",F2);
 	  if (F2 <= F) {	/* accept new point */
 #ifdef APOT
 	    xi[idx[h]] = xi2[idx[h]];
@@ -294,18 +333,41 @@ void anneal(double *xi)
 	      // optimum potential in the future, and the current potential
 	      // could be rescaled differently from the optimum
 	      col2 = 0;
-	      for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
+	      for (col = f_start; col < f_start + ntypes; ++col) {
 		optbegin[col2] = opt_pot.begin[col];
 		optend[col2] = opt_pot.end[col];
 		optstep[col2] = opt_pot.step[col];
 		optinvstep[col2] = opt_pot.invstep[col];
 
 		// Loop through each spline knot of F
-		for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
+		for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n){
 		  optxcoord[n] = opt_pot.xcoord[n];
-
+		}
 		++col2;
 	      }
+		    
+#ifdef TBEAM   /* TBEAM */
+  /* TBEAM S-Band contribution */
+  
+  	      // Need to save xcoord of this F potential because we use the
+	      // optimum potential in the future, and the current potential
+	      // could be rescaled differently from the optimum
+	      //col2 = 0;
+	      for (col = f_start + ntypes; col < f_start + 2 * ntypes; ++col) {
+		optbegin[col2] = opt_pot.begin[col];
+		optend[col2] = opt_pot.end[col];
+		optstep[col2] = opt_pot.step[col];
+		optinvstep[col2] = opt_pot.invstep[col];
+
+		// Loop through each spline knot of F
+		for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n){
+		  optxcoord[n] = opt_pot.xcoord[n];		  
+		}
+		++col2;
+	      }
+  
+#endif /* END EAM or TBEAM */   
+		  
 #endif /* APOT */
 	      Fopt = F2;
 	      if (*tempfile != '\0') {

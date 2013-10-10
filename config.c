@@ -205,8 +205,15 @@ void read_config(char *filename)
 #endif /* CONTRIB */
 
 #if defined EAM || defined ADP || defined MEAM
+#ifndef TBEAM   /* EAM ADP MEAM */
       atoms[i].rho = 0.0;
       atoms[i].gradF = 0.0;
+#else   /* TBEAM */  
+      atoms[i].rho = 0.0;
+      atoms[i].gradF = 0.0;
+      atoms[i].rho_s = 0.0;
+      atoms[i].gradF_s = 0.0;      
+#endif /* END EAM or TBEAM */  
 #endif /* EAM || ADP || MEAM */
 
 #ifdef ADP
@@ -621,6 +628,7 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].step[0] = step;
 
 #if defined EAM || defined ADP || defined MEAM
+#ifndef TBEAM   /* EAM ADP MEAM */
 		  /* transfer function */
 		  col = paircol + type2;
 		  atoms[i].neigh[k].col[1] = col;
@@ -661,6 +669,105 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[1] = shift;
 		  atoms[i].neigh[k].slot[1] = slot;
 		  atoms[i].neigh[k].step[1] = step;
+		  
+#else   /* TBEAM */  
+          /* transfer function - d band */
+		  col = paircol + type2;
+		  atoms[i].neigh[k].col[1] = col;
+		  if (format == 0 || format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[1] = shift;
+		  atoms[i].neigh[k].slot[1] = slot;
+		  atoms[i].neigh[k].step[1] = step;
+                  
+                  
+          /* transfer function - s band */
+          /* only if 1 type or 2 types are different */
+          if(ntypes == 1 || type1 != type2){
+            if(ntypes == 1){
+              col = 2;    
+            }else if(type1 != type2){
+              if(type1 > type2){
+                col = ntypes * (ntypes + 3) / 2 + (type1 * (type1-1) / 2 + type2);                              
+              }else{
+                col = ntypes * (ntypes + 3) / 2 + (type2 * (type2-1) / 2 + type1);  
+              }
+            }
+            atoms[i].neigh[k].col[2] = col;
+		    if (format == 0 || format == 3) {
+		      rr = r - calc_pot.begin[col];
+		      if (rr < 0) {
+		        fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		        fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		        fflush(stdout);
+		        error(1, "short distance in config.c!");
+		      }
+		      istep = calc_pot.invstep[col];
+		      slot = (int)(rr * istep);
+		      shift = (rr - slot * calc_pot.step[col]) * istep;
+		      slot += calc_pot.first[col];
+		      step = calc_pot.step[col];
+		    } else {	/* format == 4 ! */
+		      klo = calc_pot.first[col];
+		      khi = calc_pot.last[col];
+		      /* bisection */
+		      while (khi - klo > 1) {
+		        slot = (khi + klo) >> 1;
+		        if (calc_pot.xcoord[slot] > r)
+		  	  khi = slot;
+		        else
+		  	  klo = slot;
+		      }
+		      slot = klo;
+		      step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		      shift = (r - calc_pot.xcoord[klo]) / step;
+
+		    }
+                    
+            /* Check if we are at the last index */
+		    if (slot >= calc_pot.last[col]) {
+		      slot--;
+		      shift += 1.0;
+		    }
+		    atoms[i].neigh[k].shift[2] = shift;
+		    atoms[i].neigh[k].slot[2] = slot;
+		    atoms[i].neigh[k].step[2] = step;
+                     
+            } //end s-band
+                  
+#endif /* END EAM or TBEAM */   
 #endif /* EAM || ADP || MEAM */
 
 #ifdef MEAM
@@ -1115,12 +1222,27 @@ void read_config(char *filename)
 
   /* transfer functions */
 #if defined EAM || defined ADP || defined MEAM
+#ifndef TBEAM   /* EAM ADP MEAM */
   for (i = 0; i < ntypes; i++) {
     j = i + ntypes * (ntypes + 1) / 2;
     apot_table.begin[j] = min * 0.95;
     opt_pot.begin[j] = min * 0.95;
     calc_pot.begin[j] = min * 0.95;
   }
+#else   /* TBEAM */  
+  int den_count;
+  if(ntypes == 1){
+    den_count = ntypes + 1;
+  }else{
+    den_count = ntypes * (ntypes + 1) / 2;
+  }  
+  for (i = 0; i < den_count; i++) {
+    j = i + ntypes * (ntypes + 1) / 2;
+    apot_table.begin[j] = min * 0.95;
+    opt_pot.begin[j] = min * 0.95;
+    calc_pot.begin[j] = min * 0.95;
+  }
+#endif /* END EAM or TBEAM */      
 #endif /* EAM || ADP || MEAM */
 
   /* dipole and quadrupole functions */
@@ -1296,6 +1418,7 @@ void update_slots(void)
 	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
       }
 #if defined EAM || defined ADP || defined MEAM
+#ifndef TBEAM   /* EAM ADP MEAM */
       /* update slots for eam transfer functions, slot 1 */
       col = atoms[i].neigh[j].col[1];
       if (r < calc_pot.end[col]) {
@@ -1307,6 +1430,30 @@ void update_slots(void)
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[1] += calc_pot.first[col];
       }
+#else   /* TBEAM */  
+      /* update slots for tbeam transfer functions, d-band, slot 1 */
+      col = atoms[i].neigh[j].col[1];
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[1] = calc_pot.step[col];
+	atoms[i].neigh[j].shift[1] =
+	  (rr - atoms[i].neigh[j].slot[1] * calc_pot.step[col]) * calc_pot.invstep[col];
+	/* move slot to the right potential */
+	atoms[i].neigh[j].slot[1] += calc_pot.first[col];
+      }
+      /* update slots for tbeam transfer functions, s-band, slot 2 */
+      col = atoms[i].neigh[j].col[2];
+      if (r < calc_pot.end[col]) {
+	rr = r - calc_pot.begin[col];
+	atoms[i].neigh[j].slot[2] = (int)(rr * calc_pot.invstep[col]);
+	atoms[i].neigh[j].step[2] = calc_pot.step[col];
+	atoms[i].neigh[j].shift[2] =
+	  (rr - atoms[i].neigh[j].slot[2] * calc_pot.step[col]) * calc_pot.invstep[col];
+	/* move slot to the right potential */
+	atoms[i].neigh[j].slot[2] += calc_pot.first[col];
+      }
+#endif /* END EAM or TBEAM */ 
 #endif /* EAM || ADP || MEAM */
 
 #ifdef MEAM

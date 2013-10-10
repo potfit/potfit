@@ -46,6 +46,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
   char  buffer[1024], *res, *str;
   int   have_format = 0, end_header = 0;
   int   size, i, j, k = 0, *nvals, ncols, npots = 0;
+  
 #ifdef APOT
   apot_table_t *apt = &apot_table;
 #else
@@ -150,11 +151,17 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
       /* more potentials for other interactions */
 #ifdef EAM
-#ifndef TBEAM
+#ifndef TBEAM   /* EAM */
       npots = ncols + 2 * ntypes;
-#else
-      npots = ncols + 4 * ntypes;
-#endif /* TBEAM */
+#else   /* TBEAM */
+      if(ntypes==1){
+        /*       pair + den_d + den_s + emb d+s */
+        npots = ncols + ntypes + 1 + 2 * ntypes;            
+      }else{
+        /*       pair + den_d + den_s + emb d+s */
+        npots = ncols + ntypes + (ntypes*(ntypes-1)/2) + 2 * ntypes;   
+      }
+#endif /* END EAM or TBEAM */
 #endif /* EAM */
 #ifdef ADP
       npots = 3 * ncols + 2 * ntypes;
@@ -1527,7 +1534,9 @@ void read_pot_table3(pot_table_t *pt, int size, int ncols, int *nvals, char *fil
 
 void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals, char *filename, FILE *infile)
 {
-  int   i, k, l, j;
+  int   i, k, l, j;  
+  int den_count;
+  int emb_count;
   double *val, *ord;
 
   /* read the info block of the function table */
@@ -1601,8 +1610,19 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals, char *fil
 
   }
 #if defined EAM || defined ADP
+#ifndef TBEAM   /* EAM ADP MEAM */
+  den_count = ntypes;
+  emb_count = ntypes;
+#else   /* TBEAM */  
+  if(ntypes == 1){
+	den_count = ntypes + 1;
+  }else{
+    den_count = ntypes * (ntypes + 1) / 2;
+  }
+  emb_count = 2 * ntypes;
+#endif /* END EAM or TBEAM */      
   /* read EAM transfer function rho(r) */
-  for (i = ncols; i < ncols + ntypes; i++) {
+  for (i = ncols; i < ncols + den_count; i++) {
     if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
 	error(1, "Premature end of potential file %s", filename);
@@ -1643,7 +1663,7 @@ void read_pot_table4(pot_table_t *pt, int size, int ncols, int *nvals, char *fil
   }
 
   /* read EAM embedding function F(n) */
-  for (i = ncols + ntypes; i < ncols + 2 * ntypes; i++) {
+  for (i = ncols + den_count; i < ncols + den_count + emb_count; i++) {
     if (have_grad) {
       if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
 	error(1, "Premature end of potential file %s", filename);

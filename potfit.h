@@ -116,8 +116,13 @@
 #define SLOTS 1
 
 #if defined EAM || defined STIWEB
+#ifndef TBEAM   /* EAM */
 #undef SLOTS
 #define SLOTS 2
+#else   /* TBEAM */
+#undef SLOTS
+#define SLOTS 3
+#endif /* END EAM or TBEAM */
 #elif defined MEAM
 #undef SLOTS
 #define SLOTS 3
@@ -259,8 +264,15 @@ typedef struct {
 #endif
 
 #if defined EAM || defined ADP || defined MEAM
+#ifndef TBEAM   /* EAM ADP MEAM */
   double rho;			/* embedding electron density */
   double gradF;			/* gradient of embedding fn. */
+#else   /* TBEAM */  
+  double rho;			/* embedding electron density */
+  double gradF;			/* gradient of embedding fn. */
+  double rho_s;			/* embedding electron density */
+  double gradF_s;			/* gradient of embedding fn. */
+#endif /* END EAM or TBEAM */  
 #endif				/* EAM || ADP || MEAM */
 
 #ifdef ADP
