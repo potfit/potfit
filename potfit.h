@@ -78,10 +78,33 @@
  *
  *  SLOTS: number of different distance tables used in the force calculations
  *
- *  pair potential 	= 	0 		PAIR pair distance
- *  transfer function 	= 	1  		EAM transfer function
- *  dipole term 	= 	2 		ADP dipole term
- *  quadrupole term 	= 	3 		ADP quadrupole term
+ *  In potfit all potentials are calculated via spline interpolations of pre-
+ *  calculated potential tables. To speed up the calculation of these splines,
+ *  the exact position of a neighbor distance has to be known with respect to the
+ *  tabulated values. For each occuring distance in a force routine there should
+ *  be a different slot with the corresponding potential table information.
+ *
+ *  PAIR: 	SLOTS = 1
+ *  	0 ... pair distance
+ *
+ *  EAM: 	SLOTS = 2
+ *  	0 ... pair distance
+ *  	1 ... transfer function
+ *
+ *  STIWEB: 	SLOTS = 2
+ *  	0 ... pair distance
+ *  	1 ... exponential functions
+ *
+ *  MEAM: 	SLOTS = 3
+ *  	0 ... pair distance
+ *  	1 ... transfer function
+ *  	2 ... f(r_ij)
+ *
+ *  ADP: 	SLOTS = 4
+ *  	0 ... pair distance
+ *  	1 ... transfer function
+ *  	2 ... dipole term
+ *  	3 ... quadrupole term
  *
  ****************************************************************/
 
