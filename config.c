@@ -96,7 +96,7 @@ void read_config(char *filename)
 
   /* set maximum cutoff distance as starting value for mindist */
   for (i = 0; i < ntypes * ntypes; i++)
-    mindist[i] = 99.;
+    mindist[i] = 99.9;
   for (i = 0; i < ntypes; i++)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
@@ -205,15 +205,12 @@ void read_config(char *filename)
 #endif /* CONTRIB */
 
 #if defined EAM || defined ADP || defined MEAM
-#ifndef TBEAM   /* EAM ADP MEAM */
       atoms[i].rho = 0.0;
       atoms[i].gradF = 0.0;
-#else   /* TBEAM */  
-      atoms[i].rho = 0.0;
-      atoms[i].gradF = 0.0;
+#ifdef TBEAM
       atoms[i].rho_s = 0.0;
-      atoms[i].gradF_s = 0.0;      
-#endif /* END EAM or TBEAM */  
+      atoms[i].gradF_s = 0.0;
+#endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
 
 #ifdef ADP
@@ -628,7 +625,6 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].step[0] = step;
 
 #if defined EAM || defined ADP || defined MEAM
-#ifndef TBEAM   /* EAM ADP MEAM */
 		  /* transfer function */
 		  col = paircol + type2;
 		  atoms[i].neigh[k].col[1] = col;
@@ -669,11 +665,11 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].shift[1] = shift;
 		  atoms[i].neigh[k].slot[1] = slot;
 		  atoms[i].neigh[k].step[1] = step;
-		  
-#else   /* TBEAM */  
-          /* transfer function - d band */
-		  col = paircol + type2;
-		  atoms[i].neigh[k].col[1] = col;
+
+#ifdef TBEAM
+		  /* transfer function - d band */
+		  col = paircol + ntypes + type2;
+		  atoms[i].neigh[k].col[2] = col;
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];
 		    if (rr < 0) {
@@ -708,66 +704,11 @@ void read_config(char *filename)
 		    slot--;
 		    shift += 1.0;
 		  }
-		  atoms[i].neigh[k].shift[1] = shift;
-		  atoms[i].neigh[k].slot[1] = slot;
-		  atoms[i].neigh[k].step[1] = step;
-                  
-                  
-          /* transfer function - s band */
-          /* only if 1 type or 2 types are different */
-          if(ntypes == 1 || type1 != type2){
-            if(ntypes == 1){
-              col = 2;    
-            }else if(type1 != type2){
-              if(type1 > type2){
-                col = ntypes * (ntypes + 3) / 2 + (type1 * (type1-1) / 2 + type2);                              
-              }else{
-                col = ntypes * (ntypes + 3) / 2 + (type2 * (type2-1) / 2 + type1);  
-              }
-            }
-            atoms[i].neigh[k].col[2] = col;
-		    if (format == 0 || format == 3) {
-		      rr = r - calc_pot.begin[col];
-		      if (rr < 0) {
-		        fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
-		        fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
-		        fflush(stdout);
-		        error(1, "short distance in config.c!");
-		      }
-		      istep = calc_pot.invstep[col];
-		      slot = (int)(rr * istep);
-		      shift = (rr - slot * calc_pot.step[col]) * istep;
-		      slot += calc_pot.first[col];
-		      step = calc_pot.step[col];
-		    } else {	/* format == 4 ! */
-		      klo = calc_pot.first[col];
-		      khi = calc_pot.last[col];
-		      /* bisection */
-		      while (khi - klo > 1) {
-		        slot = (khi + klo) >> 1;
-		        if (calc_pot.xcoord[slot] > r)
-		  	  khi = slot;
-		        else
-		  	  klo = slot;
-		      }
-		      slot = klo;
-		      step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
-		      shift = (r - calc_pot.xcoord[klo]) / step;
+		  atoms[i].neigh[k].shift[2] = shift;
+		  atoms[i].neigh[k].slot[2] = slot;
+		  atoms[i].neigh[k].step[2] = step;
+#endif /* TBEAM */
 
-		    }
-                    
-            /* Check if we are at the last index */
-		    if (slot >= calc_pot.last[col]) {
-		      slot--;
-		      shift += 1.0;
-		    }
-		    atoms[i].neigh[k].shift[2] = shift;
-		    atoms[i].neigh[k].slot[2] = slot;
-		    atoms[i].neigh[k].step[2] = step;
-                     
-            } //end s-band
-                  
-#endif /* END EAM or TBEAM */   
 #endif /* EAM || ADP || MEAM */
 
 #ifdef MEAM
@@ -940,17 +881,19 @@ void read_config(char *filename)
 		  atoms[i].neigh[k].step[1] = step;
 #endif /* STIWEB */
 
-		}
-	      }
-	    }
-	  }
-	}
-      }
+		}		/* !sh_dist */
+	      }			/* r < r_cut */
+	    }			/* loop over images in z direction */
+	  }			/* loop over images in y direction */
+	}			/* loop over images in x direction */
+      }				/* second loop over atoms (neighbors) */
+
       maxneigh = MAX(maxneigh, atoms[i].num_neigh);
       reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
-    }
+    }				/* first loop over atoms */
 
     /* compute the angular part */
+    /* For TERSOFF we create a full neighbor list, for all other potentials only a half list */
 #ifdef THREEBODY
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].num_neigh;
@@ -1005,20 +948,23 @@ void read_config(char *filename)
 	  atoms[i].angl_part[ijk].step = step;
 #endif /* MEAM */
 	  ijk++;
-	}
-      }
+	}			/* third loop over atoms */
+      }				/* second loop over atoms */
       atoms[i].num_angl = ijk;
       reg_for_free(atoms[i].angl_part, "angl part atom %d", i);
-    }
+    }				/* first loop over atoms */
 #endif /* THREEBODY */
 
-/* increment natoms and configuration number */
+    /* increment natoms and configuration number */
     natoms += count;
     nconf++;
 
   } while (!feof(infile));
+
+  /* close config file */
   fclose(infile);
 
+  /* the calculation of the neighbor lists is now complete */
   printf("done\n");
 
   /* calculate the total number of the atom types */
@@ -1035,7 +981,7 @@ void read_config(char *filename)
     for (j = 0; j < ntypes; j++)
       na_type[nconf][j] += na_type[i][j];
 
-  /* print diagnostic message and close file */
+  /* print diagnostic message */
   printf("\nRead %d configurations (%d with forces, %d with stresses)\n", nconf, w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
@@ -1075,20 +1021,22 @@ void read_config(char *filename)
   }
 #endif
 
-  /* mdim is dimension of force vector
-     3*natoms forces,
-     nconf cohesive energies,
-     6*nconf stress tensor components */
+  /* mdim is the dimension of the force vector:
+     - 3*natoms forces
+     - nconf cohesive energies,
+     - 6*nconf stress tensor components */
   mdim = 3 * natoms + nconf;
 #ifdef STRESS
   mdim += 6 * nconf;
 #endif /* STRESS */
 
+  /* mdim has additional components for EAM-like potentials */
 #if defined EAM || defined ADP || defined MEAM
   mdim += nconf;		/* nconf limiting constraints */
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
 #endif /* EAM || ADP || MEAM */
 
+  /* mdim has additional components for analytic potentials */
 #if defined APOT && !defined NOPUNISH
   /* 1 slot for each analytic parameter -> punishment */
   mdim += opt_pot.idxlen;
@@ -1139,7 +1087,7 @@ void read_config(char *filename)
 #if defined APOT && !defined NOPUNISH
   for (i = 0; i < opt_pot.idxlen; i++)
     force_0[k++] = 0.0;
-  for (i = 0; i < apot_table.number + 1; i++)
+  for (i = 0; i <= apot_table.number; i++)
     force_0[k++] = 0.0;
 #endif /* APOT && !NOPUNISH */
 
@@ -1204,14 +1152,14 @@ void read_config(char *filename)
 
   /* assign correct distances to different tables */
 #ifdef APOT
-  double min = 10.;
+  double min = 10.0;
 
   /* pair potentials */
   for (i = 0; i < ntypes; i++) {
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
-      if (mindist[k] == 99)
-	mindist[k] = 3;
+      if (mindist[k] >= 99.9)
+	mindist[k] = 2.5;
       rmin[i * ntypes + j] = mindist[k];
       apot_table.begin[k] = mindist[k] * 0.95;
       opt_pot.begin[k] = mindist[k] * 0.95;
@@ -1222,49 +1170,45 @@ void read_config(char *filename)
 
   /* transfer functions */
 #if defined EAM || defined ADP || defined MEAM
-#ifndef TBEAM   /* EAM ADP MEAM */
-  for (i = 0; i < ntypes; i++) {
-    j = i + ntypes * (ntypes + 1) / 2;
-    apot_table.begin[j] = min * 0.95;
-    opt_pot.begin[j] = min * 0.95;
-    calc_pot.begin[j] = min * 0.95;
+  for (i = paircol; i < paircol + ntypes; i++) {
+    apot_table.begin[i] = min * 0.95;
+    opt_pot.begin[i] = min * 0.95;
+    calc_pot.begin[i] = min * 0.95;
   }
-#else   /* TBEAM */  
-  int den_count;
-  if(ntypes == 1){
-    den_count = ntypes + 1;
-  }else{
-    den_count = ntypes * (ntypes + 1) / 2;
-  }  
-  for (i = 0; i < den_count; i++) {
-    j = i + ntypes * (ntypes + 1) / 2;
-    apot_table.begin[j] = min * 0.95;
-    opt_pot.begin[j] = min * 0.95;
-    calc_pot.begin[j] = min * 0.95;
+#ifdef TBEAM
+  for (i = paircol + 2 * ntypes; i < paircol + 3 * ntypes; i++) {
+    apot_table.begin[i] = min * 0.95;
+    opt_pot.begin[i] = min * 0.95;
+    calc_pot.begin[i] = min * 0.95;
   }
-#endif /* END EAM or TBEAM */      
+#endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
 
   /* dipole and quadrupole functions */
 #ifdef ADP
   for (i = 0; i < paircol; i++) {
-    apot_table.begin[paircol + 2 * ntypes + i] = min * 0.95;
-    apot_table.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
-    opt_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
-    opt_pot.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
-    calc_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
-    calc_pot.begin[2 * paircol + 2 * ntypes + i] = min * 0.95;
+    j = paircol + 2 * ntypes + i;
+    apot_table.begin[j] = min * 0.95;
+    opt_pot.begin[j] = min * 0.95;
+    calc_pot.begin[j] = min * 0.95;
+    j = 2 * paircol + 2 * ntypes + i;
+    apot_table.begin[j] = min * 0.95;
+    opt_pot.begin[j] = min * 0.95;
+    calc_pot.begin[j] = min * 0.95;
   }
 #endif /* ADP */
 
 #ifdef MEAM
   /* f_ij */
   for (i = 0; i < paircol; i++) {
-    apot_table.begin[paircol + 2 * ntypes + i] = min * 0.95;
-    opt_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
-    calc_pot.begin[paircol + 2 * ntypes + i] = min * 0.95;
+    j = paircol + 2 * ntypes + i;
+    apot_table.begin[j] = min * 0.95;
+    opt_pot.begin[j] = min * 0.95;
+    calc_pot.begin[j] = min * 0.95;
   }
   /* g_i */
+  /* g_i takes cos(theta) as an argument, so we need to tabulate it only
+     in the range of [-1:1]. Actually we use [-1.1:1.1] to be safe. */
   for (i = 0; i < ntypes; i++) {
     j = 2 * paircol + 2 * ntypes + i;
     apot_table.begin[j] = -1.1;
@@ -1310,6 +1254,7 @@ void read_config(char *filename)
 
   if (sh_dist)
     error(1, "Distances too short, last occurence conf %d, see above for details\n", sh_dist);
+
   return;
 }
 
@@ -1344,6 +1289,7 @@ double make_box(void)
   tbox_z.x /= volume;
   tbox_z.y /= volume;
   tbox_z.z /= volume;
+
   return volume;
 }
 
@@ -1418,7 +1364,6 @@ void update_slots(void)
 	atoms[i].neigh[j].slot[0] += calc_pot.first[col];
       }
 #if defined EAM || defined ADP || defined MEAM
-#ifndef TBEAM   /* EAM ADP MEAM */
       /* update slots for eam transfer functions, slot 1 */
       col = atoms[i].neigh[j].col[1];
       if (r < calc_pot.end[col]) {
@@ -1430,18 +1375,7 @@ void update_slots(void)
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[1] += calc_pot.first[col];
       }
-#else   /* TBEAM */  
-      /* update slots for tbeam transfer functions, d-band, slot 1 */
-      col = atoms[i].neigh[j].col[1];
-      if (r < calc_pot.end[col]) {
-	rr = r - calc_pot.begin[col];
-	atoms[i].neigh[j].slot[1] = (int)(rr * calc_pot.invstep[col]);
-	atoms[i].neigh[j].step[1] = calc_pot.step[col];
-	atoms[i].neigh[j].shift[1] =
-	  (rr - atoms[i].neigh[j].slot[1] * calc_pot.step[col]) * calc_pot.invstep[col];
-	/* move slot to the right potential */
-	atoms[i].neigh[j].slot[1] += calc_pot.first[col];
-      }
+#ifdef TBEAM
       /* update slots for tbeam transfer functions, s-band, slot 2 */
       col = atoms[i].neigh[j].col[2];
       if (r < calc_pot.end[col]) {
@@ -1453,7 +1387,7 @@ void update_slots(void)
 	/* move slot to the right potential */
 	atoms[i].neigh[j].slot[2] += calc_pot.first[col];
       }
-#endif /* END EAM or TBEAM */ 
+#endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
 
 #ifdef MEAM
