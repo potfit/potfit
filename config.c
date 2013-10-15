@@ -1034,6 +1034,9 @@ void read_config(char *filename)
 #if defined EAM || defined ADP || defined MEAM
   mdim += nconf;		/* nconf limiting constraints */
   mdim += 2 * ntypes;		/* ntypes dummy constraints */
+#ifdef TBEAM
+  mdim += 2 * ntypes;		/* additional dummy constraints for s-band */
+#endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
 
   /* mdim has additional components for analytic potentials */
@@ -1078,17 +1081,19 @@ void read_config(char *filename)
 #if defined EAM || defined ADP || defined MEAM
   for (i = 0; i < nconf; i++)
     force_0[k++] = 0.0;		/* punishment rho out of bounds */
-  for (i = 0; i < 2 * ntypes; i++) {	/* constraint on U(n=0):=0 */
-    /* XXX and U'(n_mean)=0  */
-    force_0[k++] = 0.0;
-  }
+  for (i = 0; i < 2 * ntypes; i++)
+    force_0[k++] = 0.0;		/* constraint on U(n=0):=0 */
+#ifdef TBEAM
+  for (i = 0; i < 2 * ntypes; i++)
+    force_0[k++] = 0.0;		/* constraint on U(n=0):=0 for s-band */
+#endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
 
 #if defined APOT && !defined NOPUNISH
   for (i = 0; i < opt_pot.idxlen; i++)
-    force_0[k++] = 0.0;
+    force_0[k++] = 0.0;		/* punishment for individual parameters */
   for (i = 0; i <= apot_table.number; i++)
-    force_0[k++] = 0.0;
+    force_0[k++] = 0.0;		/* punishment for potential functions */
 #endif /* APOT && !NOPUNISH */
 
   /* write pair distribution file */

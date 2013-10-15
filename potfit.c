@@ -149,16 +149,26 @@ int main(int argc, char **argv)
     }
 #endif /* APOT */
 
-    /* set spline density corrections to 0 */
+    /* set spline density corrections to 0.0 */
 #if defined EAM || defined ADP || defined MEAM
+#ifndef TBEAM
     lambda = (double *)malloc(ntypes * sizeof(double));
-    reg_for_free(lambda, "lambda");
-
     totdens = (double *)malloc(ntypes * sizeof(double));
-    reg_for_free(totdens, "totdens");
-
-    for (i = 0; i < ntypes; i++)
+    for (i = 0; i < ntypes; i++) {
       lambda[i] = 0.0;
+      totdens[i] = 0.0;
+    }
+#else
+    lambda = (double *)malloc(2 * ntypes * sizeof(double));
+    totdens = (double *)malloc(2 * ntypes * sizeof(double));
+    for (i = 0; i < 2 * ntypes; i++) {
+      lambda[i] = 0.0;
+      totdens[i] = 0.0;
+    }
+#endif /* !TBEAM */
+
+    reg_for_free(lambda, "lambda");
+    reg_for_free(totdens, "totdens");
 #endif /* EAM || ADP || MEAM */
 
     init_done = 1;
@@ -214,7 +224,11 @@ int main(int argc, char **argv)
   limit_p = stress_p + 6 * nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
+#ifdef TBEAM
   punish_par_p = dummy_p + 2 * ntypes;
+#else
+  punish_par_p = dummy_p + 4 * ntypes;
+#endif /* TBEAM */
   punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
 #endif /* APOT */
 #else /* EAM || ADP || MEAM */
@@ -228,7 +242,11 @@ int main(int argc, char **argv)
   limit_p = energy_p + nconf;
   dummy_p = limit_p + nconf;
 #ifdef APOT
+#ifdef TBEAM
   punish_par_p = dummy_p + 2 * ntypes;
+#else
+  punish_par_p = dummy_p + 4 * ntypes;
+#endif /* TBEAM */
   punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
 #endif /* APOT */
 #else /* EAM || ADP || MEAM */
@@ -577,7 +595,12 @@ int main(int argc, char **argv)
       for (i = dummy_p; i < dummy_p + ntypes; i++) {
 #ifdef NORESCALE
 	sqr = dsquare(force[i]);
-	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0., sqr, 0., force[i]);
+	fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0.0, sqr, 0.0, force[i]);
+#ifdef TBEAM
+	sqr = dsquare(force[i + 2 * ntypes]);
+	fprintf(outfile, "%s_s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0.0, sqr, 0.0,
+	  force[i + 2 * ntypes]);
+#endif /* TBEAM */
 #else
 	sqr = dsquare(force[i + ntypes]);
 	fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
@@ -586,8 +609,13 @@ int main(int argc, char **argv)
       }
 #ifdef NORESCALE
       fprintf(outfile, "\nNORESCALE: <n>!=1\n");
-      fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
+      fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1.0);
       fprintf(outfile, "Additional punishment of %f added.\n", dsquare(force[dummy_p + ntypes]));
+#ifdef TBEAM
+      fprintf(outfile, "\nNORESCALE: <n_s>!=1\n");
+      fprintf(outfile, "<n_s>=%f\n", force[dummy_p + 3 * ntypes] / DUMMY_WEIGHT + 1.0);
+      fprintf(outfile, "Additional punishment of %f added.\n", dsquare(force[dummy_p + 3 * ntypes]));
+#endif /* TBEAM */
 #endif /* NORESCALE */
       printf("Punishment constraints data written to \t%s\n", file);
       fclose(outfile);
