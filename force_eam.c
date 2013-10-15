@@ -117,6 +117,9 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
   while (1) {
     tmpsum = 0.0;		/* sum of squares of local process */
     rho_sum_loc = 0.0;
+#ifdef TBEAM
+    rho_s_sum_loc = 0.0;
+#endif /* TBEAM */
 
 #if defined APOT && !defined MPI
     if (0 == format) {
@@ -162,34 +165,17 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     }
 
     /* [paircol + ntypes, ..., paircol + 2 * ntypes - 1] = embedding function */
-#ifndef PARABOLA
-    /* if we have parabolic interpolation, we don't need that */
     for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {
       first = calc_pot.first[col];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
       if (0 == format || 3 == format)
 	spline_ed(calc_pot.step[col], xi + first, calc_pot.last[col] - first + 1,
-#ifdef WZERO
-	  ((calc_pot.begin[col] <= 0.0) ? *(xi + first - 2)
-	    : 0.5 / xi[first]), ((calc_pot.end[col] >= 0.0) ? *(xi + first - 1)
-	    : -0.5 / xi[calc_pot.last[col]]),
-#else /* WZERO: F is natural spline in any case */
-	  *(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
-	  calc_pot.d2tab + first);
+	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first, calc_pot.last[col] - first + 1,
-#ifdef WZERO
-	  (calc_pot.begin[col] <= 0.0 ? *(xi + first - 2)
-	    : 0.5 / xi[first]), (calc_pot.end[col] >= 0.0 ? *(xi + first - 1)
-	    : -0.5 / xi[calc_pot.last[col]]),
-#else /* WZERO */
-	  *(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
-	  calc_pot.d2tab + first);
+	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
     }
-#endif /* PARABOLA */
 
 #ifdef TBEAM
     /* [paircol + 2 * ntypes, ..., paircol + 3 * ntypes - 1] = s-band transfer function */
@@ -203,35 +189,18 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
     }
 
-    /* [paircol + 3 * ntypes, ..., paircol + 4 * ntypes - 1] = embedding function */
-#ifndef PARABOLA
-    /* if we have parabolic interpolation, we don't need that */
+    /* [paircol + 3 * ntypes, ..., paircol + 4 * ntypes - 1] = s-band embedding function */
     for (col = paircol + 3 * ntypes; col < paircol + 4 * ntypes; col++) {
       first = calc_pot.first[col];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
       if (0 == format || 3 == format)
 	spline_ed(calc_pot.step[col], xi + first, calc_pot.last[col] - first + 1,
-#ifdef WZERO
-	  ((calc_pot.begin[col] <= 0.0) ? *(xi + first - 2)
-	    : 0.5 / xi[first]), ((calc_pot.end[col] >= 0.0) ? *(xi + first - 1)
-	    : -0.5 / xi[calc_pot.last[col]]),
-#else /* WZERO: F is natural spline in any case */
-	  *(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
-	  calc_pot.d2tab + first);
+	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
       else			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first, calc_pot.last[col] - first + 1,
-#ifdef WZERO
-	  (calc_pot.begin[col] <= 0.0 ? *(xi + first - 2)
-	    : 0.5 / xi[first]), (calc_pot.end[col] >= 0.0 ? *(xi + first - 1)
-	    : -0.5 / xi[calc_pot.last[col]]),
-#else /* WZERO */
-	  *(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
-	  calc_pot.d2tab + first);
+	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
     }
-#endif /* PARABOLA */
 #endif /* TBEAM */
 
 #ifndef MPI
@@ -299,6 +268,9 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  }
 	  /* reset atomic density */
 	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
+#ifdef TBEAM
+	  conf_atoms[cnfstart[h] - firstatom + i].rho_s = 0.0;
+#endif /* TBEAM */
 	}
 	/* end of first loop */
 
@@ -417,37 +389,25 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
-#ifndef PARABOLA
-	    /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.end[col_F];
-#endif /* PARABOLA */
 	  }
 
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
-#ifndef PARABOLA
-	    /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.begin[col_F];
-#endif /* PARABOLA */
 	  }
 #ifdef TBEAM
 	  if (atom->rho_s > calc_pot.end[col_F_s]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho_s - calc_pot.end[col_F_s]);
-#ifndef PARABOLA
-	    /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho_s = calc_pot.end[col_F_s];
-#endif /* PARABOLA */
 	  }
 
 	  if (atom->rho_s < calc_pot.begin[col_F_s]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F_s] - atom->rho_s);
-#ifndef PARABOLA
-	    /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho_s = calc_pot.begin[col_F_s];
-#endif /* PARABOLA */
 	  }
 #endif /* TBEAM */
 #endif /* !NORESCALE */
@@ -455,9 +415,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 
-#ifdef PARABOLA
-	  forces[energy_p + h] += parab_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#elif defined(NORESCALE)
+#ifdef NORESCALE
 	  if (atom->rho < calc_pot.begin[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
@@ -503,9 +461,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  rho_sum_loc += atom->rho;
 
 #ifdef TBEAM
-#ifdef PARABOLA
-	  forces[energy_p + h] += parab_comb(&calc_pot, xi, col_s_F, atom->rho_s, &atom->gradF_s);
-#elif defined(NORESCALE)
+#ifdef NORESCALE
 	  if (atom->rho_s < calc_pot.begin[col_F_s]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
@@ -516,7 +472,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #else
 	    /* linear extrapolation left */
 	    rho_s_val = splint_comb(&calc_pot, xi, col_F_s, calc_pot.begin[col_F_s], &atom->gradF_s);
-	    forces[energy_p + h] += rho_s_val + (atom->rho - calc_pot.begin[col_F_s]) * atom->gradF_s;
+	    forces[energy_p + h] += rho_s_val + (atom->rho_s - calc_pot.begin[col_F_s]) * atom->gradF_s;
 #endif /* APOT */
 	  } else if (atom->rho_s > calc_pot.end[col_F_s]) {
 #ifdef APOT
@@ -550,7 +506,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F_s, atom->rho_s, &atom->gradF_s);
 #endif /* NORESCALE */
 
-	  /* sum up rho */
+	  /* sum up rho_s */
 	  rho_s_sum_loc += atom->rho_s;
 #endif /* TBEAM */
 
@@ -693,31 +649,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
     if (myid == 0) {
       int   g;
       for (g = 0; g < ntypes; g++) {
-	/* PARABOLA, WZERO, NORESC - different behaviour */
-#ifdef PARABOLA
-/* constraints on U(n) */
-	forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * parab(&calc_pot, xi, paircol + ntypes + g, 0.)
-	  - force_0[dummy_p + ntypes + g];
-/* constraints on U`(n) */
-	forces[dummy_p + g] =
-	  DUMMY_WEIGHT * parab_grad(&calc_pot, xi, paircol + ntypes + g,
-	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g])) -
-	  force_0[dummy_p + g];
-#elif defined(WZERO)
-	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
-	  /* 0 in domain of U(n) */
-/* constraints on U(n) */
-	  forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * splint(&calc_pot, xi, paircol + ntypes + g, 0.)
-	    - force_0[dummy_p + ntypes + g];
-	else
-	  /* 0 not in domain of U(n) */
-	  forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
-/* constraints on U`(n) */
-	forces[dummy_p + g] =
-	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
-	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
-	  - force_0[dummy_p + g];
-#elif defined(NORESCALE)
+#ifdef NORESCALE
 	/* clear field */
 	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
@@ -729,22 +661,24 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	forces[dummy_p + 2 * ntypes + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * ntypes + g, 1.0);
 #endif /* TBEAM */
-#else /* NOTHING */
+#else /* NORESCALE */
 	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
-/* constraints on U`(n) */
+	/* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
 	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #ifdef TBEAM
 	forces[dummy_p + 3 * ntypes + g] = 0.0;	/* Free end... */
-/* constraints on U`(n) */
+	/* constraints on U`(n) */
 	forces[dummy_p + 2 * ntypes + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * ntypes + g,
 	  .5 * (calc_pot.begin[paircol + 3 * ntypes + g] + calc_pot.end[paircol + 3 * ntypes + g]))
 	  - force_0[dummy_p + 2 * ntypes + g];
 #endif /* TBEAM */
-#endif /* Dummy constraints */
+#endif /* NORESCALE */
+
+	/* add punishments to total error sum */
 	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
 	tmpsum += dsquare(forces[dummy_p + g]);
 #ifdef TBEAM
@@ -752,19 +686,24 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	tmpsum += dsquare(forces[dummy_p + 2 * ntypes + g]);
 #endif /* TBEAM */
       }				/* loop over types */
+
 #ifdef NORESCALE
       /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
-      /* Calculate averages */
-      rho_sum /= (double)natoms;
-      /* ATTN: if there are invariant potentials, things might be problematic */
-      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
-      tmpsum += dsquare(forces[dummy_p + ntypes]);
+      if (rho_sum > 0.0) {
+	/* Calculate averages */
+	rho_sum /= (double)natoms;
+	/* ATTN: if there are invariant potentials, things might be problematic */
+	forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+	tmpsum += dsquare(forces[dummy_p + ntypes]);
+      }
 #ifdef TBEAM
-      /* Calculate averages */
-      rho_s_sum /= (double)natoms;
-      /* ATTN: if there are invariant potentials, things might be problematic */
-      forces[dummy_p + 3 * ntypes] = DUMMY_WEIGHT * (rho_s_sum - 1.);
-      tmpsum += dsquare(forces[dummy_p + 3 * ntypes]);
+      if (rho_s_sum > 0.0) {
+	/* Calculate averages */
+	rho_s_sum /= (double)natoms;
+	/* ATTN: if there are invariant potentials, things might be problematic */
+	forces[dummy_p + 3 * ntypes] = DUMMY_WEIGHT * (rho_s_sum - 1.);
+	tmpsum += dsquare(forces[dummy_p + 3 * ntypes]);
+      }
 #endif /* TBEAM */
 #endif /* NORESCALE */
     }				/* only root process */

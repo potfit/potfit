@@ -59,14 +59,16 @@
 #endif /* MEAM || TERSOFF || STIWEB */
 
 /* define EAM if TBEAM is defined */
-#ifdef TBEAM
+#if defined TBEAM && !defined EAM
 #define EAM
-#endif /* TBEAM */
+#endif /* TBEAM && !EAM */
 
 /* always define NORESCALE for analytic potentials */
 #ifdef APOT
+#ifndef NORESCALE
 #define NORESCALE
-#endif
+#endif /* NORESCALE */
+#endif /* APOT */
 
 #ifdef APOT
 #define APOT_STEPS 500		/* number of sampling points for analytic pot */

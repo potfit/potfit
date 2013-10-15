@@ -668,7 +668,7 @@ void read_config(char *filename)
 
 #ifdef TBEAM
 		  /* transfer function - d band */
-		  col = paircol + ntypes + type2;
+		  col = paircol + 2 * ntypes + type2;
 		  atoms[i].neigh[k].col[2] = col;
 		  if (format == 0 || format == 3) {
 		    rr = r - calc_pot.begin[col];

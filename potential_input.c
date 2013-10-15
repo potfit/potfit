@@ -1641,6 +1641,13 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
     || (NULL == pt->d2tab))
     error(1, "Cannot allocate memory for potential table");
 
+  for (i = 0;i < pt->len; i++) {
+    pt->table[i] = 0.0;
+    pt->xcoord[i] = 0.0;
+    pt->d2tab[i] = 0.0;
+    pt->idx[i] = 0;
+  }
+
   /* input loop */
   val = pt->table;
   ord = pt->xcoord;
