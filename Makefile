@@ -565,11 +565,11 @@ WARNING += "limit is now mandatory -- "
 endif
 
 ifneq (,$(findstring parab,${MAKETARGET}))
-CFLAGS += -DPARABOLA
+ERROR += "parab is no longer supported, please remove it from your target -- "
 endif
 
 ifneq (,$(findstring wzero,${MAKETARGET}))
-CFLAGS += -DWZERO
+ERROR += "wzero is no longer supported, please remove it from your target -- "
 endif
 
 ifneq (,$(findstring dist,${MAKETARGET}))

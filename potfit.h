@@ -612,11 +612,6 @@ EXTERN void (*write_pot_table) (apot_table_t *, char *);
 #else
 EXTERN void (*write_pot_table) (pot_table_t *, char *);
 #endif /* APOT */
-#ifdef PARABOLA
-EXTERN double (*parab) (pot_table_t *, double *, int, double);
-EXTERN double (*parab_comb) (pot_table_t *, double *, int, double, double *);
-EXTERN double (*parab_grad) (pot_table_t *, double *, int, double);
-#endif /* PARABOLA */
 
 /****************************************************************
  *

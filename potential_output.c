@@ -843,31 +843,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #ifdef APOT
       apot_table.fvalue[col1] (r2, apot_table.values[col1], &temp);
 #else
-#ifdef WZERO
-      if (r2 < pt->begin[col1] && pt->begin[col1] > 0)
-	if (r2 <= 0)
-	  temp = 100 * (root / fabs(root)) * r2;	/* steep decline */
-	else
-	  temp = root * sqrt(r2);	/* sqrt-like shape */
-      else if (r2 > pt->end[col1] && pt->end[col1] < 0)
-	if (r2 >= 0)
-	  temp = -100. * (root / fabs(root)) * r2;	/* steep decline */
-	else
-	  temp = root * sqrt(-r2);	/* sqrt-like shape */
-      else {
-#ifdef PARABOLA
-	temp = parab(pt, pt->table, col1, r2);
-#else
-	temp = splint_ne(pt, pt->table, col1, r2);
-#endif /* PARABOLA */
-      }
-#else /* WZERO */
 #ifdef MEAM
       temp = splint_ne_lin(pt, pt->table, col1, r2);
 #else
       temp = splint_ne_lin(pt, pt->table, col1, r2);
 #endif
-#endif /* WZERO */
       temp2 = r2 - pt->end[col1];
       temp += (temp2 > 0.) ? 5e2 * (temp2 * temp2 * temp2) : 0.;
 #ifdef NEWSCALE
@@ -1240,11 +1220,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
-#ifdef PARABOLA
-      temp = parab(pt, pt->table, i, r);
-#else
       temp = splint_ne(pt, pt->table, i, r);
-#endif /* PARABOLA */
 #ifdef NEWSCALE
       temp -= lambda[i - (paircol + ntypes)] * r;
 #endif /* NEWSCALE */
@@ -1680,11 +1656,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
-#ifdef PARABOLA
-      temp = parab(pt, pt->table, i, r);
-#else
       temp = splint_ne(pt, pt->table, i, r);
-#endif /* PARABOLA */
 #ifdef NEWSCALE
       temp -= lambda[i - (j + ntypes)] * r;
 #endif /* NEWSCALE */

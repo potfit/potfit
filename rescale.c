@@ -94,21 +94,11 @@ double rescale(pot_table_t *pt, double upper, int flag)
     /* gradient 0 at r_cut */
     if (format == 3)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-#ifdef WZERO
-	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
-#else /* WZERO : natural spline */
 	*(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
 	pt->d2tab + first);
     else			/* format == 4 */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
-#ifdef WZERO
-	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
-#else /* WZERO */
 	*(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
 	pt->d2tab + first);
   }
 
@@ -299,21 +289,11 @@ double rescale(pot_table_t *pt, double upper, int flag)
     /* gradient 0 at r_cut */
     if (format == 3)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-#ifdef WZERO
-	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
-#else /* WZERO */
 	*(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
 	pt->d2tab + first);
     else			/* format == 4 */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
-#ifdef WZERO
-	((pt->begin[col] <= 0.) ? *(xi + first - 2) : .5 / xi[first]),
-	((pt->end[col] >= 0.) ? *(xi + first - 1) : -.5 / xi[pt->last[col]]),
-#else /* WZERO */
 	*(xi + first - 2), *(xi + first - 1),
-#endif /* WZERO */
 	pt->d2tab + first);
   }
 

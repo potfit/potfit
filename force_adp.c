@@ -396,28 +396,19 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
-#ifndef PARABOLA
-	    /* then we use the final value, with PARABOLA: extrapolate */
 	    atom->rho = calc_pot.end[col_F];
-#endif /* PARABOLA */
 	  }
 
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
-#ifndef PARABOLA
-	    /* then we use the final value, with PARABOLA: extrapolate */
-	    atom->rho = calc_pot.begin[col_F];
-#endif /* PARABOLA */
 	  }
 #endif /* !NORESCALE */
 
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 
-#ifdef PARABOLA
-	  forces[energy_p + h] += parab_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#elif defined(NORESCALE)
+#ifdef NORESCALE
 	  if (atom->rho < calc_pot.begin[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
@@ -455,9 +446,9 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 #endif /* APOT */
 	      forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
-#else /* PARABOLA */
+#else /* NORESCALE */
 	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#endif /* PARABOLA */
+#endif /* NORESCALE */
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
 
@@ -671,45 +662,21 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
     if (myid == 0) {
       int   g;
       for (g = 0; g < ntypes; g++) {
-	/* PARABOLA, WZERO, NORESC - different behaviour */
-#ifdef PARABOLA
-/* constraints on U(n) */
-	forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * parab(&calc_pot, xi, paircol + ntypes + g, 0.)
-	  - force_0[dummy_p + ntypes + g];
-/* constraints on U`(n) */
-	forces[dummy_p + g] =
-	  DUMMY_WEIGHT * parab_grad(&calc_pot, xi, paircol + ntypes + g,
-	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g])) -
-	  force_0[dummy_p + g];
-#elif defined(WZERO)
-	if (calc_pot.begin[paircol + ntypes + g] <= 0.)
-	  /* 0 in domain of U(n) */
-/* constraints on U(n) */
-	  forces[dummy_p + ntypes + g] = DUMMY_WEIGHT * splint(&calc_pot, xi, paircol + ntypes + g, 0.)
-	    - force_0[dummy_p + ntypes + g];
-	else
-	  /* 0 not in domain of U(n) */
-	  forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
-/* constraints on U`(n) */
-	forces[dummy_p + g] =
-	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
-	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
-	  - force_0[dummy_p + g];
-#elif defined(NORESCALE)
+#ifdef NORESCALE
 	/* clear field */
 	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.)=0; */
 	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
-#else /* NOTHING */
+#else /* NORESCALE */
 	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
-/* constraints on U`(n) */
+	/* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
 	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
-#endif /* Dummy constraints */
-	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
+#endif /* NORESCALE constraints */
 	tmpsum += dsquare(forces[dummy_p + g]);
+	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
       }				/* loop over types */
 
 #ifdef NORESCALE

@@ -47,16 +47,6 @@ void  update_apot_table(double *);
 void  update_calc_table(double *, double *, int);
 #endif /* APOT */
 
-/* parabolic interpolation */
-#ifdef PARABOLA
-double parab_comb_ed(pot_table_t *, double *, int, double, double *);
-double parab_grad_ed(pot_table_t *, double *, int, double);
-double parab_ed(pot_table_t *, double *, int, double);
-double parab_comb_ne(pot_table_t *, double *, int, double, double *);
-double parab_grad_ne(pot_table_t *, double *, int, double);
-double parab_ne(pot_table_t *, double *, int, double);
-#endif /* PARABOLA */
-
 /* writing potentials to files */
 #ifdef APOT
 void  write_pot_table0(apot_table_t *, char *);

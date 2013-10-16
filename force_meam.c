@@ -89,13 +89,6 @@
  *
  ****************************************************************/
 
-/****************************************************************
- *
- * DOES NOT WORK WITH THE FOLLOWING FLAGS:
- * PARABOLA, WZERO
- *
- ****************************************************************/
-
 double calc_forces_meam(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
