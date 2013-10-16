@@ -192,7 +192,7 @@ ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   LIBS		= -L${ACML4PATH} -lpthread -lacml -lacml_mv
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-   LIBMPATH 	= ${LIBMDIR}/lib64
+   LIBMPATH 	= ${LIBMDIR}/lib/dynamic
    CINCLUDE     += -I${ACML5DIR}/include -I${LIBMDIR}/include
    LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
 endif
@@ -228,7 +228,7 @@ ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib64
+  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
   CINCLUDE     	+= -I${ACML5DIR}/include -I${LIBMDIR}/include
   LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
@@ -271,7 +271,7 @@ ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   LIBS		+= -L${ACML4PATH} -lpthread -lacml
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib/static
+  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
   CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
   LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml
 endif
@@ -307,7 +307,7 @@ ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
   LIBS		+= -L${ACML4PATH} -lpthread -lacml -Wl,--as-needed
 endif
 ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  LIBMPATH 	= ${LIBMDIR}/lib/static
+  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
   CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
   LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -Wl,--as-needed
 endif
