@@ -549,9 +549,8 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		  if (atom->type == neigh->type) {	/* use actio = reactio */
 		    rho_s_grad_j = rho_s_grad;
 		  } else {
-		    rho_s_grad_j =
-		      (r < calc_pot.end[col_F_s - ntypes]) ? splint_grad(&calc_pot, xi, col_F_s - ntypes,
-		      r) : 0.0;
+		    rho_s_grad_j = (r < calc_pot.end[col_F_s - ntypes]) ?
+			splint_grad(&calc_pot, xi, col_F_s - ntypes, r) : 0.0;
 		  }
 		  /* now we know everything - calculate forces */
 		  eam_force +=
@@ -601,8 +600,8 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	      tmpsum += conf_weight[h] *
 		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }			/* third loop over atoms */
-	}
-	/* use forces */
+	} 			/* use forces */
+
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
@@ -679,11 +678,11 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #endif /* NORESCALE */
 
 	/* add punishments to total error sum */
-	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
 	tmpsum += dsquare(forces[dummy_p + g]);
+	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
 #ifdef TBEAM
-	tmpsum += dsquare(forces[dummy_p + 3 * ntypes + g]);
 	tmpsum += dsquare(forces[dummy_p + 2 * ntypes + g]);
+	tmpsum += dsquare(forces[dummy_p + 3 * ntypes + g]);
 #endif /* TBEAM */
       }				/* loop over types */
 
