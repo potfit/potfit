@@ -58,10 +58,17 @@
 #define THREEBODY
 #endif /* MEAM || TERSOFF || STIWEB */
 
+/* define EAM if TBEAM is defined */
+#if defined TBEAM && !defined EAM
+#define EAM
+#endif /* TBEAM && !EAM */
+
 /* always define NORESCALE for analytic potentials */
 #ifdef APOT
+#ifndef NORESCALE
 #define NORESCALE
-#endif
+#endif /* NORESCALE */
+#endif /* APOT */
 
 #ifdef APOT
 #define APOT_STEPS 500		/* number of sampling points for analytic pot */
@@ -69,22 +76,23 @@
 #endif /* APOT */
 
 #if defined EAM || defined ADP || defined MEAM
-#define DUMMY_WEIGHT 100.
+#define DUMMY_WEIGHT 100.0
 #endif /* EAM || ADP || MEAM */
 
-#define FORCE_EPS .1
+#define FORCE_EPS 0.1
 
 /****************************************************************
  *
  *  SLOTS: number of different distance tables used in the force calculations
  *
  *  In potfit all potentials are calculated via spline interpolations of pre-
- *  calculated potential tables. To speed up the calculation of these splines,
+ *  calculated potential tables. To speed up the spline calculation,
  *  the exact position of a neighbor distance has to be known with respect to the
- *  tabulated values. For each occuring distance in a force routine there should
+ *  tabulated values. For each potential function in a force routine there should
  *  be a different slot with the corresponding potential table information.
  *
- *  PAIR: 	SLOTS = 1
+ *  SLOTS = 1 for the following interactions:
+ *  	PAIR, COULOMB, DIPOLE, TERSOFF
  *  	0 ... pair distance
  *
  *  EAM: 	SLOTS = 2
@@ -94,6 +102,11 @@
  *  STIWEB: 	SLOTS = 2
  *  	0 ... pair distance
  *  	1 ... exponential functions
+ *
+ *  TBEAM: 	SLOTS = 3
+ *  	0 ... pair distance
+ *  	1 ... transfer function
+ *  	2 ... 2nd transfer function
  *
  *  MEAM: 	SLOTS = 3
  *  	0 ... pair distance
@@ -113,13 +126,17 @@
 #if defined EAM || defined STIWEB
 #undef SLOTS
 #define SLOTS 2
-#elif defined MEAM
+#endif /* EAM || STIWEB */
+
+#if defined TBEAM || defined MEAM
 #undef SLOTS
 #define SLOTS 3
-#elif defined ADP
+#endif /* TBEAM || MEAM */
+
+#if defined ADP
 #undef SLOTS
 #define SLOTS 4
-#endif
+#endif /* ADP */
 
 /****************************************************************
  *
@@ -128,17 +145,6 @@
  ****************************************************************/
 
 typedef enum Param_T { PARAM_STR, PARAM_INT, PARAM_DOUBLE } param_t;
-
-typedef enum Interaction_T {
-  I_PAIR,
-  I_EAM,
-  I_ADP,
-  I_ELSTAT,
-  I_EAM_ELSTAT,
-  I_MEAM,
-  I_STIWEB,
-  I_TERSOFF
-} Interaction_T;
 
 typedef struct {
   double x;
@@ -267,6 +273,10 @@ typedef struct {
 #if defined EAM || defined ADP || defined MEAM
   double rho;			/* embedding electron density */
   double gradF;			/* gradient of embedding fn. */
+#ifdef TBEAM
+  double rho_s;			/* embedding electron density */
+  double gradF_s;		/* gradient of embedding fn. */
+#endif				/* TBEAM */
 #endif				/* EAM || ADP || MEAM */
 
 #ifdef ADP
@@ -393,31 +403,12 @@ typedef struct {
 
 /* MAIN is defined only once in the main module */
 #ifdef MAIN
-#define EXTERN			/* define Variables in main */
+#define EXTERN			/* define variables in main */
 #define INIT(data) = data	/* initialize data only in main */
 #else
 #define EXTERN extern		/* declare them extern otherwise */
 #define INIT(data)		/* skip initialization otherwise */
 #endif /* MAIN */
-
-/* define interaction type */
-#ifdef PAIR
-EXTERN Interaction_T interaction INIT(I_PAIR);
-#elif defined EAM && !defined COULOMB
-EXTERN Interaction_T interaction INIT(I_EAM);
-#elif defined ADP
-EXTERN Interaction_T interaction INIT(I_ADP);
-#elif defined COULOMB && !defined EAM
-EXTERN Interaction_T interaction INIT(I_ELSTAT);
-#elif defined COULOMB && defined EAM
-EXTERN Interaction_T interaction INIT(I_EAM_ELSTAT);
-#elif defined MEAM
-EXTERN Interaction_T interaction INIT(I_MEAM);
-#elif defined STIWEB
-EXTERN Interaction_T interaction INIT(I_STIWEB);
-#elif defined TERSOFF
-EXTERN Interaction_T interaction INIT(I_TERSOFF);
-#endif /* interaction type */
 
 /* system variables */
 EXTERN int myid INIT(0);	/* Who am I? (0 if serial) */
@@ -460,14 +451,14 @@ EXTERN double evo_threshold INIT(1.e-6);
 #else /* EVO */
 EXTERN char anneal_temp[20] INIT("\0");
 #endif /* EVO */
-EXTERN double eweight INIT(-1.);
-EXTERN double sweight INIT(-1.);
-EXTERN double extend INIT(2.);	/* how far should one extend imd pot */
+EXTERN double eweight INIT(-1.0);
+EXTERN double sweight INIT(-1.0);
+EXTERN double extend INIT(2.0);	/* how far should one extend imd pot */
 #ifdef APOT
 EXTERN int compnodes INIT(0);	/* how many additional composition nodes */
 EXTERN int enable_cp INIT(0);	/* switch chemical potential on/off */
-EXTERN double apot_punish_value INIT(0.);
-EXTERN double plotmin INIT(0.);	/* minimum for plotfile */
+EXTERN double apot_punish_value INIT(0.0);
+EXTERN double plotmin INIT(0.0);	/* minimum for plotfile */
 #endif /* APOT */
 
 /* configurations */
@@ -497,8 +488,8 @@ EXTERN double *force_0;		/* the forces we aim at */
 EXTERN double *rcut;
 EXTERN double *rmin;
 EXTERN double *volume;		/* volume of cell */
-EXTERN double rcutmin INIT(999.);	/* minimum of all cutoff values */
-EXTERN double rcutmax INIT(0.);	/* maximum of all cutoff values */
+EXTERN double rcutmin INIT(999.9);	/* minimum of all cutoff values */
+EXTERN double rcutmax INIT(0.0);	/* maximum of all cutoff values */
 EXTERN sym_tens *conf_stress;
 EXTERN sym_tens *stress;	/* Stresses in each config */
 EXTERN vector box_x, box_y, box_z;
@@ -510,7 +501,6 @@ EXTERN vector *sphere_centers;	/* centers of the spheres of contrib. atoms */
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
 /* potential variables */
-EXTERN char interaction_name[10] INIT("\0");
 EXTERN int *gradient;		/* Gradient of potential fns.  */
 EXTERN int *invar_pot;
 EXTERN int format INIT(-1);	/* format of potential table */
@@ -527,11 +517,8 @@ EXTERN double *compnodelist;	/* list of the composition nodes */
 #endif /* APOT */
 
 /* potential tables */
-EXTERN pot_table_t opt_pot;	/* potential in the internal */
-				/* representation used for  */
-				/* minimisation */
-EXTERN pot_table_t calc_pot;	/* the potential table used */
-				/* for force calculations */
+EXTERN pot_table_t opt_pot;	/* potential in the internal representation used for minimisation */
+EXTERN pot_table_t calc_pot;	/* the potential table used for force calculations */
 #ifdef APOT
 EXTERN apot_table_t apot_table;	/* potential in analytic form */
 EXTERN int n_functions INIT(0);	/* number of analytic function prototypes */
@@ -592,7 +579,7 @@ EXTERN char *component[6];	/* componentes of vectors and tensors */
 /* variables needed for electrostatic options */
 #ifdef COULOMB
 EXTERN double dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
-EXTERN double dp_cut INIT(10);	/* cutoff-radius for long-range interactions */
+EXTERN double dp_cut INIT(10.0);	/* cutoff-radius for long-range interactions */
 #endif /* COULOMB */
 #ifdef DIPOLE
 EXTERN double dp_tol INIT(1.e-7);	/* dipole iteration precision */
@@ -642,29 +629,41 @@ void set_force_vector_pointers();
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
 double calc_forces_pair(double *, double *, int);
+EXTERN const char interaction_name[5] INIT("PAIR");
 #elif defined EAM && !defined COULOMB
 double calc_forces_eam(double *, double *, int);
+#ifndef TBEAM
+EXTERN const char interaction_name[4] INIT("EAM");
+#else
+EXTERN const char interaction_name[6] INIT("TBEAM");
+#endif /* TBEAM */
 #elif defined ADP
 double calc_forces_adp(double *, double *, int);
+EXTERN const char interaction_name[4] INIT("ADP")
 #elif defined COULOMB && !defined EAM
 double calc_forces_elstat(double *, double *, int);
+EXTERN const char interaction_name[7] INIT("ELSTAT");
 #elif defined COULOMB && defined EAM
 double calc_forces_eam_elstat(double *, double *, int);
+EXTERN const char interaction_name[11] INIT("EAM_ELSTAT");
 #elif defined MEAM
 double calc_forces_meam(double *, double *, int);
+EXTERN const char interaction_name[5] INIT("MEAM");
 #elif defined STIWEB
 double calc_forces_stiweb(double *, double *, int);
+EXTERN const char interaction_name[7] INIT("STIWEB");
 void  update_stiweb_pointers(double *);
 #elif defined TERSOFF
 double calc_forces_tersoff(double *, double *, int);
+EXTERN const char interaction_name[8] INIT("TERSOFF");
 void  update_tersoff_pointers(double *);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
-#if defined EAM || defined MEAM
+#if !defined APOT && ( defined EAM || defined MEAM )
 double rescale(pot_table_t *, double, int);
 void  embed_shift(pot_table_t *);
-#endif /* EAM */
+#endif /* !APOT && (EAM || MEAM) */
 
 /* MPI parallelization [mpi_utils.c] */
 #ifdef MPI

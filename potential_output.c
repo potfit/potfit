@@ -335,6 +335,14 @@ void write_pot_table3(pot_table_t *pt, char *filename)
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
+#ifdef TBEAM
+    /* transfer functions s-band */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    /* embedding functions s-band */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+#endif /* TBEAM */
 #endif /* EAM || MEAM */
 #ifdef MEAM
     /* pre-anglpart */
@@ -426,6 +434,14 @@ void write_pot_table4(pot_table_t *pt, char *filename)
     /* embedding functions */
     for (i = 0; i < ntypes; i++)
       fprintf(outfile, " %s", elements[i]);
+#ifdef TBEAM
+    /* transfer functions s-band */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    /* embedding functions s-band */
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+#endif /* TBEAM */
 #endif /* EAM */
   }
   if (have_invar) {

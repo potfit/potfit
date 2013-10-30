@@ -36,8 +36,8 @@ void  read_pot_table(pot_table_t *, char *);
 #ifdef APOT
 void  read_pot_table0(pot_table_t *, apot_table_t *, char *, FILE *);
 #else
-void  read_pot_table3(pot_table_t *, int, int, int *, char *, FILE *);
-void  read_pot_table4(pot_table_t *, int, int, int *, char *, FILE *);
+void  read_pot_table3(pot_table_t *, int, char *, FILE *);
+void  read_pot_table4(pot_table_t *, int, char *, FILE *);
 #endif /* APOT */
 
 /* calculating the potential tables */

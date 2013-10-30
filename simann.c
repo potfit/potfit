@@ -107,13 +107,13 @@ void makebump(double *x, double width, double height, int center)
   /* find pot to which center belongs */
   while (opt_pot.last[j] < idx[center])
     j++;
-  for (i = 0; i <= 4. * width; i++) {
+  for (i = 0; i <= 4.0 * width; i++) {
     /* using idx avoids moving fixed points */
     if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
       x[idx[center + i]] += GAUSS((double)i / width) * height;
     }
   }
-  for (i = 1; i <= 4. * width; i++) {
+  for (i = 1; i <= 4.0 * width; i++) {
     if ((center - i >= 0) && (idx[center - i] >= opt_pot.first[j])) {
       x[idx[center - i]] += GAUSS((double)i / width) * height;
     }
