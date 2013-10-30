@@ -62,7 +62,7 @@ void shutdown_mpi(void)
     fprintf(stderr, "MPI will be killed, because the initialization is not yet complete.\n");
     fprintf(stderr, "This is not a bug!\n\n");
     fflush(stderr);
-    MPI_Abort(MPI_COMM_WORLD, -1);
+    MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
   }
   MPI_Barrier(MPI_COMM_WORLD);	/* Wait for all processes to arrive */
   MPI_Finalize();		/* Shutdown */
@@ -308,6 +308,7 @@ void broadcast_params()
   MPI_Bcast(&ntypes, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&natoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&nconf, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&paircol, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
   MPI_Bcast(&dp_cut, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);

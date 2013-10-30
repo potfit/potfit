@@ -582,7 +582,9 @@ EXTERN int *conf_len;
 EXTERN int *idx;
 EXTERN int init_done INIT(0);
 EXTERN int plot INIT(0);	/* plot output flag */
+#if defined EAM || defined ADP || defined MEAM
 EXTERN double *lambda;		/* embedding energy slope... */
+#endif
 EXTERN double *maxchange;	/* Maximal permissible change */
 EXTERN dsfmt_t dsfmt;		/* random number generator */
 EXTERN char *component[6];	/* componentes of vectors and tensors */
@@ -623,11 +625,19 @@ EXTERN void (*write_pot_table) (pot_table_t *, char *);
 void  error(int, char *, ...);
 void  warning(int, char *, ...);
 
+/* error reports [errors.c] */
+void write_errors(double *, double);
+
 /* reading parameter file [param.c] */
 int   getparam(char *, void *, param_t, int, int);
 void  check_parameters_complete(char *);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
+
+/* general force functions [forces.c] */
+void set_forces();
+void init_forces();
+void set_force_vector_pointers();
 
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR

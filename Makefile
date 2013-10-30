@@ -369,7 +369,7 @@ endif
 
 POTFITHDR   	= bracket.h elements.h optimize.h potfit.h potential.h \
 		  random.h splines.h utils.h
-POTFITSRC 	= bracket.c brent.c config.c elements.c linmin.c \
+POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 		  param.c potential_input.c potential_output.c potfit.c \
 		  powell_lsq.c random.c simann.c splines.c utils.c
 
@@ -705,19 +705,15 @@ ifeq (0,${RELEASE})
 ifeq (1,${GIT})
 	@echo -e "Writing git data to version.h\n"
 	@rm -f version.h
-
 	@echo -e "#define VERSION_INFO \"potfit-git (r"`git rev-list HEAD | wc -l`")\"\n" > version.h
-	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 else
 	@echo -e "Writing fake git data to version.h\n"
 	@rm -f version.h
 	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
-	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 endif
 else
 	@rm -f version.h
 	@echo -e "#define VERSION_INFO \"setversionhere\"" > version.h
-	@echo -e "#define VERSION_DATE \"`date +%Y-%m-%d\ %H:%M:%S\ %z`\"" >> version.h
 endif
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
 else
