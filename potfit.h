@@ -395,7 +395,7 @@ EXTERN const char interaction_name[6] INIT("TBEAM");
 #endif /* TBEAM */
 #elif defined ADP
 double calc_forces_adp(double *, double *, int);
-EXTERN const char interaction_name[4] INIT("ADP")
+EXTERN const char interaction_name[4] INIT("ADP");
 #elif defined COULOMB && !defined EAM
 double calc_forces_elstat(double *, double *, int);
 EXTERN const char interaction_name[7] INIT("ELSTAT");

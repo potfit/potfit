@@ -583,11 +583,7 @@ endif
 endif
 
 ifneq (,$(findstring newscale,${MAKETARGET}))
-ifeq (,$(findstring MPI,${PARALLEL}))
-CFLAGS += -DNEWSCALE
-else
-ERROR += "newscale is not mpi parallelized -- "
-endif
+ERROR += "newscale is no longer supported, please remove it from your target -- "
 endif
 
 ifneq (,$(findstring fweight,${MAKETARGET}))

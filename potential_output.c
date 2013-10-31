@@ -740,22 +740,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
-#ifdef NEWSCALE
-	/* Pair potentials corrected so that U'(1)   =0 with NORESCALE */
-	/*                               and U'(n_av)=0 without */
-	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1,
-	    sqrt(r2)) + (sqrt(r2) <=
-	    pt->end[paircol + j] ? lambda[i] * splint_ne(pt, pt->table,
-	      paircol + j,
-	      sqrt(r2)) : 0.0) + (sqrt(r2) <=
-	    pt->end[paircol + i] ? lambda[j] * splint_ne(pt, pt->table, paircol + i, sqrt(r2)) : 0.0));
-#else /* NEWSCALE */
 #ifdef MEAM
 	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
 #else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, sqrt(r2)));
-#endif //MEAM
-#endif /* NEWSCALE */
+#endif /* MEAM */
 #endif /* APOT */
 	r2 += r2step[col2];
       }
@@ -866,9 +855,6 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif
       temp2 = r2 - pt->end[col1];
       temp += (temp2 > 0.0) ? 5e2 * (temp2 * temp2 * temp2) : 0.0;
-#ifdef NEWSCALE
-      temp -= lambda[i] * r2;
-#endif /* NEWSCALE */
 #endif /* APOT */
       fprintf(outfile, "%.16e\n", temp);
       r2 += r2step[i];
@@ -1210,13 +1196,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       r = pt->begin[k];
       r_step = (pt->end[k] - r) / (NPLOT - 1);
       for (l = 0; l < NPLOT - 1; l++) {
-#ifdef NEWSCALE
-	fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r)
-	  + (r <= pt->end[paircol + i] ? splint_ne(pt, pt->table, paircol + i, r) * lambda[j] : 0.0)
-	  + (r <= pt->end[paircol + j] ? splint_ne(pt, pt->table, paircol + j, r) * lambda[i] : 0.0));
-#else
 	fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r));
-#endif /* NEWSCALE */
 	r += r_step;
       }
       fprintf(outfile, "%e %e\n\n\n", r, 0.0);
@@ -1237,9 +1217,6 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
       temp = splint_ne(pt, pt->table, i, r);
-#ifdef NEWSCALE
-      temp -= lambda[i - (paircol + ntypes)] * r;
-#endif /* NEWSCALE */
       fprintf(outfile, "%e %e\n", r, temp);
       r += r_step;
     }
@@ -1646,13 +1623,7 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
     for (j = i; j < ntypes; j++) {
       r = rmin;
       for (l = 0; l < NPLOT - 1; l++) {
-#ifdef NEWSCALE
-	fprintf(outfile, "%e %e\n", r, (r <= pt->end[k] ? splint_ne(pt, pt->table, k, r) : 0.0)
-	  + (r <= pt->end[paircol + i] ? splint_ne(pt, pt->table, paircol + i, r) * lambda[j] : 0.0)
-	  + (r <= pt->end[paircol + j] ? splint_ne(pt, pt->table, paircol + j, r) * lambda[i] : 0.0));
-#else
 	fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r));
-#endif /* NEWSCALE */
 	r += r_step;
       }
       fprintf(outfile, "%e %e\n\n\n", r, 0.0);
@@ -1673,9 +1644,6 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
       temp = splint_ne(pt, pt->table, i, r);
-#ifdef NEWSCALE
-      temp -= lambda[i - (j + ntypes)] * r;
-#endif /* NEWSCALE */
       fprintf(outfile, "%e %e\n", r, temp);
       r += r_step;
     }

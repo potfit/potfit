@@ -87,26 +87,6 @@ void write_errors(double *force, double tot)
     printf("Local electron density data written to \t%s\n", file);
     fclose(outfile);
   }
-#ifdef NEWSCALE
-  for (i = 0; i < ntypes; i++) {
-#ifdef NORESCALE
-    /* U'(1.0) = 0.0 */
-    lambda[i] = splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i, 1.0);
-#else
-    /* U'(<n>)=0; */
-    lambda[i] = splint_grad(&calc_pot, calc_pot.table, paircol + ntypes + i, totdens[i]);
-#endif /* NORESCALE */
-    printf("lambda[%d] = %f \n", i, lambda[i]);
-  }
-  sprintf(plotfile, "%s_new", plotfile);
-  sprintf(imdpot, "%s_new", imdpot);
-  /* write new potential plotting table */
-  if (plot)
-    write_altplot_pair(&opt_pot, plotfile);
-  /* write NEW imd potentials */
-  if (writeimd)
-    write_pot_table_imd(&opt_pot, imdpot);
-#endif /* NEWSCALE */
 #endif /* !MPI */
 #endif /* EAM || ADP || MEAM */
 
