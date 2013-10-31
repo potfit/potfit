@@ -30,6 +30,8 @@
 
 #include "potfit.h"
 
+#include "utils.h"
+
 void write_errors(double *force, double tot)
 {
   int i, j;

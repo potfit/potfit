@@ -177,8 +177,8 @@ int main(int argc, char **argv)
       splint = splint_ne;
       splint_comb = splint_comb_ne;
       splint_grad = splint_grad_ne;
-#endif /* !APOT */
     }
+#endif /* !APOT */
 
     /* all but root go to calc_forces */
 #ifdef APOT
