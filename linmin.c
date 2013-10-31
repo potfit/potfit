@@ -64,7 +64,7 @@ double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, do
   delcom = del;
   ax = 0.0;			/*do not change without correcting fa, */
   /*saves 1 fcalc... */
-  bx = .1;
+  bx = 0.1;
 
   if (vecu == NULL) {
     vecu = vect_double(ndimtot);

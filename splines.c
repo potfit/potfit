@@ -324,7 +324,7 @@ double splint_ne(pot_table_t *pt, double *xi, int col, double r)
   d22 = pt->d2tab[khi];
 
   b = (r - x1) / h;
-  a = (1. - b);
+  a = (1.0 - b);
 
   return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
 }
@@ -363,16 +363,16 @@ double splint_ne_lin(pot_table_t *pt, double *xi, int col, double r)
 
 /*   if (h == 0.0) error("Bad xa input to routine splint"); */
   b = (r - x1) / h;
-  a = (1. - b);
+  a = (1.0 - b);
 
   if (r < pt->begin[col]) {
-    b = 0.;
-    a = 1.;
+    b = 0.0;
+    a = 1.0;
     grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
     return p1 + grad * (r - x1);
   } else if (r > pt->end[col]) {
-    b = 1.;
-    a = 0.;
+    b = 1.0;
+    a = 0.0;
     grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
     return p2 + grad * (r - x2);
   }
@@ -414,7 +414,7 @@ double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r, double *gr
   d22 = pt->d2tab[khi];
 
   b = (r - x1) / h;
-  a = (1. - b);
+  a = (1.0 - b);
 
   *grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
 
@@ -453,7 +453,7 @@ double splint_grad_ne(pot_table_t *pt, double *xi, int col, double r)
   d22 = pt->d2tab[khi];
 
   b = (r - x1) / h;
-  a = (1. - b);
+  a = (1.0 - b);
 
   return (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
 }

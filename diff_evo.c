@@ -72,7 +72,7 @@ void init_population(double **pop, double *xi, double *cost)
       min = apot_table.pmin[apot_table.idxpot[j]][apot_table.idxparam[j]];
       max = apot_table.pmax[apot_table.idxpot[j]][apot_table.idxparam[j]];
       /* initialize with normal distribution */
-      temp = normdist() / 3.;
+      temp = normdist() / 3.0;
       if (fabs(temp) > 1)
 	temp /= fabs(temp);
       if (temp > 0)
@@ -80,11 +80,11 @@ void init_population(double **pop, double *xi, double *cost)
       else
 	pop[i][idx[j]] = val + temp * (val - min);
 #else /* APOT */
-      min = -10. * val;
-      max = 10. * val;
+      min = -10.0 * val;
+      max = 10.0 * val;
       /* initialize with uniform distribution in [-1:1] */
       temp = dsfmt_genrand_close_open(&dsfmt);
-/*      pop[i][idx[j]] = temp * 100.;*/
+/*      pop[i][idx[j]] = temp * 100.0;*/
       pop[i][idx[j]] = val + temp * (max - min);
 #endif /* APOT */
     }
@@ -121,13 +121,13 @@ void opposite_check(double **P, double *costP, int init)
     for (i = 0; i < 2 * NP; i++) {
       tot_P[i] = (double *)malloc(D * sizeof(double));
       for (j = 0; j < D; j++)
-	tot_P[i][j] = 0.;
+	tot_P[i][j] = 0.0;
     }
   }
   if (tot_cost == NULL)
     tot_cost = (double *)malloc(2 * NP * sizeof(double));
   for (i = 0; i < 2 * NP; i++)
-    tot_cost[i] = 0.;
+    tot_cost[i] = 0.0;
 
   if (!init) {
     for (i = 0; i < ndim; i++) {
@@ -194,16 +194,16 @@ void diff_evo(double *xi)
   int   i, j, k;		/* counters */
   int   count = 0;		/* counter for loops */
   int   jsteps = 0;
-  double avg = 0.;		/* average sum of squares for all configurations */
-  double crit = 1000.;		/* treshold for stopping criterion */
-  double force = 0.;		/* holds the current sum of squares */
+  double avg = 0.0;		/* average sum of squares for all configurations */
+  double crit = 1000.0;		/* treshold for stopping criterion */
+  double force = 0.0;		/* holds the current sum of squares */
   double jumprate = JR;
   double min = 10e10;		/* current minimum for all configurations */
-  double max = 0.;		/* current maximum for all configurations */
-  double temp = 0.;		/* temp storage */
+  double max = 0.0;		/* current maximum for all configurations */
+  double temp = 0.0;		/* temp storage */
 #ifdef APOT
-  double pmin = 0.;		/* lower bound for parameter */
-  double pmax = 0.;		/* upper bound for parameter */
+  double pmin = 0.0;		/* lower bound for parameter */
+  double pmax = 0.0;		/* upper bound for parameter */
 #endif /* APOT */
   double *best;			/* best configuration */
   double *cost;			/* cost values for all configurations */
@@ -213,7 +213,7 @@ void diff_evo(double *xi)
   double **x2;			/* next generation */
   FILE *ff;			/* exit flagfile */
 
-  if (evo_threshold == 0.)
+  if (evo_threshold == 0.0)
     return;
 
   /* vector for force calculation */
@@ -265,7 +265,7 @@ void diff_evo(double *xi)
 
   /* main differential evolution loop */
   while (crit >= evo_threshold && min >= evo_threshold) {
-    max = 0.;
+    max = 0.0;
     /* randomly create new populations */
     for (i = 0; i < NP; i++) {
       /* generate random numbers */
@@ -371,7 +371,7 @@ void diff_evo(double *xi)
       }
     }
 #endif /* APOT */
-    avg = 0.;
+    avg = 0.0;
     for (i = 0; i < NP; i++)
       avg += cost[i];
     printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP), max - min);

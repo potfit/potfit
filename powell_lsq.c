@@ -51,7 +51,7 @@
 #include "potential.h"
 #include "utils.h"
 
-#define EPS .001
+#define EPS 0.001
 #define PRECISION 1.E-7
 #define NOTHING 1.E-12		/* Well, almost nothing */
 #define INNERLOOPS 801
@@ -77,15 +77,15 @@ void powell_lsq(double *xi)
 #endif /* ACML */
   int  *perm_indx;		/* Keeps track of LU pivoting */
   int   breakflag;		/* Breakflag */
-  double cond = 0.;		/* Condition number dsysvx */
+  double cond = 0.0;		/* Condition number dsysvx */
   double *p, *q;		/* Vectors needed in Powell's algorithm */
   double F, F2, F3 = 0, df, xi1, xi2;	/* Fn values, changes, steps ... */
   double temp, temp2;		/* as the name indicates: temporary vars */
 #ifdef APOT
   int   itemp, itemp2;		/* the same for integer */
 #endif /* APOT */
-  double ferror = 0.;
-  double berror = 0.;		/* forward/backward error estimates */
+  double ferror = 0.0;
+  double berror = 0.0;		/* forward/backward error estimates */
   FILE *ff;			/* Exit flagfile */
 
   d = mat_double(ndim, ndim);
@@ -109,7 +109,7 @@ void powell_lsq(double *xi)
 
   /* clear delta */
   for (i = 0; i < ndimtot; i++)
-    delta[i] = 0.;
+    delta[i] = 0.0;
 
   /* calculate the first force */
   F = (*calc_forces) (xi, fxi1, 0);
@@ -140,7 +140,7 @@ void powell_lsq(double *xi)
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
       warning(1, "F does not depend on xi[%d], trying to rescale!\n", idx[i - 1]);
-      rescale(&opt_pot, 1., 1);
+      rescale(&opt_pot, 1.0, 1);
       /* wake other threads and sync potentials */
       F = calc_forces(xi, fxi1, 2);
       i = gamma_init(gamma, d, xi, fxi1);
@@ -194,7 +194,7 @@ void powell_lsq(double *xi)
       }
       /* (b) get delta by multiplying q with the direction vectors */
       for (i = 0; i < ndim; i++) {
-	delta[idx[i]] = 0.;
+	delta[idx[i]] = 0.0;
 	for (j = 0; j < ndim; j++)
 	  delta[idx[i]] += d[i][j] * q[j];
 #ifndef APOT
@@ -232,12 +232,12 @@ void powell_lsq(double *xi)
 
       /* (d) if error estimate is too high after minimization
          in 5 directions: restart outer loop */
-      if (ferror + berror > 1. && m > 5)
+      if (ferror + berror > 1.0 && m > 5)
 	break;
 
       /* (e) find optimal direction to replace */
       j = 0;
-      temp2 = 0.;
+      temp2 = 0.0;
       for (i = 0; i < ndim; i++)
 	if ((temp = fabs(p[i] * q[i])) > temp2) {
 	  j = i;
@@ -293,9 +293,9 @@ void powell_lsq(double *xi)
 #ifndef NORESCALE
     /* Check for rescaling... every fourth step */
     if ((n % 4) == 0) {
-      temp = rescale(&opt_pot, 1., 0);
+      temp = rescale(&opt_pot, 1.0, 0);
       /* Was rescaling necessary ? */
-      if (temp != 0.) {
+      if (temp != 0.0) {
 	/* wake other threads and sync potentials */
 	F = calc_forces(xi, fxi1, 2);
       }
@@ -313,7 +313,7 @@ void powell_lsq(double *xi)
     }
 
     /*End fit if whole series didn't improve F */
-  } while (((F3 - F > PRECISION / 10.) || (F3 - F < 0)) && (F3 - F > d_eps));
+  } while (((F3 - F > PRECISION / 10.0) || (F3 - F < 0)) && (F3 - F > d_eps));
   /* outer loop */
 
   if (fabs(F3 - F) < PRECISION && F3 != F)
@@ -367,7 +367,7 @@ int gamma_init(double **gamma, double **d, double *xi, double *force_xi)
   /*Initialize direction vectors */
   for (i = 0; i < ndim; i++) {
     for (j = 0; j < ndim; j++)
-      d[i][j] = (i == j) ? 1. : 0.;
+      d[i][j] = (i == j) ? 1.0 : 0.0;
   }
 /* Initialize gamma by calculating numerical derivatives    */
   if (force == NULL) {
@@ -387,10 +387,10 @@ int gamma_init(double **gamma, double **d, double *xi, double *force_xi)
       apot_table.pmin[apot_table.idxpot[i]][apot_table.idxparam[i]];
     xi[idx[i]] += (EPS * scale);
 #else
-    scale = 1.;
+    scale = 1.0;
     xi[idx[i]] += EPS;		/*increase xi[idx[i]]... */
 #endif /* APOT */
-    sum = 0.;
+    sum = 0.0;
     (void)(*calc_forces) (xi, force, 0);
     for (j = 0; j < mdim; j++) {
       temp = (force[j] - force_xi[j]) / (EPS * scale);
@@ -423,8 +423,8 @@ int gamma_update(double **gamma, double a, double b, double *fa, double *fb,
 {
   int   i;
   double temp;
-  double sum = 0.;
-  double mu = 0.;
+  double sum = 0.0;
+  double mu = 0.0;
   for (i = 0; i < m; i++) {
     temp = ((fa[i] - fb[i]) / (a - b));
     gamma[i][j] = temp;
@@ -461,7 +461,7 @@ void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce, double
   /* calculating vector p (lineqsys . q == P in LinEqSys) */
 
   for (i = 0; i < n; i++) {
-    p[i] = 0.;
+    p[i] = 0.0;
     for (j = 0; j < m; j++) {
       p[i] -= gamma[j][i] * deltaforce[j];
     }
@@ -472,7 +472,7 @@ void lineqsys_init(double **gamma, double **lineqsys, double *deltaforce, double
     for (j = 0; j < m; j++)
       lineqsys[i][i] += dsquare(gamma[j][i]);
     for (k = i + 1; k < n; k++) {
-      lineqsys[i][k] = 0.;
+      lineqsys[i][k] = 0.0;
       for (j = 0; j < m; j++) {
 	lineqsys[i][k] += gamma[j][i] * gamma[j][k];
       }
@@ -493,8 +493,8 @@ void lineqsys_update(double **gamma, double **lineqsys, double *force_xi, double
 {
   int   j, k;
   for (k = 0; k < n; k++) {
-    p[k] = 0.;
-    lineqsys[i][k] = 0.;
+    p[k] = 0.0;
+    lineqsys[i][k] = 0.0;
     for (j = 0; j < m; j++) {
       p[k] -= gamma[j][k] * force_xi[j];
       lineqsys[i][k] += gamma[j][i] * gamma[j][k];
@@ -549,7 +549,7 @@ void matdotvec(double **a, double *x, double *y, int n, int m)
 {
   int   i, j;
   for (i = 0; i < n; i++) {
-    y[idx[i]] = 0.;
+    y[idx[i]] = 0.0;
     for (j = 0; j < m; j++)
       y[idx[i]] += a[i][j] * x[j];
   }

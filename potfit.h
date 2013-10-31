@@ -369,7 +369,7 @@ void  error(int, char *, ...);
 void  warning(int, char *, ...);
 
 /* error reports [errors.c] */
-void write_errors(double *, double);
+void  write_errors(double *, double);
 
 /* reading parameter file [param.c] */
 int   getparam(char *, void *, param_t, int, int);
@@ -378,9 +378,9 @@ void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
 
 /* general force functions [forces.c] */
-void set_forces();
-void init_forces();
-void set_force_vector_pointers();
+void  set_forces();
+void  init_forces();
+void  set_force_vector_pointers();
 
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR

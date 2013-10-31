@@ -336,7 +336,7 @@ void read_config(char *filename)
 	  /* energy */
 	} else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
-	    h_eng++;
+	    h_eng = 1;
 	  else
 	    error(1, "%s: Error in energy on line %d\n", filename, line);
 
@@ -344,6 +344,8 @@ void read_config(char *filename)
 	} else if (res[1] == 'W') {
 	  if (sscanf(res + 3, "%lf\n", &(conf_weight[nconf])) != 1)
 	    error(1, "%s: Error in configuration weight on line %d\n", filename, line);
+	  if (conf_weight[nconf] < 0.0)
+	    error(1, "%s: The configuration weight is negative on line %d\n", filename, line);
 
 	  /* chemical elements */
 	} else if (res[1] == 'C') {
@@ -423,14 +425,16 @@ void read_config(char *filename)
 	else if (res[1] == 'S') {
 	  if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
 	      &(stresses->yy), &(stresses->zz), &(stresses->xy), &(stresses->yz), &(stresses->zx)) == 6)
-	    h_stress++;
+	    h_stress = 1;
 	  else
 	    error(1, "Error in stress tensor on line %d\n", line);
 	}
 #endif /* STRESS */
 
       } while (res[1] != 'F');
-      if (!(h_eng && h_boxx && h_boxy && h_boxz))
+      if (0 == h_eng)
+	error(1, "%s: missing energy in configuration %d!", filename, nconf);
+      if (!(h_boxx && h_boxy && h_boxz))
 	error(1, "Incomplete box vectors for config %d!", nconf);
 #ifdef CONTRIB
       if (have_contrib_box && have_contrib != 4)
@@ -515,7 +519,7 @@ void read_config(char *filename)
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_y.x, tbox_y.y, tbox_y.z);
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", tbox_z.x, tbox_z.y, tbox_z.z);
     fprintf(stderr, "Box heights:\n");
-    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", 1. / iheight.x, 1. / iheight.y, 1. / iheight.z);
+    fprintf(stderr, "     %10.6f %10.6f %10.6f\n", 1.0 / iheight.x, 1.0 / iheight.y, 1.0 / iheight.z);
     fprintf(stderr, "Potential range:  %f\n", rcutmax);
     fprintf(stderr, "Periodic images needed: %d %d %d\n\n",
       2 * cell_scale[0] + 1, 2 * cell_scale[1] + 1, 2 * cell_scale[2] + 1);
@@ -986,9 +990,9 @@ void read_config(char *filename)
   printf("with a total of %d atoms (", natoms);
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
-      printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i], 100. * na_type[nconf][i] / natoms);
+      printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i], 100.0 * na_type[nconf][i] / natoms);
     else
-      printf("%d type %d (%.2f%%)", na_type[nconf][i], i, 100. * na_type[nconf][i] / natoms);
+      printf("%d type %d (%.2f%%)", na_type[nconf][i], i, 100.0 * na_type[nconf][i] / natoms);
     if (i != (ntypes - 1))
       printf(", ");
   }
@@ -1228,7 +1232,7 @@ void read_config(char *filename)
   /* recalculate step, invstep and xcoord for new tables */
   for (i = 0; i < calc_pot.ncols; i++) {
     calc_pot.step[i] = (calc_pot.end[i] - calc_pot.begin[i]) / (APOT_STEPS - 1);
-    calc_pot.invstep[i] = 1. / calc_pot.step[i];
+    calc_pot.invstep[i] = 1.0 / calc_pot.step[i];
     for (j = 0; j < APOT_STEPS; j++) {
       index = i * APOT_STEPS + (i + 1) * 2 + j;
       calc_pot.xcoord[index] = calc_pot.begin[i] + j * calc_pot.step[i];

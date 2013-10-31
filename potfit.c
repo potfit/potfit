@@ -122,9 +122,10 @@ int main(int argc, char **argv)
     free(array);
 #undef R_SIZE
 #undef RAND_MAX
-  } 	/* myid == 0 */
+  }
 
-/* initialize the remaining parameters and assign the atoms */
+  /* myid == 0 */
+  /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI
   MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
   broadcast_params();		/* let the others know what's going on */
@@ -223,7 +224,6 @@ int main(int argc, char **argv)
 #endif /* APOT */
       printf("\nPotential in format %d written to file \t%s\n", format, endpot);
     }
-
 #ifndef APOT
     /* then we can also write format 4 */
     if (format == 3) {
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
 
-  } 		/* myid == 0 */
+  }				/* myid == 0 */
 
   /* calculate total runtime */
   if (opt && myid == 0 && ndim > 0) {

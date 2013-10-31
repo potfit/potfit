@@ -120,6 +120,7 @@ double chemical_potential_3d(int *n, double *mu, int dim)
 
   for (i = 0; i < dim; i++)
     temp += n[i] * mu[i];
+
   return temp;
 }
 
@@ -137,7 +138,8 @@ double chemical_potential(int dim, int *n, double *mu)
     return chemical_potential_2d(n, mu);
   if (dim >= 3)
     return chemical_potential_3d(n, mu, dim);
-  return 0.;
+
+  return 0.0;
 }
 
 #endif /* APOT && PAIR */

@@ -97,7 +97,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
   /* This is the start of an infinite loop */
   while (1) {
-    tmpsum = 0.;		/* sum of squares of local process */
+    tmpsum = 0.0;		/* sum of squares of local process */
 
 #ifndef MPI
     apot_check_params(xi_opt);
@@ -503,7 +503,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
   }				/* end of infinite loop */
 
   /* once a non-root process arrives here, all is done. */
-  return -1.;
+  return -1.0;
 }
 
 void update_tersoff_pointers(double *xi)

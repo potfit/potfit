@@ -46,8 +46,8 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
   double x_left;
   double x_right;
   double z;
-  double d = 0.;
-  double e = 0.;
+  double d = 0.0;
+  double e = 0.0;
   double u, f_u;
   double v;
   double w;
@@ -183,5 +183,5 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
 
   }
   error(1, "Too many iterations in Brent minimization.\n");
-  return 0.;
+  return 0.0;
 }

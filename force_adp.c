@@ -395,13 +395,13 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 #ifndef NORESCALE
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
 	    atom->rho = calc_pot.end[col_F];
 	  }
 
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 	  }
 #endif /* !NORESCALE */
 
@@ -484,7 +484,7 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
 	      /* are we within reach? */
 	      if ((neigh->r < calc_pot.end[neigh->col[1]]) || (neigh->r < calc_pot.end[col_F - ntypes])) {
 		rho_grad = (neigh->r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot,
-		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.;
+		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.0;
 		if (atom->type == neigh->type)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
@@ -664,11 +664,11 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
       for (g = 0; g < ntypes; g++) {
 #ifdef NORESCALE
 	/* clear field */
-	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
-	/* NEW: Constraint on U': U'(1.)=0; */
-	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
+	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
+	/* NEW: Constraint on U': U'(1.0)=0.0; */
+	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.0);
 #else /* NORESCALE */
-	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
+	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 	/* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
@@ -680,11 +680,11 @@ double calc_forces_adp(double *xi_opt, double *forces, int flag)
       }				/* loop over types */
 
 #ifdef NORESCALE
-      /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
+      /* NEW: Constraint on n: <n>=1.0 ONE CONSTRAINT ONLY */
       /* Calculate averages */
       rho_sum /= (double)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
-      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
 #endif /* NORESCALE */
     }				/* only root process */

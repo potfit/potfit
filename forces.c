@@ -71,19 +71,19 @@ void set_forces()
 
 void init_forces()
 {
-  int i;
+  int   i;
 
 #ifdef COULOMB
-    if (apot_table.sw_kappa)
-      init_tails(apot_table.dp_kappa[0]);
+  if (apot_table.sw_kappa)
+    init_tails(apot_table.dp_kappa[0]);
 #endif /* COULOMB */
 
-    /* set spline density corrections to 0 */
+  /* set spline density corrections to 0 */
 #if defined EAM || defined ADP || defined MEAM
-    lambda = (double *)malloc(ntypes * sizeof(double));
-    reg_for_free(lambda, "lambda");
-    for (i = 0; i < ntypes; i++)
-      lambda[i] = 0.0;
+  lambda = (double *)malloc(ntypes * sizeof(double));
+  reg_for_free(lambda, "lambda");
+  for (i = 0; i < ntypes; i++)
+    lambda[i] = 0.0;
 #endif /* EAM || ADP || MEAM */
 
   return;

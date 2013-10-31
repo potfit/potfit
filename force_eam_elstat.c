@@ -89,7 +89,7 @@
 
 double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 {
-  double tmpsum, sum = 0.;
+  double tmpsum, sum = 0.0;
   int   first, col, ne, size, i;
   double *xi = NULL;
   apot_table_t *apt = &apot_table;
@@ -107,7 +107,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 #endif /* DIPOLE */
 
   static double rho_sum_loc, rho_sum;
-  rho_sum_loc = rho_sum = 0.;
+  rho_sum_loc = rho_sum = 0.0;
 
   switch (format) {
       case 0:
@@ -126,8 +126,8 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
   /* This is the start of an infinite loop */
   while (1) {
-    tmpsum = 0.;		/* sum of squares of local process */
-    rho_sum_loc = 0.;
+    tmpsum = 0.0;		/* sum of squares of local process */
+    rho_sum_loc = 0.0;
 
 #if defined APOT && !defined MPI
     if (format == 0) {
@@ -166,7 +166,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	charge[i] = xi_opt[2 * size + ne + i];
 	sum_charges += apt->ratio[i] * charge[i];
       } else {
-	charge[i] = 0.;
+	charge[i] = 0.0;
       }
     }
     apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
@@ -174,7 +174,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
     if (xi_opt[2 * size + ne + ntypes - 1]) {
       dp_kappa = xi_opt[2 * size + ne + ntypes - 1];
     } else {
-      dp_kappa = 0.;
+      dp_kappa = 0.0;
     }
 
     /*int k;
@@ -188,19 +188,19 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
       if (xi_opt[2 * size + ne + ntypes + i]) {
 	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i];
       } else {
-	dp_alpha[i] = 0.;
+	dp_alpha[i] = 0.0;
       }
     }
     for (i = 0; i < ncols; i++) {
       if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
 	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
       } else {
-	dp_b[i] = 0.;
+	dp_b[i] = 0.0;
       }
       if (xi_opt[2 * size + ne + 2 * ntypes + ncols + i]) {
 	dp_c[i] = xi_opt[2 * size + ne + 2 * ntypes + ncols + i];
       } else {
-	dp_c[i] = 0.;
+	dp_c[i] = 0.0;
       }
     }
 #endif /* DIPOLE */
@@ -474,13 +474,13 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	  col_F = paircol + ntypes + atom->type;	/* column of F */
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
 	    atom->rho = calc_pot.end[col_F];
 	  }
 
 	  if (atom->rho < calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 	    atom->rho = calc_pot.begin[col_F];
 	  }
 
@@ -492,16 +492,16 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	    rho_val = splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F], &atom->gradF);
 	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
 #ifdef APOT
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 #endif /* APOT */
 	  } else if (atom->rho > calc_pot.end[col_F]) {
 	    /* and right */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F,
-	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
+	      calc_pot.end[col_F] - 0.5 * calc_pot.step[col_F], &atom->gradF);
 	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 #ifdef APOT
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
 #endif /* APOT */
 	  }
 	  /* and in-between */
@@ -548,9 +548,9 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	      atom->E_old.y = atom->E_ind.y;
 	      atom->E_old.z = atom->E_ind.z;
 
-	      atom->E_ind.x = 0.;
-	      atom->E_ind.y = 0.;
-	      atom->E_ind.z = 0.;
+	      atom->E_ind.x = 0.0;
+	      atom->E_ind.y = 0.0;
+	      atom->E_ind.z = 0.0;
 	    }
 	  }
 
@@ -868,12 +868,12 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 		|| (r < calc_pot.end[col_F - ntypes])) {
 		rho_grad =
 		  (r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot,
-		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.;
+		  xi, neigh->slot[1], neigh->shift[1], neigh->step[1]) : 0.0;
 		if (atom->type == neigh->type)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
 		  rho_grad_j =
-		    (r < calc_pot.end[col_F - ntypes]) ? splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.;
+		    (r < calc_pot.end[col_F - ntypes]) ? splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.0;
 		/* now we know everything - calculate forces */
 		eam_force = (rho_grad * atom->gradF + rho_grad_j * conf_atoms[(neigh->nr) - firstatom].gradF);
 		/* avoid double counting if atom is interacting with a
@@ -961,26 +961,26 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
       for (g = 0; g < ntypes; g++) {
 #ifdef NORESCALE
 	/* clear field */
-	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
-	/* NEW: Constraint on U': U'(1.)=0; */
-	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.);
+	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
+	/* NEW: Constraint on U': U'(1.0)=0.0; */
+	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.0);
 #else /* NOTHING */
-	forces[dummy_p + ntypes + g] = 0.;	/* Free end... */
+	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 /* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
-	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
+	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #endif /* NORESCALE */
 	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
 	tmpsum += dsquare(forces[dummy_p + g]);
       }				/* loop over types */
 #ifdef NORESCALE
-      /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
+      /* NEW: Constraint on n: <n>=1.0 ONE CONSTRAINT ONLY */
       /* Calculate averages */
       rho_sum /= (double)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
-      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
 #endif /* NORESCALE */
     }
@@ -991,7 +991,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 
 #ifdef MPI
     /* reduce global sum */
-    sum = 0.;
+    sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     if (myid == 0) {		/* root node already has data in place */
@@ -1039,7 +1039,7 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
   }
 
   /* once a non-root process arrives here, all is done. */
-  return -1.;
+  return -1.0;
 }
 
 

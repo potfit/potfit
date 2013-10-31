@@ -116,8 +116,8 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
     /* Reset tmpsum and rho_sum_loc
        tmpsum = Sum of all the forces, energies and constraints
        rho_sum_loc = Sum of density, rho, for all atoms */
-    tmpsum = 0.;
-    rho_sum_loc = 0.;
+    tmpsum = 0.0;
+    rho_sum_loc = 0.0;
 
 #if defined APOT && !defined MPI
     if (0 == format) {
@@ -394,7 +394,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	  if (atom->rho < calc_pot.begin[col_F]) {
 
 	    /* Punish this potential for having rho lie outside of F */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 
 	    /* Set the atomic density to the first rho in the spline F */
 	    atom->rho = calc_pot.begin[col_F];
@@ -402,7 +402,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	  } else if (atom->rho > calc_pot.end[col_F]) {	/* rho is to the right of the spline */
 
 	    /* Punish this potential for having rho lie outside of F */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10. * dsquare(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
 
 	    /* Set the atomic density to the last rho in the spline F */
 	    atom->rho = calc_pot.end[col_F];
@@ -439,7 +439,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	    /* Get value and grad at 1/2 the width from the final spline point */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F,
-	      calc_pot.end[col_F] - .5 * calc_pot.step[col_F], &atom->gradF);
+	      calc_pot.end[col_F] - 0.5 * calc_pot.step[col_F], &atom->gradF);
 	    /* Linear extrapolate to the right to get energy */
 	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 #endif /* APOT */
@@ -669,7 +669,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
          this sets the avg rho per atom to 1
          Please read the other constraint on gauge conditions
          above. */
-      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
     }
 #endif /* NORESCALE */

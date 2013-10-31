@@ -45,7 +45,7 @@
 #define STEPVAR 2.0
 #define TEMPVAR 0.85
 #define KMAX 1000
-#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-((a)*(a))/2.)))
+#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-((a)*(a))/2.0)))
 
 #ifdef APOT
 
@@ -76,7 +76,7 @@ void randomize_parameter(int n, double *xi, double *v)
 
   do {
     temp = xi[idx[n]];
-    rand = 2.0 * eqdist() - 1.;
+    rand = 2.0 * eqdist() - 1.0;
     temp += (rand * v[n]);
     if (temp >= min && temp <= max)
       done = 1;
@@ -141,7 +141,7 @@ void anneal(double *xi)
 #ifndef APOT
   int   rescaleMe = 1;		/* rescaling flag */
 #endif /* APOT */
-  double T = -1.;		/* Temperature */
+  double T = -1.0;		/* Temperature */
   double F, Fopt, F2;		/* Fn value */
   double *Fvar;			/* backlog of Fn vals */
   double *v;			/* step vector */
@@ -162,7 +162,7 @@ void anneal(double *xi)
       error(1, "The value for anneal_temp (%f) is invalid!\n", T);
   }
 
-  if (T == 0. && auto_T != 1)
+  if (T == 0.0 && auto_T != 1)
     return;			/* don't anneal if starttemp equal zero */
 
   Fvar = vect_double(KMAX + 5 + NEPS);	/* Backlog of old F values */
@@ -184,7 +184,7 @@ void anneal(double *xi)
 
   /* init step vector and optimum vector */
   for (n = 0; n < ndim; n++) {
-    v[n] = .1;
+    v[n] = 0.1;
     naccept[n] = 0;
   }
   for (n = 0; n < ndimtot; n++) {
@@ -215,8 +215,8 @@ void anneal(double *xi)
     int   e = 0;
     int   u = 10 * ndim;
     int   m1 = 0;
-    double dF = 0.;
-    double chi = .8;
+    double dF = 0.0;
+    double chi = 0.8;
 
     printf("Determining optimal starting temperature T ...\n");
     for (e = 0; e < u; e++) {
@@ -357,7 +357,7 @@ void anneal(double *xi)
       /* Check for rescaling... every tenth step */
       if (((m + 1) % 10 == 0) && (rescaleMe == 1)) {
 	/* Was rescaling necessary ? */
-	if (rescale(&opt_pot, 1., 0) != 0.) {
+	if (rescale(&opt_pot, 1.0, 0) != 0.0) {
 	  /* wake other threads and sync potentials */
 	  printf("F before rescale = %f\n", F);
 	  F = (*calc_forces) (xi, fxi1, 2);

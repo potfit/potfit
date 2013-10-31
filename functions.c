@@ -279,7 +279,7 @@ void lj_value(double r, double *p, double *f)
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
   sig_d_rad12 = dsquare(sig_d_rad6);
 
-  *f = 4. * p[0] * (sig_d_rad12 - sig_d_rad6);
+  *f = 4.0 * p[0] * (sig_d_rad12 - sig_d_rad6);
 
   return;
 }
@@ -318,7 +318,7 @@ void eopp_value(double r, double *p, double *f)
 
 void morse_value(double r, double *p, double *f)
 {
-  *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2])));
+  *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2.0 * exp(-p[1] * (r - p[2])));
 
   return;
 }
@@ -335,9 +335,9 @@ void ms_value(double r, double *p, double *f)
 {
   static double x;
 
-  x = 1. - r / p[2];
+  x = 1.0 - r / p[2];
 
-  *f = p[0] * (exp(p[1] * x) - 2. * exp((p[1] * x) / 2.));
+  *f = p[0] * (exp(p[1] * x) - 2.0 * exp((p[1] * x) / 2.0));
 
   return;
 }
@@ -453,7 +453,7 @@ void power_decay_value(double r, double *p, double *f)
 {
   static double x, y, power;
 
-  x = 1. / r;
+  x = 1.0 / r;
   y = p[1];
 
   power_1(&power, &x, &y);
@@ -488,11 +488,11 @@ void bjs_value(double r, double *p, double *f)
 {
   static double power;
 
-  if (r == 0)
-    *f = 0;
+  if (r == 0.0)
+    *f = 0.0;
   else {
     power_1(&power, &r, &p[1]);
-    *f = p[0] * (1. - p[1] * log(r)) * power + p[2] * r;
+    *f = p[0] * (1.0 - p[1] * log(r)) * power + p[2] * r;
   }
 
   return;
@@ -525,7 +525,7 @@ void csw_value(double r, double *p, double *f)
 
   power_1(&power, &r, &p[3]);
 
-  *f = (1. + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
+  *f = (1.0 + p[0] * cos(p[2] * r) + p[1] * sin(p[2] * r)) / power;
 
   return;
 }
@@ -544,7 +544,7 @@ void csw2_value(double r, double *p, double *f)
 
   power_1(&power, &r, &p[3]);
 
-  *f = (1. + p[0] * cos(p[1] * r + p[2])) / power;
+  *f = (1.0 + p[0] * cos(p[1] * r + p[2])) / power;
 
   return;
 }
@@ -628,7 +628,7 @@ void strmm_value(double r, double *p, double *f)
 
   r_0 = r - p[4];
 
-  *f = 2. * p[0] * exp(-p[1] / 2. * r_0) - p[2] * (1. + p[3] * r_0) * exp(-p[3] * r_0);
+  *f = 2.0 * p[0] * exp(-p[1] / 2.0 * r_0) - p[2] * (1.0 + p[3] * r_0) * exp(-p[3] * r_0);
 
   return;
 }
@@ -644,8 +644,8 @@ void strmm_value(double r, double *p, double *f)
 void double_morse_value(double r, double *p, double *f)
 {
   *f =
-    (p[0] * (exp(-2. * p[1] * (r - p[2])) - 2. * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2. * p[4] * (r - p[5])) - 2. * exp(-p[4] * (r - p[5])))) + p[6];
+    (p[0] * (exp(-2.0 * p[1] * (r - p[2])) - 2.0 * exp(-p[1] * (r - p[2]))) +
+    p[3] * (exp(-2.0 * p[4] * (r - p[5])) - 2.0 * exp(-p[4] * (r - p[5])))) + p[6];
 
   return;
 }
@@ -677,9 +677,9 @@ void poly_5_value(double r, double *p, double *f)
 {
   static double dr;
 
-  dr = (r - 1.) * (r - 1.);
+  dr = (r - 1.0) * (r - 1.0);
 
-  *f = p[0] + .5 * p[1] * dr + p[2] * (r - 1.) * dr + p[3] * (dr * dr) + p[4] * (dr * dr) * (r - 1.);
+  *f = p[0] + 0.5 * p[1] * dr + p[2] * (r - 1.0) * dr + p[3] * (dr * dr) + p[4] * (dr * dr) * (r - 1.0);
 
   return;
 }
@@ -712,7 +712,7 @@ void kawamura_mix_value(double r, double *p, double *f)
   r6 *= r6;
 
   *f = p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] + p[6])) - p[7] * p[8] / r6
-    + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2. * exp(-p[10] * (r - p[11])));
+    + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2.0 * exp(-p[10] * (r - p[11])));
 
   return;
 }
@@ -749,7 +749,7 @@ void mishin_value(double r, double *p, double *f)
 
   power_1(&power, &z, &p[4]);
 
-  *f = p[0] * power * temp * (1. + p[1] * temp) + p[2];
+  *f = p[0] * power * temp * (1.0 + p[1] * temp) + p[2];
 
   return;
 }
@@ -803,7 +803,7 @@ void gljm_value(double r, double *p, double *f)
 
   *f =
     p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
-    p[5] * (p[6] * power[2] * temp * (1. + p[7] * temp) + p[8]);
+    p[5] * (p[6] * power[2] * temp * (1.0 + p[7] * temp) + p[8]);
 
   return;
 }
@@ -900,7 +900,7 @@ void sheng_rho_value(double r, double *p, double *f)
   sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
   sig_d_rad12 = dsquare(sig_d_rad6);
 
-  *f = (p[0] * power + p[2]) * k + (4. * p[3] * (sig_d_rad12 - sig_d_rad6)) * h;
+  *f = (p[0] * power + p[2]) * k + (4.0 * p[3] * (sig_d_rad12 - sig_d_rad6)) * h;
 
   return;
 }
@@ -1050,7 +1050,7 @@ double cutoff(double r, double r0, double h)
   val *= val;
   val *= val;
 
-  return val / (1. + val);
+  return val / (1.0 + val);
 }
 
 /****************************************************************
@@ -1123,7 +1123,7 @@ int apot_check_params(double *params)
 double apot_punish(double *params, double *forces)
 {
   int   i, j;
-  double x, tmpsum = 0., min, max;
+  double x, tmpsum = 0.0, min, max;
 
   /* loop over individual parameters */
   for (i = 0; i < ndim; i++) {
@@ -1182,7 +1182,7 @@ double apot_grad(double r, double *p, void (*function) (double, double *, double
   function(r + h, p, &a);
   function(r - h, p, &b);
 
-  return (a - b) / (2. * h);
+  return (a - b) / (2.0 * h);
 }
 
 #ifdef COULOMB
@@ -1306,7 +1306,7 @@ void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_ta
 
   *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
   *grad_tail = gtail - gtail_cut;
-  *ggrad_tail = 0.;
+  *ggrad_tail = 0.0;
 #ifdef DIPOLE
   *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
   *grad_tail -= x[2] * ggtail_cut / 2;

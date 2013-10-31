@@ -550,7 +550,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 		    rho_s_grad_j = rho_s_grad;
 		  } else {
 		    rho_s_grad_j = (r < calc_pot.end[col_F_s - ntypes]) ?
-			splint_grad(&calc_pot, xi, col_F_s - ntypes, r) : 0.0;
+		      splint_grad(&calc_pot, xi, col_F_s - ntypes, r) : 0.0;
 		  }
 		  /* now we know everything - calculate forces */
 		  eam_force +=
@@ -600,8 +600,9 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	      tmpsum += conf_weight[h] *
 		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }			/* third loop over atoms */
-	} 			/* use forces */
+	}
 
+	/* use forces */
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
@@ -651,12 +652,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 #ifdef NORESCALE
 	/* clear field */
 	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
-	/* NEW: Constraint on U': U'(1.)=0; */
+	/* NEW: Constraint on U': U'(1.0)=0.0; */
 	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.0);
 #ifdef TBEAM
 	/* clear field */
 	forces[dummy_p + 3 * ntypes + g] = 0.0;	/* Free end... */
-	/* NEW: Constraint on U': U'(1.)=0; */
+	/* NEW: Constraint on U': U'(1.0)=0.0; */
 	forces[dummy_p + 2 * ntypes + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * ntypes + g, 1.0);
 #endif /* TBEAM */
@@ -665,14 +666,14 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	/* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
-	  .5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
+	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
 #ifdef TBEAM
 	forces[dummy_p + 3 * ntypes + g] = 0.0;	/* Free end... */
 	/* constraints on U`(n) */
 	forces[dummy_p + 2 * ntypes + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * ntypes + g,
-	  .5 * (calc_pot.begin[paircol + 3 * ntypes + g] + calc_pot.end[paircol + 3 * ntypes + g]))
+	  0.5 * (calc_pot.begin[paircol + 3 * ntypes + g] + calc_pot.end[paircol + 3 * ntypes + g]))
 	  - force_0[dummy_p + 2 * ntypes + g];
 #endif /* TBEAM */
 #endif /* NORESCALE */
@@ -687,12 +688,12 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
       }				/* loop over types */
 
 #ifdef NORESCALE
-      /* NEW: Constraint on n: <n>=1. ONE CONSTRAINT ONLY */
+      /* NEW: Constraint on n: <n>=1.0 ONE CONSTRAINT ONLY */
       if (rho_sum > 0.0) {
 	/* Calculate averages */
 	rho_sum /= (double)natoms;
 	/* ATTN: if there are invariant potentials, things might be problematic */
-	forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.);
+	forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
 	tmpsum += dsquare(forces[dummy_p + ntypes]);
       }
 #ifdef TBEAM
@@ -700,7 +701,7 @@ double calc_forces_eam(double *xi_opt, double *forces, int flag)
 	/* Calculate averages */
 	rho_s_sum /= (double)natoms;
 	/* ATTN: if there are invariant potentials, things might be problematic */
-	forces[dummy_p + 3 * ntypes] = DUMMY_WEIGHT * (rho_s_sum - 1.);
+	forces[dummy_p + 3 * ntypes] = DUMMY_WEIGHT * (rho_s_sum - 1.0);
 	tmpsum += dsquare(forces[dummy_p + 3 * ntypes]);
       }
 #endif /* TBEAM */

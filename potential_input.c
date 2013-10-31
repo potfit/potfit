@@ -515,7 +515,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       }
 
       /* check for invariance and proper value (respect boundaries) */
-      apt->invar_par[i][j] = 0.;
+      apt->invar_par[i][j] = 0.0;
       /* parameter will not be optimized if min==max */
       if (apt->pmin[i][j] == apt->pmax[i][j]) {
 	apt->invar_par[i][j] = 1;
@@ -863,7 +863,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	i + 1, apt->names[i], filename);
 
     /* set very small begin, needed for EAM embedding function */
-    apt->begin[i] = .0001;
+    apt->begin[i] = 0.0001;
 
     /* allocate memory for this parameter */
     apt->values[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
@@ -1280,10 +1280,10 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
   pt->idx = (int *)malloc(pt->len * sizeof(int));
   reg_for_free(pt->idx, "pt->idx");
   for (i = 0; i < pt->len; i++) {
-    pt->table[i] = 0.;
-    pt->xcoord[i] = 0.;
-    pt->d2tab[i] = 0.;
-    pt->idx[i] = 0.;
+    pt->table[i] = 0.0;
+    pt->xcoord[i] = 0.0;
+    pt->d2tab[i] = 0.0;
+    pt->idx[i] = 0.0;
   }
   if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab))
     error(1, "Cannot allocate memory for potential table");
@@ -1300,7 +1300,7 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     if ((!invar_pot[i]) && (gradient[i] >> 1))
@@ -1333,7 +1333,7 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     if ((!invar_pot[i]) && (gradient[i] >> 1))
@@ -1398,7 +1398,7 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     if ((!invar_pot[i]) && (gradient[i] >> 1))
@@ -1465,7 +1465,7 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     if ((!invar_pot[i]) && (gradient[i] >> 1))
@@ -1530,7 +1530,7 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);;
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     if ((!invar_pot[i]) && (gradient[i] >> 1))
@@ -1623,8 +1623,8 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
   for (i = 0; i < size; i++) {
     if (1 > fscanf(infile, "%d", &nvals[i]))
       error(1, "Premature end of potential file %s", filename);
-    pt->step[i] = 0.;
-    pt->invstep[i] = 0.;
+    pt->step[i] = 0.0;
+    pt->invstep[i] = 0.0;
     if (i == 0)
       pt->first[i] = 2;
     else
@@ -1641,7 +1641,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
     || (NULL == pt->d2tab))
     error(1, "Cannot allocate memory for potential table");
 
-  for (i = 0;i < pt->len; i++) {
+  for (i = 0; i < pt->len; i++) {
     pt->table[i] = 0.0;
     pt->xcoord[i] = 0.0;
     pt->d2tab[i] = 0.0;
@@ -1661,7 +1661,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     ord += 2;
@@ -1693,7 +1693,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
-    pt->invstep[i] = 1. / pt->step[i];
+    pt->invstep[i] = 1.0 / pt->step[i];
 
   }
 #if defined EAM || defined ADP
@@ -1715,7 +1715,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     ord += 2;
@@ -1746,7 +1746,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
-    pt->invstep[i] = 1. / pt->step[i];
+    pt->invstep[i] = 1.0 / pt->step[i];
   }
 
   /* read EAM embedding function F(n) */
@@ -1787,7 +1787,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
-    pt->invstep[i] = 1. / pt->step[i];
+    pt->invstep[i] = 1.0 / pt->step[i];
   }
 #endif /* EAM || ADP */
 
@@ -1799,7 +1799,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
 	error(1, "Premature end of potential file %s", filename);
     } else {
       *val = 1e30;
-      *(val + 1) = 0.;
+      *(val + 1) = 0.0;
     }
     val += 2;
     ord += 2;
@@ -1830,7 +1830,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
-    pt->invstep[i] = 1. / pt->step[i];
+    pt->invstep[i] = 1.0 / pt->step[i];
   }
 
   /* read adp quadrupole function w(r) */
@@ -1871,7 +1871,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
     pt->end[i] = pt->xcoord[pt->last[i]];
     /* pt->step is average step length.. */
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
-    pt->invstep[i] = 1. / pt->step[i];
+    pt->invstep[i] = 1.0 / pt->step[i];
   }
 #endif /* ADP */
 
@@ -1944,7 +1944,7 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    calct->last[i] = (x += APOT_STEPS - 1);
 	    x++;
 	    calct->step[i] = (calct->end[i] - calct->begin[i]) / (APOT_STEPS - 1);
-	    calct->invstep[i] = 1. / calct->step[i];
+	    calct->invstep[i] = 1.0 / calct->step[i];
 	    for (j = 0; j < APOT_STEPS; j++) {
 	      index = i * APOT_STEPS + (i + 1) * 2 + j;
 	      calct->xcoord[index] = calct->begin[i] + j * calct->step[i];

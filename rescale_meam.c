@@ -237,8 +237,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
     // Is minrho outside of range of F's x-axis
     // OR is minrho too far inside the range of F
     // OR same for maxrho
-    if (flag || minrho[i] - pt->begin[j] < 0. || minrho[i] - pt->begin[j] > .95 * pt->step[j]
-      || maxrho[i] - pt->end[j] > 0 || maxrho[i] - pt->end[j] < -.95 * pt->step[j])
+    if (flag || minrho[i] - pt->begin[j] < 0.0 || minrho[i] - pt->begin[j] > 0.95 * pt->step[j]
+      || maxrho[i] - pt->end[j] > 0 || maxrho[i] - pt->end[j] < -0.95 * pt->step[j])
       flag = 1;			// Continue with scaling
   }
 
@@ -537,21 +537,21 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	// Phi' = Phi + lambda_i * rho_j + lambda_j * rho_i
 	pt->table[j] += (pt->xcoord[j] < pt->end[paircol + col2]
 	  ? lambda[col] * splint_ne(pt, pt->table, paircol + col2, pt->xcoord[j])
-	  : 0.) + (pt->xcoord[j] < pt->end[paircol + col]
-	  ? lambda[col2] * splint_ne(pt, pt->table, paircol + col, pt->xcoord[j]) : 0.);
+	  : 0.0) + (pt->xcoord[j] < pt->end[paircol + col]
+	  ? lambda[col2] * splint_ne(pt, pt->table, paircol + col, pt->xcoord[j]) : 0.0);
       }				// End of Loop over spline points
 
       // Now we fix Phi's gradients
       if (pt->table[pt->first[i] - 2] < 1.e30)	// natural spline
 	pt->table[pt->first[i] - 2] += (pt->begin[i] < pt->end[paircol + col2]
 	  ? lambda[col] * splint_grad(pt, pt->table, paircol + col2, pt->begin[i])
-	  : 0.) + (pt->begin[i] < pt->end[paircol + col]
-	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col, pt->begin[i]) : 0.);
+	  : 0.0) + (pt->begin[i] < pt->end[paircol + col]
+	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col, pt->begin[i]) : 0.0);
       if (pt->table[pt->first[i] - 1] < 1.e30)
 	pt->table[pt->first[i] - 1] += (pt->end[i] < pt->end[paircol + col2]
 	  ? lambda[col] * splint_grad(pt, pt->table, paircol + col2, pt->end[i])
-	  : 0.) + (pt->end[i] < pt->end[paircol + col]
-	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col, pt->end[i]) : 0.);
+	  : 0.0) + (pt->end[i] < pt->end[paircol + col]
+	  ? lambda[col2] * splint_grad(pt, pt->table, paircol + col, pt->end[i]) : 0.0);
       ++i;
     }				// END OF INNER LOOP OVER PHI
   }				// END OF OUTER LOOP OVER PHI
@@ -569,7 +569,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
       pt->table[pt->first[paircol + ntypes + i] - 2] -= lambda[i];
     if (pt->table[pt->first[paircol + ntypes + i] - 1] < 1.e30)
       pt->table[pt->first[paircol + ntypes + i] - 1] -= lambda[i];
-    lambda[i] = 0.;
+    lambda[i] = 0.0;
   }
 
   // Initialize 2nd derivatives just for pair potential (not sure why though)

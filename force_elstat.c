@@ -89,7 +89,7 @@
 
 double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 {
-  double tmpsum, sum = 0.;
+  double tmpsum, sum = 0.0;
   int   first, col, ne, size, i;
   double *xi = NULL;
   apot_table_t *apt = &apot_table;
@@ -120,7 +120,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 
   /* This is the start of an infinite loop */
   while (1) {
-    tmpsum = 0.;		/* sum of squares of local process */
+    tmpsum = 0.0;		/* sum of squares of local process */
 
 #if defined APOT && !defined MPI
     if (format == 0) {
@@ -159,7 +159,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	charge[i] = xi_opt[2 * size + ne + i];
 	sum_charges += apt->ratio[i] * charge[i];
       } else {
-	charge[i] = 0.;
+	charge[i] = 0.0;
       }
     }
     apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
@@ -167,7 +167,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
     if (xi_opt[2 * size + ne + ntypes - 1]) {
       dp_kappa = xi_opt[2 * size + ne + ntypes - 1];
     } else {
-      dp_kappa = 0.;
+      dp_kappa = 0.0;
     }
 
 #ifdef DIPOLE
@@ -175,19 +175,19 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
       if (xi_opt[2 * size + ne + ntypes + i]) {
 	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i];
       } else {
-	dp_alpha[i] = 0.;
+	dp_alpha[i] = 0.0;
       }
     }
     for (i = 0; i < size; i++) {
       if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
 	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
       } else {
-	dp_b[i] = 0.;
+	dp_b[i] = 0.0;
       }
       if (xi_opt[3 * size + ne + 2 * ntypes + i]) {
 	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i];
       } else {
-	dp_c[i] = 0.;
+	dp_c[i] = 0.0;
       }
     }
 #endif /* DIPOLE */
@@ -438,9 +438,9 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 	      atom->E_old.y = atom->E_ind.y;
 	      atom->E_old.z = atom->E_ind.z;
 
-	      atom->E_ind.x = 0.;
-	      atom->E_ind.y = 0.;
-	      atom->E_ind.z = 0.;
+	      atom->E_ind.x = 0.0;
+	      atom->E_ind.y = 0.0;
+	      atom->E_ind.z = 0.0;
 	    }
 	  }
 
@@ -769,7 +769,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 
 #ifdef MPI
     /* reduce global sum */
-    sum = 0.;
+    sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
     if (myid == 0) {		/* root node already has data in place */
@@ -810,7 +810,7 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
   }
 
   /* once a non-root process arrives here, all is done. */
-  return -1.;
+  return -1.0;
 }
 
 #endif /* COULOMB */
