@@ -114,7 +114,7 @@ except:
 
 # write parameter file to stdout
 out = sys.stdout.write
-out('nytpes\t\t%s\n' % ntypes)
+out('ntypes\t\t%s\n' % ntypes)
 out('config\t\t%s\n' % configfile)
 out('startpot\t%s\n' % potfile)
 out('endpot\t\t%s\n' % (potfile + '_end'))
