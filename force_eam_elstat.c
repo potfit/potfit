@@ -29,9 +29,9 @@
  *
  ****************************************************************/
 
-#if defined COULOMB && defined EAM
-
 #include "potfit.h"
+
+#if defined COULOMB && defined EAM
 
 #include "functions.h"
 #include "potential.h"
@@ -96,14 +96,11 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
   double charge[ntypes];
   double sum_charges;
   double dp_kappa;
-  int   ncols;
-
-  ncols = ntypes * (ntypes + 1) / 2;
 
 #ifdef DIPOLE
   double dp_alpha[ntypes];
-  double dp_b[ncols];
-  double dp_c[ncols];
+  double dp_b[paircol];
+  double dp_c[paircol];
 #endif /* DIPOLE */
 
   static double rho_sum_loc, rho_sum;
@@ -177,12 +174,6 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
       dp_kappa = 0.0;
     }
 
-    /*int k;
-       for(k = 0; k < 71; k++) {
-       printf("%d\t%f\n", k, xi_opt[k]);
-       }
-       error(1, ""); */
-
 #ifdef DIPOLE
     for (i = 0; i < ntypes; i++) {
       if (xi_opt[2 * size + ne + ntypes + i]) {
@@ -191,14 +182,14 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	dp_alpha[i] = 0.0;
       }
     }
-    for (i = 0; i < ncols; i++) {
+    for (i = 0; i < paircol; i++) {
       if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
 	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
       } else {
 	dp_b[i] = 0.0;
       }
-      if (xi_opt[2 * size + ne + 2 * ntypes + ncols + i]) {
-	dp_c[i] = xi_opt[2 * size + ne + 2 * ntypes + ncols + i];
+      if (xi_opt[2 * size + ne + 2 * ntypes + paircol + i]) {
+	dp_c[i] = xi_opt[2 * size + ne + 2 * ntypes + paircol + i];
       } else {
 	dp_c[i] = 0.0;
       }

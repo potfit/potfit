@@ -120,9 +120,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
       npots = 2 * paircol + 1;
 #endif /* STIWEB */
 
-#ifdef TERSOFF
+#if defined TERSOFF && !defined TERSOFFMOD
       npots = ntypes * ntypes;
-#endif /* TERSOFF */
+#endif /* TERSOFF && !TERSOFFMOD */
 
       if (size == npots) {
 	printf(" - Using %d %s potentials to calculate forces\n", npots, interaction_name);

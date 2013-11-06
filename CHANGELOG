@@ -1,5 +1,7 @@
 potfit-next
 + add tbeam interaction
++ remove WZERO and PARAB options
++ add modified tersoff potential
 
 potfit-0.6.0 (20130821)
 + merge MEAM implementation of Jeremy Nicklas (Ohio State University)

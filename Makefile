@@ -526,13 +526,16 @@ ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
   INTERACTION = 1
 endif
 
-# Tersoff potentials (TERSOFF)
+# Tersoff potentials (TERSOFF and TERSOFFMOD)
 ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
     ERROR += More than one potential model specified
   endif
   ifeq (,$(findstring apot,${MAKETARGET}))
     ERROR += TERSOFF does not work without the apot flag
+  endif
+  ifneq (,$(findstring tersoffmod,${MAKETARGET}))
+    CFLAGS += -DTERSOFFMOD
   endif
   CFLAGS  += -DTERSOFF
   INTERACTION = 1

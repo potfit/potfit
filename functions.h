@@ -78,8 +78,12 @@ void  lambda_value(double, double *, double *);
 #endif /* STIWEB */
 
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
 void  tersoff_pot_value(double, double *, double *);
 void  tersoff_mix_value(double, double *, double *);
+#else
+void  tersoff_mod_pot_value(double, double *, double *);
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
 /* template for new potential function called newpot */

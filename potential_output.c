@@ -1428,6 +1428,7 @@ void write_pot_table_lammps(pot_table_t *pt)
 	fprintf(outfile, " %g", 0.0);
 #endif /* STIWEB */
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
 	/* potfit calculates the Tersoff_2 potential model */
 	/* lammps requires the parameters in Tersoff_1 format */
 	/* m has no effect, set it to 1.0 */
@@ -1458,6 +1459,44 @@ void write_pot_table_lammps(pot_table_t *pt)
 	fprintf(outfile, " %g", apot_table.values[col_j][2]);
 	/* A */
 	fprintf(outfile, " %g", apot_table.values[col_j][0]);
+#else /* !TERSOFFMOD */
+	/* order of parameters for a LAMMPS potential: */
+	/* beta, alpha, h, eta, beta_ters (dummy), lambda2, B, R, D, lambda1, A, n, c1,..,c5 */
+	/* beta */
+	fprintf(outfile, " %g", apot_table.values[col_j][7]);
+	/* alpha */
+	fprintf(outfile, " %g", apot_table.values[col_j][6]);
+	/* h */
+	fprintf(outfile, " %g", apot_table.values[col_j][13]);
+	/* eta */
+	fprintf(outfile, " %g", apot_table.values[col_j][4]);
+	/* beta_ters (dummy) */
+	fprintf(outfile, " %g", 1.0);
+	/* lambda2 = mu */
+	fprintf(outfile, " %g", apot_table.values[col_j][3]);
+	/* B */
+	fprintf(outfile, " %g", apot_table.values[col_j][1]);
+	/* R = 0.5 * (R1+R2) */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][14] + apot_table.values[col_j][15]));
+	/* D = 0.5 * (R2-R1) */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][15] - apot_table.values[col_j][14]));
+	/* lambda1 = lambda */
+	fprintf(outfile, " %g", apot_table.values[col_j][2]);
+	/* A */
+	fprintf(outfile, " %g", apot_table.values[col_j][0]);
+	/* n = 1/(2*delta) */
+	fprintf(outfile, " %g", 1.0 / (2.0 * apot_table.values[col_j][5]));
+	/* c1 */
+	fprintf(outfile, " %g", apot_table.values[col_j][8]);
+	/* c2 */
+	fprintf(outfile, " %g", apot_table.values[col_j][9]);
+	/* c3 */
+	fprintf(outfile, " %g", apot_table.values[col_j][10]);
+	/* c4 */
+	fprintf(outfile, " %g", apot_table.values[col_j][11]);
+	/* c5 */
+	fprintf(outfile, " %g", apot_table.values[col_j][12]);
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 	fprintf(outfile, "\n");
       }

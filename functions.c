@@ -99,8 +99,12 @@ void apot_init(void)
 #endif /* STIWEB */
 
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
   add_pot(tersoff_pot, 11);
   add_pot(tersoff_mix, 2);
+#else
+  add_pot(tersoff_mod_pot, 16);
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
   reg_for_free(function_table.name, "function_table.name");
@@ -234,7 +238,8 @@ void check_apot_functions(void)
   int   pcol = (ntypes * (ntypes + 1)) / 2;
   int   i;
 
-  /* check for the correct function types for SW potential */
+#ifndef TERSOFFMOD
+  /* check for the correct function types for TERSOFF potential */
   for (i = 0; i < pcol; i++) {
     if (strcmp(apot_table.names[i], "tersoff_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
@@ -252,6 +257,23 @@ void check_apot_functions(void)
       error(1, "Please change it, that the condition R < S can be fulfilled.\n");
     }
   }
+#else
+  /* check for the correct function types for TERSOFFMOD potential */
+  for (i = 0; i < pcol; i++) {
+    if (strcmp(apot_table.names[i], "tersoff_mod_pot") != 0)
+      error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
+  }
+
+  /* make sure the cutoff parameters (R, S) can be optimized correctly */
+  for (i = 0; i < pcol; i++) {
+    if (apot_table.pmax[i][15] < apot_table.pmin[i][14]) {
+      error(0, "The upper bound for the parameter R2 is smaller than the lower bound\n");
+      error(0, "for the parameter R1 in potential %d.\n", i + 1);
+      error(1, "Please change it, that the condition R1 < R2 can be fulfilled.\n");
+    }
+  }
+
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
   return;
@@ -971,10 +993,11 @@ void lambda_value(double r, double *p, double *f)
 #endif /* STIWEB */
 
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
 
 /****************************************************************
  *
- * pseudo Stillinger-Weber potential function to store lamda values
+ * pseudo Tersoff potential function to store potential parameters
  *
  ****************************************************************/
 
@@ -987,7 +1010,7 @@ void tersoff_pot_value(double r, double *p, double *f)
 
 /****************************************************************
  *
- * pseudo Stillinger-Weber potential function to store lamda values
+ * pseudo Tersoff potential function to store mixing potential values
  *
  ****************************************************************/
 
@@ -998,6 +1021,22 @@ void tersoff_mix_value(double r, double *p, double *f)
   return;
 }
 
+#else
+
+/****************************************************************
+ *
+ * pseudo modified Tersoff potential function to store potential parameters
+ *
+ ****************************************************************/
+
+void tersoff_mod_pot_value(double r, double *p, double *f)
+{
+  *f = 0.0 * r * p[0];
+
+  return;
+}
+
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
 /****************************************************************

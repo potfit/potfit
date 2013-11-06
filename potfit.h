@@ -145,7 +145,7 @@
 
 /****************************************************************
  *
- *  include type definitions after all preprocessor flags are set
+ *  include type definitions after all preprocessor flags are properly set
  *
  ****************************************************************/
 
@@ -338,7 +338,7 @@ EXTERN double dp_eps INIT(14.40);	/* this is e^2/(4*pi*epsilon_0) in eV A */
 EXTERN double dp_cut INIT(10.0);	/* cutoff-radius for long-range interactions */
 #endif /* COULOMB */
 #ifdef DIPOLE
-EXTERN double dp_tol INIT(1.e-7);	/* dipole iteration precision */
+EXTERN double dp_tol INIT(1.0e-7);	/* dipole iteration precision */
 EXTERN double dp_mix INIT(0.2);	/* mixing parameter (other than that one in IMD) */
 #endif /* DIPOLE */
 
@@ -410,8 +410,12 @@ double calc_forces_stiweb(double *, double *, int);
 EXTERN const char interaction_name[7] INIT("STIWEB");
 void  update_stiweb_pointers(double *);
 #elif defined TERSOFF
-double calc_forces_tersoff(double *, double *, int);
+#ifdef TERSOFFMOD
+EXTERN const char interaction_name[11] INIT("TERSOFFMOD");
+#else
 EXTERN const char interaction_name[8] INIT("TERSOFF");
+#endif /* TERSOFFMOD */
+double calc_forces_tersoff(double *, double *, int);
 void  update_tersoff_pointers(double *);
 #endif /* interaction type */
 

@@ -28,9 +28,9 @@
  *
  ****************************************************************/
 
-#ifdef PAIR
-
 #include "potfit.h"
+
+#ifdef PAIR
 
 #include "functions.h"
 #include "potential.h"

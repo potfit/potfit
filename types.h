@@ -79,9 +79,9 @@ typedef struct {
 #endif
 
 #ifdef THREEBODY
-  double f;
-  double df;
-  int   ijk_start;
+  double f;			/* value of the cutoff function f_c */
+  double df;			/* derivative of the cutoff function f_c */
+  int   ijk_start;		/* index of the first entry for angular part */
 #endif
 
 #ifdef MEAM
@@ -124,6 +124,7 @@ typedef struct {
 #endif
 
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
 /* pointers to access Tersoff parameters directly */
 typedef struct {
   int   init;
@@ -144,7 +145,29 @@ typedef struct {
   double *d2;
   double one;
 } tersoff_t;
-#endif
+#else
+/* pointers to access Tersoff parameters directly */
+typedef struct {
+  int   init;
+  double **A;
+  double **B;
+  double **lambda;
+  double **mu;
+  double **eta;
+  double **delta;
+  double **alpha;
+  double **beta;
+  double **c1;
+  double **c2;
+  double **c3;
+  double **c4;
+  double **c5;
+  double **h;
+  double **R1;
+  double **R2;
+} tersoff_t;
+#endif /* !TERSOFFMOD */
+#endif /* TERSOFF */
 
 typedef struct {
   int   type;
