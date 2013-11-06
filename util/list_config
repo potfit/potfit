@@ -71,7 +71,7 @@ for line in f:
     i += 1
 
 for i in range(len(data_N)):
-    if origin[i] == '':
+    if origin[i] == '' or not origin[i]:
         source = 'source unknown'
     else:
         source = 'generated from {}'.format(origin[i].strip().split()[6])
