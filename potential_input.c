@@ -907,8 +907,16 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
       strcpy(apt->param_name[i][j], "\0");
       fgetpos(infile, &filepos);
+      fgets(name, 255, infile);
+      while (name[0] == '#' && !feof(infile)) {
+	fgets(name, 255, infile);
+      }
+      if (feof(infile) || name[0] == '\0') {
+	error(0, "Premature end of potential definition or file.\n");
+	error(1, "Probably your potential definition is missing some parameters.\n");
+      }
       ret_val =
-	fscanf(infile, "%s %lf %lf %lf", buffer, &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
+	sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
       strncpy(apt->param_name[i][j], buffer, 30);
 
       /* if last char of name is "!" we have a global parameter */
