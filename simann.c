@@ -28,11 +28,9 @@
  *
  *****************************************************************/
 
-#ifndef EVO
-
-#include <ctype.h>
-
 #include "potfit.h"
+
+#ifndef EVO
 
 #include "optimize.h"
 #include "potential.h"

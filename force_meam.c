@@ -31,9 +31,9 @@
  *
  ****************************************************************/
 
-#ifdef MEAM
-
 #include "potfit.h"
+
+#ifdef MEAM
 
 #include "functions.h"
 #include "potential.h"

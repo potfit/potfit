@@ -977,9 +977,6 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
     }
 #endif /* NOPUNISH */
 
-    /* only root process */
-    sum = tmpsum;		/* global sum = local sum  */
-
 #ifdef MPI
     /* reduce global sum */
     sum = 0.0;
@@ -1013,6 +1010,8 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
 	forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     /* no need to pick up dummy constraints - are already @ root */
+#else
+    sum = tmpsum;		/* global sum = local sum  */
 #endif /* MPI */
 
     /* root process exits this function now */
@@ -1032,6 +1031,5 @@ double calc_forces_eam_elstat(double *xi_opt, double *forces, int flag)
   /* once a non-root process arrives here, all is done. */
   return -1.0;
 }
-
 
 #endif /* COULOMB && EAM */

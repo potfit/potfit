@@ -28,12 +28,13 @@
  *
  *****************************************************************/
 
+#include "potfit.h"
+
 #if !defined NORESCALE && !defined APOT
 
-#include "potfit.h"
 #include "splines.h"
 
-/* Doesn't make much sense without EAM or MEAM */
+/* Doesn't make much sense without MEAM */
 
 #ifdef MEAM
 

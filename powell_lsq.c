@@ -38,13 +38,13 @@
  *
  ****************************************************************/
 
+#include "potfit.h"
+
 #ifdef ACML
 #include <acml.h>
 #else /* ACML */
 #include <mkl_lapack.h>
 #endif /* ACML */
-
-#include "potfit.h"
 
 #include "bracket.h"
 #include "optimize.h"

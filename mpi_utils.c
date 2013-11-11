@@ -28,9 +28,9 @@
  *
  ****************************************************************/
 
-#ifdef MPI
-
 #include "potfit.h"
+
+#ifdef MPI
 
 #include "utils.h"
 

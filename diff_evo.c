@@ -29,9 +29,9 @@
  *
  ****************************************************************/
 
-#ifdef EVO
-
 #include "potfit.h"
+
+#ifdef EVO
 
 #include "optimize.h"
 #include "utils.h"

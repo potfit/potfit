@@ -38,8 +38,7 @@
 #endif /* M_PI */
 
 /* macro for simplified addition of new potential functions */
-#define str(s) #s
-#define add_pot(a,b) add_potential(str(a),b,&a ## _value)
+#define add_pot(a,b) add_potential(#a,b,&a ## _value)
 
 /****************************************************************
  *

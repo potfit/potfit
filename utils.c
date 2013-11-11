@@ -28,6 +28,8 @@
  *
  *****************************************************************/
 
+#include "potfit.h"
+
 #include <stdint.h>
 
 /* 32-bit */
@@ -53,7 +55,6 @@
 
 #endif /* UINTPTR_MAX */
 
-#include "potfit.h"
 #include "utils.h"
 
 int  *vect_int(long dim)

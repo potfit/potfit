@@ -28,9 +28,9 @@
  *
  ****************************************************************/
 
-#ifdef TERSOFF
-
 #include "potfit.h"
+
+#ifdef TERSOFF
 
 #include "functions.h"
 #include "potential.h"

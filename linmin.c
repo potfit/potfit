@@ -31,7 +31,7 @@
 
 /*** rewritten for double precision and zero-offset vectors and matrices 	***/
 /*** adapted to Powell requrirements (return vector instead of value)... 	***/
-/*** adapted to double variables (ITAP standard) by PB, ITAP, 2002-10-24 		***/
+/*** adapted to double variables (ITAP standard) by PB, ITAP, 2002-10-24	***/
 /*** by Peter Brommer, ITAP, 2002-10-10 					***/
 
 #include "potfit.h"

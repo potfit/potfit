@@ -28,9 +28,9 @@
  *
  ****************************************************************/
 
-#if defined APOT && defined PAIR
-
 #include "potfit.h"
+
+#if defined APOT && defined PAIR
 
 #include "functions.h"
 

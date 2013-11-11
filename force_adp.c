@@ -28,9 +28,9 @@
  *
  ****************************************************************/
 
-#ifdef ADP
-
 #include "potfit.h"
+
+#ifdef ADP
 
 #include "functions.h"
 #include "potential.h"

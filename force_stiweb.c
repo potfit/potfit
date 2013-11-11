@@ -29,9 +29,9 @@
  *
  ****************************************************************/
 
-#ifdef STIWEB
-
 #include "potfit.h"
+
+#ifdef STIWEB
 
 #include "functions.h"
 #include "potential.h"

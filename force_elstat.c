@@ -29,9 +29,9 @@
  *
  ****************************************************************/
 
-#if defined COULOMB && !defined EAM
-
 #include "potfit.h"
+
+#if defined COULOMB && !defined EAM
 
 #include "functions.h"
 #include "potential.h"
@@ -765,8 +765,6 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
     }
 #endif /* APOT */
 
-    sum = tmpsum;		/* global sum = local sum  */
-
 #ifdef MPI
     /* reduce global sum */
     sum = 0.0;
@@ -793,6 +791,8 @@ double calc_forces_elstat(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
 	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
     }
+#else
+    sum = tmpsum;		/* global sum = local sum  */
 #endif /* MPI */
 
     /* root process exits this function now */

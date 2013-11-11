@@ -28,11 +28,11 @@
  *
  ****************************************************************/
 
-#include <time.h>
-
 #define MAIN
 #include "potfit.h"
 #undef MAIN
+
+#include <time.h>
 
 #include "config.h"
 #include "functions.h"
