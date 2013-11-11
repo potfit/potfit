@@ -57,8 +57,8 @@ typedef struct {
   double r;			/* r */
   double r2;			/* r^2 */
   double inv_r;			/* 1/r */
-  vector dist;			/* real distance */
-  vector dist_r;		/* distance divided by r */
+  vector dist;			/* real distance vector */
+  vector dist_r;		/* distance vector divided by r = normalized distance vector */
 
   /* data to access the spline tables at the correct position */
   int   slot[SLOTS];		/* the slot, belonging to the neighbor distance */
