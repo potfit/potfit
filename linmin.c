@@ -72,7 +72,7 @@ double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, do
   }
   for (j = 0; j < ndimtot; j++)
     vecu[j] = xicom[j] + bx * delcom[j];	/*set vecu */
-  fb = (*calc_forces) (vecu, fret2, 0);
+  fb = calc_forces(vecu, fret2, 0);
 
   bracket(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
 

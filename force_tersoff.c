@@ -88,7 +88,7 @@
 
 #ifndef TERSOFFMOD
 
-double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
+double calc_forces(double *xi_opt, double *forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
   const tersoff_t *tersoff = &apot_table.tersoff;
@@ -608,7 +608,7 @@ void update_tersoff_pointers(double *xi)
 
 #else /* !TERSOFFMOD */
 
-double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
+double calc_forces(double *xi_opt, double *forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
   const tersoff_t *tersoff = &apot_table.tersoff;

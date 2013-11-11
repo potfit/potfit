@@ -90,7 +90,7 @@ void init_population(double **pop, double *xi, double *cost)
     }
   }
   for (i = 0; i < NP; i++)
-    cost[i] = (*calc_forces) (pop[i], fxi, 0);
+    cost[i] = calc_forces(pop[i], fxi, 0);
 #ifdef APOT
   opposite_check(pop, cost, 1);
 #endif /* APOT */
@@ -167,7 +167,7 @@ void opposite_check(double **P, double *costP, int init)
   for (i = 0; i < NP; i++)
     tot_cost[i] = costP[i];
   for (i = NP; i < 2 * NP; i++)
-    tot_cost[i] = (*calc_forces) (tot_P[i], fxi, 0);
+    tot_cost[i] = calc_forces(tot_P[i], fxi, 0);
 
   /* evaluate the NP best individuals from both populations */
   /* sort with quicksort and return NP best indivuals */
@@ -332,7 +332,7 @@ void diff_evo(double *xi)
 	j = (j + 1) % ndim;
       }
 
-      force = (*calc_forces) (trial, fxi, 0);
+      force = calc_forces(trial, fxi, 0);
       if (force < min) {
 	for (j = 0; j < D; j++)
 	  best[j] = trial[j];

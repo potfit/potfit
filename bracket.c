@@ -80,7 +80,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
     nb_eval++;
     for (j = 0; j < ndimtot; j++)
       vecu[j] = xicom[j] + x_left * delcom[j];	/*set vecu */
-    f_left = (*calc_forces) (vecu, p_left, 0);
+    f_left = calc_forces(vecu, p_left, 0);
   } else {
     x_center = x_right;
     f_center = f_right;
@@ -89,7 +89,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
     nb_eval++;
     for (j = 0; j < ndimtot; j++)
       vecu[j] = xicom[j] + x_right * delcom[j];	/*set vecu */
-    f_right = (*calc_forces) (vecu, p_right, 0);
+    f_right = calc_forces(vecu, p_right, 0);
   }
 
   do {
@@ -117,7 +117,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
 	  vecu[j] = xicom[j] + x_right * delcom[j];
-	f_right = (*calc_forces) (vecu, p_right, 0);
+	f_right = calc_forces(vecu, p_right, 0);
       } else {			/* f_center == f_right */
 
 	/* Pathological: Search between center and right */
@@ -129,7 +129,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
 	  vecu[j] = xicom[j] + x_right * delcom[j];
-	f_right = (*calc_forces) (vecu, p_right, 0);
+	f_right = calc_forces(vecu, p_right, 0);
 	last = 1;
       }
     } else if (f_center > f_left)
@@ -146,7 +146,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
       nb_eval++;
       for (j = 0; j < ndimtot; j++)
 	vecu[j] = xicom[j] + x_left * delcom[j];
-      f_left = (*calc_forces) (vecu, p_left, 0);
+      f_left = calc_forces(vecu, p_left, 0);
     } else {			/* f_center == f_left */
 
       if (f_center < f_right) {
@@ -158,7 +158,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
 	  vecu[j] = xicom[j] + x_left * delcom[j];
-	f_left = (*calc_forces) (vecu, p_left, 0);
+	f_left = calc_forces(vecu, p_left, 0);
 	last = 2;
       } else if (f_center > f_right) {
 	/* Search to the right */
@@ -172,7 +172,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	nb_eval++;
 	for (j = 0; j < ndimtot; j++)
 	  vecu[j] = xicom[j] + x_right * delcom[j];
-	f_right = (*calc_forces) (vecu, p_right, 0);
+	f_right = calc_forces(vecu, p_right, 0);
       } else {			/* f_center==f_left==f_right */
 
 	/* Kind of pathological case: go left/right in turns */
@@ -185,7 +185,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	  nb_eval++;
 	  for (j = 0; j < ndimtot; j++)
 	    vecu[j] = xicom[j] + x_left * delcom[j];
-	  f_left = (*calc_forces) (vecu, p_left, 0);
+	  f_left = calc_forces(vecu, p_left, 0);
 	  last = 1;
 	} else {		/* go further to the right, to left it went up */
 
@@ -196,7 +196,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	  nb_eval++;
 	  for (j = 0; j < ndimtot; j++)
 	    vecu[j] = xicom[j] + x_right * delcom[j];
-	  f_right = (*calc_forces) (vecu, p_right, 0);
+	  f_right = calc_forces(vecu, p_right, 0);
 	  last = 2;
 	}
       }

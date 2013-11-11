@@ -87,7 +87,7 @@
  *
  ****************************************************************/
 
-double calc_forces_elstat(double *xi_opt, double *forces, int flag)
+double calc_forces(double *xi_opt, double *forces, int flag)
 {
   double tmpsum, sum = 0.0;
   int   first, col, ne, size, i;

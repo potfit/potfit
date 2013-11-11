@@ -32,38 +32,6 @@
 
 /****************************************************************
  *
- *  set_forces() assigns the correct pointer to the
- *  	calc_forces function pointer.
- *
- ****************************************************************/
-
-void set_forces()
-{
-
-  /* assign correct force routine */
-#ifdef PAIR
-  calc_forces = calc_forces_pair;
-#elif defined EAM && !defined COULOMB
-  calc_forces = calc_forces_eam;
-#elif defined ADP
-  calc_forces = calc_forces_adp;
-#elif defined COULOMB && !defined EAM
-  calc_forces = calc_forces_elstat;
-#elif defined COULOMB && defined EAM
-  calc_forces = calc_forces_eam_elstat;
-#elif defined MEAM
-  calc_forces = calc_forces_meam;
-#elif defined STIWEB
-  calc_forces = calc_forces_stiweb;
-#elif defined TERSOFF
-  calc_forces = calc_forces_tersoff;
-#endif /* PAIR */
-
-  return;
-}
-
-/****************************************************************
- *
  *  init_forces() is called after all parameters and potentials are
  *  	read. Additional assignments and initializations can be made here.
  *

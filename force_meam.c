@@ -89,7 +89,7 @@
  *
  ****************************************************************/
 
-double calc_forces_meam(double *xi_opt, double *forces, int flag)
+double calc_forces(double *xi_opt, double *forces, int flag)
 {
   int   first, col, i;
   double *xi = NULL;

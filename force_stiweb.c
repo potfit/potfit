@@ -87,7 +87,7 @@
  *
  ****************************************************************/
 
-double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
+double calc_forces(double *xi_opt, double *forces, int flag)
 {
   int   col, i;
   double tmpsum = 0.0, sum = 0.0;

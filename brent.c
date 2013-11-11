@@ -81,7 +81,7 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
   p_z = fxmin;
   p_w = fxmin2;
   p_u = fxu;
-  f_v = f_w = (*calc_forces) (vecu, p_w, 0);
+  f_v = f_w = calc_forces(vecu, p_w, 0);
 
   for (iter = 1; iter <= ITMAX; iter++) {
     midpoint = 0.5 * (x_left + x_right);

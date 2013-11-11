@@ -189,7 +189,7 @@ void anneal(double *xi)
     xi2[n] = xi[n];
     xopt[n] = xi[n];
   }
-  F = (*calc_forces) (xi, fxi1, 0);
+  F = calc_forces(xi, fxi1, 0);
   Fopt = F;
 #ifndef APOT
   // Need to save xcoord of this F potential because we use the
@@ -230,7 +230,7 @@ void anneal(double *xi)
       height = normdist() * v[h];
       makebump(xi2, width, height, h);
 #endif /* APOT */
-      F2 = (*calc_forces) (xi2, fxi1, 0);
+      F2 = calc_forces(xi2, fxi1, 0);
       if (F2 <= F) {
 	m1++;
       } else {
@@ -273,7 +273,7 @@ void anneal(double *xi)
 	  height = normdist() * v[h];
 	  makebump(xi2, width, height, h);
 #endif /* APOT */
-	  F2 = (*calc_forces) (xi2, fxi1, 0);
+	  F2 = calc_forces(xi2, fxi1, 0);
 	  if (F2 <= F) {	/* accept new point */
 #ifdef APOT
 	    xi[idx[h]] = xi2[idx[h]];
@@ -358,7 +358,7 @@ void anneal(double *xi)
 	if (rescale(&opt_pot, 1.0, 0) != 0.0) {
 	  /* wake other threads and sync potentials */
 	  printf("F before rescale = %f\n", F);
-	  F = (*calc_forces) (xi, fxi1, 2);
+	  F = calc_forces(xi, fxi1, 2);
 	  printf("F after rescale = %f\n", F);
 	}
       }
@@ -395,7 +395,7 @@ void anneal(double *xi)
       }
 
       /* wake other threads and sync potentials */
-      F = (*calc_forces) (xi, fxi1, 2);
+      F = calc_forces(xi, fxi1, 2);
 
       // Turn off rescaling
       rescaleMe = 0;
@@ -425,7 +425,7 @@ void anneal(double *xi)
   }
 
   // wake other threads and sync potentials
-  F = (*calc_forces) (xi, fxi1, 2);
+  F = calc_forces(xi, fxi1, 2);
 #endif /* MEAM && !APOT */
   printf("Finished annealing, starting powell minimization ...\n");
 

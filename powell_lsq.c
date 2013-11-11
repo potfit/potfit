@@ -112,7 +112,7 @@ void powell_lsq(double *xi)
     delta[i] = 0.0;
 
   /* calculate the first force */
-  F = (*calc_forces) (xi, fxi1, 0);
+  F = calc_forces(xi, fxi1, 0);
 #ifndef APOT
   printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
   fflush(stdout);
@@ -391,7 +391,7 @@ int gamma_init(double **gamma, double **d, double *xi, double *force_xi)
     xi[idx[i]] += EPS;		/*increase xi[idx[i]]... */
 #endif /* APOT */
     sum = 0.0;
-    (void)(*calc_forces) (xi, force, 0);
+    calc_forces(xi, force, 0);
     for (j = 0; j < mdim; j++) {
       temp = (force[j] - force_xi[j]) / (EPS * scale);
       gamma[j][i] = temp;

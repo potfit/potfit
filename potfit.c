@@ -67,9 +67,6 @@ int main(int argc, char **argv)
 #endif /* MPI */
   }
 
-  /* assign the correct force routines to the calc_forces function pointer */
-  set_forces();
-
   /* read the parameters and the potential file */
   if (myid == 0) {
     read_parameters(argc, argv);

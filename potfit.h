@@ -348,7 +348,7 @@ EXTERN double dp_mix INIT(0.2);	/* mixing parameter (other than that one in IMD)
  *
  ****************************************************************/
 
-EXTERN double (*calc_forces) (double *, double *, int);
+EXTERN double calc_forces(double *, double *, int);
 EXTERN double (*splint) (pot_table_t *, double *, int, double);
 EXTERN double (*splint_grad) (pot_table_t *, double *, int, double);
 EXTERN double (*splint_comb) (pot_table_t *, double *, int, double, double *);
@@ -384,29 +384,22 @@ void  set_force_vector_pointers();
 
 /* force routines for different potential models [force_xxx.c] */
 #ifdef PAIR
-double calc_forces_pair(double *, double *, int);
 EXTERN const char interaction_name[5] INIT("PAIR");
 #elif defined EAM && !defined COULOMB
-double calc_forces_eam(double *, double *, int);
 #ifndef TBEAM
 EXTERN const char interaction_name[4] INIT("EAM");
 #else
 EXTERN const char interaction_name[6] INIT("TBEAM");
 #endif /* TBEAM */
 #elif defined ADP
-double calc_forces_adp(double *, double *, int);
 EXTERN const char interaction_name[4] INIT("ADP");
 #elif defined COULOMB && !defined EAM
-double calc_forces_elstat(double *, double *, int);
 EXTERN const char interaction_name[7] INIT("ELSTAT");
 #elif defined COULOMB && defined EAM
-double calc_forces_eam_elstat(double *, double *, int);
 EXTERN const char interaction_name[11] INIT("EAM_ELSTAT");
 #elif defined MEAM
-double calc_forces_meam(double *, double *, int);
 EXTERN const char interaction_name[5] INIT("MEAM");
 #elif defined STIWEB
-double calc_forces_stiweb(double *, double *, int);
 EXTERN const char interaction_name[7] INIT("STIWEB");
 void  update_stiweb_pointers(double *);
 #elif defined TERSOFF
@@ -415,7 +408,6 @@ EXTERN const char interaction_name[11] INIT("TERSOFFMOD");
 #else
 EXTERN const char interaction_name[8] INIT("TERSOFF");
 #endif /* TERSOFFMOD */
-double calc_forces_tersoff(double *, double *, int);
 void  update_tersoff_pointers(double *);
 #endif /* interaction type */
 
