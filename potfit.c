@@ -107,24 +107,23 @@ int main(int argc, char **argv)
     /* properly initialize random number generator */
 #define R_SIZE 624
 #define RAND_MAX 2147483647
-    uint32_t *array;
-    array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-    srand(seed);
-    for (i = 0; i < R_SIZE; i++)
-      array[i] = rand();
+    {
+      uint32_t *array;
+      array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
+      srand(seed);
+      for (i = 0; i < R_SIZE; i++)
+	array[i] = rand();
 
-    dsfmt_init_by_array(&dsfmt, array, R_SIZE);
-    for (i = 0; i < 10e5; i++)
-      eqdist();
-    free(array);
+      dsfmt_init_by_array(&dsfmt, array, R_SIZE);
+      for (i = 0; i < 10e5; i++)
+	eqdist();
+      free(array);
+    }
 #undef R_SIZE
 #undef RAND_MAX
-  }
+  } /* myid == 0 */
 
-  /* myid == 0 */
-  /* initialize the remaining parameters and assign the atoms */
 #ifdef MPI
-  MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
   broadcast_params();		/* let the others know what's going on */
 #else
   /* Identify subset of atoms/volumes belonging to individual process
@@ -145,7 +144,7 @@ int main(int argc, char **argv)
     error(1, "Could not allocate memory for main force vector.");
   for (i = 0; i < mdim; i++)
     force[i] = 0.0;
-  reg_for_free(force, "force");
+  reg_for_free(force, "force vector");
 
   /* starting positions for the force vector */
   set_force_vector_pointers();
@@ -192,18 +191,18 @@ int main(int argc, char **argv)
     }
 #endif /* MPI */
     time(&t_begin);
-    if (opt && ndim != 0) {
+    if (opt && ndim > 0) {
       printf("\nStarting optimization with %d parameters.\n", ndim);
       fflush(stdout);
-#ifdef EVO
-      diff_evo(opt_pot.table);
-#else /* EVO */
+#ifndef EVO
       anneal(opt_pot.table);
+#else /* EVO */
+      diff_evo(opt_pot.table);
 #endif /* EVO */
       printf("\nStarting powell minimization ...\n");
       powell_lsq(opt_pot.table);
       printf("\nFinished powell minimization, calculating errors ...\n");
-    } else if (ndim == 0) {
+    } else if (0 == ndim) {
       printf("\nOptimization disabled due to 0 free parameters. Calculating errors.\n");
     } else {
       printf("\nOptimization disabled. Calculating errors.\n\n");
@@ -250,7 +249,6 @@ int main(int argc, char **argv)
 #ifdef MPI
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
-
   }				/* myid == 0 */
 
   /* calculate total runtime */

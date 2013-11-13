@@ -91,6 +91,8 @@ void broadcast_params()
   int   j;
 #endif /* APOT */
 
+  MPI_Bcast(&init_done, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
   /* Define Structures */
   /* first the easy ones: */
   /* MPI_VECTOR */

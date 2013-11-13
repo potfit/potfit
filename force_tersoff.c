@@ -602,8 +602,6 @@ void update_tersoff_pointers(double *xi)
     tersoff->c2[i] = *(tersoff->c[i]) * *(tersoff->c[i]);
     tersoff->d2[i] = *(tersoff->d[i]) * *(tersoff->d[i]);
   }
-
-  return;
 }
 
 #else /* !TERSOFFMOD */
@@ -665,7 +663,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       double dzeta_ij, dzeta_ik;
       double g_theta, dg_theta;
       double phi_val, phi_grad;
-      double tmp_1, tmp_2, tmp_3, tmp_4;
+      double tmp, tmp_1, tmp_2, tmp_3, tmp_4;
       double zeta, dzeta_cos;
       vector dcos_j, dcos_k;
       vector dzeta_i, dzeta_j;
@@ -885,17 +883,17 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef STRESS			/* Distribute stress among atoms */
 	      if (us) {
 		tmp = neigh_j->dist.x * force_j.x;
-		forces[stresses + 0] -= tmp;
+		forces[stresses + 0] += tmp;
 		tmp = neigh_j->dist.y * force_j.y;
-		forces[stresses + 1] -= tmp;
+		forces[stresses + 1] += tmp;
 		tmp = neigh_j->dist.z * force_j.z;
-		forces[stresses + 2] -= tmp;
+		forces[stresses + 2] += tmp;
 		tmp = 0.5 * (neigh_j->dist.x * force_j.y + neigh_j->dist.y * force_j.x);
-		forces[stresses + 3] -= tmp;
+		forces[stresses + 3] += tmp;
 		tmp = 0.5 * (neigh_j->dist.y * force_j.z + neigh_j->dist.z * force_j.y);
-		forces[stresses + 4] -= tmp;
+		forces[stresses + 4] += tmp;
 		tmp = 0.5 * (neigh_j->dist.z * force_j.x + neigh_j->dist.x * force_j.z);
-		forces[stresses + 5] -= tmp;
+		forces[stresses + 5] += tmp;
 	      }
 #endif /* STRESS */
 
