@@ -317,14 +317,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 #ifdef STRESS			/* Distribute stress among atoms */
 		  if (us) {
-		    forces[stresses + 0] += force_j.x * neigh_j->dist.x + force_k.x * neigh_k->dist.x;
-		    forces[stresses + 1] += force_j.y * neigh_j->dist.y + force_k.y * neigh_k->dist.y;
-		    forces[stresses + 2] += force_j.z * neigh_j->dist.z + force_k.z * neigh_k->dist.z;
-		    forces[stresses + 3] += 0.5 * (force_j.x * neigh_j->dist.y + force_k.x * neigh_k->dist.y
+		    forces[stresses + 0] -= force_j.x * neigh_j->dist.x + force_k.x * neigh_k->dist.x;
+		    forces[stresses + 1] -= force_j.y * neigh_j->dist.y + force_k.y * neigh_k->dist.y;
+		    forces[stresses + 2] -= force_j.z * neigh_j->dist.z + force_k.z * neigh_k->dist.z;
+		    forces[stresses + 3] -= 0.5 * (force_j.x * neigh_j->dist.y + force_k.x * neigh_k->dist.y
 		      + force_j.y * neigh_j->dist.x + force_k.y * neigh_k->dist.x);
-		    forces[stresses + 4] += 0.5 * (force_j.y * neigh_j->dist.z + force_k.y * neigh_k->dist.z
+		    forces[stresses + 4] -= 0.5 * (force_j.y * neigh_j->dist.z + force_k.y * neigh_k->dist.z
 		      + force_j.z * neigh_j->dist.y + force_k.z * neigh_k->dist.y);
-		    forces[stresses + 5] += 0.5 * (force_j.z * neigh_j->dist.x + force_k.z * neigh_k->dist.x
+		    forces[stresses + 5] -= 0.5 * (force_j.z * neigh_j->dist.x + force_k.z * neigh_k->dist.x
 		      + force_j.x * neigh_j->dist.z + force_k.x * neigh_k->dist.z);
 		  }
 #endif /* STRESS */

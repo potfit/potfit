@@ -121,8 +121,8 @@ int main(int argc, char **argv)
     }
 #undef R_SIZE
 #undef RAND_MAX
-  } /* myid == 0 */
-
+  }
+  /* myid == 0 */
 #ifdef MPI
   broadcast_params();		/* let the others know what's going on */
 #else

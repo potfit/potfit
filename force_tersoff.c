@@ -91,7 +91,7 @@
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
-  const tersoff_t *tersoff = &apot_table.tersoff;
+  const tersoff_t *ters = &apot_table.tersoff;
 
 #ifndef MPI
   myconf = nconf;
@@ -193,13 +193,13 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    neigh_j = atom->neigh + j;
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
-	    if (neigh_j->r < *(tersoff->S[col_j])) {
+	    if (neigh_j->r < *(ters->S[col_j])) {
 	      self = (neigh_j->nr == i + cnfstart[h]) ? 1 : 0;
 
 	      /* calculate cutoff function f_c and store it for every neighbor */
-	      cut_tmp = M_PI / (*(tersoff->S[col_j]) - *(tersoff->R[col_j]));
-	      cut_tmp_j = cut_tmp * (neigh_j->r - *(tersoff->R[col_j]));
-	      if (neigh_j->r < *(tersoff->R[col_j])) {
+	      cut_tmp = M_PI / (*(ters->S[col_j]) - *(ters->R[col_j]));
+	      cut_tmp_j = cut_tmp * (neigh_j->r - *(ters->R[col_j]));
+	      if (neigh_j->r < *(ters->R[col_j])) {
 		neigh_j->f = 1.0;
 		neigh_j->df = 0.0;
 	      } else {
@@ -208,10 +208,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      }
 
 	      /* calculate pair part f_c*A*exp(-lambda*r) and the derivative */
-	      tmp = exp(-*(tersoff->lambda[col_j]) * neigh_j->r);
-	      phi_val = neigh_j->f * *(tersoff->A[col_j]) * tmp;
-	      phi_grad = neigh_j->df - *(tersoff->lambda[col_j]) * neigh_j->f;
-	      phi_grad *= *(tersoff->A[col_j]) * tmp;
+	      tmp = exp(-*(ters->lambda[col_j]) * neigh_j->r);
+	      phi_val = neigh_j->f * *(ters->A[col_j]) * tmp;
+	      phi_grad = neigh_j->df - *(ters->lambda[col_j]) * neigh_j->f;
+	      phi_grad *= *(ters->A[col_j]) * tmp;
 
 	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
@@ -254,12 +254,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    neigh_j = atom->neigh + j;
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
-	    if (neigh_j->r < *(tersoff->S[col_j])) {
+	    if (neigh_j->r < *(ters->S[col_j])) {
 	      ijk = neigh_j->ijk_start;
 	      n_j = 3 * neigh_j->nr;
 
 	      /* skip neighbor if coefficient is zero */
-	      if (0.0 == *(tersoff->B[col_j]))
+	      if (0.0 == *(ters->B[col_j]))
 		continue;
 
 	      /* reset variables for each neighbor */
@@ -278,17 +278,17 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		neigh_k = atom->neigh + k;
 		col_k = neigh_k->col[0];
 		n_angl = atom->angl_part + ijk++;
-		if (neigh_k->r < *(tersoff->S[col_k])) {
+		if (neigh_k->r < *(ters->S[col_k])) {
 
 		  tmp_jk = 1.0 / (neigh_j->r * neigh_k->r);
 		  cos_theta = n_angl->cos;
 
-		  tmp_1 = *(tersoff->h[col_j]) - cos_theta;
-		  tmp_2 = 1.0 / (tersoff->d2[col_j] + tmp_1 * tmp_1);
-		  g_theta = 1.0 + tersoff->c2[col_j] / tersoff->d2[col_j] - tersoff->c2[col_j] * tmp_2;
+		  tmp_1 = *(ters->h[col_j]) - cos_theta;
+		  tmp_2 = 1.0 / (ters->d2[col_j] + tmp_1 * tmp_1);
+		  g_theta = 1.0 + ters->c2[col_j] / ters->d2[col_j] - ters->c2[col_j] * tmp_2;
 
 		  /* zeta */
-		  zeta += neigh_k->f * *(tersoff->omega[col_k]) * g_theta;
+		  zeta += neigh_k->f * *(ters->omega[col_k]) * g_theta;
 
 		  tmp_j2 = cos_theta / (neigh_j->r * neigh_j->r);
 		  tmp_k2 = cos_theta / (neigh_k->r * neigh_k->r);
@@ -301,10 +301,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		  dcos_k.y = tmp_jk * neigh_j->dist.y - tmp_k2 * neigh_k->dist.y;
 		  dcos_k.z = tmp_jk * neigh_j->dist.z - tmp_k2 * neigh_k->dist.z;
 
-		  tmp_3 = 2.0 * tersoff->c2[col_j] * tmp_1 * tmp_2 * tmp_2 * neigh_k->f *
-		    *(tersoff->omega[col_k]);
+		  tmp_3 = 2.0 * ters->c2[col_j] * tmp_1 * tmp_2 * tmp_2 * neigh_k->f * *(ters->omega[col_k]);
 
-		  tmp_grad = neigh_k->df / neigh_k->r * g_theta * *(tersoff->omega[col_k]);
+		  tmp_grad = neigh_k->df / neigh_k->r * g_theta * *(ters->omega[col_k]);
 
 		  neigh_k->dzeta.x = tmp_grad * neigh_k->dist.x - tmp_3 * dcos_k.x;
 		  neigh_k->dzeta.y = tmp_grad * neigh_k->dist.y - tmp_3 * dcos_k.y;
@@ -320,13 +319,13 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		}
 	      }			/* k */
 
-	      phi_a = 0.5 * *(tersoff->B[col_j]) * exp(-*(tersoff->mu[col_j]) * neigh_j->r);
+	      phi_a = 0.5 * *(ters->B[col_j]) * exp(-*(ters->mu[col_j]) * neigh_j->r);
 
-	      tmp_pow_1 = *(tersoff->gamma[col_j]) * zeta;
-	      power_1(&tmp_4, &tmp_pow_1, tersoff->n[col_j]);
+	      tmp_pow_1 = *(ters->gamma[col_j]) * zeta;
+	      power_1(&tmp_4, &tmp_pow_1, ters->n[col_j]);
 
 	      tmp_pow_1 = 1.0 + tmp_4;
-	      tmp_pow_2 = -1.0 / (2.0 * *(tersoff->n[col_j]));
+	      tmp_pow_2 = -1.0 / (2.0 * *(ters->n[col_j]));
 	      power_1(&b_ij, &tmp_pow_1, &tmp_pow_2);
 
 	      phi_val = -b_ij * phi_a;
@@ -337,8 +336,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		tmp_5 = 0.0;
 	      else
 		tmp_5 = -b_ij * neigh_j->f * phi_a * tmp_4 / (2.0 * zeta * (1.0 + tmp_4));
-	      tmp_6 =
-		(neigh_j->f * phi_a * *(tersoff->mu[col_j]) * b_ij + neigh_j->df * phi_val) / neigh_j->r;
+	      tmp_6 = (neigh_j->f * phi_a * *(ters->mu[col_j]) * b_ij + neigh_j->df * phi_val) / neigh_j->r;
 
 	      force_j.x = -tmp_6 * neigh_j->dist.x + tmp_5 * dzeta_j.x;
 	      force_j.y = -tmp_6 * neigh_j->dist.y + tmp_5 * dzeta_j.y;
@@ -348,7 +346,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		if (k != j) {
 		  neigh_k = atom->neigh + k;
 		  col_k = neigh_k->col[0];
-		  if (neigh_k->r < *(tersoff->S[col_k])) {
+		  if (neigh_k->r < *(ters->S[col_k])) {
 		    n_k = 3 * neigh_k->nr;
 		    /* update force on particle k */
 		    forces[n_k + 0] += tmp_5 * neigh_k->dzeta.x;
@@ -358,24 +356,18 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		    /* Distribute stress among atoms */
 #ifdef STRESS
 		    if (us) {
-		      tmp = neigh_k->dist.x * tmp_5 * neigh_k->dzeta.x;
-		      forces[stresses + 0] -= tmp;
-		      tmp = neigh_k->dist.y * tmp_5 * neigh_k->dzeta.y;
-		      forces[stresses + 1] -= tmp;
-		      tmp = neigh_k->dist.z * tmp_5 * neigh_k->dzeta.z;
-		      forces[stresses + 2] -= tmp;
-		      tmp =
+		      forces[stresses + 0] += neigh_k->dist.x * tmp_5 * neigh_k->dzeta.x;
+		      forces[stresses + 1] += neigh_k->dist.y * tmp_5 * neigh_k->dzeta.y;
+		      forces[stresses + 2] += neigh_k->dist.z * tmp_5 * neigh_k->dzeta.z;
+		      forces[stresses + 3] +=
 			0.5 * tmp_5 * (neigh_k->dist.x * neigh_k->dzeta.y +
 			neigh_k->dist.y * neigh_k->dzeta.x);
-		      forces[stresses + 3] -= tmp;
-		      tmp =
+		      forces[stresses + 4] +=
 			0.5 * tmp_5 * (neigh_k->dist.y * neigh_k->dzeta.z +
 			neigh_k->dist.z * neigh_k->dzeta.y);
-		      forces[stresses + 4] -= tmp;
-		      tmp =
+		      forces[stresses + 5] +=
 			0.5 * tmp_5 * (neigh_k->dist.z * neigh_k->dzeta.x +
 			neigh_k->dist.x * neigh_k->dzeta.z);
-		      forces[stresses + 5] -= tmp;
 		    }
 #endif /* STRESS */
 
@@ -395,18 +387,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 #ifdef STRESS			/* Distribute stress among atoms */
 	      if (us) {
-		tmp = neigh_j->dist.x * force_j.x;
-		forces[stresses + 0] -= tmp;
-		tmp = neigh_j->dist.y * force_j.y;
-		forces[stresses + 1] -= tmp;
-		tmp = neigh_j->dist.z * force_j.z;
-		forces[stresses + 2] -= tmp;
-		tmp = 0.5 * (neigh_j->dist.x * force_j.y + neigh_j->dist.y * force_j.x);
-		forces[stresses + 3] -= tmp;
-		tmp = 0.5 * (neigh_j->dist.y * force_j.z + neigh_j->dist.z * force_j.y);
-		forces[stresses + 4] -= tmp;
-		tmp = 0.5 * (neigh_j->dist.z * force_j.x + neigh_j->dist.x * force_j.z);
-		forces[stresses + 5] -= tmp;
+		forces[stresses + 0] += neigh_j->dist.x * force_j.x;
+		forces[stresses + 1] += neigh_j->dist.y * force_j.y;
+		forces[stresses + 2] += neigh_j->dist.z * force_j.z;
+		forces[stresses + 3] += 0.5 * (neigh_j->dist.x * force_j.y + neigh_j->dist.y * force_j.x);
+		forces[stresses + 4] += 0.5 * (neigh_j->dist.y * force_j.z + neigh_j->dist.z * force_j.y);
+		forces[stresses + 5] += 0.5 * (neigh_j->dist.z * force_j.x + neigh_j->dist.x * force_j.z);
 	      }
 #endif /* STRESS */
 
@@ -609,7 +595,7 @@ void update_tersoff_pointers(double *xi)
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
-  const tersoff_t *tersoff = &apot_table.tersoff;
+  const tersoff_t *ters = &apot_table.tersoff;
 
 #ifndef MPI
   myconf = nconf;
@@ -658,11 +644,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       int   ijk;
 
       /* pair variables */
+      double phi_val, phi_grad;
       double b;
       double cos_theta;
       double dzeta_ij, dzeta_ik;
       double g_theta, dg_theta;
-      double phi_val, phi_grad;
       double tmp, tmp_1, tmp_2, tmp_3, tmp_4;
       double zeta, dzeta_cos;
       vector dcos_j, dcos_k;
@@ -710,13 +696,13 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    neigh_j = atom->neigh + j;
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
-	    if (neigh_j->r < *(tersoff->R2[col_j])) {
+	    if (neigh_j->r < *(ters->R2[col_j])) {
 	      self = (neigh_j->nr == i + cnfstart[h]) ? 1 : 0;
 
 	      /* calculate cutoff function f_c and store it for every neighbor */
-	      tmp_1 = M_PI / (*(tersoff->R2[col_j]) - *(tersoff->R1[col_j]));
-	      tmp_2 = tmp_1 * (neigh_j->r - *(tersoff->R1[col_j]));
-	      if (neigh_j->r < *(tersoff->R1[col_j])) {
+	      tmp_1 = M_PI / (*(ters->R2[col_j]) - *(ters->R1[col_j]));
+	      tmp_2 = tmp_1 * (neigh_j->r - *(ters->R1[col_j]));
+	      if (neigh_j->r < *(ters->R1[col_j])) {
 		neigh_j->f = 1.0;
 		neigh_j->df = 0.0;
 	      } else {
@@ -725,10 +711,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      }
 
 	      /* calculate pair part f_c*A*exp(-lambda*r) and the derivative */
-	      tmp_1 = exp(-*(tersoff->lambda[col_j]) * neigh_j->r);
-	      phi_val = neigh_j->f * *(tersoff->A[col_j]) * tmp_1;
-	      phi_grad = neigh_j->df - *(tersoff->lambda[col_j]) * neigh_j->f;
-	      phi_grad *= *(tersoff->A[col_j]) * tmp_1;
+	      tmp_1 = exp(-*(ters->lambda[col_j]) * neigh_j->r);
+	      phi_val = neigh_j->f * *(ters->A[col_j]) * tmp_1;
+	      phi_grad = neigh_j->df - *(ters->lambda[col_j]) * neigh_j->f;
+	      phi_grad *= *(ters->A[col_j]) * tmp_1;
 
 	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
@@ -771,12 +757,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    neigh_j = atom->neigh + j;
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
-	    if (neigh_j->r < *(tersoff->R2[col_j])) {
+	    if (neigh_j->r < *(ters->R2[col_j])) {
 	      ijk = neigh_j->ijk_start;
 	      n_j = 3 * neigh_j->nr;
 
 	      /* skip neighbor if coefficient is zero */
-	      if (0.0 == *(tersoff->B[col_j]))
+	      if (0.0 == *(ters->B[col_j]))
 		continue;
 
 	      /* reset variables for each neighbor */
@@ -797,7 +783,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		col_k = neigh_k->col[0];
 		n_angl = atom->angl_part + ijk++;
 
-		if (neigh_k->r < *(tersoff->R2[col_k])) {
+		if (neigh_k->r < *(ters->R2[col_k])) {
 		  cos_theta = n_angl->cos;
 		  dcos_j.x = (neigh_k->dist_r.x - neigh_j->dist_r.x * cos_theta) / neigh_j->r;
 		  dcos_j.y = (neigh_k->dist_r.y - neigh_j->dist_r.y * cos_theta) / neigh_j->r;
@@ -807,21 +793,18 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		  dcos_k.z = (neigh_j->dist_r.z - neigh_k->dist_r.z * cos_theta) / neigh_k->r;
 
 		  /* g(theta) */
-		  tmp_1 = *(tersoff->h[col_j]) - cos_theta;
-		  tmp_2 = 1.0 / (*(tersoff->c3[col_j]) + tmp_1 * tmp_1);
-		  tmp_3 = *(tersoff->c4[col_j]) * exp(-*(tersoff->c5[col_j]) * tmp_1 * tmp_1);
+		  tmp_1 = *(ters->h[col_j]) - cos_theta;
+		  tmp_2 = 1.0 / (*(ters->c3[col_j]) + tmp_1 * tmp_1);
+		  tmp_3 = *(ters->c4[col_j]) * exp(-*(ters->c5[col_j]) * tmp_1 * tmp_1);
 
-		  g_theta =
-		    *(tersoff->c1[col_j]) + *(tersoff->c2[col_j]) * tmp_1 * tmp_1 * tmp_2 * (1.0 + tmp_3);
-		  dg_theta = 2.0 * *(tersoff->c2[col_j]) * tmp_1 * tmp_2 *
-		    (*(tersoff->c5[col_j]) * tmp_1 * tmp_1 * tmp_3 -
-		    *(tersoff->c3[col_j]) * tmp_2 * (1.0 + tmp_3));
+		  g_theta = *(ters->c1[col_j]) + *(ters->c2[col_j]) * tmp_1 * tmp_1 * tmp_2 * (1.0 + tmp_3);
+		  dg_theta = 2.0 * *(ters->c2[col_j]) * tmp_1 * tmp_2 *
+		    (*(ters->c5[col_j]) * tmp_1 * tmp_1 * tmp_3 - *(ters->c3[col_j]) * tmp_2 * (1.0 + tmp_3));
 
 		  tmp_1 = neigh_j->r - neigh_k->r;
 		  tmp_2 =
-		    *(tersoff->alpha[col_j]) * *(tersoff->beta[col_j]) * pow(tmp_1,
-		    *(tersoff->beta[col_j]) - 1.0);
-		  tmp_3 = exp(*(tersoff->alpha[col_j]) * pow(tmp_1, *(tersoff->beta[col_j])));
+		    *(ters->alpha[col_j]) * *(ters->beta[col_j]) * pow(tmp_1, *(ters->beta[col_j]) - 1.0);
+		  tmp_3 = exp(*(ters->alpha[col_j]) * pow(tmp_1, *(ters->beta[col_j])));
 
 		  dzeta_ik = (neigh_k->df - neigh_k->f * tmp_2) * g_theta * tmp_3;
 
@@ -850,19 +833,19 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      dzeta_j.y += dzeta_ij * neigh_j->dist_r.y;
 	      dzeta_j.z += dzeta_ij * neigh_j->dist_r.z;
 
-	      tmp_1 = pow(zeta, *(tersoff->eta[col_j]));
-	      b = pow(1.0 + tmp_1, -*(tersoff->delta[col_j]));
+	      tmp_1 = pow(zeta, *(ters->eta[col_j]));
+	      b = pow(1.0 + tmp_1, -*(ters->delta[col_j]));
 
-	      tmp_2 = 0.5 * b * *(tersoff->B[col_j]) * exp(-*(tersoff->mu[col_j]) * neigh_j->r);
+	      tmp_2 = 0.5 * b * *(ters->B[col_j]) * exp(-*(ters->mu[col_j]) * neigh_j->r);
 
 	      if (0.0 == zeta)
 		tmp_3 = 0.0;
 	      else
-		tmp_3 = tmp_2 * neigh_j->f * *(tersoff->eta[col_j]) * *(tersoff->delta[col_j]) *
+		tmp_3 = tmp_2 * neigh_j->f * *(ters->eta[col_j]) * *(ters->delta[col_j]) *
 		  tmp_1 / ((1.0 + tmp_1) * zeta);
 
 	      phi_val = -tmp_2;
-	      tmp_4 = -tmp_2 * (neigh_j->df - *(tersoff->mu[col_j]) * neigh_j->f);
+	      tmp_4 = -tmp_2 * (neigh_j->df - *(ters->mu[col_j]) * neigh_j->f);
 
 	      forces[energy_p + h] += neigh_j->f * phi_val;
 
@@ -901,7 +884,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		if (k != j) {
 		  neigh_k = atom->neigh + k;
 		  col_k = neigh_k->col[0];
-		  if (neigh_k->r < *(tersoff->R2[col_k])) {
+		  if (neigh_k->r < *(ters->R2[col_k])) {
 		    n_k = 3 * neigh_k->nr;
 		    /* update force on particle k */
 		    forces[n_k + 0] -= tmp_3 * neigh_k->dzeta.x;
