@@ -93,6 +93,39 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double tmpsum = 0.0, sum = 0.0;
   const tersoff_t *ters = &apot_table.tersoff;
 
+  atom_t *atom;			/* pointer to current atom */
+  neigh_t *neigh_j;		/* pointer to current neighbor j (first neighbor loop) */
+  neigh_t *neigh_k;		/* pointer to current neighbor k (second neighbor loop) */
+  angl *n_angl;			/* pointer to current angular table */
+  int   h;			/* counter for configurations */
+  int   i;			/* counter for atoms */
+  int   j;			/* counter for neighbors (first loop) */
+  int   k;			/* counter for neighbors (second loop) */
+  int   n_i;			/* index number of the ith atom */
+  int   n_j;			/* index number of the jth atom */
+  int   n_k;			/* index number of the kth atom */
+  int   self, uf;
+#ifdef STRESS
+  int   us, stresses;
+#endif /* STRESS */
+
+  int   col_j, col_k;
+  int   ijk;
+
+  /* pair variables */
+  double phi_val, phi_grad, phi_a;
+  double cut_tmp, cut_tmp_j;
+  double tmp_jk;
+  double cos_theta, g_theta;
+  double tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_grad, tmp;
+  double tmp_j2, tmp_k2;
+  double b_ij;
+  vector force_j, tmp_force;
+  double zeta;
+  double tmp_pow_1, tmp_pow_2;
+  vector dzeta_i, dzeta_j;
+  vector dcos_j, dcos_k;
+
 #ifndef MPI
   myconf = nconf;
 #endif /* !MPI */
@@ -120,39 +153,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      atom_t *atom;		/* pointer to current atom */
-      neigh_t *neigh_j;		/* pointer to current neighbor j (first neighbor loop) */
-      neigh_t *neigh_k;		/* pointer to current neighbor k (second neighbor loop) */
-      angl *n_angl;		/* pointer to current angular table */
-      int   h;			/* counter for configurations */
-      int   i;			/* counter for atoms */
-      int   j;			/* counter for neighbors (first loop) */
-      int   k;			/* counter for neighbors (second loop) */
-      int   n_i;		/* index number of the ith atom */
-      int   n_j;		/* index number of the jth atom */
-      int   n_k;		/* index number of the kth atom */
-      int   self, uf;
-#ifdef STRESS
-      int   us, stresses;
-#endif /* STRESS */
-
-      int   col_j, col_k;
-      int   ijk;
-
-      /* pair variables */
-      double phi_val, phi_grad, phi_a;
-      double cut_tmp, cut_tmp_j;
-      double tmp_jk;
-      double cos_theta, g_theta;
-      double tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_grad, tmp;
-      double tmp_j2, tmp_k2;
-      double b_ij;
-      vector force_j, tmp_force;
-      double zeta;
-      double tmp_pow_1, tmp_pow_2;
-      vector dzeta_i, dzeta_j;
-      vector dcos_j, dcos_k;
-
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];

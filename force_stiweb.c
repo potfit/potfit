@@ -93,6 +93,34 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double tmpsum = 0.0, sum = 0.0;
   const sw_t *sw = &apot_table.sw;
 
+  atom_t *atom;
+  int   h, j, k;
+  int   n_i, n_j, n_k;
+  int   self, uf;
+#ifdef STRESS
+  int   us, stresses;
+#endif /* STRESS */
+
+  /* pointer for neighbor tables */
+  neigh_t *neigh_j, *neigh_k;
+  /* pointer for angular neighbor table */
+  angl *n_angl;
+
+  /* pair variables */
+  double phi_r, phi_a, inv_c, f_cut;
+  double power[2], x[2], y[2];
+  double tmp, tmp_r;
+  double v2_val, v2_grad;
+  vector tmp_force;
+
+  /* threebody variables */
+  int   ijk;
+  double lambda;
+  double v3_val, tmp_grad1, tmp_grad2;
+  double tmp_jj, tmp_jk, tmp_kk;
+  double tmp_1, tmp_2;
+  vector force_j, force_k;
+
 #ifndef MPI
   myconf = nconf;
 #endif /* !MPI */
@@ -120,34 +148,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      atom_t *atom;
-      int   h, j, k;
-      int   n_i, n_j, n_k;
-      int   self, uf;
-#ifdef STRESS
-      int   us, stresses;
-#endif /* STRESS */
-
-      /* pointer for neighbor tables */
-      neigh_t *neigh_j, *neigh_k;
-      /* pointer for angular neighbor table */
-      angl *n_angl;
-
-      /* pair variables */
-      double phi_r, phi_a, inv_c, f_cut;
-      double power[2], x[2], y[2];
-      double tmp, tmp_r;
-      double v2_val, v2_grad;
-      vector tmp_force;
-
-      /* threebody variables */
-      int   ijk;
-      double lambda;
-      double v3_val, tmp_grad1, tmp_grad2;
-      double tmp_jj, tmp_jk, tmp_kk;
-      double tmp_1, tmp_2;
-      vector force_j, force_k;
-
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];

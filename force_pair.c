@@ -88,11 +88,27 @@
 
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
-  int   first, col, i = flag;
+  int   first, col, i;
   double *xi = NULL;
 
   /* Some useful temp variables */
-  static double tmpsum = 0.0, sum = 0.0;
+  double tmpsum = 0.0, sum = 0.0;
+
+  atom_t *atom;
+  int   h, j;
+  int   n_i, n_j;
+  int   self;
+  int   uf;
+#ifdef STRESS
+  int   us, stresses;
+#endif /* STRESS */
+
+  /* pointer for neighbor table */
+  neigh_t *neigh;
+
+  /* pair variables */
+  double phi_val, phi_grad;
+  vector tmp_force;
 
   switch (format) {
       case 0:
@@ -158,21 +174,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      atom_t *atom;
-      int   h, j;
-      int   n_i, n_j;
-      int   self;
-      int   uf;
-#ifdef STRESS
-      int   us, stresses;
-#endif /* STRESS */
-
-      /* pointer for neighbor table */
-      neigh_t *neigh;
-
-      /* pair variables */
-      double phi_val, phi_grad;
-      vector tmp_force;
 
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {

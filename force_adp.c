@@ -92,8 +92,43 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double *xi = NULL;
 
   /* Some useful temp variables */
-  static double tmpsum = 0.0, sum = 0.0;
-  static double rho_sum_loc = 0.0, rho_sum = 0.0;
+  double tmpsum = 0.0, sum = 0.0;
+  double rho_sum_loc = 0.0, rho_sum = 0.0;
+
+  /* Temp variables */
+  atom_t *atom;
+  int   h, j;
+  int   n_i, n_j;
+  int   self;
+  int   uf;
+#ifdef STRESS
+  int   us, stresses;
+#endif /* STRESS */
+
+#ifdef APOT
+  double temp_eng;
+#endif /* APOT */
+
+  /* pointer for neighbor table */
+  neigh_t *neigh;
+
+  /* pair variables */
+  double phi_val, phi_grad;
+  vector tmp_force;
+
+  /* EAM variables */
+  int   col_F;
+  double eam_force;
+  double rho_val, rho_grad, rho_grad_j;
+
+  /* ADP variables */
+  double eng_store;
+  double f1, f2;
+  double nu;
+  double tmp, trace;
+  vector tmp_vect;
+  sym_tens w_force;
+  vector u_force;
 
   switch (format) {
       case 0:
@@ -109,7 +144,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
   /* This is the start of an infinite loop */
   while (1) {
-
     /* Reset tmpsum and rho_sum_loc
        tmpsum = Sum of all the forces, energies and constraints
        rho_sum_loc = Sum of density, rho, for all atoms */
@@ -146,7 +180,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* MPI */
 
     /* init second derivatives for splines */
-
     /* [0, ...,  paircol - 1] = pair potentials */
     /* [paircol, ..., paircol + ntypes - 1] = transfer function */
     /* [paircol + ntypes, ..., paircol + 2 * ntypes - 1] = embedding function */
@@ -168,41 +201,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      /* Temp variables */
-      atom_t *atom;
-      int   h, j;
-      int   n_i, n_j;
-      int   self;
-      int   uf;
-#ifdef STRESS
-      int   us, stresses;
-#endif /* STRESS */
-
-#ifdef APOT
-      double temp_eng;
-#endif /* APOT */
-
-      /* pointer for neighbor table */
-      neigh_t *neigh;
-
-      /* pair variables */
-      double phi_val, phi_grad;
-      vector tmp_force;
-
-      /* EAM variables */
-      int   col_F;
-      double eam_force;
-      double rho_val, rho_grad, rho_grad_j;
-
-      /* ADP variables */
-      double eng_store;
-      double f1, f2;
-      double nu;
-      double tmp, trace;
-      vector tmp_vect;
-      sym_tens w_force;
-      vector u_force;
-
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];

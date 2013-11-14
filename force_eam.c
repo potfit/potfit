@@ -92,13 +92,39 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double tmpsum = 0.0, sum = 0.0;
   double *xi = NULL;
 
-  static double rho_sum_loc, rho_sum;
-  rho_sum_loc = rho_sum = 0.0;
+  double rho_sum_loc = 0.0, rho_sum = 0.0;
 
   /* TBEAM: additional s-band contribution */
 #ifdef TBEAM
-  static double rho_s_sum_loc, rho_s_sum;
-  rho_s_sum_loc = rho_s_sum = 0.0;
+  double rho_s_sum_loc = 0.0, rho_s_sum = 0.0;
+#endif /* TBEAM */
+
+  atom_t *atom;
+  int   h, j;
+  int   n_i, n_j;
+  int   self;
+  int   uf;
+#ifdef APOT
+  double temp_eng;
+#endif /* APOT */
+#ifdef STRESS
+  int   us, stresses;
+#endif /* STRESS */
+
+  /* pointer for neighbor table */
+  neigh_t *neigh;
+
+  /* pair variables */
+  double phi_val, phi_grad, r;
+  vector tmp_force;
+
+  /* EAM variables */
+  int   col_F;
+  double eam_force;
+  double rho_val, rho_grad, rho_grad_j;
+#ifdef TBEAM
+  int   col_F_s;
+  double rho_s_val, rho_s_grad, rho_s_grad_j;
 #endif /* TBEAM */
 
   switch (format) {
@@ -209,34 +235,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      atom_t *atom;
-      int   h, j;
-      int   n_i, n_j;
-      int   self;
-      int   uf;
-#ifdef APOT
-      double temp_eng;
-#endif /* APOT */
-#ifdef STRESS
-      int   us, stresses;
-#endif /* STRESS */
-
-      /* pointer for neighbor table */
-      neigh_t *neigh;
-
-      /* pair variables */
-      double phi_val, phi_grad, r;
-      vector tmp_force;
-
-      /* EAM variables */
-      int   col_F;
-      double eam_force;
-      double rho_val, rho_grad, rho_grad_j;
-#ifdef TBEAM
-      int   col_F_s;
-      double rho_s_val, rho_s_grad, rho_s_grad_j;
-#endif /* TBEAM */
-
       /* loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];

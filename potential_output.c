@@ -529,14 +529,14 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fprintf(outfile, "# COPY THE CONTENTS OF THIS FILE INTO THE IMD PARAMETER FILE\n\n");
 
 #ifdef STIWEB
-  write_imd_data_pair(outfile, "stiweb_a\t", i, 0);	/* A_ij */
-  write_imd_data_pair(outfile, "stiweb_b\t", i, 1);	/* B_ij */
-  write_imd_data_pair(outfile, "stiweb_p\t", i, 2);	/* p_ij */
-  write_imd_data_pair(outfile, "stiweb_q\t", i, 3);	/* q_ij */
-  write_imd_data_pair(outfile, "stiweb_de\t", i, 4);	/* delta_ij */
-  write_imd_data_pair(outfile, "stiweb_a1\t", i, 5);	/* a1_ij */
-  write_imd_data_pair(outfile, "stiweb_ga\t", paircol + i, 0);	/* gamma_ij */
-  write_imd_data_pair(outfile, "stiweb_a2\t", paircol + i, 1);	/* a2_ij */
+  write_imd_data_pair(outfile, "stiweb_a\t", 0, 0);	/* A_ij */
+  write_imd_data_pair(outfile, "stiweb_b\t", 0, 1);	/* B_ij */
+  write_imd_data_pair(outfile, "stiweb_p\t", 0, 2);	/* p_ij */
+  write_imd_data_pair(outfile, "stiweb_q\t", 0, 3);	/* q_ij */
+  write_imd_data_pair(outfile, "stiweb_de\t", 0, 4);	/* delta_ij */
+  write_imd_data_pair(outfile, "stiweb_a1\t", 0, 5);	/* a1_ij */
+  write_imd_data_pair(outfile, "stiweb_ga\t", paircol, 0);	/* gamma_ij */
+  write_imd_data_pair(outfile, "stiweb_a2\t", paircol, 1);	/* a2_ij */
 
   /* lambda_ijk */
   /* strange format (e.g. binary): 000, 100, 001, 101, 011, 111 */
@@ -550,17 +550,17 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 
 #ifdef TERSOFF
 #ifndef TERSOFFMOD
-  write_imd_data_pair(outfile, "ters_a\t\t", i, 0);	/* A_ij */
-  write_imd_data_pair(outfile, "ters_b\t\t", i, 1);	/* B_ij */
-  write_imd_data_pair(outfile, "ters_la\t\t", i, 2);	/* lambda_ij */
-  write_imd_data_pair(outfile, "ters_mu\t\t", i, 3);	/* mu_ij */
-  write_imd_data_pair(outfile, "ters_ga\t\t", i, 4);	/* gamma_ij */
-  write_imd_data_pair(outfile, "ters_n\t\t", i, 5);	/* n_ij */
-  write_imd_data_pair(outfile, "ters_c\t\t", i, 6);	/* c_ij */
-  write_imd_data_pair(outfile, "ters_d\t\t", i, 7);	/* d_ij */
-  write_imd_data_pair(outfile, "ters_h\t\t", i, 8);	/* h_ij */
-  write_imd_data_pair(outfile, "ters_r_cut\t\t", i, 9);	/* r_cut = S_ij */
-  write_imd_data_pair(outfile, "ters_r0\t\t", i, 10);	/* r0 = R_ij */
+  write_imd_data_pair(outfile, "ters_a\t\t", 0, 0);	/* A_ij */
+  write_imd_data_pair(outfile, "ters_b\t\t", 0, 1);	/* B_ij */
+  write_imd_data_pair(outfile, "ters_la\t\t", 0, 2);	/* lambda_ij */
+  write_imd_data_pair(outfile, "ters_mu\t\t", 0, 3);	/* mu_ij */
+  write_imd_data_pair(outfile, "ters_ga\t\t", 0, 4);	/* gamma_ij */
+  write_imd_data_pair(outfile, "ters_n\t\t", 0, 5);	/* n_ij */
+  write_imd_data_pair(outfile, "ters_c\t\t", 0, 6);	/* c_ij */
+  write_imd_data_pair(outfile, "ters_d\t\t", 0, 7);	/* d_ij */
+  write_imd_data_pair(outfile, "ters_h\t\t", 0, 8);	/* h_ij */
+  write_imd_data_pair(outfile, "ters_r_cut\t\t", 0, 9);	/* r_cut = S_ij */
+  write_imd_data_pair(outfile, "ters_r0\t\t", 0, 10);	/* r0 = R_ij */
 
   /* chi and omega only for mixing potentials */
   if (ntypes > 1) {
@@ -577,22 +577,22 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
     fprintf(outfile, "\n");
   }
 #else
-  write_imd_data_pair(outfile, "ters_a\t\t", i, 0);	/* A_ij */
-  write_imd_data_pair(outfile, "ters_b\t\t", i, 1);	/* B_ij */
-  write_imd_data_pair(outfile, "ters_la\t\t", i, 2);	/* lambda_ij */
-  write_imd_data_pair(outfile, "ters_mu\t\t", i, 3);	/* mu_ij */
-  write_imd_data_pair(outfile, "ters_eta\t\t", i, 4);	/* eta_ij */
-  write_imd_data_pair(outfile, "ters_delta\t\t", i, 5);	/* delta_ij */
-  write_imd_data_pair(outfile, "ters_alpha\t\t", i, 6);	/* alpha_ij */
-  write_imd_data_pair(outfile, "ters_beta\t\t", i, 7);	/* beta_ij */
-  write_imd_data_pair(outfile, "ters_c1\t\t", i, 8);	/* c1_ij */
-  write_imd_data_pair(outfile, "ters_c2\t\t", i, 9);	/* c2_ij */
-  write_imd_data_pair(outfile, "ters_c3\t\t", i, 10);	/* c3_ij */
-  write_imd_data_pair(outfile, "ters_c4\t\t", i, 11);	/* c4_ij */
-  write_imd_data_pair(outfile, "ters_c5\t\t", i, 12);	/* c5_ij */
-  write_imd_data_pair(outfile, "ters_h\t\t", i, 13);	/* h_ij */
-  write_imd_data_pair(outfile, "ters_r0\t\t", i, 14);	/* R1_ij */
-  write_imd_data_pair(outfile, "ters_r_cut\t\t", i, 15);	/* R2_ij */
+  write_imd_data_pair(outfile, "ters_a\t\t", 0, 0);	/* A_ij */
+  write_imd_data_pair(outfile, "ters_b\t\t", 0, 1);	/* B_ij */
+  write_imd_data_pair(outfile, "ters_la\t\t", 0, 2);	/* lambda_ij */
+  write_imd_data_pair(outfile, "ters_mu\t\t", 0, 3);	/* mu_ij */
+  write_imd_data_pair(outfile, "ters_eta\t\t", 0, 4);	/* eta_ij */
+  write_imd_data_pair(outfile, "ters_delta\t\t", 0, 5);	/* delta_ij */
+  write_imd_data_pair(outfile, "ters_alpha\t\t", 0, 6);	/* alpha_ij */
+  write_imd_data_pair(outfile, "ters_beta\t\t", 0, 7);	/* beta_ij */
+  write_imd_data_pair(outfile, "ters_c1\t\t", 0, 8);	/* c1_ij */
+  write_imd_data_pair(outfile, "ters_c2\t\t", 0, 9);	/* c2_ij */
+  write_imd_data_pair(outfile, "ters_c3\t\t", 0, 10);	/* c3_ij */
+  write_imd_data_pair(outfile, "ters_c4\t\t", 0, 11);	/* c4_ij */
+  write_imd_data_pair(outfile, "ters_c5\t\t", 0, 12);	/* c5_ij */
+  write_imd_data_pair(outfile, "ters_h\t\t", 0, 13);	/* h_ij */
+  write_imd_data_pair(outfile, "ters_r0\t\t", 0, 14);	/* R1_ij */
+  write_imd_data_pair(outfile, "ters_r_cut\t\t", 0, 15);	/* R2_ij */
 #endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
@@ -1717,13 +1717,13 @@ void write_pairdist(pot_table_t *pt, char *filename)
 
 #ifdef APOT
 
-void write_imd_data_pair(FILE *outfile, char *string, int x, int y)
+void write_imd_data_pair(FILE *outfile, char *string, int offset, int y)
 {
   int   i = 0;
 
   fprintf(outfile, string);
   for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[x][y]);
+    fprintf(outfile, " %g", apot_table.values[offset + i][y]);
   fprintf(outfile, "\n");
 }
 

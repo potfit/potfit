@@ -95,8 +95,40 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double *xi = NULL;
 
   /* Some useful temp variables */
-  static double tmpsum = 0.0, sum = 0.0;
-  static double rho_sum = 0.0, rho_sum_loc = 0.0;
+  double tmpsum = 0.0, sum = 0.0;
+  double rho_sum = 0.0, rho_sum_loc = 0.0;
+
+  /* Temp variables */
+  atom_t *atom;			/* atom pointer */
+  int   h, j, k;
+  int   n_i, n_j, n_k;
+  int   uf;
+#ifdef APOT
+  double temp_eng;
+#endif /* APOT */
+#ifdef STRESS
+  int   us, stresses;
+#endif /* STRESS */
+
+  /* Some useful temp struct variable types */
+  /* neighbor pointers */
+  neigh_t *neigh_j, *neigh_k;
+
+  /* Pair variables */
+  double phi_val, phi_grad;
+  vector tmp_force;
+
+  /* EAM variables */
+  int   col_F;
+  double eam_force;
+#if defined NORESCALE && !defined APOT
+  double rho_val;
+#endif /* NORESCALE && !APOT */
+
+  /* MEAM variables */
+  double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
+  vector dfj, dfk;
+  angl *n_angl;
 
   switch (format) {
       case 0:
@@ -176,38 +208,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      /* Temp variables */
-      atom_t *atom;		/* atom pointer */
-      int   h, j, k;
-      int   n_i, n_j, n_k;
-      int   uf;
-#ifdef APOT
-      double temp_eng;
-#endif /* APOT */
-#ifdef STRESS
-      int   us, stresses;
-#endif /* STRESS */
-
-      /* Some useful temp struct variable types */
-      /* neighbor pointers */
-      neigh_t *neigh_j, *neigh_k;
-
-      /* Pair variables */
-      double phi_val, phi_grad;
-      vector tmp_force;
-
-      /* EAM variables */
-      int   col_F;
-      double eam_force;
-#if defined NORESCALE && !defined APOT
-      double rho_val;
-#endif /* NORESCALE && !APOT */
-
-      /* MEAM variables */
-      double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
-      vector dfj, dfk;
-      angl *n_angl;
-
       /* Loop over configurations */
       for (h = firstconf; h < firstconf + myconf; h++) {
 	uf = conf_uf[h - firstconf];
