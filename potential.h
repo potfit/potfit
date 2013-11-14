@@ -69,4 +69,8 @@ void  init_tails(double);
 void  write_coulomb_table(void);
 #endif /* COULOMB */
 
+#ifdef APOT
+void  write_imd_data_pair(FILE *, char *, int, int);
+#endif /* APOT */
+
 #endif /* POTENTIAL_H */

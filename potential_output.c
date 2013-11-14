@@ -500,7 +500,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   sprintf(filename, "%s.sw.pot", prefix);
 #endif /* STIWEB */
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
   sprintf(filename, "%s.tersoff.pot", prefix);
+#else
+  sprintf(filename, "%s.tersoffmod.pot", prefix);
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
   /* open file */
   outfile = fopen(filename, "w");
@@ -512,7 +516,11 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fprintf(outfile, "# This is a Stillinger-Weber potential. Compile IMD with the 'stiweb' option.\n#\n");
 #endif /* STIWEB */
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
   fprintf(outfile, "# This is a Tersoff potential. Compile IMD with the 'tersoff2' option.\n#\n");
+#else
+  fprintf(outfile, "# This is a modified Tersoff potential. Compile IMD with the 'tersoffmod2' option.\n#\n");
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
   /* write warning header */
@@ -521,53 +529,14 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
   fprintf(outfile, "# COPY THE CONTENTS OF THIS FILE INTO THE IMD PARAMETER FILE\n\n");
 
 #ifdef STIWEB
-  /* A_ij */
-  fprintf(outfile, "stiweb_a\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][0]);
-  fprintf(outfile, "\n");
-
-  /* B_ij */
-  fprintf(outfile, "stiweb_b\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][1]);
-  fprintf(outfile, "\n");
-
-  /* p_ij */
-  fprintf(outfile, "stiweb_p\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][2]);
-  fprintf(outfile, "\n");
-
-  /* q_ij */
-  fprintf(outfile, "stiweb_q\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][3]);
-  fprintf(outfile, "\n");
-
-  /* delta_ij */
-  fprintf(outfile, "stiweb_de\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][4]);
-  fprintf(outfile, "\n");
-
-  /* a1_ij */
-  fprintf(outfile, "stiweb_a1\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][5]);
-  fprintf(outfile, "\n");
-
-  /* gamma_ij */
-  fprintf(outfile, "stiweb_ga\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[paircol + i][0]);
-  fprintf(outfile, "\n");
-
-  /* a2_ij */
-  fprintf(outfile, "stiweb_a2\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[paircol + i][1]);
-  fprintf(outfile, "\n");
+  write_imd_data_pair(outfile, "stiweb_a\t", i, 0);	/* A_ij */
+  write_imd_data_pair(outfile, "stiweb_b\t", i, 1);	/* B_ij */
+  write_imd_data_pair(outfile, "stiweb_p\t", i, 2);	/* p_ij */
+  write_imd_data_pair(outfile, "stiweb_q\t", i, 3);	/* q_ij */
+  write_imd_data_pair(outfile, "stiweb_de\t", i, 4);	/* delta_ij */
+  write_imd_data_pair(outfile, "stiweb_a1\t", i, 5);	/* a1_ij */
+  write_imd_data_pair(outfile, "stiweb_ga\t", paircol + i, 0);	/* gamma_ij */
+  write_imd_data_pair(outfile, "stiweb_a2\t", paircol + i, 1);	/* a2_ij */
 
   /* lambda_ijk */
   /* strange format (e.g. binary): 000, 100, 001, 101, 011, 111 */
@@ -580,75 +549,21 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #endif /* STIWEB */
 
 #ifdef TERSOFF
-  /* A_ij */
-  fprintf(outfile, "ters_a\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][0]);
-  fprintf(outfile, "\n");
-
-  /* B_ij */
-  fprintf(outfile, "ters_b\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][1]);
-  fprintf(outfile, "\n");
-
-  /* lambda_ij */
-  fprintf(outfile, "ters_la\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][2]);
-  fprintf(outfile, "\n");
-
-  /* mu_ij */
-  fprintf(outfile, "ters_mu\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][3]);
-  fprintf(outfile, "\n");
-
-  /* gamma_ij */
-  fprintf(outfile, "ters_ga\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][4]);
-  fprintf(outfile, "\n");
-
-  /* n_ij */
-  fprintf(outfile, "ters_n\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][5]);
-  fprintf(outfile, "\n");
-
-  /* c_ij */
-  fprintf(outfile, "ters_c\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][6]);
-  fprintf(outfile, "\n");
-
-  /* d_ij */
-  fprintf(outfile, "ters_d\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][7]);
-  fprintf(outfile, "\n");
-
-  /* h_ij */
-  fprintf(outfile, "ters_h\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][8]);
-  fprintf(outfile, "\n");
-
-  /* r_cut = S_ij */
-  fprintf(outfile, "ters_r_cut\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][9]);
-  fprintf(outfile, "\n");
-
-  /* r_0 = R_ij */
-  fprintf(outfile, "ters_r0\t\t");
-  for (i = 0; i < paircol; i++)
-    fprintf(outfile, " %g", apot_table.values[i][10]);
-  fprintf(outfile, "\n");
+#ifndef TERSOFFMOD
+  write_imd_data_pair(outfile, "ters_a\t\t", i, 0);	/* A_ij */
+  write_imd_data_pair(outfile, "ters_b\t\t", i, 1);	/* B_ij */
+  write_imd_data_pair(outfile, "ters_la\t\t", i, 2);	/* lambda_ij */
+  write_imd_data_pair(outfile, "ters_mu\t\t", i, 3);	/* mu_ij */
+  write_imd_data_pair(outfile, "ters_ga\t\t", i, 4);	/* gamma_ij */
+  write_imd_data_pair(outfile, "ters_n\t\t", i, 5);	/* n_ij */
+  write_imd_data_pair(outfile, "ters_c\t\t", i, 6);	/* c_ij */
+  write_imd_data_pair(outfile, "ters_d\t\t", i, 7);	/* d_ij */
+  write_imd_data_pair(outfile, "ters_h\t\t", i, 8);	/* h_ij */
+  write_imd_data_pair(outfile, "ters_r_cut\t\t", i, 9);	/* r_cut = S_ij */
+  write_imd_data_pair(outfile, "ters_r0\t\t", i, 10);	/* r0 = R_ij */
 
   /* chi and omega only for mixing potentials */
   if (ntypes > 1) {
-
     /* chi_ij, chi_ii = 1.0 */
     fprintf(outfile, "ters_chi\t\t");
     for (i = 0; i < ntypes * (ntypes - 1) / 2.0; i++)
@@ -661,6 +576,24 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
       fprintf(outfile, " %g", apot_table.values[paircol + i][1]);
     fprintf(outfile, "\n");
   }
+#else
+  write_imd_data_pair(outfile, "ters_a\t\t", i, 0);	/* A_ij */
+  write_imd_data_pair(outfile, "ters_b\t\t", i, 1);	/* B_ij */
+  write_imd_data_pair(outfile, "ters_la\t\t", i, 2);	/* lambda_ij */
+  write_imd_data_pair(outfile, "ters_mu\t\t", i, 3);	/* mu_ij */
+  write_imd_data_pair(outfile, "ters_eta\t\t", i, 4);	/* eta_ij */
+  write_imd_data_pair(outfile, "ters_delta\t\t", i, 5);	/* delta_ij */
+  write_imd_data_pair(outfile, "ters_alpha\t\t", i, 6);	/* alpha_ij */
+  write_imd_data_pair(outfile, "ters_beta\t\t", i, 7);	/* beta_ij */
+  write_imd_data_pair(outfile, "ters_c1\t\t", i, 8);	/* c1_ij */
+  write_imd_data_pair(outfile, "ters_c2\t\t", i, 9);	/* c2_ij */
+  write_imd_data_pair(outfile, "ters_c3\t\t", i, 10);	/* c3_ij */
+  write_imd_data_pair(outfile, "ters_c4\t\t", i, 11);	/* c4_ij */
+  write_imd_data_pair(outfile, "ters_c5\t\t", i, 12);	/* c5_ij */
+  write_imd_data_pair(outfile, "ters_h\t\t", i, 13);	/* h_ij */
+  write_imd_data_pair(outfile, "ters_r0\t\t", i, 14);	/* R1_ij */
+  write_imd_data_pair(outfile, "ters_r_cut\t\t", i, 15);	/* R2_ij */
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
   fclose(outfile);
@@ -1320,6 +1253,9 @@ void write_pot_table_lammps(pot_table_t *pt)
   char  filename[255];
   int   i, j, k;
   int   col_j;
+#ifdef STIWEB
+  double epsilon, sigma, scale_p, scale_q;
+#endif /* STIWEB */
 
   if (!have_elements) {
     warning(0, "There are no elements listed in you configuration file.\n");
@@ -1350,7 +1286,11 @@ void write_pot_table_lammps(pot_table_t *pt)
   sprintf(filename, "%s.lammps.sw", filename);
 #endif /* STIWEB */
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
   sprintf(filename, "%s.lammps.tersoff", filename);
+#else
+  sprintf(filename, "%s.lammps.tersoffmod", filename);
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
   outfile = fopen(filename, "w");
   if (NULL == outfile)
@@ -1374,10 +1314,9 @@ void write_pot_table_lammps(pot_table_t *pt)
   fprintf(outfile, "# format of a single entry (one or more lines):\n");
   fprintf(outfile, "#   element_1 element_2 element_3\n");
   fprintf(outfile, "#   epsilon sigma a lambda gamma costheta0 A B p q tol\n\n");
-
-  double epsilon, sigma, scale_p, scale_q;
 #endif /* STIWEB */
 #ifdef TERSOFF
+#ifndef TERSOFFMOD
   fprintf(outfile, "# Tersoff parameters fitted with %s\n", VERSION_INFO);
   fprintf(outfile, "# these entries are in LAMMPS \"metal\" units:\n");
   fprintf(outfile, "#   A,B = eV; lambda1,2,3 = 1/Angstroms; R,D = Angstroms\n");
@@ -1385,6 +1324,16 @@ void write_pot_table_lammps(pot_table_t *pt)
   fprintf(outfile, "# format of a single entry (one or more lines):\n");
   fprintf(outfile, "#   element_1 element_2 element_3\n");
   fprintf(outfile, "#   m, gamma, lambda3, c, d, costheta0, n, beta, lambda2, B, R, D, lambda1, A\n\n");
+#else
+  fprintf(outfile, "# modified Tersoff parameters fitted with %s\n", VERSION_INFO);
+  fprintf(outfile, "# these entries are in LAMMPS \"metal\" units:\n");
+  fprintf(outfile, "#   A,B = eV; lambda1,2,3 = 1/Angstroms; R,D = Angstroms\n");
+  fprintf(outfile, "#   other quantities are unitless\n\n");
+  fprintf(outfile, "# format of a single entry (one or more lines):\n");
+  fprintf(outfile, "#   element_1 element_2 element_3\n");
+  fprintf(outfile,
+    "#   beta, alpha, h, eta, beta_ters, lambda2, B, R, D, lambda1, A, n\n#   c1, c2, c3, c4, c5\n\n");
+#endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
   /* write data, one line per triple of elements */
@@ -1403,29 +1352,17 @@ void write_pot_table_lammps(pot_table_t *pt)
 	power_1(&scale_q, &sigma, &apot_table.values[col_j][3]);
 	scale_p = 1.0 / (epsilon * scale_p);
 	scale_q = 1.0 / (epsilon * scale_q);
-	/* epsilon */
-	fprintf(outfile, " %g", epsilon);
-	/* sigma */
-	fprintf(outfile, " %g", sigma);
-	/* a */
-	fprintf(outfile, " %g", apot_table.values[col_j][5] / sigma);
-	/* lambda */
-	fprintf(outfile, " %g", *(apot_table.sw.lambda[i][j][k]) / epsilon);
-	/* gamma */
-	fprintf(outfile, " %g", apot_table.values[paircol + col_j][0] / sigma);
-	/* costheta0 */
-	fprintf(outfile, " %g", -1.0 / 3.0);
-	/* A */
-	fprintf(outfile, " %g", apot_table.values[col_j][1] * scale_q);
-	/* B */
-	fprintf(outfile, " %g",
-	  apot_table.values[col_j][0] * scale_p / apot_table.values[col_j][1] / scale_q);
-	/* p */
-	fprintf(outfile, " %g", apot_table.values[col_j][2]);
-	/* q */
-	fprintf(outfile, " %g", apot_table.values[col_j][3]);
-	/* tol */
-	fprintf(outfile, " %g", 0.0);
+	fprintf(outfile, " %g", epsilon);	/* epsilon */
+	fprintf(outfile, " %g", sigma);	/* sigma */
+	fprintf(outfile, " %g", apot_table.values[col_j][5] / sigma);	/* a */
+	fprintf(outfile, " %g", *(apot_table.sw.lambda[i][j][k]) / epsilon);	/* lambda */
+	fprintf(outfile, " %g", apot_table.values[paircol + col_j][0] / sigma);	/* gamma */
+	fprintf(outfile, " %g", -1.0 / 3.0);	/* costheta0 */
+	fprintf(outfile, " %g", apot_table.values[col_j][1] * scale_q);	/* A */
+	fprintf(outfile, " %g", apot_table.values[col_j][0] * scale_p / apot_table.values[col_j][1] / scale_q);	/* B */
+	fprintf(outfile, " %g", apot_table.values[col_j][2]);	/* p */
+	fprintf(outfile, " %g", apot_table.values[col_j][3]);	/* q */
+	fprintf(outfile, " %g", 0.0);	/* tol */
 #endif /* STIWEB */
 #ifdef TERSOFF
 #ifndef TERSOFFMOD
@@ -1433,69 +1370,39 @@ void write_pot_table_lammps(pot_table_t *pt)
 	/* lammps requires the parameters in Tersoff_1 format */
 	/* m has no effect, set it to 1.0 */
 	fprintf(outfile, " %g", 1.0);
-	/* gamma_ijk = omega_ik */
-	fprintf(outfile, " %g", *(apot_table.tersoff.omega[col_j]));
-	/* lambda3 = 0 */
-	fprintf(outfile, " %g", 0.0);
-	/* c */
-	fprintf(outfile, " %g", apot_table.values[col_j][6]);
-	/* d */
-	fprintf(outfile, " %g", apot_table.values[col_j][7]);
-	/* costheta0 = h */
-	fprintf(outfile, " %g", apot_table.values[col_j][8]);
-	/* n */
-	fprintf(outfile, " %g", apot_table.values[col_j][5]);
-	/* beta */
-	fprintf(outfile, " %g", apot_table.values[col_j][4]);
-	/* lambda2 */
-	fprintf(outfile, " %g", apot_table.values[col_j][3]);
-	/* B (includes chi) */
-	fprintf(outfile, " %g", apot_table.values[col_j][1] * *(apot_table.tersoff.chi[col_j]));
-	/* R */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] + apot_table.values[col_j][10]));
-	/* D */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] - apot_table.values[col_j][10]));
-	/* lambda1 */
-	fprintf(outfile, " %g", apot_table.values[col_j][2]);
-	/* A */
-	fprintf(outfile, " %g", apot_table.values[col_j][0]);
+	fprintf(outfile, " %g", *(apot_table.tersoff.omega[col_j]));	/* gamma_ijk = omega_ik */
+	fprintf(outfile, " %g", 0.0);	/* lambda3 = 0 */
+	fprintf(outfile, " %g", apot_table.values[col_j][6]);	/* c */
+	fprintf(outfile, " %g", apot_table.values[col_j][7]);	/* d */
+	fprintf(outfile, " %g", apot_table.values[col_j][8]);	/* costheta0 = h */
+	fprintf(outfile, " %g", apot_table.values[col_j][5]);	/* n */
+	fprintf(outfile, " %g", apot_table.values[col_j][4]);	/* beta */
+	fprintf(outfile, " %g", apot_table.values[col_j][3]);	/* lambda2 */
+	fprintf(outfile, " %g", apot_table.values[col_j][1] * *(apot_table.tersoff.chi[col_j]));	/* B (includes chi) */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] + apot_table.values[col_j][10]));	/* R */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] - apot_table.values[col_j][10]));	/* D */
+	fprintf(outfile, " %g", apot_table.values[col_j][2]);	/* lambda1 */
+	fprintf(outfile, " %g", apot_table.values[col_j][0]);	/* A */
 #else /* !TERSOFFMOD */
 	/* order of parameters for a LAMMPS potential: */
 	/* beta, alpha, h, eta, beta_ters (dummy), lambda2, B, R, D, lambda1, A, n, c1,..,c5 */
-	/* beta */
-	fprintf(outfile, " %g", apot_table.values[col_j][7]);
-	/* alpha */
-	fprintf(outfile, " %g", apot_table.values[col_j][6]);
-	/* h */
-	fprintf(outfile, " %g", apot_table.values[col_j][13]);
-	/* eta */
-	fprintf(outfile, " %g", apot_table.values[col_j][4]);
-	/* beta_ters (dummy) */
-	fprintf(outfile, " %g", 1.0);
-	/* lambda2 = mu */
-	fprintf(outfile, " %g", apot_table.values[col_j][3]);
-	/* B */
-	fprintf(outfile, " %g", apot_table.values[col_j][1]);
-	/* R = 0.5 * (R1+R2) */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][14] + apot_table.values[col_j][15]));
-	/* D = 0.5 * (R2-R1) */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][15] - apot_table.values[col_j][14]));
-	/* lambda1 = lambda */
-	fprintf(outfile, " %g", apot_table.values[col_j][2]);
-	/* A */
-	fprintf(outfile, " %g", apot_table.values[col_j][0]);
-	/* n = 1/(2*delta) */
-	fprintf(outfile, " %g", 1.0 / (2.0 * apot_table.values[col_j][5]));
-	/* c1 */
-	fprintf(outfile, " %g", apot_table.values[col_j][8]);
-	/* c2 */
-	fprintf(outfile, " %g", apot_table.values[col_j][9]);
-	/* c3 */
-	fprintf(outfile, " %g", apot_table.values[col_j][10]);
-	/* c4 */
-	fprintf(outfile, " %g", apot_table.values[col_j][11]);
-	/* c5 */
-	fprintf(outfile, " %g", apot_table.values[col_j][12]);
+	fprintf(outfile, " %g", apot_table.values[col_j][7]);	/* beta */
+	fprintf(outfile, " %g", apot_table.values[col_j][6]);	/* alpha */
+	fprintf(outfile, " %g", apot_table.values[col_j][13]);	/* h */
+	fprintf(outfile, " %g", apot_table.values[col_j][4]);	/* eta */
+	fprintf(outfile, " %g", 1.0);	/* beta_ters (dummy) */
+	fprintf(outfile, " %g", apot_table.values[col_j][3]);	/* lambda2 = mu */
+	fprintf(outfile, " %g", apot_table.values[col_j][1]);	/* B */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][14] + apot_table.values[col_j][15]));	/* R = 0.5 * (R1+R2) */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][15] - apot_table.values[col_j][14]));	/* D = 0.5 * (R2-R1) */
+	fprintf(outfile, " %g", apot_table.values[col_j][2]);	/* lambda1 = lambda */
+	fprintf(outfile, " %g", apot_table.values[col_j][0]);	/* A */
+	fprintf(outfile, " %g", 1.0 / (2.0 * apot_table.values[col_j][5]));	/* n = 1/(2*delta) */
+	fprintf(outfile, " %g", apot_table.values[col_j][8]);	/* c1 */
+	fprintf(outfile, " %g", apot_table.values[col_j][9]);	/* c2 */
+	fprintf(outfile, " %g", apot_table.values[col_j][10]);	/* c3 */
+	fprintf(outfile, " %g", apot_table.values[col_j][11]);	/* c4 */
+	fprintf(outfile, " %g", apot_table.values[col_j][12]);	/* c5 */
 #endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 	fprintf(outfile, "\n");
@@ -1505,8 +1412,6 @@ void write_pot_table_lammps(pot_table_t *pt)
 
   fclose(outfile);
   printf("Potential in LAMMPS format written to \t%s\n", filename);
-
-  return;
 }
 
 #else
@@ -1809,3 +1714,17 @@ void write_pairdist(pot_table_t *pt, char *filename)
 }
 
 #endif /* PDIST */
+
+#ifdef APOT
+
+void write_imd_data_pair(FILE *outfile, char *string, int x, int y)
+{
+  int   i = 0;
+
+  fprintf(outfile, string);
+  for (i = 0; i < paircol; i++)
+    fprintf(outfile, " %g", apot_table.values[x][y]);
+  fprintf(outfile, "\n");
+}
+
+#endif /* APOT */

@@ -90,7 +90,7 @@
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
   double tmpsum, sum = 0.0;
-  int   first, col, ne, size, i;
+  int   first, col, ne, size, i = flag;
   double *xi = NULL;
   apot_table_t *apt = &apot_table;
   double charge[ntypes];

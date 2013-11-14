@@ -401,9 +401,4 @@ void write_errors(double *force, double tot)
   if (write_output_files) {
     fclose(outfile);
   }
-#ifdef MPI
-  calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
-#endif /* MPI */
-
-  return;
 }

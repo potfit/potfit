@@ -32,6 +32,8 @@
 
 #ifndef EVO
 
+#include <ctype.h>
+
 #include "optimize.h"
 #include "potential.h"
 #include "utils.h"

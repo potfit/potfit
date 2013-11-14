@@ -50,7 +50,7 @@
 
 int main(int argc, char **argv)
 {
-  int   i, j;
+  int   i;
   double *force, tot;
   time_t t_begin, t_end;
 

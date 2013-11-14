@@ -483,8 +483,6 @@ void init_elements()
   element_table[110].mass = 1.0;
 
   reg_for_free(element_table, "element_table");
-
-  return;
 }
 
 double ele_mass_from_number(int num)
@@ -509,7 +507,7 @@ double ele_mass_from_name(char *name)
 	return element_table[i].mass;
   }
 
-  return 0;
+  return 0.0;
 }
 
 int ele_number_from_name(char *name)

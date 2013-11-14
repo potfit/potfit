@@ -89,14 +89,12 @@
 
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
-  int   col, i;
+  int   col, i = flag;
   double tmpsum = 0.0, sum = 0.0;
   const sw_t *sw = &apot_table.sw;
 
 #ifndef MPI
   myconf = nconf;
-  /* access flag to shut up compiler warnings */
-  i = flag;
 #endif /* !MPI */
 
   /* This is the start of an infinite loop */

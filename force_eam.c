@@ -88,7 +88,7 @@
 
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
-  int   first, col, i;
+  int   first, col, i = flag;
   double tmpsum = 0.0, sum = 0.0;
   double *xi = NULL;
 
