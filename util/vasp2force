@@ -287,7 +287,7 @@ for i in range(len(outcars)):
                     for k in range(data[i][2][num]):
                         line = [float(s) for s in f.readline().split()[0:6]]
                         if args.c:
-                            sys.stdout.write('{} '.format(types[data[i][1][nim]]))
+                            sys.stdout.write('{} '.format(types[data[i][1][num]]))
                         else:
                             sys.stdout.write('{} '.format(num))
                         sys.stdout.write("{:11.7g} {:11.7g} {:11.7g}".format(line[0],line[1],line[2]))
