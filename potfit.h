@@ -237,6 +237,7 @@ EXTERN int have_contrib_box INIT(0);	/* do we have a box of contrib. atoms? */
 EXTERN int n_spheres INIT(0);	/* number of spheres of contrib. atoms */
 EXTERN double *r_spheres;	/* radii of the spheres of contrib. atoms */
 #endif /* CONTRIB */
+EXTERN double global_cell_scale INIT(1.0);	/* global scaling parameter */
 EXTERN double *coheng;		/* Cohesive energy for each config */
 EXTERN double *conf_vol;
 EXTERN double *conf_weight;	/* weight of configuration */

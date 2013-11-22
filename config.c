@@ -277,26 +277,48 @@ void read_config(char *filename)
 	if ((ptr = strchr(res, '\n')) != NULL)
 	  *ptr = '\0';
 	line++;
-	/* read the box vectors */
-	if (res[1] == 'X') {
-	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z) == 3)
-	    h_boxx++;
-	  else
-	    error(1, "%s: Error in box vector x, line %d\n", filename, line);
-	} else if (res[1] == 'Y') {
-	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z) == 3)
-	    h_boxy++;
-	  else
-	    error(1, "%s: Error in box vector y, line %d\n", filename, line);
-	} else if (res[1] == 'Z') {
-	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z) == 3)
-	    h_boxz++;
-	  else
-	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
 
+	/* read the box vectors: x */
+	if (res[1] == 'X') {
+	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z) == 3) {
+	    h_boxx++;
+	    if (global_cell_scale != 1.0) {
+	      box_x.x *= global_cell_scale;
+	      box_x.y *= global_cell_scale;
+	      box_x.z *= global_cell_scale;
+	    }
+	  } else
+	    error(1, "%s: Error in box vector x, line %d\n", filename, line);
+	}
+
+	/* read the box vectors: y */
+	else if (res[1] == 'Y') {
+	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z) == 3) {
+	    h_boxy++;
+	    if (global_cell_scale != 1.0) {
+	      box_y.x *= global_cell_scale;
+	      box_y.y *= global_cell_scale;
+	      box_y.z *= global_cell_scale;
+	    }
+	  } else
+	    error(1, "%s: Error in box vector y, line %d\n", filename, line);
+	}
+
+	/* read the box vectors: z */
+	else if (res[1] == 'Z') {
+	  if (sscanf(res + 3, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z) == 3) {
+	    h_boxz++;
+	    if (global_cell_scale != 1.0) {
+	      box_z.x *= global_cell_scale;
+	      box_z.y *= global_cell_scale;
+	      box_z.z *= global_cell_scale;
+	    }
+	  } else
+	    error(1, "%s: Error in box vector z, line %d\n", filename, line);
+	}
 #ifdef CONTRIB
-	  /* box of contributing particles */
-	} else if (strncmp(res + 1, "B_O", 3) == 0) {
+	/* box of contributing particles: origin */
+	else if (strncmp(res + 1, "B_O", 3) == 0) {
 	  if (1 == have_contrib_box) {
 	    error(0, "There can only be one box of contributing atoms\n");
 	    error(1, "This occured in %s on line %d", filename, line);
@@ -304,51 +326,90 @@ void read_config(char *filename)
 	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_o.x, &cbox_o.y, &cbox_o.z) == 3) {
 	    have_contrib_box = 1;
 	    have_contrib++;
+	    if (global_cell_scale != 1.0) {
+	      cbox_o.x *= global_cell_scale;
+	      cbox_o.y *= global_cell_scale;
+	      cbox_o.z *= global_cell_scale;
+	    }
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
-	} else if (strncmp(res + 1, "B_A", 3) == 0) {
+	}
+
+	/* box of contributing particles: a */
+	else if (strncmp(res + 1, "B_A", 3) == 0) {
 	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_a.x, &cbox_a.y, &cbox_a.z) == 3) {
 	    have_contrib++;
+	    if (global_cell_scale != 1.0) {
+	      cbox_a.x *= global_cell_scale;
+	      cbox_a.y *= global_cell_scale;
+	      cbox_a.z *= global_cell_scale;
+	    }
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
-	} else if (strncmp(res + 1, "B_B", 3) == 0) {
+	}
+
+	/* box of contributing particles: b */
+	else if (strncmp(res + 1, "B_B", 3) == 0) {
 	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_b.x, &cbox_b.y, &cbox_b.z) == 3) {
 	    have_contrib++;
+	    if (global_cell_scale != 1.0) {
+	      cbox_b.x *= global_cell_scale;
+	      cbox_b.y *= global_cell_scale;
+	      cbox_b.z *= global_cell_scale;
+	    }
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
-	} else if (strncmp(res + 1, "B_C", 3) == 0) {
+	}
+
+	/* box of contributing particles: c */
+	else if (strncmp(res + 1, "B_C", 3) == 0) {
 	  if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_c.x, &cbox_c.y, &cbox_c.z) == 3) {
 	    have_contrib++;
+	    if (global_cell_scale != 1.0) {
+	      cbox_c.x *= global_cell_scale;
+	      cbox_c.y *= global_cell_scale;
+	      cbox_c.z *= global_cell_scale;
+	    }
 	  } else
 	    error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
+	}
 
-	  /* sphere of contributing particles */
-	} else if (strncmp(res + 1, "B_S", 3) == 0) {
+	/* sphere of contributing particles */
+	else if (strncmp(res + 1, "B_S", 3) == 0) {
 	  sphere_centers = (vector *)realloc(sphere_centers, (n_spheres + 1) * sizeof(vector));
 	  r_spheres = (double *)realloc(r_spheres, (n_spheres + 1) * sizeof(double));
 	  if (sscanf(res + 5, "%lf %lf %lf %lf\n", &sphere_centers[n_spheres].x,
 	      &sphere_centers[n_spheres].y, &sphere_centers[n_spheres].z, &r_spheres[n_spheres]) == 4) {
 	    n_spheres++;
+	    if (global_cell_scale != 1.0) {
+	      sphere_centers[n_spheres].x *= global_cell_scale;
+	      sphere_centers[n_spheres].y *= global_cell_scale;
+	      sphere_centers[n_spheres].z *= global_cell_scale;
+	      r_spheres[n_spheres] *= global_cell_scale;
+	    }
 	  } else
 	    error(1, "%s: Error in sphere of contributing atoms, line %d\n", filename, line);
+	}
 #endif /* CONTRIB */
 
-	  /* energy */
-	} else if (res[1] == 'E') {
+	/* cohesive energy */
+	else if (res[1] == 'E') {
 	  if (sscanf(res + 3, "%lf\n", &(coheng[nconf])) == 1)
 	    h_eng = 1;
 	  else
 	    error(1, "%s: Error in energy on line %d\n", filename, line);
+	}
 
-	  /* configuration weight */
-	} else if (res[1] == 'W') {
+	/* configuration weight */
+	else if (res[1] == 'W') {
 	  if (sscanf(res + 3, "%lf\n", &(conf_weight[nconf])) != 1)
 	    error(1, "%s: Error in configuration weight on line %d\n", filename, line);
 	  if (conf_weight[nconf] < 0.0)
 	    error(1, "%s: The configuration weight is negative on line %d\n", filename, line);
+	}
 
-	  /* chemical elements */
-	} else if (res[1] == 'C') {
+	/* chemical elements */
+	else if (res[1] == 'C') {
 	  fgetpos(infile, &filepos);
 	  if (!have_elements) {
 	    i = 0;
@@ -447,6 +508,17 @@ void read_config(char *filename)
       fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z);
       fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z);
       line += 3;
+      if (global_cell_scale != 1.0) {
+	box_x.x *= global_cell_scale;
+	box_x.y *= global_cell_scale;
+	box_x.z *= global_cell_scale;
+	box_y.x *= global_cell_scale;
+	box_y.y *= global_cell_scale;
+	box_y.z *= global_cell_scale;
+	box_z.x *= global_cell_scale;
+	box_z.y *= global_cell_scale;
+	box_z.z *= global_cell_scale;
+      }
 
       /* read cohesive energy */
       if (1 != fscanf(infile, "%lf\n", &(coheng[nconf])))
@@ -476,6 +548,11 @@ void read_config(char *filename)
 	  &(atom->force.z)))
 	error(1, "Corrupt configuration file on line %d\n", line + 1);
       line++;
+      if (global_cell_scale != 1.0) {
+	atom->pos.x *= global_cell_scale;
+	atom->pos.y *= global_cell_scale;
+	atom->pos.z *= global_cell_scale;
+      }
       if (atom->type >= ntypes || atom->type < 0)
 	error(1, "Corrupt configuration file on line %d: Incorrect atom type (%d)\n", line, atom->type);
       atom->absforce = sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) + dsquare(atom->force.z));

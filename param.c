@@ -167,6 +167,9 @@ void check_parameters_complete(char *paramfile)
     error(1, "Missing parameter or invalid value in %s : distfile is \"%s\"", paramfile, distfile);
 #endif /* PDIST */
 
+  if (global_cell_scale <= 0)
+    error(1, "Missing parameter or invalid value in %s : cell_scale is \"%f\"", paramfile, global_cell_scale);
+
   return;
 }
 
@@ -366,6 +369,10 @@ void read_paramfile(FILE *pf)
       getparam("dp_mix", &dp_mix, PARAM_DOUBLE, 1, 1);
     }
 #endif /* DIPOLE */
+    /* global scaling parameter */
+    else if (strcasecmp(token, "cell_scale") == 0) {
+      getparam("cell_scale", &global_cell_scale, PARAM_DOUBLE, 1, 1);
+    }
     /* unknown tag */
     else {
       fprintf(stderr, "Unknown tag <%s> in parameter file ignored!\n", token);

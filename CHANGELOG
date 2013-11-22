@@ -1,4 +1,5 @@
 potfit-next
++ add global scaling parameter (UNTESTED)
 + add tbeam interaction
 + remove WZERO and PARAB options
 + add modified tersoff potential
