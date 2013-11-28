@@ -38,15 +38,17 @@ if __name__ == "__main__":
 
 class potfit_function(object):
     def __init__(self):
-        self.cutoff = 6
+        self.rmin = 0.0
+        self.cutoff = 6.0
         self.do_smooth = 0
         self.random = False
         self.params = []
 
-    def set_properties(self, cutoff, do_smooth, random):
+    def set_properties(self, cutoff, do_smooth, random, rmin = 0.0):
         self.cutoff = cutoff
         self.do_smooth = do_smooth
         self.random = random
+        self.rmin = rmin
         if self.do_smooth == 1:
             self.params.append(['h', 1, 0.5, 2])
 
