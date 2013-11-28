@@ -586,7 +586,7 @@ void read_config(char *filename)
       have_small_box = 1;
 
 #ifdef DEBUG
-    fprintf(stderr, "Checking cell size for configuration %d:\n", nconf);
+    fprintf(stderr, "\nChecking cell size for configuration %d:\n", nconf);
     fprintf(stderr, "Box dimensions:\n");
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_x.x, box_x.y, box_x.z);
     fprintf(stderr, "     %10.6f %10.6f %10.6f\n", box_y.x, box_y.y, box_y.z);
@@ -1121,12 +1121,12 @@ void read_config(char *filename)
 #endif /* EAM || ADP || MEAM */
 
   /* mdim has additional components for analytic potentials */
-#if defined APOT && !defined NOPUNISH
+#ifdef APOT
   /* 1 slot for each analytic parameter -> punishment */
   mdim += opt_pot.idxlen;
   /* 1 slot for each analytic potential -> punishment */
   mdim += apot_table.number + 1;
-#endif /* APOT && !NOPUNISH */
+#endif /* APOT */
 
   /* copy forces into single vector */
   if (NULL == (force_0 = (double *)malloc(mdim * sizeof(double))))
@@ -1170,12 +1170,12 @@ void read_config(char *filename)
 #endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
 
-#if defined APOT && !defined NOPUNISH
+#ifdef APOT
   for (i = 0; i < opt_pot.idxlen; i++)
     force_0[k++] = 0.0;		/* punishment for individual parameters */
   for (i = 0; i <= apot_table.number; i++)
     force_0[k++] = 0.0;		/* punishment for potential functions */
-#endif /* APOT && !NOPUNISH */
+#endif /* APOT */
 
   /* write pair distribution file */
   if (1 == write_pair) {

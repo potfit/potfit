@@ -76,6 +76,7 @@ void set_force_vector_pointers()
   energy_p = 3 * natoms;
 
 #ifdef STRESS
+
   stress_p = energy_p + nconf;
 #if defined EAM || defined ADP || defined MEAM
   limit_p = stress_p + 6 * nconf;
