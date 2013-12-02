@@ -226,8 +226,7 @@ void anneal(double *xi)
 #ifdef APOT
       randomize_parameter(h, xi2, v);
 #else
-      /* Create a gaussian bump,
-         width & hight distributed normally */
+      /* Create a gaussian bump, width & hight distributed normally */
       width = fabs(normdist());
       height = normdist() * v[h];
       makebump(xi2, width, height, h);
@@ -239,7 +238,7 @@ void anneal(double *xi)
 	dF += F2 - F;
       }
     }
-    printf("Did %d steps, %d were accepted\n", u, m1);
+    printf("Performed %d trial steps, %d of them were downhill.\n", u, m1);
     u -= m1;
     dF /= u;
 
