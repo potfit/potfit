@@ -333,7 +333,6 @@ void broadcast_params()
   MPI_Bcast(cnfstart, nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(force_0, mdim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(conf_weight, nconf, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&maxneigh, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   /* Broadcast weights... */
   MPI_Bcast(&eweight, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);

@@ -229,7 +229,6 @@ EXTERN int *inconf;		/* Nr. of atoms in each config */
 EXTERN int *useforce;		/* Should we use force/stress */
 EXTERN int *usestress;		/* Should we use force/stress */
 EXTERN int have_elements INIT(0);	/* do we have the elements ? */
-EXTERN int maxneigh INIT(0);	/* maximum number of neighbors */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
 #ifdef CONTRIB

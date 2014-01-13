@@ -1943,8 +1943,8 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    error(1, "Cannot allocate info block for calc potential table\n");
 
 	  for (i = 0; i < calct->len; i++) {
-            calct->xcoord[i] = 0.0;
-            calct->table[i] = 0.0;
+	    calct->xcoord[i] = 0.0;
+	    calct->table[i] = 0.0;
 	    calct->d2tab[i] = 0.0;
 	  }
 

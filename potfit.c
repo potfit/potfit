@@ -121,8 +121,8 @@ int main(int argc, char **argv)
     }
 #undef R_SIZE
 #undef RAND_MAX
-  } /* myid == 0 */
-
+  }
+  /* myid == 0 */
 #ifdef MPI
   if (0 == myid) {
     printf("Broadcasting data to MPI workers ... ");

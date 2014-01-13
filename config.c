@@ -969,7 +969,6 @@ void read_config(char *filename)
 	}			/* loop over images in x direction */
       }				/* second loop over atoms (neighbors) */
 
-      maxneigh = MAX(maxneigh, atoms[i].num_neigh);
       reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
     }				/* first loop over atoms */
 
