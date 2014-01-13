@@ -121,10 +121,18 @@ int main(int argc, char **argv)
     }
 #undef R_SIZE
 #undef RAND_MAX
-  }
-  /* myid == 0 */
+  } /* myid == 0 */
+
 #ifdef MPI
+  if (0 == myid) {
+    printf("Broadcasting data to MPI workers ... ");
+    fflush(stdout);
+  }
   broadcast_params();		/* let the others know what's going on */
+  if (0 == myid) {
+    printf("done\n");
+    fflush(stdout);
+  }
 #else
   /* Identify subset of atoms/volumes belonging to individual process
      with complete set of atoms/volumes */
