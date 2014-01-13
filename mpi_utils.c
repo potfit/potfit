@@ -539,6 +539,59 @@ void broadcast_neighbors()
   neigh_t neigh;
   atom_t *atom;
 
+  neigh.type = 0;
+  neigh.nr = 0;
+  neigh.r = 0.0;
+  neigh.r2 = 0.0;
+  neigh.inv_r = 0.0;
+  neigh.dist.x = 0.0;
+  neigh.dist.y = 0.0;
+  neigh.dist.z = 0.0;
+  neigh.dist_r.x = 0.0;
+  neigh.dist_r.y = 0.0;
+  neigh.dist_r.z = 0.0;
+  for (i = 0; i < SLOTS; i++) {
+    neigh.slot[i] = 0;
+    neigh.shift[i] = 0.0;
+    neigh.step[i] = 0.0;
+    neigh.col[i] = 0.0;
+  }
+
+#ifdef ADP
+  neigh.sqrdist.xx = 0.0;
+  neigh.sqrdist.yy = 0.0;
+  neigh.sqrdist.zz = 0.0;
+  neigh.sqrdist.xy = 0.0;
+  neigh.sqrdist.yz = 0.0;
+  neigh.sqrdist.zx = 0.0;
+  neigh.u_val = 0.0;
+  neigh.u_grad = 0.0;
+  neigh.w_val = 0.0;
+  neigh.w_grad = 0.0;
+#endif /* APOT */
+
+#ifdef COULOMB
+  neigh.fnval_el = 0.0;
+  neigh.grad_el = 0.0;
+  neigh.ggrad_el = 0.0;
+#endif /* COULOMB */
+
+#ifdef THREEBODY
+  neigh.f = 0.0;
+  neigh.df = 0.0;
+  neigh.ijk_start = 0.0;
+#endif /* THREEBODY */
+
+#ifdef MEAM
+  neigh.drho = 0.0;
+#endif /* MEAM */
+
+#ifdef TERSOFF
+  neigh.dzeta.x = 0.0;
+  neigh.dzeta.y = 0.0;
+  neigh.dzeta.z = 0.0;
+#endif /* TERSOFF */
+
   for (i = 0; i < natoms; i++) {
     atom = conf_atoms + i - firstatom;
     if (myid == 0)
@@ -572,6 +625,16 @@ void broadcast_angles()
   int   i, j, nangles;
   angl  angle;
   atom_t *atom;
+
+  angle.cos = 0.0;
+
+#ifdef MEAM
+  angle.slot = 0;
+  angle.shift = 0.0;
+  angle.step = 0.0;
+  angle.g = 0.0;
+  angle.dg = 0.0;
+#endif /* MEAM */
 
   for (i = 0; i < natoms; ++i) {
     atom = conf_atoms + i - firstatom;

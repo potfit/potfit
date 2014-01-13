@@ -1189,7 +1189,6 @@ double apot_punish(double *params, double *forces)
 	tmpsum += apot_punish_value * (1 + x) * (1 + x);
       }
     }
-
 #ifdef EAM
     /* punish m=n for universal embedding function */
     if (strcmp(apot_table.names[i], "universal") == 0) {
