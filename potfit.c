@@ -194,8 +194,8 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
 #ifdef MPI
     if (num_cpus > nconf) {
-      warning(0, "You are using more cpus than you have configurations!");
-      warning(1, "While this will not do any harm, you are wasting %d CPUs\n", num_cpus - nconf);
+      warning(0, "You are using more CPUs than you have configurations!\n");
+      warning(1, "While this will not do any harm, you are wasting %d CPUs.", num_cpus - nconf);
     }
 #endif /* MPI */
     time(&t_begin);

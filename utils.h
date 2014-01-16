@@ -32,15 +32,22 @@
 #define UTILS_H
 
 /* vector and matrix allocations */
-int  *vect_int(long dim);
-double *vect_double(long dim);
-double **mat_double(long rowdim, long coldim);
-void  free_vect_int(int *vect);
-void  free_vect_double(double *vect);
-void  free_mat_double(double **matrix);
+int  *vect_int(long);
+double *vect_double(long);
+double **mat_double(long, long);
+void  free_vect_int(int *);
+void  free_vect_double(double *);
+void  free_mat_double(double **);
+
+/* properly initialization */
+void  init_atom(atom_t *);
+void  init_neigh(neigh_t *);
+#ifdef THREEBODY
+void  init_angle(angle_t *);
+#endif /* THREEBODY */
 
 /* memory management */
-void  reg_for_free(void *p, char *name, ...);
+void  reg_for_free(void *, char *, ...);
 void  free_all_pointers();
 
 /* vector procuct */
@@ -58,9 +65,9 @@ void  power_m(int, double *, double *, double *);
 
 #if defined APOT && defined EVO
 /* quicksort for ODE */
-void  quicksort(double *x, int low, int high, double **p);
-int   partition(double *x, int low, int high, int index, double **p);
-void  swap_population(double *a, double *b);
+void  quicksort(double *, int, int, double **);
+int   partition(double *, int, int, int, double **);
+void  swap_population(double *, double *);
 #endif /* APOT && EVO */
 
 #endif /* UTILS_H */

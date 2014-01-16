@@ -104,7 +104,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   /* pointer for neighbor tables */
   neigh_t *neigh_j, *neigh_k;
   /* pointer for angular neighbor table */
-  angl *n_angl;
+  angle_t *angle;
 
   /* pair variables */
   double phi_r, phi_a, inv_c, f_cut;
@@ -260,7 +260,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      /* loop over remaining neighbors */
 	      for (k = j + 1; k < atom->num_neigh; k++) {
 		/* Store pointer to angular part (g) */
-		n_angl = atom->angl_part + ijk++;
+		angle = atom->angle_part + ijk++;
 		/* Get pointer to neighbor k */
 		neigh_k = atom->neigh + k;
 		/* store lambda for atom triple i,j,k */
@@ -273,7 +273,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		/* check if we are inside the cutoff radius */
 		if (neigh_k->r < *(sw->a2[neigh_k->col[0]])) {
 		  /* potential term */
-		  tmp = n_angl->cos + 1.0 / 3.0;
+		  tmp = angle->cos + 1.0 / 3.0;
 		  v3_val = lambda * neigh_j->f * neigh_k->f * tmp * tmp;
 
 		  /* total potential */
@@ -286,14 +286,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		  tmp_jj = 1.0 / (neigh_j->r2);
 		  tmp_jk = 1.0 / (neigh_j->r * neigh_k->r);
 		  tmp_kk = 1.0 / (neigh_k->r2);
-		  tmp_1 = tmp_grad2 * neigh_j->df * neigh_k->f - tmp_grad1 * n_angl->cos * tmp_jj;
+		  tmp_1 = tmp_grad2 * neigh_j->df * neigh_k->f - tmp_grad1 * angle->cos * tmp_jj;
 		  tmp_2 = tmp_grad1 * tmp_jk;
 
 		  force_j.x = tmp_1 * neigh_j->dist.x + tmp_2 * neigh_k->dist.x;
 		  force_j.y = tmp_1 * neigh_j->dist.y + tmp_2 * neigh_k->dist.y;
 		  force_j.z = tmp_1 * neigh_j->dist.z + tmp_2 * neigh_k->dist.z;
 
-		  tmp_1 = tmp_grad2 * neigh_k->df * neigh_j->f - tmp_grad1 * n_angl->cos * tmp_kk;
+		  tmp_1 = tmp_grad2 * neigh_k->df * neigh_j->f - tmp_grad1 * angle->cos * tmp_kk;
 		  force_k.x = tmp_1 * neigh_k->dist.x + tmp_2 * neigh_j->dist.x;
 		  force_k.y = tmp_1 * neigh_k->dist.y + tmp_2 * neigh_j->dist.y;
 		  force_k.z = tmp_1 * neigh_k->dist.z + tmp_2 * neigh_j->dist.z;

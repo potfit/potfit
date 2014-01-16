@@ -100,11 +100,10 @@ typedef struct {
   int   slot;
   double shift;
   double step;
-
   double g;
   double dg;
 #endif
-} angl;
+} angle_t;
 #endif
 
 #ifdef STIWEB
@@ -206,7 +205,7 @@ typedef struct {
 #endif
 
 #ifdef THREEBODY
-  int   num_angl;
+  int   num_angles;
 #ifdef MEAM
   double rho_eam;		/* Store EAM density */
 #endif
@@ -214,7 +213,7 @@ typedef struct {
 
   neigh_t *neigh;		/* dynamic array for neighbors */
 #ifdef THREEBODY
-  angl *angl_part;		/* dynamic array for angular neighbors */
+  angle_t *angle_part;		/* dynamic array for angular neighbors */
 #endif
 } atom_t;
 

@@ -188,76 +188,8 @@ void read_config(char *filename)
     if (NULL == na_type[nconf])
       error(1, "Cannot allocate memory for na_type");
 
-    for (i = natoms; i < natoms + count; i++) {
-      atoms[i].type = 0;
-      atoms[i].num_neigh = 0;
-      atoms[i].pos.x = 0.0;
-      atoms[i].pos.y = 0.0;
-      atoms[i].pos.z = 0.0;
-      atoms[i].force.x = 0.0;
-      atoms[i].force.y = 0.0;
-      atoms[i].force.z = 0.0;
-      atoms[i].absforce = 0.0;
-      atoms[i].conf = 0;
-
-#ifdef CONTRIB
-      atoms[i].contrib = 0;
-#endif /* CONTRIB */
-
-#if defined EAM || defined ADP || defined MEAM
-      atoms[i].rho = 0.0;
-      atoms[i].gradF = 0.0;
-#ifdef TBEAM
-      atoms[i].rho_s = 0.0;
-      atoms[i].gradF_s = 0.0;
-#endif /* TBEAM */
-#endif /* EAM || ADP || MEAM */
-
-#ifdef ADP
-      atoms[i].mu.x = 0.0;
-      atoms[i].mu.y = 0.0;
-      atoms[i].mu.z = 0.0;
-      atoms[i].lambda.xx = 0.0;
-      atoms[i].lambda.yy = 0.0;
-      atoms[i].lambda.zz = 0.0;
-      atoms[i].lambda.xy = 0.0;
-      atoms[i].lambda.yz = 0.0;
-      atoms[i].lambda.zx = 0.0;
-#endif /* ADP */
-
-#ifdef DIPOLE
-      atoms[i].E_stat.x = 0.0;
-      atoms[i].E_stat.y = 0.0;
-      atoms[i].E_stat.z = 0.0;
-      atoms[i].p_sr.x = 0.0;
-      atoms[i].p_sr.y = 0.0;
-      atoms[i].p_sr.z = 0.0;
-      atoms[i].E_ind.x = 0.0;
-      atoms[i].E_ind.y = 0.0;
-      atoms[i].E_ind.z = 0.0;
-      atoms[i].p_ind.x = 0.0;
-      atoms[i].p_ind.y = 0.0;
-      atoms[i].p_ind.z = 0.0;
-      atoms[i].E_old.x = 0.0;
-      atoms[i].E_old.y = 0.0;
-      atoms[i].E_old.z = 0.0;
-      atoms[i].E_tot.x = 0.0;
-      atoms[i].E_tot.y = 0.0;
-      atoms[i].E_tot.z = 0.0;
-#endif /* DIPOLE */
-
-#ifdef THREEBODY
-      atoms[i].num_angl = 0;
-#ifdef MEAM
-      atoms[i].rho_eam = 0.0;
-#endif /* MEAM */
-#endif /* MANYBODY */
-
-      atoms[i].neigh = NULL;
-#ifdef THREEBODY
-      atoms[i].angl_part = NULL;
-#endif /* THREEBODY */
-    }
+    for (i = natoms; i < natoms + count; i++)
+      init_atom(atoms + i);
 
     for (i = 0; i < ntypes; i++)
       na_type[nconf][i] = 0;
@@ -640,6 +572,7 @@ void read_config(char *filename)
 		dd.y /= r;
 		dd.z /= r;
 		k = atoms[i].num_neigh++;
+		init_neigh(atoms[i].neigh + k);
 		atoms[i].neigh[k].type = type2;
 		atoms[i].neigh[k].nr = j;
 		atoms[i].neigh[k].r = r;
@@ -978,7 +911,7 @@ void read_config(char *filename)
     for (i = natoms; i < natoms + count; i++) {
       nnn = atoms[i].num_neigh;
       ijk = 0;
-      atoms[i].angl_part = (angl *) malloc(sizeof(angl));
+      atoms[i].angle_part = (angle_t *) malloc(sizeof(angle_t));
 #ifdef TERSOFF
       for (j = 0; j < nnn; j++) {
 #else
@@ -992,13 +925,14 @@ void read_config(char *filename)
 #else
 	for (k = j + 1; k < nnn; k++) {
 #endif /* TERSOFF */
-	  atoms[i].angl_part = (angl *) realloc(atoms[i].angl_part, (ijk + 1) * sizeof(angl));
+	  atoms[i].angle_part = (angle_t *) realloc(atoms[i].angle_part, (ijk + 1) * sizeof(angle_t));
+	  init_angle(atoms[i].angle_part + ijk);
 	  ccos =
 	    atoms[i].neigh[j].dist_r.x * atoms[i].neigh[k].dist_r.x +
 	    atoms[i].neigh[j].dist_r.y * atoms[i].neigh[k].dist_r.y +
 	    atoms[i].neigh[j].dist_r.z * atoms[i].neigh[k].dist_r.z;
 
-	  atoms[i].angl_part[ijk].cos = ccos;
+	  atoms[i].angle_part[ijk].cos = ccos;
 
 	  col = 2 * paircol + 2 * ntypes + atoms[i].type;
 	  if (0 == format || 3 == format) {
@@ -1023,15 +957,15 @@ void read_config(char *filename)
 #endif /* !MEAM */
 	  }
 #ifdef MEAM
-	  atoms[i].angl_part[ijk].shift = shift;
-	  atoms[i].angl_part[ijk].slot = slot;
-	  atoms[i].angl_part[ijk].step = step;
+	  atoms[i].angle_part[ijk].shift = shift;
+	  atoms[i].angle_part[ijk].slot = slot;
+	  atoms[i].angle_part[ijk].step = step;
 #endif /* MEAM */
 	  ijk++;
 	}			/* third loop over atoms */
       }				/* second loop over atoms */
-      atoms[i].num_angl = ijk;
-      reg_for_free(atoms[i].angl_part, "angl part atom %d", i);
+      atoms[i].num_angles = ijk;
+      reg_for_free(atoms[i].angle_part, "angular part atom %d", i);
     }				/* first loop over atoms */
 #endif /* THREEBODY */
 
@@ -1521,16 +1455,16 @@ void update_slots(void)
 #ifdef THREEBODY
   /* update angular slots */
   for (i = 0; i < natoms; i++) {
-    for (j = 0; j < atoms[i].num_angl; j++) {
-      rr = atoms[i].angl_part[j].cos + 1.1;
+    for (j = 0; j < atoms[i].num_angles; j++) {
+      rr = atoms[i].angle_part[j].cos + 1.1;
 #ifdef MEAM
       col = 2 * paircol + 2 * ntypes + atoms[i].type;
-      atoms[i].angl_part[j].slot = (int)(rr * calc_pot.invstep[col]);
-      atoms[i].angl_part[j].step = calc_pot.step[col];
-      atoms[i].angl_part[j].shift =
-	(rr - atoms[i].angl_part[j].slot * calc_pot.step[col]) * calc_pot.invstep[col];
+      atoms[i].angle_part[j].slot = (int)(rr * calc_pot.invstep[col]);
+      atoms[i].angle_part[j].step = calc_pot.step[col];
+      atoms[i].angle_part[j].shift =
+	(rr - atoms[i].angle_part[j].slot * calc_pot.step[col]) * calc_pot.invstep[col];
       /* move slot to the right potential */
-      atoms[i].angl_part[j].slot += calc_pot.first[col];
+      atoms[i].angle_part[j].slot += calc_pot.first[col];
 #endif /* MEAM */
     }
   }

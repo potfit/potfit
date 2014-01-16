@@ -96,7 +96,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   atom_t *atom;			/* pointer to current atom */
   neigh_t *neigh_j;		/* pointer to current neighbor j (first neighbor loop) */
   neigh_t *neigh_k;		/* pointer to current neighbor k (second neighbor loop) */
-  angl *n_angl;			/* pointer to current angular table */
+  angle_t *angle;		/* pointer to current angular table */
   int   h;			/* counter for configurations */
   int   i;			/* counter for atoms */
   int   j;			/* counter for neighbors (first loop) */
@@ -277,11 +277,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		  continue;
 		neigh_k = atom->neigh + k;
 		col_k = neigh_k->col[0];
-		n_angl = atom->angl_part + ijk++;
+		angle = atom->angle_part + ijk++;
 		if (neigh_k->r < *(ters->S[col_k])) {
 
 		  tmp_jk = 1.0 / (neigh_j->r * neigh_k->r);
-		  cos_theta = n_angl->cos;
+		  cos_theta = angle->cos;
 
 		  tmp_1 = *(ters->h[col_j]) - cos_theta;
 		  tmp_2 = 1.0 / (ters->d2[col_j] + tmp_1 * tmp_1);
@@ -627,7 +627,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       atom_t *atom;		/* pointer to current atom */
       neigh_t *neigh_j;		/* pointer to current neighbor j (first neighbor loop) */
       neigh_t *neigh_k;		/* pointer to current neighbor k (second neighbor loop) */
-      angl *n_angl;		/* pointer to current angular table */
+      angle_t *angle;		/* pointer to current angular table */
       int   h;			/* counter for configurations */
       int   i;			/* counter for atoms */
       int   j;			/* counter for neighbors (first loop) */
@@ -781,10 +781,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		  continue;
 		neigh_k = atom->neigh + k;
 		col_k = neigh_k->col[0];
-		n_angl = atom->angl_part + ijk++;
+		angle = atom->angle_part + ijk++;
 
 		if (neigh_k->r < *(ters->R2[col_k])) {
-		  cos_theta = n_angl->cos;
+		  cos_theta = angle->cos;
 		  dcos_j.x = (neigh_k->dist_r.x - neigh_j->dist_r.x * cos_theta) / neigh_j->r;
 		  dcos_j.y = (neigh_k->dist_r.y - neigh_j->dist_r.y * cos_theta) / neigh_j->r;
 		  dcos_j.z = (neigh_k->dist_r.z - neigh_j->dist_r.z * cos_theta) / neigh_j->r;

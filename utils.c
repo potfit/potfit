@@ -112,24 +112,164 @@ double **mat_double(long rowdim, long coldim)
 void free_vect_double(double *vect)
 {
   free(vect);
-
-  return;
 }
 
 void free_vect_int(int *vect)
 {
   free(vect);
-
-  return;
 }
 
 void free_mat_double(double **matrix)
 {
   free(matrix[0]);
   free(matrix);
-
-  return;
 }
+
+void init_atom(atom_t *atom)
+{
+  atom->type = 0;
+  atom->num_neigh = 0;
+  atom->pos.x = 0.0;
+  atom->pos.y = 0.0;
+  atom->pos.z = 0.0;
+  atom->force.x = 0.0;
+  atom->force.y = 0.0;
+  atom->force.z = 0.0;
+  atom->absforce = 0.0;
+  atom->conf = 0;
+
+#ifdef CONTRIB
+  atom->contrib = 0;
+#endif /* CONTRIB */
+
+#if defined EAM || defined ADP || defined MEAM
+  atom->rho = 0.0;
+  atom->gradF = 0.0;
+#ifdef TBEAM
+  atom->rho_s = 0.0;
+  atom->gradF_s = 0.0;
+#endif /* TBEAM */
+#endif /* EAM || ADP || MEAM */
+
+#ifdef ADP
+  atom->mu.x = 0.0;
+  atom->mu.y = 0.0;
+  atom->mu.z = 0.0;
+  atom->lambda.xx = 0.0;
+  atom->lambda.yy = 0.0;
+  atom->lambda.zz = 0.0;
+  atom->lambda.xy = 0.0;
+  atom->lambda.yz = 0.0;
+  atom->lambda.zx = 0.0;
+  atom->nu = 0.0;
+#endif /* ADP */
+
+#ifdef DIPOLE
+  atom->E_stat.x = 0.0;
+  atom->E_stat.y = 0.0;
+  atom->E_stat.z = 0.0;
+  atom->p_sr.x = 0.0;
+  atom->p_sr.y = 0.0;
+  atom->p_sr.z = 0.0;
+  atom->E_ind.x = 0.0;
+  atom->E_ind.y = 0.0;
+  atom->E_ind.z = 0.0;
+  atom->p_ind.x = 0.0;
+  atom->p_ind.y = 0.0;
+  atom->p_ind.z = 0.0;
+  atom->E_old.x = 0.0;
+  atom->E_old.y = 0.0;
+  atom->E_old.z = 0.0;
+  atom->E_tot.x = 0.0;
+  atom->E_tot.y = 0.0;
+  atom->E_tot.z = 0.0;
+#endif /* DIPOLE */
+
+#ifdef THREEBODY
+  atom->num_angles = 0;
+#ifdef MEAM
+  atom->rho_eam = 0.0;
+#endif /* MEAM */
+#endif /* MANYBODY */
+
+  atom->neigh = NULL;
+#ifdef THREEBODY
+  atom->angle_part = NULL;
+#endif /* THREEBODY */
+}
+
+void init_neigh(neigh_t *neigh)
+{
+  int   i = 0;
+
+  neigh->type = 0;
+  neigh->nr = 0;
+  neigh->r = 0.0;
+  neigh->r2 = 0.0;
+  neigh->inv_r = 0.0;
+  neigh->dist.x = 0.0;
+  neigh->dist.y = 0.0;
+  neigh->dist.z = 0.0;
+  neigh->dist_r.x = 0.0;
+  neigh->dist_r.y = 0.0;
+  neigh->dist_r.z = 0.0;
+  for (i = 0; i < SLOTS; i++) {
+    neigh->slot[i] = 0;
+    neigh->shift[i] = 0.0;
+    neigh->step[i] = 0.0;
+    neigh->col[i] = 0;
+  }
+
+#ifdef ADP
+  neigh->sqrdist.xx = 0.0;
+  neigh->sqrdist.yy = 0.0;
+  neigh->sqrdist.zz = 0.0;
+  neigh->sqrdist.xy = 0.0;
+  neigh->sqrdist.yz = 0.0;
+  neigh->sqrdist.zx = 0.0;
+  neigh->u_val = 0.0;
+  neigh->u_grad = 0.0;
+  neigh->w_val = 0.0;
+  neigh->w_grad = 0.0;
+#endif /* APOT */
+
+#ifdef COULOMB
+  neigh->fnval_el = 0.0;
+  neigh->grad_el = 0.0;
+  neigh->ggrad_el = 0.0;
+#endif /* COULOMB */
+
+#ifdef THREEBODY
+  neigh->f = 0.0;
+  neigh->df = 0.0;
+  neigh->ijk_start = 0;
+#endif /* THREEBODY */
+
+#ifdef MEAM
+  neigh->drho = 0.0;
+#endif /* MEAM */
+
+#ifdef TERSOFF
+  neigh->dzeta.x = 0.0;
+  neigh->dzeta.y = 0.0;
+  neigh->dzeta.z = 0.0;
+#endif /* TERSOFF */
+}
+
+#ifdef THREEBODY
+void init_angle(angle_t * angle)
+{
+  angle->cos = 0.0;
+
+#ifdef MEAM
+  angle->slot = 0;
+  angle->shift = 0.0;
+  angle->step = 0.0;
+  angle->g = 0.0;
+  angle->dg = 0.0;
+#endif /* MEAM */
+}
+#endif /* THREEBODY */
 
 void reg_for_free(void *p, char *name, ...)
 {
@@ -143,8 +283,6 @@ void reg_for_free(void *p, char *name, ...)
   all_pointers = (void **)realloc(all_pointers, (num_pointers + 1) * sizeof(void *));
   all_pointers[num_pointers] = p;
   num_pointers++;
-
-  return;
 }
 
 void free_all_pointers()
@@ -157,8 +295,6 @@ void free_all_pointers()
   }
   free(all_pointers);
   free(pointer_names);
-
-  return;
 }
 
 /* vector product */
@@ -289,8 +425,6 @@ void quicksort(double *x, int low, int high, double **p)
     quicksort(x, low, newIndex - 1, p);
     quicksort(x, newIndex + 1, high, p);
   }
-
-  return;
 }
 
 int partition(double *x, int low, int high, int index, double **p)
@@ -322,8 +456,6 @@ void swap_population(double *a, double *b)
   for (i = 0; i < ndimtot + 2; i++) {
     SWAP(a[i], b[i], temp);
   }
-
-  return;
 }
 
 #endif /* APOT && EVO */

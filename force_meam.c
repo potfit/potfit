@@ -128,7 +128,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   /* MEAM variables */
   double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
   vector dfj, dfk;
-  angl *n_angl;
+  angle_t *angle;
 
   switch (format) {
       case 0:
@@ -358,8 +358,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	     N(N-1)/2 possible combinations
 	     Used in computing angular part g_ijk */
 
-	  /* set n_angl pointer to angl_part of current atom */
-	  n_angl = atom->angl_part;
+	  /* set angl pointer to angl_part of current atom */
+	  angle = atom->angle_part;
 
 	  for (j = 0; j < atom->num_neigh - 1; j++) {
 
@@ -373,15 +373,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 	      /* The cos(theta) should always lie inside -1 ... 1
 	         So store the g and g' without checking bounds */
-	      n_angl->g =
-		splint_comb_dir(&calc_pot, xi, n_angl->slot, n_angl->shift, n_angl->step, &n_angl->dg);
+	      angle->g = splint_comb_dir(&calc_pot, xi, angle->slot, angle->shift, angle->step, &angle->dg);
 
 	      /* Sum up rho piece for atom i caused by j and k
 	         f_ij * f_ik * m_ijk */
-	      atom->rho += neigh_j->f * neigh_k->f * n_angl->g;
+	      atom->rho += neigh_j->f * neigh_k->f * angle->g;
 
-	      /* Increase n_angl pointer */
-	      n_angl++;
+	      /* Increase angl pointer */
+	      angle++;
 	    }
 	  }
 
@@ -516,8 +515,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	       N(N-1)/2 possible combinations
 	       Used in computing angular part g_ijk */
 
-	    /* set n_angl pointer to angl_part of current atom */
-	    n_angl = atom->angl_part;
+	    /* set angle pointer to angl_part of current atom */
+	    angle = atom->angle_part;
 
 	    for (j = 0; j < atom->num_neigh - 1; j++) {
 
@@ -535,14 +534,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		n_k = 3 * neigh_k->nr;
 
 		/* Some tmp variables to clean up force fn below */
-		dV3j = n_angl->g * neigh_j->df * neigh_k->f;
-		dV3k = n_angl->g * neigh_j->f * neigh_k->df;
-		V3 = neigh_j->f * neigh_k->f * n_angl->dg;
+		dV3j = angle->g * neigh_j->df * neigh_k->f;
+		dV3k = angle->g * neigh_j->f * neigh_k->df;
+		V3 = neigh_j->f * neigh_k->f * angle->dg;
 
 		vlj = V3 * neigh_j->inv_r;
 		vlk = V3 * neigh_k->inv_r;
-		vv3j = dV3j - vlj * n_angl->cos;
-		vv3k = dV3k - vlk * n_angl->cos;
+		vv3j = dV3j - vlj * angle->cos;
+		vv3k = dV3k - vlk * angle->cos;
 
 		dfj.x = vv3j * neigh_j->dist_r.x + vlj * neigh_k->dist_r.x;
 		dfj.y = vv3j * neigh_j->dist_r.y + vlj * neigh_k->dist_r.y;
@@ -593,7 +592,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		}
 #endif // STRESS
 		/* Increase n_angl pointer */
-		n_angl++;
+		angle++;
 	      }			/* End inner loop over angles (neighbor atom k) */
 	    }			/* End outer loop over angles (neighbor atom j) */
 	  }			/* uf */
