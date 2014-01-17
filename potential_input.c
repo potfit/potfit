@@ -905,30 +905,31 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       if (NULL == apt->param_name[i][j])
 	error(1, "Error in allocating memory for parameter name");
       reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
-      strcpy(apt->param_name[i][j], "\0");
+      strcpy(apt->param_name[i][j], "empty");
       fgetpos(infile, &filepos);
       fgets(name, 255, infile);
-      while (name[0] == '#' && !feof(infile)) {
+      while (name[0] == '#' && !feof(infile) && (j != apt->n_par[i] -1)) {
 	fgets(name, 255, infile);
       }
-      if (feof(infile) || name[0] == '\0') {
+      if ((j != (apt->n_par[i] - 1)) && (feof(infile) || name[0] == '\0')) {
 	error(0, "Premature end of potential definition or file.\n");
 	error(1, "Probably your potential definition is missing some parameters.\n");
       }
-      ret_val =
-	sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
-      strncpy(apt->param_name[i][j], buffer, 30);
+      if (feof(infile))
+	name[0] = '\0';
+      buffer[0] = '\0';
+      ret_val = sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
+      if (buffer[0] != '\0')
+        strncpy(apt->param_name[i][j], buffer, 30);
 
       /* if last char of name is "!" we have a global parameter */
       if (strrchr(apt->param_name[i][j], '!') != NULL) {
 	apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] = '\0';
 	l = -1;
-	for (k = 0; k < apt->globals; k++) {
-	  if (strcmp(apt->param_name[i][j], apt->param_name[global_pot][k])
-	    == 0)
+	for (k = 0; k < apt->globals; k++)
+	  if (strcmp(apt->param_name[i][j], apt->param_name[global_pot][k]) == 0)
 	    l = k;
-	}
-	if (l == -1)
+	if (-1 == l)
 	  error(1, "Could not find global parameter %s!\n", apt->param_name[i][j]);
 	sprintf(apt->param_name[i][j], "%s!", apt->param_name[i][j]);
 
@@ -951,7 +952,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	/* this is no global parameter */
 	if (4 > ret_val) {
 	  if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
-	    if (strcmp(apt->param_name[i][j], "type") == 0 || feof(infile)) {
+	    if (0 == strcmp(apt->param_name[i][j], "type") ||
+		0 == strcmp(apt->param_name[i][j], "empty") || feof(infile)) {
 	      warning(1, "No cutoff parameter given for potential #%d: adding one parameter.", i);
 	      strcpy(apt->param_name[i][j], "h");
 	      apt->values[i][j] = 1;
