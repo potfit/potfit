@@ -534,11 +534,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	    apt->values[i][j] = apt->pmin[i][j];
 	  if (apt->values[i][j] > apt->pmax[i][j])
 	    apt->values[i][j] = apt->pmax[i][j];
-	  warning(0, "Starting value for chemical potential #%d is ", j + 1);
-	  warning(0, "outside of specified adjustment range.\n");
-	  warning(1, "Resetting it to %f.\n", j + 1, apt->values[i][j]);
+	  warning("Starting value for chemical potential #%d is ", j + 1);
+	  warning("outside of specified adjustment range.\n");
+	  warning("Resetting it to %f.\n", j + 1, apt->values[i][j]);
 	  if (apt->values[i][j] == 0)
-	    warning(1, "New value is 0 ! Please be careful about this.\n");
+	    warning("New value is 0 ! Please be careful about this.\n");
 	}
       }
       strcpy(apt->param_name[i][j], buffer);
@@ -797,11 +797,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	    apt->values[i][j] = apt->pmin[i][j];
 	  if (apt->values[i][j] > apt->pmax[i][j])
 	    apt->values[i][j] = apt->pmax[i][j];
-	  warning(0, "Starting value for global parameter #%d is ", j + 1);
-	  warning(0, "outside of specified adjustment range.\n");
-	  warning(1, "Resetting it to %f.\n", j + 1, apt->values[i][j]);
+	  warning("Starting value for global parameter #%d is ", j + 1);
+	  warning("outside of specified adjustment range.\n");
+	  warning("Resetting it to %f.\n", j + 1, apt->values[i][j]);
 	  if (apt->values[i][j] == 0)
-	    warning(1, "New value is 0 ! Please be careful about this.\n");
+	    warning("New value is 0 ! Please be careful about this.\n");
 	}
       }
     }
@@ -954,7 +954,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	  if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
 	    if (0 == strcmp(apt->param_name[i][j], "type") ||
 		0 == strcmp(apt->param_name[i][j], "empty") || feof(infile)) {
-	      warning(1, "No cutoff parameter given for potential #%d: adding one parameter.", i);
+	      warning("No cutoff parameter given for potential #%d: adding one parameter.\n", i);
 	      strcpy(apt->param_name[i][j], "h");
 	      apt->values[i][j] = 1;
 	      apt->pmin[i][j] = 0.5;
@@ -989,11 +989,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	      apt->values[i][j] = apt->pmin[i][j];
 	    if (apt->values[i][j] > apt->pmax[i][j])
 	      apt->values[i][j] = apt->pmax[i][j];
-	    warning(0, "Starting value for parameter #%d in potential #%d is ", j + 1, i + 1);
-	    warning(0, "outside of specified adjustment range.\n");
-	    warning(1, "Resetting it to %f.\n", apt->values[i][j]);
+	    warning("Starting value for parameter #%d in potential #%d is ", j + 1, i + 1);
+	    warning("outside of specified adjustment range.\n");
+	    warning("Resetting it to %f.\n", apt->values[i][j]);
 	    if (apt->values[i][j] == 0)
-	      warning(1, "New value is 0 ! Please be careful about this.\n");
+	      warning("New value is 0 ! Please be careful about this.\n");
 	  }
 	}
       }
@@ -1227,7 +1227,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 #ifdef NOPUNISH
   if (opt)
-    warning(1, "Gauge degrees of freedom are NOT fixed!");
+    warning("Gauge degrees of freedom are NOT fixed!\n");
 #endif /* NOPUNISH */
 
   check_apot_functions();

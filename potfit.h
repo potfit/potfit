@@ -374,7 +374,7 @@ EXTERN void (*write_pot_table) (pot_table_t *, char *);
 
 /* general functions [potfit.c] */
 void  error(int, char *, ...);
-void  warning(int, char *, ...);
+void  warning(char *, ...);
 
 /* error reports [errors.c] */
 void  write_errors(double *, double);

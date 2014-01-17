@@ -123,7 +123,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	/* Pathological: Search between center and right */
 	/* This means a change from original algorithm */
 #ifdef DEBUG
-	warning(1, "Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left, x_center, x_right);
+	warning( "Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
 	nb_eval++;
@@ -152,7 +152,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
       if (f_center < f_right) {
 	/* between center and left */
 #ifdef DEBUG
-	warning(1, "Pathological  @%li %f %f %f! center-left!\n", nb_eval, x_left, x_center, x_right);
+	warning("Pathological  @%li %f %f %f! center-left!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_left = -(x_right - x_left) * CGOLD + x_left;
 	nb_eval++;
@@ -179,7 +179,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	if (last == 2) {
 	  /* go further to left, it goes up towards the right */
 #ifdef DEBUG
-	  warning(1, "Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left, x_center, x_right);
+	  warning("Pathological  @%li %f %f %f! Go left!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	  x_left = -(x_right - x_left) / CGOLD + x_left;
 	  nb_eval++;
@@ -190,7 +190,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	} else {		/* go further to the right, to left it went up */
 
 #ifdef DEBUG
-	  warning(1, "Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left, x_center, x_right);
+	  warning("Pathological @%li %f %f %f! Go right!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	  x_right = (x_right - x_left) / CGOLD + x_right;
 	  nb_eval++;

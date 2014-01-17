@@ -139,7 +139,7 @@ void powell_lsq(double *xi)
 #if defined EAM || defined MEAM
 #ifndef NORESCALE
       /* perhaps rescaling helps? - Last resort... */
-      warning(1, "F does not depend on xi[%d], trying to rescale!\n", idx[i - 1]);
+      warning("F does not depend on xi[%d], trying to rescale!\n", idx[i - 1]);
       rescale(&opt_pot, 1.0, 1);
       /* wake other threads and sync potentials */
       F = calc_forces(xi, fxi1, 2);
@@ -152,16 +152,15 @@ void powell_lsq(double *xi)
 	/* ok, now this is serious, better exit cleanly */
 #ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
-	warning(1, "F does not depend on xi[%d], fit impossible!\n", idx[i - 1]);
+	warning("F does not depend on xi[%d], fit impossible!\n", idx[i - 1]);
 #else
 	update_apot_table(xi);
 	write_pot_table(&apot_table, tempfile);
 	itemp = apot_table.idxpot[i - 1];
 	itemp2 = apot_table.idxparam[i - 1];
-	warning(0,
-	  "F does not depend on the %d. parameter (%s) of the %d. potential.\n",
+	warning("F does not depend on the %d. parameter (%s) of the %d. potential.\n",
 	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
-	warning(1, "Fit impossible!\n");
+	warning("Fit impossible!\n");
 #endif /* APOT */
 	break;
       }
@@ -189,7 +188,7 @@ void powell_lsq(double *xi)
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
 #endif /* DEBUG && !APOT */
       if (i > 0 && i <= ndim) {
-	warning(1, "Linear equation system singular after step %d i=%d", m, i);
+	warning("Linear equation system singular after step %d i=%d\n", m, i);
 	break;
       }
       /* (b) get delta by multiplying q with the direction vectors */
@@ -202,9 +201,9 @@ void powell_lsq(double *xi)
 	  && (fabs(delta[idx[i]]) > maxchange[idx[i]])) {
 	  /* something seriously went wrong,
 	     parameter idx[i] out of control */
-	  warning(0, "Direction vector component %d out of range in step %d\n", idx[i], m);
-	  warning(0, "(%g instead of %g).\n", fabs(delta[idx[i]]), maxchange[idx[i]]);
-	  warning(0, "Restarting inner loop\n");
+	  warning("Direction vector component %d out of range in step %d\n", idx[i], m);
+	  warning("(%g instead of %g).\n", fabs(delta[idx[i]]), maxchange[idx[i]]);
+	  warning("Restarting inner loop\n");
 	  breakflag = 1;
 	}
 #else
@@ -247,7 +246,7 @@ void powell_lsq(double *xi)
       /* (f) update gamma, but if fn returns 1, matrix will be sigular,
          break inner loop and restart with new matrix */
       if (gamma_update(gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, mdim, ndimtot, F)) {
-	warning(1, "Matrix gamma singular after step %d, restarting inner loop", m);
+	warning("Matrix gamma singular after step %d, restarting inner loop\n", m);
 	break;
       }
 

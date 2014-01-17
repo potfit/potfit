@@ -196,8 +196,8 @@ int main(int argc, char **argv)
   } else {			/* root thread does minimization */
 #ifdef MPI
     if (num_cpus > nconf) {
-      warning(0, "You are using more CPUs than you have configurations!\n");
-      warning(1, "While this will not do any harm, you are wasting %d CPUs.", num_cpus - nconf);
+      warning("You are using more CPUs than you have configurations!\n");
+      warning("While this will not do any harm, you are wasting %d CPUs.\n", num_cpus - nconf);
     }
 #endif /* MPI */
     time(&t_begin);
@@ -290,17 +290,15 @@ int main(int argc, char **argv)
 
 void error(int done, char *msg, ...)
 {
-  static int begin = 0;
   va_list ap;
 
   fflush(stderr);
-  if (begin == 0) {
-    fprintf(stderr, "\n--> ERROR <--\n");
-    begin = 1;
-  }
+  fprintf(stderr, "[ERROR] ");
+
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
+
   fflush(stderr);
   if (done == 1) {
 #ifdef MPI
@@ -321,22 +319,16 @@ void error(int done, char *msg, ...)
  *
  ****************************************************************/
 
-void warning(int done, char *msg, ...)
+void warning(char *msg, ...)
 {
-  static int begin = 0;
   va_list ap;
 
   fflush(stdout);
-  if (begin == 0) {
-    fprintf(stderr, "\n--> WARNING <--\n");
-    begin = 1;
-  }
+  fprintf(stderr, "[WARNING] ");
+
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
-  if (done == 1) {
-    fprintf(stderr, "\n");
-    begin = 0;
-  }
+
   fflush(stderr);
 }

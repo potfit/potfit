@@ -132,7 +132,7 @@ void check_parameters_complete(char *paramfile)
     error(1, "Missing parameter or invalid value in %s : startpot is \"%s\"", paramfile, startpot);
 
   if (strcmp(endpot, "\0") == 0) {
-    warning(1, "endpot is missing in %s, setting it to %s_end", paramfile, startpot);
+    warning("endpot is missing in %s, setting it to %s_end\n", paramfile, startpot);
     sprintf(endpot, "%s_end", startpot);
   }
 
@@ -375,7 +375,7 @@ void read_paramfile(FILE *pf)
     }
     /* unknown tag */
     else {
-      fprintf(stderr, "Unknown tag <%s> in parameter file ignored!\n", token);
+      warning("Unknown tag <%s> in parameter file ignored!\n", token);
     }
   } while (!feof(pf));
 

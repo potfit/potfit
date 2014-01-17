@@ -1258,8 +1258,8 @@ void write_pot_table_lammps(pot_table_t *pt)
 #endif /* STIWEB */
 
   if (!have_elements) {
-    warning(0, "There are no elements listed in you configuration file.\n");
-    warning(1, "A LAMMPS potential cannot be written without them.\n");
+    warning("There are no elements listed in you configuration file.\n");
+    warning("A LAMMPS potential cannot be written without them.\n");
     return;
   }
 
@@ -1269,9 +1269,9 @@ void write_pot_table_lammps(pot_table_t *pt)
 #ifdef STIWEB
   /* check if final potential is LAMMPS compliant (a1==a2) */
   if (apot_table.values[0][5] != apot_table.values[paircol][1]) {
-    warning(0, "Your potential is not supported by LAMMPS.\n");
-    warning(0, "Please ensure that the values a1 and a2 are the same,\n");
-    warning(1, "  either by using global parameters or by fixing them.\n");
+    warning("Your potential is not supported by LAMMPS.\n");
+    warning("Please ensure that the values a1 and a2 are the same,\n");
+    warning("  either by using global parameters or by fixing them.\n");
 
     return;
   }

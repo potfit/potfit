@@ -430,8 +430,8 @@ void read_config(char *filename)
 	}
 #endif /* STRESS */
 	else if (res[1] != '#' && res[1] != 'F') {
-	  warning(0, "Unknown header line in %s detected:\n", filename);
-	  warning(1, "Line %d : %s\n", line, res);
+	  warning("Unknown header line in %s detected:\n", filename);
+	  warning("Line %d : %s\n", line, res);
 	}
 
       } while (res[1] != 'F');
@@ -1031,8 +1031,8 @@ void read_config(char *filename)
   }
 
   if (0 != have_small_box) {
-    warning(0, "The box size of at least one configuration is smaller than the cutoff distance.\n");
-    warning(1, "Using additional periodic images for energy and force calculations.");
+    warning("The box size of at least one configuration is smaller than the cutoff distance.\n");
+    warning("Using additional periodic images for energy and force calculations.\n");
   }
 
   reg_for_free(atoms, "atoms");
