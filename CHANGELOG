@@ -3,6 +3,10 @@ potfit-next
 + add tbeam interaction
 + remove WZERO and PARAB options
 + add modified tersoff potential
++ remove NEWSCALE option
++ remove NORESCALE option, rescaling is now no longer enabled by default
+  enable it with the RESCALE option
++ bump copyright to 2014
 
 potfit-0.6.0 (20130821)
 + merge MEAM implementation of Jeremy Nicklas (Ohio State University)

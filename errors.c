@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -258,20 +258,20 @@ void write_errors(double *force, double tot)
     fprintf(outfile, "\nDummy Constraints\n");
     fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
     for (i = dummy_p; i < dummy_p + ntypes; i++) {
-#ifdef NORESCALE
+#ifndef RESCALE
       sqr = dsquare(force[i]);
       fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", elements[i - dummy_p], 0.0, sqr, 0.0, force[i]);
 #else
       sqr = dsquare(force[i + ntypes]);
-      fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr,
-	dsquare(force[i]), force[i + ntypes], force[i]);
-#endif /* NORESCALE */
+      fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", elements[i - dummy_p], sqr, dsquare(force[i]),
+	force[i + ntypes], force[i]);
+#endif /* !RESCALE */
     }
-#ifdef NORESCALE
+#ifndef RESCALE
     fprintf(outfile, "\nNORESCALE: <n>!=1\n");
     fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
     fprintf(outfile, "Additional punishment of %f added.\n", dsquare(force[dummy_p + ntypes]));
-#endif /* NORESCALE */
+#endif /* !RESCALE */
     printf("Punishment constraints data written to \t%s\n", file);
     fclose(outfile);
   } else {

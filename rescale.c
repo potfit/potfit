@@ -5,7 +5,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -31,11 +31,11 @@
 
 #include "potfit.h"
 
-#if !defined NORESCALE && !defined APOT
+#if defined RESCALE && !defined APOT
 
 #include "splines.h"
 
-/* Doesn't make much sense without EAM (or ADP?)  */
+/* Doesn't make much sense without EAM or ADP  */
 
 #if defined EAM || defined ADP
 
@@ -134,7 +134,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
     }
   }
   for (i = 0; i < ntypes; i++) {
-    /* printf("maxrho[%d]=%f\tminrho[%d]=%f\n",i,maxrho[i],i,minrho[i]); */
     if (maxrho[i] > max) {
       max = maxrho[i];
       maxcol = i;
@@ -148,7 +147,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
   sign = (max >= -min) ? 1 : -1;
 
   /* determine new left and right boundary, add 40 percent... */
-
   for (i = 0; i < ntypes; i++) {
     j = paircol + ntypes + i;
     left[i] = minrho[i] - 0.3 * pt->step[j];
@@ -166,13 +164,10 @@ double rescale(pot_table_t *pt, double upper, int flag)
     flag = 1;
 
   /* update needed? */
-
   if (!flag)
     return 0.0;			/* no */
 
   /* Let's update... */
-
-
   /* expand potential  */
   h = 0;
   for (i = 0; i < ntypes; i++) {
@@ -400,4 +395,4 @@ void embed_shift(pot_table_t *pt)
   }
 }
 #endif /* EAM || ADP */
-#endif /* !NORESCALE && !APOT */
+#endif /* RESCALE && !APOT */

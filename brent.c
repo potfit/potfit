@@ -7,7 +7,7 @@
  *
  * Copyright 1996, 1997, 1998, 1999, 2000
  * 	Brian Gough
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/

@@ -4,7 +4,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -30,7 +30,7 @@
 
 #include "potfit.h"
 
-#if !defined NORESCALE && !defined APOT
+#if defined RESCALE && !defined APOT
 
 #include "splines.h"
 
@@ -41,7 +41,7 @@
 /****************************************************************
  *
  * rescale: Routine used to automatically rescale
- *     EAM potential. Flag indicates whether to force update...
+ *     MEAM potential. Flag indicates whether to force update...
  *     upper is upper limit of electron density.
  *
  ****************************************************************/
@@ -576,7 +576,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
       pt->d2tab + first);
   }
 
-#endif // EAM
+#endif /* EAM */
   free(newxi);
   free(neword);
   free(newstep);
@@ -588,4 +588,4 @@ double rescale(pot_table_t *pt, double upper, int flag)
 }
 
 #endif /* MEAM */
-#endif /* !NORESCALE || !APOT */
+#endif /* RESCALE || !APOT */

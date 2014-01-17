@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -908,7 +908,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       strcpy(apt->param_name[i][j], "empty");
       fgetpos(infile, &filepos);
       fgets(name, 255, infile);
-      while (name[0] == '#' && !feof(infile) && (j != apt->n_par[i] -1)) {
+      while (name[0] == '#' && !feof(infile) && (j != apt->n_par[i] - 1)) {
 	fgets(name, 255, infile);
       }
       if ((j != (apt->n_par[i] - 1)) && (feof(infile) || name[0] == '\0')) {
@@ -918,9 +918,10 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       if (feof(infile))
 	name[0] = '\0';
       buffer[0] = '\0';
-      ret_val = sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
+      ret_val =
+	sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
       if (buffer[0] != '\0')
-        strncpy(apt->param_name[i][j], buffer, 30);
+	strncpy(apt->param_name[i][j], buffer, 30);
 
       /* if last char of name is "!" we have a global parameter */
       if (strrchr(apt->param_name[i][j], '!') != NULL) {
@@ -953,7 +954,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	if (4 > ret_val) {
 	  if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
 	    if (0 == strcmp(apt->param_name[i][j], "type") ||
-		0 == strcmp(apt->param_name[i][j], "empty") || feof(infile)) {
+	      0 == strcmp(apt->param_name[i][j], "empty") || feof(infile)) {
 	      warning("No cutoff parameter given for potential #%d: adding one parameter.\n", i);
 	      strcpy(apt->param_name[i][j], "h");
 	      apt->values[i][j] = 1;

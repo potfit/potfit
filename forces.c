@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -69,6 +69,21 @@ void init_forces()
  *  	punish_par_p 	... 	position of the first parameter punishment (APOT only)
  *  	punish_pot_p 	... 	position of the first potential punishment (APOT only)
  *
+ * 	limiting constraints: (EAM and similar potentials only)
+ * 		text
+ *
+ * 	dummy constraints:
+ * 		test
+ *
+ * 	parameter punishments: (APOT only)
+ * 		These punishments are used if a certain parameter is
+ * 		out of its predefined bounds.
+ *
+ * 	potential punishments: (APOT only)
+ * 		These punishments are used if an analytic potential
+ * 		function exhibits a bad behavior.
+ * 		E.g. parameter A needs to be smaller than parameter B
+ *
  ****************************************************************/
 
 void set_force_vector_pointers()
@@ -88,7 +103,7 @@ void set_force_vector_pointers()
 #else /* EAM || ADP || MEAM */
 #ifdef APOT
   punish_par_p = stress_p + 6 * nconf;
-  punish_pot_p = punish_par_p + apot_table.total_par;
+  punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
 
@@ -104,7 +119,7 @@ void set_force_vector_pointers()
 #else /* EAM || ADP || MEAM */
 #ifdef APOT
   punish_par_p = energy_p + nconf;
-  punish_pot_p = punish_par_p + apot_table.total_par;
+  punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
 

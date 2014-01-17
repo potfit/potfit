@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -1674,15 +1674,15 @@ void write_pairdist(pot_table_t *pt, char *filename)
       col = paircol + ntypes + typ1;
       if (format == 3) {
 	rr = atom->rho - pt->begin[col];
-#ifdef NORESCALE
-	if (rr < 0)
-	  rr = 0;		/* extrapolation */
-	j = MIN((int)(rr * pt->invstep[col]) + pt->first[col], pt->last[col]);
-#else
-	if (rr < 0)
+#ifdef RESCALE
+	if (rr < 0.0)
 	  error(1, "short distance");
 	j = (int)(rr * pt->invstep[col]) + pt->first[col];
-#endif /* NORESCALE */
+#else
+	if (rr < 0.0)
+	  rr = 0.0;		/* extrapolation */
+	j = MIN((int)(rr * pt->invstep[col]) + pt->first[col], pt->last[col]);
+#endif /* RESCALE */
       } else {			/* format ==4 */
 	rr = atom->rho;
 	k = pt->first[col];

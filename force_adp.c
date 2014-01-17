@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -390,7 +390,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  }			/* loop over neighbors */
 
 	  col_F = paircol + ntypes + atom->type;	/* column of F */
-#ifndef NORESCALE
+#ifdef RESCALE
 	  if (atom->rho > calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
@@ -401,12 +401,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 	  }
-#endif /* !NORESCALE */
+#endif /* RESCALE */
 
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 
-#ifdef NORESCALE
+#ifndef RESCALE
 	  if (atom->rho < calc_pot.begin[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
@@ -444,9 +444,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* APOT */
 	      forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
-#else /* NORESCALE */
+#else /* !RESCALE */
 	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#endif /* NORESCALE */
+#endif /* !RESCALE */
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
 
@@ -660,31 +660,33 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     if (myid == 0) {
       int   g;
       for (g = 0; g < ntypes; g++) {
-#ifdef NORESCALE
+#ifndef RESCALE
 	/* clear field */
 	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.0)=0.0; */
 	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.0);
-#else /* NORESCALE */
+#else /* !RESCALE */
 	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 	/* constraints on U`(n) */
 	forces[dummy_p + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
 	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
 	  - force_0[dummy_p + g];
-#endif /* NORESCALE constraints */
+#endif /* !RESCALE */
+
+	/* add punishments to total error sum */
 	tmpsum += dsquare(forces[dummy_p + g]);
 	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
       }				/* loop over types */
 
-#ifdef NORESCALE
+#ifndef RESCALE
       /* NEW: Constraint on n: <n>=1.0 ONE CONSTRAINT ONLY */
       /* Calculate averages */
       rho_sum /= (double)natoms;
       /* ATTN: if there are invariant potentials, things might be problematic */
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
-#endif /* NORESCALE */
+#endif /* !RESCALE */
     }				/* only root process */
 #endif /* !NOPUNISH */
 
@@ -706,11 +708,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
 	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
-#ifndef NORESCALE
+#ifdef RESCALE
       /* punishment constraints */
       MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + limit_p,
 	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* !NORESCALE */
+#endif /* RESCALE */
     } else {
       /* forces */
       MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
@@ -723,11 +725,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
 	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
-#ifndef NORESCALE
+#ifndef RESCALE
       /* punishment constraints */
       MPI_Gatherv(forces + limit_p + firstconf, myconf, MPI_DOUBLE,
 	forces + limit_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* !NORESCALE */
+#endif /* RESCALE */
     }
     /* no need to pick up dummy constraints - they are already @ root */
 #else
@@ -736,7 +738,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* root process exits this function now */
     if (myid == 0) {
-      fcalls++;			/* Increase function call counter */
+      fcalls++;			/* increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");
@@ -745,7 +747,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       } else
 	return sum;
     }
-  }				/* END OF INFINITE LOOP */
+  }				/* end of infinite loop */
 
   /* once a non-root process arrives here, all is done. */
   return -1.0;

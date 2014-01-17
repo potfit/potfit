@@ -6,7 +6,7 @@
  *
  * Copyright 1996, 1997, 1998, 1999, 2000
  * 	Fabrice Rossi (gsl/min/bracketing.c)
- * Copyright 2002-2013
+ * Copyright 2002-2014
  * 	Institute for Theoretical and Applied Physics
  * 	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -123,7 +123,7 @@ void bracket(double *x_lower, double *x_minimum, double *x_upper,
 	/* Pathological: Search between center and right */
 	/* This means a change from original algorithm */
 #ifdef DEBUG
-	warning( "Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left, x_center, x_right);
+	warning("Pathological  @%li %f %f %f! center-right!\n", nb_eval, x_left, x_center, x_right);
 #endif /* DEBUG */
 	x_right = (x_right - x_left) * CGOLD + x_right;
 	nb_eval++;

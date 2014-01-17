@@ -4,7 +4,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -352,7 +352,8 @@ void anneal(double *xi)
 	  break;
 	}
       }
-#if !defined APOT && ( defined EAM || defined ADP || defined MEAM ) && !defined NORESCALE
+#ifdef RESCALE
+#if !defined APOT && ( defined EAM || defined ADP || defined MEAM )
       /* Check for rescaling... every tenth step */
       if (((m + 1) % 10 == 0) && (rescaleMe == 1)) {
 	/* Was rescaling necessary ? */
@@ -363,7 +364,8 @@ void anneal(double *xi)
 	  printf("F after rescale = %f\n", F);
 	}
       }
-#endif /* !APOT && ( EAM || ADP || MEAM ) && !NORESCALE */
+#endif /* !APOT && ( EAM || ADP || MEAM ) */
+#endif /* RESCALE */
     }
 
     /*Temp adjustment */

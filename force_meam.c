@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -121,9 +121,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   /* EAM variables */
   int   col_F;
   double eam_force;
-#if defined NORESCALE && !defined APOT
+#if !defined RESCALE && !defined APOT
   double rho_val;
-#endif /* NORESCALE && !APOT */
+#endif /* !RESCALE && !APOT */
 
   /* MEAM variables */
   double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
@@ -387,7 +387,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  /* Column for embedding function, F */
 	  col_F = paircol + ntypes + atom->type;
 
-#ifndef NORESCALE
+#ifdef RESCALE
 	  /* Compute energy, gradient for embedding function F
 	     Check if rho lies short of inner cutoff of F(rho) */
 	  if (atom->rho < calc_pot.begin[col_F]) {
@@ -455,7 +455,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      /* Get energy value from within spline and store the grad */
 	      forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
-#endif /* !NORESCALE */
+#endif /* RESCALE */
 
 	  /* Sum up rho for future MPI use */
 	  rho_sum_loc += atom->rho;
@@ -641,13 +641,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	}
 #endif /* STRESS */
 
-#ifndef NORESCALE
+#ifdef RESCALE
 	/* Add in the square of the limiting constraints for each config */
-	/* This is punishment from going out of bounds for F(rho)
-	   if NORESCALE is not defined */
+	/* This is punishment from going out of bounds for F(rho) */
 	forces[limit_p + h] *= conf_weight[h];
 	tmpsum += dsquare(forces[limit_p + h]);
-#endif /* !NORESCALE */
+#endif /* RESCALE */
       }				/* END MAIN LOOP OVER CONFIGURATIONS */
     }
 
@@ -666,7 +665,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     rho_sum = rho_sum_loc;
 #endif // MPI
 
-#ifdef NORESCALE
+#ifndef RESCALE
     if (myid == 0) {
       /* Calculate the average rho_sum per atom
          NOTE: This gauge constraint exists for both EAM and MEAM */
@@ -679,7 +678,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
       tmpsum += dsquare(forces[dummy_p + ntypes]);
     }
-#endif /* NORESCALE */
+#endif /* !RESCALE */
 
 #ifdef MPI
     /* Reduce the global sum from all the tmpsum's */
@@ -698,11 +697,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
 	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
-#ifndef NORESCALE
+#ifdef RESCALE
       /* punishment constraints */
       MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + limit_p,
 	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* !NORESCALE */
+#endif /* RESCALE */
     } else {
       /* forces */
       MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
@@ -715,11 +714,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
 	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
-#ifndef NORESCALE
+#ifdef RESCALE
       /* punishment constraints */
       MPI_Gatherv(forces + limit_p + firstconf, myconf, MPI_DOUBLE,
 	forces + limit_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* !NORESCALE */
+#endif /* RESCALE */
     }
     /* no need to pick up dummy constraints - they are already @ root */
 #else

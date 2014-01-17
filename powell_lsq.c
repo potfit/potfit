@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -136,16 +136,16 @@ void powell_lsq(double *xi)
     /* Init gamma */
     i = gamma_init(gamma, d, xi, fxi1);
     if (0 != i) {
-#if defined EAM || defined MEAM
-#ifndef NORESCALE
+#ifdef RESCALE
+#if defined EAM || defined ADP || defined MEAM
       /* perhaps rescaling helps? - Last resort... */
       warning("F does not depend on xi[%d], trying to rescale!\n", idx[i - 1]);
       rescale(&opt_pot, 1.0, 1);
       /* wake other threads and sync potentials */
       F = calc_forces(xi, fxi1, 2);
       i = gamma_init(gamma, d, xi, fxi1);
-#endif /* NORESCALE */
 #endif /* EAM */
+#endif /* RESCALE */
 
       /* try again */
       if (0 != i) {
@@ -287,9 +287,10 @@ void powell_lsq(double *xi)
 	break;
       }
     }
-    // WARNING: This rescaling is not necessary for EAM. Causes more problems.
+
+    /* WARNING: This rescaling is not necessary for EAM. Causes more problems. */
+#ifdef RESCALE
 #if defined xEAM || defined xMEAM
-#ifndef NORESCALE
     /* Check for rescaling... every fourth step */
     if ((n % 4) == 0) {
       temp = rescale(&opt_pot, 1.0, 0);
@@ -299,8 +300,9 @@ void powell_lsq(double *xi)
 	F = calc_forces(xi, fxi1, 2);
       }
     }
-#endif /* NORESCALE */
-#endif /* EAM */
+#endif /* xEAM || xMEAM */
+#endif /* RESCALE */
+
     /* write temp file  */
     if (*tempfile != '\0') {
 #ifndef APOT

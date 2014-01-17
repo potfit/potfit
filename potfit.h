@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -62,13 +62,6 @@
 #if defined TBEAM && !defined EAM
 #define EAM
 #endif /* TBEAM && !EAM */
-
-/* always define NORESCALE for analytic potentials */
-#ifdef APOT
-#ifndef NORESCALE
-#define NORESCALE
-#endif /* NORESCALE */
-#endif /* APOT */
 
 #ifdef APOT
 #define APOT_STEPS 500		/* number of sampling points for analytic pot */

@@ -1,7 +1,7 @@
 ############################################################################
 #
 # potfit -- The ITAP Force Matching Program
-# 	Copyright 2002-2013
+# 	Copyright 2002-2014
 #
 # 	Institute for Theoretical and Applied Physics,
 # 	University of Stuttgart, D-70550 Stuttgart, Germany
@@ -529,10 +529,10 @@ endif
 # Tersoff potentials (TERSOFF and TERSOFFMOD)
 ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
   ifneq (,$(findstring 1,${INTERACTION}))
-    ERROR += More than one potential model specified
+    ERROR += "More than one potential model specified."
   endif
   ifeq (,$(findstring apot,${MAKETARGET}))
-    ERROR += TERSOFF does not work without the apot flag
+    ERROR += "TERSOFF does not work without the apot flag!"
   endif
   ifneq (,$(findstring tersoffmod,${MAKETARGET}))
     CFLAGS += -DTERSOFFMOD
@@ -542,7 +542,7 @@ ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
 endif
 
 ifneq (,$(findstring 0,${INTERACTION}))
-  ERROR += No interaction model specified
+  ERROR += "No interaction model specified."
 endif
 
 # EVO - for differential evolution
@@ -552,6 +552,9 @@ endif
 
 # APOT - for analytic potentials
 ifneq (,$(findstring apot,${MAKETARGET}))
+  ifneq (,$(findstring resc,${MAKETARGET}))
+    ERROR += "Analytic potentials are incompatible with the rescale option!"
+  endif
 CFLAGS += -DAPOT
 endif
 
@@ -614,8 +617,8 @@ ifneq (,$(findstring acml5,${MAKETARGET}))
 CFLAGS += -DACML -DACML5
 endif
 
-ifneq (,$(findstring noresc,${MAKETARGET}))
-CFLAGS += -DNORESCALE
+ifneq (,$(findstring resc,${MAKETARGET}))
+CFLAGS += -DRESCALE
 endif
 
 # Substitute .o for .c to get the names of the object files

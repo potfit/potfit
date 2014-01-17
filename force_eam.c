@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2013
+ * Copyright 2002-2014
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -249,8 +249,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
+#ifdef RESCALE
 	/* set limiting constraints */
 	forces[limit_p + h] = -force_0[limit_p + h];
+#endif /* RESCALE */
 
 	/* first loop over atoms: reset forces, densities */
 	for (i = 0; i < inconf[h]; i++) {
@@ -379,7 +381,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  col_F_s = col_F + 2 * ntypes;
 #endif /* TBEAM */
 
-#ifndef NORESCALE
+#ifdef RESCALE
 	  /* we punish the potential for bad behavior:
 	   * if the density of one atom is smaller or greater than we have the
 	   * embedding function tabulated a punishment is added */
@@ -408,12 +410,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    atom->rho_s = calc_pot.begin[col_F_s];
 	  }
 #endif /* TBEAM */
-#endif /* !NORESCALE */
+#endif /* RESCALE */
 
 	  /* embedding energy, embedding gradient */
 	  /* contribution to cohesive energy is F(n) */
 
-#ifdef NORESCALE
+#ifndef RESCALE
 	  if (atom->rho < calc_pot.begin[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
@@ -438,9 +440,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      &atom->gradF);
 	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
 #endif /* APOT */
-	  }
-	  /* and in-between */
-	  else {
+	  } else {		/* and in-between */
 #ifdef APOT
 	    /* calculate small values directly */
 	    if (atom->rho < 0.1) {
@@ -453,13 +453,13 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  }
 #else
 	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
-#endif /* NORESCALE */
+#endif /* !RESCALE */
 
 	  /* sum up rho */
 	  rho_sum_loc += atom->rho;
 
 #ifdef TBEAM
-#ifdef NORESCALE
+#ifndef RESCALE
 	  if (atom->rho_s < calc_pot.begin[col_F_s]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
@@ -502,14 +502,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  }
 #else
 	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F_s, atom->rho_s, &atom->gradF_s);
-#endif /* NORESCALE */
+#endif /* !RESCALE */
 
 	  /* sum up rho_s */
 	  rho_s_sum_loc += atom->rho_s;
 #endif /* TBEAM */
-
 	}			/* second loop over atoms */
-
 
 	/* 3rd loop over atom: EAM force */
 	if (uf) {		/* only required if we calc forces */
@@ -615,8 +613,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  }
 	}
 #endif /* STRESS */
+#ifdef RESCALE
 	/* limiting constraints per configuration */
 	tmpsum += conf_weight[h] * dsquare(forces[limit_p + h]);
+#endif /* RESCALE */
       }				/* loop over configurations */
     }				/* parallel region */
 
@@ -647,7 +647,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     if (myid == 0) {
       int   g;
       for (g = 0; g < ntypes; g++) {
-#ifdef NORESCALE
+#ifndef RESCALE
 	/* clear field */
 	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.0)=0.0; */
@@ -659,7 +659,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	forces[dummy_p + 2 * ntypes + g] =
 	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * ntypes + g, 1.0);
 #endif /* TBEAM */
-#else /* NORESCALE */
+#else /* !RESCALE */
 	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
 	/* constraints on U`(n) */
 	forces[dummy_p + g] =
@@ -674,7 +674,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  0.5 * (calc_pot.begin[paircol + 3 * ntypes + g] + calc_pot.end[paircol + 3 * ntypes + g]))
 	  - force_0[dummy_p + 2 * ntypes + g];
 #endif /* TBEAM */
-#endif /* NORESCALE */
+#endif /* !RESCALE */
 
 	/* add punishments to total error sum */
 	tmpsum += dsquare(forces[dummy_p + g]);
@@ -685,7 +685,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* TBEAM */
       }				/* loop over types */
 
-#ifdef NORESCALE
+#ifndef RESCALE
       /* NEW: Constraint on n: <n>=1.0 ONE CONSTRAINT ONLY */
       if (rho_sum > 0.0) {
 	/* Calculate averages */
@@ -703,7 +703,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	tmpsum += dsquare(forces[dummy_p + 3 * ntypes]);
       }
 #endif /* TBEAM */
-#endif /* NORESCALE */
+#endif /* !RESCALE */
     }				/* only root process */
 #endif /* !NOPUNISH */
 
@@ -724,11 +724,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
 	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
-#ifndef NORESCALE
+#ifdef RESCALE
       /* punishment constraints */
       MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + limit_p,
 	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* !NORESCALE */
+#endif /* RESCALE */
     } else {
       /* forces */
       MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
@@ -741,20 +741,20 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
 	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
-#ifndef NORESCALE
+#ifdef RESCALE
       /* punishment constraints */
       MPI_Gatherv(forces + limit_p + firstconf, myconf, MPI_DOUBLE,
 	forces + limit_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* !NORESCALE */
+#endif /* RESCALE */
     }
-    /* no need to pick up dummy constraints - are already @ root */
+    /* no need to pick up dummy constraints - they are already @ root */
 #else
     sum = tmpsum;		/* global sum = local sum  */
 #endif /* MPI */
 
     /* root process exits this function now */
     if (0 == myid) {
-      fcalls++;			/* Increase function call counter */
+      fcalls++;			/* increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");
@@ -763,7 +763,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       } else
 	return sum;
     }
-
   }				/* end of infinite loop */
 
   /* once a non-root process arrives here, all is done. */
