@@ -651,6 +651,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       }				/* END MAIN LOOP OVER CONFIGURATIONS */
     }
 
+    /* dummy constraints (global) */
+#ifdef APOT
+    /* add punishment for out of bounds (mostly for powell_lsq) */
+    if (0 == myid) {
+      tmpsum += apot_punish(xi_opt, forces);
+    }
+#endif /* APOT */
+
 #ifdef MPI
     /* Reduce the rho_sum into root node */
     MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -680,32 +688,40 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     /* gather forces, energies, stresses */
     if (myid == 0) {		/* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
-	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces,
+	atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3,
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + energy_p,
 	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + natoms * 3 + nconf,
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
 	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+#endif /* STRESS */
+#ifndef NORESCALE
       /* punishment constraints */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3 + 7 * nconf,
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + limit_p,
 	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif /* !NORESCALE */
     } else {
       /* forces */
-      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
-	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
+	forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
-	forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + energy_p + firstconf, myconf, MPI_DOUBLE,
+	forces + energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#ifdef STRESS
       /* stresses */
-      MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
-	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
+	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+#endif /* STRESS */
+#ifndef NORESCALE
       /* punishment constraints */
-      MPI_Gatherv(forces + natoms * 3 + 7 * nconf + firstconf, myconf, MPI_DOUBLE,
-	forces + natoms * 3 + 7 * nconf, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + limit_p + firstconf, myconf, MPI_DOUBLE,
+	forces + limit_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif /* !NORESCALE */
     }
-    /* no need to pick up dummy constraints - are already @ root */
+    /* no need to pick up dummy constraints - they are already @ root */
 #else
     /* Set tmpsum to sum - only matters when not running MPI */
     sum = tmpsum;

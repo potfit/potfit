@@ -515,14 +515,20 @@ void broadcast_params()
 #endif /* THREEBODY */
   conf_vol = (double *)malloc(myconf * sizeof(double));
   conf_uf = (int *)malloc(myconf * sizeof(double));
+#ifdef STRESS
   conf_us = (int *)malloc(myconf * sizeof(double));
+#endif /* STRESS */
   MPI_Scatterv(volume, conf_len, conf_dist, MPI_DOUBLE, conf_vol, myconf, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Scatterv(useforce, conf_len, conf_dist, MPI_INT, conf_uf, myconf, MPI_INT, 0, MPI_COMM_WORLD);
+#ifdef STRESS
   MPI_Scatterv(usestress, conf_len, conf_dist, MPI_INT, conf_us, myconf, MPI_INT, 0, MPI_COMM_WORLD);
+#endif /* STRESS */
 
   reg_for_free(conf_vol, "conf_vol");
   reg_for_free(conf_uf, "conf_uf");
+#ifdef STRESS
   reg_for_free(conf_us, "conf_us");
+#endif /* STRESS */
   reg_for_free(conf_atoms, "conf_atoms");
 }
 

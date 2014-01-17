@@ -55,11 +55,9 @@ double rescale(pot_table_t *pt, double upper, int flag)
   atom_t *atom;
   neigh_t *neigh;
 
-#ifdef MEAM
   int   jj, kk, ijk;
-  angl *n_angl;
+  angle_t *angle;
   neigh_t *neigh_j, *neigh_k;
-#endif // MEAM
 
   /* Set potential array in xi */
   xi = pt->table;
@@ -174,18 +172,18 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	for (kk = jj + 1; kk < atom->num_neigh; ++kk) {
 
 	  // Store pointer to angular part (g)
-	  n_angl = atom->angl_part + ijk;
+	  angle = atom->angle_part + ijk;
 
 	  // Get pointer to neighbor kk
 	  neigh_k = atom->neigh + kk;
 
 	  // The cos(theta) should always lie inside -1 ... 1
 	  // So store the g and g' without checking bounds
-	  n_angl->g = splint_dir(pt, xi, n_angl->slot, n_angl->shift, n_angl->step);
+	  angle->g = splint_dir(pt, xi, angle->slot, angle->shift, angle->step);
 
 	  // Sum up rho piece for atom i caused by j and k
 	  // f_ij * f_ik * m_ijk
-	  atom->rho += neigh_j->f * neigh_k->f * n_angl->g;
+	  atom->rho += neigh_j->f * neigh_k->f * angle->g;
 	  ++ijk;
 	}			// END OF INNER LOOP OVER TRIPLETS
       }				// END OF OUTER LOOP OVER TRIPLETS
@@ -340,7 +338,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
       *(xi + pt->first[i] - 1) *= a;
   }
 
-#ifdef MEAM
   // In MEAM you have a*f*f*g, where 'a' scale factor is
   // carried over from scaling the total density
   // We multiply this 'a' to the g potential
@@ -359,8 +356,6 @@ double rescale(pot_table_t *pt, double upper, int flag)
     if (*(xi + pt->first[i] - 1) < 1.e30)
       *(xi + pt->first[i] - 1) *= a;
   }
-
-#endif // MEAM
 
   // Output some details
   printf("Scaling factor %f\n", a);

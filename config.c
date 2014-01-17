@@ -165,9 +165,11 @@ void read_config(char *filename)
     volume = (double *)realloc(volume, (nconf + 1) * sizeof(double));
     if (NULL == volume)
       error(1, "Cannot allocate memory for volume");
+#ifdef STRESS
     stress = (sym_tens *)realloc(stress, (nconf + 1) * sizeof(sym_tens));
     if (NULL == stress)
       error(1, "Cannot allocate memory for stress");
+#endif /* STRESS */
     inconf = (int *)realloc(inconf, (nconf + 1) * sizeof(int));
     if (NULL == inconf)
       error(1, "Cannot allocate memory for atoms in conf");
@@ -177,9 +179,11 @@ void read_config(char *filename)
     useforce = (int *)realloc(useforce, (nconf + 1) * sizeof(int));
     if (NULL == useforce)
       error(1, "Cannot allocate memory for useforce");
+#ifdef STRESS
     usestress = (int *)realloc(usestress, (nconf + 1) * sizeof(int));
-    if (NULL == useforce)
+    if (NULL == usestress)
       error(1, "Cannot allocate memory for usestress");
+#endif /* STRESS */
     na_type = (int **)realloc(na_type, (nconf + 2) * sizeof(int *));
     if (NULL == na_type)
       error(1, "Cannot allocate memory for na_type");
@@ -197,7 +201,9 @@ void read_config(char *filename)
     inconf[nconf] = count;
     cnfstart[nconf] = natoms;
     useforce[nconf] = use_force;
+#ifdef STRESS
     stresses = stress + nconf;
+#endif /* STRESS */
 #ifdef CONTRIB
     have_contrib = 0;
     have_contrib_box = 0;
@@ -423,6 +429,10 @@ void read_config(char *filename)
 	    error(1, "Error in stress tensor on line %d\n", line);
 	}
 #endif /* STRESS */
+	else if (res[1] != '#' && res[1] != 'F') {
+	  warning(0, "Unknown header line in %s detected:\n", filename);
+	  warning(1, "Line %d : %s\n", line, res);
+	}
 
       } while (res[1] != 'F');
       if (0 == h_eng)
@@ -433,7 +443,9 @@ void read_config(char *filename)
       if (have_contrib_box && have_contrib != 4)
 	error(1, "Incomplete box of contributing atoms for config %d!", nconf);
 #endif /* CONTRIB */
+#ifdef STRESS
       usestress[nconf] = h_stress;	/* no stress tensor available */
+#endif /* STRESS */
     } else {
       /* read the box vectors */
       fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z);
@@ -457,16 +469,20 @@ void read_config(char *filename)
 	error(1, "Configuration file without cohesive energy -- old format!");
       line++;
 
+#ifdef STRESS
       /* read stress tensor */
       if (6 != fscanf(infile, "%lf %lf %lf %lf %lf %lf\n", &(stresses->xx),
 	  &(stresses->yy), &(stresses->zz), &(stresses->xy), &(stresses->yz), &(stresses->zx)))
 	error(1, "No stresses given -- old format");
       usestress[nconf] = 1;
       line++;
+#endif /* STRESS */
     }
 
+#ifdef STRESS
     if (usestress[nconf])
       w_stress++;
+#endif /* STRESS */
     if (useforce[nconf])
       w_force++;
 
@@ -1023,17 +1039,21 @@ void read_config(char *filename)
   reg_for_free(coheng, "coheng");
   reg_for_free(conf_weight, "conf_weight");
   reg_for_free(volume, "volume");
+#ifdef STRESS
   reg_for_free(stress, "stress");
+#endif /* STRESS */
   reg_for_free(inconf, "inconf");
   reg_for_free(cnfstart, "cnfstart");
   reg_for_free(useforce, "useforce");
+#ifdef STRESS
   reg_for_free(usestress, "usestress");
+#endif /* STRESS */
 #ifdef CONTRIB
   if (n_spheres > 0) {
     reg_for_free(r_spheres, "sphere radii");
     reg_for_free(sphere_centers, "sphere centers");
   }
-#endif
+#endif /* CONTRIB */
 
   /* mdim is the dimension of the force vector:
      - 3*natoms forces

@@ -139,7 +139,9 @@ int main(int argc, char **argv)
   conf_atoms = atoms;
   conf_vol = volume;
   conf_uf = useforce;
+#ifdef STRESS
   conf_us = usestress;
+#endif /* STRESS */
 #endif /* MPI */
 
   ndim = opt_pot.idxlen;

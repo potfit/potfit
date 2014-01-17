@@ -318,24 +318,28 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     /* gather forces, energies, stresses */
     if (0 == myid) {		/* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
-	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces,
+	atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3,
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + energy_p,
 	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + natoms * 3 + nconf,
+      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
 	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+#endif /* STRESS */
     } else {
       /* forces */
-      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
-	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
+	forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
-	forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + energy_p + firstconf, myconf, MPI_DOUBLE,
+	forces + energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#ifdef STRESS
       /* stresses */
-      MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
-	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
+	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+#endif /* STRESS */
     }
 #else
     sum = tmpsum;		/* global sum = local sum  */
@@ -352,7 +356,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       } else
 	return sum;
     }
-
   }				/* end of infinite loop */
 
   /* once a non-root process arrives here, all is done. */

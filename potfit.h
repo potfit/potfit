@@ -224,10 +224,14 @@ EXTERN char **elements;		/* element names from vasp2force */
 EXTERN int **na_type;		/* number of atoms per type */
 EXTERN int *cnfstart;		/* Nr. of first atom in config */
 EXTERN int *conf_uf;
+#ifdef STRESS
 EXTERN int *conf_us;
+#endif /* STRESS */
 EXTERN int *inconf;		/* Nr. of atoms in each config */
-EXTERN int *useforce;		/* Should we use force/stress */
-EXTERN int *usestress;		/* Should we use force/stress */
+EXTERN int *useforce;		/* Should we use forces */
+#ifdef STRESS
+EXTERN int *usestress;		/* Should we use stresses */
+#endif /* STRESS */
 EXTERN int have_elements INIT(0);	/* do we have the elements ? */
 EXTERN int natoms INIT(0);	/* number of atoms */
 EXTERN int nconf INIT(0);	/* number of configurations */
@@ -246,8 +250,10 @@ EXTERN double *rmin;
 EXTERN double *volume;		/* volume of cell */
 EXTERN double rcutmin INIT(999.9);	/* minimum of all cutoff values */
 EXTERN double rcutmax INIT(0.0);	/* maximum of all cutoff values */
+#ifdef STRESS
 EXTERN sym_tens *conf_stress;
 EXTERN sym_tens *stress;	/* Stresses in each config */
+#endif /* STRESS */
 EXTERN vector box_x, box_y, box_z;
 #ifdef CONTRIB
 EXTERN vector cbox_o;		/* origin of box of contrib. atoms */
@@ -297,7 +303,9 @@ EXTERN int myconf INIT(0);
 
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
+#ifdef STRESS
 EXTERN int stress_p INIT(0);	/* pointer to stresses */
+#endif /* STRESS */
 #if defined EAM || defined ADP || defined MEAM
 EXTERN int dummy_p INIT(0);	/* pointer to dummy constraints */
 EXTERN int limit_p INIT(0);	/* pointer to limiting constraints */
