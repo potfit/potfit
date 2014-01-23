@@ -1,4 +1,4 @@
-potfit-next
+potfit-0.7.0 (20140123)
 + add global scaling parameter (UNTESTED)
 + add tbeam interaction
 + remove WZERO and PARAB options
