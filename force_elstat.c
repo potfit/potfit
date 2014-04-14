@@ -591,7 +591,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      }
 
 	      /* dipole-monopole contributions */
-	      if (dp_alpha[type2] && charge[type2]) {
+	      if (dp_alpha[type1] && charge[type2]) {
 
 		if (dp_b[col] && dp_c[col]) {
 		  fnval_sum = fnval_tail + srval;
