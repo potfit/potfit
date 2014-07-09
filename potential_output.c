@@ -1432,14 +1432,13 @@ void write_pot_table_lammps(pot_table_t *pt)
   char  filename[255];
   int   i, j;
   int   k = 0, l;
-  double dx, r;
+  double drho, dr, r, temp;
 
   /* open file */
   if (strcmp(output_prefix, "") != 0)
-    strcpy(filename, output_prefix);
+    sprintf(filename, "%s.lammps.%s", output_prefix, interaction_name);
   else
-    strcpy(filename, endpot);
-  sprintf(filename, "%s.lammps.%s", filename, interaction_name);
+    sprintf(filename, "%s.lammps.%s", endpot, interaction_name);
   outfile = fopen(filename, "w");
   if (NULL == outfile)
     error(1, "Could not open file %s\n", filename);
@@ -1457,9 +1456,18 @@ void write_pot_table_lammps(pot_table_t *pt)
   for (i = 0; i < ntypes; i++)
     fprintf(outfile, " %s", elements[i]);
   fprintf(outfile, "\n");
-  dx = rcutmin / (imdpotsteps - 1);
+
+  temp = 999.9;
+  for (i=0;i<ntypes;i++) {
+    k = paircol + ntypes + i;
+    temp = MIN(temp,apot_table.end[k]);
+  }
+
+  drho = temp / (imdpotsteps - 1);
+  dr = rcutmin / (imdpotsteps - 1);
+
   /* line 5: Nrho, drho, Nr, dr, cutoff */
-  fprintf(outfile, "%d %f %d %f %f\n", imdpotsteps, dx, imdpotsteps, dx, rcutmin);
+  fprintf(outfile, "%d %f %d %f %f\n", imdpotsteps, drho, imdpotsteps, dr, rcutmin);
 
   /* one block for every atom type */
 #if defined EAM || defined ADP
@@ -1470,15 +1478,31 @@ void write_pot_table_lammps(pot_table_t *pt)
     /* embedding function F(n) */
     k = paircol + ntypes + i;
     for (j = 0; j < imdpotsteps; j++) {
-      fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
-      r += dx;
+#ifdef APOT
+	apot_table.fvalue[k] (r, apot_table.values[k], &temp);
+	temp =
+	  smooth_pot[k] ? temp * cutoff(r, apot_table.end[k],
+	  apot_table.values[k][apot_table.n_par[k] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
+	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, k, r));
+#endif /* APOT */
+      r += drho;
     }
     r = 0.0;
     k = paircol + i;
     /* transfer function rho(r) */
     for (j = 0; j < imdpotsteps; j++) {
-      fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
-      r += dx;
+#ifdef APOT
+	apot_table.fvalue[k] (r, apot_table.values[k], &temp);
+	temp =
+	  smooth_pot[k] ? temp * cutoff(r, apot_table.end[k],
+	  apot_table.values[k][apot_table.n_par[k] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", temp);
+#else
+	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, k, r));
+#endif /* APOT */
+      r += dr;
     }
   }
 #endif /* EAM || ADP */
@@ -1489,8 +1513,16 @@ void write_pot_table_lammps(pot_table_t *pt)
       r = 0.0;
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
       for (l = 0; l < imdpotsteps; l++) {
-	fprintf(outfile, "%e\n", r * splint_ne(pt, pt->table, k, r));
-	r += dx;
+#ifdef APOT
+	apot_table.fvalue[k] (r, apot_table.values[k], &temp);
+	temp =
+	  smooth_pot[k] ? temp * cutoff(r, apot_table.end[k],
+	  apot_table.values[k][apot_table.n_par[k] - 1]) : temp;
+	fprintf(outfile, "%.16e\n", r * temp);
+#else
+	fprintf(outfile, "%.16e\n", r * splint_ne(pt, pt->table, k, r));
+#endif /* APOT */
+	r += dr;
       }
     }
 
@@ -1721,7 +1753,7 @@ void write_imd_data_pair(FILE *outfile, char *string, int offset, int y)
 {
   int   i = 0;
 
-  fprintf(outfile, string);
+  fprintf(outfile, "%s", string);
   for (i = 0; i < paircol; i++)
     fprintf(outfile, " %g", apot_table.values[offset + i][y]);
   fprintf(outfile, "\n");

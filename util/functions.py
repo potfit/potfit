@@ -104,7 +104,7 @@ class lj(potfit_function):
 class morse(potfit_function):
     def __init__(self):
         super(morse, self).__init__()
-        self.function = "{0}*(1-exp(-{1}*(x-{2})))**2"
+        self.function = "{0}*((1-exp(-{1}*(x-{2})))**2-1)"
         self.params = [
                 ['D_e', 0.1, 0, 1],
                 ['a', 2, 1, 5],
