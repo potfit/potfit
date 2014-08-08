@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * potential_input.c: Routines for writing the potential table
+ * potential_output.c: Routines for writing the potential table
  *
  ****************************************************************
  *
