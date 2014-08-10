@@ -1245,6 +1245,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
  *
  ****************************************************************/
 
+#ifdef APOT
+
 #if defined STIWEB || defined TERSOFF
 
 void write_pot_table_lammps(pot_table_t *pt)
@@ -1419,7 +1421,6 @@ void write_pot_table_lammps(pot_table_t *pt)
  /* in DYNAMO multi-element setfl format */
 void write_pot_table_lammps(pot_table_t *pt)
 {
-/* TODO: ??? */
 #ifdef COULOMB
   printf("Potential in LAMMPS format is not available for coulomb interactions.\n");
   return;
@@ -1559,7 +1560,9 @@ void write_pot_table_lammps(pot_table_t *pt)
 #endif /* COULOMB */
 }
 
-#endif /* STIWEB */
+#endif /* STIWEB || TERSOFF */
+
+#endif /* APOT */
 
 /****************************************************************
  *

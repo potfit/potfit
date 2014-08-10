@@ -443,11 +443,11 @@ class stiweb_2(potfit_function):
                 ['p', 1, -10, 10],
                 ['q', 1, -10, 10],
                 ['delta', 1, -10, 10],
-                ['a_1', 1, -10, 10]]
+                ['a', 1, -10, 10]]
 
 class stiweb_3(potfit_function):
     def __init__(self):
         super(stiweb_3, self).__init__()
         self.params = [
                 ['gamma', 1, -10, 10],
-                ['a_2', 1, -10, 10]]
+                ['b', 1, -10, 10]]
