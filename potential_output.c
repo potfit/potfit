@@ -1536,7 +1536,7 @@ void write_pot_table_lammps(pot_table_t *pt)
       k += paircol + 2 * ntypes;
       for (l = 0; l < imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
-	r += dx;
+	r += dr;
       }
     }
   /* quadrupole distortion */
@@ -1547,7 +1547,7 @@ void write_pot_table_lammps(pot_table_t *pt)
       k += 2 * (paircol + ntypes);
       for (l = 0; l < imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
-	r += dx;
+	r += dr;
       }
     }
 #endif /* ADP */
