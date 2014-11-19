@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 ################################################################
 #
 # vasp2force:
@@ -6,7 +6,7 @@
 #
 ################################################################
 #
-#   Copyright 2013
+#   Copyright 2014
 #             Institute for Theoretical and Applied Physics
 #             University of Stuttgart, D-70550 Stuttgart, Germany
 #             http://potfit.sourceforge.net/
@@ -31,6 +31,7 @@
 #################################################################
 
 import argparse
+import copy
 import gzip
 import os
 import sys
@@ -67,6 +68,8 @@ def scan_outcar_file(file_handle):
     potcar = []
     ipt = []
     for line in file_handle:
+        if line.startswith('|'):
+            continue
         if 'TOTAL-FORCE' in line:
             configs += 1
         if 'VRHFIN' in line:
@@ -96,8 +99,136 @@ def uniq(seq):
     seen_add = seen.add
     return [ x for x in seq if x not in seen and not seen_add(x)]
 
+
+def process_outcar_file_v4(f, natoms, count):
+    line = f.readline()
+    while line != '':
+        line = f.readline()
+        if 'Iteration' in line:
+            energy = 0
+            box_x = []
+            box_y = []
+            box_z = []
+            stress = []
+        if 'energy  without' in line:
+            energy = float(line.split()[6]) / natoms
+        if 'VOLUME and BASIS' in line:
+            for do in range(5):
+                line = f.readline()
+            box_x = [float(s) for s in line.replace('-',' -').split()[0:3]]
+            line = f.readline()
+            box_y = [float(s) for s in line.replace('-',' -').split()[0:3]]
+            line = f.readline()
+            box_z = [float(s) for s in line.replace('-',' -').split()[0:3]]
+        if 'in kB' in line:
+            stress = [float(s)/1602 for s in line.split()[2:8]]
+        if 'TOTAL-FORCE' in line:
+            count += 1
+            line = f.readline()
+            if count in configs or (args.final and count == data[i][0]):
+                print "#N %s 1" % natoms
+                sys.stdout.write("#C")
+                if args.c:
+                    sys.stdout.write(" %s" % numbers[0])
+                    for j in range(1,max_types):
+                        sys.stdout.write(' %s' % numbers[j])
+                else:
+                    sys.stdout.write(" %s" % data[i][1][0])
+                    for j in range(1,max_types):
+                        sys.stdout.write(' %s' % data[i][1][j])
+                sys.stdout.write("\n")
+                print "## force file generated from file {} config {:d}".format(outcars[i], count)
+                print "#X {:13.8f} {:13.8f} {:13.8f}".format(box_x[0],box_x[1],box_x[2])
+                print "#Y {:13.8f} {:13.8f} {:13.8f}".format(box_y[0],box_y[1],box_y[2])
+                print "#Z {:13.8f} {:13.8f} {:13.8f}".format(box_z[0],box_z[1],box_z[2])
+                print "#W {:f}".format(args.weight)
+                print "#E {:.10f}".format(energy)
+                if stress:
+                    sys.stdout.write("#S")
+                    for num in range(6):
+                        sys.stdout.write(' {:8.7g}'.format(stress[num]))
+                    sys.stdout.write('\n')
+                print "#F"
+                for num in range(len(data[i][2])):
+                    for k in range(data[i][2][num]):
+                        line = [float(s) for s in f.readline().split()[0:6]]
+                        if args.c:
+                            sys.stdout.write('{} '.format(types[data[i][1][num]]))
+                        else:
+                            sys.stdout.write('{} '.format(num))
+                        sys.stdout.write("{:11.7g} {:11.7g} {:11.7g}".format(line[0],line[1],line[2]))
+                        sys.stdout.write(" {:11.7g} {:11.7g} {:11.7g}\n".format(line[3],line[4],line[5]))
+
+def process_outcar_file_v5(f, natoms, count):
+    line = f.readline()
+    while line != '':
+        line = f.readline()
+        if 'Iteration' in line:
+            energy = 0
+            box_x = []
+            box_y = []
+            box_z = []
+            stress = []
+            atom_data = []
+        if 'energy  without' in line:
+            energy = float(line.split()[6]) / natoms
+            if count in configs or (args.final and count == data[i][0]):
+                print "#N %s 1" % natoms
+                sys.stdout.write("#C")
+                if args.c:
+                    sys.stdout.write(" %s" % numbers[0])
+                    for j in range(1,max_types):
+                        sys.stdout.write(' %s' % numbers[j])
+                else:
+                    sys.stdout.write(" %s" % data[i][1][0])
+                    for j in range(1,max_types):
+                        sys.stdout.write(' %s' % data[i][1][j])
+                sys.stdout.write("\n")
+                print "## force file generated from file {} config {}".format(outcars[i], count)
+                print "#X {:13.8f} {:13.8f} {:13.8f}".format(box_x[0],box_x[1],box_x[2])
+                print "#Y {:13.8f} {:13.8f} {:13.8f}".format(box_y[0],box_y[1],box_y[2])
+                print "#Z {:13.8f} {:13.8f} {:13.8f}".format(box_z[0],box_z[1],box_z[2])
+                print "#W {:f}".format(args.weight)
+                print "#E {:.10f}".format(energy)
+                if stress:
+                    sys.stdout.write("#S")
+                    for num in range(6):
+                        sys.stdout.write(' {:8.7g}'.format(stress[num]))
+                    sys.stdout.write('\n')
+                print "#F"
+                for adata in atom_data:
+                    print "{} {:11.7g} {:11.7g} {:11.7g} {:11.7g} {:11.7g} {:11.7g}".format(
+                            adata[0], adata[1], adata[2], adata[3], adata[4], adata[5], adata[6])
+        if 'VOLUME and BASIS' in line:
+            for do in range(5):
+                line = f.readline()
+            box_x = [float(s) for s in line.replace('-',' -').split()[0:3]]
+            line = f.readline()
+            box_y = [float(s) for s in line.replace('-',' -').split()[0:3]]
+            line = f.readline()
+            box_z = [float(s) for s in line.replace('-',' -').split()[0:3]]
+        if 'in kB' in line:
+            stress = [float(s)/1602 for s in line.split()[2:8]]
+        if 'TOTAL-FORCE' in line:
+            count += 1
+            line = f.readline()
+            adata = [0] * 7
+            for num in range(len(data[i][2])):
+                for k in range(data[i][2][num]):
+                    line = [float(s) for s in f.readline().split()[0:6]]
+                    if args.c:
+                        adata[0] = int(types[data[i][1][num]])
+                    else:
+                        adata[0] = int(num)
+                    adata[1] = float(line[0])
+                    adata[2] = float(line[1])
+                    adata[3] = float(line[2])
+                    adata[4] = float(line[3])
+                    adata[5] = float(line[4])
+                    adata[6] = float(line[5])
+                    atom_data.append(copy.copy(adata))
+
 parser = argparse.ArgumentParser(
-#    formatter_class=argparse.RawDescriptionHelpFormatter,
     description = '''Converts vasp output data into potfit reference configurations.''')
 
 parser.add_argument('-c', type=str, required=False, help='list of chemical species to use, e.g. -c Mg=0,Zn=1')
@@ -187,6 +318,13 @@ if args.configs:
                 for i in range(val_min,val_max+1):
                     configs.append(i)
 
+# abort with an error message if no configurations are specified
+if (len(configs) == 0 and not args.final):
+    sys.stderr.write("ERROR: \tNo configurations specified.\n")
+    sys.stderr.write("\tUse the -s and/or -f command line switches.\n")
+    sys.exit()
+
+# check for valid configurations
 for i in range(len(data)):
     item = data[i]
     if configs and int(configs[-1]) > int(item[0]):
@@ -228,68 +366,25 @@ if args.c:
             types[name] = number
             numbers[number] = name
 
+# process the outcar files
 for i in range(len(outcars)):
+
     if outcars[i].endswith('.gz'):
         f = gzip.open(outcars[i], 'rb')
     else:
         f = open(outcars[i], 'r')
+
     natoms = sum(data[i][2])
     count = 0
     line = f.readline()
-    while line != '':
-        line = f.readline()
-        if 'Iteration' in line:
-            energy = 0
-            box_x = []
-            box_y = []
-            box_z = []
-            stress = []
-        if 'energy  without' in line:
-            energy = float(line.split()[6]) / natoms
-        if 'VOLUME and BASIS' in line:
-            for do in range(5):
-                line = f.readline()
-            box_x = [float(s) for s in line.replace('-',' -').split()[0:3]]
-            line = f.readline()
-            box_y = [float(s) for s in line.replace('-',' -').split()[0:3]]
-            line = f.readline()
-            box_z = [float(s) for s in line.replace('-',' -').split()[0:3]]
-        if 'in kB' in line:
-            stress = [float(s)/1602 for s in line.split()[2:8]]
-        if 'TOTAL-FORCE' in line:
-            count += 1
-            line = f.readline()
-            if count in configs or (args.final and count == data[i][0]):
-                print "#N %s 1" % natoms
-                sys.stdout.write("#C")
-                if args.c:
-                    sys.stdout.write(" %s" % numbers[0])
-                    for j in range(1,max_types):
-                        sys.stdout.write(' %s' % numbers[j])
-                else:
-                    sys.stdout.write(" %s" % data[i][1][0])
-                    for j in range(1,max_types):
-                        sys.stdout.write(' %s' % data[i][1][j])
-                sys.stdout.write("\n")
-                print "## force file generated from file %s" % outcars[i]
-                print "#X {:13.8f} {:13.8f} {:13.8f}".format(box_x[0],box_x[1],box_x[2])
-                print "#Y {:13.8f} {:13.8f} {:13.8f}".format(box_y[0],box_y[1],box_y[2])
-                print "#Z {:13.8f} {:13.8f} {:13.8f}".format(box_z[0],box_z[1],box_z[2])
-                print "#W {:f}".format(args.weight)
-                print "#E {:.10f}".format(energy)
-                if stress:
-                    sys.stdout.write("#S")
-                    for num in range(6):
-                        sys.stdout.write(' {:8.7g}'.format(stress[num]))
-                    sys.stdout.write('\n')
-                print "#F"
-                for num in range(len(data[i][2])):
-                    for k in range(data[i][2][num]):
-                        line = [float(s) for s in f.readline().split()[0:6]]
-                        if args.c:
-                            sys.stdout.write('{} '.format(types[data[i][1][num]]))
-                        else:
-                            sys.stdout.write('{} '.format(num))
-                        sys.stdout.write("{:11.7g} {:11.7g} {:11.7g}".format(line[0],line[1],line[2]))
-                        sys.stdout.write(" {:11.7g} {:11.7g} {:11.7g}\n".format(line[3],line[4],line[5]))
+
+    vasp_major_version = int(line.split()[0][5])
+    vasp_minor_version = int(line.split()[0][7])
+    vasp_patch_level = int(line.split()[0].split('.')[3])
+
+    if vasp_major_version == 4:
+        process_outcar_file_v4(f, natoms, count)
+    else:
+        process_outcar_file_v5(f, natoms, count)
+
     f.close()
