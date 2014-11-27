@@ -40,7 +40,6 @@
 #include "potential.h"
 #include "splines.h"
 #include "utils.h"
-#include "version.h"
 
 /****************************************************************
  *
@@ -61,7 +60,7 @@ int main(int argc, char **argv)
 
   /* print version and compile date and time */
   if (myid == 0) {
-    printf("This is %s compiled on %s, %s.\n\n", VERSION_INFO, __DATE__, __TIME__);
+    printf("This is %s compiled on %s, %s.\n\n", POTFIT_VERSION, __DATE__, __TIME__);
 #ifdef MPI
     printf("Starting up MPI with %d processes.\n", num_cpus);
 #endif /* MPI */

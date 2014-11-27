@@ -31,6 +31,8 @@
 #ifndef POTFIT_H
 #define POTFIT_H
 
+#define POTFIT_VERSION "potfit-git"
+
 #ifdef __INTEL_COMPILER
 
 /* remark #981: operands are evaluated in unspecified order */
