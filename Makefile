@@ -164,7 +164,6 @@ MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
 ACML4PATH 	= ${ACML4DIR}/lib
 ACML5PATH 	= ${ACML5DIR}/lib
-RELEASE		= 0
 
 ###########################################################################
 #
@@ -634,18 +633,6 @@ OBJECTS := $(subst .c,.o,${SOURCES})
 
 ###########################################################################
 #
-# 	Check for bzr binary
-#
-###########################################################################
-
-ifneq (,$(shell `which git 2> /dev/null`))
-  GIT = 1
-else
-  GIT = 0
-endif
-
-###########################################################################
-#
 #	 Rules
 #
 ###########################################################################
@@ -713,20 +700,6 @@ ifneq (,${ERROR})
 else
 ifneq (,${MAKETARGET})
 	@echo "${WARNING}"
-ifeq (0,${RELEASE})
-ifeq (1,${GIT})
-	@echo -e "Writing git data to version.h\n"
-	@rm -f version.h
-	@echo -e "#define VERSION_INFO \"potfit-git (r"`git rev-list HEAD | wc -l`")\"\n" > version.h
-else
-	@echo -e "Writing fake git data to version.h\n"
-	@rm -f version.h
-	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
-endif
-else
-	@rm -f version.h
-	@echo -e "#define VERSION_INFO \"setversionhere\"" > version.h
-endif
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
 else
 	@echo 'No TARGET specified.'
@@ -739,7 +712,7 @@ endif
 ###########################################################################
 
 clean:
-	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h
+	rm -f *.o *.u *~ \#* *.V *.T *.O *.il
 
 help:
 	@echo "Usage: make potfit[_<parallel>][_<option>[_<option>...]]"

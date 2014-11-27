@@ -1,3 +1,9 @@
+potfit-0.7.1 (20141127)
++ remove the version.h file, it caused too much trouble
++ make vasp2force compatible with VASP version 5 OUTCAR files
++ fix output of LAMMPS potential tables
++ small bugfixes
+
 potfit-0.7.0 (20140123)
 + add global scaling parameter (UNTESTED)
 + add tbeam interaction
