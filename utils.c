@@ -361,7 +361,7 @@ inline int isquare(int i)
   return i * i;
 }
 
-inline double dsquare(double d)
+double dsquare(double d)
 {
   return d * d;
 }

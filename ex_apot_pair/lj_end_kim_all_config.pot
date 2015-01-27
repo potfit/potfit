@@ -1,0 +1,12 @@
+#F 0 1
+#T PAIR
+#C Ar
+## Ar-Ar
+#I 0
+#E
+
+type	lj
+cutoff	6.000000
+# rmin	2.051330
+epsilon	        0.66403439	      0.0000	      1.0000
+sigma	        2.14453710	      1.0000	      4.0000

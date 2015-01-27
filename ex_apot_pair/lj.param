@@ -1,0 +1,21 @@
+ntypes		1
+config		sys_b.force
+startpot	lj.pot
+endpot		lj_end.pot
+tempfile	dummy.tmp
+
+imdpot		dummy.imd
+plotfile	dummy.plot
+flagfile	STOP
+
+write_pair	1
+write_lammps	1
+
+imdpotsteps	5000
+output_prefix	out
+
+opt		1
+anneal_temp	10
+eng_weight	100
+stress_weight	10
+seed		42

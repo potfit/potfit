@@ -1,0 +1,24 @@
+* Info (KIM_API_model::is_it_match): The following descriptor file line may not match with Simulator's descriptor file.
+OneBasedLists flag none [] 
+
+* Info (KIM_API_model::is_it_match): The following descriptor file line may not match with Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000's descriptor file.
+ZeroBasedLists flag none [] 
+
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so
+* Info: (KIM_API_model::model_init): call dynamically linked initialize routine for:Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+               from the shared library:/usr/local/lib/kim-api-v1/models/Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000/libkim-api-model-v1.so

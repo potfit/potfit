@@ -121,15 +121,13 @@
 # x86_64-gcc    64bit GNU Compiler
 # i686-icc 	32bit Intel Compiler
 # i686-gcc  	32bit GNU Compiler
-# i686-kim  	32bit GNU Compiler
 #
 #SYSTEM 		= x86_64-icc 	# Use this as fallback
-#SYSTEM 		= $(shell uname -m)-icc
-SYSTEM 		= i686-kim
+SYSTEM 		= $(shell uname -m)-icc
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
-#BIN_DIR 	= ${HOME}/bin
+BIN_DIR 	= ${HOME}/bin
 #BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
@@ -285,13 +283,13 @@ endif
 
 ifeq (i686-gcc,${SYSTEM})
 # compiler
-  CC_SERIAL	= gcc-4.8 -m32
-  CC_MPI	= mpicc -m32
-  OMPI_CC     	= gcc-4.8 -m32
-  OMPI_CLINKER 	= gcc-4.8 -m32
+  CC_SERIAL	= gcc
+  CC_MPI	= mpicc
+  OMPI_CC     	= gcc
+  OMPI_CLINKER 	= gcc
 
 # general optimization flags
-  OPT_FLAGS	+= -O3 -Wno-unused
+  OPT_FLAGS	+= -O3 -march=native -Wno-unused
 
 # profiling and debug flags
   PROF_FLAGS	+= -g3 -pg
@@ -301,10 +299,8 @@ ifeq (i686-gcc,${SYSTEM})
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      += -I${MKLDIR}/include
-#  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
-#		   -Wl,--end-group -lpthread -Wl,--as-needed
-  LIBS		+= -lmkl_intel -lmkl_sequential -lmkl_core \
-		   -lpthread
+  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
+		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library
@@ -321,26 +317,6 @@ endif
   export        OMPI_CC OMPI_CLINKER
 endif
 
-ifeq (i686-kim,${SYSTEM})
-  ifeq ($(shell kim-api-build-config --version),)
-	    $(error The utility 'kim-api-build-config' not found on path; Update PATH environment variable appropriately)
-  endif
-
-  CC_SERIAL      = $(shell kim-api-build-config --cc)
-  CINCLUDE      += $(shell kim-api-build-config --includes)
-  FLAGS         += $(shell kim-api-build-config --cflags)
-  LFLAGS_SERIAL += $(shell kim-api-build-config --ldflags)
-  LIBS          += $(shell kim-api-build-config --ldlibs)
-
-# Intel Math Kernel Library
-ifeq (,$(strip $(findstring acml,${MAKETARGET})))
-  CINCLUDE      += -I${MKLDIR}/include
-#  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
-#		   -Wl,--end-group -lpthread -Wl,--as-needed
-  LIBS		+= -lmkl_intel -lmkl_sequential -lmkl_core \
-		   -lpthread
-endif
-endif
 
 ###########################################################################
 #
@@ -400,7 +376,7 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 		  powell_lsq.c random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-  POTFITSRC      += force_kim/force_kim.c
+  POTFITSRC      += force_pair.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))
@@ -705,7 +681,7 @@ ifneq (,${STRIP})
 endif
 ifneq (,${BIN_DIR})
   ifneq (,${MV})
-	${MV} $@ ${BIN_DIR} && rm -f $@
+#	${MV} $@ ${BIN_DIR} && rm -f $@
   endif
 endif
 
@@ -757,7 +733,7 @@ endif
 ###########################################################################
 
 clean:
-	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h force_kim/*.o
+	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h
 
 help:
 	@echo "Usage: make potfit[_<parallel>][_<option>[_<option>...]]"

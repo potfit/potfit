@@ -296,6 +296,17 @@ EXTERN int firstconf INIT(0);
 EXTERN int myatoms INIT(0);
 EXTERN int myconf INIT(0);
 
+
+/* added */
+/************************
+* KIM variable
+************************/
+EXTERN int haveKIMObj INIT(0);   /* do we have created kim objects? 0 not, 1 yes*/
+EXTERN void** pkimObj;						 /* pointers to kim objects, will be initialized to
+																		 void* pkimObj[nconf] */			
+/* added ends */
+
+
 /* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 #ifdef STRESS
