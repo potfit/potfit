@@ -135,7 +135,7 @@ SYSTEM 		= i686-kim
 # Base directory of your installation of the MKL or ACML
 
 # General settings
-MKLDIR      = /opt/intel/composer_xe_2015.1.108/mkl
+MKLDIR      = /opt/intel/composer_xe_2015.1.133/mkl
 ACML4DIR  	= /opt/acml4.4.0/gfortran64
 ACML5DIR  	= /opt/acml5.3.1/gfortran64
 LIBMDIR 	= /opt/amdlibm
@@ -335,10 +335,10 @@ ifeq (i686-kim,${SYSTEM})
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      += -I${MKLDIR}/include
-#  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
+ # LIBS		+= -Wl,--start-group -lmkl_sequential -lmkl_core \
 #		   -Wl,--end-group -lpthread -Wl,--as-needed
-  LIBS		+= -lmkl_intel -lmkl_sequential -lmkl_core \
-		   -lpthread
+   LIBS   += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+					   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 endif
 
@@ -400,7 +400,7 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 		  powell_lsq.c random.c simann.c splines.c utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-  POTFITSRC      += force_kim/force_kim.c
+  POTFITSRC      += force_kim/force_kim.c force_kim/free_kim.c
 endif
 
 ifneq (,$(strip $(findstring eam,${MAKETARGET})))

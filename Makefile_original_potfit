@@ -133,7 +133,7 @@ BIN_DIR 	= ${HOME}/bin
 # Base directory of your installation of the MKL or ACML
 
 # General settings
-MKLDIR      = /opt/intel/composer_xe_2015.1.108/mkl
+MKLDIR      = /opt/intel/composer_xe_2015.1.133/mkl
 ACML4DIR  	= /opt/acml4.4.0/gfortran64
 ACML5DIR  	= /opt/acml5.3.1/gfortran64
 LIBMDIR 	= /opt/amdlibm

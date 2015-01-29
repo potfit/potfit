@@ -6,3 +6,4 @@ tags
 cscope.out
 potfit_*
 *.pyc
+.DS_Store

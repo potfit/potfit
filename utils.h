@@ -50,6 +50,18 @@ void  init_angle(angle_t *);
 void  reg_for_free(void *, char *, ...);
 void  free_all_pointers();
 
+
+/* added */
+/**************************************************
+*
+* free KIM pointers
+*
+* the function is defined in force_kim/kim_free.c 
+**************************************************/
+void FreeKIM(void);
+
+
+
 /* vector procuct */
 vector vec_prod(vector, vector);
 

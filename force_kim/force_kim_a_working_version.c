@@ -378,26 +378,6 @@ exit(1);
 	      else
 		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 
-
-
-
-/* unittest */
-/* Replace the spline-based force calculation algorithom in potfit by an analytic 
-	Lennard-Jones potential to check that the difference in optimized parameters
-	between KIM and potfit is due to the method how the forces are calcualted. In 
-	KIM, analytic function is used, but potfit uses splines */
-
-
- AnalyticForce(xi_opt[2], xi_opt[3], calc_pot.end[neigh->col[0]],
- 								neigh->r, &phi_val, &phi_grad);
-
-
-/* unittest ends*/
-
-
-
-
-
 	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
 		phi_val *= 0.5;
@@ -624,10 +604,7 @@ printf("flag kimtmp_sum of energy from kim%f\n", kim_tmpsum);
 *
 ***************************************************************************/
 
-/*
 	tmpsum = kim_tmpsum;
-*/
-
 /* added ends */
 
 
@@ -1144,40 +1121,4 @@ int CalcForce(void* pkim, double** energy, double** force, double** virial)
 	return KIM_STATUS_OK;
 }
 /* added ends */
-
-
-
-/* added */
-/***************************************************************************
-* 
-* Calculate analytic Lennard-Jones potential value and gradient
-*
-* This is just a test, we don't need it once it is checked
-*
-*	transferred variable:
-* phi_val: potential value
-* phi_grad: gradient of potential 
-***************************************************************************/
-
-int AnalyticForce(double epsilon, double sigma, double cutoff,
-									double r, double* phi_val, double* phi_grad)
-{	
-	/* local variables */
-	double sor;
-	double sor6;
-	double sor12;
-
-	sor   = sigma/(double)r;
-	sor6  = pow(sor,6);
-	sor12 = pow(sor6,2);
-
-	if( r > cutoff) {
-		*phi_val  = 0.0;
-		*phi_grad = 0.0;
-	} else {
-		*phi_val  = 4.0*epsilon*(sor12 - sor6);
-		*phi_grad = 24.0*epsilon*(-2.0*sor12 + sor6)/(double)r;
-	}
-	return 1;
-}
 

@@ -280,6 +280,13 @@ int main(int argc, char **argv)
   free(u_address);
   free_all_pointers();
 
+
+/* added */
+/* free KIM stuff */
+	FreeKIM();
+/* added ends */
+
+
   return 0;
 }
 
