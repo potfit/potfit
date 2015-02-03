@@ -257,6 +257,23 @@ EXTERN vector *sphere_centers;	/* centers of the spheres of contrib. atoms */
 #endif /* CONTRIB */
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
+
+/* added */
+/*********************************************************
+* This is used to enable MI_OPBC_H in KIM. 
+box_side_len is used to store the info of box size of each
+* configuration. box_side_len[0] box_side_len[1] box_side_len[2] 
+* store box_x.x box_y.y box_z.z of the first configuration,
+* respectively. box_side_len[3] stores box_x.x of the second 
+* config... 
+* Note this is only possible when box_x.y = 0, and similar 
+* for other components of the box. If not, we need to come 
+* up with other methods. 
+*********************************************************/
+EXTERN double* box_side_len;
+/* added ends */
+
+
 /* potential variables */
 EXTERN int *gradient;		/* Gradient of potential fns.  */
 EXTERN int *invar_pot;
@@ -298,9 +315,9 @@ EXTERN int myconf INIT(0);
 
 
 /* added */
-/************************
+/********************************************************
 * KIM variable
-************************/
+********************************************************/
 EXTERN int haveKIMObj INIT(0);   /* do we have created kim objects? 0 not, 1 yes*/
 EXTERN void** pkimObj;						 /* pointers to kim objects, will be initialized to
 																		 void* pkimObj[nconf] */			

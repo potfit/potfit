@@ -380,21 +380,16 @@ exit(1);
 
 
 
-
 /* unittest */
 /* Replace the spline-based force calculation algorithom in potfit by an analytic 
 	Lennard-Jones potential to check that the difference in optimized parameters
 	between KIM and potfit is due to the method how the forces are calcualted. In 
 	KIM, analytic function is used, but potfit uses splines */
-
-
+/*
  AnalyticForce(xi_opt[2], xi_opt[3], calc_pot.end[neigh->col[0]],
  								neigh->r, &phi_val, &phi_grad);
-
-
+*/
 /* unittest ends*/
-
-
 
 
 
@@ -549,7 +544,6 @@ printf("flag tmp_sum of energy from potfit %f\n",tmpsum);
    	exit(1);
  	}
 
-
 	/* forces contributation */
 	for (i = 0; i < inconf[h]; i++) {
 	  n_i = DIM * (cnfstart[h] + i);	
@@ -624,9 +618,7 @@ printf("flag kimtmp_sum of energy from kim%f\n", kim_tmpsum);
 *
 ***************************************************************************/
 
-/*
 	tmpsum = kim_tmpsum;
-*/
 
 /* added ends */
 
@@ -708,6 +700,7 @@ printf("flag kimtmp_sum of energy from kim%f\n", kim_tmpsum);
 * golbal potfit varialbes, used but not transferred: 
 * atoms 
 * elements
+* box_side_len  (this is defined by us, not potfit) 
 ***************************************************************************/
 
 int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
@@ -719,6 +712,8 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
   double* coords;	
 	int* numberContrib;
 	NeighObjectType* NeighObject;
+	const char* NBCstr;
+	int NBC;
 	/* local variables */
   int status;	
 	int species_code;	
@@ -767,7 +762,6 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
 		KIM_API_report_error(__LINE__, __FILE__,"KIM_API_set_method",status);
     return(status);				
 	}	
-
 	/* call Model's init routine */
   status = KIM_API_model_init(pkim);
   if (KIM_STATUS_OK > status)
@@ -790,8 +784,7 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
                     "particleSpecies",     &particleSpecies,     1,
                     "coordinates",         &coords,              1,
 					 "numberContributingParticles",  &numberContrib, (1==halfflag) );
-  if (KIM_STATUS_OK > status)
-  {
+  if (KIM_STATUS_OK > status) {
 		KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
   	return status;
 	}
@@ -801,8 +794,49 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
   *numberOfSpecies 	 = Nspecies;	
 	*numberContrib		 = Ncontrib;
 
+	/* set boxSideLengths if MI_OPBC is used */
+	/* determine which NBC is used */
+  status = KIM_API_get_NBC_method(pkim, &NBCstr);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method", status);
+    return status; }
+  if ((!strcmp("NEIGH_RVEC_H",NBCstr)) || (!strcmp("NEIGH_RVEC_F",NBCstr))) {
+    NBC = 0; }
+  else if ((!strcmp("NEIGH_PURE_H",NBCstr)) || (!strcmp("NEIGH_PURE_F",NBCstr))) {
+    NBC = 1; }
+  else if ((!strcmp("MI_OPBC_H",NBCstr)) || (!strcmp("MI_OPBC_F",NBCstr))) {
+    NBC = 2; }
+  else if (!strcmp("CLUSTER",NBCstr)) {
+    NBC = 3; }
+  else {
+    status = KIM_STATUS_FAIL;
+    KIM_API_report_error(__LINE__, __FILE__, "Unknown NBC method", status);
+    return status; }
 
-	/* set the species types */
+	if (NBC == 2) {
+		/* define local varialbe */
+		double* boxSideLen;
+		int which_conf;		/* which config we are in? */
+	
+		which_conf = atoms[start].conf; 
+
+  	/* Unpack data from KIM object */
+  	KIM_API_getm_data(pkim, &status, 1*3,
+					 					"boxSideLengths",      &boxSideLen,			1 );
+  	if (KIM_STATUS_OK > status)
+ 	  {
+			KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
+ 		 	return status;
+		}
+ 
+	  /* Set values */
+		boxSideLen[0]	= box_side_len[DIM*which_conf + 0];
+		boxSideLen[1]	= box_side_len[DIM*which_conf + 1];
+		boxSideLen[2] = box_side_len[DIM*which_conf + 2];
+	}		
+
+
+  /* set the species types */
 	/* to use this, the #C Header line in configuration file has to be included.
 		Also the order of elements name after #C should be in accordane	with the
 		species code in the first column of configuration data, ranging from 0 to
@@ -926,9 +960,7 @@ printf("%d %f %f %f\n", atoms[start+i].neigh[j].nr,
   if (KIM_STATUS_OK > status)	{
    	KIM_API_report_error(__LINE__, __FILE__,
 												"copy neighbor list failed", status);
-  	return status;
- 	}
-
+  	return status; } 
 
 	/* If the number of neighbors of an atom is zero, set the BeginIdx to the 
 		 last position in neghbor list. Actually, the main purpose is to ensure 

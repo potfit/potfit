@@ -63,7 +63,7 @@ Neigh_LocaAccess            flag
 
 NEIGH_RVEC_H                flag
 
-
+MI_OPBC_H			      				flag
 
 #######################################################################################################
 MODEL_INPUT:
@@ -78,12 +78,13 @@ particleSpecies             integer      none                [numberOfParticles]
 
 coordinates                 double       length              [numberOfParticles,3]
 
+boxSideLengths							double			 length							 [3]
+
 numberContributingParticles integer      none                []
 
 get_neigh                   method       none                []
 
 neighObject                 pointer      none                []
-
 
 
 #######################################################################################################

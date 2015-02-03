@@ -209,6 +209,19 @@ void read_config(char *filename)
     have_contrib_box = 0;
 #endif /* CONTRIB */
 
+
+
+/* added */
+/***********************************************************************
+* realloc memory for box_side_len 
+***********************************************************************/
+	box_side_len = (double *)realloc(box_side_len, 3*(nconf+1)*sizeof(double));
+	if(NULL == box_side_len) 
+		error(1, "Cannot allocate memory for box_side_len");
+/* added ends */
+
+
+
     if (tag_format) {
       do {
 	res = fgets(buffer, 1024, infile);
@@ -487,6 +500,19 @@ void read_config(char *filename)
       w_force++;
 
     volume[nconf] = make_box();
+
+
+
+/* added */
+/***********************************************************************
+* store the box size info in box_side_len 
+***********************************************************************/
+	box_side_len[3*nconf + 0] = box_x.x;
+	box_side_len[3*nconf + 1] = box_y.y;
+	box_side_len[3*nconf + 2] = box_z.z;
+/* added ends */
+
+
 
     /* read the atoms */
     for (i = 0; i < count; i++) {
@@ -1054,6 +1080,14 @@ void read_config(char *filename)
     reg_for_free(sphere_centers, "sphere centers");
   }
 #endif /* CONTRIB */
+
+/* added */
+/************************************************************************
+* register box_side_len for free
+************************************************************************/
+	reg_for_free(box_side_len, "box side lengths");
+/* added ends*/
+
 
   /* mdim is the dimension of the force vector:
      - 3*natoms forces
