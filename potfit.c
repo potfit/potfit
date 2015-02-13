@@ -220,15 +220,12 @@ int main(int argc, char **argv)
 
 #ifdef APOT
     tot = calc_forces(opt_pot.table, force, 0);
-    if (opt) {
-      write_pot_table(&apot_table, endpot);
+    write_pot_table(&apot_table, endpot);
 #else /* APOT */
     tot = calc_forces(calc_pot.table, force, 0);
-    if (opt) {
-      write_pot_table(&opt_pot, endpot);
+    write_pot_table(&opt_pot, endpot);
 #endif /* APOT */
-      printf("\nPotential in format %d written to file \t%s\n", format, endpot);
-    }
+    printf("\nPotential in format %d written to file \t%s\n", format, endpot);
 #ifndef APOT
     /* then we can also write format 4 */
     if (format == 3) {
