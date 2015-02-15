@@ -1244,8 +1244,6 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
  *
  ****************************************************************/
 
-#ifdef APOT
-
 #if defined STIWEB || defined TERSOFF
 
 void write_pot_table_lammps(pot_table_t *pt)
@@ -1332,8 +1330,7 @@ void write_pot_table_lammps(pot_table_t *pt)
   fprintf(outfile, "#   other quantities are unitless\n\n");
   fprintf(outfile, "# format of a single entry (one or more lines):\n");
   fprintf(outfile, "#   element_1 element_2 element_3\n");
-  fprintf(outfile,
-    "#   beta, alpha, h, eta, beta_ters, lambda2, B, R, D, lambda1, A, n\n#   c1, c2, c3, c4, c5\n\n");
+  fprintf(outfile, "#   beta, alpha, h, eta, beta_ters, lambda2, B, R, D, lambda1, A, n\n#   c1, c2, c3, c4, c5\n\n");
 #endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 
@@ -1460,7 +1457,11 @@ void write_pot_table_lammps(pot_table_t *pt)
   temp = 999.9;
   for (i=0;i<ntypes;i++) {
     k = paircol + ntypes + i;
-    temp = MIN(temp,apot_table.end[k]);
+#ifdef APOT
+    temp = MIN(temp, apot_table.end[k]);
+#else
+	temp = MIN(temp, opt_pot.end[k]);
+#endif
   }
 
   drho = temp / (imdpotsteps - 1);
@@ -1560,8 +1561,6 @@ void write_pot_table_lammps(pot_table_t *pt)
 }
 
 #endif /* STIWEB || TERSOFF */
-
-#endif /* APOT */
 
 /****************************************************************
  *
