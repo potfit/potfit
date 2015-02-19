@@ -241,10 +241,8 @@ int main(int argc, char **argv)
     if (1 == plot)
       write_plotpot_pair(&calc_pot, plotfile);
 
-#ifdef APOT
     if (1 == write_lammps)
       write_pot_table_lammps(&calc_pot);
-#endif /* APOT */
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
