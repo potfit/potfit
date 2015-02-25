@@ -38,6 +38,14 @@
 #include "potential.h"
 #include "utils.h"
 
+/*added*/
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif /* M_PI */
+
+
+
+
 #define EPS 0.1
 #define NEPS 4
 #define NSTEP 20
@@ -172,7 +180,7 @@ void anneal(double *xi)
   fxi1 = vect_double(mdim);
   naccept = vect_int(ndim);
 #ifndef APOT
-  // Optimum potential x-coord arrays
+  /* Optimum potential x-coord arrays */
   int   col, col2;
   double *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
   optbegin = vect_double(ntypes);
@@ -194,9 +202,9 @@ void anneal(double *xi)
   F = calc_forces(xi, fxi1, 0);
   Fopt = F;
 #ifndef APOT
-  // Need to save xcoord of this F potential because we use the
-  // optimum potential in the future, and the current potential
-  // could be rescaled differently from the optimum
+  /* Need to save xcoord of this F potential because we use the
+   optimum potential in the future, and the current potential
+   could be rescaled differently from the optimum*/
   col2 = 0;
   for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
     optbegin[col2] = opt_pot.begin[col];
@@ -204,7 +212,7 @@ void anneal(double *xi)
     optstep[col2] = opt_pot.step[col];
     optinvstep[col2] = opt_pot.invstep[col];
 
-    // Loop through each spline knot of F
+    /* Loop through each spline knot of F*/
     for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
       optxcoord[n] = opt_pot.xcoord[n];
     ++col2;
@@ -289,9 +297,9 @@ void anneal(double *xi)
 		xopt[n] = xi2[n];
 
 #ifndef APOT
-	      // Need to save xcoord of this F potential because we use the
-	      // optimum potential in the future, and the current potential
-	      // could be rescaled differently from the optimum
+	      /* Need to save xcoord of this F potential because we use the
+	       optimum potential in the future, and the current potential
+	       could be rescaled differently from the optimum*/
 	      col2 = 0;
 	      for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
 		optbegin[col2] = opt_pot.begin[col];
@@ -299,7 +307,7 @@ void anneal(double *xi)
 		optstep[col2] = opt_pot.step[col];
 		optinvstep[col2] = opt_pot.invstep[col];
 
-		// Loop through each spline knot of F
+		/* Loop through each spline knot of F*/
 		for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
 		  optxcoord[n] = opt_pot.xcoord[n];
 
@@ -382,7 +390,7 @@ void anneal(double *xi)
 	xi[n] = xopt[n];
       F = Fopt;
 #if defined MEAM && !defined APOT
-      // Need to put back xcoord of optimum F potential
+      /* Need to put back xcoord of optimum F potential*/
       col2 = 0;
       for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
 	opt_pot.begin[col] = optbegin[col2];
@@ -390,7 +398,7 @@ void anneal(double *xi)
 	opt_pot.step[col] = optstep[col2];
 	opt_pot.invstep[col] = optinvstep[col2];
 
-	// Loop through each spline knot of F
+	/* Loop through each spline knot of F*/
 	for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
 	  opt_pot.xcoord[n] = optxcoord[n];
 
@@ -400,7 +408,7 @@ void anneal(double *xi)
       /* wake other threads and sync potentials */
       F = calc_forces(xi, fxi1, 2);
 
-      // Turn off rescaling
+      /* Turn off rescaling*/
       rescaleMe = 0;
 #endif /* MEAM && !APOT */
 
@@ -412,7 +420,7 @@ void anneal(double *xi)
   }
 
 #if defined MEAM && !defined APOT
-  // Need to put back xcoord of optimum F potential
+  /* Need to put back xcoord of optimum F potential*/
   col2 = 0;
   for (col = paircol + ntypes; col < paircol + 2 * ntypes; ++col) {
     opt_pot.begin[col] = optbegin[col2];
@@ -420,14 +428,14 @@ void anneal(double *xi)
     opt_pot.step[col] = optstep[col2];
     opt_pot.invstep[col] = optinvstep[col2];
 
-    // Loop through each spline knot of F
+    /* Loop through each spline knot of F*/
     for (n = opt_pot.first[col]; n <= opt_pot.last[col]; ++n)
       opt_pot.xcoord[n] = optxcoord[n];
 
     ++col2;
   }
 
-  // wake other threads and sync potentials
+  /* wake other threads and sync potentials*/
   F = calc_forces(xi, fxi1, 2);
 #endif /* MEAM && !APOT */
   printf("Finished annealing, starting powell minimization ...\n");

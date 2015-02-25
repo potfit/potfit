@@ -59,6 +59,7 @@ void FreeKIM(void)
  		if (KIM_STATUS_OK > status) 
 			KIM_API_report_error(__LINE__, __FILE__,"destroy", status);
 	}
+
   free(pkimObj);
 	/* every thing is great */
 }

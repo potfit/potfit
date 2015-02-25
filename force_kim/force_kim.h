@@ -25,16 +25,24 @@ typedef struct
 } NeighObjectType;
 
 /* function prototypes */
-int CreateKIMObj(void* km, int Natoms, int Nspecies, int start);
+int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start);
 
 int get_neigh(void* kimmdl, int *mode, int *request, int* part,
-              int* numnei, int** nei1part, double** Rij);
+              int* numnei, int** nei1part, double** Rij);					
 
-int PublishParam(void* km, double* PotTable, double CutOff);							
+int CalcForce(void* pkim, double** energy, double** force, double** virial);
 
-int CalcForce(void* km, double** energy, double** force, double** virial);
-
+#ifdef PAIR
+int PublishParam(void* km, double* PotTable, double CutOff);
 /* used only for check purpose */
 int AnalyticForce(double epsilon, double sigma, double cutoff,
 									double r, double* phi_val, double* phi_grad); 
+#endif /* PAIR */
+
+#ifdef EAM
+int PublishParam(void* km, double* PotTable);
+void* GetShapeAndPointer(void* const pkim, char const* const argName, 
+												 int* const shape, int* const status);
+#endif /*EAM*/
+
 #endif /* FORCEKIM_H */

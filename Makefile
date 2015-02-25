@@ -411,7 +411,7 @@ ifneq (,$(strip $(findstring eam,${MAKETARGET})))
   else ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
     POTFITSRC      += force_eam_elstat.c
   else
-    POTFITSRC      += force_eam.c
+    POTFITSRC      += force_kim/force_eam_kim.c force_kim/free_kim.c
   endif
 endif
 

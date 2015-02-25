@@ -317,10 +317,11 @@ EXTERN int myconf INIT(0);
 /* added */
 /********************************************************
 * KIM variable
-********************************************************/
-EXTERN int haveKIMObj INIT(0);   /* do we have created kim objects? 0 not, 1 yes*/
-EXTERN void** pkimObj;						 /* pointers to kim objects, will be initialized to
-																		 void* pkimObj[nconf] */			
+********************************************************/ 
+/* do we have created kim objects? 0 not, 1 yes*/
+EXTERN int haveKIMObj INIT(0);  	 
+/* pointers to kim objects, will be initialized to void*pkimObj[nconf]*/
+EXTERN void** pkimObj;					
 /* added ends */
 
 

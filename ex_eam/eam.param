@@ -1,0 +1,16 @@
+ntypes		1
+config		config.force
+startpot	eam.pot
+endpot		eam_end.pot
+tempfile	dummy.tmp
+
+flagfile	STOP
+
+imdpotsteps	5000
+output_prefix	out
+
+opt		1
+anneal_temp	10
+eng_weight	100
+stress_weight	10
+seed		42

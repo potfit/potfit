@@ -283,7 +283,9 @@ int main(int argc, char **argv)
 
 /* added */
 /* free KIM stuff */
-	FreeKIM();
+
+/*	FreeKIM();
+*/
 /* added ends */
 
 
