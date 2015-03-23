@@ -1,5 +1,5 @@
 /****************************************************************
- *
+*
  * potfit.c: Contains main potfit program
  *
  ****************************************************************
@@ -41,6 +41,7 @@
 #include "splines.h"
 #include "utils.h"
 
+
 /****************************************************************
  *
  *  main potfit routine
@@ -75,6 +76,19 @@ int main(int argc, char **argv)
 #ifdef STRESS
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
+
+
+/* added */
+/****************************************************************
+* Initialize KIM 
+****************************************************************/
+/*#ifdef EAM*/
+/*
+	printf("kim model name is:%s",kim_model_name);
+	InitKIM();
+*/
+/*#endif *//* EAM */
+/* */
 
     /* Select correct spline interpolation and other functions */
 #ifdef APOT

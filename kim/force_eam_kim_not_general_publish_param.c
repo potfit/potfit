@@ -29,7 +29,7 @@
  ****************************************************************/
 
 #include "../potfit.h"
-#include "force_kim.h"
+#include "kim.h"
 #include "KIM_API_C.h"
 #if defined EAM && !defined COULOMB
 

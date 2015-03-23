@@ -292,7 +292,6 @@ ifeq (i686-gcc,${SYSTEM})
 
 # general optimization flags
   OPT_FLAGS	+= -O3 -Wno-unused
-
 # profiling and debug flags
   PROF_FLAGS	+= -g3 -pg
   PROF_LIBS	+= -g3 -pg
@@ -399,67 +398,150 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 		  param.c potential_input.c potential_output.c potfit.c \
 		  powell_lsq.c random.c simann.c splines.c utils.c
 
-ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-  POTFITSRC      += force_kim/force_kim.c force_kim/free_kim.c
-endif
 
-ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-    POTFITSRC      += force_meam.c
-  else ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-    POTFITSRC      += force_eam_elstat.c
-  else ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-    POTFITSRC      += force_eam_elstat.c
-  else
-    POTFITSRC      += force_kim/force_eam_kim.c force_kim/free_kim.c
-  endif
-endif
+# added
+###########################################################################
+# to compile with kim 
+# nothing new, just add kim in the maketarget
+# e.g. make potfit_eam_kim
+###########################################################################
+# if kim
+ifneq (,$(strip $(findstring kim,${MAKETARGET})))
+  
+  POTFITSRC      += kim/kim.c
 
-ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-    POTFITSRC      += force_elstat.c
-  endif
-endif
-
-ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-  ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-    POTFITSRC      += force_elstat.c
-  endif
-endif
-
-ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-  POTFITSRC      += force_adp.c
-endif
-
-ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
-  POTFITSRC      += force_stiweb.c
-endif
-
-ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
-  POTFITSRC      += force_tersoff.c
-endif
-
-ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-  POTFITHDR      += functions.h
-  POTFITSRC      += functions.c
   ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-    POTFITSRC      += chempot.c
+    POTFITSRC      += kim/force_pair_kim.c 
   endif
-else
-  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-    POTFITSRC 	+= rescale_meam.c
+
+  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
+    ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+      POTFITSRC      += force_meam.c
+    else ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+      POTFITSRC      += force_eam_elstat.c
+    else ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+      POTFITSRC      += force_eam_elstat.c
+    else
+      POTFITSRC      += kim/force_eam_kim.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+    POTFITSRC      += force_adp.c
+  endif
+
+  ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
+    POTFITSRC      += force_stiweb.c
+  endif
+
+  ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
+    POTFITSRC      += force_tersoff.c
+  endif
+
+  ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+    POTFITHDR      += functions.h
+    POTFITSRC      += functions.c
+    ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+      POTFITSRC      += chempot.c
+    endif
   else
-    POTFITSRC      += rescale.c
+    ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+      POTFITSRC 	+= rescale_meam.c
+    else
+      POTFITSRC      += rescale.c
+    endif
   endif
-endif
 
-ifneq (,$(strip $(findstring evo,${MAKETARGET})))
-  POTFITSRC      += diff_evo.c
-endif
+  ifneq (,$(strip $(findstring evo,${MAKETARGET})))
+    POTFITSRC      += diff_evo.c
+  endif
 
-ifneq (,$(strip $(findstring parab,${MAKETARGET})))
-  POTFITSRC      += parabola.c
-endif
+  ifneq (,$(strip $(findstring parab,${MAKETARGET})))
+    POTFITSRC      += parabola.c
+  endif
+
+
+else # kim
+
+
+  ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+    POTFITSRC      += force_pair.c 
+  endif
+
+  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
+    ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+      POTFITSRC      += force_meam.c
+    else ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+      POTFITSRC      += force_eam_elstat.c
+    else ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+      POTFITSRC      += force_eam_elstat.c
+    else
+      POTFITSRC      += force_eam.c 
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+    POTFITSRC      += force_adp.c
+  endif
+
+  ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
+    POTFITSRC      += force_stiweb.c
+  endif
+
+  ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
+    POTFITSRC      += force_tersoff.c
+  endif
+
+  ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+    POTFITHDR      += functions.h
+    POTFITSRC      += functions.c
+    ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+      POTFITSRC      += chempot.c
+    endif
+  else
+    ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+      POTFITSRC 	+= rescale_meam.c
+    else
+      POTFITSRC      += rescale.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring evo,${MAKETARGET})))
+    POTFITSRC      += diff_evo.c
+  endif
+
+  ifneq (,$(strip $(findstring parab,${MAKETARGET})))
+    POTFITSRC      += parabola.c
+  endif
+
+endif  #kim
+# added ends
+
+
 
 MPISRC          = mpi_utils.c
 
@@ -757,7 +839,15 @@ endif
 ###########################################################################
 
 clean:
-	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h force_kim/*.o
+	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h 
+
+# added 
+###########################################################################
+# remove kim stuff
+###########################################################################
+	rm -f  potfit_* force_kim/*.o
+# added ends
+
 
 help:
 	@echo "Usage: make potfit[_<parallel>][_<option>[_<option>...]]"

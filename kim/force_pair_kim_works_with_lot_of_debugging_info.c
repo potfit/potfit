@@ -38,11 +38,12 @@
 #include "../splines.h"
 #include "../utils.h"
 
-
 /* added */
+/*********************************
+* define useful Macro
+*********************************/
 #define DIM 3
 /* added ends */
-
 
 /****************************************************************
  *
@@ -117,19 +118,25 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double phi_val, phi_grad;
   vector tmp_force;
 
-
 /* added */
 /***************************************************************************
 *
-* Declear(define) KIM local variables  
+* Declear(define) kim local variables  
 *
 ***************************************************************************/
 	int status;	
 	double kim_tmpsum = 0.0;   /* similar to tmp_sum, used by kim */
 	double* kimenergy;
-	double* kimforce; 			
-	double* kimvirial;				 
-	int numOfconf = nconf;		/* number of configurations in reference data */
+	double* kimforce; 				/* QUESTION: Do we need to allocate memory 
+															for kimforce and kimvirial? If it is needed, 
+															note that the length of kimforce is not fixed,
+															since different conff may have different number 
+															of atoms. Also it would be better to define them
+															in the loop.  Since kimforce and kimvirial is
+															kind of pointers point to kim object.
+															I think it is not needed.*/
+	double* kimvirial;
+	int numOfconf = nconf;		/*number of configurations in reference data*/
 /* added ends*/
 
 
@@ -151,22 +158,18 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 *
 * Create KIM object
 *
-*	create them once for all 
+*	 create KIM objects, the total number is nconf. 
+*	 create them once for all 
 ***************************************************************************/
 	if (! haveKIMObj) {
+		/* alloc memory for kim objects */
 	
 		char *modelname;
 		modelname = "Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000";
 		/*NOTE(change): need to read kim model name from potfit param file */
 		
 	  /* Allocate memory for KIM objects */
-		pkimObj = (void**) malloc(numOfconf * sizeof(void *));
-		if (NULL == pkimObj) {
-		  KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
-			exit(1);
-		}
-		
-		/* Checking whether .kim files in test and model are compatible or not */
+		pkimObj = (void**) malloc(numOfconf * sizeof(void *));		
 		for (i = 0; i < numOfconf; i++) {  				
 			status = KIM_API_file_init(&pkimObj[i], "descriptor.kim", modelname);
   		if (KIM_STATUS_OK > status)
@@ -179,10 +182,11 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		/* QUESTION: does each config has the same number of species? e.g. there are
 		two types of species, but a specific config may one have one species). If
 		not, then ntypes below need to be modified from config to config */
+		/* NOTE(remove), the modelname argument is not needed */
 
 		/*  Initialize KIM objects */
 		for (i = 0; i < numOfconf; i++) { 
-			status = CreateKIMObj(pkimObj[i], inconf[i], ntypes, cnfstart[i]);
+			status = CreateKIMObj(pkimObj[i], inconf[i], ntypes, cnfstart[i], modelname);
 			if (KIM_STATUS_OK > status)	{
     		KIM_API_report_error(__LINE__, __FILE__,
 															"KIM: initializing objects failed", status);
@@ -193,24 +197,28 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		/* only need to initialize KIM objects once */
 		haveKIMObj = 1;
 
-		printf("Initializing KIM objects ... done\n");
+		printf("flag: initializing KIM objects ... done\n");
 		fflush(stdout);		
 	}
 /* added ends */
 
 
- /* unittest */
-/* This is used to see that the neighbor list is correct. Note that c and cpp is
-zerolist but fortran is onelist. So if fortran models are used(as is here), j 
-starts from one. */ 
+
+
+
+
 /*
-	int request;
+
+int request;
+
   int currentPart;
   int numOfPartNeigh;
   double* Rij_list;
   int* neighListOfCurrentPart;
 
+
 for( j = 1; j <= inconf[1]; j++) {
+
  KIM_API_get_neigh(pkimObj[1], 1, j, &currentPart, &numOfPartNeigh,
                               &neighListOfCurrentPart, &Rij_list);
 printf("which atom: %d\n",j);
@@ -221,6 +229,7 @@ i = 0;
 													Rij_list[DIM*i+1],
 											  	Rij_list[DIM*i+2]	);
 
+
 printf("which atom: %d\n",j);
 													
 i = numOfPartNeigh-1; 
@@ -229,25 +238,25 @@ i = numOfPartNeigh-1;
 													Rij_list[DIM*i+1],
 											  	Rij_list[DIM*i+2]	);
 }
+
 exit(1);
+
 */
- /* unittest ends*/
- 
- 
+
 
 /* added */
 /***************************************************************************
 *
 * Publish KIM parameters
 * 
-* publish parameters for LJ potential: epsilon and sigma.
-*
-* Need to use xi_opt not xi (the second  and third argument) when calling
-* PublishParam. xi_opt stores the original parameter for analytic
-* potential, but xi here stores some parameter suitable for spline calculating.
-* potfit uses splines to do force calculating, even though it is analytic
-* potential. But KIM uses analytic potential directly. 
+* publish parameters for LJ potential: epsilon and sigma. 
 * 
+* Need to use xi_opt not xi (the second variable) when calling PublishParam. 
+* xi_opt stores the original parameter for analytic
+* potential, but xi here stores some parameter suitable for spline calculating.
+* Since potfit uses splines to do force calculating, even though it is analytic
+* potential. 
+*
 * NOTE(change): the cutoff is also published here, since for the time being,
 * we want touse the cutoff from potfit to see whether it can give the same 
 *	resuts. In the future, it will come from KIM models directly, and do not 
@@ -264,15 +273,14 @@ exit(1);
 /* added ends */
 
 
+
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.0;		/* sum of squares of local process */
 
-
 /* added */
 		kim_tmpsum = 0.0;
 /* added ends */
-
 
 #if defined APOT && !defined MPI
     if (0 == format) {
@@ -378,21 +386,6 @@ exit(1);
 	      else
 		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 
-
-
-/* unittest */
-/* Replace the spline-based force calculation algorithom in potfit by an analytic 
-	Lennard-Jones potential to check that the difference in optimized parameters
-	between KIM and potfit is due to the method how the forces are calcualted. In 
-	KIM, analytic function is used, but potfit uses splines */
-/*
- AnalyticForce(xi_opt[2], xi_opt[3], calc_pot.end[neigh->col[0]],
- 								neigh->r, &phi_val, &phi_grad);
-*/
-/* unittest ends*/
-
-
-
 	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
 		phi_val *= 0.5;
@@ -417,10 +410,9 @@ exit(1);
 		forces[n_j + 2] -= tmp_force.z;
 
 	
-
-/* unittest (to use this, print the same thing in the model (model driver), 
-   then compare. Note that one needs to `make' `make install' and 
-	 `make isntall-set-dafault-to-vx' for kim. vx is the main version of kim )
+/* unittest (to use this, print the same thing in the model (model driver), then compare. Note that
+	one needs to `make' `make install' and `make isntall-set-dafault-to-vx' for kim. vx is the main 
+	version of kim )
 */
 /* print atom number, neighbor number, neigh distance, cutoff
 printf("%3d %3d %15.5e %15.5e ", n_i, j, neigh->r, calc_pot.end[neigh->col[0]] );
@@ -433,8 +425,8 @@ printf("%15.5e\n", forces[n_i + 0]);
 /*
 printf("potfit forces each step %3d %f %f %f %f\n",j, phi_grad, neigh->dist_r.x, neigh->dist_r.y, neigh->dist_r.z  );
 */
-/* unittest ends */
 
+/* unittest ends */
 
 
 #ifdef STRESS
@@ -449,8 +441,9 @@ printf("potfit forces each step %3d %f %f %f %f\n",j, phi_grad, neigh->dist_r.x,
 		}
 #endif /* STRESS */
 	      }
-	    }			/* neighbor in range */
+	    }			/* neighbor in range */	 
 	 }			/* loop over all neighbors */
+
 
 	  /* then we can calculate contribution of forces right away */
 	  if (uf) {
@@ -465,10 +458,26 @@ printf("potfit forces each step %3d %f %f %f %f\n",j, phi_grad, neigh->dist_r.x,
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
+
+
+
+/*
+
+printf("tmpsum %d %f", i, tmpsum);
+printf(" %f %f %f\n", forces[n_i + 0],forces[n_i + 1],forces[n_i + 2]);
+
+*/
+
+
+
+
+
 	      tmpsum += conf_weight[h] *
 		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }
 	}			/* second loop over atoms */
+
+
 
 
 
@@ -481,12 +490,10 @@ printf("flag tmp_sum of forces from potfit %f\n",tmpsum);
 */
 /* uinttest ends */
 
-
 	/* energy contributions */
 	forces[energy_p + h] /= (double)inconf[h];
 	forces[energy_p + h] -= force_0[energy_p + h];
 	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
-
 
 /* unittest */
 /* used together with `printf("flag kimtmp_sum of energy from kim%f\n", kim_tmpsum);' 
@@ -496,7 +503,6 @@ printf("flag tmp_sum of forces from potfit %f\n",tmpsum);
 printf("flag tmp_sum of energy from potfit %f\n",tmpsum);
 */
 /* uinttest ends */
-
 
 #ifdef STRESS
 	/* stress contributions */
@@ -517,34 +523,56 @@ printf("flag tmp_sum of energy from potfit %f\n",tmpsum);
 ***************************************************************************/
 /* the following 20 lines is the same as CalcForce, either one could be used*/
 	/*  unpack data from KIM */
-/*	KIM_API_getm_data(pkimObj[h], &status, 2*3,
+
+
+KIM_API_getm_data(pkimObj[h], &status, 2*3,
                     "energy",              &kimenergy,              1,
-                    "forces",              &kimforce,               1   ,
-										"virial",           	 &virial,       			 1 );
+                    "forces",              &kimforce,               1);
   if (KIM_STATUS_OK > status)
   {
 		KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
     return status;
   }	
+
+
+
+/*
+printf("flag: force calculation ... begin %d\n", h);
+KIM_API_print(pkimObj[h],&status);
+fflush(stdout);		
 */
 
+
   /* Call model compute */
-/*  status = KIM_API_model_compute(pkimObj[h]);
+	/* KIM_API_print(pkimObj[h], &status); */
+  status = KIM_API_model_compute(pkimObj[h]);
   if (KIM_STATUS_OK > status)
   {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_compute", status);
     return status;
   }
+
+/*
+KIM_API_print(pkimObj[h],&status);
+
+printf("flag: force calculation ... done\n");
+fflush(stdout);		
 */
 
 
+/*
 	status = CalcForce( pkimObj[h], &kimenergy,  &kimforce,  &kimvirial);
 	if (KIM_STATUS_OK > status) {
 		KIM_API_report_error(__LINE__, __FILE__, "KIM: compute forces failed", status);
    	exit(1);
  	}
 
+*/
+
+
+
 	/* forces contributation */
+	/* get the difference between the calcualted forces and the reference ones */
 	for (i = 0; i < inconf[h]; i++) {
 	  n_i = DIM * (cnfstart[h] + i);	
 	  if (uf) {
@@ -560,6 +588,8 @@ printf("flag tmp_sum of energy from potfit %f\n",tmpsum);
 																		+ dsquare(forces[n_i + 1])
 																		+ dsquare(forces[n_i + 2]) );
 	}
+
+
 
 
 /* unittest */
@@ -606,20 +636,22 @@ printf("flag kimtmp_sum of energy from kim%f\n", kim_tmpsum);
 #endif /* STRESS */
 /* added ends */
 
+
+
+
       }				/* loop over configurations */
     }				/* parallel region */
 
 
 
+
+
+
 /* added */
-/***************************************************************************
-*
-* Replace sum of errors calculated from potfit by that from KIM 
-*
-***************************************************************************/
-
+/*********************************
+* replace tmpsum with kim_tmpsum
+*********************************/
 	tmpsum = kim_tmpsum;
-
 /* added ends */
 
 
@@ -692,19 +724,29 @@ printf("flag kimtmp_sum of energy from kim%f\n", kim_tmpsum);
 * Create KIM object	 
 *
 * transferred varialbes:
-* pkim: KIM object pointer
+* km: KIM object pointer
 * Natoms: number of atoms in this configuration  
 * Nspecies: number of atom species in this configuraiton 
-*	start: index of the first atom of this configuration in potfit atom array
+*	start: index of the first atom of this configuration in atom array
+*	modelname: KIM model name
 *
 * golbal potfit varialbes, used but not transferred: 
 * atoms 
 * elements
-* box_side_len  (this is defined by us, not potfit) 
 ***************************************************************************/
 
-int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
+int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start, char* modelname)
 {
+
+/*
+
+printf("flag: func: CreateKIMObj ... enter\n");
+fflush(stdout);		
+
+*/
+
+
+
   /* model inputs */
   int* numberOfParticles;
   int* numberOfSpecies;
@@ -712,8 +754,6 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
   double* coords;	
 	int* numberContrib;
 	NeighObjectType* NeighObject;
-	const char* NBCstr;
-	int NBC;
 	/* local variables */
   int status;	
 	int species_code;	
@@ -729,16 +769,21 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
 	int neighListLength; /* total length of neighList */
 
 
-	/* set value */
+/*NOTE(change) take care of this part, what should be the number of contrib*/
+/* set value */
 	Ncontrib = Natoms;
 
 	/* allocate memory for NeighObject ( simulator should be in charge of
 	allocating memory for neighbor objects, not kim model ) */
 	NeighObject = (NeighObjectType*) malloc(sizeof(NeighObjectType));
-  if (NULL == NeighObject) {
-		KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
-		exit(1);
-	}	
+
+
+/*
+printf("flag: func: CreateKIMObj ... 1\n");
+fflush(stdout);		
+*/
+
+
 
 	/* Allocate memory via the KIM system */
   KIM_API_allocate(pkim, Natoms, Nspecies, &status);
@@ -748,13 +793,26 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
     return(status);
   }
 
+/*
+printf("flag: func: CreateKIMObj ... 2 \n");
+fflush(stdout);		
+*/
+
+
 	/* register for neighObject */
 	KIM_API_setm_data(pkim, &status, 1*4,
-				   					 "neighObject",     1,   NeighObject,   1);
+   					        "neighObject",     1,   NeighObject,   1);
   if (KIM_STATUS_OK > status) {
    KIM_API_report_error(__LINE__, __FILE__,"KIM_API_setm_data",status);
     return(status);		
 	 }
+
+/*
+printf("flag: func: CreateKIMObj ... 3 \n");
+fflush(stdout);		
+*/
+
+
 
 	/* register for get_neigh */
   status = KIM_API_set_method(pkim, "get_neigh", 1, (func_ptr) &get_neigh);
@@ -762,6 +820,14 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
 		KIM_API_report_error(__LINE__, __FILE__,"KIM_API_set_method",status);
     return(status);				
 	}	
+
+/*
+printf("flag: func: CreateKIMObj ... 4 \n");
+fflush(stdout);		
+*/
+
+
+
 	/* call Model's init routine */
   status = KIM_API_model_init(pkim);
   if (KIM_STATUS_OK > status)
@@ -770,12 +836,26 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
     return(status);		
   }
 
+/*
+printf("flag: func: CreateKIMObj ... 5 \n");
+fflush(stdout);		
+*/
+
+
+
 /* Determine which neighbor list type to use */
   halfflag = KIM_API_is_half_neighbors(pkim, &status);
   if (KIM_STATUS_OK > status) {
 		KIM_API_report_error(__LINE__, __FILE__,"is_half_neighbors", status);
     return(status);		
 	}
+
+/*
+printf("flag: func: CreateKIMObj ... 6 \n");
+fflush(stdout);		
+
+*/
+
 
   /* Unpack data from KIM object */
   KIM_API_getm_data(pkim, &status, 5*3,
@@ -784,59 +864,26 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
                     "particleSpecies",     &particleSpecies,     1,
                     "coordinates",         &coords,              1,
 					 "numberContributingParticles",  &numberContrib, (1==halfflag) );
-  if (KIM_STATUS_OK > status) {
+  if (KIM_STATUS_OK > status)
+  {
 		KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
   	return status;
 	}
+
+/*
+printf("flag: func: CreateKIMObj ... 7 \n");
+fflush(stdout);		
+
+*/
+
 
   /* Set values */
   *numberOfParticles = Natoms;
   *numberOfSpecies 	 = Nspecies;	
 	*numberContrib		 = Ncontrib;
 
-	/* set boxSideLengths if MI_OPBC is used */
-	/* determine which NBC is used */
-  status = KIM_API_get_NBC_method(pkim, &NBCstr);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method", status);
-    return status; }
-  if ((!strcmp("NEIGH_RVEC_H",NBCstr)) || (!strcmp("NEIGH_RVEC_F",NBCstr))) {
-    NBC = 0; }
-  else if ((!strcmp("NEIGH_PURE_H",NBCstr)) || (!strcmp("NEIGH_PURE_F",NBCstr))) {
-    NBC = 1; }
-  else if ((!strcmp("MI_OPBC_H",NBCstr)) || (!strcmp("MI_OPBC_F",NBCstr))) {
-    NBC = 2; }
-  else if (!strcmp("CLUSTER",NBCstr)) {
-    NBC = 3; }
-  else {
-    status = KIM_STATUS_FAIL;
-    KIM_API_report_error(__LINE__, __FILE__, "Unknown NBC method", status);
-    return status; }
 
-	if (NBC == 2) {
-		/* define local varialbe */
-		double* boxSideLen;
-		int which_conf;		/* which config we are in? */
-	
-		which_conf = atoms[start].conf; 
-
-  	/* Unpack data from KIM object */
-  	KIM_API_getm_data(pkim, &status, 1*3,
-					 					"boxSideLengths",      &boxSideLen,			1 );
-  	if (KIM_STATUS_OK > status)
- 	  {
-			KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
- 		 	return status;
-		}
- 
-	  /* Set values */
-		boxSideLen[0]	= box_side_len[DIM*which_conf + 0];
-		boxSideLen[1]	= box_side_len[DIM*which_conf + 1];
-		boxSideLen[2] = box_side_len[DIM*which_conf + 2];
-	}		
-
-
-  /* set the species types */
+	/* set the species types */
 	/* to use this, the #C Header line in configuration file has to be included.
 		Also the order of elements name after #C should be in accordane	with the
 		species code in the first column of configuration data, ranging from 0 to
@@ -849,8 +896,10 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
 		 to be totally the same as that kim descriptor file? e.g. Upper case or lower
 		 case matters or not? */
 
-	for (i = 0; i < *numberOfParticles; i++) { 
+
 		/* in potfit, atom types range from 0 to (ntype-1) */
+
+/*	for (i = 0; i < *numberOfParticles; i++) { 
 		if (atoms[start+i].type < 0 || atoms[start+i].type >= *numberOfSpecies) {
  			status = KIM_STATUS_FAIL;			
 			KIM_API_report_error(__LINE__, __FILE__,
@@ -867,9 +916,33 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
 														"as that in KIM standard file", status);
  			 	return status;
  			}
- 	    particleSpecies[i] = species_code;
+ 	    particleSpecies[i] = species_code;	
 		}
 	}
+
+
+*/
+
+
+	for (i = 0; i < *numberOfParticles; i++) { 
+    particleSpecies[i] = 1;
+	}
+
+
+
+
+
+
+
+
+
+/*
+
+printf("flag: func: CreateKIMObj ... 8 \n");
+fflush(stdout);		
+
+*/
+
 
 	/* set coords values */
 	for (i = 0; i < *numberOfParticles; i++) {
@@ -888,23 +961,50 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
   NeighObject->NNeighbors = (int*) malloc((*numberOfParticles) * sizeof(int));
   if (NULL==NeighObject->NNeighbors) {
 		KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
-		exit(1);
 	}	
   NeighObject->neighborList = (int*) malloc(neighListLength * sizeof(int));
   if (NULL==NeighObject->neighborList) {
 		KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
-		exit(1);		
 	}	
  NeighObject->RijList = (double*) malloc((DIM*neighListLength) * sizeof(double));
   if (NULL==NeighObject->RijList) {
 		KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
-		exit(1);		
 	}	
 	NeighObject->BeginIdx	= (int*) malloc((*numberOfParticles) * sizeof(int));
 	if (NULL==NeighObject->BeginIdx) {
 		KIM_API_report_error(__LINE__,__FILE__,"malloc unsuccessful", -1);
-		exit(1);		
 	}
+
+
+	/* initializing neighbor object */
+	for (i = 0; i < *numberOfParticles; i++) {
+		NeighObject->NNeighbors[i] = 0;
+		NeighObject->BeginIdx[i] = 0;	 
+	}
+	for (i = 0; i < neighListLength; i++) {
+		NeighObject->neighborList[i] = 0;
+	}
+	for (i = 0; i < DIM*neighListLength; i++) {
+		 NeighObject->RijList[i] = 0.0;
+	}
+
+
+
+
+/*
+
+printf("flag: func: CreateKIMObj ... 9 \n");
+fflush(stdout);		
+
+
+
+printf("NeighObject %d\n",  NeighObject);
+printf("neighbotList %d\n",  NeighObject->neighborList);
+printf("RijList %d\n",  NeighObject->RijList);
+*/
+
+
+
 
 	/* copy the number of neighbors to NeighObject.NNeighbors */
 	status = KIM_STATUS_FAIL; /* assume staus fails */
@@ -920,29 +1020,36 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
   return status;
  	}
 
-	/* copy neighborlist from distributed memory locations to 
-		continuous ones.
-		copy atoms[i].neigh[j].nr to NeighObject.neighborList,
-		copy atoms[i].neigh[k].dist.x ... to 	NeighObject.Rij[DIM*k] ... */	
+/*
+
+printf("flag: func: CreateKIMObj ... 10 \n");
+fflush(stdout);		
+
+*/
+
+
+
+
+	/* copy neighborlist from distributed memory locations to continuous ones.
+		copy atoms[i].neigh[j].nr (index of atom) to NeighObject.neighborList,
+		copy atoms[i].neigh[k].dist.x ... to NeighObject.Rij[DIM*k] ... */	
 	status = KIM_STATUS_FAIL; /* assume staus fails */	
 	k = 0;
 	for (i = 0; i < *numberOfParticles; i++) {
 		NeighObject->BeginIdx[i] = k;
-		for (j = 0; j < NeighObject->NNeighbors[i]; j++) {
+		for (j = 0; j < atoms[start+i].num_neigh; j++) {
 			NeighObject->neighborList[k]  =	atoms[start+i].neigh[j].nr - start;
 			NeighObject->RijList[DIM*k]   =	atoms[start+i].neigh[j].dist.x;
 			NeighObject->RijList[DIM*k+1] =	atoms[start+i].neigh[j].dist.y;
 			NeighObject->RijList[DIM*k+2] =	atoms[start+i].neigh[j].dist.z;
 			k++;
 
-/* unittest */
-/* used together with to see that the stuff in the neighbor lista are correct
-	set  start == 0 , will check for the first config. We set j==0, and j==last
-	atom in the neighbor list of an atom, since we don't want that verbose info.
-*/
+
 /*
+
 if (start != 0 && (j== 0 || j == atoms[start+i].num_neigh-1 )) {
 printf("last neighbor: %d\n", atoms[start+ *numberOfParticles-1].num_neigh);
+
 printf("which atom: %d\n",i);
 printf("%d %f %f %f\n", atoms[start+i].neigh[j].nr,
 												atoms[start+i].neigh[j].dist.x,
@@ -950,34 +1057,36 @@ printf("%d %f %f %f\n", atoms[start+i].neigh[j].nr,
 												atoms[start+i].neigh[j].dist.z );
 }
 */
-/* unittest ends*/
+
+
 		}
 	}
 	
+	for (i = 0; i < *numberOfParticles; i++) {
+		if( atoms[start + i].num_neigh == 0) {
+			NeighObject->BeginIdx[i] = k-1;
+		}
+	}
+
+
+
+
 	if (i == *numberOfParticles && k == neighListLength){
 		status = KIM_STATUS_OK;
 	}
   if (KIM_STATUS_OK > status)	{
    	KIM_API_report_error(__LINE__, __FILE__,
 												"copy neighbor list failed", status);
-  	return status; } 
+  	return status;
+ 	}
 
-	/* If the number of neighbors of an atom is zero, set the BeginIdx to the 
-		 last position in neghbor list. Actually, the main purpose is to ensure 
-		 that the BeginIdx of the last atom will not go beyond limit of 
-		 neighborlist length.
-		 e.g. there are 128 atoms in the config, and we use half neighbor list,
-		 then the 128th atom will have no neighbors. Then the the begin index
-		 for the last atom, BeginIdx[127] will go beyond the limit of Neighbor
-		 list, which may result in segfault. So we need to do something to avoid
-		 this.
-		 I'm sure, there are better ways to do this.
-	*/	
-	for (i = 0; i < *numberOfParticles; i++) {
-		if( NeighObject->NNeighbors[i] == 0) {
-			NeighObject->BeginIdx[i] = k-1;
-		}
-	}
+
+/*
+
+printf("flag: func: CreateKIMObj ... done\n");
+fflush(stdout);		
+*/
+
 
  	return KIM_STATUS_OK;
 }
@@ -1063,20 +1172,35 @@ int get_neigh(void* kimmdl, int *mode, int *request, int* part,
     return KIM_STATUS_NEIGH_INVALID_MODE;
   }
 
-	/* index of the first neigh of each particle */
+
+
+
+
+
+	/* index of the first neigh of particle in neighborList */
 	idx = (*nl).BeginIdx[partToReturn];
+
+
 
   /* set the returned part */
   *part = partToReturn;
 
+
+
   /* set the returned number of neighbors for the returned part */
   *numnei = (*nl).NNeighbors[partToReturn];
+
+
 
   /* set the location for the returned neighbor list */
   *nei1part = &((*nl).neighborList[idx]);
 
+
   /* set the pointer to Rij to appropriate value */
   *Rij = &((*nl).RijList[DIM*idx]);
+
+
+
 
 	return KIM_STATUS_OK;
 }
@@ -1090,16 +1214,27 @@ int get_neigh(void* kimmdl, int *mode, int *request, int* part,
 *
 * Publish KIM parameter ((update epsilon and sigma of LJ))
 *
-* transferred varialbes:
-*	pkkm: KIM ojbect
-*	PotTable: potential table where the potential paramenters are stored
-*	CutOff: cutoff radius   
-*
 ***************************************************************************/
 /*Don't forget to publish params for all KIM objest */
 
 int PublishParam(void* pkim, double* PotTable, double CutOff)
-{	
+{
+
+/*
+printf("flag: func: PublishParam ... enter\n");
+fflush(stdout);		
+*/
+
+
+	/* transferred varialbes
+		 km: KIM ojbect
+		 PotTable: potential table where the potential paramenters are stored
+		 CutOff: cutoff radius   
+	*/
+	
+	/* golbal potfit varialbes, used but not transferred 
+	*/
+
   int status;
 	/* published param */
 	double* param_cutoff;
@@ -1129,6 +1264,15 @@ int PublishParam(void* pkim, double* PotTable, double CutOff)
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
     return status;
   }
+
+/*
+printf("flag: func: PublishParam ... done\n");
+fflush(stdout);		
+*/
+
+
+
+
 	return KIM_STATUS_OK;
 }
 /* added ends */
@@ -1140,19 +1284,25 @@ int PublishParam(void* pkim, double* PotTable, double CutOff)
 * 
 * Calculate force from KIM (general force, including force, virial, energy)
 *
-* transferred variaves 
-*	Pkim: KIM object
-* the following three are also model output 
-*	energy;
-* force;
-*	virial;
-*
 ***************************************************************************/
 
 int CalcForce(void* pkim, double** energy, double** force, double** virial)
 {	
-	/* local variables */
+
+/*
+printf("flag: func: CaclForce ... enter\n");
+fflush(stdout);		
+*/
+
+	/* transferred variaves 
+		 PkIm: KIM object
+  	 the following three are also model output 
+	   energy;
+		 force;
+		 virial;
+	*/
   int status;
+	/* local variables */
 
 	/* Access to free parameters, also unpack other variables as needed */
 	KIM_API_getm_data(pkim, &status, 2*3,
@@ -1173,43 +1323,13 @@ int CalcForce(void* pkim, double** energy, double** force, double** virial)
     return status;
   }
 
+/*
+printf("flag: func: CaclForce ... done\n");
+fflush(stdout);		
+*/
+
+
 	return KIM_STATUS_OK;
 }
 /* added ends */
-
-
-
-/* added */
-/***************************************************************************
-* 
-* Calculate analytic Lennard-Jones potential value and gradient
-*
-* This is just a test, we don't need it once it is checked
-*
-*	transferred variable:
-* phi_val: potential value
-* phi_grad: gradient of potential 
-***************************************************************************/
-
-int AnalyticForce(double epsilon, double sigma, double cutoff,
-									double r, double* phi_val, double* phi_grad)
-{	
-	/* local variables */
-	double sor;
-	double sor6;
-	double sor12;
-
-	sor   = sigma/(double)r;
-	sor6  = pow(sor,6);
-	sor12 = pow(sor6,2);
-
-	if( r > cutoff) {
-		*phi_val  = 0.0;
-		*phi_grad = 0.0;
-	} else {
-		*phi_val  = 4.0*epsilon*(sor12 - sor6);
-		*phi_grad = 24.0*epsilon*(-2.0*sor12 + sor6)/(double)r;
-	}
-	return 1;
-}
 

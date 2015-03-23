@@ -373,6 +373,17 @@ void read_paramfile(FILE *pf)
     else if (strcasecmp(token, "cell_scale") == 0) {
       getparam("cell_scale", &global_cell_scale, PARAM_DOUBLE, 1, 1);
     }
+/*added*/
+/*************************************************************
+* KIM model name
+*************************************************************/
+/* #ifdef KIM
+*/
+    else if (strcasecmp(token, "kim_model_name") == 0) {
+      getparam("kim_model_name", kim_model_name, PARAM_STR, 1, 255);
+    }
+/* #endif*/  /*KIM*/
+/*added ends*/
     /* unknown tag */
     else {
       warning("Unknown tag <%s> in parameter file ignored!\n", token);

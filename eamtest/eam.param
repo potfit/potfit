@@ -1,9 +1,8 @@
 ntypes		1
-config		config.force_created_with_eam.pot_original
-startpot	eam.pot_pertubed
+config		eam.force
+startpot	eam_in2.pt
 endpot		eam_end.pot
 tempfile	dummy.tmp
-kim_model_name  EAM_Dynamo_tmp_model
 
 flagfile	STOP
 

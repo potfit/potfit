@@ -3,6 +3,7 @@ config		sys_b.force
 startpot	lj.pot
 endpot		lj_end.pot
 tempfile	dummy.tmp
+kim_model_name  Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
 
 imdpot		dummy.imd
 plotfile	dummy.plot
