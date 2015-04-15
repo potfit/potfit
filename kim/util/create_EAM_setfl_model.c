@@ -12,13 +12,13 @@ int main() {
 
 		/* local variables */
 	char SysCmd[256];
-	char tmpstring[80];
-	char flag_make[80];
+	char tmpstring[256];
+	char flag_make[256];
 	int i,j;
   FILE *pFile;
 
-	char model_name[80];
-  char model_driver_name[80]; /* "EAM_CubicCompleteSpline__MD_000000111111_000" */
+	char model_name[256];
+  char model_driver_name[256]; /* "EAM_CubicCompleteSpline__MD_000000111111_000" */
   
 	int Nspecies = 1;
 

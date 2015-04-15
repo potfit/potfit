@@ -16,7 +16,7 @@ endif
 include ../Makefile.KIM_Config
 
 # set model driver specific details
-MODEL_DRIVER_NAME    := EAM_Dynamo__MD_120291908751_001
+MODEL_DRIVER_NAME    := EAM_CubicCompleteSpline__MD_000000111111_000
 MODEL_NAME           := EAM_Dynamo_tmp_model
 SPECIES_001_NAME     := Al
 PARAM_FILE_001_NAME  := EAM_Dynamo_tmp_model.params

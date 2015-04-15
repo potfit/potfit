@@ -68,7 +68,7 @@ int get_neigh(void* kimmdl, int *mode, int *request, int* part,
 int CalcForce(void* pkim, double** energy, double** force, double** virial,
 							int useforce, int usestress);
 
-
+int get_NumOptimizableParam(void* pkim);
 
 
 /* functions in force_[interaction]_kim.c */

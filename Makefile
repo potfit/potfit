@@ -564,7 +564,8 @@ endif
 
 INTERACTION = 0
 
-# pair potentials
+
+# pair interactions
 ifneq (,$(findstring pair,${MAKETARGET}))
   CFLAGS += -DPAIR
   INTERACTION = 1
@@ -728,6 +729,18 @@ endif
 ifneq (,$(findstring resc,${MAKETARGET}))
 CFLAGS += -DRESCALE
 endif
+
+
+
+############################################
+# added    to enable KIM in the preprocessor
+############################################
+# kim  
+ifneq (,$(findstring kim,${MAKETARGET}))
+  CFLAGS += -DKIM
+endif
+#added ends#
+
 
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})

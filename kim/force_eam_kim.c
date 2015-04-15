@@ -129,23 +129,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* TBEAM */
 
 
-/* added */
-/***************************************************************************
-*
-* Declear(define) KIM local variables  
-*
-***************************************************************************/
-	int status;	
-	double kim_tmpsum = 0.0;   /* similar to tmp_sum, used by kim */
-	double* kimenergy;
-	double* kimforce; 			
-	double* kimvirial;		
-	int kim_uf = 0;						/* do we use forces? */
-	int kim_us = 0;						/* do we use stress? */		 
-	int numOfconf = nconf;		/* number of configurations in reference data */
-/* added ends*/
-
-
   switch (format) {
       case 0:
 	xi = calc_pot.table;
@@ -157,6 +140,24 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       case 5:
 	xi = calc_pot.table;	/* we need to update the calc-table */
   }
+
+
+
+/* added */
+/***************************************************************************
+*
+* Declear(define) KIM local variables  
+*
+***************************************************************************/
+	int status;	
+	double kim_tmpsum = 0.0;   /* similar to tmp_sum, used by kim */
+	double* kimenergy;
+	double* kimforce; 			
+	double* kimvirial;				 
+	int kim_uf = 0;							/* do we need to calculate force? */
+	int kim_us = 0;							/* do we need to calculate stress? */
+	int numOfconf = nconf;		/* number of configurations in reference data */
+/* added ends*/
 
 
 
@@ -191,9 +192,7 @@ printf("print0");
 KIM_API_print(pkimObj[0], &status);
 printf("print1");
 KIM_API_print(pkimObj[1], &status);
-exit(1);
-*/
-
+ */
 /* make sure that the derivatives does not change */
 xi[0] = 0.0;
 calc_pot.table[0]=0.0;
@@ -697,10 +696,33 @@ calc_pot.table[0]=0.0;
 * Calculate forces from KIM (general forces, including forces, virial and energy)
 *
 ***************************************************************************/
+/* the following 20 lines is the same as CalcForce, either one could be used*/
+	/*  unpack data from KIM */
+/*	KIM_API_getm_data(pkimObj[h], &status, 2*3,
+                    "energy",              &kimenergy,              1,
+                    "forces",              &kimforce,               1   ,
+										"virial",           	 &virial,       			 1 );
+  if (KIM_STATUS_OK > status)
+  {
+		KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
+    return status;
+  }	
+*/
+
+  /* Call model compute */
+/*  status = KIM_API_model_compute(pkimObj[h]);
+  if (KIM_STATUS_OK > status)
+  {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_compute", status);
+    return status;
+  }
+*/
+
 	kim_uf = uf;
-#ifdef STRESS
+#ifdef STREEE
 	kim_us = us;
-#endif /*stress*/
+#endif
+
 	status = CalcForce( pkimObj[h], &kimenergy,  &kimforce,  &kimvirial, kim_uf, kim_us);
 	if (KIM_STATUS_OK > status) {
 		KIM_API_report_error(__LINE__, __FILE__, "KIM: compute forces failed", status);

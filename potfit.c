@@ -82,13 +82,20 @@ int main(int argc, char **argv)
 /****************************************************************
 * Initialize KIM 
 ****************************************************************/
-/*#ifdef EAM*/
-/*
-	printf("kim model name is:%s",kim_model_name);
+#ifdef KIM
+
+
+	char* kimString;
+	KIM_API_get_model_kim_str(kim_model_name, &kimString);
+	printf("%s\n",kimString);
+
+
+	printf("KIM model being used: %s\n",kim_model_name);
 	InitKIM();
-*/
-/*#endif *//* EAM */
-/* */
+
+#endif /* KIM */
+/*added ends */
+
 
     /* Select correct spline interpolation and other functions */
 #ifdef APOT

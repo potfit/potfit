@@ -5,6 +5,7 @@
 */
 
 
+
 #include "../potfit.h"				/* to use `nconf'	*/
 #include "kim.h"				/* to use `NeighObjectType' */
 
@@ -16,11 +17,11 @@ void InitKIM() {
 
 /*NOTE(remove) the following two lines to create EAM model are in util now*/
 	/* create EAM temp model in current dir */
-/*	CreateModel();
-*/
+	CreateModel();
+
 	/* system call to make to model just made */
-/*	MakeModel();
-*/
+	MakeModel();
+
 	/* create KIM objects and do the necessary initialization */
 	InitObject();
 
@@ -36,6 +37,118 @@ void InitKIM() {
 
 	printf("\nInitializing KIM ... done\n");
 	fflush(stdout);
+}
+
+
+
+
+/***************************************************************************
+*
+* Create KIM Model
+*
+*	Create a directory for KIM model, and then create `Makefile' and '*.params'. 
+***************************************************************************/
+
+int CreateModel()
+{
+ 
+  char kim_model_driver_name[] = "EAM_CubicCompleteSpline__MD_000000111111_000" ;
+	/*char kim_model_driver_name[] = "EAM_Dynamo__MD_120291908751_001";
+*/
+	/* local variables */
+	char SysCmd[256];
+	char tmpstring[80];
+	int i,j;
+  FILE *pFile;
+
+  /* whether kim-api-build-config exists has been tested in the Makefile*/
+	/* create Makefile.KIM_Config */
+	system("kim-api-build-config --makefile-kim-config > Makefile.KIM_Config");
+
+	/* create model directoy */
+	/* if the model file name too long? */
+	if(strlen(kim_model_name) > 249)
+		error(1, "KIM Model name: '%s' is too long, use a shorter one.\n", kim_model_name);
+
+/*NOTE(change) it would be better check whether the dir exits or not */
+	strcpy(SysCmd, "mkdir ");
+	strcat(SysCmd, kim_model_name);
+	system(SysCmd);
+
+	/* create Makefile */
+	sprintf(tmpstring, "%s/Makefile", kim_model_name);
+	pFile = fopen(tmpstring,"w");
+	if(pFile == NULL)
+		error(1, "Error creating file: KIM Makefile. %s %d\n", __FILE__, __LINE__);
+	else {
+		fprintf(pFile,
+			"#\n"
+			"# Copyright (c) 2013--2014, Regents of the University of Minnesota.\n"
+			"# All rights reserved.\n"
+			"#\n"
+			"# Contributors:\n"
+			"#    Ryan S. Elliott\n"
+			"#    Ellad B. Tadmor\n"
+			"#    Mingjian Wen\n"
+			"#\n\n\n" );	
+
+		fprintf(pFile,"# load all basic KIM make configuration\n" );	
+		fprintf(pFile,"ifeq ($(wildcard ../Makefile.KIM_Config),)\n"
+	  	"  $(error ../Makefile.KIM_Config does not exist. Something is wrong with your KIM API package setup)\n"
+			"endif\n"
+			"include ../Makefile.KIM_Config\n\n" );	
+
+		fprintf(pFile,"# set model driver specific details\n" );
+		fprintf(pFile,"MODEL_DRIVER_NAME    := %s\n", kim_model_driver_name);	
+		fprintf(pFile,"MODEL_NAME           := %s\n", kim_model_name);	
+
+		for (i = 0; i < ntypes; i++) {
+			sprintf(tmpstring, "SPECIES_%03d_NAME", i+1);		
+			fprintf(pFile,"%s     := %s\n", tmpstring, elements[i]);	
+		}
+		sprintf(tmpstring, "%s.params", kim_model_name);			
+		fprintf(pFile,"PARAM_FILE_001_NAME  := %s\n\n", tmpstring);	
+	
+		fprintf(pFile,
+			"# APPEND to compiler option flag lists\n"
+			"#FFLAGS   +=\n"
+			"#CFLAGS   +=\n"
+			"#CXXFLAGS +=\n"
+			"#LDFLAGS  +=\n"
+			"#LDLIBS   +=\n\n");	
+
+		fprintf(pFile, "# load remaining KIM make configuration\n"
+		"include $(KIM_DIR)/$(builddir)/Makefile.ParameterizedModel\n");	
+	}
+	fflush(pFile);
+	fclose(pFile);
+
+	/* create EAM parameter file*/
+#ifdef EAM
+  CreateParamFileEAM();
+#endif /* EAM*/
+
+	return 0;
+}
+
+
+
+/***************************************************************************
+*
+* System call to make the model 
+*
+***************************************************************************/
+int MakeModel() {
+
+	/* local variables */
+	char SysCmd[256];
+	
+	printf("\n\nMaking KIM model ... starting\n");
+  sprintf(SysCmd,"cd %s; make", kim_model_name);
+	system(SysCmd);
+	printf("Making KIM model ... done\n");
+	
+	return 0;
 }
 
 
@@ -69,15 +182,7 @@ int InitObject() {
    		exit(1);
   	}
 	}
-
-
-
-get_NumOptimizableParam(pkimObj[0]);
-
-
-
-
-
+		
 	/* QUESTION: does each config has the same number of species? e.g. there are
 	two types of species, but a specific config may one have one species). If
 	not, then ntypes below need to be modified from config to config */
@@ -822,196 +927,3 @@ int CreateParamFileEAM() {
 	fclose(pFile);
 	return 0;
 }
-
-
-/******************************************************************************
-* get_NumOptimizableParam
-* inquire KIM to get the number of optimizable parameters in Model
-*******************************************************************************/
-
-int get_NumOptimizableParam(void* pkim) {
-	/*local variables */
-	int status;
-	int numberFreeParameters;
-	int maxStringLength;
-	int i;
-	char* pstr;
-	char buffer[128];
-	char name[64];
-	char type[16];
-	int haveNoDouble = 0;
-	char* tmp_FreeParamName;
-
-	/* get the number of free parameters */
-	status = KIM_API_get_num_free_params(pkim, &numberFreeParameters, &maxStringLength);
-	if (KIM_STATUS_OK > status) {
-  	KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_num_free_params", status);
-  	return(status);
-	}
-
-	/* Is there any free parameter of type other than double? If yes, exclude them. */
-		/* get the descriptor file, pointer by pstr */	
-	status = KIM_API_get_model_kim_str(kim_model_name, &pstr);
-	if (KIM_STATUS_OK > status) {
-  	KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_kim_str", status);
-  	return(status);
-	}
-
-		/* infinite loop to find PARAM_FREE_* of type other than double */
-		/* It's safe to do pstr = strstr(pstr+1,"PARAM_FREE") because the ``PARAM_FREE''
-		will never ever occur at the beginning of the descriptor file */	
-	while (1) {
-  	pstr = strstr(pstr+1,"PARAM_FREE");
-		if (pstr != NULL) {
-			snprintf(buffer, sizeof(buffer), "%s", pstr);
-			sscanf(buffer, "%s%s", name, type);
-			if (strncmp(name, "PARAM_FREE",10) == 0 && strcmp(type, "double") != 0) {
-				numberFreeParameters--;	
-				haveNoDouble = 1;			
-			}
-		} else {
-			break;
-		}
-	}
-	if(haveNoDouble) {
-		printf("There are Free Parameters of type other than ``double'', you may"
-				 "want to check the published list against the ``descriptor.kim'' file "
-				 "to ensure that they agree with each other!\n");
-	}
-	
-	/* Is cutoff a free parameter? If yes, exclude it. Since cutoff is 
-	not treated as a parameter in potfit */
-	for(i = 0; i < numberFreeParameters; i++ ) {
-		status = KIM_API_get_free_parameter(pkim, i, &tmp_FreeParamName);
-		if (!strcmp(tmp_FreeParamName, "PARAM_FREE_cutoff")) {
-			numberFreeParameters--;	
-			break;
-		}
-		if (KIM_STATUS_OK > status) {
-  		KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_free_parameter", status);
-    	return(status);
-  	}
-	}
-
-printf("nubmer of free parameters %d\n",numberFreeParameters);
-
-
-	return numberFreeParameters;
-}
-
-
-
-
-
-
-
-/***************************************************************************
-*
-* Create KIM Model
-*
-*	Create a directory for KIM model, and then create `Makefile' and '*.params'. 
-***************************************************************************/
-
-int CreateModel()
-{
- 
-  char kim_model_driver_name[] = "EAM_CubicCompleteSpline__MD_000000111111_000" ;
-	/*char kim_model_driver_name[] = "EAM_Dynamo__MD_120291908751_001";
-*/
-	/* local variables */
-	char SysCmd[256];
-	char tmpstring[80];
-	int i,j;
-  FILE *pFile;
-
-  /* whether kim-api-build-config exists has been tested in the Makefile*/
-	/* create Makefile.KIM_Config */
-	system("kim-api-build-config --makefile-kim-config > Makefile.KIM_Config");
-
-	/* create model directoy */
-	/* if the model file name too long? */
-	if(strlen(kim_model_name) > 249)
-		error(1, "KIM Model name: '%s' is too long, use a shorter one.\n", kim_model_name);
-
-/*NOTE(change) it would be better check whether the dir exits or not */
-	strcpy(SysCmd, "mkdir ");
-	strcat(SysCmd, kim_model_name);
-	system(SysCmd);
-
-	/* create Makefile */
-	sprintf(tmpstring, "%s/Makefile", kim_model_name);
-	pFile = fopen(tmpstring,"w");
-	if(pFile == NULL)
-		error(1, "Error creating file: KIM Makefile. %s %d\n", __FILE__, __LINE__);
-	else {
-		fprintf(pFile,
-			"#\n"
-			"# Copyright (c) 2013--2014, Regents of the University of Minnesota.\n"
-			"# All rights reserved.\n"
-			"#\n"
-			"# Contributors:\n"
-			"#    Ryan S. Elliott\n"
-			"#    Ellad B. Tadmor\n"
-			"#    Mingjian Wen\n"
-			"#\n\n\n" );	
-
-		fprintf(pFile,"# load all basic KIM make configuration\n" );	
-		fprintf(pFile,"ifeq ($(wildcard ../Makefile.KIM_Config),)\n"
-	  	"  $(error ../Makefile.KIM_Config does not exist. Something is wrong with your KIM API package setup)\n"
-			"endif\n"
-			"include ../Makefile.KIM_Config\n\n" );	
-
-		fprintf(pFile,"# set model driver specific details\n" );
-		fprintf(pFile,"MODEL_DRIVER_NAME    := %s\n", kim_model_driver_name);	
-		fprintf(pFile,"MODEL_NAME           := %s\n", kim_model_name);	
-
-		for (i = 0; i < ntypes; i++) {
-			sprintf(tmpstring, "SPECIES_%03d_NAME", i+1);		
-			fprintf(pFile,"%s     := %s\n", tmpstring, elements[i]);	
-		}
-		sprintf(tmpstring, "%s.params", kim_model_name);			
-		fprintf(pFile,"PARAM_FILE_001_NAME  := %s\n\n", tmpstring);	
-	
-		fprintf(pFile,
-			"# APPEND to compiler option flag lists\n"
-			"#FFLAGS   +=\n"
-			"#CFLAGS   +=\n"
-			"#CXXFLAGS +=\n"
-			"#LDFLAGS  +=\n"
-			"#LDLIBS   +=\n\n");	
-
-		fprintf(pFile, "# load remaining KIM make configuration\n"
-		"include $(KIM_DIR)/$(builddir)/Makefile.ParameterizedModel\n");	
-	}
-	fflush(pFile);
-	fclose(pFile);
-
-	/* create EAM parameter file*/
-#ifdef EAM
-  CreateParamFileEAM();
-#endif /* EAM*/
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-*
-* System call to make the model 
-*
-***************************************************************************/
-int MakeModel() {
-
-	/* local variables */
-	char SysCmd[256];
-	
-	printf("\n\nMaking KIM model ... starting\n");
-  sprintf(SysCmd,"cd %s; make", kim_model_name);
-	system(SysCmd);
-	printf("Making KIM model ... done\n");
-	
-	return 0;
-}
-
-
