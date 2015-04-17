@@ -17,6 +17,10 @@
 #define DIM 3
 #endif
 
+/* variables */
+
+char** OptParamNames;
+int OptParamNum;
 
 
 /* Define neighborlist structure */
@@ -34,14 +38,14 @@ typedef struct
 {
   char** name;
  	double** value;   /* the pointer to parameters */
-	double** nestedvalue; /*nest all values into one long variable, would be equal  
-	                        to value if all optimizalbe has rank 0 */
 	int* rank;
 	int** shape;
-	int Nparam;				/* number of optimizable parameters */
-} OptParamType;
+	int Nparam;				/* number of free parameters, used in free_kim.c */
+	int cutoffIdx;		/* Index of cutoff in the name list (used to publish cutoff 
+											once and for all)*/
+} FreeParamType;
 
-OptParamType* OptParamAllConfig;
+FreeParamType* FreeParamAllConfig;
 
 
 /* function prototypes */
@@ -53,11 +57,9 @@ void FreeKIM();
 
 int InitObject();
 
-int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam);
+int CreateFreeParamList(void* pkim, FreeParamType* FreeParam);
 
-int nest_OptimizableParamValue(void* pkim, OptParamType* OptParam);
-
-int PublishCutoff(void* pkim, double cutoff);
+int PublishCutoff(void* pkim, FreeParamType* FreeParam, double cutoff);
 
 int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start);
 
@@ -67,11 +69,11 @@ int get_neigh(void* kimmdl, int *mode, int *request, int* part,
 int CalcForce(void* pkim, double** energy, double** force, double** virial,
 							int useforce, int usestress);
 
-int get_OptimizableParamSize();
+int get_OptimizableParam();
 
 
 /* functions in force_[interaction]_kim.c */
-int PublishParam(void* pkim, OptParamType* FreeParam, double* PotTable);
+int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable);
 
 #ifdef PAIR
 /* used only for check purpose (could be deleted ) */

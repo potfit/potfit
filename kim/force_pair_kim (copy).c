@@ -148,7 +148,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 *
 * Publish KIM parameters
 * 
-* publish parameters 
+* publish parameters for LJ potential: epsilon and sigma.
 *
 * Need to use xi_opt not xi (the second  and third argument) when calling
 * PublishParam. xi_opt stores the original parameter for analytic
@@ -162,8 +162,13 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 *	need to be published. 
 ***************************************************************************/
  	for (i = 0; i < numOfconf; i++) {
-    PublishParam(pkimObj[i], &OptParamAllConfig[i], xi_opt);	
-  }
+		status = PublishParam(pkimObj[i], &FreeParamAllConfig[i], xi_opt);	
+		if (KIM_STATUS_OK > status) {
+			KIM_API_report_error(__LINE__, __FILE__, 
+														"KIM: publish parameters failed", status);
+    	exit(1);
+ 	 	}
+	}
 
 /* added ends */
 
@@ -574,32 +579,37 @@ printf("flag kimtmp_sum of energy from kim%f\n", kim_tmpsum);
 /* added */
 /***************************************************************************
 *
-* Publish KIM parameter 
+* Publish KIM parameter ((update epsilon and sigma of LJ))
 *
 * transferred varialbes:
 *	pkkm: KIM ojbect
 *	PotTable: potential table where the potential paramenters are stored
+*	CutOff: cutoff radius   
 *
 ***************************************************************************/
-int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
-{	
-  /*local variables*/  
-  int status;
-  int i;
+/*Don't forget to publish params for all KIM objest */
+int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable) {
+	/*local variables*/  
+	int status;
+	double* param_epsilon;
+	double* param_sigma;
 
-  /*publish parameters */ 
-  /*Pot[i+2] because the first two index stores the derivative info  */
-  for (i = 0; i < OptParam->Nparam; i++) {
- 	  *(OptParam->nestedvalue[i]) = PotTable[i+2]; 
-  }
+	/* set convenient pointers to the parameters */
+	param_epsilon = FreeParam->value[1];
+	param_sigma   = FreeParam->value[2];
+	
+	/*publish parameters*/
+ 	*param_epsilon = PotTable[2]; 
+	*param_sigma	 = PotTable[3];
  	status = KIM_API_model_reinit(pkim);
- 	if (KIM_STATUS_OK > status)	{
+ 	if (KIM_STATUS_OK > status)	
+  {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
     return status;
   }
-  return 0;
+	return KIM_STATUS_OK;
 }
-
+/* added ends */
 
 
 

@@ -84,13 +84,6 @@ int main(int argc, char **argv)
 ****************************************************************/
 #ifdef KIM
 
-
-	char* kimString;
-	KIM_API_get_model_kim_str(kim_model_name, &kimString);
-	printf("%s\n",kimString);
-
-
-	printf("KIM model being used: %s\n",kim_model_name);
 	InitKIM();
 
 #endif /* KIM */

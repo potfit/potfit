@@ -13,10 +13,7 @@
 
 
 #include "../potfit.h"				/* to use `nconf' etc.	*/
-#include "../utils.h"					/* the function prototype is defined here */
-#include "kim.h"				/* to use `NeighObjectType' */
-#include "KIM_API_C.h"
-#include "KIM_API_status.h"
+#include "free_kim.h"
 
 /* added */
 /***************************************************************************
@@ -53,24 +50,34 @@ void FreeKIM(void)
 		free(NeighObject->BeginIdx);	
 		/* free the neighbor list itself */
 		free(NeighObject);	
-	
-		/* free FreeParam type*/
-		FreeParamType* FreeParam = &FreeParamAllConfig[i];
-		for(j = 0; j < FreeParam->Nparam; j++) {
-			free(FreeParam->name[j]);	
-			free(FreeParam->shape[j]);
-		}
-			free(FreeParam->name);	
-			free(FreeParam->value);
-			free(FreeParam->shape);	
-			free(FreeParam->rank);
-
+    
+    /* free paramlist */
+    FreeOptParamType (&OptParamAllConfig[i]);
 		/* free memory of KIM objects */
   	KIM_API_free(pkim, &status);
  		if (KIM_STATUS_OK > status) 
 			KIM_API_report_error(__LINE__, __FILE__,"destroy", status);
 	}
-	free(FreeParamAllConfig);
+	free(OptParamAllConfig);
   free(pkimObj);
 	/* every thing is great */
+}
+
+
+void FreeOptParamType (OptParamType* OptParam) 
+{
+	/*local variable*/
+	int i;
+
+	for(i = 0; i < OptParam->Nparam; i++) {
+		free(OptParam->name[i]);	
+		free(OptParam->shape[i]);
+	}
+	free(OptParam->name);	
+	free(OptParam->value);
+	free(OptParam->shape);	
+	free(OptParam->rank); 
+	if (OptParam->nestedvalue != NULL) {
+		free(OptParam->nestedvalue);
+	}
 }
