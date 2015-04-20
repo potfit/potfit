@@ -180,7 +180,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 *	need to be published. 
 ***************************************************************************/
  	for (i = 0; i < numOfconf; i++) {
-		status = PublishParam(pkimObj[i], &FreeParamAllConfig[i], xi);	
+		status = PublishParam(pkimObj[i], &OptParamAllConfig[i], xi);	
 		if (KIM_STATUS_OK > status) {
 			KIM_API_report_error(__LINE__, __FILE__, 
 														"KIM: publish parameters failed", status);
@@ -962,7 +962,7 @@ calc_pot.table[0]=0.0;
 
 ***************************************************************************/
 
-int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable)
+int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
 {	
 	int status;
 	/* published param */
@@ -981,13 +981,13 @@ int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable)
 	int tableIdx;			/* where we are in the potfit potential table? */			
 	int i,j,k;
 
-	/* set convinent pointer pointing to FreeParam->value */
-	param_embedding = FreeParam->value[3];
-	param_density		= FreeParam->value[4];
-	param_rPhi  		= FreeParam->value[5];
-	shape_embedding = FreeParam->shape[3];
-	shape_density   = FreeParam->shape[4];
-	shape_rPhi      = FreeParam->shape[5];
+	/* set convinent pointer pointing to OptParam->value */
+	param_embedding = OptParam->value[2];
+	param_density		= OptParam->value[3];
+	param_rPhi  		= OptParam->value[4];
+	shape_embedding = OptParam->shape[2];
+	shape_density   = OptParam->shape[3];
+	shape_rPhi      = OptParam->shape[4];
 
   /* copy embedding data */		
 	for (i = 0; i<shape_embedding[0]; i++) {	

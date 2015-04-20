@@ -22,6 +22,7 @@ void InitKIM() {
 /*	MakeModel();
 */
 
+	printf("\nInitializing KIM ... started\n");
 	/* create KIM objects and do the necessary initialization */
 	InitObject();
 
@@ -36,7 +37,7 @@ void InitKIM() {
 		PublishCutoff(pkimObj[i], rcutmax);
 	}
 
-	printf("\nInitializing KIM ... done\n");
+	printf("Initializing KIM ... done\n");
 	fflush(stdout);
 }
 
@@ -929,7 +930,7 @@ int get_OptimizableParamSize() {
 	printf("- There is (are) %d `PARAM_FREE_*' parameter(s) of type other than "
 						"`double'.\n", NumFreeParamNoDouble);
 	printf("- The following parameters should and will be pubished to KIM each time "           
-	       " force calculating routine (`calc_force') is called.\n");
+	       "force calculating routine (`calc_force') is called.\n");
 	printf("         param name                 param extent\n");
 	printf("        ############               ##############\n");
 	for(i = 0; i < OptParamSize.Nparam; i++ ) {

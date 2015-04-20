@@ -855,6 +855,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     strcpy(apt->names[i], name);
     apt->n_par[i] = apot_parameters(name);
 #else 
+/*NOTE(modify)   the name is harded coded, need to be changed */
     strcpy(apt->names[i], "lj");
 		apt->n_par[i] = get_OptimizableParamSize(); 
 #endif /* KIM */
@@ -1617,6 +1618,14 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
+
+/*added*/
+/******************************************************************************
+* print the published parameter to screen
+******************************************************************************/
+	get_OptimizableParamSize();
+
+/*added ends*/
 
   return;
 }
