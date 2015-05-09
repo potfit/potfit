@@ -176,7 +176,9 @@ int main(int argc, char **argv)
 #ifdef MPI
   MPI_Bcast(opt_pot.table, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
+#ifndef KIM
   update_calc_table(opt_pot.table, calc_pot.table, 1);
+#endif /* KIM */
 #endif /* APOT */
 
   /* Select correct spline interpolation and other functions */

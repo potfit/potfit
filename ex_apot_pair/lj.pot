@@ -6,8 +6,12 @@
 global 1
 h	0.86	0.50	2.00
 
-type lj
-cutoff 6.0
-# there should be no comments between type and cutoff, but here it’s allowed
-epsilon	0.36	0.00	1.00
-sigma	2.35	1.00	4.00
+type  Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+
+#check_kim_optimizable_parameters
+# the number of paramters that will be optimized 
+num_optimize_param  2
+
+#test comment
+PARAM_FREE_epsilon	0.00	1.00
+PARAM_FREE_sigma		1.00	4.00

@@ -843,11 +843,26 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     if (strcmp(name, "pohlong") == 0)
       strcpy(name, "bjs\0");
 
+
+/*added */
+/******************************************************************************
+* Get the size pf optimizable parameters from KIM
+******************************************************************************/
+#ifndef KIM
     if (apot_parameters(name) == -1)
       error(1, "Unknown function type in file %s, please define \"%s\" in functions.c.", filename, name);
 
     strcpy(apt->names[i], name);
     apt->n_par[i] = apot_parameters(name);
+#else 
+/*NOTE(modify)   the name is harded coded, need to be changed */
+    strcpy(apt->names[i], "lj");
+		apt->n_par[i] = get_OptimizableParamSize(); 
+#endif /* KIM */
+/* added ends*/
+
+
+
 
     /* add one parameter for cutoff function if _sc is found */
     if (smooth_pot[i] == 1)
@@ -1603,6 +1618,14 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
+
+/*added*/
+/******************************************************************************
+* print the published parameter to screen
+******************************************************************************/
+	get_OptimizableParamSize();
+
+/*added ends*/
 
   return;
 }

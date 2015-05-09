@@ -3,7 +3,6 @@ config		config_two_config.force
 startpot	eam.pot_pertubed
 endpot		eam_end.pot
 tempfile	dummy.tmp
-kim_model_name  EAM_Dynamo_tmp_model
 
 flagfile	STOP
 

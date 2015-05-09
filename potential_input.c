@@ -34,6 +34,10 @@
 #include "potential.h"
 #include "utils.h"
 
+/*added to use OptParamType*/
+#include "kim/kim.h"
+/*added ends*/
+
 /****************************************************************
  *
  * read potential tables
@@ -292,7 +296,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
   apt->names = (char **)malloc(size * sizeof(char *));
   for (i = 0; i < size; i++)
-    apt->names[i] = (char *)malloc(20 * sizeof(char));
+/*added modified (allocate more memory)*/
+   /* apt->names[i] = (char *)malloc(20 * sizeof(char));*/
+    apt->names[i] = (char *)malloc(255 * sizeof(char));
+/*added ends*/
 
   if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL)
     || (apt->fvalue == NULL) || (apt->names == NULL) || (apt->pmin == NULL)
@@ -492,8 +499,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
     /* loop over all atom types */
     for (j = 0; j < ntypes; j++) {
-
-      /* allocate memory for parameter name */
       apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
       reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
       if (apt->param_name[i][j] == NULL)
@@ -848,34 +853,68 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 /******************************************************************************
 * Get the size pf optimizable parameters from KIM
 ******************************************************************************/
-#ifndef KIM
-    if (apot_parameters(name) == -1)
+/*    if (apot_parameters(name) == -1)
       error(1, "Unknown function type in file %s, please define \"%s\" in functions.c.", filename, name);
 
     strcpy(apt->names[i], name);
     apt->n_par[i] = apot_parameters(name);
-#else 
+*/
 /*NOTE(modify)   the name is harded coded, need to be changed */
-    strcpy(apt->names[i], "lj");
-		apt->n_par[i] = get_OptimizableParamSize(); 
-#endif /* KIM */
-/* added ends*/
+    strcpy(kim_model_name, name);
+    strcpy(apt->names[i], name);
+
+    /*get the parameters info from kim. get_OptimizableParamSize will nest
+     * cutoff at the end of nestedvalue if smooth_pot[i]*/
+    OptParamType OptParamSet;
+		apt->n_par[i] = get_OptimizableParamSize(&OptParamSet, smooth_pot[i]); 
+
+    /* get cutoff (also check whether cutoff is publishable (whether
+     * PARAM_FREE_cutoff is in .kim file)) */
+    if( strcmp(OptParamSet.name[OptParamSet.Nparam - 1], "PARAM_FREE_cutoff") == 0) {
+      apt->end[i] = *OptParamSet.value[OptParamSet.Nparam - 1];
+    } else {
+      KIM_API_report_error(__LINE__, __FILE__, "PARAM_FREE_cutoff could not be "
+      "obtained from the KIM model.", -1);
+      exit(1);
+  	}
+     
+    /* check whether each parameter has rank 0 */
+    if (smooth_pot[i]){  
+      if (OptParamSet.Nparam != apt->n_par[i] ) {
+        KIM_API_report_error(__LINE__, __FILE__, "Some potential parameters "
+                          "`PARAM_FREE_*' have rank greater than 0. Not "
+                          "supported by APOT.", -1);
+        exit(1);
+      }
+    } else {
+      if (OptParamSet.Nparam - 1 != apt->n_par[i] ) {
+        KIM_API_report_error(__LINE__, __FILE__, "Some potential parameters "
+                          "`PARAM_FREE_*' have rank greater than 0. Not "
+                          "supported by APOT.", -1);
+        exit(1);
+      }
+    }
+    /* so far everything is great */
 
 
 
+    /* add one parameter for cutoff function if _sc is found,(added already considered
+     * in get_OptimiazalbeParamSize) */
+    /*if (smooth_pot[i] == 1)
+      apt->n_par[i]++;*/
 
-    /* add one parameter for cutoff function if _sc is found */
-    if (smooth_pot[i] == 1)
-      apt->n_par[i]++;
     apt->total_par += apt->n_par[i];
 
+/*added modified (we read cutoff from KIM directly see above */
     /* read cutoff */
-    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i]))
+/*    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i]))
       error(1, "Could not read cutoff for potential #%d in file %s\nAborting", i, filename);
     if (strcmp(buffer, "cutoff") != 0)
       error(1,
 	"No cutoff found for the %d. potential (%s) after \"type\" in file %s.\nAborting",
 	i + 1, apt->names[i], filename);
+*/  
+
 
     /* set very small begin, needed for EAM embedding function */
     apt->begin[i] = 0.0001;
@@ -900,10 +939,32 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       || NULL == apt->pmax[i] || NULL == apt->param_name[i])
       error(1, "Cannot allocate memory for potential paramters.\nAborting");
 
+
+    /* added  copy parameters values to potfit, assume all paramenters are
+     * optimizable by setting pmin and pmax smaller and larger than values,
+     * respectively. Then pmin and pmax for parameters that are optimizable(not 
+     * invar) will be read in again from the input file, and thus written. So the
+     * main purpose is to initialize the inval */
+
+    for (j = 0; j <apt->n_par[i]; j++) {
+      apt->param_name[i][j] = (char *)malloc(63 * sizeof(char));
+      if (NULL == apt->param_name[i][j]) {
+        error(1, "Error in allocating memory for parameter name");
+      }
+      reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
+      strncpy(apt->param_name[i][j], OptParamSet.name[j], 63);
+      apt->values[i][j] = *OptParamSet.nestedvalue[j];
+      apt->pmin[i][j] = *OptParamSet.nestedvalue[j] - 1.0;
+      apt->pmax[i][j] = *OptParamSet.nestedvalue[j] + 1.0;
+      k++;
+    }
+
+
     /* check for comments */
     do {
-      j = fgetc(infile);
-    } while (j != 10);
+          j = fgetc(infile);
+       } while (j == '\n' || j == '\t' || j == ' ');
+    ungetc(j,infile);
 
     fgetpos(infile, &filepos);
     fgets(buffer, 255, infile);
@@ -913,111 +974,150 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     }
     fsetpos(infile, &filepos);
 
+
+    /* read the flag `check_kim_optimizable_parameters', if exit nicely */
+    /* read the number of parameters that will be optimized */
+    int num_optimize_param = -1;
+    fgets(buffer, 255, infile);
+    if (strncmp(buffer,"check_kim_optimizable_parameters", 32) == 0) {
+      printf(" - The following potential parameters are available to fit. Include the "
+	           "name(s) of the one(s) you want to optimize in the potential input "
+             "file: %s.\n",filename);
+      printf("         param name                 param extent\n");
+      printf("        ############               ##############\n");
+      for(k = 0; k < OptParamSet.Nparam; k++ ) {
+        printf("     %-35s[ ", OptParamSet.name[k]);
+        for(j = 0; j < OptParamSet.rank[k]; j++) {
+          printf("%d ", OptParamSet.shape[k][j]);
+        }
+        printf("]\n");
+      }
+      exit(1); 
+    } else if (strncmp(buffer,"num_optimize_param", 18) == 0) {
+      if(1 != sscanf(buffer, "%*s%d", &num_optimize_param)) {
+        error(1, "Could not read num_optimize_param.\n");  
+      }
+    }else {
+      error(1, "The number of parameters that will be optimized "
+            "(num_optimize_param) should be given after `type'.\n ");
+    }
+  
+    /* check for comments */
+    do {
+          j = fgetc(infile);
+       } while (j == '\n' || j == '\t' || j == ' ');
+    ungetc(j,infile);
+    fgetpos(infile, &filepos);
+    fgets(buffer, 255, infile);
+    while (buffer[0] == '#') {
+      fgetpos(infile, &filepos);
+      fgets(buffer, 255, infile);
+    }
+    fsetpos(infile, &filepos);
+
+ 
+    double tmp_pmin;
+    double tmp_pmax;
+    int have_param[apt->n_par[i]]; /* if the parameter is in file, have_param=1*/
+    int valid_name;
+    /* initialize flag */
+    for (j = 0; j < apt->n_par[i]; j++) {
+      have_param[j] = 0;
+    }
+
     /* read parameters */
     apt->invar_par[i][apt->n_par[i]] = 0;
-    for (j = 0; j < apt->n_par[i]; j++) {
-      apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
-      if (NULL == apt->param_name[i][j])
-	error(1, "Error in allocating memory for parameter name");
-      reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
-      strcpy(apt->param_name[i][j], "empty");
-      fgetpos(infile, &filepos);
+    for (j = 0; j < num_optimize_param; j++) {
       fgets(name, 255, infile);
-      while (name[0] == '#' && !feof(infile) && (j != apt->n_par[i] - 1)) {
-	fgets(name, 255, infile);
+      while (name[0] == '#' && !feof(infile) && (j != num_optimize_param - 1)) {
+      	fgets(name, 255, infile);
       }
-      if ((j != (apt->n_par[i] - 1)) && (feof(infile) || name[0] == '\0')) {
-	error(0, "Premature end of potential definition or file.\n");
-	error(1, "Probably your potential definition is missing some parameters.\n");
+      if ((j != (num_optimize_param - 1)) && (feof(infile) || name[0] == '\0')) {
+      	error(0, "Premature end of potential definition or file.\n");
+       	error(1, "Probably your potential definition is missing some parameters.\n");
       }
       if (feof(infile))
-	name[0] = '\0';
+        name[0] = '\0';
       buffer[0] = '\0';
-      ret_val =
-	sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j], &apt->pmin[i][j], &apt->pmax[i][j]);
-      if (buffer[0] != '\0')
-	strncpy(apt->param_name[i][j], buffer, 30);
-
-      /* if last char of name is "!" we have a global parameter */
-      if (strrchr(apt->param_name[i][j], '!') != NULL) {
-	apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] = '\0';
-	l = -1;
-	for (k = 0; k < apt->globals; k++)
-	  if (strcmp(apt->param_name[i][j], apt->param_name[global_pot][k]) == 0)
-	    l = k;
-	if (-1 == l)
-	  error(1, "Could not find global parameter %s!\n", apt->param_name[i][j]);
-	sprintf(apt->param_name[i][j], "%s!", apt->param_name[i][j]);
-
-	/* write index array for global parameters */
-	if (++apt->n_glob[l] > 1) {
-	  apt->global_idx[l] = (int **)realloc(apt->global_idx[l], apt->n_glob[l] * sizeof(int *));
-	} else {
-	  apt->global_idx[l] = (int **)malloc(1 * sizeof(int *));
-	}
-	apt->global_idx[l][apt->n_glob[l] - 1] = (int *)malloc(2 * sizeof(int));
-	apt->global_idx[l][apt->n_glob[l] - 1][0] = i;
-	apt->global_idx[l][apt->n_glob[l] - 1][1] = j;
-
-	apt->values[i][j] = apt->values[global_pot][l];
-	apt->pmin[i][j] = apt->pmin[global_pot][l];
-	apt->pmax[i][j] = apt->pmax[global_pot][l];
-	apt->invar_par[i][j] = 1;
-	apt->invar_par[i][apt->n_par[i]]++;
-      } else {
-	/* this is no global parameter */
-	if (4 > ret_val) {
-	  if (smooth_pot[i] && j == apot_parameters(apt->names[i])) {
-	    if (0 == strcmp(apt->param_name[i][j], "type") ||
-	      0 == strcmp(apt->param_name[i][j], "empty") || feof(infile)) {
-	      warning("No cutoff parameter given for potential #%d: adding one parameter.\n", i);
-	      strcpy(apt->param_name[i][j], "h");
-	      apt->values[i][j] = 1;
-	      apt->pmin[i][j] = 0.5;
-	      apt->pmax[i][j] = 2;
-	      fsetpos(infile, &filepos);
+      ret_val = sscanf(name, "%s %lf %lf", buffer, &tmp_pmin, &tmp_pmax);
+      
+      if (strcmp(buffer, "PARAM_FREE_cutoff") == 0) {
+        if( smooth_pot[i] == 0) {
+           error(1, "`PARAM_FREE_cutoff' should not be included in potential file: "
+                 "%s, if smooth cutoff is not enabled.", filename);
+        }
+      }
+ 
+      if (ret_val == 3) {
+        valid_name = 0;
+        for (k = 0; k < apt->n_par[i]; k++) {
+      	  if (strcmp(buffer, apt->param_name[i][k]) == 0) {
+            apt->pmin[i][k] = tmp_pmin;
+            apt->pmax[i][k] = tmp_pmax;
+            have_param[k] = 1;
+            valid_name = 1;
+            break;
+          } 
+        }
+        if (valid_name == 0) {
+            error(1, "`%s' you specified in file `%s' is not a valid parameter name.\n"
+                   , buffer, filename);
+        }  
+      } else { /* not enough parameters are readed */
+	      if (smooth_pot[i] && !have_param[apt->n_par[i]-1] && j == num_optimize_param - 1) {
+	        error(1,"No cutoff parameter given for potential #%d: adding one parameter.\n", i);
+	      } else {
+	        if ( ret_val == EOF) {
+	          error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", 
+                    i + 1, apt->names[i],filename);
+	          error(1, "You specified %d parameter(s), but required are %d.\n", j, num_optimize_param);
+	        }
+          error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
+	      }
 	    }
-	  } else {
-	    if (strcmp(apt->param_name[i][j], "type") == 0 || ret_val == EOF) {
-	      error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", i + 1, apt->names[i],
-		filename);
-	      error(1, "You specified %d parameter(s), but required are %d.\n", j, apt->n_par[i]);
-	    }
-	    error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
-	  }
-	}
 
-	/* check for invariance and proper value (respect boundaries) */
-	/* parameter will not be optimized if min==max */
-	apt->invar_par[i][j] = 0;
-	if (apt->pmin[i][j] == apt->pmax[i][j]) {
-	  apt->invar_par[i][j] = 1;
-	  apt->invar_par[i][apt->n_par[i]]++;
-	} else if (apt->pmin[i][j] > apt->pmax[i][j]) {
-	  temp = apt->pmin[i][j];
-	  apt->pmin[i][j] = apt->pmax[i][j];
-	  apt->pmax[i][j] = temp;
-	} else if ((apt->values[i][j] < apt->pmin[i][j])
-	  || (apt->values[i][j] > apt->pmax[i][j])) {
-	  /* Only print warning if we are optimizing */
-	  if (opt) {
-	    if (apt->values[i][j] < apt->pmin[i][j])
-	      apt->values[i][j] = apt->pmin[i][j];
-	    if (apt->values[i][j] > apt->pmax[i][j])
-	      apt->values[i][j] = apt->pmax[i][j];
-	    warning("Starting value for parameter #%d in potential #%d is ", j + 1, i + 1);
-	    warning("outside of specified adjustment range.\n");
-	    warning("Resetting it to %f.\n", apt->values[i][j]);
-	    if (apt->values[i][j] == 0)
-	      warning("New value is 0 ! Please be careful about this.\n");
-	  }
-	}
+    	/* check for invariance and proper value (respect boundaries) */
+    	/* parameter will not be optimized if min==max */
+    	apt->invar_par[i][j] = 0;
+    	if (apt->pmin[i][j] == apt->pmax[i][j]) {
+	      apt->invar_par[i][j] = 1;
+        apt->invar_par[i][apt->n_par[i]]++;
+      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
+        temp = apt->pmin[i][j];
+        apt->pmin[i][j] = apt->pmax[i][j];
+        apt->pmax[i][j] = temp;
+      } else if ((apt->values[i][j] < apt->pmin[i][j]) ||
+                  (apt->values[i][j] > apt->pmax[i][j])) {
+	       /* Only print warning if we are optimizing */
+        if (opt) {
+          if (apt->values[i][j] < apt->pmin[i][j])
+            apt->values[i][j] = apt->pmin[i][j];
+          if (apt->values[i][j] > apt->pmax[i][j])
+            apt->values[i][j] = apt->pmax[i][j];
+          warning("Starting value for parameter #%d in potential #%d is ", j + 1, i + 1);
+          warning("outside of specified adjustment range.\n");
+          warning("Resetting it to %f.\n", apt->values[i][j]);
+          if (apt->values[i][j] == 0)
+	          warning("New value is 0 ! Please be careful about this.\n");
+        }
+      }
+    }
+    
+    /* check for invariance (the above is not the end of story) */
+    /* if the parameter is not provided in the file, they are invariable */
+    for (j = 0; j < apt->n_par[i]; j++) {
+      if (have_param[j] == 0) {
+        apt->invar_par[i][j] = 1;
+        apt->invar_par[i][apt->n_par[i]]++;
       }
     }
 
   }
   printf(" - Successfully read %d potential table(s)\n", apt->number);
-
+  
+  
+  
+  
   /* clean up globals table */
   if (have_globals) {
     for (i = 0; i < apt->globals; i++) {
@@ -1042,9 +1142,15 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     }
   }
 
+/*added modified   do not need it any more*/
   /* assign the potential functions to the function pointers */
-  if (apot_assign_functions(apt) == -1)
+ /* if (apot_assign_functions(apt) == -1)
     error(1, "Could not assign the function pointers.\n");
+  */
+/*added ends*/
+
+
+
 #ifdef PAIR
   if (enable_cp) {
     cp_start = apt->total_par - apt->globals + ntypes * (ntypes + 1);
@@ -1129,9 +1235,17 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       val++;
       list++;
       if (!invar_pot[i] && !apt->invar_par[i][j]) {
-	pt->idx[k] = l++;
-	apt->idxpot[k] = i;
-	apt->idxparam[k++] = j;
+	pt->idx[k] = l++;      /*index, the optimiable parameters in pt->table. for
+                          example, idx[0] = 2 indicates that the the first
+                          variable parameters lies in slot 2 of pt->table */
+	apt->idxpot[k] = i;   /* index, the optimizable parameters come from which
+                         potential? e.g. idxpot[0] = 0, indicates that the first 
+                         variable parameter is from the first potential*/
+	apt->idxparam[k++] = j;/*index, the optimizable parameters is the ?th
+                          parammeter of the potential. Sould be used together
+                          with idxpot. e.g. idxparam[0] = 1 indicates that the
+                          first variable parameter is the 2nd parameter 
+                          of potential idxpot[0] */
       } else
 	l++;
     }
@@ -1227,8 +1341,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     for (j = 0; j < apt->globals; j++) {
       *val = apt->values[i][j];
       *list = apt->values[i][j];
-      val++;
-      list++;
+      val++; list++;
       if (!apt->invar_par[i][j]) {
 	pt->idx[k] = l++;
 	apt->idxpot[k] = i;
@@ -1248,8 +1361,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
   check_apot_functions();
 
+/*added don't need it any more; the calculation are done by KIM, but we still
+ need it in reading config info  */
   init_calc_table(pt, &calc_pot);
 
+/*added ends */
   return;
 }
 
@@ -1280,6 +1396,46 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
   int   i, j, k, l;
   int   nvals[size];
   double *val;
+
+
+    char  buffer[255], name[255];
+    OptParamType OptParamSet;
+    /*for tabulated potential, no smooth cutoff should even be considered. So
+    pass flag 0 to not include the PARAM_FREE_cutoff in the nestedvalue */
+    
+    strcpy(kim_model_name, "EAM_Dynamo_tmp_model"); 
+		get_OptimizableParamSize(&OptParamSet, 0); 
+
+
+    /* read the flag `check_kim_optimizable_parameters', if exit nicely */
+    /* read the number of parameters that will be optimized */
+    int num_optimize_param = -1;
+/*    fgets(buffer, 255, infile);
+*/  strcpy(buffer,"check_kim_optimizable_parameters"); 
+    if (strncmp(buffer,"check_kim_optimizable_parameters", 32) == 0) {
+      printf(" - The following potential parameters are available to fit. Include the "
+	           "name(s) of the one(s) you want to optimize in the potential input "
+             "file: %s.\n",filename);
+      printf("         param name                 param extent\n");
+      printf("        ############               ##############\n");
+      for(k = 0; k < OptParamSet.Nparam - 1; k++ ) { /* Nparam -1 to exclude
+      PARAM_FREE_cutoff */
+        printf("     %-35s[ ", OptParamSet.name[k]);
+        for(j = 0; j < OptParamSet.rank[k]; j++) {
+          printf("%d ", OptParamSet.shape[k][j]);
+        }
+        printf("]\n");
+      }
+      exit(1); 
+    } else if (strncmp(buffer,"num_optimize_param", 18) == 0) {
+      if(1 != sscanf(buffer, "%*s%d", &num_optimize_param)) {
+        error(1, "Could not read num_optimize_param.\n");  
+      }
+    }else {
+      error(1, "The number of parameters that will be optimized "
+            "(num_optimize_param) should be given after `type'.\n ");
+    }
+  
 
   /* read the info block of the function table */
   for (i = 0; i < size; i++) {
@@ -1988,9 +2144,12 @@ void init_calc_table(pot_table_t *optt, pot_table_t *calct)
 	    for (j = 0; j < APOT_STEPS; j++) {
 	      index = i * APOT_STEPS + (i + 1) * 2 + j;
 	      calct->xcoord[index] = calct->begin[i] + j * calct->step[i];
-
-	      apot_table.fvalue[i] (calct->xcoord[index], val, &f);
-	      calct->table[index] = smooth_pot[i] ? f * cutoff(calct->xcoord[index], calct->begin[i], h) : f;
+/*added function pointer is disabled, because we don't need it. The potential
+ comes from KIM directly now. */
+/*	      apot_table.fvalue[i] (calct->xcoord[index], val, &f);
+*/
+/*added ends*/
+        calct->table[index] = smooth_pot[i] ? f * cutoff(calct->xcoord[index], calct->begin[i], h) : f;
 	      calct->idx[i * APOT_STEPS + j] = index;
 	    }
 	  }
@@ -2076,8 +2235,11 @@ void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
 	error(1, "The cutoff parameter for potential %d is 0!", i);
     }
 
-    (*val) = apot_grad(calc_pot.begin[i], val + 2, apot_table.fvalue[i]);
-    val += 2;
+/*added disable it*/
+/*    (*val) = apot_grad(calc_pot.begin[i], val + 2, apot_table.fvalue[i]);
+*/
+/*added ends*/
+  val += 2;
     /* check if something has changed */
     change = 0;
     for (j = 0; j < apot_table.n_par[i]; j++) {
@@ -2089,8 +2251,11 @@ void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
     if (do_all || (change && !invar_pot[i])) {
       for (j = 0; j < APOT_STEPS; j++) {
 	k = i * APOT_STEPS + (i + 1) * 2 + j;
-	apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
-	*(xi_calc + k) = smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k], apot_table.end[i], h) : f;
+/*added  disable it*/
+/*  apot_table.fvalue[i] (calc_pot.xcoord[k], val, &f);
+*/
+/*added ends*/
+  *(xi_calc + k) = smooth_pot[i] ? f * cutoff(calc_pot.xcoord[k], apot_table.end[i], h) : f;
 	if (isnan(f) || isnan(*(xi_calc + k))) {
 #ifdef DEBUG
 	  error(0, "Potential value was nan or inf. Aborting.\n");

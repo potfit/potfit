@@ -55,7 +55,7 @@ int InitObject();
 
 int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam);
 
-int nest_OptimizableParamValue(void* pkim, OptParamType* OptParam);
+int nest_OptimizableParamValue(void* pkim, OptParamType* OptParam, int inlcude_cutoff);
 
 int PublishCutoff(void* pkim, double cutoff);
 
