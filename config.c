@@ -49,7 +49,7 @@ void read_config(char *filename)
   int   i, j, k, ix, iy, iz;
   int   type1, type2, col, slot, klo, khi;
   int   cell_scale[3];
-  int   fixed_elements;
+  int   fixed_elements = 0;
   int   h_stress = 0, h_eng = 0, h_boxx = 0, h_boxy = 0, h_boxz = 0, use_force;
   int   have_small_box = 0;
 #ifdef CONTRIB
@@ -68,7 +68,9 @@ void read_config(char *filename)
   fpos_t filepos;
   double r, rr, istep, shift, step;
   double *mindist;
+#ifdef STRESS
   sym_tens *stresses;
+#endif /* STRESS */
   vector d, dd, iheight;
 #ifdef THREEBODY
   int   ijk;
@@ -448,9 +450,13 @@ void read_config(char *filename)
 #endif /* STRESS */
     } else {
       /* read the box vectors */
-      fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z);
-      fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z);
-      fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z);
+      if (3 != fscanf(infile, "%lf %lf %lf\n", &box_x.x, &box_x.y, &box_x.z)) {
+	error(1, "Not enough items in box vector on line %d\n", line);
+      } else if (3 != fscanf(infile, "%lf %lf %lf\n", &box_y.x, &box_y.y, &box_y.z)) {
+	error(1, "Not enough items in box vector on line %d\n", line);
+      } else if (3 != fscanf(infile, "%lf %lf %lf\n", &box_z.x, &box_z.y, &box_z.z)) {
+	error(1, "Not enough items in box vector on line %d\n", line);
+      }
       line += 3;
       if (global_cell_scale != 1.0) {
 	box_x.x *= global_cell_scale;
@@ -1160,7 +1166,6 @@ void read_config(char *filename)
       for (i = 0; i < natoms; i++) {
 	type1 = atoms[i].type;
 	for (j = 0; j < atoms[i].num_neigh; j++) {
-	  type2 = atoms[i].neigh[j].type;
 	  col = atoms[i].neigh[j].col[0];
 	  if (col == k) {
 	    pos = (int)(atoms[i].neigh[j].r / pair_dist[k]);

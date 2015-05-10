@@ -42,24 +42,6 @@
 
 /****************************************************************
  *
- *  calculate tail of coulomb-potential and its first derivative
- *
- ****************************************************************/
-
-void init_tails(double dp_kappa)
-{
-  int   i, j;
-
-  for (i = 0; i < natoms; i++)
-    for (j = 0; j < atoms[i].num_neigh; j++)
-      elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
-	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
-
-  return;
-}
-
-/****************************************************************
- *
  * write coulomb-potential
  *
  ****************************************************************/
@@ -604,14 +586,19 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 void write_pot_table_imd(pot_table_t *pt, char *prefix)
 {
   int   i, j, k, m, m2, col1, col2;
-  double r2, temp;
-#ifndef APOT
+  double r2;
+#if defined(APOT)
+  double temp = 0.0;
+#if defined (EAM) || defined(ADP) || defined(MEAM)
+  double root = 0.0;
+#endif
+#endif
+#if !defined(APOT) && (defined (EAM) || defined(ADP) || defined(MEAM))
+  double temp = 0.0;
   double temp2;
-#endif /* APOT */
-  double *r2begin, *r2end, *r2step;
-#if defined EAM || defined ADP || defined MEAM
   double root;
-#endif /* EAM */
+#endif /* !APOT */
+  double *r2begin, *r2end, *r2step;
   FILE *outfile;
   char  filename[255];
 
@@ -729,11 +716,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 	  apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
-#ifdef MEAM
 	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
-#else
-	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
-#endif /* MEAM */
 #endif
 	r2 += r2step[col2];
       }
@@ -780,11 +763,7 @@ void write_pot_table_imd(pot_table_t *pt, char *prefix)
 #ifdef APOT
       apot_table.fvalue[col1] (r2, apot_table.values[col1], &temp);
 #else
-#ifdef MEAM
       temp = splint_ne_lin(pt, pt->table, col1, r2);
-#else
-      temp = splint_ne_lin(pt, pt->table, col1, r2);
-#endif
       temp2 = r2 - pt->end[col1];
       temp += (temp2 > 0.0) ? 5e2 * (temp2 * temp2 * temp2) : 0.0;
 #endif /* APOT */
@@ -1109,9 +1088,10 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 #ifndef APOT
   int   k = 0, l;
 #else
-  double h;
+  double h = 0.0;
+  double temp = 0.0;
 #endif /* APOT */
-  double r, r_step, temp;
+  double r, r_step;
 
   /* access pt to shut up compiler warnings */
   i = pt->len;
@@ -1148,8 +1128,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
-      temp = splint_ne(pt, pt->table, i, r);
-      fprintf(outfile, "%e %e\n", r, temp);
+      fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
     fprintf(outfile, "\n\n\n");
@@ -1169,8 +1148,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
-      temp = splint_ne(pt, pt->table, i, r);
-      fprintf(outfile, "%e %e\n", r, temp);
+      fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
     fprintf(outfile, "\n\n\n");
@@ -1664,12 +1642,15 @@ void write_altplot_pair(pot_table_t *pt, char *filename)
 void write_pairdist(pot_table_t *pt, char *filename)
 {
   int  *freq;			/* frequency... */
-  int   h, i, j, k, l, typ1, typ2, col;
+  int   h, i, j, typ1, typ2, col;
+#if defined(EAM)
+  int k = 0;
+  int l = 0;
+#endif /* EAM */
   double rr;
   atom_t *atom;
   neigh_t *neigh;
   FILE *outfile;
-  char  msg[255];
 
   /* open file */
   outfile = fopen(filename, "w");

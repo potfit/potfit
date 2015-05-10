@@ -64,7 +64,6 @@ void  write_pairdist(pot_table_t *, char *);
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  init_tails(double);
 void  write_coulomb_table(void);
 #endif /* COULOMB */
 

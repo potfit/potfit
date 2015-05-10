@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 {
   int   i;
   double *force, tot;
-  time_t t_begin, t_end;
+  time_t t_begin = 0, t_end = 0;
 
 #ifdef MPI
   /* initialize the MPI communication */
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
  *
  ****************************************************************/
 
-void error(int done, char *msg, ...)
+void error(int done, const char *msg, ...)
 {
   va_list ap;
 
@@ -315,7 +315,7 @@ void error(int done, char *msg, ...)
  *
  ****************************************************************/
 
-void warning(char *msg, ...)
+void warning(const char *msg, ...)
 {
   va_list ap;
 

@@ -368,14 +368,14 @@ EXTERN void (*write_pot_table) (pot_table_t *, char *);
  ****************************************************************/
 
 /* general functions [potfit.c] */
-void  error(int, char *, ...);
-void  warning(char *, ...);
+void  error(int, const char *, ...);
+void  warning(const char *, ...);
 
 /* error reports [errors.c] */
 void  write_errors(double *, double);
 
 /* reading parameter file [param.c] */
-int   getparam(char *, void *, param_t, int, int);
+int   getparam(const char *, void *, param_t, int, int);
 void  check_parameters_complete(char *);
 void  read_parameters(int, char **);
 void  read_paramfile(FILE *);
@@ -415,7 +415,7 @@ void  update_tersoff_pointers(double *);
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
-#if !defined APOT && ( defined EAM || defined MEAM )
+#if !defined APOT && ( defined EAM || defined(ADP) || defined MEAM )
 double rescale(pot_table_t *, double, int);
 void  embed_shift(pot_table_t *);
 #endif /* !APOT && (EAM || MEAM) */

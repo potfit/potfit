@@ -514,7 +514,7 @@ void broadcast_params()
   broadcast_angles();
 #endif /* THREEBODY */
   conf_vol = (double *)malloc(myconf * sizeof(double));
-  conf_uf = (int *)malloc(myconf * sizeof(double));
+  conf_uf = (int *)malloc(myconf * sizeof(int));
 #ifdef STRESS
   conf_us = (int *)malloc(myconf * sizeof(double));
 #endif /* STRESS */

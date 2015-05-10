@@ -464,8 +464,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     /* search for cp */
     do {
       fgetpos(infile, &filepos);
-      fscanf(infile, "%s", buffer);
+      i = fscanf(infile, "%s", buffer);
     } while (strncmp(buffer, "cp", 2) != 0 && !feof(infile));
+
     /* and save the position */
     fsetpos(infile, &filepos);
 
@@ -695,7 +696,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   fsetpos(infile, &startpos);
   do {
     fgetpos(infile, &filepos);
-    fscanf(infile, "%s", buffer);
+    i = fscanf(infile, "%s", buffer);
   } while (strcmp(buffer, "global") != 0 && !feof(infile));
   fsetpos(infile, &filepos);
 
@@ -813,7 +814,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   fsetpos(infile, &startpos);
   do {
     fgetpos(infile, &filepos);
-    fscanf(infile, "%s", buffer);
+    i = fscanf(infile, "%s", buffer);
   } while (strcmp(buffer, "type") != 0 && !feof(infile));
   fsetpos(infile, &filepos);
 
@@ -821,7 +822,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     /* scan for "type" keyword */
     do {
       fgetpos(infile, &filepos);
-      fscanf(infile, "%s", buffer);
+      j = fscanf(infile, "%s", buffer);
     } while (strcmp(buffer, "type") != 0 && !feof(infile));
     fsetpos(infile, &filepos);
     /* read type */
@@ -891,10 +892,10 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     } while (j != 10);
 
     fgetpos(infile, &filepos);
-    fgets(buffer, 255, infile);
+    char * ret = fgets(buffer, 255, infile);
     while (buffer[0] == '#') {
       fgetpos(infile, &filepos);
-      fgets(buffer, 255, infile);
+      ret = fgets(buffer, 255, infile);
     }
     fsetpos(infile, &filepos);
 
@@ -907,9 +908,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
       strcpy(apt->param_name[i][j], "empty");
       fgetpos(infile, &filepos);
-      fgets(name, 255, infile);
+      ret = fgets(name, 255, infile);
       while (name[0] == '#' && !feof(infile) && (j != apt->n_par[i] - 1)) {
-	fgets(name, 255, infile);
+	ret = fgets(name, 255, infile);
       }
       if ((j != (apt->n_par[i] - 1)) && (feof(infile) || name[0] == '\0')) {
 	error(0, "Premature end of potential definition or file.\n");
@@ -1625,8 +1626,10 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
 {
   int   i, k, l, j;
+#if defined(EAM) || defined(ADP)
   int   den_count;
   int   emb_count;
+#endif /* EAM || ADP */
   int   nvals[size];
   double *val, *ord;
 

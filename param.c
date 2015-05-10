@@ -58,7 +58,7 @@ int   curline;			/* number of current line */
 
    return value . the number of parameters read is returned */
 
-int getparam(char *param_name, void *param, param_t ptype, int pnum_min, int pnum_max)
+int getparam(const char *param_name, void *param, param_t ptype, int pnum_min, int pnum_max)
 {
   char *str;
   int   i;

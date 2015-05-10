@@ -119,7 +119,7 @@ void apot_init(void)
  *
  ****************************************************************/
 
-void add_potential(char *name, int parameter, fvalue_pointer fval)
+void add_potential(const char *name, int parameter, fvalue_pointer fval)
 {
   int   i;
   int   k = n_functions;
@@ -1250,6 +1250,24 @@ void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_ta
   *grad_tail -= x[2] * ggtail_cut / 2;
   *ggrad_tail = ggtail - ggtail_cut;
 #endif /* DIPOLE */
+}
+
+/****************************************************************
+ *
+ *  calculate tail of coulomb-potential and its first derivative
+ *
+ ****************************************************************/
+
+void init_tails(double dp_kappa)
+{
+  int   i, j;
+
+  for (i = 0; i < natoms; i++)
+    for (j = 0; j < atoms[i].num_neigh; j++)
+      elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
+	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
+
+  return;
 }
 
 #endif /* COULOMB */

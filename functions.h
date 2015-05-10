@@ -95,7 +95,7 @@ void  newpot_value(double, double *, double *);
 
 /* functions for analytic potential initialization */
 void  apot_init(void);
-void  add_potential(char *, int, fvalue_pointer);
+void  add_potential(const char *, int, fvalue_pointer);
 int   apot_assign_functions(apot_table_t *);
 int   apot_check_params(double *);
 int   apot_parameters(char *);
@@ -127,6 +127,7 @@ void  ms_shift(double, double *, double *);
 void  buck_shift(double, double *, double *);
 void  elstat_value(double, double, double *, double *, double *);
 void  elstat_shift(double, double, double *, double *, double *);
+void  init_tails(double);
 #endif /* COULOMB */
 #ifdef DIPOLE
 double shortrange_value(double, double, double, double);
