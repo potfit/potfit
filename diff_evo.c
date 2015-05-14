@@ -229,7 +229,7 @@ void diff_evo(double *xi)
   /* allocate memory for all configurations */
   x1 = (double **)malloc(NP * sizeof(double *));
   x2 = (double **)malloc(NP * sizeof(double *));
-  best = (double *)malloc(NP * sizeof(double));
+  best = (double *)malloc(D * sizeof(double));
   cost = (double *)malloc(NP * sizeof(double));
   if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
     error(1, "Could not allocate memory for population vector!\n");
