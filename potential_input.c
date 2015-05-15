@@ -849,116 +849,22 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       strcpy(name, "bjs\0");
 
 
+
+
+
 /*added */
 /******************************************************************************
-* Get the size pf optimizable parameters from KIM
-******************************************************************************/
-/*    if (apot_parameters(name) == -1)
-      error(1, "Unknown function type in file %s, please define \"%s\" in functions.c.", filename, name);
+* Get the size of optimizable parameters from KIM
 
-    strcpy(apt->names[i], name);
-    apt->n_par[i] = apot_parameters(name);
-*/
-/*NOTE(modify)   the name is harded coded, need to be changed */
+
+* smooth cutoff should not be enabled, do not need to 
+
+******************************************************************************/
     strcpy(kim_model_name, name);
     strcpy(apt->names[i], name);
-
-    /*get the parameters info from kim. get_OptimizableParamSize will nest
-     * cutoff at the end of nestedvalue if smooth_pot[i]*/
+    printf("\nKIM Model being used: %s.\n\n", kim_model_name);
+    
     OptParamType OptParamSet;
-		apt->n_par[i] = get_OptimizableParamSize(&OptParamSet, smooth_pot[i]); 
-
-    /* get cutoff (also check whether cutoff is publishable (whether
-     * PARAM_FREE_cutoff is in .kim file)) */
-    if( strcmp(OptParamSet.name[OptParamSet.Nparam - 1], "PARAM_FREE_cutoff") == 0) {
-      apt->end[i] = *OptParamSet.value[OptParamSet.Nparam - 1];
-    } else {
-      KIM_API_report_error(__LINE__, __FILE__, "PARAM_FREE_cutoff could not be "
-      "obtained from the KIM model.", -1);
-      exit(1);
-  	}
-     
-    /* check whether each parameter has rank 0 */
-    if (smooth_pot[i]){  
-      if (OptParamSet.Nparam != apt->n_par[i] ) {
-        KIM_API_report_error(__LINE__, __FILE__, "Some potential parameters "
-                          "`PARAM_FREE_*' have rank greater than 0. Not "
-                          "supported by APOT.", -1);
-        exit(1);
-      }
-    } else {
-      if (OptParamSet.Nparam - 1 != apt->n_par[i] ) {
-        KIM_API_report_error(__LINE__, __FILE__, "Some potential parameters "
-                          "`PARAM_FREE_*' have rank greater than 0. Not "
-                          "supported by APOT.", -1);
-        exit(1);
-      }
-    }
-    /* so far everything is great */
-
-
-
-    /* add one parameter for cutoff function if _sc is found,(added already considered
-     * in get_OptimiazalbeParamSize) */
-    /*if (smooth_pot[i] == 1)
-      apt->n_par[i]++;*/
-
-    apt->total_par += apt->n_par[i];
-
-/*added modified (we read cutoff from KIM directly see above */
-    /* read cutoff */
-/*    if (2 > fscanf(infile, "%s %lf", buffer, &apt->end[i]))
-      error(1, "Could not read cutoff for potential #%d in file %s\nAborting", i, filename);
-    if (strcmp(buffer, "cutoff") != 0)
-      error(1,
-	"No cutoff found for the %d. potential (%s) after \"type\" in file %s.\nAborting",
-	i + 1, apt->names[i], filename);
-*/  
-
-
-    /* set very small begin, needed for EAM embedding function */
-    apt->begin[i] = 0.0001;
-
-    /* allocate memory for this parameter */
-    apt->values[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
-    reg_for_free(apt->values[i], "apt->values[%d]", i);
-
-    apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
-    reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
-
-    apt->pmin[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
-    reg_for_free(apt->pmin[i], "apt->pmin[%d]", i);
-
-    apt->pmax[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
-    reg_for_free(apt->pmax[i], "apt->pmax[%d]", i);
-
-    apt->param_name[i] = (char **)malloc(apt->n_par[i] * sizeof(char *));
-    reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
-
-    if (NULL == apt->values[i] || NULL == apt->pmin[i]
-      || NULL == apt->pmax[i] || NULL == apt->param_name[i])
-      error(1, "Cannot allocate memory for potential paramters.\nAborting");
-
-
-    /* added  copy parameters values to potfit, assume all paramenters are
-     * optimizable by setting pmin and pmax smaller and larger than values,
-     * respectively. Then pmin and pmax for parameters that are optimizable(not 
-     * invar) will be read in again from the input file, and thus written. So the
-     * main purpose is to initialize the inval */
-
-    for (j = 0; j <apt->n_par[i]; j++) {
-      apt->param_name[i][j] = (char *)malloc(63 * sizeof(char));
-      if (NULL == apt->param_name[i][j]) {
-        error(1, "Error in allocating memory for parameter name");
-      }
-      reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
-      strncpy(apt->param_name[i][j], OptParamSet.name[j], 63);
-      apt->values[i][j] = *OptParamSet.nestedvalue[j];
-      apt->pmin[i][j] = *OptParamSet.nestedvalue[j] - 1.0;
-      apt->pmax[i][j] = *OptParamSet.nestedvalue[j] + 1.0;
-      k++;
-    }
-
 
     /* check for comments */
     do {
@@ -974,18 +880,23 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     }
     fsetpos(infile, &filepos);
 
-
     /* read the flag `check_kim_optimizable_parameters', if exit nicely */
     /* read the number of parameters that will be optimized */
-    int num_optimize_param = -1;
     fgets(buffer, 255, infile);
-    if (strncmp(buffer,"check_kim_optimizable_parameters", 32) == 0) {
+    if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
+	
+      /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
+      get_OptimizableParamSize(&OptParamSet, NULL, 0); 
+      
       printf(" - The following potential parameters are available to fit. Include the "
 	           "name(s) of the one(s) you want to optimize in the potential input "
-             "file: %s.\n",filename);
+             "file: `%s'.\n",filename);
       printf("         param name                 param extent\n");
       printf("        ############               ##############\n");
       for(k = 0; k < OptParamSet.Nparam; k++ ) {
+        if (strncmp(OptParamSet.name[k], "PARAM_FREE_cutoff", 17) == 0){
+          continue;
+        }
         printf("     %-35s[ ", OptParamSet.name[k]);
         for(j = 0; j < OptParamSet.rank[k]; j++) {
           printf("%d ", OptParamSet.shape[k][j]);
@@ -993,13 +904,35 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
         printf("]\n");
       }
       exit(1); 
-    } else if (strncmp(buffer,"num_optimize_param", 18) == 0) {
-      if(1 != sscanf(buffer, "%*s%d", &num_optimize_param)) {
-        error(1, "Could not read num_optimize_param.\n");  
+    } else if (strncmp(buffer,"num_opt_param", 13) == 0) {
+      if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
+        error(1, "Could not read num_opt_param.\n");  
       }
     }else {
       error(1, "The number of parameters that will be optimized "
-            "(num_optimize_param) should be given after `type'.\n ");
+            "(num_opt_param) should be given after `type' in: `%s'.\n ", filename);
+    }
+  
+    /* allocate memory for this parameter */
+    apt->pmin[i] = (double *)malloc(num_opt_param * sizeof(double));
+    reg_for_free(apt->pmin[i], "apt->pmin[%d]", i);
+
+    apt->pmax[i] = (double *)malloc(num_opt_param * sizeof(double));
+    reg_for_free(apt->pmax[i], "apt->pmax[%d]", i);
+
+    apt->param_name[i] = (char **)malloc(num_opt_param * sizeof(char *));
+    reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
+
+    if ( NULL == apt->pmin[i] || NULL == apt->pmax[i] 
+         || NULL == apt->param_name[i])
+      error(1, "Cannot allocate memory for potential paramters.\nAborting");
+
+    for (j = 0; j < num_opt_param; j++) {
+      apt->param_name[i][j] = (char *)malloc(255 * sizeof(char));
+      reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
+      if (NULL == apt->param_name[i][j]) {
+        error(1, "Error in allocating memory for parameter name");
+      }
     }
   
     /* check for comments */
@@ -1016,23 +949,15 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     fsetpos(infile, &filepos);
 
  
+    /* read parameters (names and pmin and pmax) */
     double tmp_pmin;
     double tmp_pmax;
-    int have_param[apt->n_par[i]]; /* if the parameter is in file, have_param=1*/
-    int valid_name;
-    /* initialize flag */
-    for (j = 0; j < apt->n_par[i]; j++) {
-      have_param[j] = 0;
-    }
-
-    /* read parameters */
-    apt->invar_par[i][apt->n_par[i]] = 0;
-    for (j = 0; j < num_optimize_param; j++) {
+    for (j = 0; j < num_opt_param; j++) {
       fgets(name, 255, infile);
-      while (name[0] == '#' && !feof(infile) && (j != num_optimize_param - 1)) {
+      while (name[0] == '#' && !feof(infile) && (j != num_opt_param - 1)) {
       	fgets(name, 255, infile);
       }
-      if ((j != (num_optimize_param - 1)) && (feof(infile) || name[0] == '\0')) {
+      if ((j != (num_opt_param - 1)) && (feof(infile) || name[0] == '\0')) {
       	error(0, "Premature end of potential definition or file.\n");
        	error(1, "Probably your potential definition is missing some parameters.\n");
       }
@@ -1041,81 +966,84 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       buffer[0] = '\0';
       ret_val = sscanf(name, "%s %lf %lf", buffer, &tmp_pmin, &tmp_pmax);
       
-      if (strcmp(buffer, "PARAM_FREE_cutoff") == 0) {
-        if( smooth_pot[i] == 0) {
-           error(1, "`PARAM_FREE_cutoff' should not be included in potential file: "
-                 "%s, if smooth cutoff is not enabled.", filename);
-        }
-      }
- 
       if (ret_val == 3) {
-        valid_name = 0;
-        for (k = 0; k < apt->n_par[i]; k++) {
-      	  if (strcmp(buffer, apt->param_name[i][k]) == 0) {
-            apt->pmin[i][k] = tmp_pmin;
-            apt->pmax[i][k] = tmp_pmax;
-            have_param[k] = 1;
-            valid_name = 1;
-            break;
-          } 
-        }
-        if (valid_name == 0) {
-            error(1, "`%s' you specified in file `%s' is not a valid parameter name.\n"
-                   , buffer, filename);
-        }  
+      	strcpy(apt->param_name[i][j], buffer); 
+        apt->pmin[i][j] = tmp_pmin;
+        apt->pmax[i][j] = tmp_pmax;
       } else { /* not enough parameters are readed */
-	      if (smooth_pot[i] && !have_param[apt->n_par[i]-1] && j == num_optimize_param - 1) {
-	        error(1,"No cutoff parameter given for potential #%d: adding one parameter.\n", i);
-	      } else {
-	        if ( ret_val == EOF) {
-	          error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", 
-                    i + 1, apt->names[i],filename);
-	          error(1, "You specified %d parameter(s), but required are %d.\n", j, num_optimize_param);
-	        }
-          error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
+	      if ( ret_val == EOF) {
+	        error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", 
+                 i + 1, apt->names[i],filename);
+	        error(1, "You specified %d parameter(s), but required are %d.\n", j, num_opt_param);
 	      }
+        error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
 	    }
+    }
+   
 
-    	/* check for invariance and proper value (respect boundaries) */
-    	/* parameter will not be optimized if min==max */
-    	apt->invar_par[i][j] = 0;
-    	if (apt->pmin[i][j] == apt->pmax[i][j]) {
-	      apt->invar_par[i][j] = 1;
-        apt->invar_par[i][apt->n_par[i]]++;
-      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
-        temp = apt->pmin[i][j];
-        apt->pmin[i][j] = apt->pmax[i][j];
-        apt->pmax[i][j] = temp;
-      } else if ((apt->values[i][j] < apt->pmin[i][j]) ||
-                  (apt->values[i][j] > apt->pmax[i][j])) {
-	       /* Only print warning if we are optimizing */
-        if (opt) {
-          if (apt->values[i][j] < apt->pmin[i][j])
-            apt->values[i][j] = apt->pmin[i][j];
-          if (apt->values[i][j] > apt->pmax[i][j])
-            apt->values[i][j] = apt->pmax[i][j];
-          warning("Starting value for parameter #%d in potential #%d is ", j + 1, i + 1);
-          warning("outside of specified adjustment range.\n");
-          warning("Resetting it to %f.\n", apt->values[i][j]);
-          if (apt->values[i][j] == 0)
-	          warning("New value is 0 ! Please be careful about this.\n");
-        }
+    /* get the total size (some parameters may be array) of the optimizable 
+       parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
+       need to be equal to num_opt_param, since they should all be scalar. */
+    apt->n_par[i] = get_OptimizableParamSize(&OptParamSet, apt->param_name[i],
+                                             num_opt_param); 
+    /* we only do the comparison for apt->n_par[0] for two reasons: 1) for KIM
+     * Models, there is only 1 potential; 2) if chemical potenial is enabled, we
+     * cannot compare it with num_opt_param. */
+    if (apt->n_par[0] != num_opt_param) {
+      error(1,"Some `PARAM_FREE_*' is not scalar. This format of input is not suitable.");
+    }
+
+    apt->total_par += apt->n_par[i];
+
+    /* set very small begin, needed for EAM embedding function */
+    apt->begin[i] = 0.0001;
+
+    /* allocate memory for this parameter */
+    apt->values[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
+    reg_for_free(apt->values[i], "apt->values[%d]", i);
+    
+    apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
+    reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
+
+    if (NULL == apt->values[i] || NULL == apt->invar_par[i])
+      error(1, "Cannot allocate memory for potential paramters.\nAborting");
+
+    /* copy parameters values to potfit */
+    for (j = 0; j <apt->n_par[i]; j++) {
+      apt->values[i][j] = *OptParamSet.nestedvalue[j];
+    }
+
+    /* invarable parameters. Here all are optimizable. */
+    /* the last slot is the number of invar */
+    for (j = 0; j < apt->n_par[i]; j++) {
+      apt->invar_par[i][j] = 0;
+    }
+    apt->invar_par[i][apt->n_par[i]] = 0;
+
+    /* copy cutoff */
+    int have_cutoff = 0;
+    for (j = 0; j < OptParamSet.Nparam; j++) { 
+      if (strncmp(OptParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
+        apt->end[i] = *OptParamSet.value[j];
+        have_cutoff = 1;
       }
     }
-    
-    /* check for invariance (the above is not the end of story) */
-    /* if the parameter is not provided in the file, they are invariable */
-    for (j = 0; j < apt->n_par[i]; j++) {
-      if (have_param[j] == 0) {
-        apt->invar_par[i][j] = 1;
-        apt->invar_par[i][apt->n_par[i]]++;
-      }
+    if(!have_cutoff) {
+      error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. Copy "
+              "cutoff to potfit failed.");
     }
 
   }
   printf(" - Successfully read %d potential table(s)\n", apt->number);
   
-  
+  /* copy the optimizable parameter names to global variable `name_opt_param',
+   * which will be used later to nest the optimizable that is specified in the
+   * input file. The KIM object here is a temporary one. */
+  name_opt_param = apt->param_name[0]; 
+
+
+
+
   
   
   /* clean up globals table */
@@ -1409,7 +1337,7 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 
     /* read the flag `check_kim_optimizable_parameters', if exit nicely */
     /* read the number of parameters that will be optimized */
-    int num_optimize_param = -1;
+    int num_opt_param = -1;
 /*    fgets(buffer, 255, infile);
 */  strcpy(buffer,"check_kim_optimizable_parameters"); 
     if (strncmp(buffer,"check_kim_optimizable_parameters", 32) == 0) {
@@ -1427,13 +1355,13 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
         printf("]\n");
       }
       exit(1); 
-    } else if (strncmp(buffer,"num_optimize_param", 18) == 0) {
-      if(1 != sscanf(buffer, "%*s%d", &num_optimize_param)) {
-        error(1, "Could not read num_optimize_param.\n");  
+    } else if (strncmp(buffer,"num_opt_param", 18) == 0) {
+      if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
+        error(1, "Could not read num_opt_param.\n");  
       }
     }else {
       error(1, "The number of parameters that will be optimized "
-            "(num_optimize_param) should be given after `type'.\n ");
+            "(num_opt_param) should be given after `type'.\n ");
     }
   
 
@@ -1774,14 +1702,6 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 
   pt->idxlen = k;
   init_calc_table(pt, &calc_pot);
-
-/*added*/
-/******************************************************************************
-* print the published parameter to screen
-******************************************************************************/
-	get_OptimizableParamSize();
-
-/*added ends*/
 
   return;
 }

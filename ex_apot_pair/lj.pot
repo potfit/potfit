@@ -8,10 +8,11 @@ h	0.86	0.50	2.00
 
 type  Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
 
-#check_kim_optimizable_parameters
+# uncomment the following line to see which KIM parameters are optimizable 
+check_kim_opt_param
 # the number of paramters that will be optimized 
-num_optimize_param  2
+num_opt_param  2
 
 #test comment
-PARAM_FREE_epsilon	0.00	1.00
-PARAM_FREE_sigma		1.00	4.00
+PARAM_FREE_epsilon	 0.00	1.00
+PARAM_FREE_sigma	   1.00	4.00

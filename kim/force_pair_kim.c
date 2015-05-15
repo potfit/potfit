@@ -135,8 +135,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   for (i = 0; i < nconf; i++) {
     PublishParam(pkimObj[i], &OptParamAllConfig[i], xi_opt);  
   }
-/* added ends */
-
+/*
+KIM_API_print(pkimObj[0],&status);
+*/
 
   /* This is the start of an infinite loop */
   while (1) {
@@ -237,6 +238,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       }       /* loop over configurations */
     }       /* parallel region */
 
+
     /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
@@ -298,38 +300,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 #endif /* PAIR */
 
-
-
-/* added */
-/***************************************************************************
-*
-* Publish KIM parameter 
-*
-* transferred varialbes:
-* pkkm: KIM ojbect
-* PotTable: potential table where the potential paramenters are stored
-*
-***************************************************************************/
-int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
-{ 
-  /*local variables*/  
-  int status;
-  int i;
-
-  /*publish parameters */ 
-  /*Pot[i+2] because the first two index stores the derivative info  */
-  /* OptParam-> Napram -1 because Nparam contains cutoff, which does not need to
-    be published */
-  for (i = 0; i < OptParam->Nparam - 1; i++) {
-    *(OptParam->nestedvalue[i]) = PotTable[i+2]; 
-  }
-  status = KIM_API_model_reinit(pkim);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
-    return status;
-  }
-  return 0;
-}
 
 /* added */
 /***************************************************************************

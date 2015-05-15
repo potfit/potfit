@@ -3,7 +3,6 @@ config		sys_b.force
 startpot	morse.pot
 endpot		morse_end.pot
 tempfile	dummy.tmp
-kim_model_name    Pair_Morse_Shifted_GirifalcoWeizer_HighCutoff_Al__MO_140175748626_001 
 
 imdpot		dummy.imd
 plotfile	dummy.plot

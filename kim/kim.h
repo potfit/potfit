@@ -33,12 +33,16 @@ typedef struct
 typedef struct
 {
   char** name;
- 	double** value;   /* the pointer to parameters */
-	double** nestedvalue; /*nest all values into one long variable, would be equal  
-	                        to value if all optimizalbe has rank 0 */
-	int* rank;
+ 	double** value;       /* the pointer to parameters */
+	double** nestedvalue; /* nest all values(pointer) into one long variable */
+  int* rank;
 	int** shape;
-	int Nparam;				/* number of optimizable parameters */
+	int Nparam;				    /* number of optimizable parameters */
+  int Nnestedvalue;     /* the length of nestedvalue, it would be equal to
+                         * (Nparam - 1) if all the parameters are scalar.
+                         * Otherwise, it is larger. (Nparam - 1), because
+                         * PARAM_FREE_cutoff is counted in Nparam, but not in
+                         * Nnestedvalue. */ 
 } OptParamType;
 
 OptParamType* OptParamAllConfig;
@@ -55,7 +59,11 @@ int InitObject();
 
 int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam);
 
-int nest_OptimizableParamValue(void* pkim, OptParamType* OptParam, int inlcude_cutoff);
+int nest_OptimizableParamValue(void* pkim, OptParamType* OptParam, 
+                              char** input_param_name, int input_param_num);
+
+int get_OptimizableParamSize(OptParamType* OptParam,
+                              char** input_param_name, int input_param_num);
 
 int PublishCutoff(void* pkim, double cutoff);
 
@@ -66,9 +74,6 @@ int get_neigh(void* kimmdl, int *mode, int *request, int* part,
 
 int CalcForce(void* pkim, double** energy, double** force, double** virial,
 							int useforce, int usestress);
-
-int get_OptimizableParamSize();
-
 
 /* functions in force_[interaction]_kim.c */
 int PublishParam(void* pkim, OptParamType* FreeParam, double* PotTable);

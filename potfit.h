@@ -452,10 +452,8 @@ EXTERN double* box_side_len;
 EXTERN void** pkimObj;					
 /* kim model name (read in from potfit input file)*/
 EXTERN char kim_model_name[255] INIT("\0");	
-/* parameter list (to store all parameters and make publish param general)*/
-/* the following two is not used*/
-/*EXTERN double** FreeParameterValue;
-EXTERN double* param_list;
-*/
+/* optimizable parameter names and number of names read in from input */
+EXTERN char** name_opt_param;
+EXTERN int num_opt_param;
 /* added ends */
 
