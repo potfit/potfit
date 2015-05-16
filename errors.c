@@ -319,9 +319,15 @@ void write_errors(double *force, double tot)
     if (atoms[i].contrib) {
       contrib_atoms++;
 #endif /* CONTRIB */
+#if defined(FWEIGHT)
+      rms[0] += dsquare(force[3 * i + 0] * (FORCE_EPS + atoms[i].absforce));
+      rms[0] += dsquare(force[3 * i + 1] * (FORCE_EPS + atoms[i].absforce));
+      rms[0] += dsquare(force[3 * i + 2] * (FORCE_EPS + atoms[i].absforce));
+#else
       rms[0] += dsquare(force[3 * i + 0]);
       rms[0] += dsquare(force[3 * i + 1]);
       rms[0] += dsquare(force[3 * i + 2]);
+#endif
 #ifdef CONTRIB
     }
 #endif /* CONTRIB */
