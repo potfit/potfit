@@ -633,13 +633,6 @@ void read_config(char *filename)
 		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
 #endif /* ADP */
 
-
-
-
-
-/* added for KIM potential, this is not needed  */
-#ifndef KIM
-
 		col = (type1 <= type2) ? type1 * ntypes + type2 - ((type1 * (type1 + 1)) / 2)
 		  : type2 * ntypes + type1 - ((type2 * (type2 + 1)) / 2);
 		atoms[i].neigh[k].col[0] = col;
@@ -945,9 +938,6 @@ void read_config(char *filename)
 #endif /* STIWEB */
 
 		}		/* !sh_dist */
-#endif /* KIM */
-/* added ends */
-
 	      }			/* r < r_cut */
 	    }			/* loop over images in z direction */
 	  }			/* loop over images in y direction */

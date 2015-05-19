@@ -181,24 +181,6 @@ KIM_API_print(pkimObj[0],&status);
 #ifdef STRESS
         us = conf_us[h - firstconf];
 #endif /* STRESS */
-        /* reset energies and stresses */
-        forces[energy_p + h] = 0.0;
-#ifdef STRESS
-        stresses = stress_p + 6 * h;
-        for (i = 0; i < 6; i++)
-          forces[stresses + i] = 0.0;
-#endif /* STRESS */
-
-#ifdef APOT
-        if (enable_cp)
-          forces[energy_p + h] += chemical_potential(ntypes,
-                                              na_type[h], xi_opt + cp_start);
-#endif /* APOT */
-
-
-
-
-
 
 /* added */
 /***************************************************************************

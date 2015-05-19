@@ -210,6 +210,18 @@ void read_pot_table(pot_table_t *pt, char *filename)
   if (!have_format)
     error(1, "Format not specified in header of potential file %s", filename);
 
+
+/* added reset size */
+#ifdef KIM
+  /* force size to be 1 */
+  if (size != 1) {
+    size = 1;
+    printf(" - Reset the number of data columns after the `F' header to 1 "
+            "to use KIM potential.\n");  
+  }
+#endif /* KIM */
+/* added ends */
+
   /* allocate info block of function table */
   pt->len = 0;
   pt->ncols = size;
@@ -326,6 +338,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
   printf("Reading potential file >> %s << ... done\n", filename);
 
+
+
+/* added (modified)*/
+  /* copy cutoff, cutoff equal pt->end[0] */
   /* compute rcut and rmin */
   rcut = (double *)malloc(ntypes * ntypes * sizeof(double));
   if (NULL == rcut)
@@ -337,19 +353,11 @@ void read_pot_table(pot_table_t *pt, char *filename)
     for (j = 0; j < ntypes; j++) {
       k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2)
 	: j * ntypes + i - ((j * (j + 1)) / 2);
-      rmin[i * ntypes + j] = pt->begin[k];
-      rcut[i * ntypes + j] = pt->end[k];
+      rmin[i * ntypes + j] = 0.0;
+      rcut[i * ntypes + j] = pt->end[0];
     }
-#if defined EAM || defined ADP || defined MEAM
-  for (i = 0; i < ntypes; i++) {
-    for (j = 0; j < ntypes; j++) {
-      rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j], pt->end[(ntypes * (ntypes + 1)) / 2 + i]);
-      rcut[i * ntypes + j] = MAX(rcut[i * ntypes + j], pt->end[(ntypes * (ntypes + 1)) / 2 + j]);
-      rmin[i * ntypes + j] = MAX(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + i]);
-      rmin[i * ntypes + j] = MAX(rmin[i * ntypes + j], pt->begin[(ntypes * (ntypes + 1)) / 2 + j]);
-    }
-  }
-#endif /* EAM || ADP || MEAM */
+/* added ends */
+
 
 #ifndef APOT
   double *val;
@@ -814,6 +822,20 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     printf(" - Read %d global parameter(s)\n", apt->globals);
   }
 
+
+
+/*added */
+/******************************************************************************
+* Get the size of optimizable parameters from KIM
+
+
+* smooth cutoff should not be enabled, do not need to 
+
+
+* note split name and _sc is not needed 
+
+******************************************************************************/
+ 
   /* skip to actual potentials */
   fsetpos(infile, &startpos);
   do {
@@ -852,15 +874,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 
 
-/*added */
-/******************************************************************************
-* Get the size of optimizable parameters from KIM
-
-
-* smooth cutoff should not be enabled, do not need to 
-
-******************************************************************************/
-    strcpy(kim_model_name, name);
+   strcpy(kim_model_name, name);
     strcpy(apt->names[i], name);
     printf("\nKIM Model being used: %s.\n\n", kim_model_name);
     
@@ -1026,6 +1040,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       if (strncmp(OptParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
         apt->end[i] = *OptParamSet.value[j];
         have_cutoff = 1;
+        break;
       }
     }
     if(!have_cutoff) {
@@ -1094,6 +1109,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   apt->total_par += (2 * ncols);
 #endif /* DIPOLE */
 
+
+
+/************************************************************************/
+/*added (no derivative slots are needed, pt->first   etc. is disabled )  */  
+
   /* initialize function table and write indirect index */
   for (i = 0; i < apt->number; i++) {
     pt->begin[i] = apt->begin[i];
@@ -1101,9 +1121,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     pt->step[i] = 0;
     pt->invstep[i] = 0;
     if (i == 0)
-      pt->first[i] = 2;
+/*      pt->first[i] = 2;
+*/      pt->first[i] = 0;
     else
-      pt->first[i] = pt->last[i - 1] + 3;
+/*      pt->first[i] = pt->last[i - 1] + 3;
+*/      pt->first[i] = pt->last[i - 1] + 1;
     pt->last[i] = pt->first[i] + apt->n_par[i] - 1;
   }
   pt->len = pt->first[apt->number - 1] + apt->n_par[apt->number - 1];
@@ -1148,16 +1170,21 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     pt->idx[i] = 0;
   }
 
+
+/************************************************************************/
+/*added (no derivative slots are needed, val += 2 etc. is disabled )  */  
+
+
   /* this is the indirect index */
   k = 0;
   l = 0;
   val = pt->table;
   list = calc_list;
   for (i = 0; i < apt->number; i++) {	/* loop over potentials */
-    val += 2;
+/*    val += 2;
     list += 2;
     l += 2;
-    for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
+ */   for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
       *val = apt->values[i][j];
       *list = apt->values[i][j];
       val++;
@@ -1321,387 +1348,183 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 {
-  int   i, j, k, l;
-  int   nvals[size];
-  double *val;
-
-
-    char  buffer[255], name[255];
-    OptParamType OptParamSet;
-    /*for tabulated potential, no smooth cutoff should even be considered. So
-    pass flag 0 to not include the PARAM_FREE_cutoff in the nestedvalue */
-    
-    strcpy(kim_model_name, "EAM_Dynamo_tmp_model"); 
-		get_OptimizableParamSize(&OptParamSet, 0); 
-
-
-    /* read the flag `check_kim_optimizable_parameters', if exit nicely */
-    /* read the number of parameters that will be optimized */
-    int num_opt_param = -1;
-/*    fgets(buffer, 255, infile);
-*/  strcpy(buffer,"check_kim_optimizable_parameters"); 
-    if (strncmp(buffer,"check_kim_optimizable_parameters", 32) == 0) {
-      printf(" - The following potential parameters are available to fit. Include the "
-	           "name(s) of the one(s) you want to optimize in the potential input "
-             "file: %s.\n",filename);
-      printf("         param name                 param extent\n");
-      printf("        ############               ##############\n");
-      for(k = 0; k < OptParamSet.Nparam - 1; k++ ) { /* Nparam -1 to exclude
-      PARAM_FREE_cutoff */
-        printf("     %-35s[ ", OptParamSet.name[k]);
-        for(j = 0; j < OptParamSet.rank[k]; j++) {
-          printf("%d ", OptParamSet.shape[k][j]);
-        }
-        printf("]\n");
-      }
-      exit(1); 
-    } else if (strncmp(buffer,"num_opt_param", 18) == 0) {
-      if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
-        error(1, "Could not read num_opt_param.\n");  
-      }
-    }else {
-      error(1, "The number of parameters that will be optimized "
-            "(num_opt_param) should be given after `type'.\n ");
-    }
+  int   i, j, k, ret_val;
+  char  buffer[255], name[255];
+  fpos_t filepos, startpos; 
+  OptParamType OptParamSet;
   
+  
+  /* skip to actual potentials */
+  /* scan for "type" keyword */
+  do {
+    fgetpos(infile, &filepos);
+    fscanf(infile, "%s", buffer);
+  } while (strcmp(buffer, "type") != 0 && !feof(infile));
+  fsetpos(infile, &filepos);
+  /* read type */
+  if (2 > fscanf(infile, "%s %s", buffer, name))
+    error(1, "Premature end of potential file %s", filename);
+  if (strcmp(buffer, "type") != 0)
+    error(1, "Unknown keyword in file %s, expected \"type\" but found \"%s\".", filename, buffer);
 
-  /* read the info block of the function table */
-  for (i = 0; i < size; i++) {
-    if (3 > fscanf(infile, "%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i]))
-      error(1, "Premature end of potential file %s", filename);
-    pt->step[i] = (pt->end[i] - pt->begin[i]) / (nvals[i] - 1);
-    pt->invstep[i] = 1.0 / pt->step[i];
-    /* in the two slots between last[i-1] and first[i] the gradients
-       of the respective functions are stored */
-    if (i == 0)
-      pt->first[i] = 2;
-    else
-      pt->first[i] = pt->last[i - 1] + 3;
-    pt->last[i] = pt->first[i] + nvals[i] - 1;
-    pt->len = pt->first[i] + nvals[i];
+  /* copy name*/
+  strcpy(kim_model_name, name);
+  printf("\nKIM Model being used: %s.\n\n", kim_model_name);
+  
+  /* check for comments */
+  do {
+        j = fgetc(infile);
+     } while (j == '\n' || j == '\t' || j == ' ');
+  ungetc(j,infile);
+
+  fgetpos(infile, &filepos);
+  fgets(buffer, 255, infile);
+  while (buffer[0] == '#') {
+    fgetpos(infile, &filepos);
+    fgets(buffer, 255, infile);
   }
+  fsetpos(infile, &filepos);
+
+  /* read the flag `check_kim_optimizable_parameters', if exit nicely */
+  /* read the number of parameters that will be optimized */
+  fgets(buffer, 255, infile);
+  if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
+
+    /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
+    get_OptimizableParamSize(&OptParamSet, NULL, 0); 
+    
+    printf(" - The following potential parameters are available to fit. Include the "
+           "name(s) of the one(s) you want to optimize in the potential input "
+           "file: `%s'.\n",filename);
+    printf("         param name                 param extent\n");
+    printf("        ############               ##############\n");
+    for(k = 0; k < OptParamSet.Nparam; k++ ) {
+      if (strncmp(OptParamSet.name[k], "PARAM_FREE_cutoff", 17) == 0){
+        continue;
+      }
+      printf("     %-35s[ ", OptParamSet.name[k]);
+      for(j = 0; j < OptParamSet.rank[k]; j++) {
+        printf("%d ", OptParamSet.shape[k][j]);
+      }
+      printf("]\n");
+    }
+    exit(1); 
+  } else if (strncmp(buffer,"num_opt_param", 13) == 0) {
+    if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
+      error(1, "Could not read num_opt_param.\n");  
+    }
+  }else {
+    error(1, "The number of parameters that will be optimized "
+          "(num_opt_param) should be given after `type' in: `%s'.\n ", filename);
+  }
+
+  /* allocate memory */ 
+  name_opt_param = (char**)malloc(num_opt_param*sizeof(char*)); 
+  reg_for_free(name_opt_param, "name_opt_param");
+  if (NULL == name_opt_param) {
+    error(1, "Error in allocating memory for parameter name");
+  }
+  for (i = 0; i < num_opt_param; i++) {
+    name_opt_param[i] = (char *)malloc(255 * sizeof(char));
+    reg_for_free(name_opt_param[i], "name_opt_param[%d]", i);
+    if (NULL == name_opt_param[i]) {
+      error(1, "Error in allocating memory for parameter name");
+    }
+  }
+
+  /* check for comments */
+  do {
+        i = fgetc(infile);
+     } while (i == '\n' || i == '\t' || i == ' ');
+  ungetc(j,infile);
+  fgetpos(infile, &filepos);
+  fgets(buffer, 255, infile);
+  while (buffer[0] == '#') {
+    fgetpos(infile, &filepos);
+    fgets(buffer, 255, infile);
+  }
+  fsetpos(infile, &filepos);
+
+  /* read the parameter names that will be optimized  */
+  for (i = 0; i < num_opt_param; i++) {
+    fgets(buffer, 255, infile);
+    if ((i != (num_opt_param - 1)) && (feof(infile) || buffer[0] == '\0')) {
+      error(0, "Premature end of potential definition or file.\n");
+      error(1, "Probably your potential definition is missing some parameters.\n");
+    }
+    if (feof(infile)){
+      buffer[0] = '\0';
+    }  
+    name[0] = '\0';
+    ret_val = sscanf(buffer, "%s", name);
+    if (ret_val == 1) {
+      strcpy(name_opt_param[i], name); 
+    } else { /* not enough parameters are readed */
+      if ( ret_val == EOF) {
+        error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", 
+               i + 1, name,filename);
+        error(1, "You specified %d parameter(s), but required are %d.\n", j, num_opt_param);
+      }
+      error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
+    }
+  }
+ 
+
+  /* get the total size (some parameters may be array) of the optimizable 
+     parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
+     need to be equal to num_opt_param, since they should all be scalar. */
+   get_OptimizableParamSize(&OptParamSet, name_opt_param, num_opt_param); 
+
+  /* */  
+  pt->first[0] = 0;
+  pt->last[0] = pt->first[0] + OptParamSet.Nnestedvalue - 1;
+  pt->len = OptParamSet.Nnestedvalue;
+  pt->idxlen = OptParamSet.Nnestedvalue;
+  
   /* allocate the function table */
   pt->table = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->table, "pt->table");
-  pt->xcoord = (double *)malloc(pt->len * sizeof(double));
+ /* pt->xcoord = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->xcoord, "pt->xcoord");
   pt->d2tab = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->d2tab, "pt->d2tab");
+ */
   pt->idx = (int *)malloc(pt->len * sizeof(int));
   reg_for_free(pt->idx, "pt->idx");
-  for (i = 0; i < pt->len; i++) {
-    pt->table[i] = 0.0;
-    pt->xcoord[i] = 0.0;
-    pt->d2tab[i] = 0.0;
-    pt->idx[i] = 0.0;
-  }
-  if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab))
+  if ((NULL == pt->table) || (NULL == pt->idx) )
     error(1, "Cannot allocate memory for potential table");
+  
+  
+  /* copy parameters values to potfit */
+  for (i = 0; i < pt->len; i++) {
+    pt->table[i] = *OptParamSet.nestedvalue[i];
+ /*   pt->xcoord[i] = 0.0;
+    pt->d2tab[i] = 0.0;
+  */  pt->idx[i] = i;
+  }
+/*  if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab))
+    error(1, "Cannot allocate memory for potential table");
+*/ 
+  
 
-  /* input loop */
-  val = pt->table;
-  k = 0;
-  l = 0;
-
-  /* read pair potentials */
-  for (i = 0; i < paircol; i++) {
-    if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);
-    } else {
-      *val = 1e30;
-      *(val + 1) = 0.0;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    /* read values */
-    for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val))
-	error(1, "Premature end of potential file %s", filename);
-      else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if ((!invar_pot[i]) && (j < nvals[i] - 1))
-	pt->idx[k++] = l++;
-      else
-	l++;
+  /* set begin and end (end is cutoff) */
+  pt->begin[0] = 0; 
+  int have_cutoff = 0;
+  double tmp_cutoff;
+  for (j = 0; j < OptParamSet.Nparam; j++) { 
+    if (strncmp(OptParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
+      pt->end[0] = *OptParamSet.value[j];
+      have_cutoff = 1;
+      break;
     }
   }
-
-#if defined EAM || defined ADP || defined MEAM
-  /* read EAM transfer function rho(r) */
-  for (i = paircol; i < paircol + ntypes; i++) {
-    if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);
-    } else {
-      *val = 1e30;
-      *(val + 1) = 0.0;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    /* read values */
-    for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val))
-	error(1, "Premature end of potential file %s", filename);
-      else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if ((!invar_pot[i]) && (j < nvals[i] - 1))
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
+  if(!have_cutoff) {
+    error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. copy "
+            "cutoff to potfit failed.");
   }
+  
 
-  /* read EAM embedding function F(n) */
-  for (i = paircol + ntypes; i < paircol + 2 * ntypes; i++) {
-    if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);
-    } else {
-      *val = 1.e30;
-      *(val + 1) = 1.e30;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    /* read values */
-    for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val))
-	error(1, "Premature end of potential file %s", filename);
-      else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if (!invar_pot[i])
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
-  }
-
-#ifdef TBEAM
-  /* read TBEAM transfer function rho(r) for the s-band */
-  for (i = paircol + 2 * ntypes; i < paircol + 3 * ntypes; i++) {
-    if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);
-    } else {
-      *val = 1e30;
-      *(val + 1) = 0.0;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    /* read values */
-    for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val))
-	error(1, "Premature end of potential file %s", filename);
-      else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if ((!invar_pot[i]) && (j < nvals[i] - 1))
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
-  }
-
-  /* read TBEAM embedding function F(n) for the s-band */
-  for (i = paircol + 3 * ntypes; i < paircol + 4 * ntypes; i++) {
-    if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);
-    } else {
-      *val = 1.e30;
-      *(val + 1) = 1.e30;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    /* read values */
-    for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val))
-	error(1, "Premature end of potential file %s", filename);
-      else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if (!invar_pot[i])
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
-  }
-#endif /* TBEAM */
-#endif /* EAM || ADP || MEAM */
-
-#ifdef ADP
-  /* read ADP dipole function u(r) */
-  for (i = paircol + 2 * ntypes; i < 2 * (paircol + ntypes); i++) {
-    if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);
-    } else {
-      *val = 1e30;
-      *(val + 1) = 0.0;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    /* read values */
-    for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val))
-	error(1, "Premature end of potential file %s", filename);
-      else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if ((!invar_pot[i]) && (j < nvals[i] - 1))
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
-  }
-
-  /* read adp quadrupole function w(r) */
-  for (i = 2 * (paircol + ntypes); i < 3 * paircol + 2 * ntypes; i++) {
-    if (have_grad) {
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);
-    } else {
-      *val = 1.e30;
-      *(val + 1) = 1.e30;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    /* read values */
-    for (j = 0; j < nvals[i]; j++) {
-      if (1 > fscanf(infile, "%lf\n", val))
-	error(1, "Premature end of potential file %s", filename);
-      else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if ((!invar_pot[i]) && (j < nvals[i] - 1))
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
-  }
-#endif /* ADP */
-
-#ifdef MEAM
-  for (i = paircol + 2 * ntypes; i < 2 * paircol + 2 * ntypes; i++) {	/* read in second pair pot    f */
-    if (have_grad) {		/* read gradient */
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);;
-    } else {
-      *val = 1e30;
-      *(val + 1) = 0.0;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
-      if (1 > fscanf(infile, "%lf\n", val)) {
-	error(1, "Premature end of potential file %s", filename);;
-      } else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      // Clamp first spline knot in first f_ij potential only
-      // to remove degeneracy of f*f*g where f' = f/b and g' = b^2*g
-#ifndef MEAMf
-      if ((!invar_pot[i]) && (j < nvals[i] - 1 && (j != 0 || i != paircol + 2 * ntypes)))
-#else
-      if (!invar_pot[i])
-#endif /* MEAMf */
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
-  }
-  for (i = 2 * paircol + 2 * ntypes; i < 2 * paircol + 3 * ntypes; i++) {	/* read in angl part */
-    if (have_grad) {		/* read gradient */
-      if (2 > fscanf(infile, "%lf %lf\n", val, val + 1))
-	error(1, "Premature end of potential file %s", filename);;
-    } else {
-      *val = 0;
-      *(val + 1) = 0;
-    }
-    val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
-      pt->idx[k++] = l++;
-    else
-      l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
-      if (1 > fscanf(infile, "%lf\n", val)) {
-	error(1, "Premature end of potential file %s", filename);;
-      } else
-	val++;
-      pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if (!invar_pot[i])
-	pt->idx[k++] = l++;
-      else
-	l++;
-    }
-  }
-#endif /* MEAM */
-
-  pt->idxlen = k;
-  init_calc_table(pt, &calc_pot);
+  printf(" - Successfully read potential parameters that will be optimized.\n");
 
   return;
 }

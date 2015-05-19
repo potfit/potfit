@@ -288,7 +288,7 @@ nest_OptimizableParamValue(void* pkim, OptParamType* OptParam,
         total_size += tmp_size;
       }
     } else {
-      error("The parameter `%s' is not optimizable, check spelling.\n",
+      error(1, "The parameter `%s' is not optimizable, check spelling.\n",
             input_param_name[i]);
     }
   }
@@ -665,8 +665,9 @@ int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start)
     /* in potfit, atom types range from 0 to (ntype-1) */
     if (atoms[start+i].type < 0 || atoms[start+i].type >= *numberOfSpecies) {
       status = KIM_STATUS_FAIL;     
-      KIM_API_report_error(__LINE__, __FILE__,
-                           "Unexpected species detected", status);
+      KIM_API_report_error(__LINE__, __FILE__, "Unexpected species detected, "
+       "the element(s) in potfit config file is not supported by the KIM model "
+       " you specified.", status);
       return status;
     }
     else {
@@ -965,9 +966,8 @@ int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
   int i;
 
   /*publish parameters */ 
-  /*Pot[i+2] because the first two index stores the derivative info  */
   for (i = 0; i < OptParam->Nnestedvalue; i++) {
-    *OptParam->nestedvalue[i] = PotTable[i+2]; 
+    *OptParam->nestedvalue[i] = PotTable[i]; 
   }
 
   status = KIM_API_model_reinit(pkim);
@@ -975,7 +975,7 @@ int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
     return status;
   }
-  return 0;
+  return KIM_STATUS_OK;
 }
 
 

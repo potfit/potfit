@@ -1,4 +1,4 @@
-#F 3 3
+#F 0 1
 #E
 
 type  EAM_Dynamo_tmp_model

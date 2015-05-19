@@ -201,7 +201,10 @@ void anneal(double *xi)
   }
   F = calc_forces(xi, fxi1, 0);
   Fopt = F;
+
 #ifndef APOT
+/* added */
+#ifndef KIM
   /* Need to save xcoord of this F potential because we use the
    optimum potential in the future, and the current potential
    could be rescaled differently from the optimum*/
@@ -217,6 +220,8 @@ void anneal(double *xi)
       optxcoord[n] = opt_pot.xcoord[n];
     ++col2;
   }
+#endif /* !KIM */
+/*added ends*/
 #endif /* APOT */
   /* determine optimum temperature for annealing */
   if (auto_T) {
@@ -297,7 +302,9 @@ void anneal(double *xi)
 		xopt[n] = xi2[n];
 
 #ifndef APOT
-	      /* Need to save xcoord of this F potential because we use the
+/* added */
+#ifndef KIM
+        /* Need to save xcoord of this F potential because we use the
 	       optimum potential in the future, and the current potential
 	       could be rescaled differently from the optimum*/
 	      col2 = 0;
@@ -313,6 +320,10 @@ void anneal(double *xi)
 
 		++col2;
 	      }
+#endif /* !KIM */
+/* added ends*/
+
+
 #endif /* APOT */
 	      Fopt = F2;
 	      if (*tempfile != '\0') {
