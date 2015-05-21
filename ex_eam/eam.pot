@@ -3,6 +3,7 @@
 
 type  EAM_Dynamo_tmp_model
 
+
 # uncomment the following line to see which KIM parameters are optimizable
 #check_kim_opt_param
 # the number of paramters that will be optimized
@@ -12,3 +13,4 @@ num_opt_param  3
 PARAM_FREE_embeddingData
 PARAM_FREE_densityData
 PARAM_FREE_rPhiData
+

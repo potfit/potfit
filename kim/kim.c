@@ -35,8 +35,8 @@ void InitKIM() {
     nest_OptimizableParamValue(pkimObj[i], &OptParamAllConfig[i], 
                                name_opt_param, num_opt_param);
   /* Publish cutoff (cutoff only need to be published once, so here) */
-/*    PublishCutoff(pkimObj[i], rcutmax);
-*/ 
+    PublishCutoff(pkimObj[i], rcutmax);
+ 
  }
 
   printf("Initializing KIM ... done\n");

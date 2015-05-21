@@ -210,7 +210,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
   if (!have_format)
     error(1, "Format not specified in header of potential file %s", filename);
 
-
+/*************************************************************/
 /* added reset size */
 #ifdef KIM
   /* force size to be 1 */
@@ -221,8 +221,9 @@ void read_pot_table(pot_table_t *pt, char *filename)
   }
 #endif /* KIM */
 /* added ends */
+/*************************************************************/
 
-  /* allocate info block of function table */
+/* allocate info block of function table */
   pt->len = 0;
   pt->ncols = size;
   pt->begin = (double *)malloc(size * sizeof(double));
@@ -465,9 +466,14 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   char *token;
   double *val, *list, temp;
   fpos_t filepos, startpos;
+  double  tmp_pmin, tmp_pmax;
+  char tmp_value[255];
+  int jj, kk, tmp_size;
+  OptParamType OptParamSet;
 
   /* initialize the function table for analytic potentials */
-  apot_init();
+  /*  apot_init();
+   */
 
   /* save starting position */
   fgetpos(infile, &startpos);
@@ -510,49 +516,50 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       apt->param_name[i][j] = (char *)malloc(30 * sizeof(char));
       reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
       if (apt->param_name[i][j] == NULL)
-	error(1, "Cannot allocate memory for chemical potential names.");
+        error(1, "Cannot allocate memory for chemical potential names.");
 
       /* read one line */
-      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[j], &apt->pmin[i][j], &apt->pmax[i][j]))
-	error(1, "Could not read chemical potential for %d. atomtype.", j);
+      if (4 > fscanf(infile, "%s %lf %lf %lf", buffer, &apt->chempot[j], 
+          &apt->pmin[i][j], &apt->pmax[i][j]))
+        error(1, "Could not read chemical potential for %d. atomtype.", j);
 
       /* split cp and _# */
       token = strchr(buffer, '_');
       if (token != NULL) {
-	strncpy(name, buffer, strlen(buffer) - strlen(token));
-	name[strlen(buffer) - strlen(token)] = '\0';
+        strncpy(name, buffer, strlen(buffer) - strlen(token));
+        name[strlen(buffer) - strlen(token)] = '\0';
       }
       if (strcmp("cp", name) != 0) {
-	fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
-	error(1, "No chemical potentials found in %s.\n", filename);
+        fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
+        error(1, "No chemical potentials found in %s.\n", filename);
       }
 
       /* check for invariance and proper value (respect boundaries) */
       apt->invar_par[i][j] = 0.0;
       /* parameter will not be optimized if min==max */
       if (apt->pmin[i][j] == apt->pmax[i][j]) {
-	apt->invar_par[i][j] = 1;
-	apt->invar_par[i][ntypes]++;
-	/* swap min and max if max<min */
+        apt->invar_par[i][j] = 1;
+        apt->invar_par[i][ntypes]++;
+        /* swap min and max if max<min */
       } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
-	temp = apt->pmin[i][j];
-	apt->pmin[i][j] = apt->pmax[i][j];
-	apt->pmax[i][j] = temp;
-	/* reset value if >max or <min */
+        temp = apt->pmin[i][j];
+        apt->pmin[i][j] = apt->pmax[i][j];
+        apt->pmax[i][j] = temp;
+        /* reset value if >max or <min */
       } else if ((apt->values[i][j] < apt->pmin[i][j])
-	|| (apt->values[i][j] > apt->pmax[i][j])) {
-	/* Only print warning if we are optimizing */
-	if (opt) {
-	  if (apt->values[i][j] < apt->pmin[i][j])
-	    apt->values[i][j] = apt->pmin[i][j];
-	  if (apt->values[i][j] > apt->pmax[i][j])
-	    apt->values[i][j] = apt->pmax[i][j];
-	  warning("Starting value for chemical potential #%d is ", j + 1);
-	  warning("outside of specified adjustment range.\n");
-	  warning("Resetting it to %f.\n", j + 1, apt->values[i][j]);
-	  if (apt->values[i][j] == 0)
-	    warning("New value is 0 ! Please be careful about this.\n");
-	}
+          || (apt->values[i][j] > apt->pmax[i][j])) {
+        /* Only print warning if we are optimizing */
+        if (opt) {
+          if (apt->values[i][j] < apt->pmin[i][j])
+            apt->values[i][j] = apt->pmin[i][j];
+          if (apt->values[i][j] > apt->pmax[i][j])
+            apt->values[i][j] = apt->pmax[i][j];
+          warning("Starting value for chemical potential #%d is ", j + 1);
+          warning("outside of specified adjustment range.\n");
+          warning("Resetting it to %f.\n", j + 1, apt->values[i][j]);
+          if (apt->values[i][j] == 0)
+            warning("New value is 0 ! Please be careful about this.\n");
+        }
       }
       strcpy(apt->param_name[i][j], buffer);
     }
@@ -563,9 +570,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     /* read composition nodes */
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes)) {
       if (strcmp("type", buffer) == 0)
-	compnodes = -1;
+        compnodes = -1;
       else
-	error(1, "Could not read number of composition nodes from potential file.\n");
+        error(1, "Could not read number of composition nodes from potential file.\n");
     }
     if (strcmp(buffer, "cn") != 0 && ntypes > 1 && compnodes != -1)
       error(1, "No composition nodes found in %s.\nUse \"cn 0\" for none.\n", filename);
@@ -574,29 +581,29 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     }
     if (compnodes != -1) {
       apt->values[apt->number] =
-	(double *)realloc(apt->values[apt->number], (ntypes + compnodes) * sizeof(double));
+        (double *)realloc(apt->values[apt->number], (ntypes + compnodes) * sizeof(double));
       apt->pmin[apt->number] =
-	(double *)realloc(apt->pmin[apt->number], (ntypes + compnodes) * sizeof(double));
+        (double *)realloc(apt->pmin[apt->number], (ntypes + compnodes) * sizeof(double));
       apt->pmax[apt->number] =
-	(double *)realloc(apt->pmax[apt->number], (ntypes + compnodes) * sizeof(double));
+        (double *)realloc(apt->pmax[apt->number], (ntypes + compnodes) * sizeof(double));
       apt->chempot = apt->values[apt->number];
       compnodelist = (double *)malloc((ntypes + compnodes) * sizeof(double));
 
       for (j = 0; j < compnodes; j++) {
-	if (4 > fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
-	    &apt->chempot[ntypes + j], &apt->pmin[apt->number][ntypes + j],
-	    &apt->pmax[apt->number][ntypes + j]))
-	  error(1, "Could not read composition node %d\n", j + 1);
-	if (apt->pmin[apt->number][ntypes + j] > apt->chempot[ntypes + j]
-	  || apt->pmax[apt->number][ntypes + j] < apt->chempot[ntypes + j])
-	  error(1, "composition node %d is out of bounds.\n", j + 1);
+        if (4 > fscanf(infile, "%lf %lf %lf %lf", &compnodelist[j],
+              &apt->chempot[ntypes + j], &apt->pmin[apt->number][ntypes + j],
+              &apt->pmax[apt->number][ntypes + j]))
+          error(1, "Could not read composition node %d\n", j + 1);
+        if (apt->pmin[apt->number][ntypes + j] > apt->chempot[ntypes + j]
+            || apt->pmax[apt->number][ntypes + j] < apt->chempot[ntypes + j])
+          error(1, "composition node %d is out of bounds.\n", j + 1);
       }
 
       /* check compnodes for valid values */
       if (ntypes == 2) {
-	for (j = 0; j < compnodes; j++)
-	  if (compnodelist[j] > 1 || compnodelist[j] < 0)
-	    error(1, "Composition node %d is %f but should be inside [0,1].\n", j + 1, compnodelist[j]);
+        for (j = 0; j < compnodes; j++)
+          if (compnodelist[j] > 1 || compnodelist[j] < 0)
+            error(1, "Composition node %d is %f but should be inside [0,1].\n", j + 1, compnodelist[j]);
       }
     }
     if (compnodes != -1)
@@ -606,6 +613,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 #endif /* CN */
   }
 #endif /* PAIR */
+
 
 #ifdef COULOMB
   fsetpos(infile, &startpos);
@@ -633,7 +641,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   for (i = 0; i < ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
-	&apt->charge[i], &apt->pmin[apt->number][i], &apt->pmax[apt->number][i])) {
+          &apt->charge[i], &apt->pmin[apt->number][i], &apt->pmax[apt->number][i])) {
       error(1, "Could not read charge for atomtype #%d\n", i);
     }
     apt->invar_par[apt->number][i] = 0;
@@ -644,7 +652,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   }
   apt->param_name[apt->number + 1][0] = (char *)malloc(30 * sizeof(char));
   if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][0],
-      &apt->dp_kappa[0], &apt->pmin[apt->number + 1][0], &apt->pmax[apt->number + 1][0])) {
+        &apt->dp_kappa[0], &apt->pmin[apt->number + 1][0], &apt->pmax[apt->number + 1][0])) {
     error(1, "Could not read kappa");
   }
   apt->invar_par[apt->number + 1][0] = 0;
@@ -664,8 +672,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   for (i = 0; i < ntypes; i++) {
     apt->param_name[apt->number + 2][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
-	apt->param_name[apt->number + 2][i], &apt->dp_alpha[i],
-	&apt->pmin[apt->number + 2][i], &apt->pmax[apt->number + 2][i])) {
+          apt->param_name[apt->number + 2][i], &apt->dp_alpha[i],
+          &apt->pmin[apt->number + 2][i], &apt->pmax[apt->number + 2][i])) {
       error(1, "Could not read polarisability for atomtype #%d\n", i);
     }
     apt->invar_par[apt->number + 2][i] = 0;
@@ -677,8 +685,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   for (i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 3][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
-	apt->param_name[apt->number + 3][i], &apt->dp_b[i],
-	&apt->pmin[apt->number + 3][i], &apt->pmax[apt->number + 3][i])) {
+          apt->param_name[apt->number + 3][i], &apt->dp_b[i],
+          &apt->pmin[apt->number + 3][i], &apt->pmax[apt->number + 3][i])) {
       error(1, "Could not read parameter dp_b for potential #%d\n", i);
     }
     apt->invar_par[apt->number + 3][i] = 0;
@@ -690,8 +698,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   for (i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 4][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
-	apt->param_name[apt->number + 4][i], &apt->dp_c[i],
-	&apt->pmin[apt->number + 4][i], &apt->pmax[apt->number + 4][i])) {
+          apt->param_name[apt->number + 4][i], &apt->dp_c[i],
+          &apt->pmin[apt->number + 4][i], &apt->pmax[apt->number + 4][i])) {
       error(1, "Could not read parameter dp_c for potential #%d\n", i);
     }
     apt->invar_par[apt->number + 4][i] = 0;
@@ -704,207 +712,65 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   printf(" - Read elstat table\n");
 #endif /* DIPOLE */
 
-  /* skip to global section */
-  fsetpos(infile, &startpos);
-  do {
-    fgetpos(infile, &filepos);
-    fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "global") != 0 && !feof(infile));
-  fsetpos(infile, &filepos);
-
-  /* check for global keyword */
-  if (strcmp(buffer, "global") == 0) {
-    if (2 > fscanf(infile, "%s %d", buffer, &apt->globals))
-      error(1, "Premature end of potential file %s", filename);
-    have_globals = 1;
-    apt->total_par += apt->globals;
-
-    i = apt->number + enable_cp;
-    j = apt->globals;
-    global_pot = i;
-
-    /* allocate memory for global parameters */
-    apt->names = (char **)realloc(apt->names, (global_pot + 1) * sizeof(char *));
-    apt->names[global_pot] = (char *)malloc(20 * sizeof(char));
-    strcpy(apt->names[global_pot], "global parameters");
-    reg_for_free(apt->names[global_pot], "apt->names[%d] (global_pot)", global_pot);
-
-    apt->n_glob = (int *)malloc(apt->globals * sizeof(int));
-    reg_for_free(apt->n_glob, "apt->n_glob");
-
-    apt->global_idx = (int ***)malloc(apt->globals * sizeof(int **));
-    reg_for_free(apt->global_idx, "apt->global_idx");
-
-    apt->values = (double **)realloc(apt->values, (global_pot + 1) * sizeof(double *));
-    apt->values[global_pot] = (double *)malloc(j * sizeof(double));
-    reg_for_free(apt->values[global_pot], "apt->values[%d]", global_pot);
-
-    apt->invar_par = (int **)realloc(apt->invar_par, (global_pot + 1) * sizeof(int *));
-    apt->invar_par[global_pot] = (int *)malloc((j + 1) * sizeof(int));
-    reg_for_free(apt->invar_par[global_pot], "apt->invar_par[%d]", global_pot);
-
-    apt->pmin = (double **)realloc(apt->pmin, (global_pot + 1) * sizeof(double *));
-    apt->pmin[global_pot] = (double *)malloc(j * sizeof(double));
-    reg_for_free(apt->pmin[global_pot], "apt->pmin[%d]", global_pot);
-
-    apt->pmax = (double **)realloc(apt->pmax, (global_pot + 1) * sizeof(double *));
-    apt->pmax[global_pot] = (double *)malloc(j * sizeof(double));
-    reg_for_free(apt->pmax[global_pot], "apt->pmax[%d]", global_pot);
-
-    apt->param_name = (char ***)realloc(apt->param_name, (global_pot + 1) * sizeof(char **));
-    apt->param_name[global_pot] = (char **)malloc(j * sizeof(char *));
-    reg_for_free(apt->param_name[global_pot], "apt->param_name[%d]", global_pot);
-
-    pt->first = (int *)realloc(pt->first, (global_pot + 1) * sizeof(int));
-
-    if (NULL == apt->values[global_pot] || NULL == apt->pmin[global_pot]
-      || NULL == apt->n_glob || NULL == apt->global_idx || NULL == apt->pmax[global_pot]
-      || NULL == apt->param_name[global_pot])
-      error(1, "Cannot allocate memory for global paramters.");
-
-    /* initialize properly */
-    apt->invar_par[i][j] = 0;
-
-    /* read the global parameters */
-    for (j = 0; j < apt->globals; j++) {
-      apt->param_name[global_pot][j] = (char *)malloc(30 * sizeof(char));
-      reg_for_free(apt->param_name[global_pot][j], "apt->param_name[%d][%d]", global_pot, j);
-
-      if (NULL == apt->param_name[global_pot][j])
-	error(1, "Error in allocating memory for global parameter name");
-
-      strcpy(apt->param_name[global_pot][j], "\0");
-      ret_val =
-	fscanf(infile, "%s %lf %lf %lf", apt->param_name[global_pot][j],
-	&apt->values[global_pot][j], &apt->pmin[global_pot][j], &apt->pmax[global_pot][j]);
-      if (4 > ret_val)
-	if (strcmp(apt->param_name[global_pot][j], "type") == 0) {
-	  error(0, "Not enough global parameters!\n");
-	  error(1, "You specified %d parameter(s), but needed are %d.\nAborting", j, apt->globals);
-	}
-
-      /* check for duplicate names */
-      for (k = j - 1; k >= 0; k--)
-	if (strcmp(apt->param_name[global_pot][j], apt->param_name[global_pot][k]) == 0) {
-	  error(0, "\nFound duplicate global parameter name!\n");
-	  error(1, "Parameter #%d (%s) is the same as #%d (%s)\n", j + 1,
-	    apt->param_name[global_pot][j], k + 1, apt->param_name[global_pot][k]);
-	}
-      apt->n_glob[j] = 0;
-
-      /* check for invariance and proper value (respect boundaries) */
-      /* parameter will not be optimized if min==max */
-      apt->invar_par[i][j] = 0;
-      if (apt->pmin[i][j] == apt->pmax[i][j]) {
-	apt->invar_par[i][j] = 1;
-	apt->invar_par[i][apt->globals]++;
-      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
-	temp = apt->pmin[i][j];
-	apt->pmin[i][j] = apt->pmax[i][j];
-	apt->pmax[i][j] = temp;
-      } else if ((apt->values[i][j] < apt->pmin[i][j])
-	|| (apt->values[i][j] > apt->pmax[i][j])) {
-	/* Only print warning if we are optimizing */
-	if (opt) {
-	  if (apt->values[i][j] < apt->pmin[i][j])
-	    apt->values[i][j] = apt->pmin[i][j];
-	  if (apt->values[i][j] > apt->pmax[i][j])
-	    apt->values[i][j] = apt->pmax[i][j];
-	  warning("Starting value for global parameter #%d is ", j + 1);
-	  warning("outside of specified adjustment range.\n");
-	  warning("Resetting it to %f.\n", j + 1, apt->values[i][j]);
-	  if (apt->values[i][j] == 0)
-	    warning("New value is 0 ! Please be careful about this.\n");
-	}
-      }
-    }
-
-    printf(" - Read %d global parameter(s)\n", apt->globals);
-  }
+  /* global parameter is not supported here */
 
 
 
-/*added */
-/******************************************************************************
-* Get the size of optimizable parameters from KIM
 
 
-* smooth cutoff should not be enabled, do not need to 
 
 
-* note split name and _sc is not needed 
 
-******************************************************************************/
- 
+
+
+
+
+
+
   /* skip to actual potentials */
+  buffer[0] = '\0';
+  name[0] = '\0';
   fsetpos(infile, &startpos);
   do {
-    fgetpos(infile, &filepos);
-    fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "type") != 0 && !feof(infile));
-  fsetpos(infile, &filepos);
+    fgets(buffer, 255, infile);
+    sscanf(buffer, "%s", name);
+  } while (strncmp(name, "type", 4) != 0 && !feof(infile));
+ 
 
+  /* apt->number would always be 1 for KIM potential. */
   for (i = 0; i < apt->number; i++) {
-    /* scan for "type" keyword */
-    do {
-      fgetpos(infile, &filepos);
-      fscanf(infile, "%s", buffer);
-    } while (strcmp(buffer, "type") != 0 && !feof(infile));
-    fsetpos(infile, &filepos);
-    /* read type */
-    if (2 > fscanf(infile, "%s %s", buffer, name))
-      error(1, "Premature end of potential file %s", filename);
-    if (strcmp(buffer, "type") != 0)
-      error(1, "Unknown keyword in file %s, expected \"type\" but found \"%s\".", filename, buffer);
-
-    /* split name and _sc */
-    token = strrchr(name, '_');
-    if (token != NULL && strcmp(token + 1, "sc") == 0) {
-      strncpy(buffer, name, strlen(name) - 3);
-      buffer[strlen(name) - 3] = '\0';
-      strcpy(name, buffer);
-      smooth_pot[i] = 1;
+    /* find `type' */
+    if (strncmp(name, "type", 4) != 0) {
+      error(1,"Keyword `type' is missing.");
     }
-
-    /* check if potential is "pohlong" and change it to bjs */
-    if (strcmp(name, "pohlong") == 0)
-      strcpy(name, "bjs\0");
-
-
-
-
-
-   strcpy(kim_model_name, name);
+    if (1 > sscanf(buffer, "%*s %s", name))
+      error(1, "KIM Model name is missing in %s.", filename);
+    /* copy name to kim_model_name */
+    strcpy(kim_model_name, name);
     strcpy(apt->names[i], name);
     printf("\nKIM Model being used: %s.\n\n", kim_model_name);
-    
-    OptParamType OptParamSet;
 
-    /* check for comments */
+
+    /* find `check_kim_opt_param' or `num_opt_param' */
+    fsetpos(infile, &startpos);
     do {
-          j = fgetc(infile);
-       } while (j == '\n' || j == '\t' || j == ' ');
-    ungetc(j,infile);
-
-    fgetpos(infile, &filepos);
-    fgets(buffer, 255, infile);
-    while (buffer[0] == '#') {
-      fgetpos(infile, &filepos);
       fgets(buffer, 255, infile);
-    }
-    fsetpos(infile, &filepos);
-
-    /* read the flag `check_kim_optimizable_parameters', if exit nicely */
-    /* read the number of parameters that will be optimized */
-    fgets(buffer, 255, infile);
+      sscanf(buffer, "%s", name);
+    } while (strcmp(name, "check_kim_opt_param") != 0 &&
+               strcmp(name, "num_opt_param") != 0 && !feof(infile));
+    if (strcmp(name, "check_kim_opt_param") != 0 &&
+               strcmp(name, "num_opt_param") != 0) 
+      error(1, "The number of parameters that will be optimized (num_opt_param)" 
+               " is missed in: %s.\n ", filename);
+    /* read `check_kim_opt_param' or `num_opt_param' */
     if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
-	
+
       /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
       get_OptimizableParamSize(&OptParamSet, NULL, 0); 
-      
+
       printf(" - The following potential parameters are available to fit. Include the "
-	           "name(s) of the one(s) you want to optimize in the potential input "
-             "file: `%s'.\n",filename);
+          "name(s) of the one(s) you want to optimize in the potential input "
+          "file: `%s'.\n",filename);
       printf("         param name                 param extent\n");
       printf("        ############               ##############\n");
       for(k = 0; k < OptParamSet.Nparam; k++ ) {
@@ -922,110 +788,149 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
         error(1, "Could not read num_opt_param.\n");  
       }
-    }else {
-      error(1, "The number of parameters that will be optimized "
-            "(num_opt_param) should be given after `type' in: `%s'.\n ", filename);
     }
-  
-    /* allocate memory for this parameter */
-    apt->pmin[i] = (double *)malloc(num_opt_param * sizeof(double));
-    reg_for_free(apt->pmin[i], "apt->pmin[%d]", i);
 
-    apt->pmax[i] = (double *)malloc(num_opt_param * sizeof(double));
-    reg_for_free(apt->pmax[i], "apt->pmax[%d]", i);
 
-    apt->param_name[i] = (char **)malloc(num_opt_param * sizeof(char *));
-    reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
-
-    if ( NULL == apt->pmin[i] || NULL == apt->pmax[i] 
-         || NULL == apt->param_name[i])
-      error(1, "Cannot allocate memory for potential paramters.\nAborting");
-
+    /* allocate memory for names */
+    /* For tabulated potential where the parameter could be array, one name
+     * may stands for multiple data */
+    name_opt_param = (char**)malloc(num_opt_param*sizeof(char*));
+    reg_for_free(name_opt_param, "name_opt_param");
+    if (NULL == name_opt_param)
+      error(1, "Cannot allocate memory for `name_opt_param'.\nAborting");
     for (j = 0; j < num_opt_param; j++) {
+      name_opt_param[j] = (char *)malloc(255 * sizeof(char));
+      reg_for_free(name_opt_param[j], "name_opt_param[%d]", j);
+      if (NULL == name_opt_param[j]) {
+        error(1, "Error in allocating memory for `name_opt_param'");
+      }
+    }
+    
+  
+    /* first scan only to find `PARAM_FREE_*' keyword */
+    fsetpos(infile, &startpos);
+    for (j = 0; j < num_opt_param; j++) {
+      buffer[0] = '\0';
+      name[0] = '\0';
+      do {
+        fgets(buffer, 255, infile);
+        ret_val = sscanf(buffer, "%s", name);
+      } while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
+      if (feof(infile) ) {
+        error(0, "Not enough parameter(s) (PARAM_FREE_*) in file %s!\n", filename);
+        error(1, "You listed %d parameter(s), but required are %d.\n", j, num_opt_param);
+      }
+      if (ret_val == 1) {
+        strcpy(name_opt_param[j], name); 
+      } else {
+        error(1, "Could not read parameter #%d in file %s.", j + 1, filename);
+      }
+    }
+
+
+    /* get the total size (some parameters may be array) of the optimizable 
+       parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
+       need to be equal to num_opt_param, since they should all be scalar. */
+    apt->n_par[i] = get_OptimizableParamSize(&OptParamSet, name_opt_param,
+                                             num_opt_param); 
+    apt->total_par += apt->n_par[i];
+
+    /* set begin */
+    apt->begin[i] = 0.0;
+    
+    /* allocate memory */
+    apt->values[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
+    reg_for_free(apt->values[i], "apt->values[%d]", i);
+    /* last slot stores the total number of invariable parameters */
+    apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
+    reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
+    apt->param_name[i] = (char **)malloc(apt->n_par[i]* sizeof(char *));
+    reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
+    if (NULL == apt->values[i] || NULL == apt->invar_par[i] || NULL == apt->param_name[i])
+      error(1, "Cannot allocate memory for potential paramters.\nAborting");
+    for (j = 0; j < apt->n_par[i]; j++) {
       apt->param_name[i][j] = (char *)malloc(255 * sizeof(char));
       reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
       if (NULL == apt->param_name[i][j]) {
         error(1, "Error in allocating memory for parameter name");
       }
     }
-  
-    /* check for comments */
-    do {
-          j = fgetc(infile);
-       } while (j == '\n' || j == '\t' || j == ' ');
-    ungetc(j,infile);
-    fgetpos(infile, &filepos);
-    fgets(buffer, 255, infile);
-    while (buffer[0] == '#') {
-      fgetpos(infile, &filepos);
-      fgets(buffer, 255, infile);
-    }
-    fsetpos(infile, &filepos);
-
- 
-    /* read parameters (names and pmin and pmax) */
-    double tmp_pmin;
-    double tmp_pmax;
-    for (j = 0; j < num_opt_param; j++) {
-      fgets(name, 255, infile);
-      while (name[0] == '#' && !feof(infile) && (j != num_opt_param - 1)) {
-      	fgets(name, 255, infile);
-      }
-      if ((j != (num_opt_param - 1)) && (feof(infile) || name[0] == '\0')) {
-      	error(0, "Premature end of potential definition or file.\n");
-       	error(1, "Probably your potential definition is missing some parameters.\n");
-      }
-      if (feof(infile))
-        name[0] = '\0';
-      buffer[0] = '\0';
-      ret_val = sscanf(name, "%s %lf %lf", buffer, &tmp_pmin, &tmp_pmax);
-      
-      if (ret_val == 3) {
-      	strcpy(apt->param_name[i][j], buffer); 
-        apt->pmin[i][j] = tmp_pmin;
-        apt->pmax[i][j] = tmp_pmax;
-      } else { /* not enough parameters are readed */
-	      if ( ret_val == EOF) {
-	        error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", 
-                 i + 1, apt->names[i],filename);
-	        error(1, "You specified %d parameter(s), but required are %d.\n", j, num_opt_param);
-	      }
-        error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
-	    }
-    }
-   
-
-    /* get the total size (some parameters may be array) of the optimizable 
-       parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
-       need to be equal to num_opt_param, since they should all be scalar. */
-    apt->n_par[i] = get_OptimizableParamSize(&OptParamSet, apt->param_name[i],
-                                             num_opt_param); 
-    /* we only do the comparison for apt->n_par[0] for two reasons: 1) for KIM
-     * Models, there is only 1 potential; 2) if chemical potenial is enabled, we
-     * cannot compare it with num_opt_param. */
-    if (apt->n_par[0] != num_opt_param) {
-      error(1,"Some `PARAM_FREE_*' is not scalar. This format of input is not suitable.");
-    }
-
-    apt->total_par += apt->n_par[i];
-
-    /* set very small begin, needed for EAM embedding function */
-    apt->begin[i] = 0.0001;
-
-    /* allocate memory for this parameter */
-    apt->values[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
-    reg_for_free(apt->values[i], "apt->values[%d]", i);
     
-    apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
-    reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
-
-    if (NULL == apt->values[i] || NULL == apt->invar_par[i])
+#ifndef NOLIMITS 
+    /* allocate memory */
+    apt->pmin[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
+    reg_for_free(apt->pmin[i], "apt->pmin[%d]", i);
+    apt->pmax[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
+    reg_for_free(apt->pmax[i], "apt->pmax[%d]", i);
+    if(NULL == apt->pmin[i] || NULL == apt->pmax[i])
       error(1, "Cannot allocate memory for potential paramters.\nAborting");
+#endif /* NOLIMITS */
 
+
+/* If NOLIMITS is defined when compiling, all parameters will read in from KIM */
+#ifdef NOLIMITS 
     /* copy parameters values to potfit */
     for (j = 0; j <apt->n_par[i]; j++) {
       apt->values[i][j] = *OptParamSet.nestedvalue[j];
     }
+#else /* NOLIMITS */ 
+    /* second scan to read parameter values */
+   
+    jj = 0;  
+    fsetpos(infile, &startpos);
+    for (j = 0; j < num_opt_param; j++) {
+      buffer[0] = '\0';
+      name[0] = '\0';
+      /* find the keyword `PARAM_FREE_*' */
+      do {
+        fgets(buffer, 255, infile);
+        sscanf(buffer, "%s", name);
+      } while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
+      /* how many parameter(s) are in this keyword? ( = 1 if scalar) */
+      /* k is the palce(slot) that the keyword is in the OptParam struct */
+      for ( k = 0; k < OptParamSet.Nparam; k++) {
+        if (strcmp(OptParamSet.name[k], name_opt_param[j]) == 0)
+          break;
+      }
+      tmp_size = 1;
+      if( OptParamSet.rank[k] != 0) {
+        for ( kk = 0; kk < OptParamSet.rank[k]; kk++) {
+          tmp_size *= OptParamSet.shape[k][kk];
+        }
+      }
+      /* read in the value and pmin and pmax */
+      for (kk = 0; kk < tmp_size; kk++) {
+       fgets(buffer, 255, infile);
+        ret_val = sscanf(buffer, "%s %lf %lf", tmp_value, &tmp_pmin, &tmp_pmax);
+        if (ret_val == 3) {
+          apt->pmin[i][jj] = tmp_pmin;
+          apt->pmax[i][jj] = tmp_pmax;
+          /*if give `KIM', use KIM parameter, otherwise use readin */
+          if (strncmp(tmp_value, "KIM", 3) == 0) {
+            apt->values[i][jj] = *OptParamSet.nestedvalue[jj];
+          } else if (1 > sscanf(tmp_value, "%lf", &apt->values[i][jj])) {
+             error(1, " Value %d of (%s) is not float.\n", kk+1, OptParamSet.name[k]);
+          }
+        } else {
+          error(0, "Not enough value(s) for (%s) are provided in %s. "
+                   "You listed %d value(s), but required are %d.\n", 
+                    OptParamSet.name[k], filename, kk, tmp_size);
+          error(1, "Or line %d of (%s) are of wrong type. Only `KIM' and float "
+                   "data are acceptable.\n", kk+1,OptParamSet.name[k]);
+        }
+        /* If the parameter is array, the parameter name is given to the first value 
+         * and the other name will be given `\0'. */
+        if(kk == 0) {
+          strcpy(apt->param_name[i][jj], name_opt_param[j]);
+        } else {
+          strcpy(apt->param_name[i][jj], '\0');
+        }
+        jj++;
+      }  
+    }
+
+#endif /* NOLIMITS */
+
 
     /* invarable parameters. Here all are optimizable. */
     /* the last slot is the number of invar */
@@ -1034,39 +939,75 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     }
     apt->invar_par[i][apt->n_par[i]] = 0;
 
-    /* copy cutoff */
-    int have_cutoff = 0;
-    for (j = 0; j < OptParamSet.Nparam; j++) { 
-      if (strncmp(OptParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
-        apt->end[i] = *OptParamSet.value[j];
-        have_cutoff = 1;
-        break;
+
+    /* find cutoff */
+    /* If it is anaytic potential, keyword `cutoff' has to be specified in the input
+     * file. You can give value directly, or give `KIM' to use the cutoff from KIM
+     * model. If it is tabualted potential, cutoff will read in from KIM model, even
+     * if it is given in the input file. */
+    int have_cutoff;
+    
+    fsetpos(infile, &startpos);
+    do {
+      fgets(buffer, 255, infile);
+      sscanf(buffer, "%s", name);
+    } while (strcmp(name, "cutoff") != 0 && !feof(infile));
+
+    if (apt->n_par[i] == num_opt_param) {
+      printf("Each `PARAM_FREE_*' is scalar.\n");
+      if (strcmp(name, "cutoff") == 0) {
+        if(2 > sscanf(buffer, "%s %s", name, tmp_value)) {
+          error(1,"Error reading in `cutoff'\n");
+        } else {
+          if (strcmp(tmp_value, "KIM") == 0) {
+            have_cutoff = 0;
+          } else {
+            if(1 > sscanf(tmp_value,"%lf", &apt->end[i])){
+              error(1,"Error reading in `cutoff'.\n");
+            }
+            have_cutoff = 1; 
+          }
+        }
+      } else {
+        error(1,"`cutoff' is missing in %s.\n", filename);
+      }
+    } else {
+      printf("Some `PARAM_FREE_*' are array; (%s) is probably a tabulated potential.\n"
+               ,kim_model_name);
+      if (strcmp(name, "cutoff") == 0) {
+        printf("`cutoff' read in from %s is deprecated. Will use the `cutoff' in "
+              " the KIM model throughout the fitting.\n", filename);
+      }
+      have_cutoff = 0;
+    }
+
+    /* get cutoff from KIM if cutoff has not been determined yet. */
+    if (!have_cutoff) {
+      for (j = 0; j < OptParamSet.Nparam; j++) { 
+        if (strncmp(OptParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
+          apt->end[i] = *OptParamSet.value[j];
+          have_cutoff = 1;
+          break;
+        }
+      }
+      if(!have_cutoff) {
+        error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. Copy "
+            "cutoff to potfit failed.");
       }
     }
-    if(!have_cutoff) {
-      error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. Copy "
-              "cutoff to potfit failed.");
-    }
+
 
   }
   printf(" - Successfully read %d potential table(s)\n", apt->number);
-  
-  /* copy the optimizable parameter names to global variable `name_opt_param',
-   * which will be used later to nest the optimizable that is specified in the
-   * input file. The KIM object here is a temporary one. */
-  name_opt_param = apt->param_name[0]; 
 
 
 
-
-  
-  
   /* clean up globals table */
   if (have_globals) {
     for (i = 0; i < apt->globals; i++) {
       reg_for_free(apt->global_idx[i], "apt->global_idx[%d]", i);
       for (j = 0; j < apt->n_glob[i]; j++)
-	reg_for_free(apt->global_idx[i][j], "apt->global_idx[%d][%d]", i, j);
+        reg_for_free(apt->global_idx[i][j], "apt->global_idx[%d][%d]", i, j);
     }
   }
 #ifdef COULOMB
@@ -1085,12 +1026,12 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     }
   }
 
-/*added modified   do not need it any more*/
+  /*added modified   do not need it any more*/
   /* assign the potential functions to the function pointers */
- /* if (apot_assign_functions(apt) == -1)
-    error(1, "Could not assign the function pointers.\n");
-  */
-/*added ends*/
+  /* if (apot_assign_functions(apt) == -1)
+     error(1, "Could not assign the function pointers.\n");
+   */
+  /*added ends*/
 
 
 
@@ -1111,8 +1052,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 
 
-/************************************************************************/
-/*added (no derivative slots are needed, pt->first   etc. is disabled )  */  
+  /************************************************************************/
+  /*added (no derivative slots are needed, pt->first   etc. is disabled )  */  
 
   /* initialize function table and write indirect index */
   for (i = 0; i < apt->number; i++) {
@@ -1121,12 +1062,12 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     pt->step[i] = 0;
     pt->invstep[i] = 0;
     if (i == 0)
-/*      pt->first[i] = 2;
-*/      pt->first[i] = 0;
+      /*      pt->first[i] = 2;
+       */      pt->first[i] = 0;
     else
-/*      pt->first[i] = pt->last[i - 1] + 3;
-*/      pt->first[i] = pt->last[i - 1] + 1;
-    pt->last[i] = pt->first[i] + apt->n_par[i] - 1;
+      /*      pt->first[i] = pt->last[i - 1] + 3;
+       */      pt->first[i] = pt->last[i - 1] + 1;
+      pt->last[i] = pt->first[i] + apt->n_par[i] - 1;
   }
   pt->len = pt->first[apt->number - 1] + apt->n_par[apt->number - 1];
   if (have_globals)
@@ -1162,7 +1103,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   reg_for_free(apt->idxparam, "apt->idxparam");
 
   if ((NULL == pt->table) || (NULL == pt->idx) || (apt->idxpot == NULL)
-    || (apt->idxparam == NULL))
+      || (apt->idxparam == NULL))
     error(1, "Cannot allocate memory for potential table.\n");
   for (i = 0; i < pt->len; i++) {
     pt->table[i] = 0;
@@ -1171,8 +1112,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   }
 
 
-/************************************************************************/
-/*added (no derivative slots are needed, val += 2 etc. is disabled )  */  
+  /************************************************************************/
+  /*added (no derivative slots are needed, val += 2 etc. is disabled )  */  
 
 
   /* this is the indirect index */
@@ -1181,32 +1122,32 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   val = pt->table;
   list = calc_list;
   for (i = 0; i < apt->number; i++) {	/* loop over potentials */
-/*    val += 2;
-    list += 2;
-    l += 2;
- */   for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
-      *val = apt->values[i][j];
-      *list = apt->values[i][j];
-      val++;
-      list++;
-      if (!invar_pot[i] && !apt->invar_par[i][j]) {
-	pt->idx[k] = l++;      /*index, the optimiable parameters in pt->table. for
-                          example, idx[0] = 2 indicates that the the first
-                          variable parameters lies in slot 2 of pt->table */
-	apt->idxpot[k] = i;   /* index, the optimizable parameters come from which
-                         potential? e.g. idxpot[0] = 0, indicates that the first 
-                         variable parameter is from the first potential*/
-	apt->idxparam[k++] = j;/*index, the optimizable parameters is the ?th
-                          parammeter of the potential. Sould be used together
-                          with idxpot. e.g. idxparam[0] = 1 indicates that the
-                          first variable parameter is the 2nd parameter 
-                          of potential idxpot[0] */
-      } else
-	l++;
-    }
-    if (!invar_pot[i])
-      pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
-    apt->total_par -= apt->invar_par[i][apt->n_par[i]];
+    /*    val += 2;
+          list += 2;
+          l += 2;
+     */   for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
+       *val = apt->values[i][j];
+       *list = apt->values[i][j];
+       val++;
+       list++;
+       if (!invar_pot[i] && !apt->invar_par[i][j]) {
+         pt->idx[k] = l++;      /*index, the optimiable parameters in pt->table. for
+                                  example, idx[0] = 2 indicates that the the first
+                                  variable parameters lies in slot 2 of pt->table */
+         apt->idxpot[k] = i;   /* index, the optimizable parameters come from which
+                                  potential? e.g. idxpot[0] = 0, indicates that the first 
+                                  variable parameter is from the first potential*/
+         apt->idxparam[k++] = j;/*index, the optimizable parameters is the ?th
+                                  parammeter of the potential. Sould be used together
+                                  with idxpot. e.g. idxparam[0] = 1 indicates that the
+                                  first variable parameter is the 2nd parameter 
+                                  of potential idxpot[0] */
+       } else
+         l++;
+     }
+     if (!invar_pot[i])
+       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
+     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
 
 #ifdef PAIR
@@ -1217,9 +1158,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       *val = apt->values[i][j];
       val++;
       if (!apt->invar_par[i][j]) {
-	pt->idx[k] = l++;
-	apt->idxpot[k] = i;
-	apt->idxparam[k++] = j;
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
       }
     }
     pt->idxlen += (ntypes + compnodes - apt->invar_par[apt->number][ntypes]);
@@ -1277,13 +1218,13 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       *val = apt->values[i][j];
       val++;
       if (!apt->invar_par[i][j]) {
-	pt->idx[k] = l++;
-	apt->idxpot[k] = i;
-	apt->idxparam[k++] = j;
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
       } else {
-	l++;
-	apt->total_par -= apt->invar_par[i][j];
-	pt->idxlen -= apt->invar_par[i][j];
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
       }
     }
   }
@@ -1298,11 +1239,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
       *list = apt->values[i][j];
       val++; list++;
       if (!apt->invar_par[i][j]) {
-	pt->idx[k] = l++;
-	apt->idxpot[k] = i;
-	apt->idxparam[k++] = j;
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
       } else
-	l++;
+        l++;
     }
     pt->idxlen += apt->globals - apt->invar_par[i][apt->globals];
     apt->total_par -= apt->invar_par[i][apt->globals];
@@ -1316,11 +1257,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
   check_apot_functions();
 
-/*added don't need it any more; the calculation are done by KIM, but we still
- need it in reading config info  */
+  /*added don't need it any more; the calculation are done by KIM, but we still
+    need it in reading config info  */
   init_calc_table(pt, &calc_pot);
 
-/*added ends */
+  /*added ends */
   return;
 }
 
