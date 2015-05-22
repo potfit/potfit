@@ -10,7 +10,7 @@ type  EAM_Dynamo_tmp_model
 num_opt_param  3
 
 # optimizable parameter 
-PARAM_FREE_embeddingData
-PARAM_FREE_densityData
 PARAM_FREE_rPhiData
+PARAM_FREE_densityData
+PARAM_FREE_embeddingData
 

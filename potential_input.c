@@ -1062,11 +1062,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     pt->step[i] = 0;
     pt->invstep[i] = 0;
     if (i == 0)
-      /*      pt->first[i] = 2;
-       */      pt->first[i] = 0;
+            pt->first[i] = 2;
     else
-      /*      pt->first[i] = pt->last[i - 1] + 3;
-       */      pt->first[i] = pt->last[i - 1] + 1;
+            pt->first[i] = pt->last[i - 1] + 3;
       pt->last[i] = pt->first[i] + apt->n_par[i] - 1;
   }
   pt->len = pt->first[apt->number - 1] + apt->n_par[apt->number - 1];
@@ -1122,32 +1120,32 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   val = pt->table;
   list = calc_list;
   for (i = 0; i < apt->number; i++) {	/* loop over potentials */
-    /*    val += 2;
-          list += 2;
-          l += 2;
-     */   for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
-       *val = apt->values[i][j];
-       *list = apt->values[i][j];
-       val++;
-       list++;
-       if (!invar_pot[i] && !apt->invar_par[i][j]) {
-         pt->idx[k] = l++;      /*index, the optimiable parameters in pt->table. for
-                                  example, idx[0] = 2 indicates that the the first
-                                  variable parameters lies in slot 2 of pt->table */
-         apt->idxpot[k] = i;   /* index, the optimizable parameters come from which
-                                  potential? e.g. idxpot[0] = 0, indicates that the first 
-                                  variable parameter is from the first potential*/
-         apt->idxparam[k++] = j;/*index, the optimizable parameters is the ?th
-                                  parammeter of the potential. Sould be used together
-                                  with idxpot. e.g. idxparam[0] = 1 indicates that the
-                                  first variable parameter is the 2nd parameter 
-                                  of potential idxpot[0] */
-       } else
-         l++;
-     }
-     if (!invar_pot[i])
-       pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
-     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
+    val += 2;
+    list += 2;
+    l += 2;
+    for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
+      *val = apt->values[i][j];
+      *list = apt->values[i][j];
+      val++;
+      list++;
+      if (!invar_pot[i] && !apt->invar_par[i][j]) {
+        pt->idx[k] = l++;      /*index, the optimiable parameters in pt->table. for
+                                 example, idx[0] = 2 indicates that the the first
+                                 variable parameters lies in slot 2 of pt->table */
+        apt->idxpot[k] = i;   /* index, the optimizable parameters come from which
+                                 potential? e.g. idxpot[0] = 0, indicates that the first 
+                                 variable parameter is from the first potential*/
+        apt->idxparam[k++] = j;/*index, the optimizable parameters is the ?th
+                                 parammeter of the potential. Sould be used together
+                                 with idxpot. e.g. idxparam[0] = 1 indicates that the
+                                 first variable parameter is the 2nd parameter 
+                                 of potential idxpot[0] */
+      } else
+        l++;
+    }
+    if (!invar_pot[i])
+      pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
+    apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
 
 #ifdef PAIR
@@ -1257,8 +1255,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
   check_apot_functions();
 
-  /*added don't need it any more; the calculation are done by KIM, but we still
-    need it in reading config info  */
+  /*added don't need it any more; the calculation are done by KIM. But we still
+    include it to make it possible to use the config.c file, where a lot of
+    calc_table info are needed   */
   init_calc_table(pt, &calc_pot);
 
   /*added ends */
@@ -1416,10 +1415,12 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
      need to be equal to num_opt_param, since they should all be scalar. */
    get_OptimizableParamSize(&OptParamSet, name_opt_param, num_opt_param); 
 
-  /* */  
-  pt->first[0] = 0;
+
+  /* we still include the 2 here to keep it the same as potfit does the job. Also
+   * make it possible to use potfit write potential procedure. */  
+  pt->first[0] = 2;
   pt->last[0] = pt->first[0] + OptParamSet.Nnestedvalue - 1;
-  pt->len = OptParamSet.Nnestedvalue;
+  pt->len = OptParamSet.Nnestedvalue + 2;
   pt->idxlen = OptParamSet.Nnestedvalue;
   
   /* allocate the function table */
@@ -1437,19 +1438,33 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
   
   
   /* copy parameters values to potfit */
-  for (i = 0; i < pt->len; i++) {
-    pt->table[i] = *OptParamSet.nestedvalue[i];
- /*   pt->xcoord[i] = 0.0;
-    pt->d2tab[i] = 0.0;
-  */  pt->idx[i] = i;
+ for (i = 0; i < OptParamSet.Nnestedvalue; i++) {
+    pt->table[i+2] = *OptParamSet.nestedvalue[i];
+    pt->idx[i] = i;
   }
-/*  if ((NULL == pt->table) || (NULL == pt->idx) || (NULL == pt->d2tab))
-    error(1, "Cannot allocate memory for potential table");
-*/ 
-  
+ 
+
+ 
+
+/* temporary */
+  /* copy parameters values to potfit */
+/*int ii = 0;
+for (i = 2; i < pt->len; i++) {
+    pt->table[i] = *OptParamSet.nestedvalue[i-2];
+    if ( i != 11 && i != 21){ 
+      pt->idx[ii] = i;
+printf("hello %d  %d\n",ii, i);
+      ii++;
+    }
+  }
+ 
+pt->idxlen = 24;
+*/
+
 
   /* set begin and end (end is cutoff) */
   pt->begin[0] = 0; 
+ 
   int have_cutoff = 0;
   double tmp_cutoff;
   for (j = 0; j < OptParamSet.Nparam; j++) { 
@@ -1463,6 +1478,16 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
     error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. copy "
             "cutoff to potfit failed.");
   }
+ 
+
+
+  /*added don't need it any more; the calculation are done by KIM. But we still
+    include it to make it possible to use the config.c file, where a lot of
+    calc_table info are needed   */
+  pt->step[0] = 1;  /* give arbitrary quantity. */
+  pt->invstep[0] = 1/pt->step[0];
+  init_calc_table(pt, &calc_pot);
+
   
 
   printf(" - Successfully read potential parameters that will be optimized.\n");

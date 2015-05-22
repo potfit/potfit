@@ -733,11 +733,12 @@ endif
 
 
 ############################################
-# added    to enable KIM in the preprocessor
-############################################
-# kim  
+# added    to enable KIM and NOLIMITS in the preprocessor
 ifneq (,$(findstring kim,${MAKETARGET}))
   CFLAGS += -DKIM
+endif
+ifneq (,$(findstring nolimits,${MAKETARGET}))
+  CFLAGS += -DNOLIMITS
 endif
 #added ends#
 

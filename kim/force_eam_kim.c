@@ -186,6 +186,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
  	 	}
 	}
 
+/*
+KIM_API_print(pkimObj[0], &status);
+*/
+
 /* added ends */
 
 
@@ -290,6 +294,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 
 	tmpsum = kim_tmpsum;
+
 
 #ifndef KIM
 

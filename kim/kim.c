@@ -966,8 +966,9 @@ int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
   int i;
 
   /*publish parameters */ 
+  /* add 2 to PotTable because the first two slots stores gradient. */
   for (i = 0; i < OptParam->Nnestedvalue; i++) {
-    *OptParam->nestedvalue[i] = PotTable[i]; 
+    *OptParam->nestedvalue[i] = PotTable[i+2]; 
   }
 
   status = KIM_API_model_reinit(pkim);

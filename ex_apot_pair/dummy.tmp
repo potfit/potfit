@@ -7,6 +7,6 @@
 
 type	Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
 cutoff	6.000000
-# rmin	2.051330
+# rmin	2.375000
 PARAM_FREE_epsilon	        0.66456849	      0.0000	      1.0000
 PARAM_FREE_sigma	        2.14455197	      1.0000	      4.0000
