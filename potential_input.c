@@ -1062,10 +1062,12 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
     pt->step[i] = 0;
     pt->invstep[i] = 0;
     if (i == 0)
-            pt->first[i] = 2;
+/*      pt->first[i] = 2;
+ */   pt->first[i] = 0;
     else
-            pt->first[i] = pt->last[i - 1] + 3;
-      pt->last[i] = pt->first[i] + apt->n_par[i] - 1;
+ /*     pt->first[i] = pt->last[i - 1] + 3;
+ */     pt->first[i] = pt->last[i - 1] + 1;
+    pt->last[i] = pt->first[i] + apt->n_par[i] - 1;
   }
   pt->len = pt->first[apt->number - 1] + apt->n_par[apt->number - 1];
   if (have_globals)
@@ -1120,10 +1122,10 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
   val = pt->table;
   list = calc_list;
   for (i = 0; i < apt->number; i++) {	/* loop over potentials */
-    val += 2;
+/*    val += 2;
     list += 2;
     l += 2;
-    for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
+*/  for (j = 0; j < apt->n_par[i]; j++) {	/* loop over parameters */
       *val = apt->values[i][j];
       *list = apt->values[i][j];
       val++;
@@ -1293,49 +1295,47 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
   fpos_t filepos, startpos; 
   OptParamType OptParamSet;
   
-  
-  /* skip to actual potentials */
-  /* scan for "type" keyword */
-  do {
-    fgetpos(infile, &filepos);
-    fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "type") != 0 && !feof(infile));
-  fsetpos(infile, &filepos);
-  /* read type */
-  if (2 > fscanf(infile, "%s %s", buffer, name))
-    error(1, "Premature end of potential file %s", filename);
-  if (strcmp(buffer, "type") != 0)
-    error(1, "Unknown keyword in file %s, expected \"type\" but found \"%s\".", filename, buffer);
+   /* save starting position */
+  fgetpos(infile, &startpos);
 
+  /* scan for "type" keyword */
+  buffer[0] = '\0';
+  name[0] = '\0';
+  do {
+    fgets(buffer, 255, infile);
+    sscanf(buffer, "%s", name);
+  } while (strncmp(name, "type", 4) != 0 && !feof(infile));
+  if (strncmp(name, "type", 4) != 0) {
+    error(1,"Keyword `type' is missing in file: %s.", filename);
+  }
+  if (1 > sscanf(buffer, "%*s %s", name))
+    error(1, "KIM Model name is missing in %s.", filename);
   /* copy name*/
   strcpy(kim_model_name, name);
   printf("\nKIM Model being used: %s.\n\n", kim_model_name);
   
-  /* check for comments */
+
+  /* find `check_kim_opt_param' or `num_opt_param' */
+  fsetpos(infile, &startpos);
   do {
-        j = fgetc(infile);
-     } while (j == '\n' || j == '\t' || j == ' ');
-  ungetc(j,infile);
-
-  fgetpos(infile, &filepos);
-  fgets(buffer, 255, infile);
-  while (buffer[0] == '#') {
-    fgetpos(infile, &filepos);
     fgets(buffer, 255, infile);
-  }
-  fsetpos(infile, &filepos);
-
-  /* read the flag `check_kim_optimizable_parameters', if exit nicely */
-  /* read the number of parameters that will be optimized */
-  fgets(buffer, 255, infile);
+    sscanf(buffer, "%s", name);
+  } while (strcmp(name, "check_kim_opt_param") != 0 &&
+      strcmp(name, "num_opt_param") != 0 && !feof(infile));
+  if (strcmp(name, "check_kim_opt_param") != 0 &&
+      strcmp(name, "num_opt_param") != 0) 
+    error(1, "Cannot find keyword \"num_opt_param\" in file: %s.", filename);
+  
+  /* read `check_kim_opt_param' or `num_opt_param' */
   if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
 
     /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
     get_OptimizableParamSize(&OptParamSet, NULL, 0); 
-    
+
     printf(" - The following potential parameters are available to fit. Include the "
-           "name(s) of the one(s) you want to optimize in the potential input "
-           "file: `%s'.\n",filename);
+        "name(s) (and the initial value(s) and lower and upper boudaries if "
+        "`NOLIMITS' is not enabled while compilation) that you want to optimize "
+        "in file: %s.\n",filename);
     printf("         param name                 param extent\n");
     printf("        ############               ##############\n");
     for(k = 0; k < OptParamSet.Nparam; k++ ) {
@@ -1347,16 +1347,20 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
         printf("%d ", OptParamSet.shape[k][j]);
       }
       printf("]\n");
-    }
-    exit(1); 
+   }
+    printf("\n - Note that KIM array parameter is row based, while listing the "
+        "initial values of such parameter, you should ensure that the sequence is "
+        "correct.\n");
+    printf("For example, if the extent of a parameter `PARAM_FREE_A' is "
+        "[ 2 2 ], then you should list the initial values like: A[0 0], A[0 1], "
+        "A[1 0], A[1 1].\n");
+   exit(1); 
   } else if (strncmp(buffer,"num_opt_param", 13) == 0) {
     if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
       error(1, "Could not read num_opt_param.\n");  
     }
-  }else {
-    error(1, "The number of parameters that will be optimized "
-          "(num_opt_param) should be given after `type' in: `%s'.\n ", filename);
   }
+
 
   /* allocate memory */ 
   name_opt_param = (char**)malloc(num_opt_param*sizeof(char*)); 
@@ -1372,99 +1376,70 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
     }
   }
 
-  /* check for comments */
-  do {
-        i = fgetc(infile);
-     } while (i == '\n' || i == '\t' || i == ' ');
-  ungetc(j,infile);
-  fgetpos(infile, &filepos);
-  fgets(buffer, 255, infile);
-  while (buffer[0] == '#') {
-    fgetpos(infile, &filepos);
-    fgets(buffer, 255, infile);
-  }
-  fsetpos(infile, &filepos);
-
-  /* read the parameter names that will be optimized  */
-  for (i = 0; i < num_opt_param; i++) {
-    fgets(buffer, 255, infile);
-    if ((i != (num_opt_param - 1)) && (feof(infile) || buffer[0] == '\0')) {
-      error(0, "Premature end of potential definition or file.\n");
-      error(1, "Probably your potential definition is missing some parameters.\n");
-    }
-    if (feof(infile)){
+    /* find `PARAM_FREE_*' keyword */
+    fsetpos(infile, &startpos);
+    for (j = 0; j < num_opt_param; j++) {
       buffer[0] = '\0';
-    }  
-    name[0] = '\0';
-    ret_val = sscanf(buffer, "%s", name);
-    if (ret_val == 1) {
-      strcpy(name_opt_param[i], name); 
-    } else { /* not enough parameters are readed */
-      if ( ret_val == EOF) {
-        error(0, "Not enough parameters for potential #%d (%s) in file %s!\n", 
-               i + 1, name,filename);
-        error(1, "You specified %d parameter(s), but required are %d.\n", j, num_opt_param);
+      name[0] = '\0';
+      do {
+        fgets(buffer, 255, infile);
+        ret_val = sscanf(buffer, "%s", name);
+      } while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
+      if (feof(infile) ) {
+        error(0, "Not enough parameter(s) (PARAM_FREE_*) in file %s!\n", filename);
+        error(1, "You listed %d parameter(s), but required are %d.\n", j, num_opt_param);
       }
-      error(1, "Could not read parameter #%d of potential #%d in file %s", j + 1, i + 1, filename);
+      if (ret_val == 1) {
+        strcpy(name_opt_param[j], name); 
+      } else {
+        error(1, "Could not read parameter #%d in file %s.", j + 1, filename);
+      }
     }
-  }
- 
+
 
   /* get the total size (some parameters may be array) of the optimizable 
      parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
      need to be equal to num_opt_param, since they should all be scalar. */
    get_OptimizableParamSize(&OptParamSet, name_opt_param, num_opt_param); 
 
-
-  /* we still include the 2 here to keep it the same as potfit does the job. Also
-   * make it possible to use potfit write potential procedure. */  
-  pt->first[0] = 2;
+  /* some potential table value */
+  pt->first[0] = 0;
   pt->last[0] = pt->first[0] + OptParamSet.Nnestedvalue - 1;
-  pt->len = OptParamSet.Nnestedvalue + 2;
+  pt->len = OptParamSet.Nnestedvalue;
   pt->idxlen = OptParamSet.Nnestedvalue;
   
   /* allocate the function table */
   pt->table = (double *)malloc(pt->len * sizeof(double));
   reg_for_free(pt->table, "pt->table");
- /* pt->xcoord = (double *)malloc(pt->len * sizeof(double));
-  reg_for_free(pt->xcoord, "pt->xcoord");
-  pt->d2tab = (double *)malloc(pt->len * sizeof(double));
-  reg_for_free(pt->d2tab, "pt->d2tab");
- */
   pt->idx = (int *)malloc(pt->len * sizeof(int));
   reg_for_free(pt->idx, "pt->idx");
   if ((NULL == pt->table) || (NULL == pt->idx) )
     error(1, "Cannot allocate memory for potential table");
   
-  
   /* copy parameters values to potfit */
  for (i = 0; i < OptParamSet.Nnestedvalue; i++) {
-    pt->table[i+2] = *OptParamSet.nestedvalue[i];
+    pt->table[i] = *OptParamSet.nestedvalue[i];
     pt->idx[i] = i;
   }
  
 
- 
-
-/* temporary */
+/* NOTE (delete). The last value of phi and density data of EAM potential
+in original potfit is fixed. this hard coded piece of code is used to do this job. */
   /* copy parameters values to potfit */
 /*int ii = 0;
-for (i = 2; i < pt->len; i++) {
-    pt->table[i] = *OptParamSet.nestedvalue[i-2];
-    if ( i != 11 && i != 21){ 
+for (i = 0; i < pt->len; i++) {
+    pt->table[i] = *OptParamSet.nestedvalue[i];
+    if ( i != 9 && i != 19){ 
       pt->idx[ii] = i;
 printf("hello %d  %d\n",ii, i);
       ii++;
     }
   }
- 
 pt->idxlen = 24;
 */
 
 
-  /* set begin and end (end is cutoff) */
-  pt->begin[0] = 0; 
- 
+  /* set end (end is cutoff) */
   int have_cutoff = 0;
   double tmp_cutoff;
   for (j = 0; j < OptParamSet.Nparam; j++) { 
@@ -1479,17 +1454,6 @@ pt->idxlen = 24;
             "cutoff to potfit failed.");
   }
  
-
-
-  /*added don't need it any more; the calculation are done by KIM. But we still
-    include it to make it possible to use the config.c file, where a lot of
-    calc_table info are needed   */
-  pt->step[0] = 1;  /* give arbitrary quantity. */
-  pt->invstep[0] = 1/pt->step[0];
-  init_calc_table(pt, &calc_pot);
-
-  
-
   printf(" - Successfully read potential parameters that will be optimized.\n");
 
   return;
