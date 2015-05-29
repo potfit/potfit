@@ -950,6 +950,11 @@ int CalcForce(void* pkim, double** energy, double** force, double** virial,
 
 
 
+
+
+
+
+
 /***************************************************************************
 *
 * Publish KIM parameter 
@@ -987,22 +992,131 @@ int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
 
 
 
+/***************************************************************************
+*
+* Read the keywords (`type', `cutoff', etc) and parameter names (beginning 
+* with `PARAM_FREE') in the potential input file
+*
+* In this function, the memory of two global variables: `num_opt_param' and
+* `name_opt_param' will be allocated and they will be initialized 
+*
+* pt: potential table
+* filename: potential input file name 
+* infile: potential input file
+* OptParam: data struct that contains the free parameters info of the KIM Model
+* 
+***************************************************************************/
+
+int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
+													OptParamType* OptParam)
+{
+	/* local variables */
+  int   i, j, k, ret_val;
+  char  buffer[255], name[255];
+  fpos_t filepos, startpos; 
+  
+  /* save starting position */
+  fgetpos(infile, &startpos);
+
+  /* scan for "type" keyword */
+  buffer[0] = '\0';
+  name[0] = '\0';
+  do {
+    fgets(buffer, 255, infile);
+    sscanf(buffer, "%s", name);
+  } while (strncmp(name, "type", 4) != 0 && !feof(infile));
+  if (strncmp(name, "type", 4) != 0) {
+    error(1, "Keyword `type' is missing in file: %s.", filename);
+  }
+  if (1 > sscanf(buffer, "%*s %s", name))
+    error(1, "Cannot read KIM Model name file: %s.", filename);
+  /* copy name*/
+  strcpy(kim_model_name, name);
+  printf("\nKIM Model being used: %s.\n\n", kim_model_name);
+ 
+
+  /* find `check_kim_opt_param' or `num_opt_param'. The two keywords are mutually
+	 * exculsive, which comes first will be read, and the other one will be ignored. */
+  fsetpos(infile, &startpos);
+  do {
+    fgets(buffer, 255, infile);
+    sscanf(buffer, "%s", name);
+  } while (strcmp(name, "check_kim_opt_param") != 0 
+						&& strcmp(name, "num_opt_param") != 0 && !feof(infile));
+  
+	if (strcmp(name, "check_kim_opt_param") != 0 && strcmp(name, "num_opt_param") != 0){
+    error(1, "Cannot find keyword `num_opt_param' in file: %s.", filename);
+  }
+  /* read `check_kim_opt_param' or `num_opt_param' */
+  if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
+    /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
+    get_OptimizableParamSize(OptParam, NULL, 0); 
+
+    printf(" - The following potential parameters are available to fit. Include the "
+        "name(s) (and the initial value(s) and lower and upper boudaries if "
+        "`NOLIMITS' is not enabled while compilation) that you want to optimize "
+        "in file: %s.\n",filename);
+    printf("         param name                 param extent\n");
+    printf("        ############               ##############\n");
+    for(k = 0; k < OptParam->Nparam; k++ ) {
+      if (strncmp(OptParam->name[k], "PARAM_FREE_cutoff", 17) == 0){
+        continue;
+      }
+      printf("     %-35s[ ", OptParam->name[k]);
+      for(j = 0; j < OptParam->rank[k]; j++) {
+        printf("%d ", OptParam->shape[k][j]);
+      }
+      printf("]\n");
+   }
+    printf("\n - Note that KIM array parameter is row based, while listing the "
+        "initial values of such parameter, you should ensure that the sequence is "
+        "correct. For example, if the extent of a parameter `PARAM_FREE_A' is "
+        "[ 2 2 ], then you should list the initial values like: A[0 0], A[0 1], "
+        "A[1 0], A[1 1].\n");
+   exit(1); 
+  } else if (strncmp(buffer,"num_opt_param", 13) == 0) {
+    if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
+      error(1, "Cannot read `num_opt_param' in file: %s.", filename);  
+    }
+  }
 
 
+  /* allocate memory */ 
+  name_opt_param = (char**)malloc(num_opt_param*sizeof(char*)); 
+  reg_for_free(name_opt_param, "name_opt_param");
+  if (NULL == name_opt_param) {
+    error(1, "Error in allocating memory for parameter name");
+  }
+  for (i = 0; i < num_opt_param; i++) {
+    name_opt_param[i] = (char *)malloc(255 * sizeof(char));
+    reg_for_free(name_opt_param[i], "name_opt_param[%d]", i);
+    if (NULL == name_opt_param[i]) {
+      error(1, "Error in allocating memory for parameter name");
+    }
+  }
 
+	/* find parameter names beginning with `PARAM_FREE_*' */
+	fsetpos(infile, &startpos);
+	for (j = 0; j < num_opt_param; j++) {
+		buffer[0] = '\0';
+		name[0] = '\0';
+		do {
+			fgets(buffer, 255, infile);
+			ret_val = sscanf(buffer, "%s", name);
+		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
+		if (feof(infile) ) {
+			error(0, "Not enough parameter(s) `PARAM_FREE_*' in file %s!\n", filename);
+			error(1, "You listed %d parameter(s), but required are %d.\n", j, num_opt_param);
+		}
+		if (ret_val == 1) {
+			strcpy(name_opt_param[j], name); 
+		} else {
+			error(1, "Could not read parameter #%d in file %s.", j + 1, filename);
+		}
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
+	return 0;
+}
 
 
 

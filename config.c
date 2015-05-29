@@ -945,7 +945,8 @@ void read_config(char *filename)
 #endif /* STIWEB */
 
 		}		/* !sh_dist */
-#endif /* KIM */
+
+#endif /* kim */
 /* added ends */
 
 	      }			/* r < r_cut */
@@ -956,6 +957,9 @@ void read_config(char *filename)
 
       reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
     }				/* first loop over atoms */
+
+/*added */
+#ifndef KIM 
 
     /* compute the angular part */
     /* For TERSOFF we create a full neighbor list, for all other potentials only a half list */
@@ -1020,6 +1024,12 @@ void read_config(char *filename)
       reg_for_free(atoms[i].angle_part, "angular part atom %d", i);
     }				/* first loop over atoms */
 #endif /* THREEBODY */
+
+
+#endif /* kim */
+/* added ends */
+
+
 
     /* increment natoms and configuration number */
     natoms += count;
@@ -1233,6 +1243,10 @@ void read_config(char *filename)
     fclose(pairfile);
   }
 
+
+/*added (not need this, because KIM calcualtes the forces ) */ 
+#ifndef KIM
+
   /* assign correct distances to different tables */
 #ifdef APOT
   double min = 10.0;
@@ -1333,9 +1347,12 @@ void read_config(char *filename)
   }
   printf("\n");
 
+#endif /* KIM */
+/* added ends */
+
   free(mindist);
 
-  if (sh_dist)
+	if (sh_dist)
     error(1, "Distances too short, last occurence conf %d, see above for details\n", sh_dist);
 
   return;

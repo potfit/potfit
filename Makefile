@@ -399,6 +399,7 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 		  powell_lsq.c random.c simann.c splines.c utils.c
 
 
+
 # added
 ###########################################################################
 # to compile with kim 
@@ -408,8 +409,18 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 # if kim
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
   
+#  ifneq (,$(strip $(findstring nolimits,${MAKETARGET})))
+#    COPY_MAKETARGET = ${MAKETARGET}
+#    ADD_ON = "_eam"
+#    MAKETARGET = ${COPY_MAKETARGET}${ADD_ON}
+#  else 
+#    COPY_MAKETARGET = ${MAKETARGET}
+#    ADD_ON = "_apot_pair"
+#    MAKETARGET = ${COPY_MAKETARGET}${ADD_ON}
+#  endif
+	
   POTFITSRC      += kim/kim.c kim/free_kim.c
-
+  
   ifneq (,$(strip $(findstring pair,${MAKETARGET})))
     POTFITSRC      += kim/force_pair_kim.c 
   endif
@@ -426,41 +437,11 @@ ifneq (,$(strip $(findstring kim,${MAKETARGET})))
     endif
   endif
 
-  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-      POTFITSRC      += force_elstat.c
-    endif
-  endif
-
-  ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-      POTFITSRC      += force_elstat.c
-    endif
-  endif
-
-  ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-    POTFITSRC      += force_adp.c
-  endif
-
-  ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
-    POTFITSRC      += force_stiweb.c
-  endif
-
-  ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
-    POTFITSRC      += force_tersoff.c
-  endif
-
   ifneq (,$(strip $(findstring apot,${MAKETARGET})))
     POTFITHDR      += functions.h
     POTFITSRC      += functions.c
     ifneq (,$(strip $(findstring pair,${MAKETARGET})))
       POTFITSRC      += chempot.c
-    endif
-  else
-    ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-      POTFITSRC 	+= rescale_meam.c
-    else
-      POTFITSRC      += rescale.c
     endif
   endif
 
@@ -474,6 +455,9 @@ ifneq (,$(strip $(findstring kim,${MAKETARGET})))
 
 
 else # kim
+
+
+
 
 
   ifneq (,$(strip $(findstring pair,${MAKETARGET})))

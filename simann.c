@@ -117,7 +117,12 @@ void makebump(double *x, double width, double height, int center)
     j++;
   for (i = 0; i <= 4.0 * width; i++) {
     /* using idx avoids moving fixed points */
-    if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
+
+/*added (corrected)*/
+/*  if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
+*/    if ((center + i < ndim) && (idx[center + i] <= opt_pot.last[j])) {
+/*added ends*/
+
       x[idx[center + i]] += GAUSS((double)i / width) * height;
     }
   }
@@ -328,10 +333,14 @@ void anneal(double *xi)
 	      Fopt = F2;
 	      if (*tempfile != '\0') {
 #ifndef APOT
-		write_pot_table(&opt_pot, tempfile);
+/*added
+  write_pot_table(&opt_pot, tempfile);
+*/
 #else
 		update_apot_table(xi);
-		write_pot_table(&apot_table, tempfile);
+/*added  
+write_pot_table(&apot_table, tempfile);
+*/
 #endif /* APOT */
 	      }
 	    }

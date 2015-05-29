@@ -69,7 +69,7 @@ int PublishCutoff(void* pkim, double cutoff);
 
 int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start);
 
-int get_neigh(void* kimmdl, int *mode, int *request, int* part,
+int get_neigh(void* kimmdl, int* mode, int *request, int* part,
               int* numnei, int** nei1part, double** Rij);					
 
 int CalcForce(void* pkim, double** energy, double** force, double** virial,
@@ -77,6 +77,11 @@ int CalcForce(void* pkim, double** energy, double** force, double** virial,
 
 /* functions in force_[interaction]_kim.c */
 int PublishParam(void* pkim, OptParamType* FreeParam, double* PotTable);
+
+/* read potential input file */
+int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
+								    			OptParamType* OptParam);
+
 
 #ifdef PAIR
 /* used only for check purpose (could be deleted ) */

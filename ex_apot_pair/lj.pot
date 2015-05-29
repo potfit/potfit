@@ -1,4 +1,4 @@
-#F 0 1
+#F 5 1
 #T PAIR
 #I 0
 #E
@@ -10,6 +10,7 @@ cutoff KIM
 
 # uncomment the following line to see which KIM parameters are optimizable 
 #check_kim_opt_param
+
 # the number of paramters that will be optimized 
 num_opt_param  2
 
