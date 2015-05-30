@@ -279,17 +279,15 @@ nest_OptimizableParamValue(void* pkim, OptParamType* OptParam,
     }
     if (have_name) {
       tmp_size = 1;
-      if (OptParam->rank[idx[i]] == 0) {
-        total_size += 1;
-      } else {
-        for (j = 0; j < OptParam->rank[idx[i]]; j++) {
-          tmp_size *= OptParam->shape[idx[i]][j];
-        }
-        total_size += tmp_size;
+      for (j = 0; j < OptParam->rank[idx[i]]; j++) {
+        tmp_size *= OptParam->shape[idx[i]][j];
       }
+      /* store tmp_size for later use in potential outpot */
+      size_opt_param[i] = tmp_size; 
+      total_size += tmp_size;
     } else {
       error(1, "The parameter `%s' is not optimizable, check spelling.\n",
-            input_param_name[i]);
+          input_param_name[i]);
     }
   }
   
@@ -297,25 +295,21 @@ nest_OptimizableParamValue(void* pkim, OptParamType* OptParam,
   /* allocate memory for nestedvalue*/
   OptParam->nestedvalue = (double**) malloc((total_size) * sizeof(double*));
 
+  
   /*copy the values (pointers) to nestedvalue */
   k = 0;
   for (i = 0; i < input_param_num; i++ ) {
     tmp_size = 1; 
-    if (OptParam->rank[idx[i]] == 0) {
-      OptParam->nestedvalue[k] = OptParam->value[idx[i]];
-      k++;
-    } else {
-      for (j = 0; j < OptParam->rank[idx[i]]; j++) {
-        tmp_size *= OptParam->shape[idx[i]][j];
-      }
-      for (j = 0; j <tmp_size; j++) {
-        OptParam->nestedvalue[k] = OptParam->value[idx[i]]+j;
-        k++;
-      }
+    for (j = 0; j < OptParam->rank[idx[i]]; j++) {
+      tmp_size *= OptParam->shape[idx[i]][j];
     }
-    
-
+   for (j = 0; j <tmp_size; j++) {
+      OptParam->nestedvalue[k] = OptParam->value[idx[i]]+j;
+      k++;
+    }
   }
+
+
   OptParam->Nnestedvalue = total_size;
 
   return total_size;
@@ -997,8 +991,10 @@ int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
 * Read the keywords (`type', `cutoff', etc) and parameter names (beginning 
 * with `PARAM_FREE') in the potential input file
 *
-* In this function, the memory of two global variables: `num_opt_param' and
-* `name_opt_param' will be allocated and they will be initialized 
+* In this function, the memory of three global variables: `num_opt_param',
+* `name_opt_param', `size_opt_param' will be allocated and the first two will be
+* initialized here (based on the infomation from the input), `size_opt_param' will
+* be initialized in nest_OptimizableParamValue. 
 *
 * pt: potential table
 * filename: potential input file name 
@@ -1083,9 +1079,11 @@ int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
 
   /* allocate memory */ 
   name_opt_param = (char**)malloc(num_opt_param*sizeof(char*)); 
+  size_opt_param = (int*)malloc(num_opt_param*sizeof(int)); 
   reg_for_free(name_opt_param, "name_opt_param");
-  if (NULL == name_opt_param) {
-    error(1, "Error in allocating memory for parameter name");
+  reg_for_free(size_opt_param, "size_opt_param");
+  if (NULL == name_opt_param || NULL == size_opt_param) {
+    error(1, "Error in allocating memory for parameter name or size");
   }
   for (i = 0; i < num_opt_param; i++) {
     name_opt_param[i] = (char *)malloc(255 * sizeof(char));
@@ -1122,47 +1120,69 @@ int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
 
 
 
+/****************************************************************
+ *
+ *  write potential table (format 5)
+ *
+ ****************************************************************/
 
+void write_pot_table5(pot_table_t *pt, char *filename)
+{
+  FILE *outfile = NULL;
+  int i, j, k;
 
+  /* open file */
+  outfile = fopen(filename, "w");
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
+  /* write header */
+  fprintf(outfile, "#F 5 1");
+  if (have_elements) {
+    fprintf(outfile, "\n#C");
+    for (i = 0; i < ntypes; i++)
+      fprintf(outfile, " %s", elements[i]);
+    fprintf(outfile, "\n##");
+    for (i = 0; i < ntypes; i++)
+      for (j = i; j < ntypes; j++)
+        fprintf(outfile, " %s-%s", elements[i], elements[j]);
+  }
+  fprintf(outfile, "\n#E");
 
+  /* write KIM Model name */
+  fprintf(outfile, "\n\n# KIM Model name");
+  fprintf(outfile, "\ntype  %s", kim_model_name);
 
+  /* write cutoff */
+  fprintf(outfile, "\n\n# cutoff");
+  fprintf(outfile, "\ncutoff  %24.16e", rcutmax);
 
+  /* check KIM optimizable params */
+  fprintf(outfile, "\n\n# uncomment the following line to check the optimizable "
+                   "parameters of the KIM Model");
+  fprintf(outfile, "\n#check_kim_opt_param");
 
+  /* number of opt params */
+  fprintf(outfile, "\n\n# the number of optimizable parameters that will be listed below");
+  fprintf(outfile, "\nnum_opt_param  %d", num_opt_param);
+  
+  /* write data */
+  k = 0; 
+  fprintf(outfile, "\n\n# parameters");
+  for (i = 0; i < num_opt_param; i++) {
+    fprintf(outfile, "\n%s", name_opt_param[i]);
+#ifndef NOLIMITS
+    for (j = 0; j < size_opt_param[i]; j++) {
+      fprintf(outfile, "\n%24.16e %24.16e %24.16e", pt->table[k], apot_table.pmin[0][k],
+              apot_table.pmax[0][k]); 
+      k++;
+    }
+    fprintf(outfile, "\n");
+#endif  
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  fclose(outfile);
+}
 
 
 

@@ -81,7 +81,8 @@ int PublishParam(void* pkim, OptParamType* FreeParam, double* PotTable);
 /* read potential input file */
 int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
 								    			OptParamType* OptParam);
-
+/* write potential file */
+void write_pot_table5(pot_table_t *pt, char *filename);
 
 #ifdef PAIR
 /* used only for check purpose (could be deleted ) */

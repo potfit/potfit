@@ -453,7 +453,10 @@ EXTERN void** pkimObj;
 /* kim model name (read in from potfit input file)*/
 EXTERN char kim_model_name[255] INIT("\0");	
 /* optimizable parameter names and number of names read in from input */
+/* size_opt_param the size of each parameter (number of values each parameter name
+ * represents ) */
 EXTERN char** name_opt_param;
 EXTERN int num_opt_param;
+EXTERN int* size_opt_param;
 /* added ends */
 

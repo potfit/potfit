@@ -732,11 +732,11 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 						"data are acceptable.\n", kk+1,OptParamSet.name[k]);
 			}
 			/* If the parameter is array, the parameter name is given to the first value 
-			 * and the other name will be given `\0'. */
+			 * and the other name will be given "\0". */
 			if(kk == 0) {
 				strcpy(apt->param_name[i][jj], name_opt_param[j]);
 			} else {
-				strcpy(apt->param_name[i][jj], '\0');
+				strcpy(apt->param_name[i][jj], "\0");
 			}
 			jj++;
 		}  
@@ -1010,8 +1010,10 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 				"cutoff to potfit failed.");
 	}
 
-	printf(" - Successfully read potential parameters that will be optimized.\n");
-
+  /* still incldue it, need it when write outpot*/
+  init_calc_table(pt, &calc_pot);
+	
+  printf(" - Successfully read potential parameters that will be optimized.\n");
 	return;
 }
 

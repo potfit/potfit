@@ -332,16 +332,21 @@ void anneal(double *xi)
 #endif /* APOT */
 	      Fopt = F2;
 	      if (*tempfile != '\0') {
+
+/*added*/
+#ifndef KIM
+
 #ifndef APOT
-/*added
   write_pot_table(&opt_pot, tempfile);
-*/
 #else
 		update_apot_table(xi);
-/*added  
 write_pot_table(&apot_table, tempfile);
-*/
 #endif /* APOT */
+
+#else /* !KIM */
+  write_pot_table(&opt_pot, tempfile);
+#endif /* !KIM */
+/*added ends*/  
 	      }
 	    }
 	  } else if (eqdist() < (exp((F - F2) / T))) {
@@ -462,12 +467,20 @@ write_pot_table(&apot_table, tempfile);
 
   F = Fopt;
   if (*tempfile != '\0') {
+
+/*added*/
+#ifndef KIM
+
 #ifndef APOT
     write_pot_table(&opt_pot, tempfile);
 #else
     update_apot_table(xopt);
     write_pot_table(&apot_table, tempfile);
 #endif /* APOT */
+
+#else /* KIM */
+    write_pot_table(&opt_pot, tempfile);
+#endif /* KIM */
   }
 
   free_vect_double(Fvar);

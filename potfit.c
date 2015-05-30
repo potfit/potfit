@@ -42,6 +42,10 @@
 #include "utils.h"
 
 
+/*added*/
+#include "kim/kim.h"
+/*added ends*/
+
 /****************************************************************
  *
  *  main potfit routine
@@ -83,14 +87,15 @@ int main(int argc, char **argv)
 * Initialize KIM 
 ****************************************************************/
 #ifdef KIM
-
 	InitKIM();
-
 #endif /* KIM */
 /*added ends */
 
 
     /* Select correct spline interpolation and other functions */
+/*added*/
+#ifndef KIM
+
 #ifdef APOT
     if (format == 0) {
       splint = splint_ed;
@@ -111,6 +116,12 @@ int main(int argc, char **argv)
       write_pot_table = write_pot_table4;
     }
 #endif /* APOT */
+
+#else /* !KIM */
+    write_pot_table = write_pot_table5;
+#endif /* !KIM */
+/*added ends*/
+
 
     /* initialize additional force variables and parameters */
     init_forces();
@@ -176,9 +187,11 @@ int main(int argc, char **argv)
 #ifdef MPI
   MPI_Bcast(opt_pot.table, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
+/*added*/
 #ifndef KIM
   update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif /* KIM */
+/*added ends*/
 #endif /* APOT */
 
   /* Select correct spline interpolation and other functions */
@@ -206,7 +219,11 @@ int main(int argc, char **argv)
 #ifdef APOT
     calc_forces(opt_pot.table, force, 0);
 #else
-    calc_forces(calc_pot.table, force, 0);
+/*added (modified) calc_pot = opt_pot for tabulated; we do not initialize calc_pot in
+ potfit-KIM*/
+/*    calc_forces(calc_pot.table, force, 0);
+*/
+      calc_forces(opt_pot.table, force, 0);
 #endif /* APOT */
   } else {			/* root thread does minimization */
 #ifdef MPI
@@ -234,6 +251,11 @@ int main(int argc, char **argv)
     }
     time(&t_end);
 
+
+
+/*added*/
+#ifndef KIM
+
 #ifdef APOT
     tot = calc_forces(opt_pot.table, force, 0);
     if (opt) {
@@ -254,6 +276,18 @@ int main(int argc, char **argv)
     }
 #endif /* !APOT */
 
+#else /* !KIM */
+    tot = calc_forces(opt_pot.table, force, 0);
+    if (opt) {
+      write_pot_table(&opt_pot, endpot);
+      printf("\nPotential in format 5 written to file: %s\n", endpot);
+    } 
+#endif
+
+
+/*added*/
+#ifndef KIM
+
     if (1 == writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
 
@@ -265,6 +299,9 @@ int main(int argc, char **argv)
       write_pot_table_lammps(&calc_pot);
 #endif /* APOT */
 
+#endif /* KIM */
+/*added ends*/
+
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
     write_pairdist(&opt_pot, distfile);
@@ -274,7 +311,9 @@ int main(int argc, char **argv)
     write_errors(force, tot);
 
 #ifdef MPI
-    calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
+/*added (modified) we do not use calc_pot in potfit-KIM. */
+/*    calc_forces(calc_pot.table, force, 1);*/ /* go wake up other threads */
+   calc_forces(opt_pot.table, force, 1);	/* go wake up other threads */
 #endif /* MPI */
   }				/* myid == 0 */
 
@@ -330,7 +369,9 @@ void error(int done, char *msg, ...)
 #ifdef MPI
     double *force = NULL;
     /* go wake up other threads */
-    calc_forces(calc_pot.table, force, 1);
+/*added (modified) we do not use calc_pot in potfit-KIM. */
+/*    calc_forces(calc_pot.table, force, 1); */
+    calc_forces(opt_pot.table, force, 1);
     fprintf(stderr, "\n");
     shutdown_mpi();
 #endif /* MPI */
