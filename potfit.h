@@ -431,32 +431,3 @@ void  potsync(void);
 #endif /* MPI */
 
 #endif /* POTFIT_H */
-
-
-/* added */
-
-/********************************************************
-* KIM variable
-********************************************************/ 
-/*box_side_len is used to enable MI_OPBC_H in KIM. 
- box_side_len is used to store the info of box size of each
- configuration. box_side_len[0] box_side_len[1] box_side_len[2] 
- store box_x.x box_y.y box_z.z of the first configuration,
- respectively. box_side_len[3] stores box_x.x of the second 
- config... 
- Note this is only possible when box_x.y = 0, and similar 
- for other components of the box. If not, we need to come 
- up with other methods.*/ 
-EXTERN double* box_side_len;
-/* pointers to kim objects, will be initialized to void*pkimObj[nconf]*/
-EXTERN void** pkimObj;					
-/* kim model name (read in from potfit input file)*/
-EXTERN char kim_model_name[255] INIT("\0");	
-/* optimizable parameter names and number of names read in from input */
-/* size_opt_param the size of each parameter (number of values each parameter name
- * represents ) */
-EXTERN char** name_opt_param;
-EXTERN int num_opt_param;
-EXTERN int* size_opt_param;
-/* added ends */
-

@@ -33,6 +33,10 @@
 #include "config.h"
 #include "utils.h"
 
+/*added (to use `box_side_length' )*/ 
+#include "kim/kim.h"
+/*added ends*/
+
 /****************************************************************
  *
  *  read the configurations

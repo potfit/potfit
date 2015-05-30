@@ -28,6 +28,12 @@
  *
  ****************************************************************/
 
+/*added */
+#ifndef TYPES_H
+#define TYPES_H
+/*added ends*/
+
+
 typedef enum Param_T {
   PARAM_STR,
   PARAM_INT,
@@ -299,3 +305,5 @@ typedef struct {
 } function_table_t;
 
 #endif /* APOT */
+
+#endif /* TYPES_H */

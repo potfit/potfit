@@ -41,10 +41,10 @@
 #include "splines.h"
 #include "utils.h"
 
-
-/*added*/
+/*added (to use `write_pot_table5') */
 #include "kim/kim.h"
 /*added ends*/
+
 
 /****************************************************************
  *

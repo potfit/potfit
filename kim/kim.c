@@ -1,69 +1,69 @@
-/*
-   Functions to connect to KIM.
 
-  Contributor: Mingjian Wen
-*/
-
-
-#include "../potfit.h"        /* to use `nconf' */
-#include "kim.h"        /* to use `NeighObjectType' */
+/*******************************************************************************
+*
+*
+*
+*******************************************************************************/
 
 
-void InitKIM() {
 
-  /* local vars */
-  int i;
 
-/*NOTE(remove) the following two lines to create EAM model are in util now*/
-  /* create EAM temp model in current dir */
-/*  CreateModel();
-*/
-  /* system call to make to model just made */
-/*  MakeModel();
-*/
+/*******************************************************************************
+*
+* kim.c 
+*
+* All functions all defined in this file
+*
+*******************************************************************************/
 
+#define KIM_MAIN
+#include "kim.h"
+#undef KIM_MAIN
+
+#include "../potfit.h" 
+
+
+/*******************************************************************************
+*
+* Create KIM objects, each object for a reference configuration.
+*
+* potfit global variables:
+* nconf
+* name_opt_param
+* num_opt_param 
+* rcutmax
+* 
+*******************************************************************************/
+
+void InitKIM() 
+{
   printf("\nInitializing KIM ... started\n");
+
   /* create KIM objects and do the necessary initialization */
   InitObject();
-
-  /*NOTE(change), repeated work, publish parameter for each config */
-  FreeParamAllConfig = (FreeParamType*) malloc(nconf*sizeof(FreeParamType));
-
-  for (i = 0; i <nconf; i++) {
-  /* nest optimizable parameters */
-    get_FreeParamDouble(pkimObj[i], &FreeParamAllConfig[i]);  
-    nest_OptimizableParamValue(pkimObj[i], &FreeParamAllConfig[i], 
-                               name_opt_param, num_opt_param);
-  /* Publish cutoff (cutoff only need to be published once, so here) */
-    PublishCutoff(pkimObj[i], rcutmax);
- }
-
-
-
-
-
+  
+  /* create free parameter data sturct and nest optimizable parameter */
+  InitOptimizableParam();
 
   printf("Initializing KIM ... done\n");
-  fflush(stdout);
 }
 
 
-/***************************************************************************
+/*******************************************************************************
 *
 * Initialize KIM objects
 *
-* create them once for all 
-***************************************************************************/
+*
+*******************************************************************************/
 
-int InitObject() {
-
+void InitObject()
+{
   /* local variables */
   int status;
-  int numOfconf = nconf;    /* number of configurations in reference data */
   int i;
 
   /* Allocate memory for KIM objects */
-  pkimObj = (void**) malloc(numOfconf * sizeof(void *));
+  pkimObj = (void**) malloc(nconf * sizeof(void *));
   if (NULL == pkimObj) {
     KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
     exit(1);
@@ -71,7 +71,7 @@ int InitObject() {
     
 
   /* Checking whether .kim files in test and model are compatible or not */
-  for (i = 0; i < numOfconf; i++) {         
+  for (i = 0; i < nconf; i++) {         
     status = KIM_API_file_init(&pkimObj[i], "descriptor.kim", kim_model_name);
     if (KIM_STATUS_OK > status)
     {
@@ -85,7 +85,7 @@ int InitObject() {
   not, then ntypes below need to be modified from config to config */
 
   /*  Initialize KIM objects */
-  for (i = 0; i < numOfconf; i++) { 
+  for (i = 0; i < nconf; i++) { 
     status = CreateKIMObj(pkimObj[i], inconf[i], ntypes, cnfstart[i]);
     if (KIM_STATUS_OK > status) {
       KIM_API_report_error(__LINE__, __FILE__,
@@ -93,7 +93,36 @@ int InitObject() {
       exit(1);
     }
   }
-  return 0;   
+}
+
+/*******************************************************************************
+*
+* Initialize optimizable parameter 
+*
+*
+*******************************************************************************/
+
+void InitOptimizableParam()
+{
+  /* local vars */
+  int i;
+
+  /* allocate memory */
+  FreeParamAllConfig = (FreeParamType*) malloc(nconf*sizeof(FreeParamType));
+  if (NULL == FreeParamAllConfig) {
+    KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
+    exit(1);
+  }
+
+  for (i = 0; i <nconf; i++) {
+    /* nest optimizable parameters */
+    get_FreeParamDouble(pkimObj[i], &FreeParamAllConfig[i]);  
+    nest_OptimizableParamValue(pkimObj[i], &FreeParamAllConfig[i], 
+                               name_opt_param, num_opt_param);
+ 
+    /* Publish cutoff (only needs to be published once, so here) */
+    PublishCutoff(pkimObj[i], rcutmax);
+  }
 }
 
 
@@ -1187,400 +1216,3 @@ void write_pot_table5(pot_table_t *pt, char *filename)
 
   fclose(outfile);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/***************************************************************************
-* 
-* Create parameter file EAM
-* 
-* Number of R data, deltaR, number of rho data, deltaRho and cutoff will be 
-* write here. Potential data will be filled with 0.0, and they will be altered
-* later by calling the PublishParam function. 
-*
-***************************************************************************/
-int CreateParamFileEAM() {  
-
-  /* local varialbes */
-  char tmpstring[80];
-  FILE *pFile;
-  int NumRho; /* number of rho data for embedding function */
-  int NumR;   /* nubmer of r data for density function and pair function */
-    /* IdxRho IdxR which potfit potential we are visiting? ranging from 0 to ncols.
-       The data are arranged as \Phi(r),..,\rho(r),...,U(\rho) in opt_pot.table.
-       For example, if there are 2 species i j, the data will be arranged as 
-       \Phi(ii), \Phi(ij), \Phi(jj), \rho(i), \rho(j) U(i),U(j) */
-  int IdxRho; 
-  int IdxR;
-  int i,j;
-
-  sprintf(tmpstring, "%s/%s.params", kim_model_name, kim_model_name); 
-  pFile = fopen(tmpstring,"w");
-  if(pFile == NULL)
-    error(1, "Error creating file: KIM Makefile. %s %d\n", __FILE__, __LINE__);
-  else {
-  
-    /* 3 lines of comments */
-    fprintf(pFile, "# EAM potential in Dynamo `setfl' format, generated by potfit-kim.\n");   
-    fprintf(pFile, "# For more info about KIM, visit: https://openkim.org\n");        
-    fprintf(pFile, "# For more info about potfit, visit: http://potfit.sourceforge.net\n");   
-    
-    /* number of atoms types and atom species*/
-    fprintf(pFile, "    %d", ntypes); 
-    for (i = 0; i < ntypes; i++) {
-      fprintf(pFile, "  %s", elements[i]);
-    }
-    fprintf(pFile, "\n");
-
-    /* number of data points, delta  rcut */
-    IdxRho = ntypes*(ntypes + 1)/2 + ntypes;  
-    NumRho = opt_pot.last[IdxRho] - opt_pot.first[IdxRho] + 1;
-    IdxR = 0;
-    NumR = opt_pot.last[IdxR] - opt_pot.first[IdxR] + 1;
-    fprintf(pFile, "  %d %22.15e %d %22.15e %22.15e\n", NumRho, opt_pot.step[IdxRho], 
-            NumR, opt_pot.step[IdxR], rcutmax);
-
-    /* embedding data, density data and their header */
-    for (i = 0; i < ntypes; i++) {
-
-/*NOTE(change)*/
-      /* the header */
-      fprintf(pFile, "  0  0.0  0.0  lattice_type\n");
-
-      /* fill embedding data with 0.0 */
-      for (j = 0; j < NumRho; j++) {
-        fprintf(pFile, "  %2.1f", 0.0);
-      }
-      fprintf(pFile, "\n");
-      /* fill density data with 0.0 */
-      for (j = 0; j < NumR; j++) {
-        fprintf(pFile, "  %2.1f", 0.0);
-      }
-      fprintf(pFile, "\n");
-    }
-
-    /* pair data */
-    for (i = 0; i < ntypes*(ntypes + 1)/2; i++) { 
-      IdxR = i;
-      NumR = opt_pot.last[IdxR] - opt_pot.first[IdxR] + 1;
-      /* fill pair data with 0.0 */
-      for (j = 0; j < NumR; j++) {
-        fprintf(pFile, "  %2.1f", 0.0);
-      }
-      fprintf(pFile, "\n");
-    }
-  } 
-  fflush(pFile);
-  fclose(pFile);
-  return 0;
-}
-
-
-/***************************************************************************
-*
-* Create KIM Model
-*
-* Create a directory for KIM model, and then create `Makefile' and '*.params'. 
-***************************************************************************/
-
-int CreateModel()
-{
- 
-  char kim_model_driver_name[] = "EAM_CubicCompleteSpline__MD_000000111111_000" ;
-  /*char kim_model_driver_name[] = "EAM_Dynamo__MD_120291908751_001";
-*/
-  /* local variables */
-  char SysCmd[256];
-  char tmpstring[80];
-  int i,j;
-  FILE *pFile;
-
-  /* whether kim-api-build-config exists has been tested in the Makefile*/
-  /* create Makefile.KIM_Config */
-  system("kim-api-build-config --makefile-kim-config > Makefile.KIM_Config");
-
-  /* create model directoy */
-  /* if the model file name too long? */
-  if(strlen(kim_model_name) > 249)
-    error(1, "KIM Model name: '%s' is too long, use a shorter one.\n", kim_model_name);
-
-/*NOTE(change) it would be better check whether the dir exits or not */
-  strcpy(SysCmd, "mkdir ");
-  strcat(SysCmd, kim_model_name);
-  system(SysCmd);
-
-  /* create Makefile */
-  sprintf(tmpstring, "%s/Makefile", kim_model_name);
-  pFile = fopen(tmpstring,"w");
-  if(pFile == NULL)
-    error(1, "Error creating file: KIM Makefile. %s %d\n", __FILE__, __LINE__);
-  else {
-    fprintf(pFile,
-      "#\n"
-      "# Copyright (c) 2013--2014, Regents of the University of Minnesota.\n"
-      "# All rights reserved.\n"
-      "#\n"
-      "# Contributors:\n"
-      "#    Ryan S. Elliott\n"
-      "#    Ellad B. Tadmor\n"
-      "#    Mingjian Wen\n"
-      "#\n\n\n" );  
-
-    fprintf(pFile,"# load all basic KIM make configuration\n" );  
-    fprintf(pFile,"ifeq ($(wildcard ../Makefile.KIM_Config),)\n"
-      "  $(error ../Makefile.KIM_Config does not exist. Something is wrong with your KIM API package setup)\n"
-      "endif\n"
-      "include ../Makefile.KIM_Config\n\n" ); 
-
-    fprintf(pFile,"# set model driver specific details\n" );
-    fprintf(pFile,"MODEL_DRIVER_NAME    := %s\n", kim_model_driver_name); 
-    fprintf(pFile,"MODEL_NAME           := %s\n", kim_model_name);  
-
-    for (i = 0; i < ntypes; i++) {
-      sprintf(tmpstring, "SPECIES_%03d_NAME", i+1);   
-      fprintf(pFile,"%s     := %s\n", tmpstring, elements[i]);  
-    }
-    sprintf(tmpstring, "%s.params", kim_model_name);      
-    fprintf(pFile,"PARAM_FILE_001_NAME  := %s\n\n", tmpstring); 
-  
-    fprintf(pFile,
-      "# APPEND to compiler option flag lists\n"
-      "#FFLAGS   +=\n"
-      "#CFLAGS   +=\n"
-      "#CXXFLAGS +=\n"
-      "#LDFLAGS  +=\n"
-      "#LDLIBS   +=\n\n");  
-
-    fprintf(pFile, "# load remaining KIM make configuration\n"
-    "include $(KIM_DIR)/$(builddir)/Makefile.ParameterizedModel\n");  
-  }
-  fflush(pFile);
-  fclose(pFile);
-
-  /* create EAM parameter file*/
-#ifdef EAM
-  CreateParamFileEAM();
-#endif /* EAM*/
-
-  return 0;
-}
-
-
-/***************************************************************************
-*
-* System call to make the model 
-*
-***************************************************************************/
-int MakeModel() {
-
-  /* local variables */
-  char SysCmd[256];
-  
-  printf("\n\nMaking KIM model ... starting\n");
-  sprintf(SysCmd,"cd %s; make", kim_model_name);
-  system(SysCmd);
-  printf("Making KIM model ... done\n");
-  
-  return 0;
-}
-
-
