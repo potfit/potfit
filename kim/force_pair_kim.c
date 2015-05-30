@@ -133,7 +133,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 * need to be published. 
 ***************************************************************************/
   for (i = 0; i < nconf; i++) {
-    PublishParam(pkimObj[i], &OptParamAllConfig[i], xi_opt);  
+    PublishParam(pkimObj[i], &FreeParamAllConfig[i], xi_opt);  
   }
 /*
 KIM_API_print(pkimObj[0],&status);

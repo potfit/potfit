@@ -34,7 +34,7 @@
 #include "potential.h"
 #include "utils.h"
 
-/*added to use OptParamType*/
+/*added to use FreeParamType*/
 #include "kim/kim.h"
 /*added ends*/
 
@@ -501,7 +501,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	double  tmp_pmin, tmp_pmax;
 	char tmp_value[255];
 	int jj, kk, tmp_size;
-	OptParamType OptParamSet;
+	FreeParamType FreeParamSet;
 
 
 	/* save starting position */
@@ -645,14 +645,14 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 
 	/* read the keywords and the names of parameters that will be optimized */
-	ReadPotentialKeywords(pt, filename, infile, &OptParamSet);
+	ReadPotentialKeywords(pt, filename, infile, &FreeParamSet);
 
 	/* There is only 1 potential for KIM Model. */
 	i = 0;
 	/* get the total size (some parameters may be array) of the optimizable 
 	 * parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
 	 * need to be equal to num_opt_param, since they should all be scalar. */
-	apt->n_par[i] = get_OptimizableParamSize(&OptParamSet, name_opt_param, num_opt_param); 
+	apt->n_par[i] = get_OptimizableParamSize(&FreeParamSet, name_opt_param, num_opt_param); 
 	apt->total_par += apt->n_par[i];
 	
 	/* copy name */
@@ -667,28 +667,21 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	/* last slot stores the total number of invariable parameters */
 	apt->invar_par[i] = (int *)malloc((apt->n_par[i] + 1) * sizeof(int));
 	reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
-	apt->param_name[i] = (char **)malloc(apt->n_par[i]* sizeof(char *));
-	reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
-	if (NULL == apt->values[i] || NULL == apt->invar_par[i] || NULL == apt->param_name[i])
-		error(1, "Cannot allocate memory for potential paramters.\nAborting");
-	for (j = 0; j < apt->n_par[i]; j++) {
-		apt->param_name[i][j] = (char *)malloc(255 * sizeof(char));
-		reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
-		if (NULL == apt->param_name[i][j]) {
-			error(1, "Error in allocating memory for parameter name");
-		}
-	}
-
-	/* allocate memory */
 	apt->pmin[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
 	reg_for_free(apt->pmin[i], "apt->pmin[%d]", i);
 	apt->pmax[i] = (double *)malloc(apt->n_par[i] * sizeof(double));
 	reg_for_free(apt->pmax[i], "apt->pmax[%d]", i);
-	if(NULL == apt->pmin[i] || NULL == apt->pmax[i])
+	if(NULL == apt->pmin[i] || NULL == apt->pmax[i]
+	   || NULL == apt->values[i] || NULL == apt->invar_par[i])
 		error(1, "Cannot allocate memory for potential paramters.\nAborting");
 
 
-	/*  scan to read parameter values */
+	/* read parameter values */
+  /* j: jth optimizable parameter 
+     k: kth free parameter, index of jth optimizable param in the free param struct 
+    jj: the current slot in the nested apot->value
+    kk: the current slot of the jth param
+  */
 	jj = 0;  
 	fsetpos(infile, &startpos);
 	for (j = 0; j < num_opt_param; j++) {
@@ -699,20 +692,13 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 			fgets(buffer, 255, infile);
 			sscanf(buffer, "%s", name);
 		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
-		/* how many parameter(s) are in this keyword? ( = 1 if scalar) */
-		/* k is the palce(slot) that the keyword is in the OptParam struct */
-		for ( k = 0; k < OptParamSet.Nparam; k++) {
-			if (strcmp(OptParamSet.name[k], name_opt_param[j]) == 0)
+		/* k is the palce(slot) that the param in the FreeParam struct */
+		for ( k = 0; k < FreeParamSet.Nparam; k++) {
+			if (strcmp(FreeParamSet.name[k], name_opt_param[j]) == 0)
 				break;
 		}
-		tmp_size = 1;
-		if( OptParamSet.rank[k] != 0) {
-			for ( kk = 0; kk < OptParamSet.rank[k]; kk++) {
-				tmp_size *= OptParamSet.shape[k][kk];
-			}
-		}
 		/* read in the value and pmin and pmax */
-		for (kk = 0; kk < tmp_size; kk++) {
+		for (kk = 0; kk < size_opt_param[j]; kk++) {
 			fgets(buffer, 255, infile);
 			ret_val = sscanf(buffer, "%s %lf %lf", tmp_value, &tmp_pmin, &tmp_pmax);
 			if (ret_val == 3) {
@@ -720,23 +706,16 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 				apt->pmax[i][jj] = tmp_pmax;
 				/*if give `KIM', use KIM parameter, otherwise use readin */
 				if (strncmp(tmp_value, "KIM", 3) == 0) {
-					apt->values[i][jj] = *OptParamSet.nestedvalue[jj];
+					apt->values[i][jj] = *FreeParamSet.nestedvalue[jj];
 				} else if (1 > sscanf(tmp_value, "%lf", &apt->values[i][jj])) {
-					error(1, " Value %d of (%s) is not float.\n", kk+1, OptParamSet.name[k]);
+					error(1, " Value %d of (%s) is not float.\n", kk+1, FreeParamSet.name[k]);
 				}
 			} else {
 				error(0, "Not enough value(s) for (%s) are provided in %s. "
 						"You listed %d value(s), but required are %d.\n", 
-						OptParamSet.name[k], filename, kk, tmp_size);
+						FreeParamSet.name[k], filename, kk, tmp_size);
 				error(1, "Or line %d of (%s) are of wrong type. Only `KIM' and float "
-						"data are acceptable.\n", kk+1,OptParamSet.name[k]);
-			}
-			/* If the parameter is array, the parameter name is given to the first value 
-			 * and the other name will be given "\0". */
-			if(kk == 0) {
-				strcpy(apt->param_name[i][jj], name_opt_param[j]);
-			} else {
-				strcpy(apt->param_name[i][jj], "\0");
+						"data are acceptable.\n", kk+1,FreeParamSet.name[k]);
 			}
 			jj++;
 		}  
@@ -796,9 +775,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 	/* get cutoff from KIM if cutoff has not been determined yet. */
 	if (!have_cutoff) {
-		for (j = 0; j < OptParamSet.Nparam; j++) { 
-			if (strncmp(OptParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
-				apt->end[i] = *OptParamSet.value[j];
+		for (j = 0; j < FreeParamSet.Nparam; j++) { 
+			if (strncmp(FreeParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
+				apt->end[i] = *FreeParamSet.value[j];
 				have_cutoff = 1;
 				break;
 			}
@@ -961,25 +940,25 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	int   i, j, k, ret_val;
 	char  buffer[255], name[255];
 	fpos_t filepos, startpos; 
-	OptParamType OptParamSet;
+	FreeParamType FreeParamSet;
 
 	/* save starting position */
 	fgetpos(infile, &startpos);
 
 	/* read the keywords and the names of parameters that will be optimized */
-	ReadPotentialKeywords(pt, filename, infile, &OptParamSet);
+	ReadPotentialKeywords(pt, filename, infile, &FreeParamSet);
 
 
 	/* get the total size (some parameters may be array) of the optimizable 
 	 * parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
 	 * need to be equal to num_opt_param, since they should all be scalar. */
-	get_OptimizableParamSize(&OptParamSet, name_opt_param, num_opt_param); 
+	get_OptimizableParamSize(&FreeParamSet, name_opt_param, num_opt_param); 
 
 	/* some potential table value */
 	pt->first[0] = 0;
-	pt->last[0] = pt->first[0] + OptParamSet.Nnestedvalue - 1;
-	pt->len = OptParamSet.Nnestedvalue;
-	pt->idxlen = OptParamSet.Nnestedvalue;
+	pt->last[0] = pt->first[0] + FreeParamSet.Nnestedvalue - 1;
+	pt->len = FreeParamSet.Nnestedvalue;
+	pt->idxlen = FreeParamSet.Nnestedvalue;
 
 	/* allocate the function table */
 	pt->table = (double *)malloc(pt->len * sizeof(double));
@@ -990,17 +969,17 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 		error(1, "Cannot allocate memory for potential table");
 
 	/* copy parameters values to potfit */
-	for (i = 0; i < OptParamSet.Nnestedvalue; i++) {
-		pt->table[i] = *OptParamSet.nestedvalue[i];
+	for (i = 0; i < FreeParamSet.Nnestedvalue; i++) {
+		pt->table[i] = *FreeParamSet.nestedvalue[i];
 		pt->idx[i] = i;
 	}
 
 	/* set end (end is cutoff) */
 	int have_cutoff = 0;
 	double tmp_cutoff;
-	for (j = 0; j < OptParamSet.Nparam; j++) { 
-		if (strncmp(OptParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
-			pt->end[0] = *OptParamSet.value[j];
+	for (j = 0; j < FreeParamSet.Nparam; j++) { 
+		if (strncmp(FreeParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
+			pt->end[0] = *FreeParamSet.value[j];
 			have_cutoff = 1;
 			break;
 		}

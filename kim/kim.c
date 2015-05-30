@@ -27,17 +27,21 @@ void InitKIM() {
   InitObject();
 
   /*NOTE(change), repeated work, publish parameter for each config */
-  OptParamAllConfig = (OptParamType*) malloc(nconf*sizeof(OptParamType));
+  FreeParamAllConfig = (FreeParamType*) malloc(nconf*sizeof(FreeParamType));
 
   for (i = 0; i <nconf; i++) {
   /* nest optimizable parameters */
-    get_OptimizableParamInfo(pkimObj[i], &OptParamAllConfig[i]);  
-    nest_OptimizableParamValue(pkimObj[i], &OptParamAllConfig[i], 
+    get_FreeParamDouble(pkimObj[i], &FreeParamAllConfig[i]);  
+    nest_OptimizableParamValue(pkimObj[i], &FreeParamAllConfig[i], 
                                name_opt_param, num_opt_param);
   /* Publish cutoff (cutoff only need to be published once, so here) */
     PublishCutoff(pkimObj[i], rcutmax);
- 
  }
+
+
+
+
+
 
   printf("Initializing KIM ... done\n");
   fflush(stdout);
@@ -95,19 +99,21 @@ int InitObject() {
 
 /***************************************************************************
 *
-* Get optimizable parameters info
+* Get free parameters of type type
 *
-* nest all optimizable parameters together (including PARAM_FREE_cutoff)
-* parameter names are nested into name
-* parameter values pinter are nested into value
-* parameter ranks are nested into rank  
-* parameter shapes ...
-
+* put all free parameters of type `double' into the data struct (only type
+* `double' parameters are optimizable. `int' ones may be some flag.)
+*
+* parameter names are nested into `name'
+* parameter values pointer are nested into `value'
+* parameter ranks are nested into `rank'
+* parameter shapes are nested into `shape'
+*
 * `PARAM_FREE_cutoff' will also be included in ParamType->name.
-* Although it is not an optimiazble parameter, but potfit will need it to
-* calculate the neighbor list. 
+* Although it is not an optimiazble parameter, but we may want to copy it to
+* potfit to calculate the neighbor list. 
 ***************************************************************************/
-int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
+int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
 
   /*local vars*/
   int status;
@@ -117,10 +123,8 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
   char buffer[128];
   char name[64];
   char type[16];
-  char* tmp_FreeParamName;
-  int tmp_NumFreeParam;
   int tmp_size;
-  int OptParamNum = 0;
+  int NumFreeParamDouble = 0;
   int i, j, k;
 
   /* get the number of free parameters */
@@ -130,7 +134,7 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
     return(status);
   }
 
-  /* get the descriptor file, pointed by pstr, the type will be phrased from pstr */  
+  /* get the descriptor file, pointed by pstr. the type of data will be phrased from pstr*/  
   status = KIM_API_get_model_kim_str(kim_model_name, &pstr);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_kim_str", status);
@@ -138,8 +142,8 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
   }
 
   /* initialize name */
-  OptParam->name = (char**) malloc(sizeof(char*));
-  if (NULL==OptParam->name) {
+  FreeParam->name = (char**) malloc(sizeof(char*));
+  if (NULL==FreeParam->name) {
     KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
     exit(1);
   }
@@ -156,37 +160,37 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
       snprintf(buffer, sizeof(buffer), "%s", pstr);
       sscanf(buffer, "%s%s", name, type);
       if (strcmp(type, "double") == 0) {
-        OptParamNum++;          
-        if (OptParamNum > 1) {
-          OptParam->name = (char**) realloc(OptParam->name, (OptParamNum)*sizeof(char*));
-          if (NULL==OptParam->name) {
+        NumFreeParamDouble++;          
+        if (NumFreeParamDouble > 1) {
+          FreeParam->name = (char**) realloc(FreeParam->name, (NumFreeParamDouble)*sizeof(char*));
+          if (NULL==FreeParam->name) {
             KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
             exit(1);
           }
         }
-        OptParam->name[OptParamNum - 1] =  /*maxStringLength+1 to hold the `\0' at end*/
+        FreeParam->name[NumFreeParamDouble - 1] =  /*maxStringLength+1 to hold the `\0' at end*/
                               (char*) malloc((maxStringLength+1)*sizeof(char));
-        if (NULL==OptParam->name[OptParamNum - 1]) {
+        if (NULL==FreeParam->name[NumFreeParamDouble - 1]) {
           KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
           exit(1);
         }               
-        strcpy(OptParam->name[OptParamNum - 1], name);
+        strcpy(FreeParam->name[NumFreeParamDouble - 1], name);
       }
     }
   }
 
-  OptParam->Nparam = OptParamNum;
+  FreeParam->Nparam = NumFreeParamDouble;
 
   /* allocate memory for value */
-  OptParam->value = (double**) malloc(OptParam->Nparam * sizeof(double*));
-  if (NULL==OptParam->value) {
+  FreeParam->value = (double**) malloc(FreeParam->Nparam * sizeof(double*));
+  if (NULL==FreeParam->value) {
     KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
     exit(1);
   } 
 
   /* get the pointer to parameter */
-  for(i = 0; i < OptParam->Nparam; i++ ) {
-    OptParam->value[i] = KIM_API_get_data(pkim, OptParam->name[i], &status);
+  for(i = 0; i < FreeParam->Nparam; i++ ) {
+    FreeParam->value[i] = KIM_API_get_data(pkim, FreeParam->name[i], &status);
   }
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
@@ -194,15 +198,15 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
   }
 
   /* allocate memory for rank */
-  OptParam->rank = (int*) malloc(OptParam->Nparam * sizeof(int));
-  if (NULL==OptParam->rank) {
+  FreeParam->rank = (int*) malloc(FreeParam->Nparam * sizeof(int));
+  if (NULL==FreeParam->rank) {
     KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
     exit(1);
   } 
 
   /* get rank */
-  for(i = 0; i < OptParam->Nparam; i++) {
-    OptParam->rank[i] = KIM_API_get_rank(pkim, OptParam->name[i], &status);
+  for(i = 0; i < FreeParam->Nparam; i++) {
+    FreeParam->rank[i] = KIM_API_get_rank(pkim, FreeParam->name[i], &status);
   }
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_rank", status);
@@ -210,24 +214,24 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
   }
 
   /* allocate memory for shape */
-  OptParam->shape = (int**) malloc(OptParam->Nparam * sizeof(int*));
-  if (NULL==OptParam->shape) {
+  FreeParam->shape = (int**) malloc(FreeParam->Nparam * sizeof(int*));
+  if (NULL==FreeParam->shape) {
     KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
     exit(1);
   } 
-  for (i = 0; i < OptParam->Nparam; i++) {
-    OptParam->shape[i] = (int*) malloc(OptParam->rank[i] * sizeof(int));
+  for (i = 0; i < FreeParam->Nparam; i++) {
+    FreeParam->shape[i] = (int*) malloc(FreeParam->rank[i] * sizeof(int));
     /* should not do the check, since rank may be zero. Then in some implementation
       malloc zero would return NULL */  
-    /*  if (NULL==OptParam->shape[i]) {
+    /*  if (NULL==FreeParam->shape[i]) {
     KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
     exit(1);
     }*/ 
   }
 
   /* get shape */
-  for(i = 0; i < OptParam->Nparam; i++) {
-    KIM_API_get_shape(pkim, OptParam->name[i], OptParam->shape[i], &status);
+  for(i = 0; i < FreeParam->Nparam; i++) {
+    KIM_API_get_shape(pkim, FreeParam->name[i], FreeParam->shape[i], &status);
   }
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_shape", status);
@@ -235,7 +239,7 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
   }
   
   /* nestedvalue is not allocated here, give NULL pointer to it */
-  OptParam->nestedvalue = NULL;
+  FreeParam->nestedvalue = NULL;
 
 
   return KIM_STATUS_OK;
@@ -256,22 +260,22 @@ int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam) {
 * this function will nest the FREE_PARAM_cutoff into nestedvaule if
 * inlcude_cutoff is true, otherwise, do not incldue it. 
 *****************************************************************************/
-nest_OptimizableParamValue(void* pkim, OptParamType* OptParam,
+nest_OptimizableParamValue(void* pkim, FreeParamType* FreeParam,
                             char** input_param_name, int input_param_num)
 {
   /* local variables */
   int tmp_size;
   int total_size;           /* the size of the nested values*/
   int have_name;            /* flag, is the name in the data struct? */
-  int idx[input_param_num]; /* the index of input_param_num in OptParam */
+  int idx[input_param_num]; /* the index of input_param_num in FreeParam */
   int i, j, k;
   /* nest values  */
   /*first compute the total size of the optimizable parameters */
   total_size = 0;
   for (i = 0; i < input_param_num; i++) { 
     have_name = 0;
-    for (j = 0; j< OptParam->Nparam; j++) {
-      if (strcmp(OptParam->name[j], input_param_name[i]) == 0) {
+    for (j = 0; j< FreeParam->Nparam; j++) {
+      if (strcmp(FreeParam->name[j], input_param_name[i]) == 0) {
         idx[i] = j;
         have_name = 1;
         break;
@@ -279,8 +283,8 @@ nest_OptimizableParamValue(void* pkim, OptParamType* OptParam,
     }
     if (have_name) {
       tmp_size = 1;
-      for (j = 0; j < OptParam->rank[idx[i]]; j++) {
-        tmp_size *= OptParam->shape[idx[i]][j];
+      for (j = 0; j < FreeParam->rank[idx[i]]; j++) {
+        tmp_size *= FreeParam->shape[idx[i]][j];
       }
       /* store tmp_size for later use in potential outpot */
       size_opt_param[i] = tmp_size; 
@@ -293,24 +297,24 @@ nest_OptimizableParamValue(void* pkim, OptParamType* OptParam,
   
   
   /* allocate memory for nestedvalue*/
-  OptParam->nestedvalue = (double**) malloc((total_size) * sizeof(double*));
+  FreeParam->nestedvalue = (double**) malloc((total_size) * sizeof(double*));
 
   
   /*copy the values (pointers) to nestedvalue */
   k = 0;
   for (i = 0; i < input_param_num; i++ ) {
     tmp_size = 1; 
-    for (j = 0; j < OptParam->rank[idx[i]]; j++) {
-      tmp_size *= OptParam->shape[idx[i]][j];
+    for (j = 0; j < FreeParam->rank[idx[i]]; j++) {
+      tmp_size *= FreeParam->shape[idx[i]][j];
     }
    for (j = 0; j <tmp_size; j++) {
-      OptParam->nestedvalue[k] = OptParam->value[idx[i]]+j;
+      FreeParam->nestedvalue[k] = FreeParam->value[idx[i]]+j;
       k++;
     }
   }
 
 
-  OptParam->Nnestedvalue = total_size;
+  FreeParam->Nnestedvalue = total_size;
 
   return total_size;
 }
@@ -327,7 +331,7 @@ nest_OptimizableParamValue(void* pkim, OptParamType* OptParam,
 * input_name: the name list of the parameters read in from input
 *******************************************************************************/
 
-int get_OptimizableParamSize(OptParamType* OptParam, 
+int get_OptimizableParamSize(FreeParamType* FreeParam, 
                               char** input_param_name, int input_param_num) 
 {
   /*local variables */
@@ -367,10 +371,10 @@ int get_OptimizableParamSize(OptParamType* OptParam,
   }
   
   /*get the info of the Optimizable parameters */
-  get_OptimizableParamInfo(pkim, OptParam);
+  get_FreeParamDouble(pkim, FreeParam);
 
   /* compute the total size of the optimizable */
-  size = nest_OptimizableParamValue(pkim, OptParam, input_param_name,
+  size = nest_OptimizableParamValue(pkim, FreeParam, input_param_name,
                                     input_param_num);
 
 
@@ -958,15 +962,15 @@ int CalcForce(void* pkim, double** energy, double** force, double** virial,
 * PotTable: potential table where the potential paramenters are stored
 *
 ***************************************************************************/
-int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
+int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable)
 { 
   /*local variables*/  
   int status;
   int i;
 
   /*publish parameters */ 
-  for (i = 0; i < OptParam->Nnestedvalue; i++) {
-    *OptParam->nestedvalue[i] = PotTable[i]; 
+  for (i = 0; i < FreeParam->Nnestedvalue; i++) {
+    *FreeParam->nestedvalue[i] = PotTable[i]; 
   }
 
   status = KIM_API_model_reinit(pkim);
@@ -999,12 +1003,12 @@ int PublishParam(void* pkim, OptParamType* OptParam, double* PotTable)
 * pt: potential table
 * filename: potential input file name 
 * infile: potential input file
-* OptParam: data struct that contains the free parameters info of the KIM Model
+* FreeParam: data struct that contains the free parameters info of the KIM Model
 * 
 ***************************************************************************/
 
 int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
-													OptParamType* OptParam)
+													FreeParamType* FreeParam)
 {
 	/* local variables */
   int   i, j, k, ret_val;
@@ -1046,7 +1050,7 @@ int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
   /* read `check_kim_opt_param' or `num_opt_param' */
   if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
     /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
-    get_OptimizableParamSize(OptParam, NULL, 0); 
+    get_OptimizableParamSize(FreeParam, NULL, 0); 
 
     printf(" - The following potential parameters are available to fit. Include the "
         "name(s) (and the initial value(s) and lower and upper boudaries if "
@@ -1054,13 +1058,13 @@ int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
         "in file: %s.\n",filename);
     printf("         param name                 param extent\n");
     printf("        ############               ##############\n");
-    for(k = 0; k < OptParam->Nparam; k++ ) {
-      if (strncmp(OptParam->name[k], "PARAM_FREE_cutoff", 17) == 0){
+    for(k = 0; k < FreeParam->Nparam; k++ ) {
+      if (strncmp(FreeParam->name[k], "PARAM_FREE_cutoff", 17) == 0){
         continue;
       }
-      printf("     %-35s[ ", OptParam->name[k]);
-      for(j = 0; j < OptParam->rank[k]; j++) {
-        printf("%d ", OptParam->shape[k][j]);
+      printf("     %-35s[ ", FreeParam->name[k]);
+      for(j = 0; j < FreeParam->rank[k]; j++) {
+        printf("%d ", FreeParam->shape[k][j]);
       }
       printf("]\n");
    }

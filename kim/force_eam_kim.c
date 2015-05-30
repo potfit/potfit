@@ -178,7 +178,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 *	need to be published. 
 ***************************************************************************/
  	for (i = 0; i < numOfconf; i++) {
-		status = PublishParam(pkimObj[i], &OptParamAllConfig[i], xi);	
+		status = PublishParam(pkimObj[i], &FreeParamAllConfig[i], xi);	
 		if (KIM_STATUS_OK > status) {
 			KIM_API_report_error(__LINE__, __FILE__, 
 														"KIM: publish parameters failed", status);

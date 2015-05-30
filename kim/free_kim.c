@@ -52,32 +52,32 @@ void FreeKIM(void)
 		free(NeighObject);	
     
     /* free paramlist */
-    FreeOptParamType (&OptParamAllConfig[i]);
+    FreeFreeParamType (&FreeParamAllConfig[i]);
 		/* free memory of KIM objects */
   	KIM_API_free(pkim, &status);
  		if (KIM_STATUS_OK > status) 
 			KIM_API_report_error(__LINE__, __FILE__,"destroy", status);
 	}
-	free(OptParamAllConfig);
+	free(FreeParamAllConfig);
   free(pkimObj);
 	/* every thing is great */
 }
 
 
-void FreeOptParamType (OptParamType* OptParam) 
+void FreeFreeParamType (FreeParamType* FreeParam) 
 {
 	/*local variable*/
 	int i;
 
-	for(i = 0; i < OptParam->Nparam; i++) {
-		free(OptParam->name[i]);	
-		free(OptParam->shape[i]);
+	for(i = 0; i < FreeParam->Nparam; i++) {
+		free(FreeParam->name[i]);	
+		free(FreeParam->shape[i]);
 	}
-	free(OptParam->name);	
-	free(OptParam->value);
-	free(OptParam->shape);	
-	free(OptParam->rank); 
-	if (OptParam->nestedvalue != NULL) {
-		free(OptParam->nestedvalue);
+	free(FreeParam->name);	
+	free(FreeParam->value);
+	free(FreeParam->shape);	
+	free(FreeParam->rank); 
+	if (FreeParam->nestedvalue != NULL) {
+		free(FreeParam->nestedvalue);
 	}
 }

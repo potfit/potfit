@@ -43,9 +43,9 @@ typedef struct
                          * Otherwise, it is larger. (Nparam - 1), because
                          * PARAM_FREE_cutoff is counted in Nparam, but not in
                          * Nnestedvalue. */ 
-} OptParamType;
+} FreeParamType;
 
-OptParamType* OptParamAllConfig;
+FreeParamType* FreeParamAllConfig;
 
 
 /* function prototypes */
@@ -57,12 +57,12 @@ void FreeKIM();
 
 int InitObject();
 
-int get_OptimizableParamInfo(void* pkim, OptParamType* OptParam);
+int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam);
 
-int nest_OptimizableParamValue(void* pkim, OptParamType* OptParam, 
+int nest_OptimizableParamValue(void* pkim, FreeParamType* FreeParam, 
                               char** input_param_name, int input_param_num);
 
-int get_OptimizableParamSize(OptParamType* OptParam,
+int get_OptimizableParamSize(FreeParamType* FreeParam,
                               char** input_param_name, int input_param_num);
 
 int PublishCutoff(void* pkim, double cutoff);
@@ -76,11 +76,11 @@ int CalcForce(void* pkim, double** energy, double** force, double** virial,
 							int useforce, int usestress);
 
 /* functions in force_[interaction]_kim.c */
-int PublishParam(void* pkim, OptParamType* FreeParam, double* PotTable);
+int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable);
 
 /* read potential input file */
 int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
-								    			OptParamType* OptParam);
+								    			FreeParamType* FreeParam);
 /* write potential file */
 void write_pot_table5(pot_table_t *pt, char *filename);
 

@@ -16,6 +16,6 @@
 
 void FreeKIM(void);
 
-void FreeOptParamType (OptParamType* OptParam); 
+void FreeFreeParamType (FreeParamType* FreeParam); 
 
 #endif /* KIM_H */
