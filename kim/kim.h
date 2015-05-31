@@ -97,7 +97,13 @@ void InitOptimizableParam();
 int PublishCutoff(void* pkim, double cutoff);
 
 /* called by `InitObject' */
-int CreateKIMObj(void* pkim, int Natoms, int Nspecies, int start);
+int setup_KIM_API_object(void** pkim, int Natoms, int Nspecies, char* modelname);
+
+int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start);
+
+int setup_neighborlist_KIM_access(void* pkim, NeighObjectType* NeighObject); 
+
+int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start);
 
 /* called in `potential_input.c' */
 int get_OptimizableParamSize(FreeParamType* FreeParam,
