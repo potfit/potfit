@@ -22,7 +22,7 @@
 *
 ***************************************************************************/
 
-void FreeKIM(void)
+void free_KIM(void)
 {
 	/* local variables */
 	int status;
@@ -52,7 +52,7 @@ void FreeKIM(void)
 		free(NeighObject);	
     
     /* free paramlist */
-    FreeFreeParamType (&FreeParamAllConfig[i]);
+    free_free_param (&FreeParamAllConfig[i]);
 		/* free memory of KIM objects */
   	KIM_API_free(pkim, &status);
  		if (KIM_STATUS_OK > status) 
@@ -64,7 +64,7 @@ void FreeKIM(void)
 }
 
 
-void FreeFreeParamType (FreeParamType* FreeParam) 
+void free_free_param (FreeParamType* FreeParam) 
 {
 	/*local variable*/
 	int i;

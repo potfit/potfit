@@ -178,7 +178,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 *	need to be published. 
 ***************************************************************************/
  	for (i = 0; i < numOfconf; i++) {
-		status = PublishParam(pkimObj[i], &FreeParamAllConfig[i], xi);	
+		status = publish_param(pkimObj[i], &FreeParamAllConfig[i], xi);	
 		if (KIM_STATUS_OK > status) {
 			KIM_API_report_error(__LINE__, __FILE__, 
 														"KIM: publish parameters failed", status);
@@ -239,7 +239,7 @@ KIM_API_print(pkimObj[0], &status);
 	kim_us = us;
 #endif
 
-	status = CalcForce( pkimObj[h], &kimenergy,  &kimforce,  &kimvirial, kim_uf, kim_us);
+	status = calc_force_KIM( pkimObj[h], &kimenergy,  &kimforce,  &kimvirial, kim_uf, kim_us);
 	if (KIM_STATUS_OK > status) {
 		KIM_API_report_error(__LINE__, __FILE__, "KIM: compute forces failed", status);
    	exit(1);

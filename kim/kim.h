@@ -85,18 +85,16 @@ EXTERN double* box_side_len;  /*box_side_len is used to enable MI_OPBC_H in KIM.
 /******************************************************************************/ 
 
 /* called in `potfit.c' */
-void InitKIM();
+void init_KIM();
 
-void FreeKIM();
+void free_KIM();
 
-/* called by `InitKIM' */
-void InitObject();
+/* called by `init_KIM' */
+void init_object();
 
-void InitOptimizableParam();
+void init_optimizable_param();
 
-int PublishCutoff(void* pkim, double cutoff);
-
-/* called by `InitObject' */
+/* called by `init_object' */
 int setup_KIM_API_object(void** pkim, int Natoms, int Nspecies, char* modelname);
 
 int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start);
@@ -105,27 +103,31 @@ int setup_neighborlist_KIM_access(void* pkim, NeighObjectType* NeighObject);
 
 int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start);
 
-/* called in `potential_input.c' */
-int get_OptimizableParamSize(FreeParamType* FreeParam,
-                              char** input_param_name, int input_param_num);
-
-int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
-								    			FreeParamType* FreeParam);
-
-/* called by `get_OptimizableParamSize' and `InitOptimizableParam' */
-int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam);
-
-int nest_OptimizableParamValue(void* pkim, FreeParamType* FreeParam, 
-                              char** input_param_name, int input_param_num);
-
-/* called in `force_kim.c' */
+/* function pointer assigned in `setup_neighborlist_KIM_access' */
 int get_neigh(void* kimmdl, int* mode, int *request, int* part,
               int* numnei, int** nei1part, double** Rij);					
 
-int CalcForce(void* pkim, double** energy, double** force, double** virial,
+/* called in `potential_input.c' */
+int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname, 
+                              char** input_param_name, int input_param_num);
+
+int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
+								    			FreeParamType* FreeParam);
+
+/* called by `get_optimizable_param_size' and `init_optimizable_param' */
+int get_free_param_double(void* pkim, FreeParamType* FreeParam);
+
+int nest_optimizable_param(void* pkim, FreeParamType* FreeParam, 
+                              char** input_param_name, int input_param_num);
+
+/* called by `init_optimizable_param' */
+int publish_cutoff(void* pkim, double cutoff);
+
+/* called in `force_kim.c' */
+int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
 							int useforce, int usestress);
 
-int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable);
+int publish_param(void* pkim, FreeParamType* FreeParam, double* PotTable);
 
 /* assigned to function pointer `write_pot_table' in `potfit.c' */
 void write_pot_table5(pot_table_t *pt, char *filename);

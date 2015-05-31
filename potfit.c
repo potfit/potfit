@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 * Initialize KIM 
 ****************************************************************/
 #ifdef KIM
-	InitKIM();
+	init_KIM();
 #endif /* KIM */
 /*added ends */
 

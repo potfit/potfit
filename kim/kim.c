@@ -25,25 +25,20 @@
 
 /*******************************************************************************
 *
-* Create KIM objects, each object for a reference configuration.
+* Init KIM objects, each object for a reference configuration. Init optimizable
+* parameters: nest them a single variable. 
 *
-* potfit global variables:
-* nconf
-* name_opt_param
-* num_opt_param 
-* rcutmax
-* 
 *******************************************************************************/
 
-void InitKIM() 
+void init_KIM() 
 {
   printf("\nInitializing KIM ... started\n");
 
   /* create KIM objects and do the necessary initialization */
-  InitObject();
+  init_object();
   
   /* create free parameter data sturct and nest optimizable parameters */
-  InitOptimizableParam();
+  init_optimizable_param();
 
   printf("Initializing KIM ... done\n");
 }
@@ -51,12 +46,20 @@ void InitKIM()
 
 /*******************************************************************************
 *
-* Initialize KIM objects
+* Create KIM objects, and init the argument values
 *
+* potfit global variables:
+* nconf
+* inconf
+* ntypes
+* cnfstart
+*
+* potfit-KIM global variables:
+* kim_model_name
 *
 *******************************************************************************/ 
 
-void InitObject()
+void init_object()
 {
   /* local variables */
   int status;
@@ -71,9 +74,14 @@ void InitObject()
 
   for (i = 0; i < nconf; i++) { 
 
-      /* QUESTION: does each config has the same number of species? e.g. there are
-  two types of species, but a specific config may one have one species). If
-  not, then ntypes below need to be modified from config to config */
+    /* QUESTION: does each config has the same number of species? e.g. there are
+     * two types of species, but a specific config may one have one species). If
+     * not, then ntypes below need to be modified from config to config */
+    /* Answer: actually this does not need any worry. If there is only one species in
+     * the whole configuration, but we let ntypes = 2 in the following function call,
+     * we just allocate more memory. But the species code for each atom would be
+     * correct(see function init_KIM_API_argument). Then KIM Model would know how to
+     * do the force calculation. */ 
 
     /* init KIM API object and allocate memory for data argument */
     status = setup_KIM_API_object(&pkimObj[i], inconf[i], ntypes, kim_model_name);
@@ -115,7 +123,12 @@ void InitObject()
   }
 }
 
-/*******************************************************************************/ 
+/*******************************************************************************
+*
+* Create KIM API objects and allocate memory 
+*
+*******************************************************************************/ 
+
 int setup_KIM_API_object(void** pkim, int Natoms, int Nspecies, char* modelname)
 {
   /* local vars */
@@ -146,7 +159,17 @@ int setup_KIM_API_object(void** pkim, int Natoms, int Nspecies, char* modelname)
 
 
 
-/*******************************************************************************/ 
+/*******************************************************************************
+*
+* Init KIM API argument values 
+*
+* potfit global variables:
+* atoms
+*
+* potfit-KIM global variables:
+* box_side_len 
+*
+*******************************************************************************/ 
 
 int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
 {
@@ -198,18 +221,6 @@ int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
     coords[DIM*i+1] = atoms[start+i].pos.y;
     coords[DIM*i+2] = atoms[start+i].pos.z;
   }
-
-  /* to use this, the #C Header line in configuration file has to be included.
-    Also the order of elements name after #C should be in accordane with the
-    species code in the first column of configuration data, ranging from 0 to
-    (ntypes-1).  
-    Here, assume potfit ensures this.
-    e.g. if we have `#C Ar Ne', then the code for Ar and Ne should be 0 and 1,
-    respectively. */
-    
-  /* QUESTION: in KIM_API_get_species_code, doest the second argument has to
-     to be totally the same as that kim descriptor file? e.g. Upper case or lower
-     case matters or not? */
 
   /* set species types */
   for (i = 0; i < *numberOfParticles; i++) { 
@@ -277,10 +288,12 @@ int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
 }
 
 
+/*******************************************************************************
+*
+* Register neighborlist object and get_neigh fuction in KIM API object.
+*
+*******************************************************************************/ 
 
-
-
-/*******************************************************************************/ 
 int setup_neighborlist_KIM_access(void* pkim, NeighObjectType* NeighObject)
 {
   /* local variables */
@@ -302,8 +315,14 @@ int setup_neighborlist_KIM_access(void* pkim, NeighObjectType* NeighObject)
 }
 
 
-
-/*******************************************************************************/ 
+/*******************************************************************************
+*
+* Create neighborlist and initialize 
+*
+* potfit gloval variables:
+* atom
+*
+*******************************************************************************/
 int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start)
 {
   /* local variables */
@@ -372,7 +391,6 @@ int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start)
 }
 
 
-
 /***************************************************************************
 * 
 * get_neigh 
@@ -405,47 +423,31 @@ int get_neigh(void* kimmdl, int *mode, int *request, int* part,
   }
 
   /* check mode and request */
-  if (0 == *mode) /* iterator mode */
-  {
-    if (0 == *request) /* reset iterator */
-    {
+  if (0 == *mode) { /* iterator mode */ 
+    if (0 == *request) { /* reset iterator */
       (*nl).iteratorId = -1;
       return KIM_STATUS_NEIGH_ITER_INIT_OK;
-    }
-    else if (1 == *request) /* increment iterator */
-    {
+    } else if (1 == *request) { /* increment iterator */
       (*nl).iteratorId++;
-      if ((*nl).iteratorId >= *numberOfParticles)
-      {
+      if ((*nl).iteratorId >= *numberOfParticles) {
         return KIM_STATUS_NEIGH_ITER_PAST_END;
-      }
-      else
-      {
+      } else {
         partToReturn = (*nl).iteratorId;
       }
-    }
-    else /* invalid request value */
-    {
+    } else { /* invalid request value */
       KIM_API_report_error(__LINE__, __FILE__,"Invalid request in get_periodic_neigh",
                            KIM_STATUS_NEIGH_INVALID_REQUEST);
       return KIM_STATUS_NEIGH_INVALID_REQUEST;
     }
-  }
-  else if (1 == *mode) /* locator mode */
-  {
-    if ((*request >= *numberOfParticles) || (*request < 0)) /* invalid id */
-    {
+  } else if (1 == *mode) { /* locator mode */
+    if ((*request >= *numberOfParticles) || (*request < 0)) { /* invalid id */
       KIM_API_report_error(__LINE__, __FILE__,"Invalid part ID in get_periodic_neigh",
                           KIM_STATUS_PARTICLE_INVALID_ID);
       return KIM_STATUS_PARTICLE_INVALID_ID;
-    }
-    else
-    {
+    } else {
       partToReturn = *request;
     }
-  }
-  else /* invalid mode */
-  {
+  } else { /* invalid mode */ 
     KIM_API_report_error(__LINE__, __FILE__,"Invalid mode in get_periodic_neigh",
                           KIM_STATUS_NEIGH_INVALID_MODE);
     return KIM_STATUS_NEIGH_INVALID_MODE;
@@ -469,18 +471,23 @@ int get_neigh(void* kimmdl, int *mode, int *request, int* part,
   return KIM_STATUS_OK;
 }
 
-/* added ends */
-
-
 
 /*******************************************************************************
 *
 * Initialize optimizable parameter 
+* allocate memory for free parameters, and nest the optimizable ones in to a 
+* variable called `nestedvalue'. Also publish the parameter once for alll. 
 *
+* potfit global variable:
+* rcutmax
+*
+* potfit-KIM global variable:
+* num_opt_param
+* name_opt_param
 *
 *******************************************************************************/
 
-void InitOptimizableParam()
+void init_optimizable_param()
 {
   /* local vars */
   int i;
@@ -494,34 +501,31 @@ void InitOptimizableParam()
 
   for (i = 0; i <nconf; i++) {
     /* nest optimizable parameters */
-    get_FreeParamDouble(pkimObj[i], &FreeParamAllConfig[i]);  
-    nest_OptimizableParamValue(pkimObj[i], &FreeParamAllConfig[i], 
+    get_free_param_double(pkimObj[i], &FreeParamAllConfig[i]);  
+    nest_optimizable_param(pkimObj[i], &FreeParamAllConfig[i], 
                                name_opt_param, num_opt_param);
  
     /* Publish cutoff (only needs to be published once, so here) */
-    PublishCutoff(pkimObj[i], rcutmax);
+    publish_cutoff(pkimObj[i], rcutmax);
   }
 }
 
 
 /***************************************************************************
 *
-* Get free parameters of type type
+* Get free parameters of type double  
 *
 * put all free parameters of type `double' into the data struct (only type
-* `double' parameters are optimizable. `int' ones may be some flag.)
-*
-* parameter names are nested into `name'
-* parameter values pointer are nested into `value'
-* parameter ranks are nested into `rank'
-* parameter shapes are nested into `shape'
+* `double' parameters are optimizable. `int' ones may be some flag.) However
+* even if it is of type double, it is upto the user's desicion whether to 
+* optimize it or not.
 *
 * `PARAM_FREE_cutoff' will also be included in ParamType->name.
 * Although it is not an optimiazble parameter, but we may want to copy it to
 * potfit to calculate the neighbor list. 
 ***************************************************************************/
-int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
-
+int get_free_param_double(void* pkim, FreeParamType* FreeParam) 
+{
   /*local vars*/
   int status;
   int NumFreeParam;
@@ -534,7 +538,7 @@ int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
   int NumFreeParamDouble = 0;
   int i, j, k;
 
-  /* get the number of free parameters */
+  /* get the maxStringLength of free parameters */
   status = KIM_API_get_num_free_params(pkim, &NumFreeParam, &maxStringLength);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_num_free_params", status);
@@ -548,15 +552,14 @@ int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
     return(status);
   }
 
-  /* initialize name */
+  /* allocate initial memory */
   FreeParam->name = (char**) malloc(sizeof(char*));
   if (NULL==FreeParam->name) {
     KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
     exit(1);
   }
 
-  /* infinite loop to find PARAM_FREE_* of type double, only they are optimizable.
-     PARAM_FREE_cutoff will also be included. */
+  /* infinite loop to find PARAM_FREE_* of type `double' */
   /* It's safe to do pstr = strstr(pstr+1,"PARAM_FREE") because the ``PARAM_FREE''
     will never ever occur at the beginning of the ``descriptor.kim'' file */  
   while (1) {
@@ -598,12 +601,12 @@ int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
   /* get the pointer to parameter */
   for(i = 0; i < FreeParam->Nparam; i++ ) {
     FreeParam->value[i] = KIM_API_get_data(pkim, FreeParam->name[i], &status);
+    if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
+      return(status);
+    }
   }
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
-    return(status);
-  }
-
+  
   /* allocate memory for rank */
   FreeParam->rank = (int*) malloc(FreeParam->Nparam * sizeof(int));
   if (NULL==FreeParam->rank) {
@@ -614,10 +617,10 @@ int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
   /* get rank */
   for(i = 0; i < FreeParam->Nparam; i++) {
     FreeParam->rank[i] = KIM_API_get_rank(pkim, FreeParam->name[i], &status);
-  }
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_rank", status);
-    return(status);
+    if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_rank", status);
+      return(status);
+    }
   }
 
   /* allocate memory for shape */
@@ -639,10 +642,10 @@ int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
   /* get shape */
   for(i = 0; i < FreeParam->Nparam; i++) {
     KIM_API_get_shape(pkim, FreeParam->name[i], FreeParam->shape[i], &status);
-  }
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_shape", status);
-    return(status);
+    if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_shape", status);
+      return(status);
+    }
   }
   
   /* nestedvalue is not allocated here, give NULL pointer to it */
@@ -653,29 +656,29 @@ int get_FreeParamDouble(void* pkim, FreeParamType* FreeParam) {
 }
 
 
-
-
 /*****************************************************************************
-* nest optimizable parameters values
-* nest the values (pointer) obtained from get_OptParamInfo() to nestedvalue.
-* nestedvalue would be equal to value if all parameters have rank 0. 
-* include_cutoff: flag, whether cutoff will be incldued in the nested list
-* return: the length of nestedvalue
-
-* After calling get_OptParamInfo, the PARAM_FREE_cutoff will be in the last slot
-* of name list. 
-* this function will nest the FREE_PARAM_cutoff into nestedvaule if
-* inlcude_cutoff is true, otherwise, do not incldue it. 
+* 
+* Nest optimizable parameters (pointer)
+*
+* Note that the optimizable parameters is a subset of the free parameters with 
+* type `double'. Only the ones that the user list in the potential input file 
+* will be optimized. This function should be called after `get_free_param_double'.
+*
+* input_param_name: the names of parameters that will be optimized 
+* input_param_num: the number of parameters that will be optimized
+*
 *****************************************************************************/
-nest_OptimizableParamValue(void* pkim, FreeParamType* FreeParam,
-                            char** input_param_name, int input_param_num)
+
+nest_optimizable_param(void* pkim, FreeParamType* FreeParam,
+                       char** input_param_name, int input_param_num)
 {
   /* local variables */
   int tmp_size;
   int total_size;           /* the size of the nested values*/
   int have_name;            /* flag, is the name in the data struct? */
-  int idx[input_param_num]; /* the index of input_param_num in FreeParam */
+  int idx[input_param_num]; /* the index in FreeParam */
   int i, j, k;
+
   /* nest values  */
   /*first compute the total size of the optimizable parameters */
   total_size = 0;
@@ -702,10 +705,12 @@ nest_OptimizableParamValue(void* pkim, FreeParamType* FreeParam,
     }
   }
   
-  
   /* allocate memory for nestedvalue*/
   FreeParam->nestedvalue = (double**) malloc((total_size) * sizeof(double*));
-
+  if (NULL==FreeParam->nestedvalue) {
+    KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
+    exit(1);
+  }
   
   /*copy the values (pointers) to nestedvalue */
   k = 0;
@@ -720,25 +725,26 @@ nest_OptimizableParamValue(void* pkim, FreeParamType* FreeParam,
     }
   }
 
-
+  /* store the number of total parameter values */
   FreeParam->Nnestedvalue = total_size;
 
   return total_size;
 }
 
 
-
-
-
 /******************************************************************************
-* get_OptimizableParam
-* inquire KIM to get the number of optimizable parameters 
-* and their names, which will be used later to nest the ParameterList
-
-* input_name: the name list of the parameters read in from input
+* 
+* Changes needed. It would be better to change this function.   
+*
+* Create a temporary KIM model to get the size of the optimizable parameters as
+* well as the nest
+*
+* input_param_name: the names of parameters that will be optimized 
+* input_param_num: the number of parameters that will be optimized
+*
 *******************************************************************************/
 
-int get_OptimizableParamSize(FreeParamType* FreeParam, 
+int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
                               char** input_param_name, int input_param_num) 
 {
   /*local variables */
@@ -754,8 +760,8 @@ int get_OptimizableParamSize(FreeParamType* FreeParam,
   int i, j;
 
   /* create a temporary KIM objects, in order to inquire KIM model for 
-   PARAM_FREE_* parameters info, delete at the end of the function */
-  status = KIM_API_file_init(&pkim, "descriptor.kim", kim_model_name);
+   PARAM_FREE_* parameters info */
+  status = KIM_API_file_init(&pkim, "descriptor.kim", modelname);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_file_init", status);
     exit(1);
@@ -777,22 +783,31 @@ int get_OptimizableParamSize(FreeParamType* FreeParam,
     return(status);   
   }
   
-  /*get the info of the Optimizable parameters */
-  get_FreeParamDouble(pkim, FreeParam);
+/* The following shold be used to replace the above ones to create a model, but
+ * somehow it does not work. report the Ryan. */
+/*
+  status = KIM_API_model_info(pkim, kim_model_name);
+ if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_info", status);
+    return(status);
+  }
+*/  
 
-  /* compute the total size of the optimizable */
-  size = nest_OptimizableParamValue(pkim, FreeParam, input_param_name,
-                                    input_param_num);
+  /* initialze the data struct for the free parameters with type double */
+  get_free_param_double(pkim, FreeParam);
 
+  /* nest the optimizable params */
+  size = nest_optimizable_param(pkim, FreeParam, input_param_name,
+                                input_param_num);
 
+  /* could deleted the following few lines, no actural use*/
   /*number of free parameters of type other than double */
-    /* get the descriptor file, pointed by pstr, the type will be phrased from pstr */  
   status = KIM_API_get_model_kim_str(kim_model_name, &pstr);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_kim_str", status);
     return(status);
   }
-    /* infinite loop to find PARAM_FREE_* of type other than double*/ 
+  /* infinite loop to find PARAM_FREE_* of type other than double*/ 
   while (1) {
     pstr = strstr(pstr+1,"PARAM_FREE");
     if (pstr == NULL) {
@@ -805,13 +820,13 @@ int get_OptimizableParamSize(FreeParamType* FreeParam,
       }
     }
   }
-
   if (NumFreeParamNoDouble != 0) {
     printf("-  There is (are) %d `PARAM_FREE_*' parameter(s) of type other than "
             "`double'.\n", NumFreeParamNoDouble);
   }
 
-
+  /* deallocate cannot be done here, because we'll qurey KIM objects to get cutoff
+   * in the read in potential function.  */
   /* deallocate */  
 /*  
   status = KIM_API_model_destroy(pkim);
@@ -835,64 +850,44 @@ int get_OptimizableParamSize(FreeParamType* FreeParam,
 
 
 /***************************************************************************
-*
-* Function used to publsih cutoff
-*
-***************************************************************************/
-PublishCutoff(void* pkim, double cutoff) {
-
-  /* local variable */
-  int status;
-  double* pcutoff;
-  
-  pcutoff = KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
-    return(status);
-  }
-
-  *pcutoff = cutoff;
-  
-  return 0;
-}
-
-
-
-
-
-/* added */
-/***************************************************************************
 * 
-* Calculate force from KIM (general force, including force, virial, energy)
+* calculate force from KIM (general force, including force, virial, energy)
 *
-* transferred variaves 
-* Pkim: KIM object
-* the following three are also model output 
+* flags:
+* usefore & usestress
+*
+* general force pointers
 * energy;
 * force;
 * virial;
 *
 ***************************************************************************/
 
-int CalcForce(void* pkim, double** energy, double** force, double** virial,
+int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
               int useforce, int usestress)
 { 
   /* local variables */
   int status;
-  /* Access to free parameters, also unpack other variables as needed */
+  
   /* potfit will always compute energy, so is here */
-  KIM_API_getm_data(pkim, &status, 1*3,
-                    "energy",              energy,              1);
-  if (useforce)
-    KIM_API_getm_data(pkim, &status, 1*3,
-                    "forces",              force,               1);
-  if(usestress)
-    KIM_API_getm_data(pkim, &status, 1*3,
-                    "virial",              virial,             1 );
+  KIM_API_getm_data(pkim, &status, 1*3, "energy", energy, 1);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
+    return status;
+  }
 
+  if (useforce) {
+    KIM_API_getm_data(pkim, &status, 1*3, "forces", force, 1);
+  }
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
+    return status;
+  }
 
-  if (KIM_STATUS_OK > status)
-  {
+  if(usestress) {
+    KIM_API_getm_data(pkim, &status, 1*3, "virial", virial, 1);
+  }
+  if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
     return status;
   }
@@ -907,25 +902,41 @@ int CalcForce(void* pkim, double** energy, double** force, double** virial,
 
   return KIM_STATUS_OK;
 }
-/* added ends */
 
 
+/***************************************************************************
+*
+* publsih cutoff
+*
+***************************************************************************/
+int publish_cutoff(void* pkim, double cutoff) 
+{
+  /* local variable */
+  int status;
+  double* pcutoff;
+  
+  pcutoff = KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
+    return(status);
+  }
 
-
-
+  *pcutoff = cutoff;
+  
+  return KIM_STATUS_OK;
+}
 
 
 
 /***************************************************************************
 *
-* Publish KIM parameter 
+* publish KIM parameter 
 *
 * transferred varialbes:
-* pkkm: KIM ojbect
 * PotTable: potential table where the potential paramenters are stored
 *
 ***************************************************************************/
-int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable)
+int publish_param(void* pkim, FreeParamType* FreeParam, double* PotTable)
 { 
   /*local variables*/  
   int status;
@@ -936,41 +947,35 @@ int PublishParam(void* pkim, FreeParamType* FreeParam, double* PotTable)
     *FreeParam->nestedvalue[i] = PotTable[i]; 
   }
 
+  /* reinit KIM model */
   status = KIM_API_model_reinit(pkim);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
     return status;
   }
+
   return KIM_STATUS_OK;
 }
 
 
-
-
-
-
-
-
-
-
-/***************************************************************************
+/******************************************************************************
 *
 * Read the keywords (`type', `cutoff', etc) and parameter names (beginning 
-* with `PARAM_FREE') in the potential input file
+* with `PARAM_FREE') in the potential input file.
 *
 * In this function, the memory of three global variables: `num_opt_param',
 * `name_opt_param', `size_opt_param' will be allocated and the first two will be
 * initialized here (based on the infomation from the input), `size_opt_param' will
-* be initialized in nest_OptimizableParamValue. 
+* be initialized in nest_optimizable_param. 
 *
 * pt: potential table
 * filename: potential input file name 
 * infile: potential input file
 * FreeParam: data struct that contains the free parameters info of the KIM Model
 * 
-***************************************************************************/
+******************************************************************************/
 
-int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
+int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 													FreeParamType* FreeParam)
 {
 	/* local variables */
@@ -1013,7 +1018,7 @@ int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
   /* read `check_kim_opt_param' or `num_opt_param' */
   if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
     /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
-    get_OptimizableParamSize(FreeParam, NULL, 0); 
+    get_optimizable_param_size(FreeParam, kim_model_name, NULL, 0); 
 
     printf(" - The following potential parameters are available to fit. Include the "
         "name(s) (and the initial value(s) and lower and upper boudaries if "
@@ -1084,17 +1089,15 @@ int ReadPotentialKeywords(pot_table_t* pt, char* filename, FILE* infile,
 }
 
 
-
-
-
-/****************************************************************
+/*******************************************************************************
  *
  *  write potential table (format 5)
  *
- ****************************************************************/
+ ******************************************************************************/
 
 void write_pot_table5(pot_table_t* pt, char *filename)
 {
+  /*local variables */
   FILE *outfile = NULL;
   int i, j, k;
 

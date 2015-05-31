@@ -645,14 +645,15 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 
 	/* read the keywords and the names of parameters that will be optimized */
-	ReadPotentialKeywords(pt, filename, infile, &FreeParamSet);
+	read_potential_keyword(pt, filename, infile, &FreeParamSet);
 
 	/* There is only 1 potential for KIM Model. */
 	i = 0;
 	/* get the total size (some parameters may be array) of the optimizable 
 	 * parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
 	 * need to be equal to num_opt_param, since they should all be scalar. */
-	apt->n_par[i] = get_OptimizableParamSize(&FreeParamSet, name_opt_param, num_opt_param); 
+	get_optimizable_param_size(&FreeParamSet, kim_model_name, name_opt_param, num_opt_param); 
+	apt->n_par[i] = FreeParamSet.Nnestedvalue; 
 	apt->total_par += apt->n_par[i];
 	
 	/* copy name */
@@ -946,13 +947,13 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	fgetpos(infile, &startpos);
 
 	/* read the keywords and the names of parameters that will be optimized */
-	ReadPotentialKeywords(pt, filename, infile, &FreeParamSet);
+	read_potential_keyword(pt, filename, infile, &FreeParamSet);
 
 
 	/* get the total size (some parameters may be array) of the optimizable 
 	 * parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
 	 * need to be equal to num_opt_param, since they should all be scalar. */
-	get_OptimizableParamSize(&FreeParamSet, name_opt_param, num_opt_param); 
+	get_optimizable_param_size(&FreeParamSet, kim_model_name, name_opt_param, num_opt_param); 
 
 	/* some potential table value */
 	pt->first[0] = 0;

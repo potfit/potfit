@@ -14,8 +14,8 @@
 
 /* function prototypes */
 
-void FreeKIM(void);
+void free_KIM(void);
 
-void FreeFreeParamType (FreeParamType* FreeParam); 
+void free_free_param (FreeParamType* FreeParam); 
 
 #endif /* KIM_H */

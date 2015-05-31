@@ -133,7 +133,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 * need to be published. 
 ***************************************************************************/
   for (i = 0; i < nconf; i++) {
-    PublishParam(pkimObj[i], &FreeParamAllConfig[i], xi_opt);  
+    publish_param(pkimObj[i], &FreeParamAllConfig[i], xi_opt);  
   }
 /*
 KIM_API_print(pkimObj[0],&status);
@@ -206,7 +206,7 @@ KIM_API_print(pkimObj[0],&status);
 * Calculate forces from KIM (general forces, including forces, virial and energy)
 *
 ***************************************************************************/
-        status = CalcForce( pkimObj[h], &kimenergy,  &kimforce,  &kimvirial, uf, kim_us);
+        status = calc_force_KIM( pkimObj[h], &kimenergy,  &kimforce,  &kimvirial, uf, kim_us);
         if (KIM_STATUS_OK > status) {
           KIM_API_report_error(__LINE__, __FILE__, "KIM: compute forces failed", status);
           exit(1);
