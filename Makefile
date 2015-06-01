@@ -419,24 +419,8 @@ ifneq (,$(strip $(findstring kim,${MAKETARGET})))
 #    MAKETARGET = ${COPY_MAKETARGET}${ADD_ON}
 #  endif
 	
-  POTFITSRC      += kim/kim.c kim/free_kim.c
+  POTFITSRC      += kim/kim.c kim/free_kim.c kim/force_kim.c
   
-  ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-    POTFITSRC      += kim/force_pair_kim.c 
-  endif
-
-  ifneq (,$(strip $(findstring eam,${MAKETARGET})))
-    ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-      POTFITSRC      += force_meam.c
-    else ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-      POTFITSRC      += force_eam_elstat.c
-    else ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-      POTFITSRC      += force_eam_elstat.c
-    else
-      POTFITSRC      += kim/force_eam_kim.c
-    endif
-  endif
-
   ifneq (,$(strip $(findstring apot,${MAKETARGET})))
     POTFITHDR      += functions.h
     POTFITSRC      += functions.c

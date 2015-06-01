@@ -1,13 +1,3 @@
-
-/*******************************************************************************
-*
-*
-*
-*******************************************************************************/
-
-
-
-
 /*******************************************************************************
 *
 * kim.c 
@@ -1153,3 +1143,38 @@ void write_pot_table5(pot_table_t* pt, char *filename)
 
   fclose(outfile);
 }
+
+
+/***************************************************************************
+ * 
+ * Calculate analytic Lennard-Jones potential value and gradient
+ *
+ * This is just a temporary test, we don't need it once it is checked
+ *
+ * transferred variable:
+ * phi_val: potential value
+ * phi_grad: gradient of potential 
+ ***************************************************************************/
+
+int AnalyticForce(double epsilon, double sigma, double cutoff,
+    double r, double* phi_val, double* phi_grad)
+{ 
+  /* local variables */
+  double sor;
+  double sor6;
+  double sor12;
+
+  sor   = sigma/(double)r;
+  sor6  = pow(sor,6);
+  sor12 = pow(sor6,2);
+
+  if( r > cutoff) {
+    *phi_val  = 0.0;
+    *phi_grad = 0.0;
+  } else {
+    *phi_val  = 4.0*epsilon*(sor12 - sor6);
+    *phi_grad = 24.0*epsilon*(-2.0*sor12 + sor6)/(double)r;
+  }
+  return 1;
+}
+

@@ -303,6 +303,16 @@ KIM_API_print(pkimObj[0], &status);
 
 
 
+
+
+
+
+
+
+
+
+
+
 #ifdef MPI
     /* Reduce rho_sum */
     rho_sum = 0.0;
@@ -325,6 +335,16 @@ KIM_API_print(pkimObj[0], &status);
       tmpsum += apot_punish(xi_opt, forces);
     }
 #endif /* APOT */
+
+
+
+
+
+
+
+
+
+
 
 #ifndef NOPUNISH
     if (myid == 0) {
