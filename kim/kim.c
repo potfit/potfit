@@ -24,6 +24,9 @@ void init_KIM()
 {
   printf("\nInitializing KIM ... started\n");
 
+  /* write the `descritor.kim' file for this test */
+  write_descriptor_file(ntypes, elements);
+
   /* create KIM objects and do the necessary initialization */
   init_object();
   
@@ -747,18 +750,66 @@ int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
   char name[64];
   char type[16];
   int tmp_size;
+  char species[1][3];
+  int Nspecies = 1;
+  int Nparticles = 1;
   int i, j;
 
+  
+  /* write the descriptor.kim file for the test */
+  /* We know all the information to write a descriptor file except for the species. But
+   * at this point, we don't know the species that the test have (actually, that info is
+   * read in from the configuration file later). So, a temporary KIM object will be
+   * created to query the species supported by the Model. We cannot just simply get all
+   * the species that the model supports and write it once for all. Because then the
+   * descriptor file does not know what species are really in the test, and if the
+   * species in the test is not supported by the Model, no error would be thrown out.
+   * So, here, only the first species supported by the model (the species in the test is
+   * a subset of the species supported by the Model) is written into the
+   * `descriptor.kim' file just to make the two descriptor file matche and work. After
+   * reading the species info from the `configuration' file, the descriptor file
+   * would be written again with the correct species info from the test. */
+  
+  /* create a temporary object*/
+  status = KIM_API_model_info(&pkim, kim_model_name);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_info", status);
+    return(status);
+  }
+
+  /* get the first species supported by the model */
+  status = KIM_API_get_model_species(pkim, 0, species);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    return(status);
+  }
+ 
+  /* free the temporary model */
+  KIM_API_free(&pkim, &status);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    return(status);
+  }
+
+  /* write a temporary `descriptor.kim' file, used only to query  model info */
+  /* we'll write `descriptor.kim' file with the species read from potfit later. */
+  status = write_descriptor_file(Nspecies, species); 
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);
+    return(status);
+  }
+ 
   /* create a temporary KIM objects, in order to inquire KIM model for 
    PARAM_FREE_* parameters info */
   status = KIM_API_file_init(&pkim, "descriptor.kim", modelname);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_file_init", status);
-    exit(1);
+    return(status);
   }
-  
+
   /* Allocate memory via the KIM system */
-  KIM_API_allocate(pkim, 2, 1, &status);
+  /* we'll never use this KIM object to do any calcualtion, allocate few memory*/
+  KIM_API_allocate(pkim, Nparticles, Nspecies, &status);
   if (KIM_STATUS_OK > status)
   {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_allocate", status);
@@ -773,16 +824,6 @@ int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
     return(status);   
   }
   
-/* The following shold be used to replace the above ones to create a model, but
- * somehow it does not work. report the Ryan. */
-/*
-  status = KIM_API_model_info(pkim, kim_model_name);
- if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_info", status);
-    return(status);
-  }
-*/  
-
   /* initialze the data struct for the free parameters with type double */
   get_free_param_double(pkim, FreeParam);
 
@@ -1145,6 +1186,171 @@ void write_pot_table5(pot_table_t* pt, char *filename)
 }
 
 
+
+/******************************************************************************
+ * 
+ * write descriptor.kim for the test 
+ *
+ * arguments:
+ * Nspecies: number of species that will be written into the descriptor file
+ * species: the names of the species, e.g. Al, Cu 
+ *
+ *****************************************************************************/
+
+int write_descriptor_file(int Nspecies, char** species)
+{
+  /* local variables */
+  int i;
+  FILE* outfile;
+
+  outfile = fopen("descriptor.kim", "w");
+ 
+  /* header */
+  fprintf(outfile,
+    "#\n"
+    "# CDDL HEADER START\n"
+    "#\n"
+    "# The contents of this file are subject to the terms of the Common Development\n"
+    "# and Distribution License Version 1.0 (the \"License\").\n"
+    "#\n"
+    "# You can obtain a copy of the license at\n"
+    "# http://www.opensource.org/licenses/CDDL-1.0.  See the License for the\n"
+    "# specific language governing permissions and limitations under the License.\n"
+    "#\n"
+    "# When distributing Covered Code, include this CDDL HEADER in each file and\n"
+    "# include the License file in a prominent location with the name LICENSE.CDDL.\n"
+    "# If applicable, add the following below this CDDL HEADER, with the fields\n"
+    "# enclosed by brackets \"[]\" replaced with your own identifying information:\n"
+    "#\n"
+    "# Portions Copyright (c) [yyyy] [name of copyright owner]. All rights reserved.\n"
+    "#\n"
+    "# CDDL HEADER END\n"
+    "#\n\n"
+  );
+
+  /* copyright */
+  fprintf(outfile, 
+    "#\n"
+    "# Copyright (c) 2013--2014, Regents of the University of Minnesota.\n"
+    "# All rights reserved.\n"
+    "#\n"
+    "# Contributors:\n"
+    "#    Ryan S. Elliott\n"
+    "#    Ellad B. Tadmor\n"
+    "#    Valeriu Smirichinski\n"
+    "#    Stephen M. Whalen\n"
+    "#\n\n"
+  );
+
+  /* versioni and units  */
+  fprintf(outfile,
+    "#######################################################################################################\n"
+    "#\n"
+    "# Release: This file is part of the kim-api-v1.6.3 package.\n"
+    "#\n"
+    "# See src/standard.kim for documentation about this file\n"
+    "#\n"
+    "#######################################################################################################\n\n"
+    "KIM_API_Version := 1.6.3\n\n"
+    "Unit_length      := A\n"
+    "Unit_energy      := eV\n"
+    "Unit_charge      := e\n"
+    "Unit_temperature := K\n"
+    "Unit_time        := ps\n\n\n"
+  );
+
+  /* particle species */
+  /* code does not matter, so just give it 0 */
+  fprintf(outfile, 
+    "#######################################################################################################\n"
+    "PARTICLE_SPECIES:\n"
+    "# Symbol/name               Type                    code\n\n" 
+  );
+  for (i = 0; i < Nspecies; i++) {
+    fprintf(outfile, "%s                          spec                    0\n\n", species[i]);
+  }
+
+  /* conversions */
+  fprintf(outfile, 
+    "\n#######################################################################################################\n"
+    "CONVENTIONS:\n"
+    "# Name                      Type\n\n"
+    "ZeroBasedLists              flag\n\n"
+    "Neigh_LocaAccess            flag\n\n"
+    "NEIGH_RVEC_H                flag\n\n"
+    "MI_OPBC_H                   flag\n\n\n"
+    );
+
+  /* Model output */
+  fprintf(outfile, 
+    "#######################################################################################################\n"
+    "MODEL_INPUT:\n"
+    "# Name                      Type         Unit                Shape             Requirements\n\n"
+    "numberOfParticles           integer      none                []\n\n"
+    "numberOfSpecies             integer      none                []\n\n"
+    "particleSpecies             integer      none                [numberOfParticles]\n\n"
+    "coordinates                 double       length              [numberOfParticles,3]\n\n"
+    "boxSideLengths              double       length              [3]\n\n"
+    "numberContributingParticles integer      none                []\n\n"
+    "get_neigh                   method       none                []\n\n"
+    "neighObject                 pointer      none                []\n\n\n"
+  );
+
+  /* Model output */
+  fprintf(outfile,  
+    "#######################################################################################################\n"
+    "MODEL_OUTPUT:\n"
+    "# Name                      Type         Unit                Shape\n\n"
+    "# Requirements\n\n" 
+    "destroy                     method       none                []\n\n"
+    "compute                     method       none                []\n\n"
+    "reinit                      method       none                []\n\n"
+    "cutoff                      double       length              []\n\n"
+    "energy                      double       energy              []\n\n"
+    "forces                      double       force               [numberOfParticles,3]\n\n"
+    "virial                      double       energy              [6]" 
+  );
+  
+  fflush(outfile);
+  fclose(outfile);
+
+  return KIM_STATUS_OK;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /***************************************************************************
  * 
  * Calculate analytic Lennard-Jones potential value and gradient
@@ -1175,6 +1381,7 @@ int AnalyticForce(double epsilon, double sigma, double cutoff,
     *phi_val  = 4.0*epsilon*(sor12 - sor6);
     *phi_grad = 24.0*epsilon*(-2.0*sor12 + sor6)/(double)r;
   }
-  return 1;
+  return 0;
 }
+
 

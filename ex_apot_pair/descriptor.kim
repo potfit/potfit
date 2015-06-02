@@ -50,7 +50,7 @@ Unit_time        := ps
 PARTICLE_SPECIES:
 # Symbol/name               Type                    code
 
-Ar                          spec                    18
+Ar                          spec                    0
 
 
 #######################################################################################################
@@ -63,12 +63,12 @@ Neigh_LocaAccess            flag
 
 NEIGH_RVEC_H                flag
 
-MI_OPBC_H			      				flag
+MI_OPBC_H                   flag
+
 
 #######################################################################################################
 MODEL_INPUT:
-# Name                      Type         Unit                Shape              Requirements
-
+# Name                      Type         Unit                Shape             Requirements
 
 numberOfParticles           integer      none                []
 
@@ -78,7 +78,7 @@ particleSpecies             integer      none                [numberOfParticles]
 
 coordinates                 double       length              [numberOfParticles,3]
 
-boxSideLengths							double			 length							 [3]
+boxSideLengths              double       length              [3]
 
 numberContributingParticles integer      none                []
 
@@ -89,13 +89,15 @@ neighObject                 pointer      none                []
 
 #######################################################################################################
 MODEL_OUTPUT:
-# Name                      Type         Unit                Shape              Requirements
+# Name                      Type         Unit                Shape
+
+# Requirements
 
 destroy                     method       none                []
 
 compute                     method       none                []
 
-reinit                      method       none                []               
+reinit                      method       none                []
 
 cutoff                      double       length              []
 
@@ -103,4 +105,4 @@ energy                      double       energy              []
 
 forces                      double       force               [numberOfParticles,3]
 
-#virial                      double       energy              [6]
+virial                      double       energy              [6]

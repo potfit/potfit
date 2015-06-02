@@ -90,6 +90,8 @@ void init_KIM();
 void free_KIM();
 
 /* called by `init_KIM' */
+int write_descriptor_file(int Nspecies, char** species);
+
 void init_object();
 
 void init_optimizable_param();

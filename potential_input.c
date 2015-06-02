@@ -747,7 +747,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	} while (strcmp(name, "cutoff") != 0 && !feof(infile));
 
 	if (apt->n_par[i] == num_opt_param) {
-		printf("Each `PARAM_FREE_*' is scalar.\n");
 		if (strcmp(name, "cutoff") == 0) {
 			if(2 > sscanf(buffer, "%s %s", name, tmp_value)) {
 				error(1,"Error reading in `cutoff'\n");
@@ -765,8 +764,6 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 			error(1,"`cutoff' is missing in %s.\n", filename);
 		}
 	} else {
-		printf("Some `PARAM_FREE_*' are array; (%s) is probably a tabulated potential.\n"
-				,kim_model_name);
 		if (strcmp(name, "cutoff") == 0) {
 			printf("`cutoff' read in from %s is deprecated. Will use the `cutoff' in "
 					" the KIM model throughout the fitting.\n", filename);
