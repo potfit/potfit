@@ -1064,6 +1064,21 @@ void read_config(char *filename)
   /* print diagnostic message */
   printf("\nRead %d configurations (%d with forces, %d with stresses)\n", nconf, w_force, w_stress);
   printf("with a total of %d atoms (", natoms);
+
+
+
+
+/*added (for KIM, elements haves to be given )*/
+#ifdef KIM 
+  if(!have_elements) {
+    error(1, "Elements info cannot be found. You need to include the line beginning "
+    "with `#C' at least in one of the configuration(s) in file: %s.", filename);
+  }
+#endif /* KIM */
+/*added ends*/
+
+
+
   for (i = 0; i < ntypes; i++) {
     if (have_elements)
       printf("%d %s (%.2f%%)", na_type[nconf][i], elements[i], 100.0 * na_type[nconf][i] / natoms);

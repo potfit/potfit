@@ -755,7 +755,7 @@ int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
   int Nparticles = 1;
   int i, j;
 
-  
+
   /* write the descriptor.kim file for the test */
   /* We know all the information to write a descriptor file except for the species. But
    * at this point, we don't know the species that the test have (actually, that info is
@@ -1316,19 +1316,6 @@ int write_descriptor_file(int Nspecies, char** species)
 
   return KIM_STATUS_OK;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
