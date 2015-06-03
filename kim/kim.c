@@ -750,7 +750,7 @@ int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
   char name[64];
   char type[16];
   int tmp_size;
-  char species[1][3];
+  char* species[1];
   int Nspecies = 1;
   int Nparticles = 1;
   int i, j;
@@ -784,13 +784,6 @@ int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
     return(status);
   }
  
-  /* free the temporary model */
-  KIM_API_free(&pkim, &status);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
-    return(status);
-  }
-
   /* write a temporary `descriptor.kim' file, used only to query  model info */
   /* we'll write `descriptor.kim' file with the species read from potfit later. */
   status = write_descriptor_file(Nspecies, species); 
@@ -798,7 +791,14 @@ int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
     KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);
     return(status);
   }
- 
+
+  /* free the temporary model */
+  KIM_API_free(&pkim, &status);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    return(status);
+  }
+
   /* create a temporary KIM objects, in order to inquire KIM model for 
    PARAM_FREE_* parameters info */
   status = KIM_API_file_init(&pkim, "descriptor.kim", modelname);

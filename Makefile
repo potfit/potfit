@@ -404,20 +404,17 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 ###########################################################################
 # to compile with kim 
 # nothing new, just add kim in the maketarget
-# e.g. make potfit_eam_kim
+# e.g. make potfit_kim
 ###########################################################################
 # if kim
+
+
+potfit_kim: potfit_apot_pair_kim
+					mv potfit_apot_pair_kim potfit_kim
+potfit_kim_nolimits: potfit_eam_kim_nolimits
+					mv potfit_eam_kim_nolimits potfit_kim_nolimits
+
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
-  
-#  ifneq (,$(strip $(findstring nolimits,${MAKETARGET})))
-#    COPY_MAKETARGET = ${MAKETARGET}
-#    ADD_ON = "_eam"
-#    MAKETARGET = ${COPY_MAKETARGET}${ADD_ON}
-#  else 
-#    COPY_MAKETARGET = ${MAKETARGET}
-#    ADD_ON = "_apot_pair"
-#    MAKETARGET = ${COPY_MAKETARGET}${ADD_ON}
-#  endif
 	
   POTFITSRC      += kim/kim.c kim/free_kim.c kim/force_kim.c
   
@@ -827,7 +824,7 @@ clean:
 ###########################################################################
 # remove kim stuff
 ###########################################################################
-	rm -f  potfit_* force_kim/*.o
+	rm -f  potfit_* kim/*.o
 # added ends
 
 
