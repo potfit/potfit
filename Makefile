@@ -416,7 +416,7 @@ potfit_kim_nolimits: potfit_eam_kim_nolimits
 
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
 	
-  POTFITSRC      += kim/kim.c kim/free_kim.c kim/force_kim.c
+  POTFITSRC      += kim/kim.c kim/force_kim.c
   
   ifneq (,$(strip $(findstring apot,${MAKETARGET})))
     POTFITHDR      += functions.h

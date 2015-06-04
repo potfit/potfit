@@ -137,6 +137,8 @@ void write_pot_table5(pot_table_t *pt, char *filename);
 /* free memory */
 int free_model_object(void** pkim);
 
+void free_KIM();
+
 #ifdef PAIR
 /* used only for check purpose (could be deleted ) */
 int AnalyticForce(double epsilon, double sigma, double cutoff,
