@@ -110,13 +110,12 @@ int get_neigh(void* kimmdl, int* mode, int *request, int* part,
               int* numnei, int** nei1part, double** Rij);					
 
 /* called in `potential_input.c' */
-int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname, 
-                              char** input_param_name, int input_param_num);
-
 int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 								    			FreeParamType* FreeParam);
 
-/* called by `get_optimizable_param_size' and `init_optimizable_param' */
+/* called in `potential_input.c' and by `read_potential_keyword'  `init_optimizable_param' */
+int write_temporary_descriptor_file(char* modelname);
+
 int get_free_param_double(void* pkim, FreeParamType* FreeParam);
 
 int nest_optimizable_param(void* pkim, FreeParamType* FreeParam, 
@@ -133,6 +132,10 @@ int publish_param(void* pkim, FreeParamType* FreeParam, double* PotTable);
 
 /* assigned to function pointer `write_pot_table' in `potfit.c' */
 void write_pot_table5(pot_table_t *pt, char *filename);
+
+
+/* free memory */
+int free_model_object(void** pkim);
 
 #ifdef PAIR
 /* used only for check purpose (could be deleted ) */

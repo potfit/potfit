@@ -10,6 +10,7 @@
 #include "kim.h"
 #undef KIM_MAIN
 
+#include <stdio.h>
 #include "../potfit.h" 
 
 
@@ -56,6 +57,7 @@ void init_object()
 {
   /* local variables */
   int status;
+  NeighObjectType* NeighObject;
   int i;
 
   /* Allocate memory for KIM objects */
@@ -90,15 +92,12 @@ void init_object()
       exit(1);
     }
 
-    NeighObjectType* NeighObject;
-
     /* allocate memory for NeighObject */ 
     NeighObject = (NeighObjectType*) malloc(sizeof(NeighObjectType));
     if (NULL == NeighObject) {
       KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
       exit(1);
     } 
-
 
     /* register access of neighborlist in KIM API */
     setup_neighborlist_KIM_access(pkimObj[i], NeighObject);
@@ -179,7 +178,6 @@ int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
   int status; 
   int species_code; 
   int halfflag;
-  int neighListLength; /* total length of neighList */
   int i, j;
   double* boxSideLen;
   int which_conf; /* which config we are in? */
@@ -527,9 +525,8 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
   char buffer[128];
   char name[64];
   char type[16];
-  int tmp_size;
   int NumFreeParamDouble = 0;
-  int i, j, k;
+  int i;
 
   /* get the maxStringLength of free parameters */
   status = KIM_API_get_num_free_params(pkim, &NumFreeParam, &maxStringLength);
@@ -662,7 +659,7 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
 *
 *****************************************************************************/
 
-nest_optimizable_param(void* pkim, FreeParamType* FreeParam,
+int nest_optimizable_param(void* pkim, FreeParamType* FreeParam,
                        char** input_param_name, int input_param_num)
 {
   /* local variables */
@@ -722,161 +719,6 @@ nest_optimizable_param(void* pkim, FreeParamType* FreeParam,
   FreeParam->Nnestedvalue = total_size;
 
   return total_size;
-}
-
-
-/******************************************************************************
-* 
-* Changes needed. It would be better to change this function.   
-*
-* Create a temporary KIM model to get the size of the optimizable parameters as
-* well as the nest
-*
-* input_param_name: the names of parameters that will be optimized 
-* input_param_num: the number of parameters that will be optimized
-*
-*******************************************************************************/
-
-int get_optimizable_param_size(FreeParamType* FreeParam, char* modelname,
-                              char** input_param_name, int input_param_num) 
-{
-  /*local variables */
-  void* pkim;
-  int status;
-  int size;     /* This would be equal to Nparam if all parameters have rank zero.*/  
-  int NumFreeParamNoDouble = 0;  /*number of FREE_PARAM_* with type other than double*/
-  char* pstr;
-  char buffer[128];
-  char name[64];
-  char type[16];
-  int tmp_size;
-  char* species[1];
-  int Nspecies = 1;
-  int Nparticles = 1;
-  int i, j;
-
-
-  /* write the descriptor.kim file for the test */
-  /* We know all the information to write a descriptor file except for the species. But
-   * at this point, we don't know the species that the test have (actually, that info is
-   * read in from the configuration file later). So, a temporary KIM object will be
-   * created to query the species supported by the Model. We cannot just simply get all
-   * the species that the model supports and write it once for all. Because then the
-   * descriptor file does not know what species are really in the test, and if the
-   * species in the test is not supported by the Model, no error would be thrown out.
-   * So, here, only the first species supported by the model (the species in the test is
-   * a subset of the species supported by the Model) is written into the
-   * `descriptor.kim' file just to make the two descriptor file matche and work. After
-   * reading the species info from the `configuration' file, the descriptor file
-   * would be written again with the correct species info from the test. */
-  
-  /* create a temporary object*/
-  status = KIM_API_model_info(&pkim, kim_model_name);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_info", status);
-    return(status);
-  }
-
-  /* get the first species supported by the model */
-  status = KIM_API_get_model_species(pkim, 0, species);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
-    return(status);
-  }
- 
-  /* write a temporary `descriptor.kim' file, used only to query  model info */
-  /* we'll write `descriptor.kim' file with the species read from potfit later. */
-  status = write_descriptor_file(Nspecies, species); 
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);
-    return(status);
-  }
-
-  /* free the temporary model */
-  KIM_API_free(&pkim, &status);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
-    return(status);
-  }
-
-  /* create a temporary KIM objects, in order to inquire KIM model for 
-   PARAM_FREE_* parameters info */
-  status = KIM_API_file_init(&pkim, "descriptor.kim", modelname);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_file_init", status);
-    return(status);
-  }
-
-  /* Allocate memory via the KIM system */
-  /* we'll never use this KIM object to do any calcualtion, allocate few memory*/
-  KIM_API_allocate(pkim, Nparticles, Nspecies, &status);
-  if (KIM_STATUS_OK > status)
-  {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_allocate", status);
-    return(status);
-  }
-
-  /* call Model's init routine */
-  status = KIM_API_model_init(pkim);
-  if (KIM_STATUS_OK > status)
-  {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_init", status);
-    return(status);   
-  }
-  
-  /* initialze the data struct for the free parameters with type double */
-  get_free_param_double(pkim, FreeParam);
-
-  /* nest the optimizable params */
-  size = nest_optimizable_param(pkim, FreeParam, input_param_name,
-                                input_param_num);
-
-  /* could deleted the following few lines, no actural use*/
-  /*number of free parameters of type other than double */
-  status = KIM_API_get_model_kim_str(kim_model_name, &pstr);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_kim_str", status);
-    return(status);
-  }
-  /* infinite loop to find PARAM_FREE_* of type other than double*/ 
-  while (1) {
-    pstr = strstr(pstr+1,"PARAM_FREE");
-    if (pstr == NULL) {
-      break;
-    } else {
-      snprintf(buffer, sizeof(buffer), "%s", pstr);
-      sscanf(buffer, "%s%s", name, type);
-      if ( strcmp(type, "double") != 0) {
-        NumFreeParamNoDouble++;
-      }
-    }
-  }
-  if (NumFreeParamNoDouble != 0) {
-    printf("-  There is (are) %d `PARAM_FREE_*' parameter(s) of type other than "
-            "`double'.\n", NumFreeParamNoDouble);
-  }
-
-  /* deallocate cannot be done here, because we'll qurey KIM objects to get cutoff
-   * in the read in potential function.  */
-  /* deallocate */  
-/*  
-  status = KIM_API_model_destroy(pkim);
-  if (KIM_STATUS_OK > status){ 
-    KIM_API_report_error(__LINE__, __FILE__,"destroy", status);
-    return status;
-  }
-*/
-
-/*
-  KIM_API_free(pkim, &status);
-  if (KIM_STATUS_OK > status){ 
-    KIM_API_report_error(__LINE__, __FILE__,"destroy", status);
-    return status;
-  }
-*/
-
-  /* return value */
-  return size;
 }
 
 
@@ -1012,8 +854,9 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 	/* local variables */
   int   i, j, k, ret_val;
   char  buffer[255], name[255];
-  fpos_t filepos, startpos; 
-  
+  fpos_t startpos; 
+	void* pkim;
+
   /* save starting position */
   fgetpos(infile, &startpos);
 
@@ -1045,14 +888,19 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
   
 	if (strcmp(name, "check_kim_opt_param") != 0 && strcmp(name, "num_opt_param") != 0){
     error(1, "Cannot find keyword `num_opt_param' in file: %s.", filename);
-  }
-  /* read `check_kim_opt_param' or `num_opt_param' */
-  if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
-    /* We do not need to get the `nestedvalue', so `NULL' and `0' works well here. */
-    get_optimizable_param_size(FreeParam, kim_model_name, NULL, 0); 
+	}
+	/* read `check_kim_opt_param' or `num_opt_param' */
+	if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
+		/* create a temporary KIM objects to query the info */
+		/* write temporary descriptor file */
+		write_temporary_descriptor_file(kim_model_name);
+		/* create KIM object with 1 atom and 1 species */
+		setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
+		/* initialze the data struct for the free parameters with type double */
+		get_free_param_double(pkim, FreeParam);
 
-    printf(" - The following potential parameters are available to fit. Include the "
-        "name(s) (and the initial value(s) and lower and upper boudaries if "
+		printf(" - The following potential parameters are available to fit. Include the "
+        "name(s) (and the initial value(s) and lower and upper boundaries if "
         "`NOLIMITS' is not enabled while compilation) that you want to optimize "
         "in file: %s.\n",filename);
     printf("         param name                 param extent\n");
@@ -1072,7 +920,9 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
         "correct. For example, if the extent of a parameter `PARAM_FREE_A' is "
         "[ 2 2 ], then you should list the initial values like: A[0 0], A[0 1], "
         "A[1 0], A[1 1].\n");
-   exit(1); 
+	 /* free the temporary kim model */
+	 free_model_object(&pkim);
+	 exit(1); 
   } else if (strncmp(buffer,"num_opt_param", 13) == 0) {
     if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
       error(1, "Cannot read `num_opt_param' in file: %s.", filename);  
@@ -1183,6 +1033,58 @@ void write_pot_table5(pot_table_t* pt, char *filename)
   }
 
   fclose(outfile);
+}
+
+
+
+/******************************************************************************
+ * 
+ * write temporary `descriptor.kim' file for the test 
+ *
+ * arguments:
+ * Nspecies: number of species that will be written into the descriptor file
+ * species: the names of the species, e.g. Al, Cu 
+ *
+ *****************************************************************************/
+
+int write_temporary_descriptor_file(char* modelname)
+{
+	/* local variables */
+	void* pkim;
+	char* species[1];
+	int status;
+	int Nspecies = 1;
+
+  /* create a temporary object*/
+  status = KIM_API_model_info(&pkim, modelname);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_info", status);
+    return(status);
+  }
+
+  /* get the first species supported by the model */
+  status = KIM_API_get_model_species(pkim, 0, &species[0]);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    return(status);
+  }
+ 
+  /* write a temporary `descriptor.kim' file, used only to query  model info */
+  /* we'll write `descriptor.kim' file with the species read from potfit later. */
+  status = write_descriptor_file(Nspecies, species); 
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);
+    return(status);
+  }
+
+  /* free the temporary object */
+  KIM_API_free(&pkim, &status);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    return(status);
+  }
+
+	return KIM_STATUS_OK;
 }
 
 
@@ -1318,11 +1220,28 @@ int write_descriptor_file(int Nspecies, char** species)
 }
 
 
+/******************************************************************************
+ * free KIM model and object 
+ ******************************************************************************/
+int free_model_object(void** pkim) 
+{
+	/* local variables */
+	int status;
 
-
-
-
-
+	/* call model destroy */
+	status = KIM_API_model_destroy(*pkim);
+	if (KIM_STATUS_OK > status) {
+		KIM_API_report_error(__LINE__, __FILE__,"KIM_API_model_destroy", status);
+		return status;
+	}
+	/* free KIM objects */
+	KIM_API_free(pkim, &status);
+	if (KIM_STATUS_OK > status) {
+		KIM_API_report_error(__LINE__, __FILE__,"KIM_API_free", status);
+		return status;
+	}
+	return KIM_STATUS_OK;
+}
 
 
 

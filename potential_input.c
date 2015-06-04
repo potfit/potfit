@@ -501,6 +501,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	double  tmp_pmin, tmp_pmax;
 	char tmp_value[255];
 	int jj, kk, tmp_size;
+	void* pkim;
 	FreeParamType FreeParamSet;
 
 
@@ -647,12 +648,32 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	/* read the keywords and the names of parameters that will be optimized */
 	read_potential_keyword(pt, filename, infile, &FreeParamSet);
 
+	/* write the descriptor.kim file for the test */
+	/* We know all the information to write a descriptor file except for the species. But
+	 * at this point, we don't know the species that the test have (actually, that info is
+	 * read in from the configuration file later). So, a temporary KIM object will be
+	 * created to query the species supported by the Model. We cannot just simply get all
+	 * the species that the model supports and write it once for all. Because then the
+	 * descriptor file does not know what species are really in the test, and if the
+	 * species in the test is not supported by the Model, no error would be thrown out.
+	 * So, here, only the first species supported by the model (the species in the test is
+	 * a subset of the species supported by the Model) is written into the
+	 * `descriptor.kim' file just to make the two descriptor file matche and work. After
+	 * reading the species info from the `configuration' file, the descriptor file
+	 * would be written again with the correct species info from the test. */
+	write_temporary_descriptor_file(kim_model_name);
+
+	/* create KIM object with 1 atom and 1 species */
+	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
+  
+  /* initialze the data struct for the free parameters with type double */
+  get_free_param_double(pkim, &FreeParamSet);
+
+  /* nest the optimizable params */
+  nest_optimizable_param(pkim, &FreeParamSet, name_opt_param, num_opt_param);
+
 	/* There is only 1 potential for KIM Model. */
 	i = 0;
-	/* get the total size (some parameters may be array) of the optimizable 
-	 * parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
-	 * need to be equal to num_opt_param, since they should all be scalar. */
-	get_optimizable_param_size(&FreeParamSet, kim_model_name, name_opt_param, num_opt_param); 
 	apt->n_par[i] = FreeParamSet.Nnestedvalue; 
 	apt->total_par += apt->n_par[i];
 	
@@ -902,12 +923,9 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 		warning("Gauge degrees of freedom are NOT fixed!\n");
 #endif /* NOPUNISH */
 
-	/*added don't need it any more; the calculation are done by KIM. But we still
-		include it to make it possible to use the config.c file, where a lot of
-		calc_table info are needed   */
-	init_calc_table(pt, &calc_pot);
+	/* free memory */
+	free_model_object(&pkim);
 
-	
 	return;
 }
 
@@ -938,6 +956,7 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	int   i, j, k, ret_val;
 	char  buffer[255], name[255];
 	fpos_t filepos, startpos; 
+	void* pkim;
 	FreeParamType FreeParamSet;
 
 	/* save starting position */
@@ -946,11 +965,29 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	/* read the keywords and the names of parameters that will be optimized */
 	read_potential_keyword(pt, filename, infile, &FreeParamSet);
 
+	/* write the descriptor.kim file for the test */
+	/* We know all the information to write a descriptor file except for the species. But
+	 * at this point, we don't know the species that the test have (actually, that info is
+	 * read in from the configuration file later). So, a temporary KIM object will be
+	 * created to query the species supported by the Model. We cannot just simply get all
+	 * the species that the model supports and write it once for all. Because then the
+	 * descriptor file does not know what species are really in the test, and if the
+	 * species in the test is not supported by the Model, no error would be thrown out.
+	 * So, here, only the first species supported by the model (the species in the test is
+	 * a subset of the species supported by the Model) is written into the
+	 * `descriptor.kim' file just to make the two descriptor file matche and work. After
+	 * reading the species info from the `configuration' file, the descriptor file
+	 * would be written again with the correct species info from the test. */
+	write_temporary_descriptor_file(kim_model_name);
 
-	/* get the total size (some parameters may be array) of the optimizable 
-	 * parameters and the `nestedvalue'. For analytic potential, apt->n_par[i]
-	 * need to be equal to num_opt_param, since they should all be scalar. */
-	get_optimizable_param_size(&FreeParamSet, kim_model_name, name_opt_param, num_opt_param); 
+	/* create KIM object with 1 atom and 1 species */
+	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
+  
+  /* initialze the data struct for the free parameters with type double */
+  get_free_param_double(pkim, &FreeParamSet);
+
+  /* nest the optimizable params */
+  nest_optimizable_param(pkim, &FreeParamSet, name_opt_param, num_opt_param);
 
 	/* some potential table value */
 	pt->first[0] = 0;
@@ -987,10 +1024,10 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 				"cutoff to potfit failed.");
 	}
 
-  /* still incldue it, need it when write outpot*/
-  init_calc_table(pt, &calc_pot);
-	
-  printf(" - Successfully read potential parameters that will be optimized.\n");
+	/* free memory */
+	free_model_object(&pkim);
+  
+	printf(" - Successfully read potential parameters that will be optimized.\n");
 	return;
 }
 
