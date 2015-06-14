@@ -39,22 +39,19 @@ void write_errors(double* force, double tot)
   FILE *outfile;
   double sqr;
   double rms[3];
-#if defined EAM || defined ADP || defined MEAM
-  double *totdens = NULL;
-#endif /* EAM || ADP || MEAM */
   char* component[6];
 
   /* set spline density corrections to 0 */
 #if defined EAM || defined ADP || defined MEAM
-  totdens = (double *)malloc(ntypes * sizeof(double));
+  double* totdens = (double *)malloc(g_param.ntypes * sizeof(double));
   reg_for_free(totdens, "totdens");
 #endif /* EAM || ADP || MEAM */
 
 #if defined EAM || defined ADP || defined MEAM
 #ifndef MPI
 /* Not much sense in printing rho when not communicated... */
-  if (write_output_files) {
-    strcpy(file, output_prefix);
+  if (g_param.write_output_files) {
+    strcpy(file, g_files.output_prefix);
     strcat(file, ".rho_loc");
     outfile = fopen(file, "w");
     if (NULL == outfile)
@@ -63,28 +60,28 @@ void write_errors(double* force, double tot)
     outfile = stdout;
     printf("Local electron density rho\n");
   }
-  for (i = 0; i < ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++) {
     totdens[i] = 0.0;
   }
   fprintf(outfile, "#    atomtype\trho\n");
 #ifdef MEAM
   fprintf(outfile, "#    atomtype\trho\trho_eam\trho_meam\n");
 #endif /* MEAM */
-  for (i = 0; i < natoms; i++) {
+  for (i = 0; i < g_config.natoms; i++) {
 #if defined EAM || defined ADP
     fprintf(outfile, "%d\t%d\t%f\n", i, g_config.atoms[i].type, g_config.atoms[i].rho);
 #elif defined MEAM
     fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, g_config.atoms[i].type, g_config.atoms[i].rho,
       g_config.atoms[i].rho_eam, g_config.atoms[i].rho - g_config.atoms[i].rho_eam);
 #endif /* EAM || ADP */
-    totdens[atoms[i].type] += g_config.atoms[i].rho;
+    totdens[g_config.atoms[i].type] += g_config.atoms[i].rho;
   }
   fprintf(outfile, "\n");
-  for (i = 0; i < ntypes; i++) {
-    totdens[i] /= (double)na_type[nconf][i];
+  for (i = 0; i < g_param.ntypes; i++) {
+    totdens[i] /= (double)g_config.na_type[g_config.nconf][i];
     fprintf(outfile, "Average local electron density at atom sites type %d: %f\n", i, totdens[i]);
   }
-  if (write_output_files) {
+  if (g_param.write_output_files) {
     printf("Local electron density data written to \t%s\n", file);
     fclose(outfile);
   }
@@ -136,7 +133,7 @@ void write_errors(double* force, double tot)
       fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
     fprintf(outfile,
       "%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\t%14.8f\n",
-      g_config.atoms[i / 3].conf, i / 3, component[i % 3], g_config.elements[atoms[i / 3].type],
+      g_config.atoms[i / 3].conf, i / 3, component[i % 3], g_config.elements[g_config.atoms[i / 3].type],
       sqr, force[i] * (FORCE_EPS + g_config.atoms[i / 3].absforce) + g_config.force_0[i],
       g_config.force_0[i], (force[i] * (FORCE_EPS + g_config.atoms[i / 3].absforce)) / g_config.force_0[i], g_config.atoms[i / 3].absforce);
 #else
@@ -238,7 +235,7 @@ void write_errors(double* force, double tot)
 #if ( defined EAM || defined ADP || defined MEAM ) && !defined NOPUNISH
   /* write EAM punishments */
   if (g_param.write_output_files) {
-    strcpy(file, output_prefix);
+    strcpy(file, g_files.output_prefix);
     strcat(file, ".punish");
     outfile = fopen(file, "w");
     if (NULL == outfile)
@@ -249,39 +246,39 @@ void write_errors(double* force, double tot)
     outfile = stdout;
     printf("Punishment Constraints\n");
   }
-  for (i = limit_p; i < dummy_p; i++) {
+  for (i = g_calc.limit_p; i < g_calc.dummy_p; i++) {
     sqr = dsquare(force[i]);
     if (g_param.write_output_files)
-      fprintf(outfile, "%d\t%f\t%f\n", i - limit_p, sqr, force[i] + g_config.force_0[i]);
+      fprintf(outfile, "%d\t%f\t%f\n", i - g_calc.limit_p, sqr, force[i] + g_config.force_0[i]);
     else
-      fprintf(outfile, "%d %f %f %f %f\n", i - limit_p, sqr,
+      fprintf(outfile, "%d %f %f %f %f\n", i - g_calc.limit_p, sqr,
 	force[i] + g_config.force_0[i], g_config.force_0[i], force[i] / g_config.force_0[i]);
   }
   if (g_param.write_output_files) {
     fprintf(outfile, "\nDummy Constraints\n");
     fprintf(outfile, "element\tU^2\t\tU'^2\t\tU\t\tU'\n");
-    for (i = dummy_p; i < dummy_p + ntypes; i++) {
+    for (i = g_calc.dummy_p; i < g_calc.dummy_p + g_param.ntypes; i++) {
 #ifndef RESCALE
       sqr = dsquare(force[i]);
-      fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", g_config.elements[i - dummy_p], 0.0, sqr, 0.0, force[i]);
+      fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", g_config.elements[i - g_calc.dummy_p], 0.0, sqr, 0.0, force[i]);
 #else
-      sqr = dsquare(force[i + ntypes]);
+      sqr = dsquare(force[i + g_param.ntypes]);
       fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", g_config.elements[i - dummy_p], sqr, dsquare(force[i]),
-	force[i + ntypes], force[i]);
+	force[i + g_param.ntypes], force[i]);
 #endif /* !RESCALE */
     }
 #ifndef RESCALE
     fprintf(outfile, "\nNORESCALE: <n>!=1\n");
-    fprintf(outfile, "<n>=%f\n", force[dummy_p + ntypes] / DUMMY_WEIGHT + 1);
-    fprintf(outfile, "Additional punishment of %f added.\n", dsquare(force[dummy_p + ntypes]));
+    fprintf(outfile, "<n>=%f\n", force[g_calc.dummy_p + g_param.ntypes] / DUMMY_WEIGHT + 1);
+    fprintf(outfile, "Additional punishment of %f added.\n", dsquare(force[g_calc.dummy_p + g_param.ntypes]));
 #endif /* !RESCALE */
     printf("Punishment constraints data written to \t%s\n", file);
     fclose(outfile);
   } else {
     fprintf(outfile, "Dummy Constraints\n");
-    for (i = dummy_p; i < dummy_p + ntypes; i++) {
+    for (i = g_calc.dummy_p; i < g_calc.dummy_p + g_param.ntypes; i++) {
       sqr = dsquare(force[i]);
-      fprintf(outfile, "%s\t%f\t%f\n", g_config.elements[i - dummy_p], sqr, force[i]);
+      fprintf(outfile, "%s\t%f\t%f\n", g_config.elements[i - g_calc.dummy_p], sqr, force[i]);
     }
   }
 #endif /* (EAM || ADP || MEAM) && !NOPUNISH */
@@ -296,7 +293,7 @@ void write_errors(double* force, double tot)
       error(1, "Could not open file %s\n", file);
 #ifndef STRESS
     fprintf(outfile,
-      "total error sum %f, count %d (%d forces, %d energies)\n", tot, mdim - 6 * nconf, 3 * natoms, nconf);
+      "total error sum %f, count %d (%d forces, %d energies)\n", tot, g_calc.mdim - 6 * g_config.nconf, 3 * g_config.natoms, g_config.nconf);
 #else
     fprintf(outfile,
       "total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",

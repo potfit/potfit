@@ -372,7 +372,7 @@ int get_param_string (char const* param_name, char** value, int line, char const
 void check_parameters_complete(char const* paramfile)
 {
   if (g_param.ntypes < 1)
-    error(1, "Missing parameter or invalid value in %s : ntypes is \"%d\"", paramfile, g_param.ntypes);
+    error(1, "Missing parameter or invalid value in %s : g_param.ntypes is \"%d\"", paramfile, g_param.ntypes);
 
   if (g_files.startpot == NULL)
     error(0, "Missing parameter or invalid value in %s : startpot is <undefined>", paramfile);

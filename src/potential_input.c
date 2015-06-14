@@ -256,7 +256,7 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
     fflush(stdout);
   } else {
     error(0, "Wrong number of data columns in %s potential file \"%s\".\n", interaction_name, pstate->filename);
-    error(1, "For ntypes=%d there should be %d, but there are %d.", g_param.ntypes, npots, pstate->num_pots);
+    error(1, "For g_param.ntypes=%d there should be %d, but there are %d.", g_param.ntypes, npots, pstate->num_pots);
   }
   /* recognized format? */
   if ((g_pot.format != 0) && (g_pot.format != 3) && (g_pot.format != 4))
@@ -413,7 +413,6 @@ void allocate_memory_for_potentials(potential_state* pstate)
 
   #if defined(APOT)
     apot_table_t* apt = &g_pot.apot_table;
-    int ntypes = g_param.ntypes;
 
     /* allocate memory for analytic potential table */
     apt->number = size;
@@ -429,13 +428,13 @@ void allocate_memory_for_potentials(potential_state* pstate)
       if (g_param.enable_cp)
       {
         apt->values = (double **)malloc((size + 1) * sizeof(double *));
-        apt->values[size] = (double *)malloc(ntypes * sizeof(double));
+        apt->values[size] = (double *)malloc(g_param.ntypes * sizeof(double));
         apt->invar_par = (int **)malloc(size * sizeof(int *));
         apt->chempot = apt->values[size];
         apt->pmin = (double **)malloc((size + 1) * sizeof(double *));
-        apt->pmin[size] = (double *)malloc(ntypes * sizeof(double));
+        apt->pmin[size] = (double *)malloc(g_param.ntypes * sizeof(double));
         apt->pmax = (double **)malloc((size + 1) * sizeof(double *));
-        apt->pmax[size] = (double *)malloc(ntypes * sizeof(double));
+        apt->pmax[size] = (double *)malloc(g_param.ntypes * sizeof(double));
       }
       else
       {
@@ -447,18 +446,18 @@ void allocate_memory_for_potentials(potential_state* pstate)
     #endif
 
     #if defined(COULOMB)
-      apt->ratio = (double *)malloc(ntypes * sizeof(double));
+      apt->ratio = (double *)malloc(g_param.ntypes * sizeof(double));
       apt->values = (double **)malloc((size + 5) * sizeof(double *));
       apt->param_name = (char ***)malloc((size + 5) * sizeof(char **));
       apt->pmin = (double **)malloc((size + 5) * sizeof(double *));
       apt->pmax = (double **)malloc((size + 5) * sizeof(double *));
       apt->invar_par = (int **)malloc((size + 5) * sizeof(int *));
 
-      apt->values[size] = (double *)malloc((ntypes - 1) * sizeof(double));
-      apt->param_name[size] = (char **)malloc((ntypes - 1) * sizeof(char *));
-      apt->pmin[size] = (double *)malloc((ntypes - 1) * sizeof(double));
-      apt->pmax[size] = (double *)malloc((ntypes - 1) * sizeof(double));
-      apt->invar_par[size] = (int *)malloc((ntypes - 1) * sizeof(int));
+      apt->values[size] = (double *)malloc((g_param.ntypes - 1) * sizeof(double));
+      apt->param_name[size] = (char **)malloc((g_param.ntypes - 1) * sizeof(char *));
+      apt->pmin[size] = (double *)malloc((g_param.ntypes - 1) * sizeof(double));
+      apt->pmax[size] = (double *)malloc((g_param.ntypes - 1) * sizeof(double));
+      apt->invar_par[size] = (int *)malloc((g_param.ntypes - 1) * sizeof(int));
 
       apt->values[size + 1] = (double *)malloc(sizeof(double));
       apt->param_name[size + 1] = (char **)malloc(sizeof(char *));
@@ -466,11 +465,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
       apt->pmax[size + 1] = (double *)malloc(sizeof(double));
       apt->invar_par[size + 1] = (int *)malloc(sizeof(int));
 
-      apt->values[size + 2] = (double *)malloc(ntypes * sizeof(double));
-      apt->param_name[size + 2] = (char **)malloc(ntypes * sizeof(char *));
-      apt->pmin[size + 2] = (double *)malloc(ntypes * sizeof(double));
-      apt->pmax[size + 2] = (double *)malloc(ntypes * sizeof(double));
-      apt->invar_par[size + 2] = (int *)malloc(ntypes * sizeof(int));
+      apt->values[size + 2] = (double *)malloc(g_param.ntypes * sizeof(double));
+      apt->param_name[size + 2] = (char **)malloc(g_param.ntypes * sizeof(char *));
+      apt->pmin[size + 2] = (double *)malloc(g_param.ntypes * sizeof(double));
+      apt->pmax[size + 2] = (double *)malloc(g_param.ntypes * sizeof(double));
+      apt->invar_par[size + 2] = (int *)malloc(g_param.ntypes * sizeof(int));
 
       for (int i = 3; i < 5; i++)
       {
@@ -538,14 +537,14 @@ void calculate_cutoffs()
     }
   }
 #if defined(EAM) || defined(ADP) || defined(MEAM)
-  for (int i = 0; i < nt; i++)
+  for (int i = 0; i < n; i++)
   {
-    for (int j = 0; j < nt; j++)
+    for (int j = 0; j < n; j++)
     {
-      g_config.rcut[i * n + j] = MAX(rcut[i * n + j], pt->end[(n * (n + 1)) / 2 + i]);
-      g_config.rcut[i * n + j] = MAX(rcut[i * n + j], pt->end[(n * (n + 1)) / 2 + j]);
-      g_config.rmin[i * n + j] = MAX(rmin[i * n + j], pt->begin[(n * (n + 1)) / 2 + i]);
-      g_config.rmin[i * n + j] = MAX(rmin[i * n + j], pt->begin[(n * (n + 1)) / 2 + j]);
+      g_config.rcut[i * n + j] = MAX(g_config.rcut[i * n + j], pt->end[(n * (n + 1)) / 2 + i]);
+      g_config.rcut[i * n + j] = MAX(g_config.rcut[i * n + j], pt->end[(n * (n + 1)) / 2 + j]);
+      g_config.rmin[i * n + j] = MAX(g_config.rmin[i * n + j], pt->begin[(n * (n + 1)) / 2 + i]);
+      g_config.rmin[i * n + j] = MAX(g_config.rmin[i * n + j], pt->begin[(n * (n + 1)) / 2 + j]);
     }
   }
 #endif /* EAM || ADP || MEAM */
@@ -602,7 +601,7 @@ void read_maxch_file()
 
 /****************************************************************
  *
- * update apot_table from opt_pot_table, including globals
+ * update g_pot.apot_table from g_pot.opt_pot_table, including globals
  *
  ****************************************************************/
 
@@ -625,7 +624,7 @@ void update_apot_table(double *xi)
 
 /****************************************************************
  *
- * update calc_pot.table from opt_pot.table, including globals
+ * update g_pot.calc_pot.table from g_pot.opt_pot.table, including globals
  *
  ****************************************************************/
 

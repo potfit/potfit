@@ -65,19 +65,19 @@ double rescale(pot_table_t *pt, double upper, int flag)
   /* Last index of F(type n) - Last index of rho(type n)
      The total number of splines and gradients for F and all of its
      types for an alloy */
-  dimnewxi = pt->last[paircol + 2 * ntypes - 1] - pt->last[paircol + ntypes - 1];
+  dimnewxi = pt->last[paircol + 2 * g_param.ntypes - 1] - pt->last[paircol + g_param.ntypes - 1];
 
   /* Allocate memory for dynamic arrays that will store the new F */
   newxi = (double *)malloc(dimnewxi * sizeof(double));	// Size of F array
   neword = (double *)malloc(dimnewxi * sizeof(double));	// Size of F array
-  newstep = (double *)malloc(ntypes * sizeof(double));	// # of cols of F
-  maxrho = (double *)malloc(ntypes * sizeof(double));	// # of cols of F
-  minrho = (double *)malloc(ntypes * sizeof(double));	// # of cols of F
-  left = (double *)malloc(ntypes * sizeof(double));	// # of cols of F
-  right = (double *)malloc(ntypes * sizeof(double));	// # of cols of F
+  newstep = (double *)malloc(g_param.ntypes * sizeof(double));	// # of cols of F
+  maxrho = (double *)malloc(g_param.ntypes * sizeof(double));	// # of cols of F
+  minrho = (double *)malloc(g_param.ntypes * sizeof(double));	// # of cols of F
+  left = (double *)malloc(g_param.ntypes * sizeof(double));	// # of cols of F
+  right = (double *)malloc(g_param.ntypes * sizeof(double));	// # of cols of F
 
   // Initialize max and min rho's for each column in F
-  for (i = 0; i < ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++) {
     maxrho[i] = -1e100;
     minrho[i] = 1e100;
   }
@@ -89,7 +89,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
   // Initialize the 2nd derivs for splines, so that we can interpolate
   // in the future
-  for (col = 0; col < 2 * paircol + 3 * ntypes; ++col) {
+  for (col = 0; col < 2 * paircol + 3 * g_param.ntypes; ++col) {
 
     // Pointer to first entry
     first = pt->first[col];
@@ -101,7 +101,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
     // *(xi + first - 2) = value of endpoint gradient (default: 1e30)
     // *(xi + first - 1) = value of other endpoint gradient
     //          (default: phi=0.0, rho=0.0, F=1e30)
-    // calc_pot.d2tab + first = array to hold 2nd deriv
+    // g_pot.calc_pot.d2tab + first = array to hold 2nd deriv
     spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2), *(xi + first - 1),
       pt->d2tab + first);
   }
@@ -145,8 +145,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
 	// BEGIN COMPUTING rho values for f_ij potential
 	// Get column for atom j (it behaves similarly to pair potential, phi)
 	// just offset by "paircol + 2*ntypes"
-	col2 = (type1 <= type2) ? paircol + 2 * ntypes + type1 * ntypes + type2 - ((type1 * (type1 + 1)) / 2)
-	  : paircol + 2 * ntypes + type2 * ntypes + type1 - ((type2 * (type2 + 1)) / 2);
+	col2 = (type1 <= type2) ? paircol + 2 * g_param.ntypes + type1 * g_param.ntypes + type2 - ((type1 * (type1 + 1)) / 2)
+	  : paircol + 2 * g_param.ntypes + type2 * g_param.ntypes + type1 - ((type2 * (type2 + 1)) / 2);
 
 	// Check that neighbor lies in range of f_ij potential
 	if (neigh->r < pt->end[col2]) {
@@ -205,7 +205,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
   }				// END OF LOOP OVER CONFIGURATIONS
 
   // Loop through each alloy's F looking for max/min column
-  for (i = 0; i < ntypes; ++i) {
+  for (i = 0; i < g_param.ntypes; ++i) {
     if (maxrho[i] > max) {
       max = maxrho[i];
       maxcol = i;
@@ -221,10 +221,10 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
   // Determine new left and right boundary, add 40 per cent...
   // Loop through each column of F
-  for (i = 0; i < ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++) {
 
     // Column of F being looped through
-    j = paircol + ntypes + i;
+    j = paircol + g_param.ntypes + i;
 
     // For each column find the bounds of the x-axis of F
     // that just encompass the min and maxrho by 30% of a
@@ -261,10 +261,10 @@ double rescale(pot_table_t *pt, double upper, int flag)
   h = 0;
 
   // Loop over columns of F
-  for (i = 0; i < ntypes; ++i) {
+  for (i = 0; i < g_param.ntypes; ++i) {
 
     // Column of F being looped through
-    col = paircol + ntypes + i;
+    col = paircol + g_param.ntypes + i;
 
     // Number of splines
     vals = pt->last[col] - pt->first[col];
@@ -306,7 +306,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
   // Now that we have the new spline values for F
   // we need to write back the new F to the old potential table
   col = 0;			// Loop over F columns in the potential table
-  for (j = paircol + ntypes; j < paircol + 2 * ntypes; ++j) {
+  for (j = paircol + g_param.ntypes; j < paircol + 2 * g_param.ntypes; ++j) {
 
     // Loop over each spline point in the old table
     for (i = pt->first[j]; i <= pt->last[j]; ++i) {
@@ -324,7 +324,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
   // Scale the actual values of rho_ij to keep physics the same
   // Loop through each rho_ij column for an alloy
-  for (i = paircol; i < paircol + ntypes; ++i) {
+  for (i = paircol; i < paircol + g_param.ntypes; ++i) {
 
     // Loop through each spline point
     for (j = pt->first[i]; j <= pt->last[i]; ++j) {
@@ -343,7 +343,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
   // We multiply this 'a' to the g potential
 
   // Loop through each g column for an alloy
-  for (i = 2 * paircol + 2 * ntypes; i < 2 * paircol + 3 * ntypes; ++i) {
+  for (i = 2 * paircol + 2 * g_param.ntypes; i < 2 * paircol + 3 * g_param.ntypes; ++i) {
 
     // Loop through each spline point
     for (j = pt->first[i]; j <= pt->last[i]; ++j) {
@@ -366,7 +366,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
     j = 0;
 
     // Loop through each F column
-    for (i = paircol + ntypes; i < paircol + 2 * ntypes; ++i) {
+    for (i = paircol + g_param.ntypes; i < paircol + 2 * g_param.ntypes; ++i) {
 
       // Reset first/last x-coord value in the table to scaled value
       pt->begin[i] = a * left[j];
@@ -402,7 +402,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
     j = 0;
 
     // Loop through each F column
-    for (i = paircol + ntypes; i < paircol + 2 * ntypes; ++i) {
+    for (i = paircol + g_param.ntypes; i < paircol + 2 * g_param.ntypes; ++i) {
 
       // Reset first/last x-coord value in the table to scaled value
       pt->begin[i] = a * right[j];
@@ -450,8 +450,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
     // Loop through each column in F
     // We will be setting the values in reverse order
-    for (i = 0; i < ntypes; ++i) {
-      col = paircol + ntypes + i;
+    for (i = 0; i < g_param.ntypes; ++i) {
+      col = paircol + g_param.ntypes + i;
 
       // Loop through each spline point in REVERSE ORDER for this column
       for (j = pt->last[col]; j >= pt->first[col]; --j) {
@@ -465,7 +465,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
     // Loop through each column in F
     // We will be setting back the values we stored earlier in reverse order
-    for (j = paircol + ntypes; j < paircol + 2 * ntypes; ++j) {
+    for (j = paircol + g_param.ntypes; j < paircol + 2 * g_param.ntypes; ++j) {
 
       // Loop through each spline knot in CORRECT ORDER for this column
       for (i = pt->first[j]; i <= pt->last[j]; ++i) {
@@ -486,7 +486,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
   // RE-Initialize the 2nd derivs for splines, so that we can interpolate
   // in the future: only initialize rho, F, and f since they changed
-  for (col = paircol; col < paircol + 2 * ntypes; ++col) {
+  for (col = paircol; col < paircol + 2 * g_param.ntypes; ++col) {
 
     // Pointer to first entry
     first = pt->first[col];
@@ -498,7 +498,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
     // *(xi + first - 2) = value of endpoint gradient (default: 1e30)
     // *(xi + first - 1) = value of other endpoint gradient
     //          (default: phi=0.0, rho=0.0, F=1e30)
-    // calc_pot.d2tab + first = array to hold 2nd deriv
+    // g_pot.calc_pot.d2tab + first = array to hold 2nd deriv
     spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2), *(xi + first - 1),
       pt->d2tab + first);
   }
@@ -508,23 +508,23 @@ double rescale(pot_table_t *pt, double upper, int flag)
   ///////////////////////////////////////////////////////////////////////////////
 
   // Loop through each column in F
-  for (i = 0; i < ntypes; ++i) {
+  for (i = 0; i < g_param.ntypes; ++i) {
 
     // Store gradient for F' at the point halfway between the domain of F
     // at each column in lambda
     lambda[i] =
-      splint_grad(&opt_pot, pt->table, paircol + ntypes + i,
-      0.5 * (pt->begin[paircol + ntypes + i] + pt->end[paircol + ntypes + i]));
+      splint_grad(&opt_pot, pt->table, paircol + g_param.ntypes + i,
+      0.5 * (pt->begin[paircol + g_param.ntypes + i] + pt->end[paircol + g_param.ntypes + i]));
   }
 
   // Now output the gradient in each column of F at this point
-  for (i = 0; i < ntypes; i++)
+  for (i = 0; i < g_param.ntypes; i++)
     printf("lambda[%d] = %f\n", i, lambda[i]);
   i = 0;
 
   // Loop through all columns of pair potential, phi
-  for (col = 0; col < ntypes; ++col) {
-    for (col2 = col; col2 < ntypes; ++col2) {
+  for (col = 0; col < g_param.ntypes; ++col) {
+    for (col2 = col; col2 < g_param.ntypes; ++col2) {
 
       // Loop through each spline point for phi
       for (j = pt->first[i]; j <= pt->last[i]; ++j) {
@@ -553,18 +553,18 @@ double rescale(pot_table_t *pt, double upper, int flag)
   }				// END OF OUTER LOOP OVER PHI
 
   // Update F potential using gauge condition
-  for (i = 0; i < ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++) {
 
     // Loop through spline points of F
     // Use gauge condition F'_i = F_i - lambda_i * rho_i
-    for (j = pt->first[paircol + ntypes + i]; j <= pt->last[paircol + ntypes + i]; ++j)
+    for (j = pt->first[paircol + g_param.ntypes + i]; j <= pt->last[paircol + g_param.ntypes + i]; ++j)
       pt->table[j] -= pt->xcoord[j] * lambda[i];
 
     // Fix the gradients as well
-    if (pt->table[pt->first[paircol + ntypes + i] - 2] < 1.e30)	// natural spline
-      pt->table[pt->first[paircol + ntypes + i] - 2] -= lambda[i];
-    if (pt->table[pt->first[paircol + ntypes + i] - 1] < 1.e30)
-      pt->table[pt->first[paircol + ntypes + i] - 1] -= lambda[i];
+    if (pt->table[pt->first[paircol + g_param.ntypes + i] - 2] < 1.e30)	// natural spline
+      pt->table[pt->first[paircol + g_param.ntypes + i] - 2] -= lambda[i];
+    if (pt->table[pt->first[paircol + g_param.ntypes + i] - 1] < 1.e30)
+      pt->table[pt->first[paircol + g_param.ntypes + i] - 1] -= lambda[i];
     lambda[i] = 0.0;
   }
 

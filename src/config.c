@@ -485,7 +485,7 @@ void read_config(char const* filename)
   }
   printf(").\n");
 
-  /* be pedantic about too large ntypes */
+  /* be pedantic about too large g_param.ntypes */
   if ((max_atom_type + 1) < g_param.ntypes) {
     error(0, "There are less than %d atom types in your configurations!\n", g_param.ntypes);
     error(1, "Please adjust \"ntypes\" in your parameter file.");
@@ -523,7 +523,7 @@ void read_config(char const* filename)
 /* mdim has additional components for EAM-like potentials */
 #if defined EAM || defined ADP || defined MEAM
   g_calc.mdim += g_config.nconf;      /* nconf limiting constraints */
-  g_calc.mdim += 2 * g_param.ntypes; /* ntypes dummy constraints */
+  g_calc.mdim += 2 * g_param.ntypes; /* g_param.ntypes dummy constraints */
 #ifdef TBEAM
   g_calc.mdim += 2 * g_param.ntypes; /* additional dummy constraints for s-band */
 #endif                /* TBEAM */
@@ -609,16 +609,16 @@ void read_config(char const* filename)
 
 /* transfer functions */
 #if defined EAM || defined ADP || defined MEAM
-for (i = g_calc.paircol; i < g_calc.paircol + ntypes; i++) {
-    apot_table.begin[i] = min * 0.95;
-    opt_pot.begin[i] = min * 0.95;
-    calc_pot.begin[i] = min * 0.95;
+for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++) {
+    g_pot.apot_table.begin[i] = min * 0.95;
+    g_pot.opt_pot.begin[i] = min * 0.95;
+    g_pot.calc_pot.begin[i] = min * 0.95;
   }
 #ifdef TBEAM
-for (i = g_calc.paircol + 2 * ntypes; i < g_calc.paircol + 3 * ntypes; i++) {
-    apot_table.begin[i] = min * 0.95;
-    opt_pot.begin[i] = min * 0.95;
-    calc_pot.begin[i] = min * 0.95;
+for (i = g_calc.paircol + 2 * g_param.ntypes; i < g_calc.paircol + 3 * g_param.ntypes; i++) {
+    g_pot.apot_table.begin[i] = min * 0.95;
+    g_pot.opt_pot.begin[i] = min * 0.95;
+    g_pot.calc_pot.begin[i] = min * 0.95;
   }
 #endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
@@ -626,36 +626,36 @@ for (i = g_calc.paircol + 2 * ntypes; i < g_calc.paircol + 3 * ntypes; i++) {
 /* dipole and quadrupole functions */
 #ifdef ADP
   for (i = 0; i < g_calc.paircol; i++) {
-    j = g_calc.paircol + 2 * ntypes + i;
-    apot_table.begin[j] = min * 0.95;
-    opt_pot.begin[j] = min * 0.95;
-    calc_pot.begin[j] = min * 0.95;
-    j = 2 * g_calc.paircol + 2 * ntypes + i;
-    apot_table.begin[j] = min * 0.95;
-    opt_pot.begin[j] = min * 0.95;
-    calc_pot.begin[j] = min * 0.95;
+    j = g_calc.paircol + 2 * g_param.ntypes + i;
+    g_pot.apot_table.begin[j] = min * 0.95;
+    g_pot.opt_pot.begin[j] = min * 0.95;
+    g_pot.calc_pot.begin[j] = min * 0.95;
+    j = 2 * g_calc.paircol + 2 * g_param.ntypes + i;
+    g_pot.apot_table.begin[j] = min * 0.95;
+    g_pot.opt_pot.begin[j] = min * 0.95;
+    g_pot.calc_pot.begin[j] = min * 0.95;
   }
 #endif /* ADP */
 
 #ifdef MEAM
   /* f_ij */
   for (i = 0; i < g_calc.paircol; i++) {
-    j = g_calc.paircol + 2 * ntypes + i;
-    apot_table.begin[j] = min * 0.95;
-    opt_pot.begin[j] = min * 0.95;
-    calc_pot.begin[j] = min * 0.95;
+    j = g_calc.paircol + 2 * g_param.ntypes + i;
+    g_pot.apot_table.begin[j] = min * 0.95;
+    g_pot.opt_pot.begin[j] = min * 0.95;
+    g_pot.calc_pot.begin[j] = min * 0.95;
   }
   /* g_i */
   /* g_i takes cos(theta) as an argument, so we need to tabulate it only
      in the range of [-1:1]. Actually we use [-1.1:1.1] to be safe. */
-  for (i = 0; i < ntypes; i++) {
-    j = 2 * g_calc.paircol + 2 * ntypes + i;
-    apot_table.begin[j] = -1.1;
-    opt_pot.begin[j] = -1.1;
-    calc_pot.begin[j] = -1.1;
-    apot_table.end[j] = 1.1;
-    opt_pot.end[j] = 1.1;
-    calc_pot.end[j] = 1.1;
+  for (i = 0; i < g_param.ntypes; i++) {
+    j = 2 * g_calc.paircol + 2 * g_param.ntypes + i;
+    g_pot.apot_table.begin[j] = -1.1;
+    g_pot.opt_pot.begin[j] = -1.1;
+    g_pot.calc_pot.begin[j] = -1.1;
+    g_pot.apot_table.end[j] = 1.1;
+    g_pot.opt_pot.end[j] = 1.1;
+    g_pot.calc_pot.end[j] = 1.1;
   }
 #endif /* MEAM */
 
@@ -1067,7 +1067,7 @@ void init_neighbors(config_state* cstate, double* mindist)
 
                 #ifdef TBEAM
                 /* transfer function - d band */
-                col = g_calc.paircol + 2 * ntypes + type2;
+                col = g_calc.paircol + 2 * g_param.ntypes + type2;
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
                 #endif /* TBEAM */
 
@@ -1075,17 +1075,17 @@ void init_neighbors(config_state* cstate, double* mindist)
 
                 #ifdef MEAM
                 /* Store slots and stuff for f(r_ij) */
-                col = g_calc.paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
+                col = g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].neigh[k].col[0];
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
                 #endif /* MEAM */
 
                 #ifdef ADP
                 /* dipole part */
-                col = g_calc.paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
+                col = g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].neigh[k].col[0];
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
 
                 /* quadrupole part */
-                col = 2 * g_calc.paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
+                col = 2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].neigh[k].col[0];
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 3);
                 #endif /* ADP */
 
@@ -1210,24 +1210,24 @@ void init_angles(config_state* cstate)
 
           atoms[i].angle_part[ijk].cos = ccos;
 
-          col = 2 * g_calc.paircol + 2 * ntypes + atoms[i].type;
+          col = 2 * g_calc.paircol + 2 * g_param.ntypes + atoms[i].type;
           if (0 == format || 3 == format) {
             if ((fabs(ccos) - 1.0) > 1e-10) {
-              printf("%.20f %f %d %d %d\n", ccos, calc_pot.begin[col], col,
+              printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col,
                      type1, type2);
               fflush(stdout);
               error(1, "cos out of range, it is strange!");
             }
 #ifdef MEAM
-            istep = calc_pot.invstep[col];
+            istep = g_pot.calc_pot.invstep[col];
             slot = (int)((ccos + 1) * istep);
-            shift = ((ccos + 1) - slot * calc_pot.step[col]) * istep;
-            slot += calc_pot.first[col];
-            step = calc_pot.step[col];
+            shift = ((ccos + 1) - slot * g_pot.calc_pot.step[col]) * istep;
+            slot += g_pot.calc_pot.first[col];
+            step = g_pot.calc_pot.step[col];
 
             /* Don't want lower bound spline knot to be final knot or upper
                bound knot will cause trouble since it goes beyond the array */
-            if (slot >= calc_pot.last[col]) {
+            if (slot >= g_pot.calc_pot.last[col]) {
               slot--;
               shift += 1.0;
             }
@@ -1458,24 +1458,24 @@ void update_slots(void)
 
 #if defined EAM || defined ADP || defined MEAM
       /* update slots for eam transfer functions, slot 1 */
-      update_neighbor_slots(g_config.atoms[i].neigh + j, col, r, 1);
+      update_neighbor_slots(g_config.atoms[i].neigh + j, r, 1);
 #ifdef TBEAM
       /* update slots for tbeam transfer functions, s-band, slot 2 */
-      update_neighbor_slots(g_config.atoms[i].neigh + j, col, r, 2);
+      update_neighbor_slots(g_config.atoms[i].neigh + j, r, 2);
 #endif /* TBEAM */
 #endif /* EAM || ADP || MEAM */
 
 #ifdef MEAM
       /* update slots for MEAM f functions, slot 2 */
-      update_neighbor_slots(g_config.atoms[i].neigh + j, col, r, 2);
+      update_neighbor_slots(g_config.atoms[i].neigh + j, r, 2);
 #endif /* MEAM */
 
 #ifdef ADP
       /* update slots for adp dipole functions, slot 2 */
-      update_neighbor_slots(g_config.atoms[i].neigh + j, col, r, 2);
+      update_neighbor_slots(g_config.atoms[i].neigh + j, r, 2);
 
       /* update slots for adp quadrupole functions, slot 3 */
-      update_neighbor_slots(g_config.atoms[i].neigh + j, col, r, 3);
+      update_neighbor_slots(g_config.atoms[i].neigh + j, r, 3);
 #endif /* ADP */
 
     } /* end loop over all neighbors */
@@ -1487,25 +1487,25 @@ void update_slots(void)
     for (j = 0; j < atoms[i].num_angles; j++) {
       rr = atoms[i].angle_part[j].cos + 1.1;
 #ifdef MEAM
-      col = 2 * g_calc.paircol + 2 * ntypes + atoms[i].type;
-      atoms[i].angle_part[j].slot = (int)(rr * calc_pot.invstep[col]);
-      atoms[i].angle_part[j].step = calc_pot.step[col];
+      col = 2 * g_calc.paircol + 2 * g_param.ntypes + atoms[i].type;
+      atoms[i].angle_part[j].slot = (int)(rr * g_pot.calc_pot.invstep[col]);
+      atoms[i].angle_part[j].step = g_pot.calc_pot.step[col];
       atoms[i].angle_part[j].shift =
-          (rr - atoms[i].angle_part[j].slot * calc_pot.step[col]) *
-          calc_pot.invstep[col];
+          (rr - atoms[i].angle_part[j].slot * g_pot.calc_pot.step[col]) *
+          g_pot.calc_pot.invstep[col];
       /* move slot to the right potential */
-      atoms[i].angle_part[j].slot += calc_pot.first[col];
+      atoms[i].angle_part[j].slot += g_pot.calc_pot.first[col];
 #endif /* MEAM */
     }
   }
 #endif /* THREEBODY */
 
 #ifdef STIWEB
-  apot_table.sw.init = 0;
+  g_pot.apot_table.sw.init = 0;
 #endif /* STIWEB */
 
 #ifdef TERSOFF
-  apot_table.tersoff.init = 0;
+  g_pot.apot_table.tersoff.init = 0;
 #endif /* TERSOFF */
 }
 

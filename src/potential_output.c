@@ -97,50 +97,50 @@ void write_pot_table0(char const* filename)
 #if defined EAM || defined ADP || defined MEAM
   /* transfer functions */
   for (int i = 0; i < g_param.ntypes; i++)
-    fprintf(outfile, " %s", elements[i]);
+    fprintf(outfile, " %s", g_config.elements[i]);
   /* embedding functions */
   for (int i = 0; i < g_param.ntypes; i++)
-    fprintf(outfile, " %s", elements[i]);
+    fprintf(outfile, " %s", g_config.elements[i]);
 #endif /* EAM || ADP || MEAM */
 
 #ifdef ADP
   /* dipole terms */
   for (int i = 0; i < g_param.ntypes; i++)
     for (int j = i; j < g_param.ntypes; j++)
-      fprintf(outfile, " %s-%s", elements[i], elements[j]);
+      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
   /* quadrupole terms */
-  for (i = 0; i < g_param.ntypes; i++)
-    for (j = i; j < g_param.ntypes; j++)
-      fprintf(outfile, " %s-%s", elements[i], elements[j]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i; j < g_param.ntypes; j++)
+      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
 #endif /* ADP */
 
 #ifdef MEAM
   /* f terms */
-  for (i = 0; i < ntypes; i++)
-    for (j = i; j < ntypes; j++)
+  for (i = 0; i < g_param.ntypes; i++)
+    for (j = i; j < g_param.ntypes; j++)
       fprintf(outfile, " %s-%s", elements[i], elements[j]);
   /* g terms */
-  for (i = 0; i < ntypes; i++)
+  for (i = 0; i < g_param.ntypes; i++)
     fprintf(outfile, " %s", elements[i]);
 #endif /* MEAM */
 
 #ifdef STIWEB
   /* stiweb_3 terms */
-  for (i = 0; i < ntypes; i++)
-    for (j = i; j < ntypes; j++)
+  for (i = 0; i < g_param.ntypes; i++)
+    for (j = i; j < g_param.ntypes; j++)
       fprintf(outfile, " %s-%s", elements[i], elements[j]);
   /* lambda terms */
   int   k = 0;
-  for (i = 0; i < ntypes; i++)
-    for (j = 0; j < ntypes; j++)
-      for (k = j; k < ntypes; k++)
+  for (i = 0; i < g_param.ntypes; i++)
+    for (j = 0; j < g_param.ntypes; j++)
+      for (k = j; k < g_param.ntypes; k++)
         fprintf(outfile, " %s-%s-%s", elements[i], elements[j], elements[k]);
 #endif /* STIWEB */
 
 #ifdef TERSOFF
   /* mixing terms */
-  for (i = 0; i < ntypes; i++)
-    for (j = i + 1; j < ntypes; j++)
+  for (i = 0; i < g_param.ntypes; i++)
+    for (j = i + 1; j < g_param.ntypes; j++)
       fprintf(outfile, " %s-%s", elements[i], elements[j]);
 #endif /* TERSOFF */
 
@@ -175,7 +175,7 @@ void write_pot_table0(char const* filename)
 
 #ifdef COULOMB
   fprintf(outfile, "elstat\n");
-  for (i = 0; i < ntypes - 1; i++)
+  for (i = 0; i < g_param.ntypes - 1; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
       apt->charge[i], apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
   fprintf(outfile, "charge_%s\t %f\n", elements[ntypes - 1], apt->last_charge);
@@ -183,7 +183,7 @@ void write_pot_table0(char const* filename)
     apt->dp_kappa[0], apt->pmin[apt->number + 1][0], apt->pmax[apt->number + 1][0]);
 
 #ifdef DIPOLE
-  for (i = 0; i < ntypes; i++)
+  for (i = 0; i < g_param.ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
       apt->dp_alpha[i], apt->pmin[apt->number + 2][i], apt->pmax[apt->number + 2][i]);
   for (i = 0; i < paircol; i++) {
@@ -283,31 +283,32 @@ void write_pot_table3(char const* filename)
     for (int i = 0; i < g_param.ntypes; i++)
       for (int j = i; j < g_param.ntypes; j++)
         fprintf(pfile_table, " %s-%s", g_config.elements[i], g_config.elements[j]);
-      #if defined EAM || defined MEAM
+#if defined EAM || defined MEAM
       /* transfer functions */
-      for (i = 0; i < ntypes; i++)
-        fprintf(pfile_table, " %s", elements[i]);
+      for (int i = 0; i < g_param.ntypes; i++)
+        fprintf(pfile_table, " %s", g_config.elements[i]);
       /* embedding functions */
-      for (i = 0; i < ntypes; i++)
-        fprintf(pfile_table, " %s", elements[i]);
-      #ifdef TBEAM
+      for (int i = 0; i < g_param.ntypes; i++)
+        fprintf(pfile_table, " %s", g_config.elements[i]);
+#ifdef TBEAM
       /* transfer functions s-band */
-      for (i = 0; i < ntypes; i++)
-        fprintf(pfile_table, " %s", elements[i]);
+      for (int i = 0; i < g_param.ntypes; i++)
+        fprintf(pfile_table, " %s", g_config.elements[i]);
       /* embedding functions s-band */
-      for (i = 0; i < ntypes; i++)
-        fprintf(pfile_table, " %s", elements[i]);
-      #endif /* TBEAM */
-      #endif /* EAM || MEAM */
-      #ifdef MEAM
+      for (int i = 0; i < g_param.ntypes; i++)
+        fprintf(pfile_table, " %s", g_config.elements[i]);
+#endif /* TBEAM */
+#endif /* EAM || MEAM */
+
+#ifdef MEAM
       /* pre-anglpart */
-      for (i = 0; i < ntypes; i++)
-        for (j = i; j < ntypes; j++)
-          fprintf(pfile_table, " %s-%s", elements[i], elements[j]);
+      for (i = 0; i < g_param.ntypes; i++)
+        for (j = i; j < g_param.ntypes; j++)
+          fprintf(pfile_table, " %s-%s", g_config.lements[i], g_config.elements[j]);
         /* angl part */
-        for (i = 0; i < ntypes; i++)
-          fprintf(pfile_table, " %s", elements[i]);
-        #endif /* MEAM */
+        for (i = 0; i < g_param.ntypes; i++)
+          fprintf(pfile_table, " %s", g_config.elements[i]);
+#endif /* MEAM */
   }
 
   if (g_pot.have_invar)
@@ -399,13 +400,14 @@ void write_pot_table4(char const* filename)
     for (int i = 0; i < g_param.ntypes; i++)
       for (int j = i; j < g_param.ntypes; j++)
         fprintf(pfile_table, " %s-%s", g_config.elements[i], g_config.elements[j]);
+
 #if defined(EAM)
       /* transfer functions */
-      for (i = 0; i < g_param.ntypes; i++)
+      for (int i = 0; i < g_param.ntypes; i++)
         fprintf(pfile_table, " %s", g_config.elements[i]);
 
       /* embedding functions */
-      for (i = 0; i < g_param.ntypes; i++)
+      for (int i = 0; i < g_param.ntypes; i++)
         fprintf(pfile_table, " %s", g_config.elements[i]);
 
 #if defined(TBEAM)
@@ -491,8 +493,8 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
 
   /* write data */
 #ifndef APOT
-  for (i = 0; i < ntypes; i++)
-    for (j = i; j < ntypes; j++) {
+  for (i = 0; i < g_param.ntypes; i++)
+    for (j = i; j < g_param.ntypes; j++) {
       r = pt->begin[k];
       r_step = (pt->end[k] - r) / (NPLOT - 1);
       for (l = 0; l < NPLOT - 1; l++) {
@@ -503,7 +505,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       k++;
     }
 #if defined EAM || defined ADP || defined MEAM
-  for (i = paircol; i < paircol + ntypes; i++) {
+  for (i = paircol; i < paircol + g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -512,7 +514,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = paircol + ntypes; i < paircol + 2 * ntypes; i++) {
+  for (i = paircol + g_param.ntypes; i < paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
@@ -523,7 +525,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   }
 #endif
 #ifdef MEAM
-  for (i = paircol; i < paircol + ntypes; i++) {
+  for (i = paircol; i < paircol + g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -532,7 +534,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = paircol + ntypes; i < paircol + 2 * ntypes; i++) {
+  for (i = paircol + g_param.ntypes; i < paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
@@ -541,7 +543,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "\n\n\n");
   }
-  for (i = paircol + 2 * ntypes; i < 2 * paircol + 2 * ntypes; i++) {
+  for (i = paircol + 2 * g_param.ntypes; i < 2 * paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -550,7 +552,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = 2 * paircol + 2 * ntypes; i < 2 * paircol + 3 * ntypes; i++) {
+  for (i = 2 * paircol + 2 * g_param.ntypes; i < 2 * paircol + 3 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -561,7 +563,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   }
 #endif /* MEAM */
 #ifdef ADP
-  for (i = paircol + 2 * ntypes; i < 2 * (paircol + ntypes); i++) {
+  for (i = paircol + 2 * g_param.ntypes; i < 2 * (paircol + g_param.ntypes); i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - r) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -571,7 +573,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
     k++;
   }
-  for (i = 2 * (paircol + ntypes); i < 3 * paircol + 2 * ntypes; i++) {
+  for (i = 2 * (paircol + g_param.ntypes); i < 3 * paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - r) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -646,8 +648,8 @@ void write_pairdist(pot_table_t *pt, char *filename)
       for (j = 0; j < atom->num_neigh; j++) {
 	neigh = atom->neigh + j;
 	typ2 = neigh->type;
-	col = (typ1 <= typ2) ? typ1 * ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
-	  : typ2 * ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
+	col = (typ1 <= typ2) ? typ1 * g_param.ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
+	  : typ2 * g_param.ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
 	/* this has already been calculated */
 	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[0]]++;
@@ -660,7 +662,7 @@ void write_pairdist(pot_table_t *pt, char *filename)
       }
 #ifdef EAM
       /* embedding function - get index first */
-      col = paircol + ntypes + typ1;
+      col = paircol + g_param.ntypes + typ1;
       if (format == 3) {
 	rr = atom->rho - pt->begin[col];
 #ifdef RESCALE
@@ -715,8 +717,8 @@ void write_pairdist(pot_table_t *pt, char *filename)
 
 void write_coulomb_table()
 {
-  apot_table_t *apt = &apot_table;
-  if (ntypes == 2) {
+  g_pot.apot_table_t *apt = &apot_table;
+  if (g_param.ntypes == 2) {
     int   i, j;
     double value, c1;
     FILE *outfile;

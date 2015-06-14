@@ -65,7 +65,7 @@
  * initiated by all processes to get the new potential from root.
  *
  * xi_opt is the array storing the potential parameters (usually it is the
- *     opt_pot.table - part of the struct opt_pot, but it can also be
+ *     g_pot.opt_pot.table - part of the struct g_pot.opt_pot, but it can also be
  *     modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
@@ -127,7 +127,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
     tmpsum = 0.0;		/* sum of squares of local process */
 
 #if defined APOT && !defined MPI
-    if (0 == format) {
+    if (g_pot.format == 0) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
@@ -136,7 +136,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
 #ifdef MPI
 #ifndef APOT
     /* exchange potential and flag value */
-    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, g_pot.calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -169,7 +169,7 @@ double calc_forces_pair(double *xi_opt, double *forces, int flag)
     }
 
 #ifndef MPI
-    myconf = nconf;
+    g_mpi.myconf = g_config.nconf;
 #endif /* MPI */
 
     /* region containing loop over configurations */

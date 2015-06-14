@@ -32,8 +32,10 @@
 
 #if defined EAM && !defined COULOMB
 
+#include "forces.h"
 #include "functions.h"
-#include "potential.h"
+#include "potential_input.h"
+#include "potential_output.h"
 #include "splines.h"
 #include "utils.h"
 
@@ -65,7 +67,7 @@
  * initiated by all processes to get the new potential from root.
  *
  * xi_opt is the array storing the potential parameters (usually it is the
- *     opt_pot.table - part of the struct opt_pot, but it can also be
+ *     g_pot.opt_pot.table - part of the struct g_pot.opt_pot, but it can also be
  *     modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
@@ -127,16 +129,16 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double rho_s_val, rho_s_grad, rho_s_grad_j;
 #endif /* TBEAM */
 
-  switch (format) {
+  switch (g_pot.format) {
       case 0:
-	xi = calc_pot.table;
+	xi = g_pot.calc_pot.table;
 	break;
       case 3:			/* fall through */
       case 4:
 	xi = xi_opt;		/* calc-table is opt-table */
 	break;
       case 5:
-	xi = calc_pot.table;	/* we need to update the calc-table */
+        xi = g_pot.calc_pot.table;	/* we need to update the calc-table */
   }
 
   /* This is the start of an infinite loop */
@@ -148,7 +150,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* TBEAM */
 
 #if defined APOT && !defined MPI
-    if (0 == format) {
+    if (g_pot.format == 0) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
@@ -157,7 +159,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef MPI
 #ifndef APOT
     /* exchange potential and flag value */
-    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, g_pot.calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -165,9 +167,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       break;			/* Exception: flag 1 means clean up */
 
 #ifdef APOT
-    if (0 == myid)
+    if (g_mpi.myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
@@ -179,72 +181,72 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     /* init second derivatives for splines */
 
     /* [0, ...,  paircol - 1] = pair potentials */
-    /* [paircol, ..., paircol + ntypes - 1] = transfer function */
-    for (col = 0; col < paircol + ntypes; col++) {
-      first = calc_pot.first[col];
-      if (0 == format || 3 == format)
-	spline_ed(calc_pot.step[col], xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+    /* [paircol, ..., paircol + g_param.ntypes - 1] = transfer function */
+    for (col = 0; col < g_calc.paircol + g_param.ntypes; col++) {
+      first = g_pot.calc_pot.first[col];
+      if (g_pot.format == 0 || g_pot.format == 3)
+        spline_ed(g_pot.calc_pot.step[col], xi + first,
+          g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
       else			/* format >= 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+          g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
     }
 
-    /* [paircol + ntypes, ..., paircol + 2 * ntypes - 1] = embedding function */
-    for (col = paircol + ntypes; col < paircol + 2 * ntypes; col++) {
-      first = calc_pot.first[col];
+    /* [paircol + g_param.ntypes, ..., paircol + 2 * g_param.ntypes - 1] = embedding function */
+    for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; col++) {
+      first = g_pot.calc_pot.first[col];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
-      if (0 == format || 3 == format)
-	spline_ed(calc_pot.step[col], xi + first, calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
+      if (g_pot.format == 0 || g_pot.format == 3)
+        spline_ed(g_pot.calc_pot.step[col], xi + first, g_pot.calc_pot.last[col] - first + 1,
+	  *(xi + first - 2), *(xi + first - 1), g_pot.calc_pot.d2tab + first);
       else			/* format >= 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first, calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
+	spline_ne(g_pot.calc_pot.xcoord + first, xi + first, g_pot.calc_pot.last[col] - first + 1,
+	  *(xi + first - 2), *(xi + first - 1), g_pot.calc_pot.d2tab + first);
     }
 
 #ifdef TBEAM
-    /* [paircol + 2 * ntypes, ..., paircol + 3 * ntypes - 1] = s-band transfer function */
-    for (col = paircol + 2 * ntypes; col < paircol + 3 * ntypes; col++) {
-      first = calc_pot.first[col];
-      if (0 == format || 3 == format)
+    /* [paircol + 2 * g_param.ntypes, ..., paircol + 3 * g_param.ntypes - 1] = s-band transfer function */
+    for (col = g_calc.paircol + 2 * g_param.ntypes; col < g_calc.paircol + 3 * g_param.ntypes; col++) {
+      first = g_pot.calc_pot.first[col];
+      if (g_pot.format == 0 || g_pot.format == 3)
 	spline_ed(calc_pot.step[col], xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
       else			/* format >= 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+	  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
     }
 
-    /* [paircol + 3 * ntypes, ..., paircol + 4 * ntypes - 1] = s-band embedding function */
-    for (col = paircol + 3 * ntypes; col < paircol + 4 * ntypes; col++) {
-      first = calc_pot.first[col];
+    /* [paircol + 3 * g_param.ntypes, ..., paircol + 4 * g_param.ntypes - 1] = s-band embedding function */
+    for (col = g_calc.paircol + 3 * g_param.ntypes; col < g_calc.paircol + 4 * g_param.ntypes; col++) {
+      first = g_pot.calc_pot.first[col];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
-      if (0 == format || 3 == format)
-	spline_ed(calc_pot.step[col], xi + first, calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
+      if (g_pot.format == 0 || g_pot.format == 3)
+        spline_ed(g_pot.calc_pot.step[col], xi + first, g_pot.calc_pot.last[col] - first + 1,
+                  *(xi + first - 2), *(xi + first - 1), g_pot.calc_pot.d2tab + first);
       else			/* format >= 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first, calc_pot.last[col] - first + 1,
-	  *(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
+        spline_ne(g_pot.calc_pot.xcoord + first, xi + first, g_pot.calc_pot.last[col] - first + 1,
+                  *(xi + first - 2), *(xi + first - 1), g_pot.calc_pot.d2tab + first);
     }
 #endif /* TBEAM */
 
 #ifndef MPI
-    myconf = nconf;
+    g_mpi.myconf = g_config.nconf;
 #endif /* MPI */
 
     /* region containing loop over configurations */
     {
       /* loop over configurations */
-      for (h = firstconf; h < firstconf + myconf; h++) {
-	uf = conf_uf[h - firstconf];
+      for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
+        uf = g_config.conf_uf[h - g_mpi.firstconf];
 #ifdef STRESS
-	us = conf_us[h - firstconf];
+        us = g_config.conf_us[h - g_mpi.firstconf];
 #endif /* STRESS */
 	/* reset energies and stresses */
-	forces[energy_p + h] = 0.0;
+	forces[g_calc.energy_p + h] = 0.0;
 #ifdef STRESS
-	stresses = stress_p + 6 * h;
+        stresses = g_calc.stress_p + 6 * h;
 	for (i = 0; i < 6; i++)
 	  forces[stresses + i] = 0.0;
 #endif /* STRESS */
@@ -255,43 +257,43 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* RESCALE */
 
 	/* first loop over atoms: reset forces, densities */
-	for (i = 0; i < inconf[h]; i++) {
-	  n_i = 3 * (cnfstart[h] + i);
+        for (i = 0; i < g_config.inconf[h]; i++) {
+          n_i = 3 * (g_config.cnfstart[h] + i);
 	  if (uf) {
-	    forces[n_i + 0] = -force_0[n_i + 0];
-	    forces[n_i + 1] = -force_0[n_i + 1];
-	    forces[n_i + 2] = -force_0[n_i + 2];
+            forces[n_i + 0] = -g_config.force_0[n_i + 0];
+            forces[n_i + 1] = -g_config.force_0[n_i + 1];
+            forces[n_i + 2] = -g_config.force_0[n_i + 2];
 	  } else {
 	    forces[n_i + 0] = 0.0;
 	    forces[n_i + 1] = 0.0;
 	    forces[n_i + 2] = 0.0;
 	  }
 	  /* reset atomic density */
-	  conf_atoms[cnfstart[h] - firstatom + i].rho = 0.0;
+          g_config.conf_atoms[g_config.cnfstart[h] - g_mpi.firstatom + i].rho = 0.0;
 #ifdef TBEAM
-	  conf_atoms[cnfstart[h] - firstatom + i].rho_s = 0.0;
+          g_config.conf_atoms[g_config.cnfstart[h] - g_mpi.firstatom + i].rho_s = 0.0;
 #endif /* TBEAM */
 	}
 	/* end of first loop */
 
 	/* 2nd loop: calculate pair forces and energies, atomic densities. */
-	for (i = 0; i < inconf[h]; i++) {
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  n_i = 3 * (cnfstart[h] + i);
+	for (i = 0; i < g_config.inconf[h]; i++) {
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+          n_i = 3 * (g_config.cnfstart[h] + i);
 	  /* loop over neighbors */
 	  for (j = 0; j < atom->num_neigh; j++) {
 	    neigh = atom->neigh + j;
 	    /* In small cells, an atom might interact with itself */
-	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+            self = (neigh->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
 	    /* pair potential part */
-	    if (neigh->r < calc_pot.end[neigh->col[0]]) {
+	    if (neigh->r < g_pot.calc_pot.end[neigh->col[0]]) {
 	      /* fn value and grad are calculated in the same step */
 	      if (uf)
 		phi_val =
-		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
+		  splint_comb_dir(&g_pot.calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
 	      else
-		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
+		phi_val = splint_dir(&g_pot.calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 
 	      /* avoid double counting if atom is interacting with a copy of itself */
 	      if (self) {
@@ -300,7 +302,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      }
 
 	      /* add cohesive energy */
-	      forces[energy_p + h] += phi_val;
+	      forces[g_calc.energy_p + h] += phi_val;
 
 	      /* calculate forces */
 	      if (uf) {
@@ -333,52 +335,52 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    /* calculate atomic densities */
 	    if (atom->type == neigh->type) {
 	      /* then transfer(a->b)==transfer(b->a) */
-	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
-		rho_val = splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
+	      if (neigh->r < g_pot.calc_pot.end[neigh->col[1]]) {
+		rho_val = splint_dir(&g_pot.calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 		atom->rho += rho_val;
 		/* avoid double counting if atom is interacting with a copy of itself */
 		if (!self) {
-		  conf_atoms[neigh->nr - firstatom].rho += rho_val;
+                  g_config.conf_atoms[neigh->nr - g_mpi.firstatom].rho += rho_val;
 		}
 	      }
 #ifdef TBEAM
-	      if (neigh->r < calc_pot.end[neigh->col[2]]) {
+	      if (neigh->r < g_pot.calc_pot.end[neigh->col[2]]) {
 		rho_s_val = splint_dir(&calc_pot, xi, neigh->slot[2], neigh->shift[2], neigh->step[2]);
 		atom->rho_s += rho_s_val;
 		/* avoid double counting if atom is interacting with a copy of itself */
 		if (!self) {
-		  conf_atoms[neigh->nr - firstatom].rho_s += rho_s_val;
+		  conf_atoms[neigh->nr - g_mpi.firstatom].rho_s += rho_s_val;
 		}
 	      }
 #endif /* TBEAM */
 	    } else {
 	      /* transfer(a->b)!=transfer(b->a) */
-	      if (neigh->r < calc_pot.end[neigh->col[1]]) {
-		atom->rho += splint_dir(&calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
+	      if (neigh->r < g_pot.calc_pot.end[neigh->col[1]]) {
+		atom->rho += splint_dir(&g_pot.calc_pot, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
 	      }
 	      /* cannot use slot/shift to access splines */
-	      if (neigh->r < calc_pot.end[paircol + atom->type]) {
-		conf_atoms[neigh->nr - firstatom].rho +=
-		  splint(&calc_pot, xi, paircol + atom->type, neigh->r);
+	      if (neigh->r < g_pot.calc_pot.end[g_calc.paircol + atom->type]) {
+                g_config.conf_atoms[neigh->nr - g_mpi.firstatom].rho +=
+		  (*g_splint)(&g_pot.calc_pot, xi, g_calc.paircol + atom->type, neigh->r);
 	      }
 #ifdef TBEAM
-	      if (neigh->r < calc_pot.end[neigh->col[2]]) {
+	      if (neigh->r < g_pot.calc_pot.end[neigh->col[2]]) {
 		atom->rho_s += splint_dir(&calc_pot, xi, neigh->slot[2], neigh->shift[2], neigh->step[2]);
 	      }
 	      /* cannot use slot/shift to access splines */
-	      if (neigh->r < calc_pot.end[paircol + 2 * ntypes + atom->type]) {
+	      if (neigh->r < g_pot.calc_pot.end[paircol + 2 * g_param.ntypes + atom->type]) {
 		conf_atoms[neigh->nr - firstatom].rho_s +=
-		  splint(&calc_pot, xi, paircol + 2 * ntypes + atom->type, neigh->r);
+		  splint(&calc_pot, xi, paircol + 2 * g_param.ntypes + atom->type, neigh->r);
 	      }
 #endif /* TBEAM */
 	    }
 	  }			/* loop over all neighbors */
 
 	  /* column of F */
-	  col_F = paircol + ntypes + atom->type;
+	  col_F = g_calc.paircol + g_param.ntypes + atom->type;
 #ifdef TBEAM
 	  /* column of F of the s-band */
-	  col_F_s = col_F + 2 * ntypes;
+	  col_F_s = col_F + 2 * g_param.ntypes;
 #endif /* TBEAM */
 
 #ifdef RESCALE
@@ -386,28 +388,28 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	   * if the density of one atom is smaller or greater than we have the
 	   * embedding function tabulated a punishment is added */
 
-	  if (atom->rho > calc_pot.end[col_F]) {
+	  if (atom->rho > g_pot.calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
-	    atom->rho = calc_pot.end[col_F];
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
+	    atom->rho = g_pot.calc_pot.end[col_F];
 	  }
 
-	  if (atom->rho < calc_pot.begin[col_F]) {
+	  if (atom->rho < g_pot.calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
-	    atom->rho = calc_pot.begin[col_F];
+	    atom->rho = g_pot.calc_pot.begin[col_F];
 	  }
 #ifdef TBEAM
-	  if (atom->rho_s > calc_pot.end[col_F_s]) {
+	  if (atom->rho_s > g_pot.calc_pot.end[col_F_s]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho_s - calc_pot.end[col_F_s]);
-	    atom->rho_s = calc_pot.end[col_F_s];
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho_s - g_pot.calc_pot.end[col_F_s]);
+	    atom->rho_s = g_pot.calc_pot.end[col_F_s];
 	  }
 
-	  if (atom->rho_s < calc_pot.begin[col_F_s]) {
+	  if (atom->rho_s < g_pot.calc_pot.begin[col_F_s]) {
 	    /* then punish target function -> bad potential */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F_s] - atom->rho_s);
-	    atom->rho_s = calc_pot.begin[col_F_s];
+	    atom->rho_s = g_pot.calc_pot.begin[col_F_s];
 	  }
 #endif /* TBEAM */
 #endif /* RESCALE */
@@ -416,43 +418,44 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  /* contribution to cohesive energy is F(n) */
 
 #ifndef RESCALE
-	  if (atom->rho < calc_pot.begin[col_F]) {
+	  if (atom->rho < g_pot.calc_pot.begin[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F] (atom->rho, xi_opt + opt_pot.first[col_F], &temp_eng);
-	    atom->gradF = apot_grad(atom->rho, xi_opt + opt_pot.first[col_F], apot_table.fvalue[col_F]);
-	    forces[energy_p + h] += temp_eng;
+            g_pot.apot_table.fvalue[col_F] (atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
+            atom->gradF = apot_grad(atom->rho,
+              xi_opt + g_pot.opt_pot.first[col_F],g_pot.apot_table.fvalue[col_F]);
+	    forces[g_calc.energy_p + h] += temp_eng;
 #else
 	    /* linear extrapolation left */
-	    rho_val = splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F], &atom->gradF);
-	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+	    rho_val = splint_comb(&calc_pot, xi, col_F, g_pot.calc_pot.begin[col_F], &atom->gradF);
+            forces[g_calc.energy_p + h] += rho_val + (atom->rho - g_pot.calc_pot.begin[col_F]) * atom->gradF;
 #endif /* APOT */
-	  } else if (atom->rho > calc_pot.end[col_F]) {
+	  } else if (atom->rho > g_pot.calc_pot.end[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F] (atom->rho, xi_opt + opt_pot.first[col_F], &temp_eng);
-	    atom->gradF = apot_grad(atom->rho, xi_opt + opt_pot.first[col_F], apot_table.fvalue[col_F]);
-	    forces[energy_p + h] += temp_eng;
+            (*g_pot.apot_table.fvalue[col_F])(atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
+            atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F], g_pot.apot_table.fvalue[col_F]);
+            forces[g_calc.energy_p + h] += temp_eng;
 #else
 	    /* and right */
 	    rho_val =
-	      splint_comb(&calc_pot, xi, col_F, calc_pot.end[col_F] - 0.5 * calc_pot.step[col_F],
+	      splint_comb(&calc_pot, xi, col_F, g_pot.calc_pot.end[col_F] - 0.5 * g_pot.calc_pot.step[col_F],
 	      &atom->gradF);
-	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
+              forces[g_calc.energy_p + h] += rho_val + (atom->rho - g_pot.calc_pot.end[col_F]) * atom->gradF;
 #endif /* APOT */
 	  } else {		/* and in-between */
 #ifdef APOT
 	    /* calculate small values directly */
 	    if (atom->rho < 0.1) {
-	      apot_table.fvalue[col_F] (atom->rho, xi_opt + opt_pot.first[col_F], &temp_eng);
-	      atom->gradF = apot_grad(atom->rho, xi_opt + opt_pot.first[col_F], apot_table.fvalue[col_F]);
-	      forces[energy_p + h] += temp_eng;
+              (*g_pot.apot_table.fvalue[col_F])(atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
+              atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F], g_pot.apot_table.fvalue[col_F]);
+              forces[g_calc.energy_p + h] += temp_eng;
 	    } else
 #endif
-	      forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+              forces[g_calc.energy_p + h] += (*g_splint_comb)(&g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
 	  }
 #else
-	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+          forces[g_calc.energy_p + h] += splint_comb(&g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
 #endif /* !RESCALE */
 
 	  /* sum up rho */
@@ -460,31 +463,31 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 #ifdef TBEAM
 #ifndef RESCALE
-	  if (atom->rho_s < calc_pot.begin[col_F_s]) {
+	  if (atom->rho_s < g_pot.calc_pot.begin[col_F_s]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F_s] (atom->rho_s, xi_opt + opt_pot.first[col_F_s], &temp_eng);
+	    g_pot.apot_table.fvalue[col_F_s] (atom->rho_s, xi_opt + g_pot.opt_pot.first[col_F_s], &temp_eng);
 	    atom->gradF_s =
-	      apot_grad(atom->rho_s, xi_opt + opt_pot.first[col_F_s], apot_table.fvalue[col_F_s]);
-	    forces[energy_p + h] += temp_eng;
+	      apot_grad(atom->rho_s, xi_opt + g_pot.opt_pot.first[col_F_s], g_pot.apot_table.fvalue[col_F_s]);
+	    forces[g_calc.energy_p + h] += temp_eng;
 #else
 	    /* linear extrapolation left */
-	    rho_s_val = splint_comb(&calc_pot, xi, col_F_s, calc_pot.begin[col_F_s], &atom->gradF_s);
-	    forces[energy_p + h] += rho_s_val + (atom->rho_s - calc_pot.begin[col_F_s]) * atom->gradF_s;
+	    rho_s_val = splint_comb(&calc_pot, xi, col_F_s, g_pot.calc_pot.begin[col_F_s], &atom->gradF_s);
+	    forces[energy_p + h] += rho_s_val + (atom->rho_s - g_pot.calc_pot.begin[col_F_s]) * atom->gradF_s;
 #endif /* APOT */
-	  } else if (atom->rho_s > calc_pot.end[col_F_s]) {
+	  } else if (atom->rho_s > g_pot.calc_pot.end[col_F_s]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F_s] (atom->rho_s, xi_opt + opt_pot.first[col_F_s], &temp_eng);
+	    g_pot.apot_table.fvalue[col_F_s] (atom->rho_s, xi_opt + g_pot.opt_pot.first[col_F_s], &temp_eng);
 	    atom->gradF_s =
-	      apot_grad(atom->rho_s, xi_opt + opt_pot.first[col_F_s], apot_table.fvalue[col_F_s]);
-	    forces[energy_p + h] += temp_eng;
+	      apot_grad(atom->rho_s, xi_opt + g_pot.opt_pot.first[col_F_s], g_pot.apot_table.fvalue[col_F_s]);
+	    forces[g_calc.energy_p + h] += temp_eng;
 #else
 	    /* and right */
 	    rho_s_val =
-	      splint_comb(&calc_pot, xi, col_F_s, calc_pot.end[col_F_s] - 0.5 * calc_pot.step[col_F_s],
+	      splint_comb(&calc_pot, xi, col_F_s, g_pot.calc_pot.end[col_F_s] - 0.5 * g_pot.calc_pot.step[col_F_s],
 	      &atom->gradF_s);
-	    forces[energy_p + h] += rho_s_val + (atom->rho_s - calc_pot.end[col_F_s]) * atom->gradF_s;
+	    forces[g_calc.energy_p + h] += rho_s_val + (atom->rho_s - g_pot.calc_pot.end[col_F_s]) * atom->gradF_s;
 #endif /* APOT */
 	  }
 	  /* and in-between */
@@ -492,16 +495,16 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef APOT
 	    /* calculate small values directly */
 	    if (atom->rho_s < 0.1) {
-	      apot_table.fvalue[col_F_s] (atom->rho_s, xi_opt + opt_pot.first[col_F_s], &temp_eng);
+	      g_pot.apot_table.fvalue[col_F_s] (atom->rho_s, xi_opt + g_pot.opt_pot.first[col_F_s], &temp_eng);
 	      atom->gradF_s =
-		apot_grad(atom->rho_s, xi_opt + opt_pot.first[col_F_s], apot_table.fvalue[col_F_s]);
-	      forces[energy_p + h] += temp_eng;
+		apot_grad(atom->rho_s, xi_opt + g_pot.opt_pot.first[col_F_s], g_pot.apot_table.fvalue[col_F_s]);
+	      forces[g_calc.energy_p + h] += temp_eng;
 	    } else
 #endif
-	      forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F_s, atom->rho_s, &atom->gradF_s);
+              forces[g_calc.energy_p + h] += splint_comb(&calc_pot, xi, col_F_s, atom->rho_s, &atom->gradF_s);
 	  }
 #else
-	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F_s, atom->rho_s, &atom->gradF_s);
+	  forces[g_calc.energy_p + h] += splint_comb(&calc_pot, xi, col_F_s, atom->rho_s, &atom->gradF_s);
 #endif /* !RESCALE */
 
 	  /* sum up rho_s */
@@ -511,46 +514,46 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 	/* 3rd loop over atom: EAM force */
 	if (uf) {		/* only required if we calc forces */
-	  for (i = 0; i < inconf[h]; i++) {
-	    atom = conf_atoms + i + cnfstart[h] - firstatom;
-	    n_i = 3 * (cnfstart[h] + i);
+	  for (i = 0; i < g_config.inconf[h]; i++) {
+            atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+	    n_i = 3 * (g_config.cnfstart[h] + i);
 	    for (j = 0; j < atom->num_neigh; j++) {
 	      /* loop over neighbors */
 	      neigh = atom->neigh + j;
 	      /* In small cells, an atom might interact with itself */
-	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-	      col_F = paircol + ntypes + atom->type;	/* column of F */
+              self = (neigh->nr == i + g_config.cnfstart[h]) ? 1 : 0;
+	      col_F = g_calc.paircol + g_param.ntypes + atom->type;	/* column of F */
 #ifdef TBEAM
-	      col_F_s = col_F + 2 * ntypes;
+	      col_F_s = col_F + 2 * g_param.ntypes;
 #endif /* TBEAM */
 	      r = neigh->r;
 	      /* are we within reach? */
-	      if ((r < calc_pot.end[neigh->col[1]]) || (r < calc_pot.end[col_F - ntypes])) {
+              if ((r < g_pot.calc_pot.end[neigh->col[1]]) || (r < g_pot.calc_pot.end[col_F - g_param.ntypes])) {
 		rho_grad =
-		  (r < calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&calc_pot, xi, neigh->slot[1],
+		(r < g_pot.calc_pot.end[neigh->col[1]]) ? splint_grad_dir(&g_pot.calc_pot, xi, neigh->slot[1],
 		  neigh->shift[1], neigh->step[1]) : 0.0;
 		if (atom->type == neigh->type)	/* use actio = reactio */
 		  rho_grad_j = rho_grad;
 		else
 		  rho_grad_j =
-		    (r < calc_pot.end[col_F - ntypes]) ? splint_grad(&calc_pot, xi, col_F - ntypes, r) : 0.0;
+		  (r < g_pot.calc_pot.end[col_F - g_param.ntypes]) ? (*g_splint_grad)(&g_pot.calc_pot, xi, col_F - g_param.ntypes, r) : 0.0;
 		/* now we know everything - calculate forces */
-		eam_force = (rho_grad * atom->gradF + rho_grad_j * conf_atoms[(neigh->nr) - firstatom].gradF);
+                eam_force = (rho_grad * atom->gradF + rho_grad_j * g_config.conf_atoms[(neigh->nr) - g_mpi.firstatom].gradF);
 
 #ifdef TBEAM			/* s-band contribution to force for TBEAM */
-		if ((r < calc_pot.end[neigh->col[2]]) || (r < calc_pot.end[col_F_s - ntypes])) {
+                if ((r < g_pot.calc_pot.end[neigh->col[2]]) || (r < g_pot.calc_pot.end[col_F_s - g_param.ntypes])) {
 		  rho_s_grad =
-		    (r < calc_pot.end[neigh->col[2]]) ? splint_grad_dir(&calc_pot, xi, neigh->slot[2],
+		  (r < g_pot.calc_pot.end[neigh->col[2]]) ? splint_grad_dir(&g_pot.calc_pot, xi, neigh->slot[2],
 		    neigh->shift[2], neigh->step[2]) : 0.0;
 		  if (atom->type == neigh->type) {	/* use actio = reactio */
 		    rho_s_grad_j = rho_s_grad;
 		  } else {
-		    rho_s_grad_j = (r < calc_pot.end[col_F_s - ntypes]) ?
-		      splint_grad(&calc_pot, xi, col_F_s - ntypes, r) : 0.0;
+                    rho_s_grad_j = (r < g_pot.calc_pot.end[col_F_s - g_param.ntypes]) ?
+                    splint_grad(&g_pot.calc_pot, xi, col_F_s - g_param.ntypes, r) : 0.0;
 		  }
 		  /* now we know everything - calculate forces */
 		  eam_force +=
-		    (rho_s_grad * atom->gradF_s + rho_s_grad_j * conf_atoms[(neigh->nr) - firstatom].gradF_s);
+		  (rho_s_grad * atom->gradF_s + rho_s_grad_j * g_config.conf_atoms[(neigh->nr) - firstatom].gradF_s);
 		}
 #endif /* TBEAM */
 
@@ -593,23 +596,23 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum += conf_weight[h] *
+	      tmpsum += g_config.conf_weight[h] *
 		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }			/* third loop over atoms */
 	}
 
 	/* use forces */
 	/* energy contributions */
-	forces[energy_p + h] /= (double)inconf[h];
-	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+	forces[g_calc.energy_p + h] /= (double)g_config.inconf[h];
+        forces[g_calc.energy_p + h] -= g_config.force_0[g_calc.energy_p + h];
+        tmpsum += g_config.conf_weight[h] * g_param.eweight * dsquare(forces[g_calc.energy_p + h]);
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stresses + i] /= conf_vol[h - firstconf];
-	    forces[stresses + i] -= force_0[stresses + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
+	    forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
+	    forces[stresses + i] -= g_config.force_0[stresses + i];
+	    tmpsum += g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -638,50 +641,50 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (0 == myid) {
+    if (g_mpi.myid == 0) {
       tmpsum += apot_punish(xi_opt, forces);
     }
 #endif /* APOT */
 
 #ifndef NOPUNISH
-    if (myid == 0) {
+    if (g_mpi.myid == 0) {
       int   g;
-      for (g = 0; g < ntypes; g++) {
+      for (g = 0; g < g_param.ntypes; g++) {
 #ifndef RESCALE
 	/* clear field */
-	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
+	forces[g_calc.dummy_p + g_param.ntypes + g] = 0.0;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.0)=0.0; */
-	forces[dummy_p + g] = DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g, 1.0);
+        forces[g_calc.dummy_p + g] = DUMMY_WEIGHT * (*g_splint_grad)(&g_pot.calc_pot, xi, g_calc.paircol + g_param.ntypes + g, 1.0);
 #ifdef TBEAM
 	/* clear field */
-	forces[dummy_p + 3 * ntypes + g] = 0.0;	/* Free end... */
+        forces[g_calc.dummy_p + 3 * g_param.ntypes + g] = 0.0;	/* Free end... */
 	/* NEW: Constraint on U': U'(1.0)=0.0; */
-	forces[dummy_p + 2 * ntypes + g] =
-	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * ntypes + g, 1.0);
+        forces[g_calc.dummy_p + 2 * g_param.ntypes + g] =
+          DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * g_param.ntypes + g, 1.0);
 #endif /* TBEAM */
 #else /* !RESCALE */
-	forces[dummy_p + ntypes + g] = 0.0;	/* Free end... */
+        forces[g_calc.dummy_p + g_param.ntypes + g] = 0.0;	/* Free end... */
 	/* constraints on U`(n) */
-	forces[dummy_p + g] =
-	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + ntypes + g,
-	  0.5 * (calc_pot.begin[paircol + ntypes + g] + calc_pot.end[paircol + ntypes + g]))
-	  - force_0[dummy_p + g];
+        forces[g_calc.dummy_p + g] =
+          DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + g_param.ntypes + g,
+                                     0.5 * (calc_pot.begin[paircol + g_param.ntypes + g] + g_pot.calc_pot.end[paircol + g_param.ntypes + g]))
+          - force_0[g_calc.dummy_p + g];
 #ifdef TBEAM
-	forces[dummy_p + 3 * ntypes + g] = 0.0;	/* Free end... */
+        forces[g_calc.dummy_p + 3 * g_param.ntypes + g] = 0.0;	/* Free end... */
 	/* constraints on U`(n) */
-	forces[dummy_p + 2 * ntypes + g] =
-	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * ntypes + g,
-	  0.5 * (calc_pot.begin[paircol + 3 * ntypes + g] + calc_pot.end[paircol + 3 * ntypes + g]))
-	  - force_0[dummy_p + 2 * ntypes + g];
+        forces[g_calc.dummy_p + 2 * g_param.ntypes + g] =
+	  DUMMY_WEIGHT * splint_grad(&calc_pot, xi, paircol + 3 * g_param.ntypes + g,
+                                     0.5 * (calc_pot.begin[paircol + 3 * g_param.ntypes + g] + g_pot.calc_pot.end[paircol + 3 * g_param.ntypes + g]))
+          - force_0[g_calc.dummy_p + 2 * g_param.ntypes + g];
 #endif /* TBEAM */
 #endif /* !RESCALE */
 
 	/* add punishments to total error sum */
-	tmpsum += dsquare(forces[dummy_p + g]);
-	tmpsum += dsquare(forces[dummy_p + ntypes + g]);
+        tmpsum += dsquare(forces[g_calc.dummy_p + g]);
+        tmpsum += dsquare(forces[g_calc.dummy_p + g_param.ntypes + g]);
 #ifdef TBEAM
-	tmpsum += dsquare(forces[dummy_p + 2 * ntypes + g]);
-	tmpsum += dsquare(forces[dummy_p + 3 * ntypes + g]);
+        tmpsum += dsquare(forces[g_calc.dummy_p + 2 * g_param.ntypes + g]);
+        tmpsum += dsquare(forces[g_calc.dummy_p + 3 * g_param.ntypes + g]);
 #endif /* TBEAM */
       }				/* loop over types */
 
@@ -689,18 +692,18 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       /* NEW: Constraint on n: <n>=1.0 ONE CONSTRAINT ONLY */
       if (rho_sum > 0.0) {
 	/* Calculate averages */
-	rho_sum /= (double)natoms;
+	rho_sum /= (double)g_config.natoms;
 	/* ATTN: if there are invariant potentials, things might be problematic */
-	forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
-	tmpsum += dsquare(forces[dummy_p + ntypes]);
+	forces[g_calc.dummy_p + g_param.ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
+        tmpsum += dsquare(forces[g_calc.dummy_p + g_param.ntypes]);
       }
 #ifdef TBEAM
       if (rho_s_sum > 0.0) {
 	/* Calculate averages */
 	rho_s_sum /= (double)natoms;
 	/* ATTN: if there are invariant potentials, things might be problematic */
-	forces[dummy_p + 3 * ntypes] = DUMMY_WEIGHT * (rho_s_sum - 1.0);
-	tmpsum += dsquare(forces[dummy_p + 3 * ntypes]);
+        forces[g_calc.dummy_p + 3 * g_param.ntypes] = DUMMY_WEIGHT * (rho_s_sum - 1.0);
+        tmpsum += dsquare(forces[g_calc.dummy_p + 3 * g_param.ntypes]);
       }
 #endif /* TBEAM */
 #endif /* !RESCALE */
@@ -712,39 +715,39 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (0 == myid) {		/* root node already has data in place */
+    if (g_mpi.myid == 0) {		/* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces,
-	atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+	g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + energy_p,
-	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
-	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
 #ifdef RESCALE
       /* punishment constraints */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + limit_p,
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + limit_p,
 	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* RESCALE */
     } else {
       /* forces */
-      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
-	forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR,
+                  forces, g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + energy_p + firstconf, myconf, MPI_DOUBLE,
-	forces + energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
-	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf, g_mpi.MPI_STENS,
+                  forces + g_calc.stress_p, g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
 #ifdef RESCALE
       /* punishment constraints */
-      MPI_Gatherv(forces + limit_p + firstconf, myconf, MPI_DOUBLE,
-	forces + limit_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + limit_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + limit_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* RESCALE */
     }
     /* no need to pick up dummy constraints - they are already @ root */
@@ -753,8 +756,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (0 == myid) {
-      fcalls++;			/* increase function call counter */
+    if (g_mpi.myid == 0) {
+      g_calc.fcalls++;			/* increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");

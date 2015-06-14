@@ -66,7 +66,7 @@
  * initiated by all processes to get the new potential from root.
  *
  * xi_opt is the array storing the potential parameters (usually it is the
- *     opt_pot.table - part of the struct opt_pot, but it can also be
+ *     g_pot.opt_pot.table - part of the struct g_pot.opt_pot, but it can also be
  *     modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
@@ -462,10 +462,10 @@ void update_stiweb_pointers(double *xi)
       sw->a2[i] = NULL;
     }
     sw->lambda = (double ****)malloc(paircol * sizeof(double ***));
-    for (i = 0; i < ntypes; i++) {
-      sw->lambda[i] = (double ***)malloc(ntypes * sizeof(double **));
-      for (j = 0; j < ntypes; j++) {
-	sw->lambda[i][j] = (double **)malloc(ntypes * sizeof(double *));
+    for (i = 0; i < g_param.ntypes; i++) {
+      sw->lambda[i] = (double ***)malloc(g_param.ntypes * sizeof(double **));
+      for (j = 0; j < g_param.ntypes; j++) {
+	sw->lambda[i][j] = (double **)malloc(g_param.ntypes * sizeof(double *));
       }
     }
     sw->init = 1;
@@ -490,9 +490,9 @@ void update_stiweb_pointers(double *xi)
       index += 2;
     }
     /* set the lambda pointer */
-    for (i = 0; i < ntypes; i++)
-      for (j = 0; j < ntypes; j++)
-	for (k = j; k < ntypes; k++) {
+    for (i = 0; i < g_param.ntypes; i++)
+      for (j = 0; j < g_param.ntypes; j++)
+	for (k = j; k < g_param.ntypes; k++) {
 	  sw->lambda[i][j][k] = sw->lambda[i][k][j] = index++;
 	}
   }

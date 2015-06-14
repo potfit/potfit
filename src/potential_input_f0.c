@@ -235,7 +235,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 
 #if defined(COULOMB)
   i = apt->number;
-  for (int j = 0; j < (ntypes - 1); j++) {
+  for (int j = 0; j < (g_param.ntypes - 1); j++) {
     *val = apt->values[i][j];
     val++;
     if (!apt->invar_par[i][j]) {
@@ -260,12 +260,12 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
     apt->total_par -= apt->invar_par[i][0];
     pt->idxlen -= apt->invar_par[i][0];
   }
-  pt->idxlen += ntypes;
+  pt->idxlen += g_param.ntypes;
 #endif /* COULOMB */
 
 #if defined(DIPOLE)
   i = apt->number + 2;
-  for (j = 0; j < (ntypes); j++) {
+  for (j = 0; j < (g_param.ntypes); j++) {
     *val = apt->values[i][j];
     val++;
     if (!apt->invar_par[i][j]) {
@@ -293,7 +293,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
       }
     }
   }
-  pt->idxlen += ntypes;
+  pt->idxlen += g_param.ntypes;
   pt->idxlen += (2 * ncols);
 #endif /* DIPOLE */
 
@@ -473,7 +473,7 @@ void read_chemical_potentials(apot_state* pstate)
       }
 
       /* check compnodes for valid values */
-      if (ntypes == 2) {
+      if (g_param.ntypes == 2) {
         for (j = 0; j < compnodes; j++)
           if (compnodelist[j] > 1 || compnodelist[j] < 0)
             error(1, "Composition node %d is %f but should be inside [0,1].\n", j + 1, compnodelist[j]);
@@ -516,12 +516,12 @@ void read_elstat_table()
   if (strcmp("ratio", buffer) != 0) {
     error(1, "Could not read ratio");
   }
-  for (i = 0; i < ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++) {
     if (1 > fscanf(infile, "%lf", &apt->ratio[i])) {
       error(1, "Could not read ratio for atomtype #%d\n", i);
     }
   }
-  for (i = 0; i < ntypes - 1; i++) {
+  for (i = 0; i < g_param.ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
       &apt->charge[i], &apt->pmin[apt->number][i], &apt->pmax[apt->number][i])) {
@@ -550,9 +550,9 @@ void read_elstat_table()
 #endif /* COULOMB */
 
 #if defined(DIPOLE)
-  int   ncols = ntypes * (ntypes + 1) / 2;
+  int   ncols = g_param.ntypes * (g_param.ntypes + 1) / 2;
 
-  for (i = 0; i < ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++) {
     apt->param_name[apt->number + 2][i] = (char *)malloc(30 * sizeof(char));
     if (4 > fscanf(infile, "%s %lf %lf %lf",
       apt->param_name[apt->number + 2][i], &apt->dp_alpha[i],
@@ -1031,7 +1031,7 @@ void init_calc_table0()
   double f = 0;
   int x = 0;
 
-  /* initialize the calc_pot table */
+  /* initialize the g_pot.calc_pot table */
   for (int i = 0; i < size; i++)
   {
     double* val = g_pot.apot_table.values[i];

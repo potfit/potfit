@@ -66,7 +66,7 @@
  * initiated by all processes to get the new potential from root.
  *
  * xi_opt is the array storing the potential parameters (usually it is the
- *     opt_pot.table - part of the struct opt_pot, but it can also be
+ *     g_pot.opt_pot.table - part of the struct g_pot.opt_pot, but it can also be
  *     modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
@@ -92,7 +92,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double tmpsum, sum = 0.0;
   int   first, col, ne, size, i = flag;
   double *xi = NULL;
-  apot_table_t *apt = &apot_table;
+  g_pot.apot_table_t *apt = &apot_table;
   double charge[ntypes];
   double sum_charges;
   double dp_kappa;
@@ -105,17 +105,17 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
   switch (format) {
       case 0:
-	xi = calc_pot.table;
+	xi = g_pot.calc_pot.table;
 	break;
       case 3:			/* fall through */
       case 4:
 	xi = xi_opt;		/* calc-table is opt-table */
 	break;
       case 5:
-	xi = calc_pot.table;	/* we need to update the calc-table */
+	xi = g_pot.calc_pot.table;	/* we need to update the calc-table */
   }
 
-  ne = apot_table.total_ne_par;
+  ne = g_pot.apot_table.total_ne_par;
   size = apt->number;
 
   /* This is the start of an infinite loop */
@@ -132,7 +132,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef MPI
     /* exchange potential and flag value */
 #ifndef APOT
-    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, g_pot.calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -154,7 +154,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* local arrays for electrostatic parameters */
     sum_charges = 0;
-    for (i = 0; i < ntypes - 1; i++) {
+    for (i = 0; i < g_param.ntypes - 1; i++) {
       if (xi_opt[2 * size + ne + i]) {
 	charge[i] = xi_opt[2 * size + ne + i];
 	sum_charges += apt->ratio[i] * charge[i];
@@ -164,28 +164,28 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     }
     apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
     charge[ntypes - 1] = apt->last_charge;
-    if (xi_opt[2 * size + ne + ntypes - 1]) {
-      dp_kappa = xi_opt[2 * size + ne + ntypes - 1];
+    if (xi_opt[2 * size + ne + g_param.ntypes - 1]) {
+      dp_kappa = xi_opt[2 * size + ne + g_param.ntypes - 1];
     } else {
       dp_kappa = 0.0;
     }
 
 #ifdef DIPOLE
-    for (i = 0; i < ntypes; i++) {
-      if (xi_opt[2 * size + ne + ntypes + i]) {
-	dp_alpha[i] = xi_opt[2 * size + ne + ntypes + i];
+    for (i = 0; i < g_param.ntypes; i++) {
+      if (xi_opt[2 * size + ne + g_param.ntypes + i]) {
+	dp_alpha[i] = xi_opt[2 * size + ne + g_param.ntypes + i];
       } else {
 	dp_alpha[i] = 0.0;
       }
     }
     for (i = 0; i < size; i++) {
-      if (xi_opt[2 * size + ne + 2 * ntypes + i]) {
-	dp_b[i] = xi_opt[2 * size + ne + 2 * ntypes + i];
+      if (xi_opt[2 * size + ne + 2 * g_param.ntypes + i]) {
+	dp_b[i] = xi_opt[2 * size + ne + 2 * g_param.ntypes + i];
       } else {
 	dp_b[i] = 0.0;
       }
-      if (xi_opt[3 * size + ne + 2 * ntypes + i]) {
-	dp_c[i] = xi_opt[3 * size + ne + 2 * ntypes + i];
+      if (xi_opt[3 * size + ne + 2 * g_param.ntypes + i]) {
+	dp_c[i] = xi_opt[3 * size + ne + 2 * g_param.ntypes + i];
       } else {
 	dp_c[i] = 0.0;
       }
@@ -194,13 +194,13 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* init second derivatives for splines */
     for (col = 0; col < paircol; col++) {
-      first = calc_pot.first[col];
+      first = g_pot.calc_pot.first[col];
       if (format == 3 || format == 0) {
 	spline_ed(calc_pot.step[col], xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
       } else {			/* format >= 4 ! */
 	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
+	  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
       }
     }
 
@@ -285,7 +285,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
 
 	    /* calculate short-range forces */
-	    if (neigh->r < calc_pot.end[col]) {
+	    if (neigh->r < g_pot.calc_pot.end[col]) {
 
 	      if (uf) {
 		fnval =

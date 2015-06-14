@@ -129,7 +129,7 @@ POTFITSRC 	+= potfit.c
 POTFITSRC 	+= powell_lsq.c
 POTFITSRC 	+= random.c
 POTFITSRC 	+= random_dsfmt.c
-POTFTTSRC 	+= simann.c
+POTFITSRC 	+= simann.c
 POTFITSRC 	+= splines.c
 POTFITSRC 	+= utils.c
 

@@ -447,7 +447,7 @@ typedef struct {
   #ifdef EVO
    double evo_threshold;
   #else /* EVO */
-   char anneal_temp[20];
+   char* anneal_temp;
   #endif /* EVO */
    double eweight;
    double sweight;

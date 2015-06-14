@@ -68,7 +68,7 @@
  * initiated by all processes to get the new potential from root.
  *
  * xi_opt is the array storing the potential parameters (usually it is the
- *     opt_pot.table - part of the struct opt_pot, but it can also be
+ *     g_pot.opt_pot.table - part of the struct g_pot.opt_pot, but it can also be
  *     modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
@@ -132,14 +132,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
   switch (format) {
       case 0:
-	xi = calc_pot.table;
+	xi = g_pot.calc_pot.table;
 	break;
       case 3:			/* fall through */
       case 4:
 	xi = xi_opt;		/* calc-table is opt-table */
 	break;
       case 5:
-	xi = calc_pot.table;	/* we need to update the calc-table */
+	xi = g_pot.calc_pot.table;	/* we need to update the calc-table */
   }
 
   /* This is the start of an infinite loop */
@@ -161,7 +161,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef MPI
     /* exchange potential and flag value */
 #ifndef APOT
-    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi, g_pot.calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* APOT */
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -184,22 +184,22 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     /* Pair potential (phi), density (rho), embedding funtion (F)
        where paircol is number of pair potential columns
-       and ntypes is number of rho columns
-       and ntypes is number of F columns */
-    for (col = 0; col < 2 * paircol + 3 * ntypes; col++) {
+       and g_param.ntypes is number of rho columns
+       and g_param.ntypes is number of F columns */
+    for (col = 0; col < 2 * paircol + 3 * g_param.ntypes; col++) {
       /* Pointer to first entry */
-      first = calc_pot.first[col];
+      first = g_pot.calc_pot.first[col];
 
       /* Initialize 2nd derivatives
          step = width of spline knots (known as h)
          xi+first = array with spline values
-         calc_pot.last[col1] - first + 1 = num of spline pts
+         g_pot.calc_pot.last[col1] - first + 1 = num of spline pts
          *(xi + first - 2) = value of endpoint gradient (default: 1e30)
          *(xi + first - 1) = value of other endpoint gradient
          (default: phi=0.0, rho=0.0, F=1e30)
-         calc_pot.d2tab + first = array to hold 2nd deriv */
-      spline_ed(calc_pot.step[col], xi + first, calc_pot.last[col] - first + 1,
-	*(xi + first - 2), *(xi + first - 1), calc_pot.d2tab + first);
+         g_pot.calc_pot.d2tab + first = array to hold 2nd deriv */
+      spline_ed(calc_pot.step[col], xi + first, g_pot.calc_pot.last[col] - first + 1,
+	*(xi + first - 2), *(xi + first - 1), g_pot.calc_pot.d2tab + first);
     }
 
 #ifndef MPI
@@ -260,7 +260,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	       For Binary Alloy: 0 = phi_AA, 1 = (phi_AB or phi_BA), 2 = phi_BB
 	       where typ = A = 0 and typ = B = 1 */
 	    /* We need to check that neighbor atom exists inside pair potential's radius */
-	    if (neigh_j->r < calc_pot.end[neigh_j->col[0]]) {
+	    if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[0]]) {
 	      /* Compute phi and phi' value given radial distance
 	         NOTE: slot = spline point index right below radial distance
 	         shift = % distance from 'slot' spline pt
@@ -312,7 +312,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	       columns if alloy. If atom j is A or B, fn value needs to be
 	       in correct rho_A or rho_B respectively, it doesn't depend on atom i. */
 	    /* Check that atom j lies inside rho_typ2 */
-	    if (neigh_j->r < calc_pot.end[neigh_j->col[1]]) {
+	    if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[1]]) {
 	      /* Store gradient in the neighbor for the pair r_ij
 	         to be used in the future when computing forces
 	         and sum up rho for atom i */
@@ -333,7 +333,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	       Note: it is "paircol+2*ntypes" spots away in the array */
 
 	    /* Check that atom j lies inside f_col2 */
-	    if (neigh_j->r < calc_pot.end[neigh_j->col[2]]) {
+	    if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[2]]) {
 	      /* Store the f(r_ij) value and the gradient for future use */
 	      neigh_j->f =
 		splint_comb_dir(&calc_pot, xi, neigh_j->slot[2], neigh_j->shift[2], neigh_j->step[2],
@@ -351,8 +351,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	     Binary Alloy: 0 = g_A, 1 = g_B
 	     where A, B are atom type for the main atom i
 	     Note: it is now "2*paircol+2*ntypes" from beginning column
-	     to account for phi(paircol)+rho(nytpes)+F(ntypes)+f(paircol)
-	     col2 = 2 * paircol + 2 * ntypes + typ1; */
+	     to account for phi(paircol)+rho(nytpes)+F(g_param.ntypes)+f(paircol)
+	     col2 = 2 * paircol + 2 * g_param.ntypes + typ1; */
 
 	  /* Loop over every angle formed by neighbors
 	     N(N-1)/2 possible combinations
@@ -385,26 +385,26 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	  }
 
 	  /* Column for embedding function, F */
-	  col_F = paircol + ntypes + atom->type;
+	  col_F = paircol + g_param.ntypes + atom->type;
 
 #ifdef RESCALE
 	  /* Compute energy, gradient for embedding function F
 	     Check if rho lies short of inner cutoff of F(rho) */
-	  if (atom->rho < calc_pot.begin[col_F]) {
+	  if (atom->rho < g_pot.calc_pot.begin[col_F]) {
 
 	    /* Punish this potential for having rho lie outside of F */
 	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
 
 	    /* Set the atomic density to the first rho in the spline F */
-	    atom->rho = calc_pot.begin[col_F];
+	    atom->rho = g_pot.calc_pot.begin[col_F];
 
-	  } else if (atom->rho > calc_pot.end[col_F]) {	/* rho is to the right of the spline */
+	  } else if (atom->rho > g_pot.calc_pot.end[col_F]) {	/* rho is to the right of the spline */
 
 	    /* Punish this potential for having rho lie outside of F */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - calc_pot.end[col_F]);
+	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
 
 	    /* Set the atomic density to the last rho in the spline F */
-	    atom->rho = calc_pot.end[col_F];
+	    atom->rho = g_pot.calc_pot.end[col_F];
 	  }
 	  /* Compute energy piece from F, and store the gradient for later use */
 	  forces[energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
@@ -412,43 +412,43 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #else
 	  /* Compute energy, gradient for embedding function F
 	     Check if rho lies short of inner cutoff of F(rho) */
-	  if (atom->rho < calc_pot.begin[col_F]) {
+	  if (atom->rho < g_pot.calc_pot.begin[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F] (atom->rho, xi_opt + opt_pot.first[col_F], &temp_eng);
-	    atom->gradF = apot_grad(atom->rho, xi_opt + opt_pot.first[col_F], apot_table.fvalue[col_F]);
+	    g_pot.apot_table.fvalue[col_F] (atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
+	    atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F], g_pot.apot_table.fvalue[col_F]);
 	    forces[energy_p + h] += temp_eng;
 #else
 	    /* Linear extrapolate values to left to get F_i(rho)
 	       This gets value and grad of initial spline point */
-	    rho_val = splint_comb(&calc_pot, xi, col_F, calc_pot.begin[col_F], &atom->gradF);
+	    rho_val = splint_comb(&calc_pot, xi, col_F, g_pot.calc_pot.begin[col_F], &atom->gradF);
 
 	    /* Sum this to the total energy for this configuration
 	       Linear extrapolate this energy */
-	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.begin[col_F]) * atom->gradF;
+	    forces[energy_p + h] += rho_val + (atom->rho - g_pot.calc_pot.begin[col_F]) * atom->gradF;
 #endif /* APOT */
 	    /* rho is to the right of the spline */
-	  } else if (atom->rho > calc_pot.end[col_F]) {
+	  } else if (atom->rho > g_pot.calc_pot.end[col_F]) {
 #ifdef APOT
 	    /* calculate analytic value explicitly */
-	    apot_table.fvalue[col_F] (atom->rho, xi_opt + opt_pot.first[col_F], &temp_eng);
-	    atom->gradF = apot_grad(atom->rho, xi_opt + opt_pot.first[col_F], apot_table.fvalue[col_F]);
+	    g_pot.apot_table.fvalue[col_F] (atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
+	    atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F], g_pot.apot_table.fvalue[col_F]);
 	    forces[energy_p + h] += temp_eng;
 #else
 	    /* Get value and grad at 1/2 the width from the final spline point */
 	    rho_val =
 	      splint_comb(&calc_pot, xi, col_F,
-	      calc_pot.end[col_F] - 0.5 * calc_pot.step[col_F], &atom->gradF);
+	      g_pot.calc_pot.end[col_F] - 0.5 * g_pot.calc_pot.step[col_F], &atom->gradF);
 	    /* Linear extrapolate to the right to get energy */
-	    forces[energy_p + h] += rho_val + (atom->rho - calc_pot.end[col_F]) * atom->gradF;
+	    forces[energy_p + h] += rho_val + (atom->rho - g_pot.calc_pot.end[col_F]) * atom->gradF;
 #endif /* APOT */
 	    /* and in-between */
 	  } else {
 #ifdef APOT
 	    /* calculate small values directly */
 	    if (atom->rho < 0.1) {
-	      apot_table.fvalue[col_F] (atom->rho, xi_opt + opt_pot.first[col_F], &temp_eng);
-	      atom->gradF = apot_grad(atom->rho, xi_opt + opt_pot.first[col_F], apot_table.fvalue[col_F]);
+	      g_pot.apot_table.fvalue[col_F] (atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
+	      atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F], g_pot.apot_table.fvalue[col_F]);
 	      forces[energy_p + h] += temp_eng;
 	    } else
 #endif
@@ -474,7 +474,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	         for alloys, where A or B stands for atom i
 	         WARNING: Double check this!!! May not need this
 	         since drho will be 0 otherwise */
-	      if (neigh_j->r < calc_pot.end[neigh_j->col[1]]) {
+	      if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[1]]) {
 
 		/* Calculate eam force */
 		eam_force = neigh_j->drho * atom->gradF;
@@ -675,8 +675,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
          this sets the avg rho per atom to 1
          Please read the other constraint on gauge conditions
          above. */
-      forces[dummy_p + ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
-      tmpsum += dsquare(forces[dummy_p + ntypes]);
+      forces[dummy_p + g_param.ntypes] = DUMMY_WEIGHT * (rho_sum - 1.0);
+      tmpsum += dsquare(forces[dummy_p + g_param.ntypes]);
     }
 #endif /* !RESCALE */
 

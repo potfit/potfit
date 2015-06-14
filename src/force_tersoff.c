@@ -65,7 +65,7 @@
  * initiated by all processes to get the new potential from root.
  *
  * xi_opt is the array storing the potential parameters (usually it is the
- *     opt_pot.table - part of the struct opt_pot, but it can also be
+ *     g_pot.opt_pot.table - part of the struct g_pot.opt_pot, but it can also be
  *     modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
@@ -572,7 +572,7 @@ void update_tersoff_pointers(double *xi)
       index += 2;
     }
     for (i = 0; i < paircol; i++) {
-      if (0 == (i % ntypes)) {
+      if (0 == (i % g_param.ntypes)) {
 	tersoff->chi[i] = &tersoff->one;
 	tersoff->omega[i] = &tersoff->one;
       } else {

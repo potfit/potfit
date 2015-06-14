@@ -82,12 +82,12 @@ if (apot_table.sw_kappa)
 
 /* set spline density corrections to 0 */
 #if defined EAM || defined ADP || defined MEAM
-int   i;
+  int   i;
 
-lambda = (double *)malloc(ntypes * sizeof(double));
-reg_for_free(lambda, "lambda");
-for (i = 0; i < ntypes; i++)
-  lambda[i] = 0.0;
+  g_todo.lambda = (double *)malloc(g_param.ntypes * sizeof(double));
+  reg_for_free(g_todo.lambda, "lambda");
+  for (i = 0; i < g_param.ntypes; i++)
+    g_todo.lambda[i] = 0.0;
 #endif /* EAM || ADP || MEAM */
 }
 
@@ -128,11 +128,11 @@ void set_force_vector_pointers()
 
   g_calc.stress_p = g_calc.energy_p + g_config.nconf;
 #if defined EAM || defined ADP || defined MEAM
-  limit_p = g_calc.stress_p + 6 * g_config.nconf;
-  dummy_p = limit_p + g_config.nconf;
+  g_calc.limit_p = g_calc.stress_p + 6 * g_config.nconf;
+  g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #ifdef APOT
-  punish_par_p = dummy_p + 2 * g_param.ntypes;
-  punish_pot_p = punish_par_p + apot_table.total_par - apot_table.invar_pots;
+  g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #else /* EAM || ADP || MEAM */
 #ifdef APOT
@@ -144,10 +144,10 @@ void set_force_vector_pointers()
 #else /* STRESS */
 
 #if defined EAM || defined ADP || defined MEAM
-  limit_p = g_calc.energy_p + g_config.nconf;
-  dummy_p = limit_p + g_config.nconf;
+  g_calc.limit_p = g_calc.energy_p + g_config.nconf;
+  g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #ifdef APOT
-  g_calc.punish_par_p = dummy_p + 2 * g_param.ntypes;
+  g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
   g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #else /* EAM || ADP || MEAM */

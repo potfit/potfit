@@ -92,7 +92,7 @@ void apot_init(void)
 #ifdef STIWEB
   add_pot(stiweb_2, 6);
   add_pot(stiweb_3, 2);
-  add_pot(lambda, (int)(0.5 * ntypes * ntypes * (ntypes + 1)));
+  add_pot(lambda, (int)(0.5 * g_param.ntypes * g_param.ntypes * (g_param.ntypes + 1)));
 #endif /* STIWEB */
 
 #ifdef TERSOFF
@@ -200,7 +200,7 @@ void check_apot_functions(void)
 {
 #ifdef STIWEB
   /* paircol is not yet defined at this point */
-  int   pcol = (ntypes * (ntypes + 1)) / 2;
+  int   pcol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
   int   i;
 
   /* check for the correct function types for SW potential */
@@ -215,11 +215,11 @@ void check_apot_functions(void)
 
   /* make sure the cutoff parameters (a1,a2) can be optimized correctly */
   for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][5] > apot_table.end[i]) {
+    if (apot_table.pmax[i][5] > g_pot.apot_table.end[i]) {
       error(0, "The upper bound for the parameter a1 exceeds the cutoff radius in potential %d.\n", i + 1);
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
-    if (apot_table.pmax[pcol + i][1] > apot_table.end[pcol + i]) {
+    if (apot_table.pmax[pcol + i][1] > g_pot.apot_table.end[pcol + i]) {
       error(0, "The upper bound for the parameter a2 exceeds the cutoff radius in potential %d.\n", i + 1);
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
@@ -228,7 +228,7 @@ void check_apot_functions(void)
 
 #ifdef TERSOFF
   /* paircol is not yet defined at this point */
-  int   pcol = (ntypes * (ntypes + 1)) / 2;
+  int   pcol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
   int   i;
 
 #ifndef TERSOFFMOD
@@ -237,14 +237,14 @@ void check_apot_functions(void)
     if (strcmp(apot_table.names[i], "tersoff_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
   }
-  for (i = 0; i < ntypes * (ntypes - 1) / 2.0; i++) {
+  for (i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++) {
     if (strcmp(apot_table.names[pcol + i], "tersoff_mix") != 0)
       error(1, "Only tersoff_mix potential is allowed for the %d. potential!\n", i + 1);
   }
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
   for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][9] < apot_table.pmin[i][10]) {
+    if (apot_table.pmax[i][9] < g_pot.apot_table.pmin[i][10]) {
       error(0, "The upper bound for the parameter S is smaller than the lower bound\n");
       error(0, "for the parameter R in potential %d.\n", i + 1);
       error(1, "Please change it, that the condition R < S can be fulfilled.\n");
@@ -259,7 +259,7 @@ void check_apot_functions(void)
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
   for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][15] < apot_table.pmin[i][14]) {
+    if (apot_table.pmax[i][15] < g_pot.apot_table.pmin[i][14]) {
       error(0, "The upper bound for the parameter R2 is smaller than the lower bound\n");
       error(0, "for the parameter R1 in potential %d.\n", i + 1);
       error(1, "Please change it, that the condition R1 < R2 can be fulfilled.\n");
@@ -1099,11 +1099,11 @@ double apot_punish(double *params, double *forces)
     }
 #if defined EAM || defined ADP || defined MEAM
     /* punish m=n for universal embedding function */
-    if (strcmp(apot_table.names[i], "universal") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "universal") == 0) {
       x = params[j + 2] - params[j + 1];
       if (fabs(x) < 1e-6) {
-	forces[punish_pot_p + i] = apot_punish_value / (x * x);
-	tmpsum += apot_punish_value / (x * x);
+	forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value / (x * x);
+	tmpsum += g_param.apot_punish_value / (x * x);
       }
     }
 #endif /* EAM */

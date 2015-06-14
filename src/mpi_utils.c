@@ -642,17 +642,17 @@ void broadcast_angles()
 void potsync()
 {
   int   firstcol, firstval, nvals;
-  firstcol = paircol + ntypes;
+  firstcol = paircol + g_param.ntypes;
   /* Memory is allocated - just bcast that changed potential... */
   /* bcast begin/end/step/invstep of embedding energy  */
-  MPI_Bcast(calc_pot.begin + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.end + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.step + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.invstep + firstcol, ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(calc_pot.first + firstcol, ntypes, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.begin + firstcol, g_param.ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.end + firstcol, g_param.ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.step + firstcol, g_param.ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.invstep + firstcol, g_param.ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(calc_pot.first + firstcol, g_param.ntypes, MPI_INT, 0, MPI_COMM_WORLD);
   /* bcast table values of transfer fn. and embedding energy */
-  firstval = calc_pot.first[paircol];
-  nvals = calc_pot.len - firstval;
+  firstval = g_pot.calc_pot.first[paircol];
+  nvals = g_pot.calc_pot.len - firstval;
   MPI_Bcast(calc_pot.table + firstval, nvals, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 

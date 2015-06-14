@@ -72,11 +72,11 @@ int main(int argc, char **argv)
   broadcast_params_mpi();
 #else
   /* Identify subset of atoms/volumes belonging to individual process with complete set of atoms/volumes */
-  conf_atoms = atoms;
-  conf_vol = volume;
-  conf_uf = useforce;
+  g_config.conf_atoms = g_config.atoms;
+  g_config.conf_vol = g_config.volume;
+  g_config.conf_uf = g_config.useforce;
 #ifdef STRESS
-  conf_us = usestress;
+  g_config.conf_us = g_config.usestress;
 #endif /* STRESS */
 #endif /* MPI */
 

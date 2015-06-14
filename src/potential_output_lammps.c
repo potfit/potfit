@@ -61,7 +61,7 @@ void write_pot_table_lammps()
 
 #ifdef STIWEB
   /* check if final potential is LAMMPS compliant (a1==a2) */
-  if (apot_table.values[0][5] != apot_table.values[paircol][1]) {
+  if (apot_table.values[0][5] != g_pot.apot_table.values[paircol][1]) {
     warning("Your potential is not supported by LAMMPS.\n");
     warning("Please ensure that the values a1 and a2 are the same,\n");
     warning("  either by using global parameters or by fixing them.\n");
@@ -129,31 +129,31 @@ void write_pot_table_lammps()
 #endif /* TERSOFF */
 
   /* write data, one line per triple of elements */
-  for (i = 0; i < ntypes; i++) {
-    for (j = 0; j < ntypes; j++) {
-      for (k = 0; k < ntypes; k++) {
-	col_j = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
+  for (i = 0; i < g_param.ntypes; i++) {
+    for (j = 0; j < g_param.ntypes; j++) {
+      for (k = 0; k < g_param.ntypes; k++) {
+	col_j = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2) : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
 	fprintf(outfile, "%s %s %s", elements[i], elements[j], elements[k]);
 #ifdef STIWEB
 	/* calculate scaling factors */
 	/* energy scaling factor */
 	epsilon = 1.0;
 	/* distance scaling factor */
-	sigma = apot_table.values[col_j][4];
+	sigma = g_pot.apot_table.values[col_j][4];
 	power_1(&scale_p, &sigma, &apot_table.values[col_j][2]);
 	power_1(&scale_q, &sigma, &apot_table.values[col_j][3]);
 	scale_p = 1.0 / (epsilon * scale_p);
 	scale_q = 1.0 / (epsilon * scale_q);
 	fprintf(outfile, " %g", epsilon);	/* epsilon */
 	fprintf(outfile, " %g", sigma);	/* sigma */
-	fprintf(outfile, " %g", apot_table.values[col_j][5] / sigma);	/* a */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][5] / sigma);	/* a */
 	fprintf(outfile, " %g", *(apot_table.sw.lambda[i][j][k]) / epsilon);	/* lambda */
-	fprintf(outfile, " %g", apot_table.values[paircol + col_j][0] / sigma);	/* gamma */
+	fprintf(outfile, " %g", g_pot.apot_table.values[paircol + col_j][0] / sigma);	/* gamma */
 	fprintf(outfile, " %g", -1.0 / 3.0);	/* costheta0 */
-	fprintf(outfile, " %g", apot_table.values[col_j][1] * scale_q);	/* A */
-	fprintf(outfile, " %g", apot_table.values[col_j][0] * scale_p / apot_table.values[col_j][1] / scale_q);	/* B */
-	fprintf(outfile, " %g", apot_table.values[col_j][2]);	/* p */
-	fprintf(outfile, " %g", apot_table.values[col_j][3]);	/* q */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][1] * scale_q);	/* A */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][0] * scale_p / g_pot.apot_table.values[col_j][1] / scale_q);	/* B */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][2]);	/* p */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][3]);	/* q */
 	fprintf(outfile, " %g", 0.0);	/* tol */
 #endif /* STIWEB */
 #ifdef TERSOFF
@@ -164,37 +164,37 @@ void write_pot_table_lammps()
 	fprintf(outfile, " %g", 1.0);
 	fprintf(outfile, " %g", *(apot_table.tersoff.omega[col_j]));	/* gamma_ijk = omega_ik */
 	fprintf(outfile, " %g", 0.0);	/* lambda3 = 0 */
-	fprintf(outfile, " %g", apot_table.values[col_j][6]);	/* c */
-	fprintf(outfile, " %g", apot_table.values[col_j][7]);	/* d */
-	fprintf(outfile, " %g", apot_table.values[col_j][8]);	/* costheta0 = h */
-	fprintf(outfile, " %g", apot_table.values[col_j][5]);	/* n */
-	fprintf(outfile, " %g", apot_table.values[col_j][4]);	/* beta */
-	fprintf(outfile, " %g", apot_table.values[col_j][3]);	/* lambda2 */
-	fprintf(outfile, " %g", apot_table.values[col_j][1] * *(apot_table.tersoff.chi[col_j]));	/* B (includes chi) */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] + apot_table.values[col_j][10]));	/* R */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] - apot_table.values[col_j][10]));	/* D */
-	fprintf(outfile, " %g", apot_table.values[col_j][2]);	/* lambda1 */
-	fprintf(outfile, " %g", apot_table.values[col_j][0]);	/* A */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][6]);	/* c */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][7]);	/* d */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][8]);	/* costheta0 = h */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][5]);	/* n */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][4]);	/* beta */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][3]);	/* lambda2 */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][1] * *(apot_table.tersoff.chi[col_j]));	/* B (includes chi) */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] + g_pot.apot_table.values[col_j][10]));	/* R */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][9] - g_pot.apot_table.values[col_j][10]));	/* D */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][2]);	/* lambda1 */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][0]);	/* A */
 #else /* !TERSOFFMOD */
 	/* order of parameters for a LAMMPS potential: */
 	/* beta, alpha, h, eta, beta_ters (dummy), lambda2, B, R, D, lambda1, A, n, c1,..,c5 */
-	fprintf(outfile, " %g", apot_table.values[col_j][7]);	/* beta */
-	fprintf(outfile, " %g", apot_table.values[col_j][6]);	/* alpha */
-	fprintf(outfile, " %g", apot_table.values[col_j][13]);	/* h */
-	fprintf(outfile, " %g", apot_table.values[col_j][4]);	/* eta */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][7]);	/* beta */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][6]);	/* alpha */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][13]);	/* h */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][4]);	/* eta */
 	fprintf(outfile, " %g", 1.0);	/* beta_ters (dummy) */
-	fprintf(outfile, " %g", apot_table.values[col_j][3]);	/* lambda2 = mu */
-	fprintf(outfile, " %g", apot_table.values[col_j][1]);	/* B */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][14] + apot_table.values[col_j][15]));	/* R = 0.5 * (R1+R2) */
-	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][15] - apot_table.values[col_j][14]));	/* D = 0.5 * (R2-R1) */
-	fprintf(outfile, " %g", apot_table.values[col_j][2]);	/* lambda1 = lambda */
-	fprintf(outfile, " %g", apot_table.values[col_j][0]);	/* A */
-	fprintf(outfile, " %g", 1.0 / (2.0 * apot_table.values[col_j][5]));	/* n = 1/(2*delta) */
-	fprintf(outfile, " %g", apot_table.values[col_j][8]);	/* c1 */
-	fprintf(outfile, " %g", apot_table.values[col_j][9]);	/* c2 */
-	fprintf(outfile, " %g", apot_table.values[col_j][10]);	/* c3 */
-	fprintf(outfile, " %g", apot_table.values[col_j][11]);	/* c4 */
-	fprintf(outfile, " %g", apot_table.values[col_j][12]);	/* c5 */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][3]);	/* lambda2 = mu */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][1]);	/* B */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][14] + g_pot.apot_table.values[col_j][15]));	/* R = 0.5 * (R1+R2) */
+	fprintf(outfile, " %g", 0.5 * (apot_table.values[col_j][15] - g_pot.apot_table.values[col_j][14]));	/* D = 0.5 * (R2-R1) */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][2]);	/* lambda1 = lambda */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][0]);	/* A */
+	fprintf(outfile, " %g", 1.0 / (2.0 * g_pot.apot_table.values[col_j][5]));	/* n = 1/(2*delta) */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][8]);	/* c1 */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][9]);	/* c2 */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][10]);	/* c3 */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][11]);	/* c4 */
+	fprintf(outfile, " %g", g_pot.apot_table.values[col_j][12]);	/* c5 */
 #endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
 	fprintf(outfile, "\n");
@@ -274,16 +274,16 @@ void write_pot_table_lammps()
   for (int i = 0; i < g_param.ntypes; i++)
   {
     /* atomic number, mass, lattice constant, lattice type */
-    fprintf(outfile, "%3d %f 0 ???\n", ele_number_from_name(elements[i]), ele_mass_from_name(elements[i]));
-    r = 0.0;
+    fprintf(outfile, "%3d %f 0 ???\n", ele_number_from_name(g_config.elements[i]), ele_mass_from_name(g_config.elements[i]));
+    double r = 0.0;
     /* embedding function F(n) */
-    k = paircol + g_param.ntypes + i;
-    for (j = 0; j < imdpotsteps; j++) {
+    int k = g_calc.paircol + g_param.ntypes + i;
+    for (int j = 0; j < g_param.imdpotsteps; j++) {
 #ifdef APOT
-	apot_table.fvalue[k] (r, apot_table.values[k], &temp);
+	(*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
 	temp =
-	  smooth_pot[k] ? temp * cutoff(r, apot_table.end[k],
-	  apot_table.values[k][apot_table.n_par[k] - 1]) : temp;
+          g_pot.smooth_pot[k] ? temp * cutoff(r, g_pot.apot_table.end[k],
+          g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, k, r));
@@ -291,14 +291,14 @@ void write_pot_table_lammps()
       r += drho;
     }
     r = 0.0;
-    k = paircol + i;
+    k = g_calc.paircol + i;
     /* transfer function rho(r) */
-    for (j = 0; j < imdpotsteps; j++) {
+    for (int j = 0; j < g_param.imdpotsteps; j++) {
 #ifdef APOT
-	apot_table.fvalue[k] (r, apot_table.values[k], &temp);
+	(*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
 	temp =
-	  smooth_pot[k] ? temp * cutoff(r, apot_table.end[k],
-	  apot_table.values[k][apot_table.n_par[k] - 1]) : temp;
+          g_pot.smooth_pot[k] ? temp * cutoff(r, g_pot.apot_table.end[k],
+	  g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
 	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, k, r));
@@ -314,7 +314,9 @@ void write_pot_table_lammps()
     for (int j = 0; j <= i; j++)
     {
       double r = 0.0;
-      int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2) : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
+      int k = (i <= j) ?
+        i * g_param.ntypes + j - ((i * (i + 1)) / 2) :
+        j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       for (int l = 0; l < g_param.imdpotsteps; l++)
       {
 #ifdef APOT
@@ -333,23 +335,27 @@ void write_pot_table_lammps()
 
 #ifdef ADP
   /* dipole distortion */
-  for (i = 0; i < ntypes; i++)
-    for (j = i; j < ntypes; j++) {
-      r = 0.0;
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
-      k += paircol + 2 * ntypes;
-      for (l = 0; l < imdpotsteps; l++) {
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i; j < g_param.ntypes; j++) {
+      double r = 0.0;
+      int k = (i <= j) ?
+        i * g_param.ntypes + j - ((i * (i + 1)) / 2) :
+        j * g_param.ntypes + i - ((j * (j + 1)) / 2);
+      k += g_calc.paircol + 2 * g_param.ntypes;
+      for (int l = 0; l < g_param.imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
 	r += dr;
       }
     }
   /* quadrupole distortion */
-  for (i = 0; i < ntypes; i++)
-    for (j = i; j < ntypes; j++) {
-      r = 0.0;
-      k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2) : j * ntypes + i - ((j * (j + 1)) / 2);
-      k += 2 * (paircol + ntypes);
-      for (l = 0; l < imdpotsteps; l++) {
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i; j < g_param.ntypes; j++) {
+      double r = 0.0;
+      int k = (i <= j) ?
+        i * g_param.ntypes + j - ((i * (i + 1)) / 2) :
+        j * g_param.ntypes + i - ((j * (j + 1)) / 2);
+      k += 2 * (g_calc.paircol + g_param.ntypes);
+      for (int l = 0; l < g_param.imdpotsteps; l++) {
 	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
 	r += dr;
       }
