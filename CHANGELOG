@@ -1,3 +1,7 @@
+potfit-next
++ completely rewrote internal potfit data structure
++ move source code into src directory
+
 potfit-0.7.1 (20141127)
 + remove the version.h file, it caused too much trouble
 + make vasp2force compatible with VASP version 5 OUTCAR files

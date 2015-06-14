@@ -132,7 +132,7 @@ SHELL = /bin/bash
 # i686-gcc  	32bit GNU Compiler
 #
 #SYSTEM 		= x86_64-icc 	# Use this as fallback
-SYSTEM 		= $(shell uname -m)-icc
+SYSTEM 		= $(shell uname -m)-clang
 
 # This is the directory where the potfit binary will be moved to.
 # If BIN_DIR is empty, the binary will not be moved.
@@ -416,11 +416,39 @@ endif
 #
 ###########################################################################
 
-POTFITHDR   	= bracket.h elements.h optimize.h potfit.h potential.h \
-		  random.h splines.h utils.h
-POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
-		  param.c potential_input.c potential_output.c potfit.c \
-		  powell_lsq.c random.c simann.c splines.c utils.c
+POTFITHDR   	+= bracket.h
+POTFITHDR 	+= elements.h
+POTFITHDR 	+= optimize.h
+POTFITHDR 	+= potfit.h
+POTFITHDR 	+= potential_input.h
+POTFITHDR 	+= potential_output.h
+POTFITHDR 	+= random.h
+POTFITHDR 	+= splines.h
+POTFITHDR 	+= utils.h
+
+POTFITSRC 	+= bracket.c
+POTFITSRC 	+= brent.c
+POTFITSRC 	+= config.c
+POTFITSRC 	+= elements.c
+POTFITSRC 	+= errors.c
+POTFITSRC 	+= forces.c
+POTFITSRC 	+= linmin.c
+POTFITSRC 	+= optimize.c
+POTFITSRC	+= params.c
+POTFITSRC 	+= potential_input.c
+POTFITSRC 	+= potential_input_f0.c
+POTFITSRC 	+= potential_input_f3.c
+POTFITSRC 	+= potential_input_f4.c
+POTFITSRC 	+= potential_output.c
+POTFITSRC 	+= potential_output_imd.c
+POTFITSRC 	+= potential_output_lammps.c
+POTFITSRC 	+= potfit.c
+POTFITSRC 	+= powell_lsq.c
+POTFITSRC 	+= random.c
+POTFITSRC 	+= random_dsfmt.c
+POTFTTSRC 	+= simann.c
+POTFITSRC 	+= splines.c
+POTFITSRC 	+= utils.c
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
   POTFITSRC      += force_pair.c
