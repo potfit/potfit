@@ -340,8 +340,12 @@ void read_pot_table3(char const* potential_filename, FILE* pfile, potential_stat
 #endif /* ADP */
 
 #ifdef MEAM
-  for (i =g_pot.paircol + 2 * g_param.ntypes; i < 2 *g_pot.paircol + 2 * g_param.ntypes; i++) {	/* read in second pair pot    f */
-    if (have_grad) {		/* read gradient */
+  /* read in second pair pot    f */
+  for (int i = g_calc.paircol + 2 * g_param.ntypes; i < 2 * g_calc.paircol + 2 * g_param.ntypes; i++)
+  {
+    /* read gradient */
+    if (pstate->have_gradient)
+    {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
         error(1, "Premature end of potential file %s", pstate->filename);;
     } else {
@@ -349,15 +353,15 @@ void read_pot_table3(char const* potential_filename, FILE* pfile, potential_stat
       *(val + 1) = 0.0;
     }
     val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] >> 1))
       pt->idx[k++] = l++;
     else
       l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] % 2))
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    for (int j = 0; j < nvals[i]; j++) {	/* read values */
       if (1 > fscanf(pfile, "%lf\n", val)) {
         error(1, "Premature end of potential file %s", pstate->filename);;
       } else
@@ -366,7 +370,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile, potential_stat
       // Clamp first spline knot in first f_ij potential only
       // to remove degeneracy of f*f*g where f' = f/b and g' = b^2*g
 #ifndef MEAMf
-      if ((!invar_pot[i]) && (j < nvals[i] - 1 && (j != 0 || i !=g_pot.paircol + 2 * g_param.ntypes)))
+      if ((!g_pot.invar_pot[i]) && (j < nvals[i] - 1 && (j != 0 || i != g_calc.paircol + 2 * g_param.ntypes)))
 #else
       if (!invar_pot[i])
 #endif /* MEAMf */
@@ -375,8 +379,13 @@ void read_pot_table3(char const* potential_filename, FILE* pfile, potential_stat
 	l++;
     }
   }
-  for (i = 2 *g_pot.paircol + 2 * g_param.ntypes; i < 2 *g_pot.paircol + 3 * g_param.ntypes; i++) {	/* read in angl part */
-    if (have_grad) {		/* read gradient */
+
+  /* read in angl part */
+  for (int i = 2 * g_calc.paircol + 2 * g_param.ntypes; i < 2 * g_calc.paircol + 3 * g_param.ntypes; i++)
+  {
+    /* read gradient */
+    if (pstate->have_gradient)
+    {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
         error(1, "Premature end of potential file %s", pstate->filename);;
     } else {
@@ -384,21 +393,21 @@ void read_pot_table3(char const* potential_filename, FILE* pfile, potential_stat
       *(val + 1) = 0;
     }
     val += 2;
-    if ((!invar_pot[i]) && (gradient[i] >> 1))
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] >> 1))
       pt->idx[k++] = l++;
     else
       l++;
-    if ((!invar_pot[i]) && (gradient[i] % 2))
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] % 2))
       pt->idx[k++] = l++;
     else
       l++;
-    for (j = 0; j < nvals[i]; j++) {	/* read values */
+    for (int j = 0; j < nvals[i]; j++) {	/* read values */
       if (1 > fscanf(pfile, "%lf\n", val)) {
         error(1, "Premature end of potential file %s", pstate->filename);;
       } else
 	val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
-      if (!invar_pot[i])
+      if (!g_pot.invar_pot[i])
 	pt->idx[k++] = l++;
       else
 	l++;

@@ -77,7 +77,7 @@ clean:
 	@rm -f *.o *.u *~ \#* *.V *.T *.O *.il
 
 distclean:
-	@make -C src $@
+	@make -C src --no-print-directory $@
 	@rm -f *.o *.u *~ \#* *.V *.T *.O *.il
 	@rm -f bin/*
 

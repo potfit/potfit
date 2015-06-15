@@ -343,7 +343,7 @@ void write_pot_table_lammps()
         j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += g_calc.paircol + 2 * g_param.ntypes;
       for (int l = 0; l < g_param.imdpotsteps; l++) {
-	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+	fprintf(outfile, "%e\n", splint_ne(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 	r += dr;
       }
     }
@@ -356,7 +356,7 @@ void write_pot_table_lammps()
         j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += 2 * (g_calc.paircol + g_param.ntypes);
       for (int l = 0; l < g_param.imdpotsteps; l++) {
-	fprintf(outfile, "%e\n", splint_ne(pt, pt->table, k, r));
+        fprintf(outfile, "%e\n", splint_ne(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 	r += dr;
       }
     }

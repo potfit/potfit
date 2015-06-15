@@ -505,22 +505,23 @@ void write_pot_table_imd(char const* prefix)
 
   /* write info block */
   m = 0;
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (int i = 0; i < g_param.ntypes; i++)
+  {
     m += i;
-    m2 = 0;
-    for (j = 0; j < g_param.ntypes; j++) {
+    int m2 = 0;
+    for (int j = 0; j < g_param.ntypes; j++) {
       m2 += j;
-      col1 = (g_param.ntypes * (g_param.ntypes + 5)) / 2;
+      int col1 = (g_param.ntypes * (g_param.ntypes + 5)) / 2;
       col1 += i < j ? i * g_param.ntypes + j - m : j * g_param.ntypes + i - m2;
-      col2 = i * g_param.ntypes + j;
+      int col2 = i * g_param.ntypes + j;
       /* Extrapolation possible  */
 #ifdef APOT
-      r2begin[col2] = dsquare((plotmin == 0 ? 0.1 : plotmin));
+      r2begin[col2] = dsquare((g_param.plotmin == 0 ? 0.1 : g_param.plotmin));
 #else
       r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
 #endif /* APOT */
       r2end[col2] = dsquare(pt->end[col1]);
-      r2step[col2] = (r2end[col2] - r2begin[col2]) / imdpotsteps;
+      r2step[col2] = (r2end[col2] - r2begin[col2]) / g_param.imdpotsteps;
       fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[col2], r2end[col2], r2step[col2]);
     }
   }
@@ -528,21 +529,22 @@ void write_pot_table_imd(char const* prefix)
 
   /* write data */
   m = 0;
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (int i = 0; i < g_param.ntypes; i++) {
     m += i;
-    m2 = 0;
-    for (j = 0; j < g_param.ntypes; j++) {
+    int m2 = 0;
+    for (int j = 0; j < g_param.ntypes; j++) {
       m2 += j;
-      col1 = (g_param.ntypes * (g_param.ntypes + 5)) / 2;
+      int col1 = (g_param.ntypes * (g_param.ntypes + 5)) / 2;
       col1 += i < j ? i * g_param.ntypes + j - m : j * g_param.ntypes + i - m2;
-      col2 = i * g_param.ntypes + j;
-      r2 = r2begin[col2];
-      for (k = 0; k < imdpotsteps; k++) {
+      int col2 = i * g_param.ntypes + j;
+      double r2 = r2begin[col2];
+      double temp = 0;
+      for (int k = 0; k < g_param.imdpotsteps; k++) {
 #ifdef APOT
-	apot_table.fvalue[col1] (sqrt(r2), g_pot.apot_table.values[col1], &temp);
+	(*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
 	temp =
-	  smooth_pot[col1] ? temp * cutoff(sqrt(r2), g_pot.apot_table.end[col1],
-	  g_pot.apot_table.values[col1][apot_table.n_par[col1] - 1]) : temp;
+	  g_pot.smooth_pot[col1] ? temp * cutoff(sqrt(r2), g_pot.apot_table.end[col1],
+	  g_pot.apot_table.values[col1][g_pot.apot_table.n_par[col1] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
 	fprintf(outfile, "%.16e\n", splint_ne_lin(pt, pt->table, col1, sqrt(r2)));
@@ -567,21 +569,21 @@ void write_pot_table_imd(char const* prefix)
   fprintf(outfile, "#F 2 %d\n#E\n", g_param.ntypes);
 
   /* write info block */
-  for (i = 0; i < g_param.ntypes; i++) {
-    col1 = (g_param.ntypes * (g_param.ntypes + 3)) + i;
+  for (int i = 0; i < g_param.ntypes; i++) {
+    int col1 = (g_param.ntypes * (g_param.ntypes + 3)) + i;
     /* from -1 to +1 */
     r2begin[i] = pt->begin[col1];
     r2end[i] = pt->end[col1];
-    r2step[i] = (r2end[i] - r2begin[i]) / imdpotsteps;
+    r2step[i] = (r2end[i] - r2begin[i]) / g_param.imdpotsteps;
     fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[i], r2end[i], r2step[i]);
   }
   fprintf(outfile, "\n");
 
   /* write data */
-  for (i = 0; i < g_param.ntypes; i++) {
-    r2 = r2begin[i];
-    col1 = (g_param.ntypes * (g_param.ntypes + 3)) + i;
-    for (k = 0; k <= imdpotsteps; k++) {
+  for (int i = 0; i < g_param.ntypes; i++) {
+    double r2 = r2begin[i];
+    int col1 = (g_param.ntypes * (g_param.ntypes + 3)) + i;
+    for (int k = 0; k <= g_param.imdpotsteps; k++) {
       fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, r2));
       r2 += r2step[i];
     }

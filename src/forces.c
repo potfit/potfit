@@ -36,6 +36,9 @@
 #include "utils.h"
 
 double calc_forces_pair(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_eam(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_adp(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_meam(double* xi_opt, double* forces, int shutdown_flag);
 
 /****************************************************************
  *
@@ -50,6 +53,14 @@ void init_forces(int is_worker)
   // set proper force routine
 #if defined(PAIR)
   g_calc_forces = &calc_forces_pair;
+#endif
+
+#if defined(EAM)
+  g_calc_forces = &calc_forces_eam;
+#endif
+
+#if defined(ADP)
+  g_calc_forces = &calc_forces_adp;
 #endif
 
   /* Select correct spline interpolation and other functions */

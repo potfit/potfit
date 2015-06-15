@@ -544,7 +544,7 @@ typedef struct {
    double *maxchange;       /* Maximal permissible change */
   /* variables needed for electrostatic options */
   #ifdef COULOMB
-   double dp_eps in eV A */
+   double dp_eps; /* ??? in eV A */
    double dp_cut;        /* cutoff-radius for long-range interactions */
   #endif /* COULOMB */
   #ifdef DIPOLE

@@ -28,9 +28,9 @@
  *
  *****************************************************************/
 
-#if !defined(EVO)
-
 #include "potfit.h"
+
+#if !defined(EVO)
 
 #include <ctype.h>
 
@@ -140,7 +140,7 @@ void run_simulated_annealing(double *xi)
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   auto_T = 0;
   int   loopagain;		/* loop flag */
-#if defined(RESCALE) && !defined(APOT) && ( defined(EAM) || defined(ADP) ) || defined(MEAM)
+#if defined(RESCALE) && !defined(APOT) && ( defined(EAM) || defined(ADP) || defined(MEAM) )
   int   rescaleMe = 1;		/* rescaling flag */
 #endif /* APOT */
   double T = -1.0;		/* Temperature */

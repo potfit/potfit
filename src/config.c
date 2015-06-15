@@ -809,7 +809,7 @@ void read_chemical_elements(char* psrc, config_state* cstate)
 
 /****************************************************************
  *
- *  init_atom
+ *  init_atom_memory
  *
  ****************************************************************/
 
@@ -888,7 +888,7 @@ void init_atom_memory(atom_t *atom)
 
 /****************************************************************
  *
- *  init_neigh
+ *  init_neigh_memory
  *
  ****************************************************************/
 
@@ -950,8 +950,14 @@ void init_neigh_memory(neigh_t *neigh)
   #endif /* TERSOFF */
 }
 
+/****************************************************************
+ *
+ *  init_angle_memory
+ *
+ ****************************************************************/
+
 #ifdef THREEBODY
-void init_angle(angle_t * angle)
+void init_angle_memory(angle_t * angle)
 {
   angle->cos = 0.0;
 
@@ -1184,46 +1190,59 @@ void init_angles(config_state* cstate)
 /* For TERSOFF we create a full neighbor list, for all other potentials only a
  * half list */
 #ifdef THREEBODY
-    for (i = natoms; i < natoms + count; i++) {
-      nnn = atoms[i].num_neigh;
-      ijk = 0;
-      atoms[i].angle_part = (angle_t *)malloc(sizeof(angle_t));
+    for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; i++)
+    {
+      int nnn = g_config.atoms[i].num_neigh;
+      int ijk = 0;
+      g_config.atoms[i].angle_part = (angle_t *)malloc(sizeof(angle_t));
 #ifdef TERSOFF
-      for (j = 0; j < nnn; j++) {
+      for (int j = 0; j < nnn; j++)
+      {
 #else
-      for (j = 0; j < nnn - 1; j++) {
+      for (int j = 0; j < nnn - 1; j++)
+      {
 #endif /* TERSOFF */
-        atoms[i].neigh[j].ijk_start = ijk;
+        g_config.atoms[i].neigh[j].ijk_start = ijk;
 #ifdef TERSOFF
-        for (k = 0; k < nnn; k++) {
+        for (int k = 0; k < nnn; k++)
+        {
           if (j == k)
             continue;
 #else
-        for (k = j + 1; k < nnn; k++) {
+        for (int k = j + 1; k < nnn; k++)
+        {
 #endif /* TERSOFF */
-          atoms[i].angle_part = (angle_t *)realloc(atoms[i].angle_part,
-                                                   (ijk + 1) * sizeof(angle_t));
-          init_angle(atoms[i].angle_part + ijk);
-          ccos = atoms[i].neigh[j].dist_r.x * atoms[i].neigh[k].dist_r.x +
-                 atoms[i].neigh[j].dist_r.y * atoms[i].neigh[k].dist_r.y +
-                 atoms[i].neigh[j].dist_r.z * atoms[i].neigh[k].dist_r.z;
 
-          atoms[i].angle_part[ijk].cos = ccos;
+          g_config.atoms[i].angle_part =
+            (angle_t *)realloc(g_config.atoms[i].angle_part, (ijk + 1) * sizeof(angle_t));
 
-          col = 2 * g_calc.paircol + 2 * g_param.ntypes + atoms[i].type;
-          if (0 == format || 3 == format) {
-            if ((fabs(ccos) - 1.0) > 1e-10) {
-              printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col,
-                     type1, type2);
+          init_angle_memory(g_config.atoms[i].angle_part + ijk);
+
+          double ccos =
+            g_config.atoms[i].neigh[j].dist_r.x * g_config.atoms[i].neigh[k].dist_r.x +
+            g_config.atoms[i].neigh[j].dist_r.y * g_config.atoms[i].neigh[k].dist_r.y +
+            g_config.atoms[i].neigh[j].dist_r.z * g_config.atoms[i].neigh[k].dist_r.z;
+
+          g_config.atoms[i].angle_part[ijk].cos = ccos;
+
+          int col = 2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
+
+          if (g_pot.format == 0 || g_pot.format == 3)
+          {
+            if ((fabs(ccos) - 1.0) > 1e-10)
+            {
+              int type1 = g_config.atoms[i].type;
+              int type2 = g_config.atoms[i].neigh[j].type;
+              printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col, type1, type2);
               fflush(stdout);
               error(1, "cos out of range, it is strange!");
             }
 #ifdef MEAM
-            istep = g_pot.calc_pot.invstep[col];
-            slot = (int)((ccos + 1) * istep);
-            shift = ((ccos + 1) - slot * g_pot.calc_pot.step[col]) * istep;
+            double istep = g_pot.calc_pot.invstep[col];
+            int slot = (int)((ccos + 1) * istep);
+            double shift = ((ccos + 1) - slot * g_pot.calc_pot.step[col]) * istep;
             slot += g_pot.calc_pot.first[col];
-            step = g_pot.calc_pot.step[col];
+//             double step = g_pot.calc_pot.step[col];
 
             /* Don't want lower bound spline knot to be final knot or upper
                bound knot will cause trouble since it goes beyond the array */
@@ -1232,18 +1251,19 @@ void init_angles(config_state* cstate)
               shift += 1.0;
             }
 #endif /* !MEAM */
-          }
+        }
 #ifdef MEAM
-          atoms[i].angle_part[ijk].shift = shift;
-          atoms[i].angle_part[ijk].slot = slot;
-          atoms[i].angle_part[ijk].step = step;
+// TODO: how did this ever work ???
+//         g_config.atoms[i].angle_part[ijk].shift = shift;
+//         g_config.atoms[i].angle_part[ijk].slot = slot;
+//         g_config.atoms[i].angle_part[ijk].step = step;
 #endif /* MEAM */
-          ijk++;
-        } /* third loop over atoms */
-      }   /* second loop over atoms */
-      atoms[i].num_angles = ijk;
-      reg_for_free(atoms[i].angle_part, "angular part atom %d", i);
-    }  /* first loop over atoms */
+        ijk++;
+      } /* third loop over atoms */
+    }   /* second loop over atoms */
+    g_config.atoms[i].num_angles = ijk;
+    reg_for_free(g_config.atoms[i].angle_part, "angular part atom %d", i);
+  }  /* first loop over atoms */
 #endif /* THREEBODY */
 }
 
@@ -1289,7 +1309,7 @@ double make_box(config_state* cstate)
  *
  ****************************************************************/
 
-void write_pair_distribution_file ()
+void write_pair_distribution_file()
 {
   int i = 0;
   int j = 0;
@@ -1483,18 +1503,17 @@ void update_slots(void)
 
 #ifdef THREEBODY
   /* update angular slots */
-  for (i = 0; i < natoms; i++) {
-    for (j = 0; j < atoms[i].num_angles; j++) {
-      rr = atoms[i].angle_part[j].cos + 1.1;
+  for (i = 0; i < g_config.natoms; i++) {
+    for (j = 0; j < g_config.atoms[i].num_angles; j++) {
+      double rr = g_config.atoms[i].angle_part[j].cos + 1.1;
 #ifdef MEAM
-      col = 2 * g_calc.paircol + 2 * g_param.ntypes + atoms[i].type;
-      atoms[i].angle_part[j].slot = (int)(rr * g_pot.calc_pot.invstep[col]);
-      atoms[i].angle_part[j].step = g_pot.calc_pot.step[col];
-      atoms[i].angle_part[j].shift =
-          (rr - atoms[i].angle_part[j].slot * g_pot.calc_pot.step[col]) *
-          g_pot.calc_pot.invstep[col];
+      int col = 2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
+      g_config.atoms[i].angle_part[j].slot = (int)(rr * g_pot.calc_pot.invstep[col]);
+      g_config.atoms[i].angle_part[j].step = g_pot.calc_pot.step[col];
+      g_config.atoms[i].angle_part[j].shift =
+        (rr - g_config.atoms[i].angle_part[j].slot * g_pot.calc_pot.step[col]) * g_pot.calc_pot.invstep[col];
       /* move slot to the right potential */
-      atoms[i].angle_part[j].slot += g_pot.calc_pot.first[col];
+      g_config.atoms[i].angle_part[j].slot += g_pot.calc_pot.first[col];
 #endif /* MEAM */
     }
   }

@@ -235,8 +235,8 @@ blklens[size] = 1; 		typen[size++] = g_mpi.MPI_VECTOR; 	/* dzeta */
   }
   displs[0] = 0;
 
-  MPI_Type_struct(size, blklens, displs, typen, &MPI_ANGL);
-  MPI_Type_commit(&MPI_ANGL);
+  MPI_Type_struct(size, blklens, displs, typen, &g_mpi.MPI_ANGL);
+  MPI_Type_commit(&g_mpi.MPI_ANGL);
 #endif /* THREEBODY */
 
   /* MPI_ATOM */
@@ -605,24 +605,24 @@ void broadcast_angles()
   angle_t angle;
   atom_t *atom;
 
-  init_angle(&angle);
+  init_angle_memory(&angle);
 
-  for (i = 0; i < natoms; ++i) {
-    atom = conf_atoms + i - firstatom;
-    if (myid == 0)
-      nangles = atoms[i].num_angles;
+  for (i = 0; i < g_config.natoms; ++i) {
+    atom = g_config.conf_atoms + i - g_mpi.firstatom;
+    if (g_mpi.myid == 0)
+      nangles = g_config.atoms[i].num_angles;
     MPI_Bcast(&nangles, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (i >= firstatom && i < (firstatom + myatoms)) {
+    if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
       atom->angle_part = (angle_t *) malloc(nangles * sizeof(angle_t));
       for (j = 0; j < nangles; j++)
-	init_angle(atom->angle_part + j);
+	init_angle_memory(atom->angle_part + j);
       reg_for_free(atom->angle_part, "broadcast atom[%d]->angle_part", i);
     }
     for (j = 0; j < nangles; ++j) {
-      if (myid == 0)
-	angle = atoms[i].angle_part[j];
-      MPI_Bcast(&angle, 1, MPI_ANGL, 0, MPI_COMM_WORLD);
-      if (i >= firstatom && i < (firstatom + myatoms)) {
+      if (g_mpi.myid == 0)
+	angle = g_config.atoms[i].angle_part[j];
+      MPI_Bcast(&angle, 1, g_mpi.MPI_ANGL, 0, MPI_COMM_WORLD);
+      if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
 	atom->angle_part[j] = angle;
       }
     }

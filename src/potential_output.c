@@ -116,32 +116,32 @@ void write_pot_table0(char const* filename)
 
 #ifdef MEAM
   /* f terms */
-  for (i = 0; i < g_param.ntypes; i++)
-    for (j = i; j < g_param.ntypes; j++)
-      fprintf(outfile, " %s-%s", elements[i], elements[j]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i; j < g_param.ntypes; j++)
+      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
   /* g terms */
-  for (i = 0; i < g_param.ntypes; i++)
-    fprintf(outfile, " %s", elements[i]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
 #endif /* MEAM */
 
 #ifdef STIWEB
   /* stiweb_3 terms */
-  for (i = 0; i < g_param.ntypes; i++)
-    for (j = i; j < g_param.ntypes; j++)
-      fprintf(outfile, " %s-%s", elements[i], elements[j]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i; j < g_param.ntypes; j++)
+      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
   /* lambda terms */
   int   k = 0;
-  for (i = 0; i < g_param.ntypes; i++)
-    for (j = 0; j < g_param.ntypes; j++)
-      for (k = j; k < g_param.ntypes; k++)
-        fprintf(outfile, " %s-%s-%s", elements[i], elements[j], elements[k]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = 0; j < g_param.ntypes; j++)
+      for (int k = j; k < g_param.ntypes; k++)
+        fprintf(outfile, " %s-%s-%s", g_config.elements[i], g_config.elements[j], g_config.elements[k]);
 #endif /* STIWEB */
 
 #ifdef TERSOFF
   /* mixing terms */
-  for (i = 0; i < g_param.ntypes; i++)
-    for (j = i + 1; j < g_param.ntypes; j++)
-      fprintf(outfile, " %s-%s", elements[i], elements[j]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i + 1; j < g_param.ntypes; j++)
+      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
 #endif /* TERSOFF */
 
   /* write invariant switch for individual potentials */
@@ -302,11 +302,11 @@ void write_pot_table3(char const* filename)
 
 #ifdef MEAM
       /* pre-anglpart */
-      for (i = 0; i < g_param.ntypes; i++)
-        for (j = i; j < g_param.ntypes; j++)
-          fprintf(pfile_table, " %s-%s", g_config.lements[i], g_config.elements[j]);
+      for (int i = 0; i < g_param.ntypes; i++)
+        for (int j = i; j < g_param.ntypes; j++)
+          fprintf(pfile_table, " %s-%s", g_config.elements[i], g_config.elements[j]);
         /* angl part */
-        for (i = 0; i < g_param.ntypes; i++)
+        for (int i = 0; i < g_param.ntypes; i++)
           fprintf(pfile_table, " %s", g_config.elements[i]);
 #endif /* MEAM */
   }
