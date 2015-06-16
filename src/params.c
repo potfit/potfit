@@ -258,17 +258,17 @@ int read_parameter_file(char const* param_file)
 #if defined(COULOMB)
     /* cutoff-radius for long-range interactions */
     else if (strcasecmp(token, "dp_cut") == 0)
-      return_error |= get_param_double("dp_cut", &g_param.dp_cut, line, param_file, DBL_MIN, DBL_MAX);
+      return_error |= get_param_double("dp_cut", &g_todo.dp_cut, line, param_file, DBL_MIN, DBL_MAX);
 #endif /* COULOMB */
 
 #if defined(DIPOLE)
     /* dipole iteration precision */
     else if (strcasecmp(token, "dp_tol") == 0)
-      return_error |= get_param_double("dp_tol", &dp_tol, line, param_file, DBL_MIN, DBL_MAX);
+      return_error |= get_param_double("dp_tol", &g_todo.dp_tol, line, param_file, DBL_MIN, DBL_MAX);
 
     /* mixing parameter for damping dipole iteration loop */
     else if (strcasecmp(token, "dp_mix") == 0)
-      return_error |= get_param_double("dp_mix", &dp_mix, line, param_file, DBL_MIN, DBL_MAX);
+      return_error |= get_param_double("dp_mix", &g_todo.dp_mix, line, param_file, DBL_MIN, DBL_MAX);
 #endif /* DIPOLE */
 
     /* global scaling parameter */

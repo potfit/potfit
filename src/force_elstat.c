@@ -33,8 +33,10 @@
 
 #if defined COULOMB && !defined EAM
 
+#include "forces.h"
 #include "functions.h"
-#include "potential.h"
+#include "potential_input.h"
+#include "potential_output.h"
 #include "splines.h"
 #include "utils.h"
 
@@ -87,23 +89,23 @@
  *
  ****************************************************************/
 
-double calc_forces(double *xi_opt, double *forces, int flag)
+double calc_forces_elstat(double *xi_opt, double *forces, int flag)
 {
   double tmpsum, sum = 0.0;
   int   first, col, ne, size, i = flag;
   double *xi = NULL;
-  g_pot.apot_table_t *apt = &apot_table;
-  double charge[ntypes];
+  apot_table_t *apt = &g_pot.apot_table;
+  double charge[g_param.ntypes];
   double sum_charges;
   double dp_kappa;
 
 #ifdef DIPOLE
-  double dp_alpha[ntypes];
+  double dp_alpha[g_param.ntypes];
   double dp_b[apt->number];
   double dp_c[apt->number];
 #endif /* DIPOLE */
 
-  switch (format) {
+  switch (g_pot.format) {
       case 0:
 	xi = g_pot.calc_pot.table;
 	break;
@@ -123,7 +125,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     tmpsum = 0.0;		/* sum of squares of local process */
 
 #if defined APOT && !defined MPI
-    if (format == 0) {
+    if (g_pot.format == 0) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
@@ -140,10 +142,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       break;			/* Exception: flag 1 means clean up */
 
 #ifdef APOT
-    if (myid == 0)
+    if (g_mpi.myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    if (format == 0)
+    MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (g_pot.format == 0)
       update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
@@ -162,8 +164,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	charge[i] = 0.0;
       }
     }
-    apt->last_charge = -sum_charges / apt->ratio[ntypes - 1];
-    charge[ntypes - 1] = apt->last_charge;
+    apt->last_charge = -sum_charges / apt->ratio[g_param.ntypes - 1];
+    charge[g_param.ntypes - 1] = apt->last_charge;
     if (xi_opt[2 * size + ne + g_param.ntypes - 1]) {
       dp_kappa = xi_opt[2 * size + ne + g_param.ntypes - 1];
     } else {
@@ -193,19 +195,19 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* DIPOLE */
 
     /* init second derivatives for splines */
-    for (col = 0; col < paircol; col++) {
+    for (col = 0; col < g_calc.paircol; col++) {
       first = g_pot.calc_pot.first[col];
-      if (format == 3 || format == 0) {
-	spline_ed(calc_pot.step[col], xi + first,
+      if (g_pot.format == 3 || g_pot.format == 0) {
+	spline_ed(g_pot.calc_pot.step[col], xi + first,
 	  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
       } else {			/* format >= 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first,
+        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
 	  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, g_pot.calc_pot.d2tab + first);
       }
     }
 
 #ifndef MPI
-    myconf = nconf;
+    g_mpi.myconf = g_config.nconf;
 #endif /* MPI */
 
     /* region containing loop over configurations,
@@ -226,23 +228,23 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       neigh_t *neigh;
 
       /* loop over configurations: M A I N LOOP CONTAINING ALL ATOM-LOOPS */
-      for (h = firstconf; h < firstconf + myconf; h++) {
-	uf = conf_uf[h - firstconf];
+      for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
+        uf = g_config.conf_uf[h - g_mpi.firstconf];
 #ifdef STRESS
-	us = conf_us[h - firstconf];
+        us = g_config.conf_us[h - g_mpi.firstconf];
 #endif /* STRESS */
 	/* reset energies and stresses */
-	forces[energy_p + h] = 0.0;
+	forces[g_calc.energy_p + h] = 0.0;
 #ifdef STRESS
-	stresses = stress_p + 6 * h;
+        stresses = g_calc.stress_p + 6 * h;
 	for (i = 0; i < 6; i++)
 	  forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
 #ifdef DIPOLE
 	/* reset dipoles and fields: LOOP Z E R O */
-	for (i = 0; i < inconf[h]; i++) {
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
+	for (i = 0; i < g_config.inconf[h]; i++) {
+	  atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 	  atom->E_stat.x = 0.0;
 	  atom->E_stat.y = 0.0;
 	  atom->E_stat.z = 0.0;
@@ -253,12 +255,12 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* DIPOLE */
 
 	/* F I R S T LOOP OVER ATOMS: reset forces, dipoles */
-	for (i = 0; i < inconf[h]; i++) {	/* atoms */
-	  n_i = 3 * (cnfstart[h] + i);
+	for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+	  n_i = 3 * (g_config.cnfstart[h] + i);
 	  if (uf) {
-	    forces[n_i + 0] = -force_0[n_i + 0];
-	    forces[n_i + 1] = -force_0[n_i + 1];
-	    forces[n_i + 2] = -force_0[n_i + 2];
+            forces[n_i + 0] = -g_config.force_0[n_i + 0];
+            forces[n_i + 1] = -g_config.force_0[n_i + 1];
+            forces[n_i + 2] = -g_config.force_0[n_i + 2];
 	  } else {
 	    forces[n_i + 0] = 0.0;
 	    forces[n_i + 1] = 0.0;
@@ -268,10 +270,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 	/* S E C O N D loop: calculate short-range and monopole forces,
 	   calculate static field- and dipole-contributions */
-	for (i = 0; i < inconf[h]; i++) {	/* atoms */
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
+        for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 	  type1 = atom->type;
-	  n_i = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (g_config.cnfstart[h] + i);
 	  for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	    neigh = atom->neigh + j;
 	    type2 = neigh->type;
@@ -282,16 +284,16 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el, &neigh->grad_el, &neigh->ggrad_el);
 
 	    /* In small cells, an atom might interact with itself */
-	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+            self = (neigh->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
 	    /* calculate short-range forces */
 	    if (neigh->r < g_pot.calc_pot.end[col]) {
 
 	      if (uf) {
 		fnval =
-		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &grad);
+		  splint_comb_dir(&g_pot.calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &grad);
 	      } else {
-		fnval = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
+                fnval = splint_dir(&g_pot.calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 	      }
 
 	      /* avoid double counting if atom is interacting with a
@@ -300,7 +302,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		fnval *= 0.5;
 		grad *= 0.5;
 	      }
-	      forces[energy_p + h] += fnval;
+	      forces[g_calc.energy_p + h] += fnval;
 
 	      if (uf) {
 		tmp_force.x = neigh->dist_r.x * grad;
@@ -330,7 +332,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    }
 
 	    /* calculate monopole forces */
-	    if (neigh->r < dp_cut && (charge[type1] || charge[type2])) {
+	    if (neigh->r < g_todo.dp_cut && (charge[type1] || charge[type2])) {
 
 	      fnval_tail = neigh->fnval_el;
 	      grad_tail = neigh->grad_el;
@@ -351,7 +353,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		grad *= 0.5;
 	      }
 
-	      forces[energy_p + h] += fnval;
+	      forces[g_calc.energy_p + h] += fnval;
 
 	      if (uf) {
 		tmp_force.x = neigh->dist.x * grad;
@@ -383,9 +385,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      atom->E_stat.y += neigh->dist.y * grad_i;
 	      atom->E_stat.z += neigh->dist.z * grad_i;
 
-	      conf_atoms[neigh->nr - firstatom].E_stat.x -= neigh->dist.x * grad_j;
-	      conf_atoms[neigh->nr - firstatom].E_stat.y -= neigh->dist.y * grad_j;
-	      conf_atoms[neigh->nr - firstatom].E_stat.z -= neigh->dist.z * grad_j;
+	      g_config.conf_atoms[neigh->nr - g_mpi.firstatom].E_stat.x -= neigh->dist.x * grad_j;
+              g_config.conf_atoms[neigh->nr - g_mpi.firstatom].E_stat.y -= neigh->dist.y * grad_j;
+              g_config.conf_atoms[neigh->nr - g_mpi.firstatom].E_stat.z -= neigh->dist.z * grad_j;
 
 	      /* calculate short-range dipoles */
 	      if (dp_alpha[type1] && dp_b[col] && dp_c[col]) {
@@ -398,9 +400,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      if (dp_alpha[type2] && dp_b[col] && dp_c[col] && !self) {
 		p_sr_tail =
 		  grad_tail * neigh->r * shortrange_value(neigh->r, dp_alpha[type2], dp_b[col], dp_c[col]);
-		conf_atoms[neigh->nr - firstatom].p_sr.x -= charge[type1] * neigh->dist_r.x * p_sr_tail;
-		conf_atoms[neigh->nr - firstatom].p_sr.y -= charge[type1] * neigh->dist_r.y * p_sr_tail;
-		conf_atoms[neigh->nr - firstatom].p_sr.z -= charge[type1] * neigh->dist_r.z * p_sr_tail;
+                  g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_sr.x -= charge[type1] * neigh->dist_r.x * p_sr_tail;
+                  g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_sr.y -= charge[type1] * neigh->dist_r.y * p_sr_tail;
+                  g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_sr.z -= charge[type1] * neigh->dist_r.z * p_sr_tail;
 	      }
 #endif /* DIPOLE */
 
@@ -417,16 +419,16 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 	while (dp_converged == 0) {
 	  dp_sum = 0;
-	  for (i = 0; i < inconf[h]; i++) {	/* atoms */
-	    atom = conf_atoms + i + cnfstart[h] - firstatom;
+          for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+            atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 	    type1 = atom->type;
 	    if (dp_alpha[type1]) {
 
 	      if (dp_it) {
 		/* note: mixing parameter is different from that on in IMD */
-		atom->E_tot.x = (1 - dp_mix) * atom->E_ind.x + dp_mix * atom->E_old.x + atom->E_stat.x;
-		atom->E_tot.y = (1 - dp_mix) * atom->E_ind.y + dp_mix * atom->E_old.y + atom->E_stat.y;
-		atom->E_tot.z = (1 - dp_mix) * atom->E_ind.z + dp_mix * atom->E_old.z + atom->E_stat.z;
+                atom->E_tot.x = (1 - g_todo.dp_mix) * atom->E_ind.x + g_todo.dp_mix * atom->E_old.x + atom->E_stat.x;
+                atom->E_tot.y = (1 - g_todo.dp_mix) * atom->E_ind.y + g_todo.dp_mix * atom->E_old.y + atom->E_stat.y;
+                atom->E_tot.z = (1 - g_todo.dp_mix) * atom->E_ind.z + g_todo.dp_mix * atom->E_old.z + atom->E_stat.z;
 	      } else {
 		atom->E_tot.x = atom->E_ind.x + atom->E_stat.x;
 		atom->E_tot.y = atom->E_ind.y + atom->E_stat.y;
@@ -447,41 +449,41 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    }
 	  }
 
-	  for (i = 0; i < inconf[h]; i++) {	/* atoms */
-	    atom = conf_atoms + i + cnfstart[h] - firstatom;
+	  for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+            atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 	    type1 = atom->type;
 	    for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	      neigh = atom->neigh + j;
 	      type2 = neigh->type;
 	      col = neigh->col[0];
 	      /* In small cells, an atom might interact with itself */
-	      self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+              self = (neigh->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
-	      if (neigh->r < dp_cut && dp_alpha[type1] && dp_alpha[type2]) {
+	      if (neigh->r < g_todo.dp_cut && dp_alpha[type1] && dp_alpha[type2]) {
 
-		rp = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist_r);
+                rp = SPROD(g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind, neigh->dist_r);
 		atom->E_ind.x +=
-		  neigh->grad_el * (3 * rp * neigh->dist_r.x - conf_atoms[neigh->nr - firstatom].p_ind.x);
+		neigh->grad_el * (3 * rp * neigh->dist_r.x - g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.x);
 		atom->E_ind.y +=
-		  neigh->grad_el * (3 * rp * neigh->dist_r.y - conf_atoms[neigh->nr - firstatom].p_ind.y);
+		neigh->grad_el * (3 * rp * neigh->dist_r.y - g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.y);
 		atom->E_ind.z +=
-		  neigh->grad_el * (3 * rp * neigh->dist_r.z - conf_atoms[neigh->nr - firstatom].p_ind.z);
+		neigh->grad_el * (3 * rp * neigh->dist_r.z - g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.z);
 
 		if (!self) {
 		  rp = SPROD(atom->p_ind, neigh->dist_r);
-		  conf_atoms[neigh->nr - firstatom].E_ind.x +=
+                  g_config.conf_atoms[neigh->nr - g_mpi.firstatom].E_ind.x +=
 		    neigh->grad_el * (3 * rp * neigh->dist_r.x - atom->p_ind.x);
-		  conf_atoms[neigh->nr - firstatom].E_ind.y +=
+                    g_config.conf_atoms[neigh->nr - g_mpi.firstatom].E_ind.y +=
 		    neigh->grad_el * (3 * rp * neigh->dist_r.y - atom->p_ind.y);
-		  conf_atoms[neigh->nr - firstatom].E_ind.z +=
+                    g_config.conf_atoms[neigh->nr - g_mpi.firstatom].E_ind.z +=
 		    neigh->grad_el * (3 * rp * neigh->dist_r.z - atom->p_ind.z);
 		}
 	      }
 	    }
 	  }
 
-	  for (i = 0; i < inconf[h]; i++) {	/* atoms */
-	    atom = conf_atoms + i + cnfstart[h] - firstatom;
+	  for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+            atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 	    type1 = atom->type;
 	    if (dp_alpha[type1]) {
 	      dp_sum += dsquare(dp_alpha[type1] * (atom->E_old.x - atom->E_ind.x));
@@ -490,14 +492,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    }
 	  }
 
-	  dp_sum /= 3 * inconf[h];
+	  dp_sum /= 3 * g_config.inconf[h];
 	  dp_sum = sqrt(dp_sum);
 
 	  if (dp_it) {
 	    if ((dp_sum > max_diff) || (dp_it > 50)) {
 	      dp_converged = 1;
-	      for (i = 0; i < inconf[h]; i++) {	/* atoms */
-		atom = conf_atoms + i + cnfstart[h] - firstatom;
+              for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+                atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 		type1 = atom->type;
 		if (dp_alpha[type1]) {
 		  atom->p_ind.x = dp_alpha[type1] * atom->E_stat.x + atom->p_sr.x;
@@ -511,7 +513,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    }
 	  }
 
-	  if (dp_sum < dp_tol) {
+	  if (dp_sum < g_todo.dp_tol) {
 	    dp_converged = 1;
 	  }
 
@@ -522,18 +524,18 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	/* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces */
 	double rp_i, rp_j, pp_ij, tmp_1, tmp_2;
 	double grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail, fnval_sum, grad_sum;
-	for (i = 0; i < inconf[h]; i++) {	/* atoms */
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
+        for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 	  type1 = atom->type;
-	  n_i = 3 * (cnfstart[h] + i);
+          n_i = 3 * (g_config.cnfstart[h] + i);
 	  for (j = 0; j < atom->num_neigh; j++) {	/* neighbors */
 	    neigh = atom->neigh + j;
 	    type2 = neigh->type;
 	    col = neigh->col[0];
 
 	    /* In small cells, an atom might interact with itself */
-	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
-	    if (neigh->r < dp_cut && (dp_alpha[type1] || dp_alpha[type2])) {
+            self = (neigh->nr == i + g_config.cnfstart[h]) ? 1 : 0;
+            if (neigh->r < g_todo.dp_cut && (dp_alpha[type1] || dp_alpha[type2])) {
 
 	      fnval_tail = -neigh->grad_el;
 	      grad_tail = -neigh->ggrad_el;
@@ -560,17 +562,17 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		  grad_sum = grad_tail;
 		}
 
-		rp_j = SPROD(conf_atoms[neigh->nr - firstatom].p_ind, neigh->dist_r);
+		rp_j = SPROD(g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind, neigh->dist_r);
 		fnval = charge[type1] * rp_j * fnval_sum * neigh->r;
 		grad_1 = charge[type1] * rp_j * grad_sum * neigh->r2;
 		grad_2 = charge[type1] * fnval_sum;
 
-		forces[energy_p + h] -= fnval;
+		forces[g_calc.energy_p + h] -= fnval;
 
 		if (uf) {
-		  tmp_force.x = neigh->dist_r.x * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.x * grad_2;
-		  tmp_force.y = neigh->dist_r.y * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.y * grad_2;
-		  tmp_force.z = neigh->dist_r.z * grad_1 + conf_atoms[neigh->nr - firstatom].p_ind.z * grad_2;
+                  tmp_force.x = neigh->dist_r.x * grad_1 + g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.x * grad_2;
+                  tmp_force.y = neigh->dist_r.y * grad_1 + g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.y * grad_2;
+                  tmp_force.z = neigh->dist_r.z * grad_1 + g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.z * grad_2;
 		  forces[n_i + 0] -= tmp_force.x;
 		  forces[n_i + 1] -= tmp_force.y;
 		  forces[n_i + 2] -= tmp_force.z;
@@ -609,7 +611,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		grad_1 = charge[type2] * rp_i * grad_sum * neigh->r2;
 		grad_2 = charge[type2] * fnval_sum;
 
-		forces[energy_p + h] += fnval;
+		forces[g_calc.energy_p + h] += fnval;
 
 		if (uf) {
 		  tmp_force.x = neigh->dist_r.x * grad_1 + atom->p_ind.x * grad_2;
@@ -641,7 +643,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      /* dipole-dipole contributions */
 	      if (dp_alpha[type1] && dp_alpha[type2]) {
 
-		pp_ij = SPROD(atom->p_ind, conf_atoms[neigh->nr - firstatom].p_ind);
+                pp_ij = SPROD(atom->p_ind, g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind);
 		tmp_1 = 3 * rp_i * rp_j;
 		tmp_2 = 3 * fnval_tail / neigh->r2;
 
@@ -649,21 +651,21 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 		grad_1 = (tmp_1 - pp_ij) * grad_tail;
 		grad_2 = 2 * rp_i * rp_j;
 
-		forces[energy_p + h] += fnval;
+		forces[g_calc.energy_p + h] += fnval;
 
 		if (uf) {
 		  tmp_force.x =
 		    grad_1 * neigh->dist.x -
 		    tmp_2 * (grad_2 * neigh->dist.x -
-		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.x -
+		    rp_i * neigh->r * g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.x -
 		    rp_j * neigh->r * atom->p_ind.x);
 		  tmp_force.y =
 		    grad_1 * neigh->dist.y - tmp_2 * (grad_2 * neigh->dist.y -
-		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.y -
+		    rp_i * neigh->r * g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.y -
 		    rp_j * neigh->r * atom->p_ind.y);
 		  tmp_force.z =
 		    grad_1 * neigh->dist.z - tmp_2 * (grad_2 * neigh->dist.z -
-		    rp_i * neigh->r * conf_atoms[neigh->nr - firstatom].p_ind.z -
+		    rp_i * neigh->r * g_config.conf_atoms[neigh->nr - g_mpi.firstatom].p_ind.z -
 		    rp_j * neigh->r * atom->p_ind.z);
 		  forces[n_i + 0] -= tmp_force.x;
 		  forces[n_i + 1] -= tmp_force.y;
@@ -698,22 +700,22 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef DIPOLE
 	double pp;
 #endif /* DIPOLE */
-	for (i = 0; i < inconf[h]; i++) {	/* atoms */
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
+	for (i = 0; i < g_config.inconf[h]; i++) {	/* atoms */
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 	  type1 = atom->type;
-	  n_i = 3 * (cnfstart[h] + i);
+	  n_i = 3 * (g_config.cnfstart[h] + i);
 
 	  /* self energy contributions */
 	  if (charge[type1]) {
 	    qq = charge[type1] * charge[type1];
-	    fnval = dp_eps * dp_kappa * qq / sqrt(M_PI);
-	    forces[energy_p + h] -= fnval;
+	    fnval = g_todo.dp_eps * dp_kappa * qq / sqrt(M_PI);
+	    forces[g_calc.energy_p + h] -= fnval;
 	  }
 #ifdef DIPOLE
 	  if (dp_alpha[type1]) {
 	    pp = SPROD(atom->p_ind, atom->p_ind);
 	    fnval = pp / (2 * dp_alpha[type1]);
-	    forces[energy_p + h] += fnval;
+	    forces[g_calc.energy_p + h] += fnval;
 	  }
 	  /* alternative dipole self energy including kappa-dependence */
 	  //if (dp_alpha[type1]) {
@@ -736,24 +738,23 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    if (atom->contrib)
 #endif /* CONTRIB */
 	      tmpsum +=
-		conf_weight[h] * (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i +
-		    2]));
+		g_config.conf_weight[h] * (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }
 	}			/* end F I F T H loop over atoms */
 
 
 	/* whole energy contributions flow into tmpsum */
-	forces[energy_p + h] /= (double)inconf[h];
-	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+	forces[g_calc.energy_p + h] /= (double)g_config.inconf[h];
+        forces[g_calc.energy_p + h] -= g_config.force_0[g_calc.energy_p + h];
+	tmpsum += g_config.conf_weight[h] * g_param.eweight * dsquare(forces[g_calc.energy_p + h]);
 
 #ifdef STRESS
 	/* whole stress contributions flow into tmpsum */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stresses + i] /= conf_vol[h - firstconf];
-	    forces[stresses + i] -= force_0[stresses + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
+	    forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
+	    forces[stresses + i] -= g_config.force_0[stresses + i];
+	    tmpsum += g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -763,7 +764,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     /* dummy constraints (global) */
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (myid == 0) {
+    if (g_mpi.myid == 0) {
       tmpsum += apot_punish(xi_opt, forces);
     }
 #endif /* APOT */
@@ -773,29 +774,29 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (myid == 0) {		/* root node already has data in place */
+    if (g_mpi.myid == 0) {		/* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces,
-	atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + energy_p,
-	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
-	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
     } else {
       /* forces */
-      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
-	forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR,
+                  forces, g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + energy_p + firstconf, myconf, MPI_DOUBLE,
-	forces + energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+        forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
-	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf, g_mpi.MPI_STENS,
+                  forces + g_calc.stress_p, g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
     }
 #else
@@ -803,8 +804,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (myid == 0) {
-      fcalls++;			/* Increase function call counter */
+    if (g_mpi.myid == 0) {
+      g_calc.fcalls++;			/* Increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");

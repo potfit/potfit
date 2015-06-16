@@ -33,8 +33,10 @@
 
 #if defined COULOMB && defined EAM
 
+#include "forces.h"
 #include "functions.h"
-#include "potential.h"
+#include "potential_input.h"
+#include "potential_output.h"
 #include "splines.h"
 #include "utils.h"
 

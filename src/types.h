@@ -549,7 +549,7 @@ typedef struct {
   #endif /* COULOMB */
   #ifdef DIPOLE
    double dp_tol;      /* dipole iteration precision */
-   double dp_mix */
+   double dp_mix;               /* */
   #endif /* DIPOLE */
 } potfit_unknown;
 

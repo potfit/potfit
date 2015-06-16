@@ -331,11 +331,11 @@ blklens[size] = 1;        	typen[size++] = g_mpi.MPI_VECTOR;   	/* E_tot */
   MPI_Bcast(&g_calc.paircol, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&g_param.opt, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #ifdef COULOMB
-  MPI_Bcast(&dp_cut, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&g_todo.dp_cut, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
 #ifdef DIPOLE
-  MPI_Bcast(&dp_tol, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&dp_mix, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&g_todo.dp_tol, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&g_todo.dp_mix, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* DIPOLE */
   if (g_mpi.myid > 0) {
     g_config.inconf = (int *)malloc(g_config.nconf * sizeof(int));

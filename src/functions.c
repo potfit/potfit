@@ -1181,9 +1181,9 @@ void ms_shift(double r, double *p, double *f)
   static double pot, grad, pot_cut, grad_cut;
 
   ms_init(r, &pot, &grad, p);
-  ms_init(dp_cut, &pot_cut, &grad_cut, p);
+  ms_init(g_todo.dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - (r - g_todo.dp_cut) * grad_cut;
 }
 
 /****************************************************************
@@ -1197,9 +1197,9 @@ void buck_shift(double r, double *p, double *f)
   static double pot, grad, pot_cut, grad_cut;
 
   buck_init(r, &pot, &grad, p);
-  buck_init(dp_cut, &pot_cut, &grad_cut, p);
+  buck_init(g_todo.dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - r * (r - g_todo.dp_cut) * grad_cut;
 }
 
 /****************************************************************
@@ -1214,10 +1214,10 @@ void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, doubl
 
   x[0] = r * r;
   x[1] = dp_kappa * dp_kappa;
-  x[2] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
+  x[2] = 2 * g_todo.dp_eps * dp_kappa / sqrt(M_PI);
   x[3] = exp(-x[0] * x[1]);
 
-  *ftail = dp_eps * erfc(dp_kappa * r) / r;
+  *ftail = g_todo.dp_eps * erfc(dp_kappa * r) / r;
   *gtail = -(*ftail + x[2] * x[3]) / x[0];
   *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
 }
@@ -1234,11 +1234,11 @@ void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_ta
   static double x[3];
 
   x[0] = r * r;
-  x[1] = dp_cut * dp_cut;
+  x[1] = g_todo.dp_cut * g_todo.dp_cut;
   x[2] = x[0] - x[1];
 
   elstat_value(r, dp_kappa, &ftail, &gtail, &ggtail);
-  elstat_value(dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
+  elstat_value(g_todo.dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
 
   *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
   *grad_tail = gtail - gtail_cut;
@@ -1258,14 +1258,14 @@ void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_ta
 
 void init_tails(double dp_kappa)
 {
-  int   i, j;
-
-  for (i = 0; i < natoms; i++)
-    for (j = 0; j < atoms[i].num_neigh; j++)
-      elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
-	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
-
-  return;
+  for (int i = 0; i < g_config.natoms; i++)
+  {
+    for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
+    {
+      elstat_shift(g_config.atoms[i].neigh[j].r, dp_kappa, &g_config.atoms[i].neigh[j].fnval_el,
+	&g_config.atoms[i].neigh[j].grad_el, &g_config.atoms[i].neigh[j].ggrad_el);
+    }
+  }
 }
 
 #endif /* COULOMB */
@@ -1288,7 +1288,7 @@ double shortrange_value(double r, double a, double b, double c)
   x[3] = x[1] * x[1];
   x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
 
-  return a * c * x[4] * exp(-x[0]) / dp_eps;
+  return a * c * x[4] * exp(-x[0]) / g_todo.dp_eps;
 }
 
 /****************************************************************
@@ -1308,8 +1308,8 @@ void shortrange_term(double r, double b, double c, double *srval_tail, double *s
   x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
   x[5] = exp(-x[0]);
 
-  *srval_tail = c * x[4] * x[5] / dp_eps;
-  *srgrad_tail = -c * b * x[3] * x[5] / (24 * dp_eps * r);
+  *srval_tail = c * x[4] * x[5] / g_todo.dp_eps;
+  *srgrad_tail = -c * b * x[3] * x[5] / (24 * g_todo.dp_eps * r);
 }
 
 #endif /* DIPOLE */

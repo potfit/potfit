@@ -473,11 +473,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
 
       for (int i = 3; i < 5; i++)
       {
-        apt->values[size + i] = (double *)malloc(paircol * sizeof(double));
-        apt->param_name[size + i] = (char **)malloc(paircol * sizeof(char *));
-        apt->pmin[size + i] = (double *)malloc(paircol * sizeof(double));
-        apt->pmax[size + i] = (double *)malloc(paircol * sizeof(double));
-        apt->invar_par[size + i] = (int *)malloc(paircol * sizeof(int));
+        apt->values[size + i] = (double *)malloc(g_calc.paircol * sizeof(double));
+        apt->param_name[size + i] = (char **)malloc(g_calc.paircol * sizeof(char *));
+        apt->pmin[size + i] = (double *)malloc(g_calc.paircol * sizeof(double));
+        apt->pmax[size + i] = (double *)malloc(g_calc.paircol * sizeof(double));
+        apt->invar_par[size + i] = (int *)malloc(g_calc.paircol * sizeof(int));
       }
 
       apt->charge = apt->values[size];

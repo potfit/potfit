@@ -175,22 +175,22 @@ void write_pot_table0(char const* filename)
 
 #ifdef COULOMB
   fprintf(outfile, "elstat\n");
-  for (i = 0; i < g_param.ntypes - 1; i++)
+  for (int i = 0; i < g_param.ntypes - 1; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number][i],
       apt->charge[i], apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
-  fprintf(outfile, "charge_%s\t %f\n", elements[ntypes - 1], apt->last_charge);
+  fprintf(outfile, "charge_%s\t %f\n", g_config.elements[g_param.ntypes - 1], apt->last_charge);
   fprintf(outfile, "%s\t\t %f\t %f\t %f\n", apt->param_name[apt->number + 1][0],
     apt->dp_kappa[0], apt->pmin[apt->number + 1][0], apt->pmax[apt->number + 1][0]);
 
 #ifdef DIPOLE
-  for (i = 0; i < g_param.ntypes; i++)
+  for (int i = 0; i < g_param.ntypes; i++)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
       apt->dp_alpha[i], apt->pmin[apt->number + 2][i], apt->pmax[apt->number + 2][i]);
-  for (i = 0; i < paircol; i++) {
+  for (int i = 0; i < g_calc.paircol; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i],
       apt->dp_b[i], apt->pmin[apt->number + 3][i], apt->pmax[apt->number + 3][i]);
   }
-  for (i = 0; i < paircol; i++) {
+  for (int i = 0; i < g_calc.paircol; i++) {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 4][i],
       apt->dp_c[i], apt->pmin[apt->number + 4][i], apt->pmax[apt->number + 4][i]);
   }
@@ -717,9 +717,10 @@ void write_pairdist(pot_table_t *pt, char *filename)
 
 void write_coulomb_table()
 {
-  g_pot.apot_table_t *apt = &apot_table;
-  if (g_param.ntypes == 2) {
-    int   i, j;
+  apot_table_t *apt = &g_pot.apot_table;
+
+  if (g_param.ntypes == 2)
+  {
     double value, c1;
     FILE *outfile;
     char *filename1 = "Coulomb_00";
@@ -729,32 +730,39 @@ void write_coulomb_table()
     c1 = -apt->charge[0] / 2;
 
     outfile = fopen(filename1, "a");
-    for (i = 0; i < natoms; i++) {
-      for (j = 0; j < atoms[i].num_neigh; j++) {
-        value = apt->charge[0] * apt->charge[0] * atoms[i].neigh[j].fnval_el;
-        fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
+
+    for (int i = 0; i < g_config.natoms; i++) {
+      for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+        value = apt->charge[0] * apt->charge[0] * g_config.atoms[i].neigh[j].fnval_el;
+        fprintf(outfile, "%f\t%f\n", g_config.atoms[i].neigh[j].r, value);
       }
     }
+
     fclose(outfile);
 
     outfile = fopen(filename2, "a");
-    for (i = 0; i < natoms; i++) {
-      for (j = 0; j < atoms[i].num_neigh; j++) {
-        value = apt->charge[0] * c1 * atoms[i].neigh[j].fnval_el;
-        fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
+
+    for (int i = 0; i < g_config.natoms; i++) {
+      for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+        value = apt->charge[0] * c1 * g_config.atoms[i].neigh[j].fnval_el;
+        fprintf(outfile, "%f\t%f\n", g_config.atoms[i].neigh[j].r, value);
       }
     }
+
     fclose(outfile);
 
     outfile = fopen(filename3, "a");
-    for (i = 0; i < natoms; i++) {
-      for (j = 0; j < atoms[i].num_neigh; j++) {
-        value = c1 * c1 * atoms[i].neigh[j].fnval_el;
-        fprintf(outfile, "%f\t%f\n", atoms[i].neigh[j].r, value);
+
+    for (int i = 0; i < g_config.natoms; i++) {
+      for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+        value = c1 * c1 * g_config.atoms[i].neigh[j].fnval_el;
+        fprintf(outfile, "%f\t%f\n", g_config.atoms[i].neigh[j].r, value);
       }
     }
     fclose(outfile);
-  } else {
+  }
+  else
+  {
     printf("Coulomb-outfiles are only available in case of two atom types.");
   }
 }

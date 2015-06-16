@@ -127,8 +127,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 #endif /* COULOMB */
 
 #if defined(DIPOLE)
-  apt->total_par += g_param.ntypes;
-  apt->total_par += (2 * ncols);
+  apt->total_par += g_param.ntypes * (g_param.ntypes + 2);
 #endif /* DIPOLE */
 
   /* initialize function table and write indirect index */
@@ -154,13 +153,10 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 #endif /* PAIR */
 
 #if defined(COULOMB)
-  pt->len += g_param.ntypes;
-  pt->len += g_param.ntypes - 1;
+  pt->len += 2 *g_param.ntypes - 1;
 #endif /* COULOMB */
-
 #if defined(DIPOLE)
-  pt->len += g_param.ntypes;
-  pt->len += (2 * g_param.ncols);
+  pt->len += g_param.ntypes * (g_param.ntypes + 2);
 #endif /* DIPOLE */
 
   pt->table = (double *)malloc(pt->len * sizeof(double));
@@ -234,7 +230,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 #endif /* PAIR */
 
 #if defined(COULOMB)
-  i = apt->number;
+  int i = apt->number;
   for (int j = 0; j < (g_param.ntypes - 1); j++) {
     *val = apt->values[i][j];
     val++;
@@ -265,7 +261,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 
 #if defined(DIPOLE)
   i = apt->number + 2;
-  for (j = 0; j < (g_param.ntypes); j++) {
+  for (int j = 0; j < (g_param.ntypes); j++) {
     *val = apt->values[i][j];
     val++;
     if (!apt->invar_par[i][j]) {
@@ -279,7 +275,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
     }
   }
   for (i = apt->number + 3; i < apt->number + 5; i++) {
-    for (j = 0; j < (ncols); j++) {
+    for (int j = 0; j < (g_param.ntypes * (g_param.ntypes + 1) / 2); j++) {
       *val = apt->values[i][j];
       val++;
       if (!apt->invar_par[i][j]) {
@@ -293,8 +289,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
       }
     }
   }
-  pt->idxlen += g_param.ntypes;
-  pt->idxlen += (2 * ncols);
+  pt->idxlen += g_param.ntypes * (g_param.ntypes + 2);
 #endif /* DIPOLE */
 
   if (g_pot.have_globals) {
@@ -496,34 +491,40 @@ void read_chemical_potentials(apot_state* pstate)
  *
  ****************************************************************/
 
-void read_elstat_table()
+void read_elstat_table(apot_state* pstate)
 {
 #if defined(COULOMB)
-  fsetpos(infile, &startpos);
+  char buffer[255];
+  fpos_t filepos;
+
+  fsetpos(pstate->pfile, &pstate->startpos);
   /* skip to electrostatic section */
   do {
-    fgetpos(infile, &filepos);
-    fscanf(infile, "%s", buffer);
-  } while (strcmp(buffer, "elstat") != 0 && !feof(infile));
+    fgetpos(pstate->pfile, &filepos);
+    fscanf(pstate->pfile, "%s", buffer);
+  } while (strcmp(buffer, "elstat") != 0 && !feof(pstate->pfile));
 
   /* check for elstat keyword */
   if (strcmp("elstat", buffer) != 0) {
-    error(1, "No elstat option found in %s.\n", filename);
+    error(1, "No elstat option found in %s.\n", pstate->filename);
   }
 
   /* read electrostatic parameters */
-  fscanf(infile, " %s", buffer);
+  fscanf(pstate->pfile, " %s", buffer);
   if (strcmp("ratio", buffer) != 0) {
     error(1, "Could not read ratio");
   }
-  for (i = 0; i < g_param.ntypes; i++) {
-    if (1 > fscanf(infile, "%lf", &apt->ratio[i])) {
+
+  apot_table_t* apt = &g_pot.apot_table;
+
+  for (int i = 0; i < g_param.ntypes; i++) {
+    if (1 > fscanf(pstate->pfile, "%lf", &apt->ratio[i])) {
       error(1, "Could not read ratio for atomtype #%d\n", i);
     }
   }
-  for (i = 0; i < g_param.ntypes - 1; i++) {
+  for (int i = 0; i < g_param.ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char *)malloc(30 * sizeof(char));
-    if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
+    if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
       &apt->charge[i], &apt->pmin[apt->number][i], &apt->pmax[apt->number][i])) {
       error(1, "Could not read charge for atomtype #%d\n", i);
       }
@@ -534,7 +535,7 @@ void read_elstat_table()
     reg_for_free(apt->param_name[apt->number][i], "apt->param_name[%d][%d]", apt->number, i);
   }
   apt->param_name[apt->number + 1][0] = (char *)malloc(30 * sizeof(char));
-  if (4 > fscanf(infile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][0],
+  if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][0],
     &apt->dp_kappa[0], &apt->pmin[apt->number + 1][0], &apt->pmax[apt->number + 1][0])) {
     error(1, "Could not read kappa");
     }
@@ -552,9 +553,9 @@ void read_elstat_table()
 #if defined(DIPOLE)
   int   ncols = g_param.ntypes * (g_param.ntypes + 1) / 2;
 
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (int i = 0; i < g_param.ntypes; i++) {
     apt->param_name[apt->number + 2][i] = (char *)malloc(30 * sizeof(char));
-    if (4 > fscanf(infile, "%s %lf %lf %lf",
+    if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
       apt->param_name[apt->number + 2][i], &apt->dp_alpha[i],
       &apt->pmin[apt->number + 2][i], &apt->pmax[apt->number + 2][i])) {
       error(1, "Could not read polarisability for atomtype #%d\n", i);
@@ -565,9 +566,9 @@ void read_elstat_table()
     }
     reg_for_free(apt->param_name[apt->number + 2][i], "apt->param_name[%d][%d]", apt->number + 2, i);
   }
-  for (i = 0; i < ncols; i++) {
+  for (int i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 3][i] = (char *)malloc(30 * sizeof(char));
-    if (4 > fscanf(infile, "%s %lf %lf %lf",
+    if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
       apt->param_name[apt->number + 3][i], &apt->dp_b[i],
       &apt->pmin[apt->number + 3][i], &apt->pmax[apt->number + 3][i])) {
       error(1, "Could not read parameter dp_b for potential #%d\n", i);
@@ -578,9 +579,9 @@ void read_elstat_table()
     }
     reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[%d][%d]", apt->number + 3, i);
   }
-  for (i = 0; i < ncols; i++) {
+  for (int i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 4][i] = (char *)malloc(30 * sizeof(char));
-    if (4 > fscanf(infile, "%s %lf %lf %lf",
+    if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
       apt->param_name[apt->number + 4][i], &apt->dp_c[i],
       &apt->pmin[apt->number + 4][i], &apt->pmax[apt->number + 4][i])) {
       error(1, "Could not read parameter dp_c for potential #%d\n", i);

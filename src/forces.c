@@ -39,6 +39,7 @@ double calc_forces_pair(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_eam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_adp(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_meam(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_elstat(double* xi_opt, double* forces, int shutdown_flag);
 
 /****************************************************************
  *
@@ -61,6 +62,10 @@ void init_forces(int is_worker)
 
 #if defined(ADP)
   g_calc_forces = &calc_forces_adp;
+#endif
+
+#if defined(COULOMB) || defined(DIPOLE)
+  g_calc_forces = &calc_forces_elstat;
 #endif
 
   /* Select correct spline interpolation and other functions */
@@ -87,8 +92,8 @@ void init_forces(int is_worker)
 #endif /* APOT */
 
 #ifdef COULOMB
-if (apot_table.sw_kappa)
-  init_tails(apot_table.dp_kappa[0]);
+  if (g_pot.apot_table.sw_kappa)
+    init_tails(g_pot.apot_table.dp_kappa[0]);
 #endif /* COULOMB */
 
 /* set spline density corrections to 0 */

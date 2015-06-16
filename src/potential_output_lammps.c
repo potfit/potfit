@@ -211,9 +211,6 @@ void write_pot_table_lammps()
  /* in DYNAMO multi-element setfl format */
 void write_pot_table_lammps()
 {
-  FILE *outfile;
-  char  filename[255];
-
 #if defined(COULOMB)
   printf("Potential in LAMMPS format is not available for coulomb interactions.\n");
   return;
@@ -221,6 +218,9 @@ void write_pot_table_lammps()
   printf("Potential in LAMMPS format is not available for dipole interactions.\n");
   return;
 #else /* COULOMB */
+
+  FILE *outfile;
+  char  filename[255];
 
 //   int   i, j;
 //   int   k = 0, l;
