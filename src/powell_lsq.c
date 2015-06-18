@@ -129,7 +129,7 @@ void run_powell_lsq(double *xi)
   /* calculate the first force */
   F = g_calc_forces(xi, fxi1, 0);
 #ifndef APOT
-  printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
+  printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4], g_calc.fcalls);
   fflush(stdout);
 #endif /* APOT */
 
@@ -166,8 +166,8 @@ void run_powell_lsq(double *xi)
       if (0 != i) {
 	/* ok, now this is serious, better exit cleanly */
 #ifndef APOT
-	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
-	warning("F does not depend on xi[%d], fit impossible!\n", idx[i - 1]);
+	write_pot_table_potfit(g_files.tempfile);	/*emergency writeout */
+	warning("F does not depend on xi[%d], fit impossible!\n", g_todo.idx[i - 1]);
 #else
 	update_apot_table(xi);
         write_pot_table_potfit(g_files.tempfile);
@@ -212,12 +212,12 @@ dsysvx('N', 'U', g_calc.ndim, j, &lineqsys[0][0], g_calc.ndim, &les_inverse[0][0
         for (j = 0; j < g_calc.ndim; j++)
           delta[g_todo.idx[i]] += d[i][j] * q[j];
 #ifndef APOT
-        if ((usemaxch) && (maxchange[g_todo.idx[i]] > 0)
-          && (fabs(delta[g_todo.idx[i]]) > maxchange[g_todo.idx[i]])) {
+        if ((g_param.usemaxch) && (g_todo.maxchange[g_todo.idx[i]] > 0)
+          && (fabs(delta[g_todo.idx[i]]) > g_todo.maxchange[g_todo.idx[i]])) {
 	  /* something seriously went wrong,
 	     parameter idx[i] out of control */
-	  warning("Direction vector component %d out of range in step %d\n", idx[i], m);
-	  warning("(%g instead of %g).\n", fabs(delta[idx[i]]), maxchange[idx[i]]);
+	  warning("Direction vector component %d out of range in step %d\n", g_todo.idx[i], m);
+	  warning("(%g instead of %g).\n", fabs(delta[idx[i]]), g_todo.maxchange[idx[i]]);
 	  warning("Restarting inner loop\n");
 	  breakflag = 1;
 	}

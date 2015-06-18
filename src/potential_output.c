@@ -32,6 +32,7 @@
 
 #include "functions.h"
 #include "potential_output.h"
+#include "splines.h"
 
 #define NPLOT 1000
 
@@ -130,7 +131,6 @@ void write_pot_table0(char const* filename)
     for (int j = i; j < g_param.ntypes; j++)
       fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
   /* lambda terms */
-  int   k = 0;
   for (int i = 0; i < g_param.ntypes; i++)
     for (int j = 0; j < g_param.ntypes; j++)
       for (int k = j; k < g_param.ntypes; k++)

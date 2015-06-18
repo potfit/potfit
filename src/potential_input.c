@@ -36,7 +36,7 @@
 void read_pot_line_F(char const* pbuf, potential_state* pstate);
 void read_pot_line_T(char const* pbuf, potential_state* pstate);
 void read_pot_line_I(char* pbuf, potential_state* pstate);
-void read_pot_line_G(char const* pbuf, potential_state* pstate);
+void read_pot_line_G(char *pbuf, potential_state * pstate);
 void read_pot_line_C(char const* pbuf, potential_state* pstate);
 
 void allocate_memory_for_potentials(potential_state* pstate);
@@ -350,7 +350,7 @@ void read_pot_line_I(char* pbuf, potential_state* pstate)
  *
  ****************************************************************/
 
-void read_pot_line_G(char const* pbuf, potential_state* pstate)
+void read_pot_line_G(char* pbuf, potential_state* pstate)
 {
 #if !defined(APOT)
   int i = 0;
@@ -365,7 +365,7 @@ void read_pot_line_G(char const* pbuf, potential_state* pstate)
       if (str == NULL)
         error(1, "Not enough items in #G header line.");
       else
-        (g_pot.gradient[i] = atoi(str);
+        g_pot.gradient[i] = atoi(str);
     }
     pstate->have_gradient = 1;
   }
@@ -576,23 +576,23 @@ void read_maxch_file()
     /* open file */
     pfile = fopen(g_files.maxchfile, "r");
 
-    if (NULL == infile)
+    if (pfile == NULL)
       error(1, "Could not open file %s\n", g_files.maxchfile);
 
     /* read maximal changes file */
     g_todo.maxchange = (double *)malloc(g_pot.opt_pot.len * sizeof(double));
 
-    val = maxchange;
+    double* val = g_todo.maxchange;
 
     for (i = 0; i < g_pot.opt_pot.len; i++)
     {
-      if (1 > fscanf(infile, " %lf\n", val))
+      if (1 > fscanf(pfile, " %lf\n", val))
         error(1, "Premature end of maxch file %s", g_files.maxchfile);
       else
         val++;
     }
 
-    fclose(infile);
+    fclose(pfile);
   }
 #endif /* !APOT */
 }

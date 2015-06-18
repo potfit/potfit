@@ -336,26 +336,7 @@ typedef struct {
   fvalue_pointer *fvalue; /* function pointers for analytic potentials */
 } apot_table_t;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif /* APOT */
 
 typedef struct {
   /* system variables */
@@ -553,4 +534,3 @@ typedef struct {
   #endif /* DIPOLE */
 } potfit_unknown;
 
-#endif /* APOT */

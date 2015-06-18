@@ -1097,7 +1097,7 @@ void init_neighbors(config_state* cstate, double* mindist)
 
                 #ifdef STIWEB
                 /* Store slots and stuff for exp. function */
-                col = g_calc.paircol + atoms[i].neigh[k].col[0];
+                col = g_calc.paircol + g_config.atoms[i].neigh[k].col[0];
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
                 #endif /* STIWEB */
 
@@ -1502,11 +1502,11 @@ void update_slots(void)
   }   /* end loop over all atoms */
 
 #ifdef THREEBODY
-  /* update angular slots */
+#ifdef MEAM
+/* update angular slots */
   for (i = 0; i < g_config.natoms; i++) {
     for (j = 0; j < g_config.atoms[i].num_angles; j++) {
       double rr = g_config.atoms[i].angle_part[j].cos + 1.1;
-#ifdef MEAM
       int col = 2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
       g_config.atoms[i].angle_part[j].slot = (int)(rr * g_pot.calc_pot.invstep[col]);
       g_config.atoms[i].angle_part[j].step = g_pot.calc_pot.step[col];
@@ -1514,9 +1514,9 @@ void update_slots(void)
         (rr - g_config.atoms[i].angle_part[j].slot * g_pot.calc_pot.step[col]) * g_pot.calc_pot.invstep[col];
       /* move slot to the right potential */
       g_config.atoms[i].angle_part[j].slot += g_pot.calc_pot.first[col];
-#endif /* MEAM */
     }
   }
+#endif /* MEAM */
 #endif /* THREEBODY */
 
 #ifdef STIWEB

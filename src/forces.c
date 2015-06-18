@@ -40,6 +40,10 @@ double calc_forces_eam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_adp(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_meam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_elstat(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_eam_elstat(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_stiweb(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_tersoff(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_tersoffmod(double* xi_opt, double* forces, int shutdown_flag);
 
 /****************************************************************
  *
@@ -56,7 +60,7 @@ void init_forces(int is_worker)
   g_calc_forces = &calc_forces_pair;
 #endif
 
-#if defined(EAM)
+#if defined(EAM) && !defined(COULOMB) && !defined(DIPOLE)
   g_calc_forces = &calc_forces_eam;
 #endif
 
@@ -65,7 +69,27 @@ void init_forces(int is_worker)
 #endif
 
 #if defined(COULOMB) || defined(DIPOLE)
+#if defined(EAM)
+  g_calc_forces = &calc_forces_eam_elstat;
+#else
   g_calc_forces = &calc_forces_elstat;
+#endif
+#endif
+
+#if defined(MEAM)
+  g_calc_forces = &calc_forces_meam;
+#endif
+
+#if defined(STIWEB)
+  g_calc_forces = &calc_forces_stiweb;
+#endif
+
+#if defined(TERSOFF)
+#if defined(TERSOFFMOD)
+  g_calc_forces = &calc_forces_tersoffmod;
+#else
+  g_calc_forces = &calc_forces_tersoff;
+#endif
 #endif
 
   /* Select correct spline interpolation and other functions */

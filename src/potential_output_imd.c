@@ -93,16 +93,15 @@ void write_pot_table_imd(char const* prefix)
   write_imd_data_pair(outfile, "stiweb_q\t", 0, 3);	/* q_ij */
   write_imd_data_pair(outfile, "stiweb_de\t", 0, 4);	/* delta_ij */
   write_imd_data_pair(outfile, "stiweb_a1\t", 0, 5);	/* a1_ij */
-  write_imd_data_pair(outfile, "stiweb_ga\t", paircol, 0);	/* gamma_ij */
-  write_imd_data_pair(outfile, "stiweb_a2\t", paircol, 1);	/* a2_ij */
+  write_imd_data_pair(outfile, "stiweb_ga\t", g_calc.paircol, 0);	/* gamma_ij */
+  write_imd_data_pair(outfile, "stiweb_a2\t", g_calc.paircol, 1);	/* a2_ij */
 
   /* lambda_ijk */
   /* strange format (e.g. binary): 000, 100, 001, 101, 011, 111 */
-  int   j;
   fprintf(outfile, "stiweb_la\t");
-  for (j = 0; j < paircol; j++)
-    for (i = 0; i < g_param.ntypes; i++)
-      fprintf(outfile, " %g", g_pot.apot_table.values[apot_table.number - 1][i * paircol + j]);
+  for (int j = 0; j < g_calc.paircol; j++)
+    for (int i = 0; i < g_param.ntypes; i++)
+      fprintf(outfile, " %g", g_pot.apot_table.values[g_pot.apot_table.number - 1][i * g_calc.paircol + j]);
   fprintf(outfile, "\n");
 #endif /* STIWEB */
 
@@ -124,14 +123,14 @@ void write_pot_table_imd(char const* prefix)
   if (g_param.ntypes > 1) {
     /* chi_ij, chi_ii = 1.0 */
     fprintf(outfile, "ters_chi\t\t");
-    for (i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++)
-      fprintf(outfile, " %g", g_pot.apot_table.values[paircol + i][0]);
+    for (int i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++)
+      fprintf(outfile, " %g", g_pot.apot_table.values[g_calc.paircol + i][0]);
     fprintf(outfile, "\n");
 
     /* omega_ij, chi_ii = 1.0 */
     fprintf(outfile, "ters_om\t\t");
-    for (i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++)
-      fprintf(outfile, " %g", g_pot.apot_table.values[paircol + i][1]);
+    for (int i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++)
+      fprintf(outfile, " %g", g_pot.apot_table.values[g_calc.paircol + i][1]);
     fprintf(outfile, "\n");
   }
 #else
@@ -214,7 +213,7 @@ void write_pot_table_imd(char const* prefix)
 #ifdef APOT
       r2begin[col2] = dsquare((g_param.plotmin == 0 ? 0.1 : g_param.plotmin));
 #else
-      r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] = dsquare(MAX(pt->begin[col1] - g_param.extend * pt->step[col1], 0));
 #endif /* APOT */
       r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / g_param.imdpotsteps;

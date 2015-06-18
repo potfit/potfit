@@ -32,8 +32,10 @@
 
 #ifdef TERSOFF
 
+#include "forces.h"
 #include "functions.h"
-#include "potential.h"
+#include "potential_input.h"
+#include "potential_output.h"
 #include "splines.h"
 #include "utils.h"
 
@@ -88,10 +90,10 @@
 
 #ifndef TERSOFFMOD
 
-double calc_forces(double *xi_opt, double *forces, int flag)
+double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
-  const tersoff_t *ters = &apot_table.tersoff;
+  const tersoff_t *ters = &g_pot.apot_table.tersoff;
 
   atom_t *atom;			/* pointer to current atom */
   neigh_t *neigh_j;		/* pointer to current neighbor j (first neighbor loop) */
@@ -127,7 +129,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   vector dcos_j, dcos_k;
 
 #ifndef MPI
-  myconf = nconf;
+  g_mpi.myconf = g_config.nconf;
 #endif /* !MPI */
 
   /* This is the start of an infinite loop */
@@ -144,9 +146,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
 
-    if (myid == 0)
+    if (g_mpi.myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
 
     update_tersoff_pointers(xi_opt);
@@ -154,28 +156,28 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     /* region containing loop over configurations */
     {
       /* loop over configurations */
-      for (h = firstconf; h < firstconf + myconf; h++) {
-	uf = conf_uf[h - firstconf];
+      for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
+        uf = g_config.conf_uf[h - g_mpi.firstconf];
 
 	/* reset energies and stresses */
-	forces[energy_p + h] = 0.0;
+	forces[g_calc.energy_p + h] = 0.0;
 
 #ifdef STRESS
-	us = conf_us[h - firstconf];
-	stresses = stress_p + 6 * h;
+        us = g_config.conf_us[h - g_mpi.firstconf];
+	stresses = g_calc.stress_p + 6 * h;
 	for (i = 0; i < 6; i++)
 	  forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
 	/* first loop over all atoms: reset forces, densities */
-	for (i = 0; i < inconf[h]; i++) {
+	for (i = 0; i < g_config.inconf[h]; i++) {
 	  if (uf) {
-	    n_i = 3 * (cnfstart[h] + i);
-	    forces[n_i + 0] = -force_0[n_i + 0];
-	    forces[n_i + 1] = -force_0[n_i + 1];
-	    forces[n_i + 2] = -force_0[n_i + 2];
+            n_i = 3 * (g_config.cnfstart[h] + i);
+            forces[n_i + 0] = -g_config.force_0[n_i + 0];
+            forces[n_i + 1] = -g_config.force_0[n_i + 1];
+            forces[n_i + 2] = -g_config.force_0[n_i + 2];
 	  } else {
-	    n_i = 3 * (cnfstart[h] + i);
+            n_i = 3 * (g_config.cnfstart[h] + i);
 	    forces[n_i + 0] = 0.0;
 	    forces[n_i + 1] = 0.0;
 	    forces[n_i + 2] = 0.0;
@@ -184,9 +186,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	/* end first loop over all atoms */
 
 	/* second loop: calculate cutoff function f_c for all neighbors */
-	for (i = 0; i < inconf[h]; i++) {
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  n_i = 3 * (cnfstart[h] + i);
+        for (i = 0; i < g_config.inconf[h]; i++) {
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+          n_i = 3 * (g_config.cnfstart[h] + i);
 
 	  /* loop over neighbors */
 	  for (j = 0; j < atom->num_neigh; j++) {
@@ -194,7 +196,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
 	    if (neigh_j->r < *(ters->S[col_j])) {
-	      self = (neigh_j->nr == i + cnfstart[h]) ? 1 : 0;
+              self = (neigh_j->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
 	      /* calculate cutoff function f_c and store it for every neighbor */
 	      cut_tmp = M_PI / (*(ters->S[col_j]) - *(ters->R[col_j]));
@@ -220,7 +222,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      }
 
 	      /* only half cohesive energy because we have a full neighbor list */
-	      forces[energy_p + h] += 0.5 * phi_val;
+	      forces[g_calc.energy_p + h] += 0.5 * phi_val;
 
 	      if (uf) {
 		/* calculate pair forces */
@@ -330,7 +332,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 	      phi_val = -b_ij * phi_a;
 
-	      forces[energy_p + h] += neigh_j->f * phi_val;
+	      forces[g_calc.energy_p + h] += neigh_j->f * phi_val;
 
 	      if (0.0 == zeta)
 		tmp_5 = 0.0;
@@ -403,8 +405,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 	/* third loop over all atoms, sum up forces */
 	if (uf) {
-	  for (i = 0; i < inconf[h]; i++) {
-	    n_i = 3 * (cnfstart[h] + i);
+          for (i = 0; i < g_config.inconf[h]; i++) {
+            n_i = 3 * (g_config.cnfstart[h] + i);
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
 	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
@@ -416,24 +418,24 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum += conf_weight[h] *
+              tmpsum += g_config.conf_weight[h] *
 		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }
 	}
 	/* end third loop over all atoms */
 
 	/* energy contributions */
-	forces[energy_p + h] /= (double)inconf[h];
-	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+        forces[g_calc.energy_p + h] /= (double)g_config.inconf[h];
+        forces[g_calc.energy_p + h] -= g_config.force_0[g_calc.energy_p + h];
+        tmpsum += g_config.conf_weight[h] * g_param.eweight * dsquare(forces[g_calc.energy_p + h]);
 
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stresses + i] /= conf_vol[h - firstconf];
-	    forces[stresses + i] -= force_0[stresses + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
+            forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
+            forces[stresses + i] -= g_config.force_0[stresses + i];
+	    tmpsum += g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -443,7 +445,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (myid == 0)
+    if (g_mpi.myid == 0)
       tmpsum += apot_punish(xi_opt, forces);
 #endif /* APOT */
 
@@ -453,32 +455,32 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (myid == 0) {		/* root node already has data in place */
+    if (g_mpi.myid == 0) {		/* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces, atom_len,
-	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
+                  g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + natoms * 3,
-	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_config.natoms * 3,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + natoms * 3 + nconf,
-	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_config.natoms * 3 + g_config.nconf,
+                  g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
     } else {
       /* forces */
-      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR, forces, atom_len,
-	atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
+                  g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + natoms * 3 + firstconf, myconf, MPI_DOUBLE,
-	forces + natoms * 3, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_config.natoms * 3 + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_config.natoms * 3, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
       /* stresses */
-      MPI_Gatherv(forces + natoms * 3 + nconf + 6 * firstconf, myconf, MPI_STENS,
-	forces + natoms * 3 + nconf, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_config.natoms * 3 + g_config.nconf + 6 * g_mpi.firstconf, g_mpi.myconf, g_mpi.MPI_STENS,
+                  forces + g_config.natoms * 3 + g_config.nconf, g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
     }
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (myid == 0) {
-      fcalls++;			/* Increase function call counter */
+    if (g_mpi.myid == 0) {
+      g_calc.fcalls++;			/* Increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");
@@ -498,26 +500,26 @@ void update_tersoff_pointers(double *xi)
 {
   int   i;
   int   index = 2;
-  tersoff_t *tersoff = &apot_table.tersoff;
+  tersoff_t *tersoff = &g_pot.apot_table.tersoff;
 
   /* allocate if this has not been done */
   if (0 == tersoff->init) {
-    tersoff->A = (double **)malloc(paircol * sizeof(double *));
-    tersoff->B = (double **)malloc(paircol * sizeof(double *));
-    tersoff->lambda = (double **)malloc(paircol * sizeof(double *));
-    tersoff->mu = (double **)malloc(paircol * sizeof(double *));
-    tersoff->gamma = (double **)malloc(paircol * sizeof(double *));
-    tersoff->n = (double **)malloc(paircol * sizeof(double *));
-    tersoff->c = (double **)malloc(paircol * sizeof(double *));
-    tersoff->d = (double **)malloc(paircol * sizeof(double *));
-    tersoff->h = (double **)malloc(paircol * sizeof(double *));
-    tersoff->S = (double **)malloc(paircol * sizeof(double *));
-    tersoff->R = (double **)malloc(paircol * sizeof(double *));
-    tersoff->chi = (double **)malloc(paircol * sizeof(double *));
-    tersoff->omega = (double **)malloc(paircol * sizeof(double *));
-    tersoff->c2 = (double *)malloc(paircol * sizeof(double));
-    tersoff->d2 = (double *)malloc(paircol * sizeof(double));
-    for (i = 0; i < paircol; i++) {
+    tersoff->A = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->B = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->lambda = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->mu = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->gamma = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->n = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->c = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->d = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->h = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->S = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->R = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->chi = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->omega = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->c2 = (double *)malloc(g_calc.paircol * sizeof(double));
+    tersoff->d2 = (double *)malloc(g_calc.paircol * sizeof(double));
+    for (i = 0; i < g_calc.paircol; i++) {
       tersoff->A[i] = NULL;
       tersoff->B[i] = NULL;
       tersoff->lambda[i] = NULL;
@@ -557,7 +559,7 @@ void update_tersoff_pointers(double *xi)
   /* update only if the address has changed */
   if (tersoff->A[0] != xi + index) {
     /* set the pair parameters */
-    for (i = 0; i < paircol; i++) {
+    for (i = 0; i < g_calc.paircol; i++) {
       tersoff->A[i] = xi + index++;
       tersoff->B[i] = xi + index++;
       tersoff->lambda[i] = xi + index++;
@@ -571,7 +573,7 @@ void update_tersoff_pointers(double *xi)
       tersoff->R[i] = xi + index++;
       index += 2;
     }
-    for (i = 0; i < paircol; i++) {
+    for (i = 0; i < g_calc.paircol; i++) {
       if (0 == (i % g_param.ntypes)) {
 	tersoff->chi[i] = &tersoff->one;
 	tersoff->omega[i] = &tersoff->one;
@@ -584,7 +586,7 @@ void update_tersoff_pointers(double *xi)
   }
 
   /* calculate c2 and d2 */
-  for (i = 0; i < paircol; i++) {
+  for (i = 0; i < g_calc.paircol; i++) {
     tersoff->c2[i] = *(tersoff->c[i]) * *(tersoff->c[i]);
     tersoff->d2[i] = *(tersoff->d[i]) * *(tersoff->d[i]);
   }
@@ -592,13 +594,13 @@ void update_tersoff_pointers(double *xi)
 
 #else /* !TERSOFFMOD */
 
-double calc_forces(double *xi_opt, double *forces, int flag)
+double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
-  const tersoff_t *ters = &apot_table.tersoff;
+  const tersoff_t *ters = &g_pot.apot_table.tersoff;
 
 #ifndef MPI
-  myconf = nconf;
+  g_mpi.myconf = g_config.nconf;
 #endif /* !MPI */
 
   /* This is the start of an infinite loop */
@@ -615,9 +617,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     if (flag == 1)
       break;			/* Exception: flag 1 means clean up */
 
-    if (myid == 0)
+    if (g_mpi.myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
 
     update_tersoff_pointers(xi_opt);
@@ -649,35 +651,38 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       double cos_theta;
       double dzeta_ij, dzeta_ik;
       double g_theta, dg_theta;
-      double tmp, tmp_1, tmp_2, tmp_3, tmp_4;
+      double tmp_1, tmp_2, tmp_3, tmp_4;
+#if defined(STRESS)
+      double tmp = 0.0;
+#endif
       double zeta, dzeta_cos;
       vector dcos_j, dcos_k;
       vector dzeta_i, dzeta_j;
       vector force_j, tmp_force;
 
       /* loop over configurations */
-      for (h = firstconf; h < firstconf + myconf; h++) {
-	uf = conf_uf[h - firstconf];
+      for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
+        uf = g_config.conf_uf[h - g_mpi.firstconf];
 
 	/* reset energies and stresses */
-	forces[energy_p + h] = 0.0;
+	forces[g_calc.energy_p + h] = 0.0;
 
 #ifdef STRESS
-	us = conf_us[h - firstconf];
-	stresses = stress_p + 6 * h;
+        us = g_config.conf_us[h - g_mpi.firstconf];
+	stresses = g_calc.stress_p + 6 * h;
 	for (i = 0; i < 6; i++)
 	  forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
 	/* first loop over all atoms: reset forces, densities */
-	for (i = 0; i < inconf[h]; i++) {
+        for (i = 0; i < g_config.inconf[h]; i++) {
 	  if (uf) {
-	    n_i = 3 * (cnfstart[h] + i);
-	    forces[n_i + 0] = -force_0[n_i + 0];
-	    forces[n_i + 1] = -force_0[n_i + 1];
-	    forces[n_i + 2] = -force_0[n_i + 2];
+            n_i = 3 * (g_config.cnfstart[h] + i);
+            forces[n_i + 0] = -g_config.force_0[n_i + 0];
+            forces[n_i + 1] = -g_config.force_0[n_i + 1];
+            forces[n_i + 2] = -g_config.force_0[n_i + 2];
 	  } else {
-	    n_i = 3 * (cnfstart[h] + i);
+            n_i = 3 * (g_config.cnfstart[h] + i);
 	    forces[n_i + 0] = 0.0;
 	    forces[n_i + 1] = 0.0;
 	    forces[n_i + 2] = 0.0;
@@ -686,9 +691,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	/* end first loop over all atoms */
 
 	/* second loop: calculate cutoff function f_c for all neighbors */
-	for (i = 0; i < inconf[h]; i++) {
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  n_i = 3 * (cnfstart[h] + i);
+        for (i = 0; i < g_config.inconf[h]; i++) {
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+          n_i = 3 * (g_config.cnfstart[h] + i);
 
 	  /* loop over neighbors */
 	  /* calculate pair potential part: f*A*exp(-lambda*r) */
@@ -697,7 +702,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	    col_j = neigh_j->col[0];
 	    /* check if we are within the cutoff range */
 	    if (neigh_j->r < *(ters->R2[col_j])) {
-	      self = (neigh_j->nr == i + cnfstart[h]) ? 1 : 0;
+	      self = (neigh_j->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
 	      /* calculate cutoff function f_c and store it for every neighbor */
 	      tmp_1 = M_PI / (*(ters->R2[col_j]) - *(ters->R1[col_j]));
@@ -723,7 +728,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      }
 
 	      /* only half cohesive energy because we have a full neighbor list */
-	      forces[energy_p + h] += 0.5 * phi_val;
+	      forces[g_calc.energy_p + h] += 0.5 * phi_val;
 
 	      if (uf) {
 		/* calculate pair forces */
@@ -847,7 +852,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	      phi_val = -tmp_2;
 	      tmp_4 = -tmp_2 * (neigh_j->df - *(ters->mu[col_j]) * neigh_j->f);
 
-	      forces[energy_p + h] += neigh_j->f * phi_val;
+	      forces[g_calc.energy_p + h] += neigh_j->f * phi_val;
 
 	      force_j.x = -tmp_4 * neigh_j->dist_r.x - tmp_3 * dzeta_j.x;
 	      force_j.y = -tmp_4 * neigh_j->dist_r.y - tmp_3 * dzeta_j.y;
@@ -925,8 +930,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 	/* third loop over all atoms, sum up forces */
 	if (uf) {
-	  for (i = 0; i < inconf[h]; i++) {
-	    n_i = 3 * (cnfstart[h] + i);
+	  for (i = 0; i < g_config.inconf[h]; i++) {
+	    n_i = 3 * (g_config.cnfstart[h] + i);
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */
 	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
@@ -938,24 +943,24 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #ifdef CONTRIB
 	    if (atom->contrib)
 #endif /* CONTRIB */
-	      tmpsum += conf_weight[h] *
+	      tmpsum += g_config.conf_weight[h] *
 		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
 	  }
 	}
 	/* end third loop over all atoms */
 
 	/* energy contributions */
-	forces[energy_p + h] /= (double)inconf[h];
-	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+	forces[g_calc.energy_p + h] /= (double)g_config.inconf[h];
+	forces[g_calc.energy_p + h] -= g_config.force_0[g_calc.energy_p + h];
+	tmpsum += g_config.conf_weight[h] * g_param.eweight * dsquare(forces[g_calc.energy_p + h]);
 
 #ifdef STRESS
 	/* stress contributions */
 	if (uf && us) {
 	  for (i = 0; i < 6; i++) {
-	    forces[stresses + i] /= conf_vol[h - firstconf];
-	    forces[stresses + i] -= force_0[stresses + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
+            forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
+            forces[stresses + i] -= g_config.force_0[stresses + i];
+            tmpsum += g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
 	  }
 	}
 #endif /* STRESS */
@@ -965,7 +970,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
 #ifdef APOT
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (myid == 0)
+    if (g_mpi.myid == 0)
       tmpsum += apot_punish(xi_opt, forces);
 #endif /* APOT */
 
@@ -974,29 +979,29 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (myid == 0) {		/* root node already has data in place */
+    if (g_mpi.myid == 0) {		/* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces,
-	atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + energy_p,
-	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
-	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
     } else {
       /* forces */
-      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
-	forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR,
+                  forces, g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + energy_p + firstconf, myconf, MPI_DOUBLE,
-	forces + energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
-	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf, g_mpi.MPI_STENS,
+                  forces + g_calc.stress_p, g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
     }
 #else
@@ -1004,8 +1009,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (myid == 0) {
-      fcalls++;			/* Increase function call counter */
+    if (g_mpi.myid == 0) {
+      g_calc.fcalls++;			/* Increase function call counter */
       if (isnan(sum)) {
 #ifdef DEBUG
 	printf("\n--> Force is nan! <--\n\n");
@@ -1031,27 +1036,27 @@ void update_tersoff_pointers(double *xi)
 {
   int   i;
   int   index = 2;
-  tersoff_t *tersoff = &apot_table.tersoff;
+  tersoff_t *tersoff = &g_pot.apot_table.tersoff;
 
   /* allocate if this has not been done */
   if (0 == tersoff->init) {
-    tersoff->A = (double **)malloc(paircol * sizeof(double *));
-    tersoff->B = (double **)malloc(paircol * sizeof(double *));
-    tersoff->lambda = (double **)malloc(paircol * sizeof(double *));
-    tersoff->mu = (double **)malloc(paircol * sizeof(double *));
-    tersoff->eta = (double **)malloc(paircol * sizeof(double *));
-    tersoff->delta = (double **)malloc(paircol * sizeof(double *));
-    tersoff->alpha = (double **)malloc(paircol * sizeof(double *));
-    tersoff->beta = (double **)malloc(paircol * sizeof(double *));
-    tersoff->c1 = (double **)malloc(paircol * sizeof(double *));
-    tersoff->c2 = (double **)malloc(paircol * sizeof(double *));
-    tersoff->c3 = (double **)malloc(paircol * sizeof(double *));
-    tersoff->c4 = (double **)malloc(paircol * sizeof(double *));
-    tersoff->c5 = (double **)malloc(paircol * sizeof(double *));
-    tersoff->h = (double **)malloc(paircol * sizeof(double *));
-    tersoff->R1 = (double **)malloc(paircol * sizeof(double *));
-    tersoff->R2 = (double **)malloc(paircol * sizeof(double *));
-    for (i = 0; i < paircol; i++) {
+    tersoff->A = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->B = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->lambda = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->mu = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->eta = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->delta = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->alpha = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->beta = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->c1 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->c2 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->c3 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->c4 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->c5 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->h = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->R1 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->R2 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    for (i = 0; i < g_calc.paircol; i++) {
       tersoff->A[i] = NULL;
       tersoff->B[i] = NULL;
       tersoff->lambda[i] = NULL;
@@ -1091,7 +1096,7 @@ void update_tersoff_pointers(double *xi)
   /* update only if the address has changed */
   if (tersoff->A[0] != xi + index) {
     /* set the pair parameters */
-    for (i = 0; i < paircol; i++) {
+    for (i = 0; i < g_calc.paircol; i++) {
       tersoff->A[i] = xi + index++;
       tersoff->B[i] = xi + index++;
       tersoff->lambda[i] = xi + index++;

@@ -205,21 +205,21 @@ void check_apot_functions(void)
 
   /* check for the correct function types for SW potential */
   for (i = 0; i < pcol; i++) {
-    if (strcmp(apot_table.names[i], "stiweb_2") != 0)
+    if (strcmp(g_pot.apot_table.names[i], "stiweb_2") != 0)
       error(1, "Only stiweb_2 potential is allowed for the %d. potential!\n", i + 1);
-    if (strcmp(apot_table.names[pcol + i], "stiweb_3") != 0)
+    if (strcmp(g_pot.apot_table.names[pcol + i], "stiweb_3") != 0)
       error(1, "Only stiweb_3 potential is allowed for the %d. potential!\n", pcol + i + 1);
   }
-  if (strcmp(apot_table.names[2 * pcol], "lambda") != 0)
+  if (strcmp(g_pot.apot_table.names[2 * pcol], "lambda") != 0)
     error(1, "The last potential for Stillinger-Weber has to be of the \"lambda\" type!\n");
 
   /* make sure the cutoff parameters (a1,a2) can be optimized correctly */
   for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][5] > g_pot.apot_table.end[i]) {
+    if (g_pot.apot_table.pmax[i][5] > g_pot.apot_table.end[i]) {
       error(0, "The upper bound for the parameter a1 exceeds the cutoff radius in potential %d.\n", i + 1);
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
-    if (apot_table.pmax[pcol + i][1] > g_pot.apot_table.end[pcol + i]) {
+    if (g_pot.apot_table.pmax[pcol + i][1] > g_pot.apot_table.end[pcol + i]) {
       error(0, "The upper bound for the parameter a2 exceeds the cutoff radius in potential %d.\n", i + 1);
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
@@ -234,17 +234,17 @@ void check_apot_functions(void)
 #ifndef TERSOFFMOD
   /* check for the correct function types for TERSOFF potential */
   for (i = 0; i < pcol; i++) {
-    if (strcmp(apot_table.names[i], "tersoff_pot") != 0)
+    if (strcmp(g_pot.apot_table.names[i], "tersoff_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
   }
   for (i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++) {
-    if (strcmp(apot_table.names[pcol + i], "tersoff_mix") != 0)
+    if (strcmp(g_pot.apot_table.names[pcol + i], "tersoff_mix") != 0)
       error(1, "Only tersoff_mix potential is allowed for the %d. potential!\n", i + 1);
   }
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
   for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][9] < g_pot.apot_table.pmin[i][10]) {
+    if (g_pot.apot_table.pmax[i][9] < g_pot.apot_table.pmin[i][10]) {
       error(0, "The upper bound for the parameter S is smaller than the lower bound\n");
       error(0, "for the parameter R in potential %d.\n", i + 1);
       error(1, "Please change it, that the condition R < S can be fulfilled.\n");
@@ -253,13 +253,13 @@ void check_apot_functions(void)
 #else
   /* check for the correct function types for TERSOFFMOD potential */
   for (i = 0; i < pcol; i++) {
-    if (strcmp(apot_table.names[i], "tersoff_mod_pot") != 0)
+    if (strcmp(g_pot.apot_table.names[i], "tersoff_mod_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
   }
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
   for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][15] < g_pot.apot_table.pmin[i][14]) {
+    if (g_pot.apot_table.pmax[i][15] < g_pot.apot_table.pmin[i][14]) {
       error(0, "The upper bound for the parameter R2 is smaller than the lower bound\n");
       error(0, "for the parameter R1 in potential %d.\n", i + 1);
       error(1, "Please change it, that the condition R1 < R2 can be fulfilled.\n");
