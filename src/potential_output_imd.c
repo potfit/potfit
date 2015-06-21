@@ -278,7 +278,7 @@ void write_pot_table_imd(char const* prefix)
       r2begin[col2] = dsquare((g_param.plotmin == 0 ? 0.1 : g_param.plotmin));
 #else
       /* Extrapolation possible  */
-      r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] = dsquare(MAX(pt->begin[col1] - g_param.extend * pt->step[col1], 0));
 #endif /* APOT */
       r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / g_param.imdpotsteps;
@@ -293,10 +293,9 @@ void write_pot_table_imd(char const* prefix)
       int col1 = (g_param.ntypes * (g_param.ntypes + 1)) / 2 + j;
       int col2 = i * g_param.ntypes + j;
       double r2 = r2begin[col2];
-      double temp = 0.0;
       for (int k = 0; k < g_param.imdpotsteps; k++) {
 #ifdef APOT
-
+        double temp = 0.0;
         (*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
 	temp =
           g_pot.smooth_pot[col1] ? temp * cutoff(sqrt(r2), g_pot.apot_table.end[col1],
@@ -331,9 +330,9 @@ void write_pot_table_imd(char const* prefix)
     r2end[i] = pt->end[col1];
 #else
     /* pad with zeroes */
-    r2begin[i] = pt->begin[col1] - extend * pt->step[col1];
+    r2begin[i] = pt->begin[col1] - g_param.extend * pt->step[col1];
     /* extrapolation */
-    r2end[i] = pt->end[col1] + extend * pt->step[col1];
+    r2end[i] = pt->end[col1] + g_param.extend * pt->step[col1];
 #endif /* APOT */
     r2step[i] = (r2end[i] - r2begin[i]) / g_param.imdpotsteps;
     fprintf(outfile, "%.16e %.16e %.16e\n", r2begin[i], r2end[i], r2step[i]);
@@ -352,7 +351,7 @@ void write_pot_table_imd(char const* prefix)
       (*g_pot.apot_table.fvalue[col1])(r2, g_pot.apot_table.values[col1], &temp);
 #else
       temp = splint_ne_lin(pt, pt->table, col1, r2);
-      temp2 = r2 - pt->end[col1];
+      double temp2 = r2 - pt->end[col1];
       temp += (temp2 > 0.0) ? 5e2 * (temp2 * temp2 * temp2) : 0.0;
 #endif /* APOT */
       fprintf(outfile, "%.16e\n", temp);
@@ -388,7 +387,7 @@ void write_pot_table_imd(char const* prefix)
 #ifdef APOT
       r2begin[col2] = dsquare((g_param.plotmin == 0 ? 0.1 : g_param.plotmin));
 #else
-      r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] = dsquare(MAX(pt->begin[col1] - g_param.extend * pt->step[col1], 0));
 #endif /* APOT */
       r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / g_param.imdpotsteps;
@@ -408,10 +407,10 @@ void write_pot_table_imd(char const* prefix)
       col1 += g_calc.paircol + 2 * g_param.ntypes;
       int col2 = i * g_param.ntypes + j;
       double r2 = r2begin[col2];
-      double temp = 0.0;
       for (int k = 0; k < g_param.imdpotsteps; k++) {
 #ifdef APOT
-	(*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
+        double temp = 0.0;
+        (*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
 	temp =
 	  g_pot.smooth_pot[col1] ? temp * cutoff(sqrt(r2), g_pot.apot_table.end[col1],
 	  g_pot.apot_table.values[col1][g_pot.apot_table.n_par[col1] - 1]) : temp;
@@ -451,7 +450,7 @@ void write_pot_table_imd(char const* prefix)
 #ifdef APOT
       r2begin[col2] = dsquare((g_param.plotmin == 0 ? 0.1 : g_param.plotmin));
 #else
-      r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] = dsquare(MAX(pt->begin[col1] - g_param.extend * pt->step[col1], 0));
 #endif /* APOT */
       r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / g_param.imdpotsteps;
@@ -471,10 +470,10 @@ void write_pot_table_imd(char const* prefix)
       col1 += 2 * g_calc.paircol + 2 * g_param.ntypes;
       int col2 = i * g_param.ntypes + j;
       double r2 = r2begin[col2];
-      double temp = 0.0;
       for (int k = 0; k < g_param.imdpotsteps; k++) {
 #ifdef APOT
-	(*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
+        double temp = 0.0;
+        (*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
 	temp =
 	  g_pot.smooth_pot[col1] ? temp * cutoff(sqrt(r2), g_pot.apot_table.end[col1],
 	  g_pot.apot_table.values[col1][g_pot.apot_table.n_par[col1] - 1]) : temp;
@@ -517,7 +516,7 @@ void write_pot_table_imd(char const* prefix)
 #ifdef APOT
       r2begin[col2] = dsquare((g_param.plotmin == 0 ? 0.1 : g_param.plotmin));
 #else
-      r2begin[col2] = dsquare(MAX(pt->begin[col1] - extend * pt->step[col1], 0));
+      r2begin[col2] = dsquare(MAX(pt->begin[col1] - g_param.extend * pt->step[col1], 0));
 #endif /* APOT */
       r2end[col2] = dsquare(pt->end[col1]);
       r2step[col2] = (r2end[col2] - r2begin[col2]) / g_param.imdpotsteps;
@@ -537,10 +536,10 @@ void write_pot_table_imd(char const* prefix)
       col1 += i < j ? i * g_param.ntypes + j - m : j * g_param.ntypes + i - m2;
       int col2 = i * g_param.ntypes + j;
       double r2 = r2begin[col2];
-      double temp = 0;
       for (int k = 0; k < g_param.imdpotsteps; k++) {
 #ifdef APOT
-	(*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
+        double temp = 0.0;
+        (*g_pot.apot_table.fvalue[col1])(sqrt(r2), g_pot.apot_table.values[col1], &temp);
 	temp =
 	  g_pot.smooth_pot[col1] ? temp * cutoff(sqrt(r2), g_pot.apot_table.end[col1],
 	  g_pot.apot_table.values[col1][g_pot.apot_table.n_par[col1] - 1]) : temp;

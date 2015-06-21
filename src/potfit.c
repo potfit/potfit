@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 
     /* will not work with MPI */
 #if defined(PDIST) && !defined(MPI)
-    write_pairdist(&opt_pot, distfile);
+    write_pairdist(&g_pot.opt_pot, g_files.distfile);
 #endif /* PDIST && !MPI */
 
     /* write the error files for forces, energies, stresses, ... */

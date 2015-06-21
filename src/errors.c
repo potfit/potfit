@@ -263,7 +263,7 @@ void write_errors(double* force, double tot)
       fprintf(outfile, "%s\t%f\t%f\t%f\t%g\n", g_config.elements[i - g_calc.dummy_p], 0.0, sqr, 0.0, force[i]);
 #else
       sqr = dsquare(force[i + g_param.ntypes]);
-      fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", g_config.elements[i - dummy_p], sqr, dsquare(force[i]),
+      fprintf(outfile, "%s\t%f\t%f\t%f\t%f\n", g_config.elements[i - g_calc.dummy_p], sqr, dsquare(force[i]),
 	force[i + g_param.ntypes], force[i]);
 #endif /* !RESCALE */
     }

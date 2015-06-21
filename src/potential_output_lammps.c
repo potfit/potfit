@@ -283,7 +283,7 @@ void write_pot_table_lammps()
           g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
-	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, k, r));
+	fprintf(outfile, "%.16e\n", splint_ne(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 #endif /* APOT */
       r += drho;
     }
@@ -298,7 +298,7 @@ void write_pot_table_lammps()
 	  g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]) : temp;
 	fprintf(outfile, "%.16e\n", temp);
 #else
-	fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, k, r));
+	fprintf(outfile, "%.16e\n", splint_ne(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 #endif /* APOT */
       r += dr;
     }

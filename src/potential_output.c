@@ -412,11 +412,11 @@ void write_pot_table4(char const* filename)
 
 #if defined(TBEAM)
       /* transfer functions s-band */
-      for (i = 0; i < g_param.ntypes; i++)
+      for (int i = 0; i < g_param.ntypes; i++)
         fprintf(pfile_table, " %s", g_config.elements[i]);
 
       /* embedding functions s-band */
-      for (i = 0; i < g_param.ntypes; i++)
+      for (int i = 0; i < g_param.ntypes; i++)
         fprintf(pfile_table, " %s", g_config.elements[i]);
 #endif /* TBEAM */
 #endif /* EAM */
@@ -505,7 +505,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
       k++;
     }
 #if defined EAM || defined ADP || defined MEAM
-  for (i = paircol; i < paircol + g_param.ntypes; i++) {
+for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -514,7 +514,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = paircol + g_param.ntypes; i < paircol + 2 * g_param.ntypes; i++) {
+  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
@@ -525,7 +525,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   }
 #endif
 #ifdef MEAM
-  for (i = paircol; i < paircol + g_param.ntypes; i++) {
+for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -534,7 +534,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = paircol + g_param.ntypes; i < paircol + 2 * g_param.ntypes; i++) {
+  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT; l++) {
@@ -543,7 +543,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "\n\n\n");
   }
-  for (i = paircol + 2 * g_param.ntypes; i < 2 * paircol + 2 * g_param.ntypes; i++) {
+  for (i = g_calc.paircol + 2 * g_param.ntypes; i < 2 * g_calc.paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -552,7 +552,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = 2 * paircol + 2 * g_param.ntypes; i < 2 * paircol + 3 * g_param.ntypes; i++) {
+  for (i = 2 * g_calc.paircol + 2 * g_param.ntypes; i < 2 * g_calc.paircol + 3 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -563,7 +563,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
   }
 #endif /* MEAM */
 #ifdef ADP
-  for (i = paircol + 2 * g_param.ntypes; i < 2 * (paircol + g_param.ntypes); i++) {
+for (i = g_calc.paircol + 2 * g_param.ntypes; i < 2 * (g_calc.paircol + g_param.ntypes); i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - r) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -573,7 +573,7 @@ void write_plotpot_pair(pot_table_t *pt, char *filename)
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
     k++;
   }
-  for (i = 2 * (paircol + g_param.ntypes); i < 3 * paircol + 2 * g_param.ntypes; i++) {
+  for (i = 2 * (g_calc.paircol + g_param.ntypes); i < 3 * g_calc.paircol + 2 * g_param.ntypes; i++) {
     r = pt->begin[i];
     r_step = (pt->end[i] - r) / (NPLOT - 1);
     for (l = 0; l < NPLOT - 1; l++) {
@@ -635,13 +635,13 @@ void write_pairdist(pot_table_t *pt, char *filename)
     error(1, "Could not open file %s\n", filename);
 
   /* initialize distribution vector */
-  freq = (int *)malloc(ndimtot * sizeof(int));
-  for (i = 0; i < ndimtot; i++)
+  freq = (int *)malloc(g_calc.ndimtot * sizeof(int));
+  for (i = 0; i < g_calc.ndimtot; i++)
     freq[i] = 0;
 
-  for (h = firstconf; h < firstconf + myconf; h++) {
-    for (i = 0; i < inconf[h]; i++) {
-      atom = atoms + i + cnfstart[h];
+  for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
+    for (i = 0; i < g_config.inconf[h]; i++) {
+      atom = g_config.atoms + i + g_config.cnfstart[h];
       typ1 = atom->type;
 
       /* pair potentials */
@@ -655,15 +655,15 @@ void write_pairdist(pot_table_t *pt, char *filename)
 	  freq[neigh->slot[0]]++;
 #ifdef EAM
 	/* transfer function */
-	col = paircol + typ2;
+	col = g_calc.paircol + typ2;
 	if (neigh->r < pt->end[col])
 	  freq[neigh->slot[1]]++;
 #endif /* EAM */
       }
 #ifdef EAM
       /* embedding function - get index first */
-      col = paircol + g_param.ntypes + typ1;
-      if (format == 3) {
+      col = g_calc.paircol + g_param.ntypes + typ1;
+      if (g_pot.format == 3) {
 	rr = atom->rho - pt->begin[col];
 #ifdef RESCALE
 	if (rr < 0.0)

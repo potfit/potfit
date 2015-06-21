@@ -154,10 +154,10 @@ void run_powell_lsq(double *xi)
 #ifdef RESCALE
 #if defined EAM || defined ADP || defined MEAM
       /* perhaps rescaling helps? - Last resort... */
-      warning("F does not depend on xi[%d], trying to rescale!\n", idx[i - 1]);
-      rescale(&opt_pot, 1.0, 1);
+      warning("F does not depend on xi[%d], trying to rescale!\n", g_todo.idx[i - 1]);
+      rescale(&g_pot.opt_pot, 1.0, 1);
       /* wake other threads and sync potentials */
-      F = calc_forces(xi, fxi1, 2);
+      F = (*g_calc_forces)(xi, fxi1, 2);
       i = gamma_init(gamma, d, xi, fxi1);
 #endif /* EAM */
 #endif /* RESCALE */
@@ -217,7 +217,7 @@ dsysvx('N', 'U', g_calc.ndim, j, &lineqsys[0][0], g_calc.ndim, &les_inverse[0][0
 	  /* something seriously went wrong,
 	     parameter idx[i] out of control */
 	  warning("Direction vector component %d out of range in step %d\n", g_todo.idx[i], m);
-	  warning("(%g instead of %g).\n", fabs(delta[idx[i]]), g_todo.maxchange[idx[i]]);
+	  warning("(%g instead of %g).\n", fabs(delta[g_todo.idx[i]]), g_todo.maxchange[g_todo.idx[i]]);
 	  warning("Restarting inner loop\n");
 	  breakflag = 1;
 	}
@@ -288,7 +288,7 @@ if ((xi[g_todo.idx[i]] + delta[g_todo.idx[i]]) < g_pot.apot_table.pmin[g_pot.apo
 #ifdef APOT
 printf("%5d\t%17.6f\t%6d\n", m, F, g_calc.fcalls);
 #else
-    printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4], fcalls);
+    printf("%d %f %f %f %f %f %f %d\n", m, F, xi[0], xi[1], xi[2], xi[3], xi[4], g_calc.fcalls);
 #endif /* APOT */
     fflush(stdout);
 

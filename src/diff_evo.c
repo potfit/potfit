@@ -36,6 +36,7 @@
 #include "forces.h"
 #include "optimize.h"
 #include "potential_output.h"
+#include "random.h"
 #include "utils.h"
 
 #define D (g_calc.ndimtot+2)
@@ -102,9 +103,9 @@ void init_population(double **pop, double *xi, double *cost)
       min = -10.0 * val;
       max = 10.0 * val;
       /* initialize with uniform distribution in [-1:1] */
-      temp = dsfmt_genrand_close_open(&dsfmt);
+      temp = eqdist();
 /*      pop[i][idx[j]] = temp * 100.0;*/
-      pop[i][idx[j]] = val + temp * (max - min);
+      pop[i][g_todo.idx[j]] = val + temp * (max - min);
 #endif /* APOT */
     }
   }
@@ -365,7 +366,7 @@ void run_differential_evolution(double *xi)
             g_pot.apot_table.values[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]] = trial[g_todo.idx[j]];
             write_pot_table_potfit(g_files.tempfile);
 #else
-	    xi[idx[j]] = trial[idx[j]];
+	    xi[g_todo.idx[j]] = trial[g_todo.idx[j]];
             write_pot_table_potfit(g_files.tempfile);
 #endif /* APOT */
 	}

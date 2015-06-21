@@ -395,7 +395,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	  if (atom->rho < g_pot.calc_pot.begin[col_F]) {
 
 	    /* Punish this potential for having rho lie outside of F */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(calc_pot.begin[col_F] - atom->rho);
+	    forces[g_calc.limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(g_pot.calc_pot.begin[col_F] - atom->rho);
 
 	    /* Set the atomic density to the first rho in the spline F */
 	    atom->rho = g_pot.calc_pot.begin[col_F];
@@ -403,13 +403,13 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 	  } else if (atom->rho > g_pot.calc_pot.end[col_F]) {	/* rho is to the right of the spline */
 
 	    /* Punish this potential for having rho lie outside of F */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
+            forces[g_calc.limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
 
 	    /* Set the atomic density to the last rho in the spline F */
 	    atom->rho = g_pot.calc_pot.end[col_F];
 	  }
 	  /* Compute energy piece from F, and store the gradient for later use */
-          forces[g_calc.energy_p + h] += splint_comb(&calc_pot, xi, col_F, atom->rho, &atom->gradF);
+          forces[g_calc.energy_p + h] += (*g_splint_comb)(&g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
 
 #else
 	  /* Compute energy, gradient for embedding function F
@@ -423,7 +423,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #else
 	    /* Linear extrapolate values to left to get F_i(rho)
 	       This gets value and grad of initial spline point */
-	    rho_val = splint_comb(&calc_pot, xi, col_F, g_pot.calc_pot.begin[col_F], &atom->gradF);
+	    rho_val = (*g_splint_comb)(&g_pot.calc_pot, xi, col_F, g_pot.calc_pot.begin[col_F], &atom->gradF);
 
 	    /* Sum this to the total energy for this configuration
 	       Linear extrapolate this energy */
@@ -439,7 +439,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #else
 	    /* Get value and grad at 1/2 the width from the final spline point */
 	    rho_val =
-	      splint_comb(&calc_pot, xi, col_F,
+	      (*g_splint_comb)(&g_pot.calc_pot, xi, col_F,
 	      g_pot.calc_pot.end[col_F] - 0.5 * g_pot.calc_pot.step[col_F], &atom->gradF);
 	    /* Linear extrapolate to the right to get energy */
             forces[g_calc.energy_p + h] += rho_val + (atom->rho - g_pot.calc_pot.end[col_F]) * atom->gradF;
@@ -646,8 +646,8 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #ifdef RESCALE
 	/* Add in the square of the limiting constraints for each config */
 	/* This is punishment from going out of bounds for F(rho) */
-	forces[limit_p + h] *= conf_weight[h];
-	tmpsum += dsquare(forces[limit_p + h]);
+	forces[g_calc.limit_p + h] *= g_config.conf_weight[h];
+	tmpsum += dsquare(forces[g_calc.limit_p + h]);
 #endif /* RESCALE */
       }				/* END MAIN LOOP OVER CONFIGURATIONS */
     }
@@ -701,8 +701,8 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 #ifdef RESCALE
       /* punishment constraints */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + limit_p,
-	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.limit_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* RESCALE */
     } else {
       /* forces */
@@ -718,8 +718,8 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 #ifdef RESCALE
       /* punishment constraints */
-      MPI_Gatherv(forces + limit_p + g_mpi.firstconf, myconf, MPI_DOUBLE,
-	forces + limit_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.limit_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_calc.limit_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* RESCALE */
     }
     /* no need to pick up dummy constraints - they are already @ root */

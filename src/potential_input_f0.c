@@ -34,7 +34,11 @@
 #include "potential_input.h"
 #include "utils.h"
 
-#if defined(APOT)
+#if !defined(APOT)
+
+void read_pot_table0(char const* potential_filename, FILE* pfile) {}
+
+#else
 
 typedef struct {
   char const* filename;

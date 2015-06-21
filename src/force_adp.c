@@ -395,13 +395,13 @@ double calc_forces_adp(double* xi_opt, double* forces, int flag)
 #ifdef RESCALE
 	  if (atom->rho > g_pot.calc_pot.end[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
+	    forces[g_calc.limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
 	    atom->rho = g_pot.calc_pot.end[col_F];
 	  }
 
 	  if (atom->rho < g_pot.calc_pot.begin[col_F]) {
 	    /* then punish target function -> bad potential */
-	    forces[limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(g_pot.calc_pot.begin[col_F] - atom->rho);
+	    forces[g_calc.limit_p + h] += DUMMY_WEIGHT * 10.0 * dsquare(g_pot.calc_pot.begin[col_F] - atom->rho);
 	  }
 #endif /* RESCALE */
 
@@ -417,7 +417,7 @@ double calc_forces_adp(double* xi_opt, double* forces, int flag)
             forces[g_calc.energy_p + h] += temp_eng;
 #else
 	    /* linear extrapolation left */
-	    rho_val = splint_comb(&g_pot.calc_pot, xi, col_F, g_pot.calc_pot.begin[col_F], &atom->gradF);
+	    rho_val = (*g_splint_comb)(&g_pot.calc_pot, xi, col_F, g_pot.calc_pot.begin[col_F], &atom->gradF);
             forces[g_calc.energy_p + h] += rho_val + (atom->rho - g_pot.calc_pot.begin[col_F]) * atom->gradF;
 #endif /* APOT */
 	  } else if (atom->rho > g_pot.calc_pot.end[col_F]) {
@@ -429,7 +429,7 @@ double calc_forces_adp(double* xi_opt, double* forces, int flag)
 #else
 	    /* and right */
 	    rho_val =
-	      splint_comb(&g_pot.calc_pot, xi, col_F, g_pot.calc_pot.end[col_F] - 0.5 * g_pot.calc_pot.step[col_F],
+	      (*g_splint_comb)(&g_pot.calc_pot, xi, col_F, g_pot.calc_pot.end[col_F] - 0.5 * g_pot.calc_pot.step[col_F],
 	      &atom->gradF);
               forces[g_calc.energy_p + h] += rho_val + (atom->rho - g_pot.calc_pot.end[col_F]) * atom->gradF;
 #endif /* APOT */
@@ -670,9 +670,9 @@ double calc_forces_adp(double* xi_opt, double* forces, int flag)
         forces[g_calc.dummy_p + g_param.ntypes + g] = 0.0;	/* Free end... */
 	/* constraints on U`(n) */
         forces[g_calc.dummy_p + g] =
-          DUMMY_WEIGHT * splint_grad(&g_pot.calc_pot, xi, g_calc.paircol + g_param.ntypes + g,
+          DUMMY_WEIGHT * (*g_splint_grad)(&g_pot.calc_pot, xi, g_calc.paircol + g_param.ntypes + g,
                                      0.5 * (g_pot.calc_pot.begin[g_calc.paircol + g_param.ntypes + g] + g_pot.calc_pot.end[g_calc.paircol + g_param.ntypes + g]))
-          - force_0[g_calc.dummy_p + g];
+          - g_config.force_0[g_calc.dummy_p + g];
 #endif /* !RESCALE */
 
 	/* add punishments to total error sum */
@@ -711,8 +711,8 @@ double calc_forces_adp(double* xi_opt, double* forces, int flag)
 #endif /* STRESS */
 #ifdef RESCALE
       /* punishment constraints */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + limit_p,
-	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.limit_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* RESCALE */
     } else {
       /* forces */

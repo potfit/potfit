@@ -107,17 +107,17 @@ void makebump(double *x, double width, double height, int center)
   int   i, j = 0;
 
   /* find pot to which center belongs */
-  while (opt_pot.last[j] < idx[center])
+  while (g_pot.opt_pot.last[j] < g_todo.idx[center])
     j++;
   for (i = 0; i <= 4.0 * width; i++) {
     /* using idx avoids moving fixed points */
-    if ((center + i <= ndim) && (idx[center + i] <= g_pot.opt_pot.last[j])) {
-      x[idx[center + i]] += GAUSS((double)i / width) * height;
+    if ((center + i <= g_calc.ndim) && (g_todo.idx[center + i] <= g_pot.opt_pot.last[j])) {
+      x[g_todo.idx[center + i]] += GAUSS((double)i / width) * height;
     }
   }
   for (i = 1; i <= 4.0 * width; i++) {
-    if ((center - i >= 0) && (idx[center - i] >= g_pot.opt_pot.first[j])) {
-      x[idx[center - i]] += GAUSS((double)i / width) * height;
+    if ((center - i >= 0) && (g_todo.idx[center - i] >= g_pot.opt_pot.first[j])) {
+      x[g_todo.idx[center - i]] += GAUSS((double)i / width) * height;
     }
   }
   return;
@@ -181,7 +181,7 @@ void run_simulated_annealing(double *xi)
   optend = vect_double(g_param.ntypes);
   optstep = vect_double(g_param.ntypes);
   optinvstep = vect_double(g_param.ntypes);
-  optxcoord = vect_double(ndimtot);
+  optxcoord = vect_double(g_calc.ndimtot);
 #endif /* APOT */
 
   /* init step vector and optimum vector */
@@ -200,7 +200,7 @@ void run_simulated_annealing(double *xi)
   // optimum potential in the future, and the current potential
   // could be rescaled differently from the optimum
   col2 = 0;
-  for (col = paircol + g_param.ntypes; col < paircol + 2 * g_param.ntypes; ++col) {
+  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
     optbegin[col2] = g_pot.opt_pot.begin[col];
     optend[col2] = g_pot.opt_pot.end[col];
     optstep[col2] = g_pot.opt_pot.step[col];
@@ -295,7 +295,7 @@ void run_simulated_annealing(double *xi)
 	      // optimum potential in the future, and the current potential
 	      // could be rescaled differently from the optimum
 	      col2 = 0;
-	      for (col = paircol + g_param.ntypes; col < paircol + 2 * g_param.ntypes; ++col) {
+	      for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
 		optbegin[col2] = g_pot.opt_pot.begin[col];
 		optend[col2] = g_pot.opt_pot.end[col];
 		optstep[col2] = g_pot.opt_pot.step[col];
@@ -311,7 +311,7 @@ void run_simulated_annealing(double *xi)
 	      Fopt = F2;
 	      if (*g_files.tempfile != '\0') {
 #ifndef APOT
-                write_pot_table_potfit(&opt_pot, g_files.tempfile);
+                write_pot_table_potfit(g_files.tempfile);
 #else
 		update_apot_table(xi);
 		write_pot_table_potfit(g_files.tempfile);
@@ -359,10 +359,10 @@ void run_simulated_annealing(double *xi)
       /* Check for rescaling... every tenth step */
       if (((m + 1) % 10 == 0) && (rescaleMe == 1)) {
 	/* Was rescaling necessary ? */
-	if (rescale(&opt_pot, 1.0, 0) != 0.0) {
+	if (rescale(&g_pot.opt_pot, 1.0, 0) != 0.0) {
 	  /* wake other threads and sync potentials */
 	  printf("F before rescale = %f\n", F);
-	  F = calc_forces(xi, fxi1, 2);
+	  F = (*g_calc_forces)(xi, fxi1, 2);
 	  printf("F after rescale = %f\n", F);
 	}
       }
@@ -386,11 +386,11 @@ void run_simulated_annealing(double *xi)
 #if defined MEAM && !defined APOT
       // Need to put back xcoord of optimum F potential
       col2 = 0;
-      for (col = paircol + g_param.ntypes; col < paircol + 2 * g_param.ntypes; ++col) {
-	opt_pot.begin[col] = optbegin[col2];
-	opt_pot.end[col] = optend[col2];
-	opt_pot.step[col] = optstep[col2];
-	opt_pot.invstep[col] = optinvstep[col2];
+      for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
+	g_pot.opt_pot.begin[col] = optbegin[col2];
+        g_pot.opt_pot.end[col] = optend[col2];
+        g_pot.opt_pot.step[col] = optstep[col2];
+        g_pot.opt_pot.invstep[col] = optinvstep[col2];
 
 	// Loop through each spline knot of F
 	for (n = g_pot.opt_pot.first[col]; n <= g_pot.opt_pot.last[col]; ++n)
@@ -400,10 +400,12 @@ void run_simulated_annealing(double *xi)
       }
 
       /* wake other threads and sync potentials */
-      F = calc_forces(xi, fxi1, 2);
+      F = (*g_calc_forces)(xi, fxi1, 2);
 
+#if defined(RESCALE)
       // Turn off rescaling
       rescaleMe = 0;
+#endif
 #endif /* MEAM && !APOT */
 
       loopagain = 1;
@@ -416,7 +418,7 @@ void run_simulated_annealing(double *xi)
 #if defined MEAM && !defined APOT
   // Need to put back xcoord of optimum F potential
   col2 = 0;
-  for (col = paircol + g_param.ntypes; col < paircol + 2 * g_param.ntypes; ++col) {
+  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
     g_pot.opt_pot.begin[col] = optbegin[col2];
     g_pot.opt_pot.end[col] = optend[col2];
     g_pot.opt_pot.step[col] = optstep[col2];
@@ -430,13 +432,13 @@ void run_simulated_annealing(double *xi)
   }
 
   // wake other threads and sync potentials
-  F = calc_forces(xi, fxi1, 2);
+  F = (*g_calc_forces)(xi, fxi1, 2);
 #endif /* MEAM && !APOT */
   printf("Finished annealing, starting powell minimization ...\n");
 
   if (*g_files.tempfile != '\0') {
 #ifndef APOT
-    write_pot_table(&opt_pot, tempfile);
+    write_pot_table_potfit(g_files.tempfile);
 #else
     update_apot_table(xopt);
     write_pot_table_potfit(g_files.tempfile);
