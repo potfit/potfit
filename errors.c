@@ -132,10 +132,10 @@ void write_errors(double *force, double tot)
     if (i == 0)
       fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
     fprintf(outfile,
-      "%3d:%6d:%s\t%4s\t%20.18f\t%11.6f\t%11.6f\t%14.8f\t%14.8f\n",
+      "%3d:%6d:%s\t%4s\t%e\t%e\t%e\t%e\t%e\n",
       atoms[i / 3].conf, i / 3, component[i % 3], elements[atoms[i / 3].type],
       sqr, force[i] * (FORCE_EPS + atoms[i / 3].absforce) + force_0[i],
-      force_0[i], (force[i] * (FORCE_EPS + atoms[i / 3].absforce)) / force_0[i], atoms[i / 3].absforce);
+      force_0[i], force[i] / force_0[i], atoms[i / 3].absforce);
 #else
     if (i > 2 && i % 3 == 0 && atoms[i / 3].conf != atoms[i / 3 - 1].conf)
       fprintf(outfile, "\n\n");
