@@ -51,6 +51,7 @@
 #include "optimize.h"
 #include "potential_input.h"
 #include "potential_output.h"
+#include "rescale.h"
 #include "utils.h"
 
 #define EPS 0.001

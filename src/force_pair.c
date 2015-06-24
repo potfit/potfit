@@ -32,6 +32,9 @@
 
 #include "potfit.h"
 
+#if defined(MPI)
+#include "mpi_utils.h"
+#endif
 #include "functions.h"
 #include "potential_input.h"
 #include "splines.h"

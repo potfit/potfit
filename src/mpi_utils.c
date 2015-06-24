@@ -33,11 +33,12 @@
 #ifdef MPI
 
 #include "config.h"
+#include "mpi_utils.h"
 #include "utils.h"
 
 /****************************************************************
  *
- * set up mpi
+ * set up MPI communication
  *
  ****************************************************************/
 

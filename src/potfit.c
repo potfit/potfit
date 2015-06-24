@@ -33,20 +33,30 @@
 #include "potfit.h"
 
 #include "config.h"
+#include "errors.h"
 #include "forces.h"
 #include "functions.h"
+#include "mpi_utils.h"
 #include "optimize.h"
 #include "params.h"
 #include "potential_input.h"
 #include "potential_output.h"
+#include "random.h"
 #include "utils.h"
 
+void  read_input_files(int argc, char** argv);
 void  allocate_global_variables();
 void  start_mpi_worker(double* force);
 void  free_global_variables();
-//   int   i;
-//   double *force, tot;
-//   time_t t_begin = 0, t_end = 0;
+
+potfit_calculation       g_calc;
+potfit_configurations    g_config;
+potfit_filenames         g_files;
+potfit_mpi_config        g_mpi;
+potfit_parameters        g_param;
+potfit_potentials        g_pot;
+potfit_memory            g_memory;
+potfit_unknown           g_todo;
 
 /****************************************************************
  *
@@ -197,6 +207,37 @@ int main(int argc, char **argv)
 
 /****************************************************************
  *
+ *  read_input_files -- process all input files
+ *
+ ****************************************************************/
+
+void read_input_files (int argc, char **argv)
+{
+  // only root process reads input files
+  if (g_mpi.myid == 0)
+  {
+    read_parameters(argc, argv);
+
+    read_pot_table(g_files.startpot);
+
+    read_config(g_files.config);
+
+    printf("Global energy weight: %f\n", g_param.eweight);
+    #if defined(STRESS)
+    printf("Global stress weight: %f\n", g_param.sweight);
+    #endif /* STRESS */
+
+    /* initialize additional force variables and parameters */
+    init_forces(0);
+
+    g_todo.init_done = 1;
+
+    init_rng(g_param.rng_seed);
+  }
+}
+
+/****************************************************************
+ *
  *  allocate_global_variables -- initialize global variables and allocate memory
  *
  ****************************************************************/
@@ -233,6 +274,52 @@ void allocate_global_variables()
   g_files.plotpointfile = NULL;
   g_files.startpot = NULL;
   g_files.tempfile = NULL;
+
+#if defined(PAIR)
+  g_todo.interaction_name = malloc(5 * sizeof(char));
+  strncpy(g_todo.interaction_name, "PAIR", 4);
+  g_todo.interaction_name[4] = '\0';
+#elif defined(EAM) && !defined(COULOMB)
+  #if !defined(TBEAM)
+    g_todo.interaction_name = malloc(4 * sizeof(char));
+    strncpy(g_todo.interaction_name, "EAM", 3);
+    g_todo.interaction_name[3] = '\0';
+  #else
+    g_todo.interaction_name = malloc(6 * sizeof(char));
+    strncpy(g_todo.interaction_name, "TBEAM", 5);
+    g_todo.interaction_name[5] = '\0';
+  #endif /* TBEAM */
+#elif defined(ADP)
+  g_todo.interaction_name = malloc(6 * sizeof(char));
+  strncpy(g_todo.interaction_name, "TBEAM", 5);
+  g_todo.interaction_name[5] = '\0';
+#elif defined(COULOMB) && !defined(EAM)
+  g_todo.interaction_name = malloc(7 * sizeof(char));
+  strncpy(g_todo.interaction_name, "ELSTAT", 6);
+  g_todo.interaction_name[6] = '\0';
+#elif defined(COULOMB) && defined(EAM)
+  g_todo.interaction_name = malloc(11 * sizeof(char));
+  strncpy(g_todo.interaction_name, "EAM_ELSTAT", 10);
+  g_todo.interaction_name[10] = '\0';
+#elif defined(MEAM)
+  g_todo.interaction_name = malloc(5 * sizeof(char));
+  strncpy(g_todo.interaction_name, "MEAM", 4);
+  g_todo.interaction_name[4] = '\0';
+#elif defined(STIWEB)
+  g_todo.interaction_name = malloc(7 * sizeof(char));
+  strncpy(g_todo.interaction_name, "STIWEB", 6);
+  g_todo.interaction_name[6] = '\0';
+#elif defined(TERSOFF)
+  #if defined(TERSOFFMOD)
+    g_todo.interaction_name = malloc(11 * sizeof(char));
+    strncpy(g_todo.interaction_name, "TERSOFFMOD", 10);
+    g_todo.interaction_name[10] = '\0';
+  #else
+    g_todo.interaction_name = malloc(8 * sizeof(char));
+    strncpy(g_todo.interaction_name, "TERSOFF", 7);
+    g_todo.interaction_name[7] = '\0';
+  #endif /* TERSOFFMOD */
+#endif /* interaction type */
 }
 
 /****************************************************************
@@ -254,7 +341,6 @@ void start_mpi_worker(double* force)
   g_calc_forces(g_pot.calc_pot.table, force, 0);
 #endif /* APOT */
 }
-
 
 /****************************************************************
  *
@@ -288,37 +374,8 @@ void free_global_variables()
     free(g_files.startpot);
   if (g_files.tempfile != NULL)
     free(g_files.tempfile);
-}
 
-/****************************************************************
- *
- *  read_input_files -- process all input files
- *
- ****************************************************************/
-
-void read_input_files (int argc, char **argv)
-{
-  // only root process reads input files
-  if (g_mpi.myid == 0)
-  {
-    read_parameters(argc, argv);
-
-    read_pot_table(g_files.startpot);
-
-    read_config(g_files.config);
-
-    printf("Global energy weight: %f\n", g_param.eweight);
-#if defined(STRESS)
-    printf("Global stress weight: %f\n", g_param.sweight);
-#endif /* STRESS */
-
-    /* initialize additional force variables and parameters */
-    init_forces(0);
-
-    g_todo.init_done = 1;
-
-    init_rng(g_param.rng_seed);
-  }
+  free(g_todo.interaction_name);
 }
 
 /****************************************************************

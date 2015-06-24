@@ -37,6 +37,7 @@
 #include "optimize.h"
 #include "potential_output.h"
 #include "random.h"
+#include "rescale.h"
 #include "utils.h"
 
 #define D (g_calc.ndimtot+2)
@@ -50,22 +51,11 @@
 #define TAU_1 0.1		/* probability for changing F */
 #define TAU_2 0.1		/* probability for changing CR */
 
-#ifdef EVO
-/* differential evolution [diff_evo.c] */
 void  init_population(double **, double *, double *);
+
 #ifdef APOT
 void  opposite_check(double **, double *, int);
 #endif /* APOT */
-void  diff_evo(double *);
-#else /* EVO */
-/* simulated annealing [simann.c] */
-#ifdef APOT
-void  randomize_parameter(int, double *, double *);
-#else
-void  makebump(double *, double, double, int);
-#endif /* APOT */
-void  anneal(double *);
-#endif /* EVO */
 
 /****************************************************************
  *

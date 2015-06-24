@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * forces.h: General settings for force routines
+ * rescale.h:
  *
  ****************************************************************
  *
@@ -28,23 +28,12 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_FORCES_H
-#define POTFIT_FORCES_H
+#ifndef POTFIT_RESCALE_H
+#define POTFIT_RESCALE_H
 
-extern double (*g_calc_forces)(double* xi_opt, double* forces, int shutdown_flag);
-extern double (*g_splint)(pot_table_t *, double *, int, double);
-extern double (*g_splint_grad)(pot_table_t *, double *, int, double);
-extern double (*g_splint_comb)(pot_table_t *, double *, int, double, double *);
+#if !defined APOT && ( defined EAM || defined(ADP) || defined MEAM )
+double rescale(pot_table_t *, double, int);
+void  embed_shift(pot_table_t *);
+#endif /* !APOT && (EAM || MEAM) */
 
-void  init_forces(int is_worker);
-void  set_force_vector_pointers();
-
-#if defined(STIWEB)
-void  update_stiweb_pointers(double*);
-#endif
-
-#if defined(TERSOFF)
-void  update_tersoff_pointers(double*);
-#endif
-
-#endif // POTFIT_FORCES_H
+#endif // POTFIT_RESCALE_H

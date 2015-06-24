@@ -252,10 +252,10 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 #endif /* TERSOFF && !TERSOFFMOD */
 
   if (pstate->num_pots == npots) {
-    printf(" - Using %d %s potentials to calculate forces\n", npots, interaction_name);
+    printf(" - Using %d %s potentials to calculate forces\n", npots, g_todo.interaction_name);
     fflush(stdout);
   } else {
-    error(0, "Wrong number of data columns in %s potential file \"%s\".\n", interaction_name, pstate->filename);
+    error(0, "Wrong number of data columns in %s potential file \"%s\".\n", g_todo.interaction_name, pstate->filename);
     error(1, "For g_param.ntypes=%d there should be %d, but there are %d.", g_param.ntypes, npots, pstate->num_pots);
   }
   /* recognized format? */
@@ -291,9 +291,9 @@ void read_pot_line_T(char const* pbuf, potential_state* pstate)
   if (pchar != NULL)
     *pchar = '\0';
 
-  if (strcmp(pbuf + 3, interaction_name) != 0) {
+  if (strcmp(pbuf + 3, g_todo.interaction_name) != 0) {
     error(0, "Wrong potential type found in potential file!\n");
-    error(0, "This binary only supports %s potentials.\n", interaction_name);
+    error(0, "This binary only supports %s potentials.\n", g_todo.interaction_name);
     error(1, "Your potential file contains a %s potential.\n", pbuf + 3);
   }
 }

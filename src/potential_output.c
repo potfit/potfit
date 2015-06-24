@@ -81,7 +81,7 @@ void write_pot_table0(char const* filename)
 
   /* write header */
   fprintf(outfile, "#F 0 %d", apt->number);
-  fprintf(outfile, "\n#T %s", interaction_name);
+  fprintf(outfile, "\n#T %s", g_todo.interaction_name);
 
   /* write elements */
   fprintf(outfile, "\n#C");
@@ -271,7 +271,7 @@ void write_pot_table3(char const* filename)
 
   /* write header */
   fprintf(pfile_table, "#F 3 %d", pt->ncols);
-  fprintf(pfile_table, "\n#T %s", interaction_name);
+  fprintf(pfile_table, "\n#T %s", g_todo.interaction_name);
 
   if (g_config.have_elements)
   {
@@ -386,7 +386,7 @@ void write_pot_table4(char const* filename)
 
   /* write header */
   fprintf(pfile_table, "#F 4 %d", pt->ncols);
-  fprintf(pfile_table, "\n#T %s", interaction_name);
+  fprintf(pfile_table, "\n#T %s", g_todo.interaction_name);
 
   if (g_config.have_elements)
   {

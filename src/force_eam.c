@@ -34,6 +34,9 @@
 
 #include "forces.h"
 #include "functions.h"
+#if defined(MPI)
+#include "mpi_utils.h"
+#endif
 #include "potential_input.h"
 #include "potential_output.h"
 #include "splines.h"

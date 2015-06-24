@@ -35,6 +35,11 @@
 #include "splines.h"
 #include "utils.h"
 
+double (*g_calc_forces)(double* xi_opt, double* forces, int shutdown_flag);
+double (*g_splint)(pot_table_t *, double *, int, double);
+double (*g_splint_grad)(pot_table_t *, double *, int, double);
+double (*g_splint_comb)(pot_table_t *, double *, int, double, double *);
+
 double calc_forces_pair(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_eam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_adp(double* xi_opt, double* forces, int shutdown_flag);

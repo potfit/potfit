@@ -37,37 +37,6 @@ dsfmt_t g_dsfmt;
 
 /****************************************************************
  *
- * initialize pRNG with seed from parameter file
- *
- ****************************************************************/
-
-void init_rng(int seed)
-{
-  int i = 0;
-
-  /* properly initialize random number generator */
-  #define R_SIZE 624
-  #define RAND_MAX 2147483647
-  {
-    uint32_t *array;
-    array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-    srand(seed);
-    for (i = 0; i < R_SIZE; i++)
-      array[i] = rand();
-
-    dsfmt_init_by_array(&g_dsfmt, array, R_SIZE);
-
-    for (i = 0; i < 10e5; i++)
-      eqdist();
-
-    free(array);
-  }
-  #undef R_SIZE
-  #undef RAND_MAX
-}
-
-/****************************************************************
- *
  *  eqdist
  *      return double precision pseudorandom number which
  *      distributes uniformly in the range [0, 1).
@@ -77,6 +46,35 @@ void init_rng(int seed)
 double eqdist()
 {
   return dsfmt_genrand_close_open(&g_dsfmt);
+}
+
+/****************************************************************
+ *
+ * initialize pRNG with seed from parameter file
+ *
+ ****************************************************************/
+
+void init_rng(int seed)
+{
+  /* properly initialize random number generator */
+#define R_SIZE 624
+#define RAND_MAX 2147483647
+  {
+    uint32_t *array;
+    array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
+    srand(seed);
+    for (int i = 0; i < R_SIZE; i++)
+      array[i] = rand();
+
+    dsfmt_init_by_array(&g_dsfmt, array, R_SIZE);
+
+    for (int i = 0; i < 10e5; i++)
+      eqdist();
+
+    free(array);
+  }
+#undef R_SIZE
+#undef RAND_MAX
 }
 
 /****************************************************************

@@ -38,6 +38,8 @@
 #include "optimize.h"
 #include "potential_input.h"
 #include "potential_output.h"
+#include "random.h"
+#include "rescale.h"
 #include "utils.h"
 
 #define EPS 0.1
@@ -48,6 +50,12 @@
 #define TEMPVAR 0.85
 #define KMAX 1000
 #define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-((a)*(a))/2.0)))
+
+#ifdef APOT
+void  randomize_parameter(int, double *, double *);
+#else
+void  makebump(double *, double, double, int);
+#endif /* APOT */
 
 #ifdef APOT
 

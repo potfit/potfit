@@ -36,9 +36,9 @@
 
 #include "potfit.h"
 
-#include "utils.h"
-#include "forces.h"
 #include "bracket.h"
+#include "forces.h"
+#include "utils.h"
 
 #define TOL 1.0e-1
 

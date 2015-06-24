@@ -532,5 +532,6 @@ typedef struct {
    double dp_tol;      /* dipole iteration precision */
    double dp_mix;               /* */
   #endif /* DIPOLE */
+  char* interaction_name;
 } potfit_unknown;
 

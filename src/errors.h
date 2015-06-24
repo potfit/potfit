@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * forces.h: General settings for force routines
+ * errors.h:
  *
  ****************************************************************
  *
@@ -28,23 +28,9 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_FORCES_H
-#define POTFIT_FORCES_H
+#ifndef POTFIT_ERRORS_H
+#define POTFIT_ERRORS_H
 
-extern double (*g_calc_forces)(double* xi_opt, double* forces, int shutdown_flag);
-extern double (*g_splint)(pot_table_t *, double *, int, double);
-extern double (*g_splint_grad)(pot_table_t *, double *, int, double);
-extern double (*g_splint_comb)(pot_table_t *, double *, int, double, double *);
+void  write_errors(double* force, double error_sum);
 
-void  init_forces(int is_worker);
-void  set_force_vector_pointers();
-
-#if defined(STIWEB)
-void  update_stiweb_pointers(double*);
-#endif
-
-#if defined(TERSOFF)
-void  update_tersoff_pointers(double*);
-#endif
-
-#endif // POTFIT_FORCES_H
+#endif // POTFIT_ERRORS_H
