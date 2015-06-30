@@ -36,19 +36,21 @@
 #include "utils.h"
 
 double (*g_calc_forces)(double* xi_opt, double* forces, int shutdown_flag);
-double (*g_splint)(pot_table_t *, double *, int, double);
-double (*g_splint_grad)(pot_table_t *, double *, int, double);
-double (*g_splint_comb)(pot_table_t *, double *, int, double, double *);
+double (*g_splint)(pot_table_t*, double*, int, double);
+double (*g_splint_grad)(pot_table_t*, double*, int, double);
+double (*g_splint_comb)(pot_table_t*, double*, int, double, double*);
 
 double calc_forces_pair(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_eam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_adp(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_meam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_elstat(double* xi_opt, double* forces, int shutdown_flag);
-double calc_forces_eam_elstat(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_eam_elstat(double* xi_opt, double* forces,
+                              int shutdown_flag);
 double calc_forces_stiweb(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_tersoff(double* xi_opt, double* forces, int shutdown_flag);
-double calc_forces_tersoffmod(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_tersoffmod(double* xi_opt, double* forces,
+                              int shutdown_flag);
 
 /****************************************************************
  *
@@ -60,7 +62,7 @@ double calc_forces_tersoffmod(double* xi_opt, double* forces, int shutdown_flag)
 
 void init_forces(int is_worker)
 {
-  // set proper force routine
+// set proper force routine
 #if defined(PAIR)
   g_calc_forces = &calc_forces_pair;
 #endif
@@ -97,23 +99,19 @@ void init_forces(int is_worker)
 #endif
 #endif
 
-  /* Select correct spline interpolation and other functions */
+/* Select correct spline interpolation and other functions */
 #if defined(APOT)
-  if (g_pot.format == 0)
-  {
+  if (g_pot.format == 0) {
     g_splint = splint_ed;
     g_splint_comb = splint_comb_ed;
     g_splint_grad = splint_grad_ed;
   }
 #else
-  if (g_pot.format == 3)
-  {
+  if (g_pot.format == 3) {
     g_splint = splint_ed;
     g_splint_comb = splint_comb_ed;
     g_splint_grad = splint_grad_ed;
-  }
-  else if (g_pot.format >= 4)
-  {
+  } else if (g_pot.format >= 4) {
     g_splint = splint_ne;
     g_splint_comb = splint_comb_ne;
     g_splint_grad = splint_grad_ne;
@@ -121,18 +119,16 @@ void init_forces(int is_worker)
 #endif /* APOT */
 
 #ifdef COULOMB
-  if (g_pot.apot_table.sw_kappa)
-    init_tails(g_pot.apot_table.dp_kappa[0]);
+  if (g_pot.apot_table.sw_kappa) init_tails(g_pot.apot_table.dp_kappa[0]);
 #endif /* COULOMB */
 
 /* set spline density corrections to 0 */
 #if defined EAM || defined ADP || defined MEAM
-  int   i;
+  int i;
 
-  g_todo.lambda = (double *)malloc(g_param.ntypes * sizeof(double));
+  g_todo.lambda = (double*)malloc(g_param.ntypes * sizeof(double));
   reg_for_free(g_todo.lambda, "lambda");
-  for (i = 0; i < g_param.ntypes; i++)
-    g_todo.lambda[i] = 0.0;
+  for (i = 0; i < g_param.ntypes; i++) g_todo.lambda[i] = 0.0;
 #endif /* EAM || ADP || MEAM */
 }
 
@@ -145,8 +141,10 @@ void init_forces(int is_worker)
  *  	stress_p 	... 	position of the first stress value
  *  	limit_p 	... 	position of the first limiting constraint
  *  	dummy_p 	... 	position of the first dummy constraint
- *  	punish_par_p 	... 	position of the first parameter punishment (APOT only)
- *  	punish_pot_p 	... 	position of the first potential punishment (APOT only)
+ *  	punish_par_p 	... 	position of the first parameter
+ *punishment (APOT only)
+ *  	punish_pot_p 	... 	position of the first potential
+ *punishment (APOT only)
  *
  * 	limiting constraints: (EAM and similar potentials only)
  * 		text
@@ -177,12 +175,14 @@ void set_force_vector_pointers()
   g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #ifdef APOT
   g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+                        g_pot.apot_table.invar_pots;
 #endif /* APOT */
-#else /* EAM || ADP || MEAM */
+#else  /* EAM || ADP || MEAM */
 #ifdef APOT
   g_calc.punish_par_p = g_calc.stress_p + 6 * g_config.nconf;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+                        g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
 
@@ -193,12 +193,14 @@ void set_force_vector_pointers()
   g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #ifdef APOT
   g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+                        g_pot.apot_table.invar_pots;
 #endif /* APOT */
-#else /* EAM || ADP || MEAM */
+#else  /* EAM || ADP || MEAM */
 #ifdef APOT
   g_calc.punish_par_p = g_calc.energy_p + g_config.nconf;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+                        g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
 

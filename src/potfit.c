@@ -44,19 +44,19 @@
 #include "random.h"
 #include "utils.h"
 
-void  read_input_files(int argc, char** argv);
-void  allocate_global_variables();
-void  start_mpi_worker(double* force);
-void  free_global_variables();
+void read_input_files(int argc, char **argv);
+void allocate_global_variables();
+void start_mpi_worker(double *force);
+void free_global_variables();
 
-potfit_calculation       g_calc;
-potfit_configurations    g_config;
-potfit_filenames         g_files;
-potfit_mpi_config        g_mpi;
-potfit_parameters        g_param;
-potfit_potentials        g_pot;
-potfit_memory            g_memory;
-potfit_unknown           g_todo;
+potfit_calculation g_calc;
+potfit_configurations g_config;
+potfit_filenames g_files;
+potfit_mpi_config g_mpi;
+potfit_parameters g_param;
+potfit_potentials g_pot;
+potfit_memory g_memory;
+potfit_unknown g_todo;
 
 /****************************************************************
  *
@@ -69,11 +69,11 @@ int main(int argc, char **argv)
   allocate_global_variables();
 
 #if defined(MPI)
-  if (init_mpi(&argc, &argv) != MPI_SUCCESS)
-    return EXIT_FAILURE;
+  if (init_mpi(&argc, &argv) != MPI_SUCCESS) return EXIT_FAILURE;
 #else
-  printf("This is %s compiled on %s, %s.\n\n", POTFIT_VERSION, __DATE__, __TIME__);
-#endif // MPI
+  printf("This is %s compiled on %s, %s.\n\n", POTFIT_VERSION, __DATE__,
+         __TIME__);
+#endif  // MPI
 
   read_input_files(argc, argv);
 
@@ -81,7 +81,8 @@ int main(int argc, char **argv)
   /* let the others know what's going on */
   broadcast_params_mpi();
 #else
-  /* Identify subset of atoms/volumes belonging to individual process with complete set of atoms/volumes */
+  /* Identify subset of atoms/volumes belonging to individual process with
+   * complete set of atoms/volumes */
   g_config.conf_atoms = g_config.atoms;
   g_config.conf_vol = g_config.volume;
   g_config.conf_uf = g_config.useforce;
@@ -94,10 +95,11 @@ int main(int argc, char **argv)
   g_calc.ndimtot = g_pot.opt_pot.len;
   g_todo.idx = g_pot.opt_pot.idx;
 
-  /* main force vector, all forces, energies, stresses, ... will be stored here */
-  double* force = (double *)malloc(g_calc.mdim * sizeof(double));
+  /* main force vector, all forces, energies, stresses, ... will be stored here
+   */
+  double *force = (double *)malloc(g_calc.mdim * sizeof(double));
 
-  if (NULL == force)
+  if (force == NULL)
     error(1, "Could not allocate memory for main force vector.");
 
   memset(force, 0, g_calc.mdim * sizeof(double));
@@ -114,16 +116,14 @@ int main(int argc, char **argv)
   update_calc_table(g_pot.opt_pot.table, g_pot.calc_pot.table, 1);
 #endif /* APOT */
 
-  if (g_mpi.myid > 0)
-  {
+  if (g_mpi.myid > 0) {
     start_mpi_worker(force);
-  }
-  else
-  {
+  } else {
 #if defined(MPI)
     if (g_mpi.num_cpus > g_config.nconf) {
       warning("You are using more CPUs than you have configurations!\n");
-      warning("While this will not do any harm, you are wasting %d CPUs.\n", g_mpi.num_cpus - g_config.nconf);
+      warning("While this will not do any harm, you are wasting %d CPUs.\n",
+              g_mpi.num_cpus - g_config.nconf);
     }
 #endif /* MPI */
 
@@ -132,16 +132,13 @@ int main(int argc, char **argv)
 
     time(&start_time);
 
-    if (g_param.opt && g_calc.ndim > 0)
-    {
+    if (g_param.opt && g_calc.ndim > 0) {
       run_optimization();
-    }
-    else if (g_calc.ndim == 0)
-    {
-      printf("\nOptimization disabled due to 0 free parameters. Calculating errors.\n");
-    }
-    else
-    {
+    } else if (g_calc.ndim == 0) {
+      printf(
+          "\nOptimization disabled due to 0 free parameters. Calculating "
+          "errors.\n");
+    } else {
       printf("\nOptimization disabled. Calculating errors.\n\n");
     }
 
@@ -155,19 +152,18 @@ int main(int argc, char **argv)
 
     write_pot_table_potfit(g_files.endpot);
 
-    printf("\nPotential in format %d written to file \t%s\n", g_pot.format, g_files.endpot);
+    printf("\nPotential in format %d written to file \t%s\n", g_pot.format,
+           g_files.endpot);
 
-    if (g_param.writeimd == 1)
-      write_pot_table_imd(g_files.imdpot);
+    if (g_param.writeimd == 1) write_pot_table_imd(g_files.imdpot);
 
     // TODO
-//     if (g_param.plot == 1)
-//       write_plotpot_pair(&g_pot.calc_pot, g_files.plotfile);
+    //     if (g_param.plot == 1)
+    //       write_plotpot_pair(&g_pot.calc_pot, g_files.plotfile);
 
-    if (g_param.write_lammps == 1)
-      write_pot_table_lammps();
+    if (g_param.write_lammps == 1) write_pot_table_lammps();
 
-    /* will not work with MPI */
+/* will not work with MPI */
 #if defined(PDIST) && !defined(MPI)
     write_pairdist(&g_pot.opt_pot, g_files.distfile);
 #endif /* PDIST && !MPI */
@@ -176,8 +172,7 @@ int main(int argc, char **argv)
     write_errors(force, tot);
 
     /* calculate total runtime */
-    if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0)
-    {
+    if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0) {
       printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
              (int)difftime(end_time, start_time) / 3600,
              ((int)difftime(end_time, start_time) % 3600) / 60,
@@ -187,11 +182,11 @@ int main(int argc, char **argv)
     }
 
 #ifdef MPI
-    g_calc_forces(NULL, NULL, 1);	/* go wake up other threads */
-#endif /* MPI */
-  }     /* myid == 0 */
+    g_calc_forces(NULL, NULL, 1); /* go wake up other threads */
+#endif                            /* MPI */
+  }                               /* myid == 0 */
 
-  /* do some cleanups before exiting */
+/* do some cleanups before exiting */
 #ifdef MPI
   /* kill MPI */
   shutdown_mpi();
@@ -211,11 +206,10 @@ int main(int argc, char **argv)
  *
  ****************************************************************/
 
-void read_input_files (int argc, char **argv)
+void read_input_files(int argc, char **argv)
 {
   // only root process reads input files
-  if (g_mpi.myid == 0)
-  {
+  if (g_mpi.myid == 0) {
     read_parameters(argc, argv);
 
     read_pot_table(g_files.startpot);
@@ -223,9 +217,9 @@ void read_input_files (int argc, char **argv)
     read_config(g_files.config);
 
     printf("Global energy weight: %f\n", g_param.eweight);
-    #if defined(STRESS)
+#if defined(STRESS)
     printf("Global stress weight: %f\n", g_param.sweight);
-    #endif /* STRESS */
+#endif /* STRESS */
 
     /* initialize additional force variables and parameters */
     init_forces(0);
@@ -280,15 +274,15 @@ void allocate_global_variables()
   strncpy(g_todo.interaction_name, "PAIR", 4);
   g_todo.interaction_name[4] = '\0';
 #elif defined(EAM) && !defined(COULOMB)
-  #if !defined(TBEAM)
-    g_todo.interaction_name = malloc(4 * sizeof(char));
-    strncpy(g_todo.interaction_name, "EAM", 3);
-    g_todo.interaction_name[3] = '\0';
-  #else
-    g_todo.interaction_name = malloc(6 * sizeof(char));
-    strncpy(g_todo.interaction_name, "TBEAM", 5);
-    g_todo.interaction_name[5] = '\0';
-  #endif /* TBEAM */
+#if !defined(TBEAM)
+  g_todo.interaction_name = malloc(4 * sizeof(char));
+  strncpy(g_todo.interaction_name, "EAM", 3);
+  g_todo.interaction_name[3] = '\0';
+#else
+  g_todo.interaction_name = malloc(6 * sizeof(char));
+  strncpy(g_todo.interaction_name, "TBEAM", 5);
+  g_todo.interaction_name[5] = '\0';
+#endif /* TBEAM */
 #elif defined(ADP)
   g_todo.interaction_name = malloc(6 * sizeof(char));
   strncpy(g_todo.interaction_name, "TBEAM", 5);
@@ -310,15 +304,15 @@ void allocate_global_variables()
   strncpy(g_todo.interaction_name, "STIWEB", 6);
   g_todo.interaction_name[6] = '\0';
 #elif defined(TERSOFF)
-  #if defined(TERSOFFMOD)
-    g_todo.interaction_name = malloc(11 * sizeof(char));
-    strncpy(g_todo.interaction_name, "TERSOFFMOD", 10);
-    g_todo.interaction_name[10] = '\0';
-  #else
-    g_todo.interaction_name = malloc(8 * sizeof(char));
-    strncpy(g_todo.interaction_name, "TERSOFF", 7);
-    g_todo.interaction_name[7] = '\0';
-  #endif /* TERSOFFMOD */
+#if defined(TERSOFFMOD)
+  g_todo.interaction_name = malloc(11 * sizeof(char));
+  strncpy(g_todo.interaction_name, "TERSOFFMOD", 10);
+  g_todo.interaction_name[10] = '\0';
+#else
+  g_todo.interaction_name = malloc(8 * sizeof(char));
+  strncpy(g_todo.interaction_name, "TERSOFF", 7);
+  g_todo.interaction_name[7] = '\0';
+#endif /* TERSOFFMOD */
 #endif /* interaction type */
 }
 
@@ -328,7 +322,7 @@ void allocate_global_variables()
  *
  ****************************************************************/
 
-void start_mpi_worker(double* force)
+void start_mpi_worker(double *force)
 {
   /* Select correct spline interpolation and other functions */
   /* Root process has done this earlier */
@@ -350,30 +344,18 @@ void start_mpi_worker(double* force)
 
 void free_global_variables()
 {
-  if (g_files.config != NULL)
-    free(g_files.config);
-  if (g_files.distfile != NULL)
-    free(g_files.distfile);
-  if (g_files.endpot != NULL)
-    free(g_files.endpot);
-  if (g_files.flagfile != NULL)
-    free(g_files.flagfile);
-  if (g_files.imdpot != NULL)
-    free(g_files.imdpot);
-  if (g_files.maxchfile != NULL)
-    free(g_files.maxchfile);
-  if (g_files.output_prefix != NULL)
-    free(g_files.output_prefix);
-  if (g_files.output_lammps != NULL)
-    free(g_files.output_lammps);
-  if (g_files.plotfile != NULL)
-    free(g_files.plotfile);
-  if (g_files.plotpointfile != NULL)
-    free(g_files.plotpointfile);
-  if (g_files.startpot != NULL)
-    free(g_files.startpot);
-  if (g_files.tempfile != NULL)
-    free(g_files.tempfile);
+  if (g_files.config != NULL) free(g_files.config);
+  if (g_files.distfile != NULL) free(g_files.distfile);
+  if (g_files.endpot != NULL) free(g_files.endpot);
+  if (g_files.flagfile != NULL) free(g_files.flagfile);
+  if (g_files.imdpot != NULL) free(g_files.imdpot);
+  if (g_files.maxchfile != NULL) free(g_files.maxchfile);
+  if (g_files.output_prefix != NULL) free(g_files.output_prefix);
+  if (g_files.output_lammps != NULL) free(g_files.output_lammps);
+  if (g_files.plotfile != NULL) free(g_files.plotfile);
+  if (g_files.plotpointfile != NULL) free(g_files.plotpointfile);
+  if (g_files.startpot != NULL) free(g_files.startpot);
+  if (g_files.tempfile != NULL) free(g_files.tempfile);
 
   free(g_todo.interaction_name);
 }
@@ -397,8 +379,7 @@ void error(int done, const char *msg, ...)
 
   fflush(stderr);
 
-  if (done == 1)
-  {
+  if (done == 1) {
 #if defined(MPI)
     /* go wake up other threads */
     g_calc_forces(NULL, NULL, 1);

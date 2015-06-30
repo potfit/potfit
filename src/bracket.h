@@ -38,13 +38,19 @@
 /* for brent.c */
 #define ITMAX 100
 #define ZEPS 1.0e-9
-#define SHIFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
+#define SHIFT(a, b, c, d) \
+  (a) = (b);              \
+  (b) = (c);              \
+  (c) = (d);
 
 extern double *xicom, *delcom;
 
-void  bracket(double *, double *, double *, double *, double *, double *, double *, double *);
-double brent(double, double, double, double, double, double *, double *, double *, double *);
+void bracket(double *, double *, double *, double *, double *, double *,
+             double *, double *);
+double brent(double, double, double, double, double, double *, double *,
+             double *, double *);
 
-double linmin(double *, double *, double, double *, double *, double *, double *);
+double linmin(double *, double *, double, double *, double *, double *,
+              double *);
 
 #endif /* BRACKET_H */

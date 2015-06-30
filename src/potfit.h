@@ -43,10 +43,13 @@
 
 #define POTFIT_VERSION "potfit-git"
 
-#define MAX(a,b)   ((a) > (b) ? (a) : (b))
-#define MIN(a,b)   ((a) < (b) ? (a) : (b))
-#define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-#define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define SPROD(a, b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
+#define SWAP(A, B, C) \
+  (C) = (A);          \
+  (A) = (B);          \
+  (B) = (C);
 
 /****************************************************************
  *
@@ -70,14 +73,14 @@
  *
  ****************************************************************/
 
-extern potfit_calculation       g_calc;
-extern potfit_configurations    g_config;
-extern potfit_filenames         g_files;
-extern potfit_mpi_config        g_mpi;
-extern potfit_parameters        g_param;
-extern potfit_potentials        g_pot;
-extern potfit_memory            g_memory;
-extern potfit_unknown           g_todo;
+extern potfit_calculation g_calc;
+extern potfit_configurations g_config;
+extern potfit_filenames g_files;
+extern potfit_mpi_config g_mpi;
+extern potfit_parameters g_param;
+extern potfit_potentials g_pot;
+extern potfit_memory g_memory;
+extern potfit_unknown g_todo;
 
 /****************************************************************
  *
@@ -85,7 +88,7 @@ extern potfit_unknown           g_todo;
  *
  ****************************************************************/
 
-void  error(int done, const char* msg, ...);
-void  warning(const char * msg, ...);
+void error(int done, const char* msg, ...);
+void warning(const char* msg, ...);
 
 #endif /* POTFIT_H */

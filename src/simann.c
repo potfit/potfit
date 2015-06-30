@@ -45,16 +45,16 @@
 #define EPS 0.1
 #define NEPS 4
 #define NSTEP 20
-#define NTEMP (3*g_calc.ndim)
+#define NTEMP (3 * g_calc.ndim)
 #define STEPVAR 2.0
 #define TEMPVAR 0.85
 #define KMAX 1000
-#define GAUSS(a) (1.0/sqrt(2*M_PI)*(exp(-((a)*(a))/2.0)))
+#define GAUSS(a) (1.0 / sqrt(2 * M_PI) * (exp(-((a) * (a)) / 2.0)))
 
 #ifdef APOT
-void  randomize_parameter(int, double *, double *);
+void randomize_parameter(int, double *, double *);
 #else
-void  makebump(double *, double, double, int);
+void makebump(double *, double, double, int);
 #endif /* APOT */
 
 #ifdef APOT
@@ -75,21 +75,21 @@ void  makebump(double *, double, double, int);
 void randomize_parameter(int n, double *xi, double *v)
 {
   double temp, rand;
-  int   done = 0, count = 0;
+  int done = 0, count = 0;
   double min, max;
 
-  min = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
-  max = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
+  min = g_pot.apot_table
+            .pmin[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
+  max = g_pot.apot_table
+            .pmax[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
 
-  if (v[n] > max - min)
-    v[n] = max - min;
+  if (v[n] > max - min) v[n] = max - min;
 
   do {
     temp = xi[g_todo.idx[n]];
     rand = 2.0 * eqdist() - 1.0;
     temp += (rand * v[n]);
-    if (temp >= min && temp <= max)
-      done = 1;
+    if (temp >= min && temp <= max) done = 1;
     count++;
   } while (!done);
   xi[g_todo.idx[n]] = temp;
@@ -112,19 +112,20 @@ void randomize_parameter(int n, double *xi, double *v)
 
 void makebump(double *x, double width, double height, int center)
 {
-  int   i, j = 0;
+  int i, j = 0;
 
   /* find pot to which center belongs */
-  while (g_pot.opt_pot.last[j] < g_todo.idx[center])
-    j++;
+  while (g_pot.opt_pot.last[j] < g_todo.idx[center]) j++;
   for (i = 0; i <= 4.0 * width; i++) {
     /* using idx avoids moving fixed points */
-    if ((center + i <= g_calc.ndim) && (g_todo.idx[center + i] <= g_pot.opt_pot.last[j])) {
+    if ((center + i <= g_calc.ndim) &&
+        (g_todo.idx[center + i] <= g_pot.opt_pot.last[j])) {
       x[g_todo.idx[center + i]] += GAUSS((double)i / width) * height;
     }
   }
   for (i = 1; i <= 4.0 * width; i++) {
-    if ((center - i >= 0) && (g_todo.idx[center - i] >= g_pot.opt_pot.first[j])) {
+    if ((center - i >= 0) &&
+        (g_todo.idx[center - i] >= g_pot.opt_pot.first[j])) {
       x[g_todo.idx[center - i]] += GAUSS((double)i / width) * height;
     }
   }
@@ -145,37 +146,37 @@ void makebump(double *x, double width, double height, int center)
 
 void run_simulated_annealing(double *xi)
 {
-  int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
-  int   auto_T = 0;
-  int   loopagain;		/* loop flag */
-#if defined(RESCALE) && !defined(APOT) && ( defined(EAM) || defined(ADP) || defined(MEAM) )
-  int   rescaleMe = 1;		/* rescaling flag */
-#endif /* APOT */
-  double T = -1.0;		/* Temperature */
-  double F, Fopt, F2;		/* Fn value */
-  double *Fvar;			/* backlog of Fn vals */
-  double *v;			/* step vector */
-  double *xopt, *xi2;		/* optimal value */
-  double *fxi1;			/* two latest force vectors */
+  int h = 0, j = 0, k = 0, n, m = 0; /* counters */
+  int auto_T = 0;
+  int loopagain; /* loop flag */
+#if defined(RESCALE) && !defined(APOT) && \
+    (defined(EAM) || defined(ADP) || defined(MEAM))
+  int rescaleMe = 1;  /* rescaling flag */
+#endif                /* APOT */
+  double T = -1.0;    /* Temperature */
+  double F, Fopt, F2; /* Fn value */
+  double *Fvar;       /* backlog of Fn vals */
+  double *v;          /* step vector */
+  double *xopt, *xi2; /* optimal value */
+  double *fxi1;       /* two latest force vectors */
 #ifndef APOT
-  double width, height;		/* gaussian bump size */
-#endif /* APOT */
-  FILE *ff;			/* exit flagfile */
-  int  *naccept;		/* number of accepted changes in dir */
+  double width, height; /* gaussian bump size */
+#endif                  /* APOT */
+  FILE *ff;             /* exit flagfile */
+  int *naccept;         /* number of accepted changes in dir */
 
   /* check for automatic temperature */
   if (tolower(g_param.anneal_temp[0]) == 'a') {
     auto_T = 1;
   } else {
     T = atof(g_param.anneal_temp);
-    if (T < 0)
-      error(1, "The value for anneal_temp (%f) is invalid!\n", T);
+    if (T < 0) error(1, "The value for anneal_temp (%f) is invalid!\n", T);
   }
 
   if (T == 0.0 && auto_T != 1)
-    return;			/* don't anneal if starttemp equal zero */
+    return; /* don't anneal if starttemp equal zero */
 
-  Fvar = vect_double(KMAX + 5 + NEPS);	/* Backlog of old F values */
+  Fvar = vect_double(KMAX + 5 + NEPS); /* Backlog of old F values */
   v = vect_double(g_calc.ndim);
   xopt = vect_double(g_calc.ndimtot);
   xi2 = vect_double(g_calc.ndimtot);
@@ -183,7 +184,7 @@ void run_simulated_annealing(double *xi)
   naccept = vect_int(g_calc.ndim);
 #ifndef APOT
   // Optimum potential x-coord arrays
-  int   col, col2;
+  int col, col2;
   double *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
   optbegin = vect_double(g_param.ntypes);
   optend = vect_double(g_param.ntypes);
@@ -208,7 +209,8 @@ void run_simulated_annealing(double *xi)
   // optimum potential in the future, and the current potential
   // could be rescaled differently from the optimum
   col2 = 0;
-  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
+  for (col = g_calc.paircol + g_param.ntypes;
+       col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
     optbegin[col2] = g_pot.opt_pot.begin[col];
     optend[col2] = g_pot.opt_pot.end[col];
     optstep[col2] = g_pot.opt_pot.step[col];
@@ -222,16 +224,15 @@ void run_simulated_annealing(double *xi)
 #endif /* APOT */
   /* determine optimum temperature for annealing */
   if (auto_T) {
-    int   e = 0;
-    int   u = 10 * g_calc.ndim;
-    int   m1 = 0;
+    int e = 0;
+    int u = 10 * g_calc.ndim;
+    int m1 = 0;
     double dF = 0.0;
     double chi = 0.8;
 
     printf("Determining optimal starting temperature T ...\n");
     for (e = 0; e < u; e++) {
-      for (n = 0; n < g_calc.ndimtot; n++)
-	xi2[n] = xi[n];
+      for (n = 0; n < g_calc.ndimtot; n++) xi2[n] = xi[n];
       h = (int)(eqdist() * g_calc.ndim);
 #ifdef APOT
       randomize_parameter(h, xi2, v);
@@ -243,9 +244,9 @@ void run_simulated_annealing(double *xi)
 #endif /* APOT */
       F2 = (*g_calc_forces)(xi2, fxi1, 0);
       if (F2 <= F) {
-	m1++;
+        m1++;
       } else {
-	dF += F2 - F;
+        dF += F2 - F;
       }
     }
     printf("Performed %d trial steps, %d of them were downhill.\n", u, m1);
@@ -255,93 +256,90 @@ void run_simulated_annealing(double *xi)
     T = dF / log(u / (u * chi + (1 - chi) * m1));
     if (isnan(T) || isinf(T))
       error(1, "Simann failed because T was %f, please set it manually.", T);
-    if (T < 0)
-      T = -T;
+    if (T < 0) T = -T;
     printf("Setting T=%f\n\n", T);
   }
 
   printf("  k\tT        \t  m\tF          \tFopt\n");
   printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, Fopt);
   fflush(stdout);
-  for (n = 0; n <= NEPS; n++)
-    Fvar[n] = F;
+  for (n = 0; n <= NEPS; n++) Fvar[n] = F;
 
   /* annealing loop */
   do {
     for (m = 0; m < NTEMP; m++) {
       for (j = 0; j < NSTEP; j++) {
         for (h = 0; h < g_calc.ndim; h++) {
-	  /* Step #1 */
+          /* Step #1 */
           for (n = 0; n < g_calc.ndimtot; n++) {
-	    xi2[n] = xi[n];
-	  }
+            xi2[n] = xi[n];
+          }
 #ifdef APOT
-	  randomize_parameter(h, xi2, v);
+          randomize_parameter(h, xi2, v);
 #else
-	  /* Create a gaussian bump,
-	     width & hight distributed normally */
-	  width = fabs(normdist());
-	  height = normdist() * v[h];
-	  makebump(xi2, width, height, h);
+          /* Create a gaussian bump,
+             width & hight distributed normally */
+          width = fabs(normdist());
+          height = normdist() * v[h];
+          makebump(xi2, width, height, h);
 #endif /* APOT */
-	  F2 = (*g_calc_forces)(xi2, fxi1, 0);
-	  if (F2 <= F) {	/* accept new point */
+          F2 = (*g_calc_forces)(xi2, fxi1, 0);
+          if (F2 <= F) { /* accept new point */
 #ifdef APOT
-	    xi[g_todo.idx[h]] = xi2[g_todo.idx[h]];
+            xi[g_todo.idx[h]] = xi2[g_todo.idx[h]];
 #else
-            for (n = 0; n < g_calc.ndimtot; n++)
-	      xi[n] = xi2[n];
+            for (n = 0; n < g_calc.ndimtot; n++) xi[n] = xi2[n];
 #endif /* APOT */
-	    F = F2;
-	    naccept[h]++;
-	    if (F2 < Fopt) {
-              for (n = 0; n < g_calc.ndimtot; n++)
-		xopt[n] = xi2[n];
+            F = F2;
+            naccept[h]++;
+            if (F2 < Fopt) {
+              for (n = 0; n < g_calc.ndimtot; n++) xopt[n] = xi2[n];
 
 #ifndef APOT
-	      // Need to save xcoord of this F potential because we use the
-	      // optimum potential in the future, and the current potential
-	      // could be rescaled differently from the optimum
-	      col2 = 0;
-	      for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
-		optbegin[col2] = g_pot.opt_pot.begin[col];
-		optend[col2] = g_pot.opt_pot.end[col];
-		optstep[col2] = g_pot.opt_pot.step[col];
-		optinvstep[col2] = g_pot.opt_pot.invstep[col];
+              // Need to save xcoord of this F potential because we use the
+              // optimum potential in the future, and the current potential
+              // could be rescaled differently from the optimum
+              col2 = 0;
+              for (col = g_calc.paircol + g_param.ntypes;
+                   col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
+                optbegin[col2] = g_pot.opt_pot.begin[col];
+                optend[col2] = g_pot.opt_pot.end[col];
+                optstep[col2] = g_pot.opt_pot.step[col];
+                optinvstep[col2] = g_pot.opt_pot.invstep[col];
 
-		// Loop through each spline knot of F
-		for (n = g_pot.opt_pot.first[col]; n <= g_pot.opt_pot.last[col]; ++n)
-		  optxcoord[n] = g_pot.opt_pot.xcoord[n];
+                // Loop through each spline knot of F
+                for (n = g_pot.opt_pot.first[col]; n <= g_pot.opt_pot.last[col];
+                     ++n)
+                  optxcoord[n] = g_pot.opt_pot.xcoord[n];
 
-		++col2;
-	      }
+                ++col2;
+              }
 #endif /* APOT */
-	      Fopt = F2;
-	      if (*g_files.tempfile != '\0') {
+              Fopt = F2;
+              if (*g_files.tempfile != '\0') {
 #ifndef APOT
                 write_pot_table_potfit(g_files.tempfile);
 #else
-		update_apot_table(xi);
-		write_pot_table_potfit(g_files.tempfile);
+                update_apot_table(xi);
+                write_pot_table_potfit(g_files.tempfile);
 #endif /* APOT */
-	      }
-	    }
-	  } else if (eqdist() < (exp((F - F2) / T))) {
-	    for (n = 0; n < g_calc.ndimtot; n++)
-	      xi[n] = xi2[n];
-	    F = F2;
-	    naccept[h]++;
-	  }
-	}
+              }
+            }
+          } else if (eqdist() < (exp((F - F2) / T))) {
+            for (n = 0; n < g_calc.ndimtot; n++) xi[n] = xi2[n];
+            F = F2;
+            naccept[h]++;
+          }
+        }
       }
 
       /* Step adjustment */
       for (n = 0; n < g_calc.ndim; n++) {
-	if (naccept[n] > (0.6 * NSTEP))
-	  v[n] *= (1 + STEPVAR * ((double)naccept[n] / NSTEP - 0.6) / 0.4);
-	else if (naccept[n] < (0.4 * NSTEP))
-	  v[n] /= (1 + STEPVAR * (0.4 - (double)naccept[n] / NSTEP) / 0.4);
-	naccept[n] = 0;
+        if (naccept[n] > (0.6 * NSTEP))
+          v[n] *= (1 + STEPVAR * ((double)naccept[n] / NSTEP - 0.6) / 0.4);
+        else if (naccept[n] < (0.4 * NSTEP))
+          v[n] /= (1 + STEPVAR * (0.4 - (double)naccept[n] / NSTEP) / 0.4);
+        naccept[n] = 0;
       }
 
       printf("%3d\t%f\t%3d\t%f\t%f\n", k, T, m + 1, F, Fopt);
@@ -349,30 +347,30 @@ void run_simulated_annealing(double *xi)
 
       /* End annealing if break flagfile exists */
       if (*g_files.flagfile != '\0') {
-	ff = fopen(g_files.flagfile, "r");
-	if (NULL != ff) {
-	  printf("Annealing terminated in presence of break flagfile \"%s\"!\n", g_files.flagfile);
-	  printf("Temperature was %f, returning optimum configuration\n", T);
-          for (n = 0; n < g_calc.ndimtot; n++)
-	    xi[n] = xopt[n];
-	  F = Fopt;
-	  k = KMAX + 1;
-	  fclose(ff);
-	  remove(g_files.flagfile);
-	  break;
-	}
+        ff = fopen(g_files.flagfile, "r");
+        if (NULL != ff) {
+          printf("Annealing terminated in presence of break flagfile \"%s\"!\n",
+                 g_files.flagfile);
+          printf("Temperature was %f, returning optimum configuration\n", T);
+          for (n = 0; n < g_calc.ndimtot; n++) xi[n] = xopt[n];
+          F = Fopt;
+          k = KMAX + 1;
+          fclose(ff);
+          remove(g_files.flagfile);
+          break;
+        }
       }
 #ifdef RESCALE
-#if !defined APOT && ( defined EAM || defined ADP || defined MEAM )
+#if !defined APOT && (defined EAM || defined ADP || defined MEAM)
       /* Check for rescaling... every tenth step */
       if (((m + 1) % 10 == 0) && (rescaleMe == 1)) {
-	/* Was rescaling necessary ? */
-	if (rescale(&g_pot.opt_pot, 1.0, 0) != 0.0) {
-	  /* wake other threads and sync potentials */
-	  printf("F before rescale = %f\n", F);
-	  F = (*g_calc_forces)(xi, fxi1, 2);
-	  printf("F after rescale = %f\n", F);
-	}
+        /* Was rescaling necessary ? */
+        if (rescale(&g_pot.opt_pot, 1.0, 0) != 0.0) {
+          /* wake other threads and sync potentials */
+          printf("F before rescale = %f\n", F);
+          F = (*g_calc_forces)(xi, fxi1, 2);
+          printf("F after rescale = %f\n", F);
+        }
       }
 #endif /* !APOT && ( EAM || ADP || MEAM ) */
 #endif /* RESCALE */
@@ -384,27 +382,26 @@ void run_simulated_annealing(double *xi)
     Fvar[k + NEPS] = F;
     loopagain = 0;
     for (n = 1; n <= NEPS; n++) {
-      if (fabs(F - Fvar[k - n + NEPS]) > (EPS * F * 0.01))
-	loopagain = 1;
+      if (fabs(F - Fvar[k - n + NEPS]) > (EPS * F * 0.01)) loopagain = 1;
     }
     if (!loopagain && ((F - Fopt) > (EPS * F * 0.01))) {
-      for (n = 0; n < g_calc.ndimtot; n++)
-	xi[n] = xopt[n];
+      for (n = 0; n < g_calc.ndimtot; n++) xi[n] = xopt[n];
       F = Fopt;
 #if defined MEAM && !defined APOT
       // Need to put back xcoord of optimum F potential
       col2 = 0;
-      for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
-	g_pot.opt_pot.begin[col] = optbegin[col2];
+      for (col = g_calc.paircol + g_param.ntypes;
+           col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
+        g_pot.opt_pot.begin[col] = optbegin[col2];
         g_pot.opt_pot.end[col] = optend[col2];
         g_pot.opt_pot.step[col] = optstep[col2];
         g_pot.opt_pot.invstep[col] = optinvstep[col2];
 
-	// Loop through each spline knot of F
-	for (n = g_pot.opt_pot.first[col]; n <= g_pot.opt_pot.last[col]; ++n)
-	  g_pot.opt_pot.xcoord[n] = optxcoord[n];
+        // Loop through each spline knot of F
+        for (n = g_pot.opt_pot.first[col]; n <= g_pot.opt_pot.last[col]; ++n)
+          g_pot.opt_pot.xcoord[n] = optxcoord[n];
 
-	++col2;
+        ++col2;
       }
 
       /* wake other threads and sync potentials */
@@ -426,7 +423,8 @@ void run_simulated_annealing(double *xi)
 #if defined MEAM && !defined APOT
   // Need to put back xcoord of optimum F potential
   col2 = 0;
-  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
+  for (col = g_calc.paircol + g_param.ntypes;
+       col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
     g_pot.opt_pot.begin[col] = optbegin[col2];
     g_pot.opt_pot.end[col] = optend[col2];
     g_pot.opt_pot.step[col] = optstep[col2];
@@ -462,5 +460,4 @@ void run_simulated_annealing(double *xi)
   return;
 }
 
-#endif // !EVO
-
+#endif  // !EVO

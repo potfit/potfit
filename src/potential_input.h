@@ -40,15 +40,17 @@ typedef struct {
 } potential_state;
 
 /* reading the potential file */
-void  read_pot_table(char const* potential_filename);
+void read_pot_table(char const* potential_filename);
 
-void  read_pot_table0(char const* potential_filename, FILE* pfile);
-void  read_pot_table3(char const* potential_filename, FILE* pfile, potential_state* pstate);
-void  read_pot_table4(char const* potential_filename, FILE* pfile, potential_state* pstate);
+void read_pot_table0(char const* potential_filename, FILE* pfile);
+void read_pot_table3(char const* potential_filename, FILE* pfile,
+                     potential_state* pstate);
+void read_pot_table4(char const* potential_filename, FILE* pfile,
+                     potential_state* pstate);
 
 #ifdef APOT
-void  update_apot_table(double *);
-void  update_calc_table(double *, double *, int);
+void update_apot_table(double*);
+void update_calc_table(double*, double*, int);
 #endif /* APOT */
 
 #endif /* POTENTIAL_INPUT_H */

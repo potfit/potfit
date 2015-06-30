@@ -31,6 +31,6 @@
 #ifndef POTFIT_ERRORS_H
 #define POTFIT_ERRORS_H
 
-void  write_errors(double* force, double error_sum);
+void write_errors(double* force, double error_sum);
 
-#endif // POTFIT_ERRORS_H
+#endif  // POTFIT_ERRORS_H

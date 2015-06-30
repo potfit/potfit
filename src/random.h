@@ -36,4 +36,4 @@ void init_rng(int seed);
 double eqdist();
 double normdist();
 
-#endif // POTFIT_RANDOM_H
+#endif  // POTFIT_RANDOM_H

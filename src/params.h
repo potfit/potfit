@@ -38,28 +38,15 @@ void read_parameters(int argc, char** argv);
 
 int read_parameter_file(char const* param_file);
 
-int get_param_double(
-  char const* param_name,
-  double* value,
-  int line,
-  char const* param_file,
-  double min,
-  double max);
+int get_param_double(char const* param_name, double* value, int line,
+                     char const* param_file, double min, double max);
 
-int get_param_int(
-  char const* param_name,
-  int* value,
-  int line,
-  char const* param_file,
-  int min,
-  int max);
+int get_param_int(char const* param_name, int* value, int line,
+                  char const* param_file, int min, int max);
 
-int get_param_string(
-  char const* param_name,
-  char** value,
-  int line,
-  char const* param_file);
+int get_param_string(char const* param_name, char** value, int line,
+                     char const* param_file);
 
-void  check_parameters_complete(char const* paramfile);
+void check_parameters_complete(char const* paramfile);
 
-#endif // POTFIT_PARAMS_H
+#endif  // POTFIT_PARAMS_H

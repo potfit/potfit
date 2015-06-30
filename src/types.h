@@ -84,15 +84,17 @@ typedef struct {
 #endif
 
 #if defined(COULOMB)
-  double fnval_el;      /* stores tail of electrostatic potential */
-  double grad_el;       /* stores tail of first derivative of electrostatic potential */
-  double ggrad_el;      /* stores tail of second derivative of electrostatic potential */
+  double fnval_el; /* stores tail of electrostatic potential */
+  double
+      grad_el; /* stores tail of first derivative of electrostatic potential */
+  double ggrad_el; /* stores tail of second derivative of electrostatic
+                      potential */
 #endif
 
 #if defined(THREEBODY)
-  double f;             /* value of the cutoff function f_c */
-  double df;            /* derivative of the cutoff function f_c */
-  int ijk_start;        /* index of the first entry for angular part */
+  double f;      /* value of the cutoff function f_c */
+  double df;     /* derivative of the cutoff function f_c */
+  int ijk_start; /* index of the first entry for angular part */
 #endif
 
 #if defined(MEAM)
@@ -119,9 +121,9 @@ typedef struct {
   double step;
   double g;
   double dg;
-#endif // MEAM
+#endif  // MEAM
 } angle_t;
-#endif // THREEBODY
+#endif  // THREEBODY
 
 /****************************************************************
  *
@@ -191,8 +193,8 @@ typedef struct {
   double **R1;
   double **R2;
 } tersoff_t;
-#endif // !TERSOFFMOD
-#endif // TERSOFF
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
 
 /****************************************************************
  *
@@ -218,8 +220,8 @@ typedef struct {
 #if defined(TBEAM)
   double rho_s;   /* embedding electron density */
   double gradF_s; /* gradient of embedding fn. */
-#endif // TBEAM
-#endif // EAM || ADP || MEAM
+#endif            // TBEAM
+#endif            // EAM || ADP || MEAM
 
 #if defined(ADP)
   vector mu;
@@ -240,8 +242,8 @@ typedef struct {
   int num_angles;
 #if defined(MEAM)
   double rho_eam; /* Store EAM density */
-#endif // MEAM
-#endif // THREEBODY
+#endif            // MEAM
+#endif            // THREEBODY
 
   neigh_t *neigh; /* dynamic array for neighbors */
 #if defined(THREEBODY)
@@ -315,7 +317,8 @@ typedef struct {
 #if defined(COULOMB)
   double *ratio;      /* stoichiometric ratio */
   double *charge;     /* charges */
-  double last_charge; /* last charge determined on the basis of charge neutrality */
+  double last_charge; /* last charge determined on the basis of charge
+                         neutrality */
   double *dp_kappa;   /* parameter kappa */
   int sw_kappa;       /* switch for kappa-optimization */
 #endif
@@ -368,93 +371,93 @@ typedef struct {
 } potfit_mpi_config;
 
 typedef struct {
-   atom_t *atoms;           /* atoms array */
-   atom_t *conf_atoms;      /* Atoms in configuration */
-   char **elements;         /* element names from vasp2force */
-   int have_elements;
-   int **na_type;           /* number of atoms per type */
-   int *cnfstart;           /* Nr. of first atom in config */
-   int *conf_uf;
-  #ifdef STRESS
-   int *conf_us;
-  #endif /* STRESS */
-   int *inconf;             /* Nr. of atoms in each config */
-   int *useforce;           /* Should we use forces */
-  #ifdef STRESS
-   int *usestress;          /* Should we use stresses */
-  #endif /* STRESS */
-   int natoms;      /* number of atoms */
-   int nconf;       /* number of configurations */
-  #ifdef CONTRIB
-   int have_contrib_box;    /* do we have a box of contrib. atoms? */
-   int n_spheres;   /* number of spheres of contrib. atoms */
-   double *r_spheres;       /* radii of the spheres of contrib. atoms */
-  #endif /* CONTRIB */
+  atom_t *atoms;      /* atoms array */
+  atom_t *conf_atoms; /* Atoms in configuration */
+  char **elements;    /* element names from vasp2force */
+  int have_elements;
+  int **na_type; /* number of atoms per type */
+  int *cnfstart; /* Nr. of first atom in config */
+  int *conf_uf;
+#ifdef STRESS
+  int *conf_us;
+#endif           /* STRESS */
+  int *inconf;   /* Nr. of atoms in each config */
+  int *useforce; /* Should we use forces */
+#ifdef STRESS
+  int *usestress; /* Should we use stresses */
+#endif            /* STRESS */
+  int natoms;     /* number of atoms */
+  int nconf;      /* number of configurations */
+#ifdef CONTRIB
+  int have_contrib_box; /* do we have a box of contrib. atoms? */
+  int n_spheres;        /* number of spheres of contrib. atoms */
+  double *r_spheres;    /* radii of the spheres of contrib. atoms */
+#endif                  /* CONTRIB */
 
-   double *coheng;          /* Cohesive energy for each config */
-   double *conf_vol;
-   double *conf_weight;     /* weight of configuration */
-   double *force_0;         /* the forces we aim at */
-   double *rcut;
-   double *rmin;
-   double *volume;          /* volume of cell */
-   double rcutmin;      /* minimum of all cutoff values */
-   double rcutmax;        /* maximum of all cutoff values */
-  #ifdef STRESS
-   sym_tens *conf_stress;
-   sym_tens *stress;        /* Stresses in each config */
-  #endif /* STRESS */
-   vector box_x, box_y, box_z;
-  #ifdef CONTRIB
-   vector cbox_o;           /* origin of box of contrib. atoms */
-   vector cbox_a, cbox_b, cbox_c;   /* box vectors for box of contrib. atoms */
-   vector *sphere_centers;  /* centers of the spheres of contrib. atoms */
-  #endif /* CONTRIB */
-   vector tbox_x, tbox_y, tbox_z;
+  double *coheng; /* Cohesive energy for each config */
+  double *conf_vol;
+  double *conf_weight; /* weight of configuration */
+  double *force_0;     /* the forces we aim at */
+  double *rcut;
+  double *rmin;
+  double *volume; /* volume of cell */
+  double rcutmin; /* minimum of all cutoff values */
+  double rcutmax; /* maximum of all cutoff values */
+#ifdef STRESS
+  sym_tens *conf_stress;
+  sym_tens *stress; /* Stresses in each config */
+#endif              /* STRESS */
+  vector box_x, box_y, box_z;
+#ifdef CONTRIB
+  vector cbox_o;                 /* origin of box of contrib. atoms */
+  vector cbox_a, cbox_b, cbox_c; /* box vectors for box of contrib. atoms */
+  vector *sphere_centers;        /* centers of the spheres of contrib. atoms */
+#endif                           /* CONTRIB */
+  vector tbox_x, tbox_y, tbox_z;
 } potfit_configurations;
 
 typedef struct {
   /* general settings (from parameter file) */
-   int imdpotsteps;      /* resolution of IMD potential */
-   int ntypes;     /* number of atom types */
-   int opt;         /* optimization flag */
-   int rng_seed;        /* seed for RNG */
-   int usemaxch;    /* use maximal changes file */
-   int write_output_files;
-   int write_lammps_files;
-   int write_pair;
-   int writeimd;
-   int write_lammps;        /* write output also in LAMMPS format */
-  #ifdef EVO
-   double evo_threshold;
-  #else /* EVO */
-   char* anneal_temp;
-  #endif /* EVO */
-   double eweight;
-   double sweight;
-   double extend; /* how far should one extend imd pot */
-  #ifdef APOT
-   int compnodes;   /* how many additional composition nodes */
-   int enable_cp;   /* switch chemical potential on/off */
-   double apot_punish_value;
-   double plotmin;        /* minimum for plotfile */
-  #endif /* APOT */
-  double global_cell_scale;      /* global scaling parameter */
+  int imdpotsteps; /* resolution of IMD potential */
+  int ntypes;      /* number of atom types */
+  int opt;         /* optimization flag */
+  int rng_seed;    /* seed for RNG */
+  int usemaxch;    /* use maximal changes file */
+  int write_output_files;
+  int write_lammps_files;
+  int write_pair;
+  int writeimd;
+  int write_lammps; /* write output also in LAMMPS format */
+#ifdef EVO
+  double evo_threshold;
+#else  /* EVO */
+  char *anneal_temp;
+#endif /* EVO */
+  double eweight;
+  double sweight;
+  double extend; /* how far should one extend imd pot */
+#ifdef APOT
+  int compnodes; /* how many additional composition nodes */
+  int enable_cp; /* switch chemical potential on/off */
+  double apot_punish_value;
+  double plotmin;           /* minimum for plotfile */
+#endif                      /* APOT */
+  double global_cell_scale; /* global scaling parameter */
 } potfit_parameters;
 
 typedef struct {
-  char* config;        /* file with atom configuration */
-  char* distfile;      /* file for distributions */
-  char* endpot;        /* file for end potential */
-  char* flagfile;      /* break if file exists */
-  char* imdpot;        /* file for IMD potential */
-  char* maxchfile;     /* file with maximal changes */
-  char* output_prefix; /* prefix for all output files */
-  char* output_lammps; /* lammps output files */
-  char* plotfile;      /* file for plotting */
-  char* plotpointfile; /* write points for plotting */
-  char* startpot;      /* file with start potential */
-  char* tempfile;      /* backup potential file */
+  char *config;        /* file with atom configuration */
+  char *distfile;      /* file for distributions */
+  char *endpot;        /* file for end potential */
+  char *flagfile;      /* break if file exists */
+  char *imdpot;        /* file for IMD potential */
+  char *maxchfile;     /* file with maximal changes */
+  char *output_prefix; /* prefix for all output files */
+  char *output_lammps; /* lammps output files */
+  char *plotfile;      /* file for plotting */
+  char *plotpointfile; /* write points for plotting */
+  char *startpot;      /* file with start potential */
+  char *tempfile;      /* backup potential file */
 } potfit_filenames;
 
 typedef struct {
@@ -467,71 +470,71 @@ typedef struct {
 
 typedef struct {
   /* potential variables */
-  int *gradient;           /* Gradient of potential fns.  */
+  int *gradient; /* Gradient of potential fns.  */
   int *invar_pot;
   int format;     /* format of potential table */
-  int have_grad;   /* Is gradient specified?  */
-  int have_invar;  /* Are invariant pots specified?  */
-  #ifdef APOT
+  int have_grad;  /* Is gradient specified?  */
+  int have_invar; /* Are invariant pots specified?  */
+#ifdef APOT
   int *smooth_pot;
-  int cp_start;    /* cp in opt_pot.table */
-  int global_idx;  /* index for global parameters in opt_pot table */
-  int global_pot;  /* number of "potential" for global parameters */
-  int have_globals;        /* do we have global parameters? */
-  double *calc_list;       /* list of current potential in the calc table */
-  double *compnodelist;    /* list of the composition nodes */
-  #endif /* APOT */
+  int cp_start;         /* cp in opt_pot.table */
+  int global_idx;       /* index for global parameters in opt_pot table */
+  int global_pot;       /* number of "potential" for global parameters */
+  int have_globals;     /* do we have global parameters? */
+  double *calc_list;    /* list of current potential in the calc table */
+  double *compnodelist; /* list of the composition nodes */
+#endif                  /* APOT */
 
   /* potential tables */
-  pot_table_t opt_pot;     /* potential in the internal representation used for minimisation */
-  pot_table_t calc_pot;    /* the potential table used for force calculations */
-  #ifdef APOT
+  pot_table_t opt_pot;  /* potential in the internal representation used for
+                           minimisation */
+  pot_table_t calc_pot; /* the potential table used for force calculations */
+#ifdef APOT
   apot_table_t apot_table; /* potential in analytic form */
-  #endif /* APOT */
+#endif                     /* APOT */
 } potfit_potentials;
 
 typedef struct {
   /* optimization variables */
-   int fcalls;
-   int mdim;
-   int ndim;
-   int ndimtot;
-   int paircol;     /* How many columns for pair potential */
-   double d_eps;
+  int fcalls;
+  int mdim;
+  int ndim;
+  int ndimtot;
+  int paircol; /* How many columns for pair potential */
+  double d_eps;
 
   /* pointers for force-vector */
-   int energy_p;    /* pointer to energies */
-  #ifdef STRESS
-   int stress_p;    /* pointer to stresses */
-  #endif /* STRESS */
-  #if defined EAM || defined ADP || defined MEAM
-   int dummy_p;     /* pointer to dummy constraints */
-   int limit_p;     /* pointer to limiting constraints */
-  #endif /* EAM || ADP || MEAM */
-  #ifdef APOT
-   int punish_par_p;        /* pointer to parameter punishment contraints */
-   int punish_pot_p;        /* pointer to potential punishment constraints */
-  #endif /* APOT */
+  int energy_p; /* pointer to energies */
+#ifdef STRESS
+  int stress_p; /* pointer to stresses */
+#endif          /* STRESS */
+#if defined EAM || defined ADP || defined MEAM
+  int dummy_p; /* pointer to dummy constraints */
+  int limit_p; /* pointer to limiting constraints */
+#endif         /* EAM || ADP || MEAM */
+#ifdef APOT
+  int punish_par_p; /* pointer to parameter punishment contraints */
+  int punish_pot_p; /* pointer to potential punishment constraints */
+#endif              /* APOT */
 } potfit_calculation;
 
 typedef struct {
   /* misc. stuff - has to belong somewhere */
-   int *idx;
-   int init_done;
-   int plot;        /* plot output flag */
-  #if defined EAM || defined ADP || defined MEAM
-   double *lambda;          /* embedding energy slope... */
-  #endif
-   double *maxchange;       /* Maximal permissible change */
-  /* variables needed for electrostatic options */
-  #ifdef COULOMB
-   double dp_eps; /* ??? in eV A */
-   double dp_cut;        /* cutoff-radius for long-range interactions */
-  #endif /* COULOMB */
-  #ifdef DIPOLE
-   double dp_tol;      /* dipole iteration precision */
-   double dp_mix;               /* */
-  #endif /* DIPOLE */
-  char* interaction_name;
+  int *idx;
+  int init_done;
+  int plot; /* plot output flag */
+#if defined EAM || defined ADP || defined MEAM
+  double *lambda; /* embedding energy slope... */
+#endif
+  double *maxchange; /* Maximal permissible change */
+/* variables needed for electrostatic options */
+#ifdef COULOMB
+  double dp_eps; /* ??? in eV A */
+  double dp_cut; /* cutoff-radius for long-range interactions */
+#endif           /* COULOMB */
+#ifdef DIPOLE
+  double dp_tol; /* dipole iteration precision */
+  double dp_mix; /* */
+#endif           /* DIPOLE */
+  char *interaction_name;
 } potfit_unknown;
-

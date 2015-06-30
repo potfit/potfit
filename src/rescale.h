@@ -31,9 +31,9 @@
 #ifndef POTFIT_RESCALE_H
 #define POTFIT_RESCALE_H
 
-#if !defined APOT && ( defined EAM || defined(ADP) || defined MEAM )
+#if !defined APOT && (defined EAM || defined(ADP) || defined MEAM)
 double rescale(pot_table_t *, double, int);
-void  embed_shift(pot_table_t *);
+void embed_shift(pot_table_t *);
 #endif /* !APOT && (EAM || MEAM) */
 
-#endif // POTFIT_RESCALE_H
+#endif  // POTFIT_RESCALE_H

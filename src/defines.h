@@ -42,9 +42,9 @@
 #endif /* TBEAM && !EAM */
 
 #if defined(APOT)
-#define APOT_STEPS 500          /* number of sampling points for analytic pot */
-#define APOT_PUNISH 10e6        /* general value for apot punishments */
-#endif /* APOT */
+#define APOT_STEPS 500   /* number of sampling points for analytic pot */
+#define APOT_PUNISH 10e6 /* general value for apot punishments */
+#endif                   /* APOT */
 
 #if defined(EAM) || defined(ADP) || defined(MEAM)
 #define DUMMY_WEIGHT 100.0
@@ -58,8 +58,10 @@
  *
  *  In potfit all potentials are calculated via spline interpolations of pre-
  *  calculated potential tables. To speed up the spline calculation,
- *  the exact position of a neighbor distance has to be known with respect to the
- *  tabulated values. For each potential function in a force routine there should
+ *  the exact position of a neighbor distance has to be known with respect to
+ *the
+ *  tabulated values. For each potential function in a force routine there
+ *should
  *  be a different slot with the corresponding potential table information.
  *
  *  SLOTS = 1 for the following interactions:
@@ -109,4 +111,4 @@
 #define SLOTS 4
 #endif /* ADP */
 
-#endif // POTFIT_DEFINES_H
+#endif  // POTFIT_DEFINES_H

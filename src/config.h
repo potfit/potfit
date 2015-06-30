@@ -50,9 +50,9 @@ typedef struct {
   int h_box_x, h_box_y, h_box_z;
   sym_tens* stresses;
   int have_contrib_box;
-  vector cbox_o;         /* origin of box of contrib. atoms */
-  vector cbox_a, cbox_b, cbox_c;   /* box vectors for box of contrib. atoms */
-  vector* sphere_centers;  /* centers of the spheres of contrib. atoms */
+  vector cbox_o;                 /* origin of box of contrib. atoms */
+  vector cbox_a, cbox_b, cbox_c; /* box vectors for box of contrib. atoms */
+  vector* sphere_centers;        /* centers of the spheres of contrib. atoms */
 } config_state;
 
 void read_config(char const*);
@@ -60,10 +60,10 @@ void read_config(char const*);
 void create_memory_for_config(config_state* cstate);
 void read_chemical_elements(char* psrc, config_state* cstate);
 
-void  init_atom_memory(atom_t* atom);
-void  init_neigh_memory(neigh_t* neighbor);
+void init_atom_memory(atom_t* atom);
+void init_neigh_memory(neigh_t* neighbor);
 #if defined(THREEBODY)
-void  init_angle_memory(angle_t* angle);
+void init_angle_memory(angle_t* angle);
 #endif /* THREEBODY */
 
 void init_neighbors(config_state* cstate, double* mindist);
@@ -77,12 +77,12 @@ void write_pair_distribution_file();
 void print_minimal_distances_matrix(double const* mindist);
 
 #ifdef CONTRIB
-int   does_contribute(vector);
+int does_contribute(vector);
 #endif /* CONTRIB */
 
 #ifdef APOT
-void  update_slots(void);
-void  update_neighbor_slots(neigh_t* neighbor, double r, int neighbor_slot);
+void update_slots(void);
+void update_neighbor_slots(neigh_t* neighbor, double r, int neighbor_slot);
 #endif /* APOT */
 
 #endif /* CONFIG_H */

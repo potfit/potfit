@@ -29,10 +29,13 @@
  *
  ****************************************************************/
 
-/*** rewritten for double precision and zero-offset vectors and matrices 	***/
-/*** adapted to Powell requrirements (return vector instead of value)... 	***/
-/*** adapted to double variables (ITAP standard) by PB, ITAP, 2002-10-24	***/
-/*** by Peter Brommer, ITAP, 2002-10-10 					***/
+/*** rewritten for double precision and zero-offset vectors and matrices
+ * ***/
+/*** adapted to Powell requrirements (return vector instead of value)...
+ * ***/
+/*** adapted to double variables (ITAP standard) by PB, ITAP, 2002-10-24
+ * ***/
+/*** by Peter Brommer, ITAP, 2002-10-10 ***/
 
 #include "potfit.h"
 
@@ -52,10 +55,11 @@ double *xicom, *delcom;
  *
  ****************************************************************/
 
-double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, double *fret1, double *fret2)
+double linmin(double xi[], double del[], double fxi1, double *x1, double *x2,
+              double *fret1, double *fret2)
 {
-  int   j;
-  static double *vecu = NULL;	/* Vector of location u */
+  int j;
+  static double *vecu = NULL; /* Vector of location u */
   double xx, fx, fb, bx, ax;
   double fa = fxi1;
   double xmin;
@@ -63,7 +67,7 @@ double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, do
 
   xicom = xi;
   delcom = del;
-  ax = 0.0;			/*do not change without correcting fa, */
+  ax = 0.0; /*do not change without correcting fa, */
   /*saves 1 fcalc... */
   bx = 0.1;
 
@@ -72,7 +76,7 @@ double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, do
     reg_for_free(vecu, "vecu");
   }
   for (j = 0; j < g_calc.ndimtot; j++)
-    vecu[j] = xicom[j] + bx * delcom[j];	/*set vecu */
+    vecu[j] = xicom[j] + bx * delcom[j]; /*set vecu */
   fb = (*g_calc_forces)(vecu, fret2, 0);
 
   bracket(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);

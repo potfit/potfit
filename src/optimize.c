@@ -32,14 +32,14 @@
 
 #include "optimize.h"
 
-void run_optimization ()
+void run_optimization()
 {
   printf("\nStarting optimization with %d parameters.\n", g_calc.ndim);
   fflush(stdout);
 
 #if !defined(EVO)
   run_simulated_annealing();
-#else /* EVO */
+#else  /* EVO */
   run_differential_evolution();
 #endif /* EVO */
 
