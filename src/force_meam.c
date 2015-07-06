@@ -95,17 +95,17 @@
  *
  ****************************************************************/
 
-double calc_forces_meam(double *xi_opt, double *forces, int flag)
+double calc_forces_meam(double* xi_opt, double* forces, int flag)
 {
   int first, col, i = flag;
-  double *xi = NULL;
+  double* xi = NULL;
 
   /* Some useful temp variables */
   double tmpsum = 0.0, sum = 0.0;
   double rho_sum = 0.0, rho_sum_loc = 0.0;
 
   /* Temp variables */
-  atom_t *atom; /* atom pointer */
+  atom_t* atom; /* atom pointer */
   int h, j, k;
   int n_i, n_j, n_k;
   int uf;
@@ -118,7 +118,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 
   /* Some useful temp struct variable types */
   /* neighbor pointers */
-  neigh_t *neigh_j, *neigh_k;
+  neigh_t* neigh_j, *neigh_k;
 
   /* Pair variables */
   double phi_val, phi_grad;
@@ -134,7 +134,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
   /* MEAM variables */
   double dV3j, dV3k, V3, vlj, vlk, vv3j, vv3k;
   vector dfj, dfk;
-  angle_t *angle;
+  angle_t* angle;
 
   switch (g_pot.format) {
     case 0:
@@ -245,17 +245,15 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
             forces[n_i + 1] = 0.0;
             forces[n_i + 2] = 0.0;
           } /* uf */
-            /* Reset the density for each atom */
-          g_config.conf_atoms[g_config.cnfstart[h] - g_mpi.firstatom + i].rho =
-              0.0;
+          /* Reset the density for each atom */
+          g_config.conf_atoms[g_config.cnfstart[h] - g_mpi.firstatom + i].rho = 0.0;
         } /* i */
-          /* END OF FIRST LOOP */
+        /* END OF FIRST LOOP */
 
         /* SECOND LOOP: Calculate pair forces and energies, atomic densities */
         for (i = 0; i < g_config.inconf[h]; i++) {
           /* Set pointer to temp atom pointer */
-          atom = g_config.conf_atoms +
-                 (g_config.cnfstart[h] - g_mpi.firstatom + i);
+          atom = g_config.conf_atoms + (g_config.cnfstart[h] - g_mpi.firstatom + i);
           /* Skip every 3 spots for force array */
           n_i = 3 * (g_config.cnfstart[h] + i);
           /* Loop over neighbors */
@@ -277,8 +275,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
               /* fn value and grad are calculated in the same step */
               if (uf)
                 phi_val = splint_comb_dir(&g_pot.calc_pot, xi, neigh_j->slot[0],
-                                          neigh_j->shift[0], neigh_j->step[0],
-                                          &phi_grad);
+                                          neigh_j->shift[0], neigh_j->step[0], &phi_grad);
               else
                 phi_val = splint_dir(&g_pot.calc_pot, xi, neigh_j->slot[0],
                                      neigh_j->shift[0], neigh_j->step[0]);
@@ -327,9 +324,9 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
               /* Store gradient in the neighbor for the pair r_ij
                  to be used in the future when computing forces
                  and sum up rho for atom i */
-              atom->rho += splint_comb_dir(&g_pot.calc_pot, xi,
-                                           neigh_j->slot[1], neigh_j->shift[1],
-                                           neigh_j->step[1], &neigh_j->drho);
+              atom->rho +=
+                  splint_comb_dir(&g_pot.calc_pot, xi, neigh_j->slot[1],
+                                  neigh_j->shift[1], neigh_j->step[1], &neigh_j->drho);
             } else {
               /* If the pair distance does not lie inside rho_typ2
                  We set the grad to 0 so it doesn't sum into the net force */
@@ -347,9 +344,9 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
             /* Check that atom j lies inside f_col2 */
             if (neigh_j->r < g_pot.calc_pot.end[neigh_j->col[2]]) {
               /* Store the f(r_ij) value and the gradient for future use */
-              neigh_j->f = splint_comb_dir(&g_pot.calc_pot, xi,
-                                           neigh_j->slot[2], neigh_j->shift[2],
-                                           neigh_j->step[2], &neigh_j->df);
+              neigh_j->f =
+                  splint_comb_dir(&g_pot.calc_pot, xi, neigh_j->slot[2],
+                                  neigh_j->shift[2], neigh_j->step[2], &neigh_j->df);
             } else {
               /* Store f and f' = 0 if doesn't lie in boundary to be used later
                * when calculating forces */
@@ -386,8 +383,8 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 
               /* The cos(theta) should always lie inside -1 ... 1
                  So store the g and g' without checking bounds */
-              angle->g = splint_comb_dir(&g_pot.calc_pot, xi, angle->slot,
-                                         angle->shift, angle->step, &angle->dg);
+              angle->g = splint_comb_dir(&g_pot.calc_pot, xi, angle->slot, angle->shift,
+                                         angle->step, &angle->dg);
 
               /* Sum up rho piece for atom i caused by j and k
                  f_ij * f_ik * m_ijk */
@@ -407,28 +404,25 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
           if (atom->rho < g_pot.calc_pot.begin[col_F]) {
             /* Punish this potential for having rho lie outside of F */
             forces[g_calc.limit_p + h] +=
-                DUMMY_WEIGHT * 10.0 *
-                dsquare(g_pot.calc_pot.begin[col_F] - atom->rho);
+                DUMMY_WEIGHT * 10.0 * dsquare(g_pot.calc_pot.begin[col_F] - atom->rho);
 
             /* Set the atomic density to the first rho in the spline F */
             atom->rho = g_pot.calc_pot.begin[col_F];
 
           } else if (atom->rho >
-                     g_pot.calc_pot
-                         .end[col_F]) { /* rho is to the right of the spline */
+                     g_pot.calc_pot.end[col_F]) { /* rho is to the right of the spline */
 
             /* Punish this potential for having rho lie outside of F */
             forces[g_calc.limit_p + h] +=
-                DUMMY_WEIGHT * 10.0 *
-                dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
+                DUMMY_WEIGHT * 10.0 * dsquare(atom->rho - g_pot.calc_pot.end[col_F]);
 
             /* Set the atomic density to the last rho in the spline F */
             atom->rho = g_pot.calc_pot.end[col_F];
           }
           /* Compute energy piece from F, and store the gradient for later use
            */
-          forces[g_calc.energy_p + h] += (*g_splint_comb)(
-              &g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
+          forces[g_calc.energy_p + h] +=
+              (*g_splint_comb)(&g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
 
 #else
           /* Compute energy, gradient for embedding function F
@@ -436,34 +430,30 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
           if (atom->rho < g_pot.calc_pot.begin[col_F]) {
 #ifdef APOT
             /* calculate analytic value explicitly */
-            g_pot.apot_table.fvalue[col_F](
-                atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
-            atom->gradF =
-                apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
-                          g_pot.apot_table.fvalue[col_F]);
+            g_pot.apot_table.fvalue[col_F](atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
+                                           &temp_eng);
+            atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
+                                    g_pot.apot_table.fvalue[col_F]);
             forces[g_calc.energy_p + h] += temp_eng;
 #else
             /* Linear extrapolate values to left to get F_i(rho)
                This gets value and grad of initial spline point */
-            rho_val =
-                (*g_splint_comb)(&g_pot.calc_pot, xi, col_F,
-                                 g_pot.calc_pot.begin[col_F], &atom->gradF);
+            rho_val = (*g_splint_comb)(&g_pot.calc_pot, xi, col_F,
+                                       g_pot.calc_pot.begin[col_F], &atom->gradF);
 
             /* Sum this to the total energy for this configuration
                Linear extrapolate this energy */
             forces[g_calc.energy_p + h] +=
-                rho_val +
-                (atom->rho - g_pot.calc_pot.begin[col_F]) * atom->gradF;
+                rho_val + (atom->rho - g_pot.calc_pot.begin[col_F]) * atom->gradF;
 #endif /* APOT */
             /* rho is to the right of the spline */
           } else if (atom->rho > g_pot.calc_pot.end[col_F]) {
 #ifdef APOT
             /* calculate analytic value explicitly */
-            g_pot.apot_table.fvalue[col_F](
-                atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
-            atom->gradF =
-                apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
-                          g_pot.apot_table.fvalue[col_F]);
+            g_pot.apot_table.fvalue[col_F](atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
+                                           &temp_eng);
+            atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
+                                    g_pot.apot_table.fvalue[col_F]);
             forces[g_calc.energy_p + h] += temp_eng;
 #else
             /* Get value and grad at 1/2 the width from the final spline point
@@ -483,15 +473,14 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
             if (atom->rho < 0.1) {
               g_pot.apot_table.fvalue[col_F](
                   atom->rho, xi_opt + g_pot.opt_pot.first[col_F], &temp_eng);
-              atom->gradF =
-                  apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
-                            g_pot.apot_table.fvalue[col_F]);
+              atom->gradF = apot_grad(atom->rho, xi_opt + g_pot.opt_pot.first[col_F],
+                                      g_pot.apot_table.fvalue[col_F]);
               forces[g_calc.energy_p + h] += temp_eng;
             } else
 #endif
               /* Get energy value from within spline and store the grad */
-              forces[g_calc.energy_p + h] += (*g_splint_comb)(
-                  &g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
+              forces[g_calc.energy_p + h] +=
+                  (*g_splint_comb)(&g_pot.calc_pot, xi, col_F, atom->rho, &atom->gradF);
           }
 #endif /* RESCALE */
 
@@ -636,8 +625,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
         /* Sum up the square of the forces for each atom
            then multiply it by the weight for this config */
         for (i = 0; i < g_config.inconf[h]; i++) {
-          atom =
-              g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
 #ifdef FWEIGHT
           /* Weigh by absolute value of force */
@@ -674,8 +662,8 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
           /* Subtract off user supplied stresses */
           forces[stresses + i] -= g_config.force_0[stresses + i];
           /* Sum in the square of each stress component with config weight */
-          tmpsum += g_config.conf_weight[h] * g_param.sweight *
-                    dsquare(forces[stresses + i]);
+          tmpsum +=
+              g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
         }
 #endif /* STRESS */
 
@@ -698,8 +686,7 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 
 #ifdef MPI
     /* Reduce the rho_sum into root node */
-    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+    MPI_Reduce(&rho_sum_loc, &rho_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 #else
     rho_sum = rho_sum_loc;
 #endif  // MPI
@@ -726,34 +713,29 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
     /* gather forces, energies, stresses */
     if (g_mpi.myid == 0) { /* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
-                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
+                  g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE,
-                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist,
-                  MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS,
-                  forces + g_calc.stress_p, g_mpi.conf_len, g_mpi.conf_dist,
-                  g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
 #ifdef RESCALE
       /* punishment constraints */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE,
-                  forces + g_calc.limit_p, g_mpi.conf_len, g_mpi.conf_dist,
-                  MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.limit_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* RESCALE */
     } else {
       /* forces */
-      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR,
-                  forces, g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf,
-                  MPI_DOUBLE, forces + g_calc.energy_p, g_mpi.conf_len,
-                  g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE,
+                  0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
       MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf,
@@ -762,9 +744,9 @@ double calc_forces_meam(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 #ifdef RESCALE
       /* punishment constraints */
-      MPI_Gatherv(forces + g_calc.limit_p + g_mpi.firstconf, g_mpi.myconf,
-                  MPI_DOUBLE, forces + g_calc.limit_p, g_mpi.conf_len,
-                  g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.limit_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_calc.limit_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0,
+                  MPI_COMM_WORLD);
 #endif /* RESCALE */
     }
 /* no need to pick up dummy constraints - they are already @ root */

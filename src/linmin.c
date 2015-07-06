@@ -45,7 +45,7 @@
 
 #define TOL 1.0e-1
 
-double *xicom, *delcom;
+double* xicom, *delcom;
 
 /****************************************************************
  *
@@ -55,11 +55,11 @@ double *xicom, *delcom;
  *
  ****************************************************************/
 
-double linmin(double xi[], double del[], double fxi1, double *x1, double *x2,
-              double *fret1, double *fret2)
+double linmin(double xi[], double del[], double fxi1, double* x1, double* x2,
+              double* fret1, double* fret2)
 {
   int j;
-  static double *vecu = NULL; /* Vector of location u */
+  static double* vecu = NULL; /* Vector of location u */
   double xx, fx, fb, bx, ax;
   double fa = fxi1;
   double xmin;
@@ -75,8 +75,7 @@ double linmin(double xi[], double del[], double fxi1, double *x1, double *x2,
     vecu = vect_double(g_calc.ndimtot);
     reg_for_free(vecu, "vecu");
   }
-  for (j = 0; j < g_calc.ndimtot; j++)
-    vecu[j] = xicom[j] + bx * delcom[j]; /*set vecu */
+  for (j = 0; j < g_calc.ndimtot; j++) vecu[j] = xicom[j] + bx * delcom[j]; /*set vecu */
   fb = (*g_calc_forces)(vecu, fret2, 0);
 
   bracket(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);

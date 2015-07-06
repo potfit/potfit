@@ -40,16 +40,15 @@
  *
  ****************************************************************/
 
-void spline_ed(double xstep, double *y, int n, double yp1, double ypn,
-               double *y2)
+void spline_ed(double xstep, double* y, int n, double yp1, double ypn, double* y2)
 {
   int i, k;
   double p, qn, un;
-  static double *u = NULL;
+  static double* u = NULL;
   static int nmax = 0;
 
   if (n > nmax) {
-    u = (double *)realloc(u, (n - 1) * sizeof(double));
+    u = (double*)realloc(u, (n - 1) * sizeof(double));
     g_memory.u_address = u;
     nmax = n;
   }
@@ -83,7 +82,7 @@ void spline_ed(double xstep, double *y, int n, double yp1, double ypn,
  *
  ****************************************************************/
 
-double splint_ed(pot_table_t *pt, double *xi, int col, double r)
+double splint_ed(pot_table_t* pt, double* xi, int col, double r)
 {
   double a, b, istep, rr, p1, p2, d21, d22;
   int k;
@@ -104,8 +103,7 @@ double splint_ed(pot_table_t *pt, double *xi, int col, double r)
   d22 = pt->d2tab[k];
 
   return a * p1 + b * p2 +
-         ((a * a * a - a) * d21 + (b * b * b - b) * d22) /
-             (6.0 * istep * istep);
+         ((a * a * a - a) * d21 + (b * b * b - b) * d22) / (6.0 * istep * istep);
 }
 
 /****************************************************************
@@ -115,8 +113,7 @@ double splint_ed(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r,
-                      double *grad)
+double splint_comb_ed(pot_table_t* pt, double* xi, int col, double r, double* grad)
 {
   double a, b, istep, rr, p1, p2, d21, d22;
   int k;
@@ -143,8 +140,7 @@ double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r,
           ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) / (6.0 * istep);
 
   return a * p1 + b * p2 +
-         ((a * a * a - a) * d21 + (b * b * b - b) * d22) /
-             (6.0 * istep * istep);
+         ((a * a * a - a) * d21 + (b * b * b - b) * d22) / (6.0 * istep * istep);
 }
 
 /****************************************************************
@@ -154,7 +150,7 @@ double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r,
  *
  ****************************************************************/
 
-double splint_grad_ed(pot_table_t *pt, double *xi, int col, double r)
+double splint_grad_ed(pot_table_t* pt, double* xi, int col, double r)
 {
   double a, b, istep, rr, p1, p2, d21, d22;
   int k;
@@ -191,7 +187,7 @@ double splint_grad_ed(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_dir(pot_table_t *pt, double *xi, int k, double b, double step)
+double splint_dir(pot_table_t* pt, double* xi, int k, double b, double step)
 {
   double a, p1, p2, d21, d22;
 
@@ -215,8 +211,8 @@ double splint_dir(pot_table_t *pt, double *xi, int k, double b, double step)
  *
  ****************************************************************/
 
-double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b,
-                       double step, double *grad)
+double splint_comb_dir(pot_table_t* pt, double* xi, int k, double b, double step,
+                       double* grad)
 {
   double a, p1, p2, d21, d22;
 
@@ -226,8 +222,8 @@ double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b,
   d21 = pt->d2tab[k++];
   p2 = xi[k];
   d22 = pt->d2tab[k];
-  *grad = (p2 - p1) / step +
-          ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
+  *grad =
+      (p2 - p1) / step + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
 
   return a * p1 + b * p2 +
          ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
@@ -241,8 +237,7 @@ double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b,
  *
  ****************************************************************/
 
-double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b,
-                       double step)
+double splint_grad_dir(pot_table_t* pt, double* xi, int k, double b, double step)
 {
   double a, p1, p2, d21, d22;
 
@@ -264,15 +259,15 @@ double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b,
  *
  ****************************************************************/
 
-void spline_ne(double *x, double *y, int n, double yp1, double ypn, double *y2)
+void spline_ne(double* x, double* y, int n, double yp1, double ypn, double* y2)
 {
   int i, k;
   double p, qn, sig, un;
-  static double *u = NULL;
+  static double* u = NULL;
   static int nmax = 0;
 
   if (n > nmax) {
-    u = (double *)realloc(u, (n - 1) * sizeof(double));
+    u = (double*)realloc(u, (n - 1) * sizeof(double));
     g_memory.u_address = u;
     nmax = n;
   }
@@ -286,8 +281,7 @@ void spline_ne(double *x, double *y, int n, double yp1, double ypn, double *y2)
     sig = (x[i] - x[i - 1]) / (x[i + 1] - x[i - 1]);
     p = sig * y2[i - 1] + 2.0;
     y2[i] = (sig - 1.0) / p;
-    u[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]) -
-           (y[i] - y[i - 1]) / (x[i] - x[i - 1]);
+    u[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]) - (y[i] - y[i - 1]) / (x[i] - x[i - 1]);
     u[i] = (6.0 * u[i] / (x[i + 1] - x[i - 1]) - sig * u[i - 1]) / p;
   }
   if (ypn > 0.99e30)
@@ -308,7 +302,7 @@ void spline_ne(double *x, double *y, int n, double yp1, double ypn, double *y2)
  *
  ****************************************************************/
 
-double splint_ne(pot_table_t *pt, double *xi, int col, double r)
+double splint_ne(pot_table_t* pt, double* xi, int col, double r)
 {
   int klo, khi, k;
   double h, b, a, d22, d21, p1, p2, x1, x2;
@@ -346,7 +340,7 @@ double splint_ne(pot_table_t *pt, double *xi, int col, double r)
  *
  *****************************************************************************/
 
-double splint_ne_lin(pot_table_t *pt, double *xi, int col, double r)
+double splint_ne_lin(pot_table_t* pt, double* xi, int col, double r)
 {
   int klo, khi, k;
   double h, b, a, d22, d21, p1, p2, x1, x2;
@@ -378,14 +372,12 @@ double splint_ne_lin(pot_table_t *pt, double *xi, int col, double r)
   if (r < pt->begin[col]) {
     b = 0.0;
     a = 1.0;
-    grad = (p2 - p1) / h +
-           ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+    grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
     return p1 + grad * (r - x1);
   } else if (r > pt->end[col]) {
     b = 1.0;
     a = 0.0;
-    grad = (p2 - p1) / h +
-           ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+    grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
     return p2 + grad * (r - x2);
   }
 
@@ -400,8 +392,7 @@ double splint_ne_lin(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r,
-                      double *grad)
+double splint_comb_ne(pot_table_t* pt, double* xi, int col, double r, double* grad)
 {
   int klo, khi, k;
   double h, b, a, d22, d21, p1, p2, x1, x2;
@@ -428,8 +419,7 @@ double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r,
   b = (r - x1) / h;
   a = (1.0 - b);
 
-  *grad = (p2 - p1) / h +
-          ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+  *grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
 
   return a * p1 + b * p2 +
          ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
@@ -442,7 +432,7 @@ double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r,
  *
  ****************************************************************/
 
-double splint_grad_ne(pot_table_t *pt, double *xi, int col, double r)
+double splint_grad_ne(pot_table_t* pt, double* xi, int col, double r)
 {
   int klo, khi, k;
   double h, b, a, d22, d21, p1, p2, x1, x2;
@@ -469,6 +459,5 @@ double splint_grad_ne(pot_table_t *pt, double *xi, int col, double r)
   b = (r - x1) / h;
   a = (1.0 - b);
 
-  return (p2 - p1) / h +
-         ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+  return (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
 }

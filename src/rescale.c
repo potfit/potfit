@@ -48,26 +48,25 @@
  *
  ****************************************************************/
 
-double rescale(pot_table_t *pt, double upper, int flag)
+double rescale(pot_table_t* pt, double upper, int flag)
 {
-  int mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign,
-      dimneuxi;
-  double *xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
-  atom_t *atom;
-  neigh_t *neigh;
+  int mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign, dimneuxi;
+  double* xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
+  atom_t* atom;
+  neigh_t* neigh;
   double fnval, pos, grad, a;
   double min = 1e100, max = -1e100;
 
   xi = pt->table;
   dimneuxi = pt->last[g_calc.paircol + 2 * g_param.ntypes - 1] -
              pt->last[g_calc.paircol + g_param.ntypes - 1];
-  neuxi = (double *)malloc(dimneuxi * sizeof(double));
-  neuord = (double *)malloc(dimneuxi * sizeof(double));
-  neustep = (double *)malloc(g_param.ntypes * sizeof(double));
-  maxrho = (double *)malloc(g_param.ntypes * sizeof(double));
-  minrho = (double *)malloc(g_param.ntypes * sizeof(double));
-  left = (double *)malloc(g_param.ntypes * sizeof(double));
-  right = (double *)malloc(g_param.ntypes * sizeof(double));
+  neuxi = (double*)malloc(dimneuxi * sizeof(double));
+  neuord = (double*)malloc(dimneuxi * sizeof(double));
+  neustep = (double*)malloc(g_param.ntypes * sizeof(double));
+  maxrho = (double*)malloc(g_param.ntypes * sizeof(double));
+  minrho = (double*)malloc(g_param.ntypes * sizeof(double));
+  left = (double*)malloc(g_param.ntypes * sizeof(double));
+  right = (double*)malloc(g_param.ntypes * sizeof(double));
   for (i = 0; i < g_param.ntypes; i++) {
     maxrho[i] = -1e100;
     minrho[i] = 1e100;
@@ -81,27 +80,25 @@ double rescale(pot_table_t *pt, double upper, int flag)
       spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
                 *(pt->table + first - 2), 0.0, pt->d2tab + first);
     else /* format == 4 ! */
-      spline_ne(pt->xcoord + first, pt->table + first,
-                pt->last[col] - first + 1, *(pt->table + first - 2), 0.0,
-                pt->d2tab + first);
+      spline_ne(pt->xcoord + first, pt->table + first, pt->last[col] - first + 1,
+                *(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
-  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes;
-       col++) { /* rho */
+  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++) { /* rho */
     first = pt->first[col];
     if (g_pot.format == 3)
-      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-                *(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
+                0.0, pt->d2tab + first);
     else /* format == 4 ! */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
                 *(xi + first - 2), 0.0, pt->d2tab + first);
   }
-  for (col = g_calc.paircol + g_param.ntypes;
-       col < g_calc.paircol + 2 * g_param.ntypes; col++) { /* F */
+  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes;
+       col++) { /* F */
     first = pt->first[col];
     /* gradient 0 at r_cut */
     if (g_pot.format == 3)
-      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-                *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
+                *(xi + first - 1), pt->d2tab + first);
     else /* format == 4 */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
                 *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
@@ -121,20 +118,18 @@ double rescale(pot_table_t *pt, double upper, int flag)
           col2 = g_calc.paircol + typ2;
           if (typ2 == typ1) {
             if (neigh->r < pt->end[col2]) {
-              fnval = splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
-                                 neigh->step[1]);
+              fnval = splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
               atom->rho += fnval;
               g_config.atoms[neigh->nr].rho += fnval;
             }
           } else {
             col = g_calc.paircol + typ1;
             if (neigh->r < pt->end[col2]) {
-              atom->rho += splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
-                                      neigh->step[1]);
+              atom->rho +=
+                  splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
             }
             if (neigh->r < pt->end[col])
-              g_config.atoms[neigh->nr].rho +=
-                  (*g_splint)(pt, xi, col, neigh->r);
+              g_config.atoms[neigh->nr].rho += (*g_splint)(pt, xi, col, neigh->r);
           }
         }
       }
@@ -162,8 +157,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
     right[i] = maxrho[i] + 0.3 * pt->step[j];
     /* is expansion necessary? */
     if (flag || minrho[i] - pt->begin[j] < 0.0 ||
-        minrho[i] - pt->begin[j] > 0.95 * pt->step[j] ||
-        maxrho[i] - pt->end[j] > 0 ||
+        minrho[i] - pt->begin[j] > 0.95 * pt->step[j] || maxrho[i] - pt->end[j] > 0 ||
         maxrho[i] - pt->end[j] < -0.95 * pt->step[j])
       flag = 1;
   }
@@ -200,8 +194,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
   /* write back values */
   col = 0; /* first value to be changed */
-  for (j = g_calc.paircol + g_param.ntypes;
-       j < g_calc.paircol + 2 * g_param.ntypes; j++)
+  for (j = g_calc.paircol + g_param.ntypes; j < g_calc.paircol + 2 * g_param.ntypes; j++)
     for (i = pt->first[j]; i <= pt->last[j]; i++) {
       xi[i] = neuxi[col];
       pt->xcoord[i] = neuord[col];
@@ -219,8 +212,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
   /* rescale all embed. by a */
   if (sign == 1) {
     j = 0;
-    for (i = g_calc.paircol + g_param.ntypes;
-         i < g_calc.paircol + 2 * g_param.ntypes; i++) {
+    for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
+         i++) {
       pt->begin[i] = a * left[j];
       pt->end[i] = a * right[j];
       pt->step[i] = a * neustep[j];
@@ -237,8 +230,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
     }
   } else { /* reverse - a negativ */
     j = 0;
-    for (i = g_calc.paircol + g_param.ntypes;
-         i < g_calc.paircol + 2 * g_param.ntypes; i++) {
+    for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
+         i++) {
       pt->begin[i] = a * right[j];
       pt->end[i] = a * left[j];
       pt->step[i] = -a * neustep[j];
@@ -269,32 +262,31 @@ double rescale(pot_table_t *pt, double upper, int flag)
       }
     }
     col = 0; /* and write back */
-    for (j = g_calc.paircol + g_param.ntypes;
-         j < g_calc.paircol + 2 * g_param.ntypes; j++)
+    for (j = g_calc.paircol + g_param.ntypes; j < g_calc.paircol + 2 * g_param.ntypes;
+         j++)
       for (i = pt->first[j]; i <= pt->last[j]; i++) {
         xi[i] = neuxi[col];
         col++;
       }
   }
   /* re-initialise splines */
-  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes;
-       col++) { /* rho */
+  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++) { /* rho */
     first = pt->first[col];
     if (g_pot.format == 3)
-      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-                *(xi + first - 2), 0.0, pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
+                0.0, pt->d2tab + first);
     else /* format == 4 ! */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
                 *(xi + first - 2), 0.0, pt->d2tab + first);
   }
 
-  for (col = g_calc.paircol + g_param.ntypes;
-       col < g_calc.paircol + 2 * g_param.ntypes; col++) { /* F */
+  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes;
+       col++) { /* F */
     first = pt->first[col];
     /* gradient 0 at r_cut */
     if (g_pot.format == 3)
-      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-                *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
+      spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
+                *(xi + first - 1), pt->d2tab + first);
     else /* format == 4 */
       spline_ne(pt->xcoord + first, xi + first, pt->last[col] - first + 1,
                 *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
@@ -302,13 +294,12 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
   /* correct gauge: U'(n_mean)=0 */
   for (i = 0; i < g_param.ntypes; i++) {
-    g_todo.lambda[i] = (*g_splint_grad)(
-        &g_pot.opt_pot, pt->table, g_calc.paircol + g_param.ntypes + i,
-        0.5 * (pt->begin[g_calc.paircol + g_param.ntypes + i] +
-               pt->end[g_calc.paircol + g_param.ntypes + i]));
+    g_todo.lambda[i] =
+        (*g_splint_grad)(&g_pot.opt_pot, pt->table, g_calc.paircol + g_param.ntypes + i,
+                         0.5 * (pt->begin[g_calc.paircol + g_param.ntypes + i] +
+                                pt->end[g_calc.paircol + g_param.ntypes + i]));
   }
-  for (i = 0; i < g_param.ntypes; i++)
-    printf("lambda[%d] = %f\n", i, g_todo.lambda[i]);
+  for (i = 0; i < g_param.ntypes; i++) printf("lambda[%d] = %f\n", i, g_todo.lambda[i]);
   i = 0;
 
   for (col = 0; col < g_param.ntypes; col++)
@@ -316,14 +307,12 @@ double rescale(pot_table_t *pt, double upper, int flag)
       for (j = pt->first[i]; j <= pt->last[i]; j++)
         pt->table[j] +=
             (pt->xcoord[j] < pt->end[g_calc.paircol + col2]
-                 ? g_todo.lambda[col] * splint_ne(pt, pt->table,
-                                                  g_calc.paircol + col2,
-                                                  pt->xcoord[j])
+                 ? g_todo.lambda[col] *
+                       splint_ne(pt, pt->table, g_calc.paircol + col2, pt->xcoord[j])
                  : 0.0) +
             (pt->xcoord[j] < pt->end[g_calc.paircol + col]
-                 ? g_todo.lambda[col2] * splint_ne(pt, pt->table,
-                                                   g_calc.paircol + col,
-                                                   pt->xcoord[j])
+                 ? g_todo.lambda[col2] *
+                       splint_ne(pt, pt->table, g_calc.paircol + col, pt->xcoord[j])
                  : 0.0);
       /* Gradient */
       if (pt->table[pt->first[i] - 2] < 1e29) /* natural spline */
@@ -334,21 +323,18 @@ double rescale(pot_table_t *pt, double upper, int flag)
                                                          pt->begin[i])
                  : 0.0) +
             (pt->begin[i] < pt->end[g_calc.paircol + col]
-                 ? g_todo.lambda[col2] * (*g_splint_grad)(pt, pt->table,
-                                                          g_calc.paircol + col,
-                                                          pt->begin[i])
+                 ? g_todo.lambda[col2] *
+                       (*g_splint_grad)(pt, pt->table, g_calc.paircol + col, pt->begin[i])
                  : 0.0);
       if (pt->table[pt->first[i] - 1] < 1e29) /* natural spline */
         pt->table[pt->first[i] - 1] +=
             (pt->end[i] < pt->end[g_calc.paircol + col2]
-                 ? g_todo.lambda[col] * (*g_splint_grad)(pt, pt->table,
-                                                         g_calc.paircol + col2,
-                                                         pt->end[i])
+                 ? g_todo.lambda[col] *
+                       (*g_splint_grad)(pt, pt->table, g_calc.paircol + col2, pt->end[i])
                  : 0.0) +
             (pt->end[i] < pt->end[g_calc.paircol + col]
-                 ? g_todo.lambda[col2] * (*g_splint_grad)(pt, pt->table,
-                                                          g_calc.paircol + col,
-                                                          pt->end[i])
+                 ? g_todo.lambda[col2] *
+                       (*g_splint_grad)(pt, pt->table, g_calc.paircol + col, pt->end[i])
                  : 0.0);
       i++;
     }
@@ -359,12 +345,10 @@ double rescale(pot_table_t *pt, double upper, int flag)
     /* Gradients */
     if (pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 2] <
         1e29) /* natural spline */
-      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 2] -=
-          g_todo.lambda[i];
+      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 2] -= g_todo.lambda[i];
     if (pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 1] <
         1e29) /* natural spline */
-      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 1] -=
-          g_todo.lambda[i];
+      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 1] -= g_todo.lambda[i];
     g_todo.lambda[i] = 0.0;
   }
 
@@ -375,9 +359,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
       spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
                 *(pt->table + first - 2), 0.0, pt->d2tab + first);
     else /* format == 4 ! */
-      spline_ne(pt->xcoord + first, pt->table + first,
-                pt->last[col] - first + 1, *(pt->table + first - 2), 0.0,
-                pt->d2tab + first);
+      spline_ne(pt->xcoord + first, pt->table + first, pt->last[col] - first + 1,
+                *(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
 
   free(neuxi);
@@ -397,14 +380,14 @@ double rescale(pot_table_t *pt, double upper, int flag)
  *
  ****************************************************************/
 
-void embed_shift(pot_table_t *pt)
+void embed_shift(pot_table_t* pt)
 {
   double shift;
-  double *xi;
+  double* xi;
   int i, j, first;
   xi = pt->table;
-  for (i = g_calc.paircol + g_param.ntypes;
-       i < g_calc.paircol + 2 * g_param.ntypes; i++) {
+  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
+       i++) {
     first = pt->first[i];
     /* init splines - better safe than sorry */
     /* gradient 0 at r_cut */
@@ -412,8 +395,8 @@ void embed_shift(pot_table_t *pt)
     /** NOT FOOLPROOF ***************/
     if (pt->begin[i] <= 0) { /* 0 in domain of U(n) */
       if (g_pot.format == 3)
-        spline_ed(pt->step[i], xi + first, pt->last[i] - first + 1,
-                  *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
+        spline_ed(pt->step[i], xi + first, pt->last[i] - first + 1, *(xi + first - 2),
+                  *(xi + first - 1), pt->d2tab + first);
       else /* format == 4 ! */
         spline_ne(pt->xcoord + first, xi + first, pt->last[i] - first + 1,
                   *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);

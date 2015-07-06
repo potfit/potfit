@@ -41,8 +41,8 @@ int read_parameter_file(char const* param_file);
 int get_param_double(char const* param_name, double* value, int line,
                      char const* param_file, double min, double max);
 
-int get_param_int(char const* param_name, int* value, int line,
-                  char const* param_file, int min, int max);
+int get_param_int(char const* param_name, int* value, int line, char const* param_file,
+                  int min, int max);
 
 int get_param_string(char const* param_name, char** value, int line,
                      char const* param_file);

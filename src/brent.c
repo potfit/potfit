@@ -37,8 +37,8 @@
 #include "forces.h"
 #include "utils.h"
 
-double brent(double ax, double bx, double cx, double fbx, double tol,
-             double *xmin, double *xmin2, double *fxmin, double *fxmin2)
+double brent(double ax, double bx, double cx, double fbx, double tol, double* xmin,
+             double* xmin2, double* fxmin, double* fxmin2)
 /* take bracket (a,b,c), f(b), tol, pointers to xmin, xmin2, vectors fxmin,
  * fxmin2 */
 {
@@ -57,9 +57,9 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
   double f_w;
   double f_z;
   double w_lower, w_upper;
-  double *p_w, *p_z, *p_u, *p_temp;
+  double* p_w, *p_z, *p_u, *p_temp;
 
-  static double *vecu = NULL, *fxu = NULL; /* Vector of location u */
+  static double* vecu = NULL, * fxu = NULL; /* Vector of location u */
 
   double p = 0, q = 0, r = 0;
   if (fxu == NULL) {
@@ -77,8 +77,7 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
   x_right = (ax > cx ? ax : cx);
 
   v = w = x_left + CGOLD * (x_right - x_left);
-  for (j = 0; j < g_calc.ndimtot; j++)
-    vecu[j] = xicom[j] + v * delcom[j]; /*set vecu */
+  for (j = 0; j < g_calc.ndimtot; j++) vecu[j] = xicom[j] + v * delcom[j]; /*set vecu */
 
   p_z = fxmin;
   p_w = fxmin2;
@@ -140,8 +139,7 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
       u = z + ((d > 0) ? tolerance : -tolerance);
     }
 
-    for (j = 0; j < g_calc.ndimtot; j++)
-      vecu[j] = xicom[j] + u * delcom[j]; /*set vecu */
+    for (j = 0; j < g_calc.ndimtot; j++) vecu[j] = xicom[j] + u * delcom[j]; /*set vecu */
     f_u = (*g_calc_forces)(vecu, p_u, 0);
 
     if (f_u > f_z) {

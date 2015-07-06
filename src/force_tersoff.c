@@ -91,15 +91,15 @@
 
 #ifndef TERSOFFMOD
 
-double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
+double calc_forces_tersoff(double* xi_opt, double* forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
-  const tersoff_t *ters = &g_pot.apot_table.tersoff;
+  const tersoff_t* ters = &g_pot.apot_table.tersoff;
 
-  atom_t *atom;     /* pointer to current atom */
-  neigh_t *neigh_j; /* pointer to current neighbor j (first neighbor loop) */
-  neigh_t *neigh_k; /* pointer to current neighbor k (second neighbor loop) */
-  angle_t *angle;   /* pointer to current angular table */
+  atom_t* atom;     /* pointer to current atom */
+  neigh_t* neigh_j; /* pointer to current neighbor j (first neighbor loop) */
+  neigh_t* neigh_k; /* pointer to current neighbor k (second neighbor loop) */
+  angle_t* angle;   /* pointer to current angular table */
   int h;            /* counter for configurations */
   int i;            /* counter for atoms */
   int j;            /* counter for neighbors (first loop) */
@@ -185,8 +185,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
         /* second loop: calculate cutoff function f_c for all neighbors */
         for (i = 0; i < g_config.inconf[h]; i++) {
-          atom =
-              g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
 
           /* loop over neighbors */
@@ -286,8 +285,8 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 
                   tmp_1 = *(ters->h[col_j]) - cos_theta;
                   tmp_2 = 1.0 / (ters->d2[col_j] + tmp_1 * tmp_1);
-                  g_theta = 1.0 + ters->c2[col_j] / ters->d2[col_j] -
-                            ters->c2[col_j] * tmp_2;
+                  g_theta =
+                      1.0 + ters->c2[col_j] / ters->d2[col_j] - ters->c2[col_j] * tmp_2;
 
                   /* zeta */
                   zeta += neigh_k->f * *(ters->omega[col_k]) * g_theta;
@@ -295,32 +294,22 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
                   tmp_j2 = cos_theta / (neigh_j->r * neigh_j->r);
                   tmp_k2 = cos_theta / (neigh_k->r * neigh_k->r);
 
-                  dcos_j.x =
-                      tmp_jk * neigh_k->dist.x - tmp_j2 * neigh_j->dist.x;
-                  dcos_j.y =
-                      tmp_jk * neigh_k->dist.y - tmp_j2 * neigh_j->dist.y;
-                  dcos_j.z =
-                      tmp_jk * neigh_k->dist.z - tmp_j2 * neigh_j->dist.z;
+                  dcos_j.x = tmp_jk * neigh_k->dist.x - tmp_j2 * neigh_j->dist.x;
+                  dcos_j.y = tmp_jk * neigh_k->dist.y - tmp_j2 * neigh_j->dist.y;
+                  dcos_j.z = tmp_jk * neigh_k->dist.z - tmp_j2 * neigh_j->dist.z;
 
-                  dcos_k.x =
-                      tmp_jk * neigh_j->dist.x - tmp_k2 * neigh_k->dist.x;
-                  dcos_k.y =
-                      tmp_jk * neigh_j->dist.y - tmp_k2 * neigh_k->dist.y;
-                  dcos_k.z =
-                      tmp_jk * neigh_j->dist.z - tmp_k2 * neigh_k->dist.z;
+                  dcos_k.x = tmp_jk * neigh_j->dist.x - tmp_k2 * neigh_k->dist.x;
+                  dcos_k.y = tmp_jk * neigh_j->dist.y - tmp_k2 * neigh_k->dist.y;
+                  dcos_k.z = tmp_jk * neigh_j->dist.z - tmp_k2 * neigh_k->dist.z;
 
-                  tmp_3 = 2.0 * ters->c2[col_j] * tmp_1 * tmp_2 * tmp_2 *
-                          neigh_k->f * *(ters->omega[col_k]);
+                  tmp_3 = 2.0 * ters->c2[col_j] * tmp_1 * tmp_2 * tmp_2 * neigh_k->f *
+                          *(ters->omega[col_k]);
 
-                  tmp_grad = neigh_k->df / neigh_k->r * g_theta *
-                             *(ters->omega[col_k]);
+                  tmp_grad = neigh_k->df / neigh_k->r * g_theta * *(ters->omega[col_k]);
 
-                  neigh_k->dzeta.x =
-                      tmp_grad * neigh_k->dist.x - tmp_3 * dcos_k.x;
-                  neigh_k->dzeta.y =
-                      tmp_grad * neigh_k->dist.y - tmp_3 * dcos_k.y;
-                  neigh_k->dzeta.z =
-                      tmp_grad * neigh_k->dist.z - tmp_3 * dcos_k.z;
+                  neigh_k->dzeta.x = tmp_grad * neigh_k->dist.x - tmp_3 * dcos_k.x;
+                  neigh_k->dzeta.y = tmp_grad * neigh_k->dist.y - tmp_3 * dcos_k.y;
+                  neigh_k->dzeta.z = tmp_grad * neigh_k->dist.z - tmp_3 * dcos_k.z;
 
                   dzeta_i.x -= neigh_k->dzeta.x;
                   dzeta_i.y -= neigh_k->dzeta.y;
@@ -332,8 +321,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
                 }
               } /* k */
 
-              phi_a = 0.5 * *(ters->B[col_j]) *
-                      exp(-*(ters->mu[col_j]) * neigh_j->r);
+              phi_a = 0.5 * *(ters->B[col_j]) * exp(-*(ters->mu[col_j]) * neigh_j->r);
 
               tmp_pow_1 = *(ters->gamma[col_j]) * zeta;
               power_1(&tmp_4, &tmp_pow_1, ters->n[col_j]);
@@ -349,8 +337,7 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
               if (0.0 == zeta)
                 tmp_5 = 0.0;
               else
-                tmp_5 = -b_ij * neigh_j->f * phi_a * tmp_4 /
-                        (2.0 * zeta * (1.0 + tmp_4));
+                tmp_5 = -b_ij * neigh_j->f * phi_a * tmp_4 / (2.0 * zeta * (1.0 + tmp_4));
               tmp_6 = (neigh_j->f * phi_a * *(ters->mu[col_j]) * b_ij +
                        neigh_j->df * phi_val) /
                       neigh_j->r;
@@ -373,12 +360,9 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
 /* Distribute stress among atoms */
 #ifdef STRESS
                     if (us) {
-                      forces[stresses + 0] +=
-                          neigh_k->dist.x * tmp_5 * neigh_k->dzeta.x;
-                      forces[stresses + 1] +=
-                          neigh_k->dist.y * tmp_5 * neigh_k->dzeta.y;
-                      forces[stresses + 2] +=
-                          neigh_k->dist.z * tmp_5 * neigh_k->dzeta.z;
+                      forces[stresses + 0] += neigh_k->dist.x * tmp_5 * neigh_k->dzeta.x;
+                      forces[stresses + 1] += neigh_k->dist.y * tmp_5 * neigh_k->dzeta.y;
+                      forces[stresses + 2] += neigh_k->dist.z * tmp_5 * neigh_k->dzeta.z;
                       forces[stresses + 3] +=
                           0.5 * tmp_5 * (neigh_k->dist.x * neigh_k->dzeta.y +
                                          neigh_k->dist.y * neigh_k->dzeta.x);
@@ -409,12 +393,12 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
                 forces[stresses + 0] += neigh_j->dist.x * force_j.x;
                 forces[stresses + 1] += neigh_j->dist.y * force_j.y;
                 forces[stresses + 2] += neigh_j->dist.z * force_j.z;
-                forces[stresses + 3] += 0.5 * (neigh_j->dist.x * force_j.y +
-                                               neigh_j->dist.y * force_j.x);
-                forces[stresses + 4] += 0.5 * (neigh_j->dist.y * force_j.z +
-                                               neigh_j->dist.z * force_j.y);
-                forces[stresses + 5] += 0.5 * (neigh_j->dist.z * force_j.x +
-                                               neigh_j->dist.x * force_j.z);
+                forces[stresses + 3] +=
+                    0.5 * (neigh_j->dist.x * force_j.y + neigh_j->dist.y * force_j.x);
+                forces[stresses + 4] +=
+                    0.5 * (neigh_j->dist.y * force_j.z + neigh_j->dist.z * force_j.y);
+                forces[stresses + 5] +=
+                    0.5 * (neigh_j->dist.z * force_j.x + neigh_j->dist.x * force_j.z);
               }
 #endif /* STRESS */
 
@@ -457,8 +441,8 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
           for (i = 0; i < 6; i++) {
             forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
             forces[stresses + i] -= g_config.force_0[stresses + i];
-            tmpsum += g_config.conf_weight[h] * g_param.sweight *
-                      dsquare(forces[stresses + i]);
+            tmpsum +=
+                g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
           }
         }
 #endif /* STRESS */
@@ -479,32 +463,28 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
     /* gather forces, energies, stresses */
     if (g_mpi.myid == 0) { /* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
-                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
+                  g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE,
-                  forces + g_config.natoms * 3, g_mpi.conf_len, g_mpi.conf_dist,
-                  MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_config.natoms * 3,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
       /* stresses */
       MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS,
                   forces + g_config.natoms * 3 + g_config.nconf, g_mpi.conf_len,
                   g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
     } else {
       /* forces */
-      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR,
-                  forces, g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
       MPI_Gatherv(forces + g_config.natoms * 3 + g_mpi.firstconf, g_mpi.myconf,
                   MPI_DOUBLE, forces + g_config.natoms * 3, g_mpi.conf_len,
                   g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
       /* stresses */
-      MPI_Gatherv(
-          forces + g_config.natoms * 3 + g_config.nconf + 6 * g_mpi.firstconf,
-          g_mpi.myconf, g_mpi.MPI_STENS,
-          forces + g_config.natoms * 3 + g_config.nconf, g_mpi.conf_len,
-          g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_config.natoms * 3 + g_config.nconf + 6 * g_mpi.firstconf,
+                  g_mpi.myconf, g_mpi.MPI_STENS,
+                  forces + g_config.natoms * 3 + g_config.nconf, g_mpi.conf_len,
+                  g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
     }
 #endif /* MPI */
 
@@ -526,29 +506,29 @@ double calc_forces_tersoff(double *xi_opt, double *forces, int flag)
   return -1.0;
 }
 
-void update_tersoff_pointers(double *xi)
+void update_tersoff_pointers(double* xi)
 {
   int i;
   int index = 2;
-  tersoff_t *tersoff = &g_pot.apot_table.tersoff;
+  tersoff_t* tersoff = &g_pot.apot_table.tersoff;
 
   /* allocate if this has not been done */
   if (0 == tersoff->init) {
-    tersoff->A = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->B = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->lambda = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->mu = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->gamma = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->n = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->c = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->d = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->h = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->S = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->R = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->chi = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->omega = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->c2 = (double *)malloc(g_calc.paircol * sizeof(double));
-    tersoff->d2 = (double *)malloc(g_calc.paircol * sizeof(double));
+    tersoff->A = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->B = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->lambda = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->mu = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->gamma = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->n = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->d = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->h = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->S = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->R = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->chi = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->omega = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c2 = (double*)malloc(g_calc.paircol * sizeof(double));
+    tersoff->d2 = (double*)malloc(g_calc.paircol * sizeof(double));
     for (i = 0; i < g_calc.paircol; i++) {
       tersoff->A[i] = NULL;
       tersoff->B[i] = NULL;
@@ -624,10 +604,10 @@ void update_tersoff_pointers(double *xi)
 
 #else /* !TERSOFFMOD */
 
-double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
+double calc_forces_tersoffmod(double* xi_opt, double* forces, int flag)
 {
   double tmpsum = 0.0, sum = 0.0;
-  const tersoff_t *ters = &g_pot.apot_table.tersoff;
+  const tersoff_t* ters = &g_pot.apot_table.tersoff;
 
 #ifndef MPI
   g_mpi.myconf = g_config.nconf;
@@ -654,19 +634,17 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
 
     /* region containing loop over configurations */
     {
-      atom_t *atom; /* pointer to current atom */
-      neigh_t *
-          neigh_j; /* pointer to current neighbor j (first neighbor loop) */
-      neigh_t *
-          neigh_k;    /* pointer to current neighbor k (second neighbor loop) */
-      angle_t *angle; /* pointer to current angular table */
-      int h;          /* counter for configurations */
-      int i;          /* counter for atoms */
-      int j;          /* counter for neighbors (first loop) */
-      int k;          /* counter for neighbors (second loop) */
-      int n_i;        /* index number of the ith atom */
-      int n_j;        /* index number of the jth atom */
-      int n_k;        /* index number of the kth atom */
+      atom_t* atom;     /* pointer to current atom */
+      neigh_t* neigh_j; /* pointer to current neighbor j (first neighbor loop) */
+      neigh_t* neigh_k; /* pointer to current neighbor k (second neighbor loop) */
+      angle_t* angle;   /* pointer to current angular table */
+      int h;            /* counter for configurations */
+      int i;            /* counter for atoms */
+      int j;            /* counter for neighbors (first loop) */
+      int k;            /* counter for neighbors (second loop) */
+      int n_i;          /* index number of the ith atom */
+      int n_j;          /* index number of the jth atom */
+      int n_k;          /* index number of the kth atom */
       int self, uf;
 #ifdef STRESS
       int us, stresses;
@@ -721,8 +699,7 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
 
         /* second loop: calculate cutoff function f_c for all neighbors */
         for (i = 0; i < g_config.inconf[h]; i++) {
-          atom =
-              g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
 
           /* loop over neighbors */
@@ -742,10 +719,9 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
                 neigh_j->f = 1.0;
                 neigh_j->df = 0.0;
               } else {
-                neigh_j->f =
-                    0.5 * (1.0 + 1.125 * cos(tmp_2) - 0.125 * cos(3.0 * tmp_2));
-                neigh_j->df = -0.5 * tmp_1 *
-                              (1.125 * sin(tmp_2) - 0.375 * sin(3.0 * tmp_2));
+                neigh_j->f = 0.5 * (1.0 + 1.125 * cos(tmp_2) - 0.125 * cos(3.0 * tmp_2));
+                neigh_j->df =
+                    -0.5 * tmp_1 * (1.125 * sin(tmp_2) - 0.375 * sin(3.0 * tmp_2));
               }
 
               /* calculate pair part f_c*A*exp(-lambda*r) and the derivative */
@@ -824,33 +800,25 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
                 if (neigh_k->r < *(ters->R2[col_k])) {
                   cos_theta = angle->cos;
                   dcos_j.x =
-                      (neigh_k->dist_r.x - neigh_j->dist_r.x * cos_theta) /
-                      neigh_j->r;
+                      (neigh_k->dist_r.x - neigh_j->dist_r.x * cos_theta) / neigh_j->r;
                   dcos_j.y =
-                      (neigh_k->dist_r.y - neigh_j->dist_r.y * cos_theta) /
-                      neigh_j->r;
+                      (neigh_k->dist_r.y - neigh_j->dist_r.y * cos_theta) / neigh_j->r;
                   dcos_j.z =
-                      (neigh_k->dist_r.z - neigh_j->dist_r.z * cos_theta) /
-                      neigh_j->r;
+                      (neigh_k->dist_r.z - neigh_j->dist_r.z * cos_theta) / neigh_j->r;
                   dcos_k.x =
-                      (neigh_j->dist_r.x - neigh_k->dist_r.x * cos_theta) /
-                      neigh_k->r;
+                      (neigh_j->dist_r.x - neigh_k->dist_r.x * cos_theta) / neigh_k->r;
                   dcos_k.y =
-                      (neigh_j->dist_r.y - neigh_k->dist_r.y * cos_theta) /
-                      neigh_k->r;
+                      (neigh_j->dist_r.y - neigh_k->dist_r.y * cos_theta) / neigh_k->r;
                   dcos_k.z =
-                      (neigh_j->dist_r.z - neigh_k->dist_r.z * cos_theta) /
-                      neigh_k->r;
+                      (neigh_j->dist_r.z - neigh_k->dist_r.z * cos_theta) / neigh_k->r;
 
                   /* g(theta) */
                   tmp_1 = *(ters->h[col_j]) - cos_theta;
                   tmp_2 = 1.0 / (*(ters->c3[col_j]) + tmp_1 * tmp_1);
-                  tmp_3 = *(ters->c4[col_j]) *
-                          exp(-*(ters->c5[col_j]) * tmp_1 * tmp_1);
+                  tmp_3 = *(ters->c4[col_j]) * exp(-*(ters->c5[col_j]) * tmp_1 * tmp_1);
 
                   g_theta = *(ters->c1[col_j]) +
-                            *(ters->c2[col_j]) * tmp_1 * tmp_1 * tmp_2 *
-                                (1.0 + tmp_3);
+                            *(ters->c2[col_j]) * tmp_1 * tmp_1 * tmp_2 * (1.0 + tmp_3);
                   dg_theta = 2.0 * *(ters->c2[col_j]) * tmp_1 * tmp_2 *
                              (*(ters->c5[col_j]) * tmp_1 * tmp_1 * tmp_3 -
                               *(ters->c3[col_j]) * tmp_2 * (1.0 + tmp_3));
@@ -858,11 +826,9 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
                   tmp_1 = neigh_j->r - neigh_k->r;
                   tmp_2 = *(ters->alpha[col_j]) * *(ters->beta[col_j]) *
                           pow(tmp_1, *(ters->beta[col_j]) - 1.0);
-                  tmp_3 = exp(*(ters->alpha[col_j]) *
-                              pow(tmp_1, *(ters->beta[col_j])));
+                  tmp_3 = exp(*(ters->alpha[col_j]) * pow(tmp_1, *(ters->beta[col_j])));
 
-                  dzeta_ik =
-                      (neigh_k->df - neigh_k->f * tmp_2) * g_theta * tmp_3;
+                  dzeta_ik = (neigh_k->df - neigh_k->f * tmp_2) * g_theta * tmp_3;
 
                   /* zeta */
                   tmp_4 = neigh_k->f * g_theta * tmp_3;
@@ -871,12 +837,9 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
                   dzeta_ij += tmp_4 * tmp_2;
                   dzeta_cos = neigh_k->f * dg_theta * tmp_3;
 
-                  neigh_k->dzeta.x =
-                      dzeta_cos * dcos_k.x + dzeta_ik * neigh_k->dist_r.x;
-                  neigh_k->dzeta.y =
-                      dzeta_cos * dcos_k.y + dzeta_ik * neigh_k->dist_r.y;
-                  neigh_k->dzeta.z =
-                      dzeta_cos * dcos_k.z + dzeta_ik * neigh_k->dist_r.z;
+                  neigh_k->dzeta.x = dzeta_cos * dcos_k.x + dzeta_ik * neigh_k->dist_r.x;
+                  neigh_k->dzeta.y = dzeta_cos * dcos_k.y + dzeta_ik * neigh_k->dist_r.y;
+                  neigh_k->dzeta.z = dzeta_cos * dcos_k.z + dzeta_ik * neigh_k->dist_r.z;
 
                   dzeta_i.x -= neigh_k->dzeta.x;
                   dzeta_i.y -= neigh_k->dzeta.y;
@@ -895,14 +858,13 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
               tmp_1 = pow(zeta, *(ters->eta[col_j]));
               b = pow(1.0 + tmp_1, -*(ters->delta[col_j]));
 
-              tmp_2 = 0.5 * b * *(ters->B[col_j]) *
-                      exp(-*(ters->mu[col_j]) * neigh_j->r);
+              tmp_2 = 0.5 * b * *(ters->B[col_j]) * exp(-*(ters->mu[col_j]) * neigh_j->r);
 
               if (0.0 == zeta)
                 tmp_3 = 0.0;
               else
-                tmp_3 = tmp_2 * neigh_j->f * *(ters->eta[col_j]) *
-                        *(ters->delta[col_j]) * tmp_1 / ((1.0 + tmp_1) * zeta);
+                tmp_3 = tmp_2 * neigh_j->f * *(ters->eta[col_j]) * *(ters->delta[col_j]) *
+                        tmp_1 / ((1.0 + tmp_1) * zeta);
 
               phi_val = -tmp_2;
               tmp_4 = -tmp_2 * (neigh_j->df - *(ters->mu[col_j]) * neigh_j->f);
@@ -931,14 +893,11 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
                 forces[stresses + 1] += tmp;
                 tmp = neigh_j->dist.z * force_j.z;
                 forces[stresses + 2] += tmp;
-                tmp = 0.5 * (neigh_j->dist.x * force_j.y +
-                             neigh_j->dist.y * force_j.x);
+                tmp = 0.5 * (neigh_j->dist.x * force_j.y + neigh_j->dist.y * force_j.x);
                 forces[stresses + 3] += tmp;
-                tmp = 0.5 * (neigh_j->dist.y * force_j.z +
-                             neigh_j->dist.z * force_j.y);
+                tmp = 0.5 * (neigh_j->dist.y * force_j.z + neigh_j->dist.z * force_j.y);
                 forces[stresses + 4] += tmp;
-                tmp = 0.5 * (neigh_j->dist.z * force_j.x +
-                             neigh_j->dist.x * force_j.z);
+                tmp = 0.5 * (neigh_j->dist.z * force_j.x + neigh_j->dist.x * force_j.z);
                 forces[stresses + 5] += tmp;
               }
 #endif        /* STRESS */
@@ -1016,8 +975,8 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
           for (i = 0; i < 6; i++) {
             forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
             forces[stresses + i] -= g_config.force_0[stresses + i];
-            tmpsum += g_config.conf_weight[h] * g_param.sweight *
-                      dsquare(forces[stresses + i]);
+            tmpsum +=
+                g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
           }
         }
 #endif /* STRESS */
@@ -1037,28 +996,24 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
     /* gather forces, energies, stresses */
     if (g_mpi.myid == 0) { /* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
-                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
+                  g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE,
-                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist,
-                  MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS,
-                  forces + g_calc.stress_p, g_mpi.conf_len, g_mpi.conf_dist,
-                  g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
     } else {
       /* forces */
-      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR,
-                  forces, g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf,
-                  MPI_DOUBLE, forces + g_calc.energy_p, g_mpi.conf_len,
-                  g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE,
+                  0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
       MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf,
@@ -1094,30 +1049,30 @@ double calc_forces_tersoffmod(double *xi_opt, double *forces, int flag)
  *
  ****************************************************************/
 
-void update_tersoff_pointers(double *xi)
+void update_tersoff_pointers(double* xi)
 {
   int i;
   int index = 2;
-  tersoff_t *tersoff = &g_pot.apot_table.tersoff;
+  tersoff_t* tersoff = &g_pot.apot_table.tersoff;
 
   /* allocate if this has not been done */
   if (0 == tersoff->init) {
-    tersoff->A = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->B = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->lambda = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->mu = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->eta = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->delta = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->alpha = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->beta = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->c1 = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->c2 = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->c3 = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->c4 = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->c5 = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->h = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->R1 = (double **)malloc(g_calc.paircol * sizeof(double *));
-    tersoff->R2 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    tersoff->A = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->B = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->lambda = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->mu = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->eta = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->delta = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->alpha = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->beta = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c1 = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c2 = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c3 = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c4 = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c5 = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->h = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->R1 = (double**)malloc(g_calc.paircol * sizeof(double*));
+    tersoff->R2 = (double**)malloc(g_calc.paircol * sizeof(double*));
     for (i = 0; i < g_calc.paircol; i++) {
       tersoff->A[i] = NULL;
       tersoff->B[i] = NULL;

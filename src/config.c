@@ -39,15 +39,15 @@
  *
  ****************************************************************/
 
-void read_config(char const *filename)
+void read_config(char const* filename)
 {
   config_state cstate;
 
   memset(&cstate, 0, sizeof(cstate));
 
   char buffer[1024];
-  char *ptr = NULL;
-  char *res = NULL;
+  char* ptr = NULL;
+  char* res = NULL;
 
   int i = 0;
   int j = 0;
@@ -57,19 +57,18 @@ void read_config(char const *filename)
   int with_forces = 0;
   int with_stresses = 0;
 
-  double *mindist = NULL;
+  double* mindist = NULL;
 
-  FILE *config_file = NULL;
+  FILE* config_file = NULL;
 
   fpos_t filepos;
 
   /* initialize elements array */
-  g_config.elements = (char **)malloc(g_param.ntypes * sizeof(char *));
-  if (g_config.elements == NULL)
-    error(1, "Cannot allocate memory for element names.");
+  g_config.elements = (char**)malloc(g_param.ntypes * sizeof(char*));
+  if (g_config.elements == NULL) error(1, "Cannot allocate memory for element names.");
   reg_for_free(g_config.elements, "elements");
   for (i = 0; i < g_param.ntypes; i++) {
-    g_config.elements[i] = (char *)malloc(3 * sizeof(char));
+    g_config.elements[i] = (char*)malloc(3 * sizeof(char));
     if (g_config.elements[i] == NULL)
       error(1, "Cannot allocate memory for %d. element name.\n", i + 1);
     reg_for_free(g_config.elements[i], "elements[%d]", i);
@@ -77,7 +76,7 @@ void read_config(char const *filename)
   }
 
   /* initialize minimum distance array */
-  mindist = (double *)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
+  mindist = (double*)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
   if (mindist == NULL) error(1, "Cannot allocate memory for minimal distance.");
 
   /* set maximum cutoff distance as starting value for mindist */
@@ -86,8 +85,8 @@ void read_config(char const *filename)
     for (j = 0; j < g_param.ntypes; j++) {
       k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                    : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
-      mindist[k] = MAX(g_config.rcut[i * g_param.ntypes + j],
-                       mindist[i * g_param.ntypes + j]);
+      mindist[k] =
+          MAX(g_config.rcut[i * g_param.ntypes + j], mindist[i * g_param.ntypes + j]);
     }
   }
 
@@ -97,7 +96,7 @@ void read_config(char const *filename)
   config_file = fopen(filename, "r");
   if (config_file == NULL) error(1, "Could not open file %s\n", filename);
 
-  printf("Reading the config file >> %s << and calculating neighbor lists ... ",
+  printf("Reading the config file >> %s << and calculating neighbor lists ... \n",
          filename);
   fflush(stdout);
 
@@ -112,8 +111,7 @@ void read_config(char const *filename)
       memset(&cstate, 0, sizeof(cstate));
 
       if (sscanf(res + 3, "%d %d", &cstate.atom_count, &cstate.use_force) < 2)
-        error(1, "%s: Error in atom number specification on line %d\n",
-              filename, line);
+        error(1, "%s: Error in atom number specification on line %d\n", filename, line);
     } else
       continue;
 
@@ -137,8 +135,7 @@ void read_config(char const *filename)
     for (i = g_config.natoms; i < g_config.natoms + cstate.atom_count; i++)
       init_atom_memory(g_config.atoms + i);
 
-    for (i = 0; i < g_param.ntypes; i++)
-      g_config.na_type[g_config.nconf][i] = 0;
+    for (i = 0; i < g_param.ntypes; i++) g_config.na_type[g_config.nconf][i] = 0;
 
     g_config.inconf[g_config.nconf] = cstate.atom_count;
     g_config.cnfstart[g_config.nconf] = g_config.natoms;
@@ -215,14 +212,12 @@ void read_config(char const *filename)
             cstate.cbox_o.z *= g_param.global_cell_scale;
           }
         } else
-          error(1, "%s: Error in box of contributing atoms, line %d\n",
-                filename, line);
+          error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
       }
 
       /* box of contributing particles: a */
       else if (strncmp(res + 1, "B_A", 3) == 0) {
-        if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_a.x, &cbox_a.y, &cbox_a.z) ==
-            3) {
+        if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_a.x, &cbox_a.y, &cbox_a.z) == 3) {
           have_contrib++;
           if (global_cell_scale != 1.0) {
             cbox_a.x *= global_cell_scale;
@@ -230,14 +225,12 @@ void read_config(char const *filename)
             cbox_a.z *= global_cell_scale;
           }
         } else
-          error(1, "%s: Error in box of contributing atoms, line %d\n",
-                filename, line);
+          error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
       }
 
       /* box of contributing particles: b */
       else if (strncmp(res + 1, "B_B", 3) == 0) {
-        if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_b.x, &cbox_b.y, &cbox_b.z) ==
-            3) {
+        if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_b.x, &cbox_b.y, &cbox_b.z) == 3) {
           have_contrib++;
           if (global_cell_scale != 1.0) {
             cbox_b.x *= global_cell_scale;
@@ -245,14 +238,12 @@ void read_config(char const *filename)
             cbox_b.z *= global_cell_scale;
           }
         } else
-          error(1, "%s: Error in box of contributing atoms, line %d\n",
-                filename, line);
+          error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
       }
 
       /* box of contributing particles: c */
       else if (strncmp(res + 1, "B_C", 3) == 0) {
-        if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_c.x, &cbox_c.y, &cbox_c.z) ==
-            3) {
+        if (sscanf(res + 5, "%lf %lf %lf\n", &cbox_c.x, &cbox_c.y, &cbox_c.z) == 3) {
           have_contrib++;
           if (global_cell_scale != 1.0) {
             cbox_c.x *= global_cell_scale;
@@ -260,16 +251,14 @@ void read_config(char const *filename)
             cbox_c.z *= global_cell_scale;
           }
         } else
-          error(1, "%s: Error in box of contributing atoms, line %d\n",
-                filename, line);
+          error(1, "%s: Error in box of contributing atoms, line %d\n", filename, line);
       }
 
       /* sphere of contributing particles */
       else if (strncmp(res + 1, "B_S", 3) == 0) {
         sphere_centers =
-            (vector *)realloc(sphere_centers, (n_spheres + 1) * sizeof(vector));
-        r_spheres =
-            (double *)realloc(r_spheres, (n_spheres + 1) * sizeof(double));
+            (vector*)realloc(sphere_centers, (n_spheres + 1) * sizeof(vector));
+        r_spheres = (double*)realloc(r_spheres, (n_spheres + 1) * sizeof(double));
         if (sscanf(res + 5, "%lf %lf %lf %lf\n", &sphere_centers[n_spheres].x,
                    &sphere_centers[n_spheres].y, &sphere_centers[n_spheres].z,
                    &r_spheres[n_spheres]) == 4) {
@@ -281,8 +270,8 @@ void read_config(char const *filename)
             r_spheres[n_spheres] *= global_cell_scale;
           }
         } else
-          error(1, "%s: Error in sphere of contributing atoms, line %d\n",
-                filename, line);
+          error(1, "%s: Error in sphere of contributing atoms, line %d\n", filename,
+                line);
       }
 #endif /* CONTRIB */
 
@@ -296,13 +285,11 @@ void read_config(char const *filename)
 
       /* configuration weight */
       else if (res[1] == 'W') {
-        if (sscanf(res + 3, "%lf\n", &(g_config.conf_weight[g_config.nconf])) !=
-            1)
-          error(1, "%s: Error in configuration weight on line %d\n", filename,
-                line);
+        if (sscanf(res + 3, "%lf\n", &(g_config.conf_weight[g_config.nconf])) != 1)
+          error(1, "%s: Error in configuration weight on line %d\n", filename, line);
         if (g_config.conf_weight[g_config.nconf] < 0.0)
-          error(1, "%s: The configuration weight is negative on line %d\n",
-                filename, line);
+          error(1, "%s: The configuration weight is negative on line %d\n", filename,
+                line);
       }
 
       /* chemical elements */
@@ -315,9 +302,8 @@ void read_config(char const *filename)
       /* read stress */
       else if (res[1] == 'S') {
         if (sscanf(res + 3, "%lf %lf %lf %lf %lf %lf\n", &(cstate.stresses->xx),
-                   &(cstate.stresses->yy), &(cstate.stresses->zz),
-                   &(cstate.stresses->xy), &(cstate.stresses->yz),
-                   &(cstate.stresses->zx)) == 6)
+                   &(cstate.stresses->yy), &(cstate.stresses->zz), &(cstate.stresses->xy),
+                   &(cstate.stresses->yz), &(cstate.stresses->zx)) == 6)
           cstate.have_stress = 1;
         else
           error(1, "Error in stress tensor on line %d\n", line);
@@ -332,16 +318,14 @@ void read_config(char const *filename)
     } while (res[1] != 'F');
 
     if (0 == cstate.have_energy)
-      error(1, "%s: missing energy in configuration %d!", filename,
-            g_config.nconf);
+      error(1, "%s: missing energy in configuration %d!", filename, g_config.nconf);
 
     if (!(cstate.h_box_x && cstate.h_box_y && cstate.h_box_z))
       error(1, "Incomplete box vectors for config %d!", g_config.nconf);
 
 #if defined(CONTRIB)
     if (have_contrib_box && have_contrib != 4)
-      error(1, "Incomplete box of contributing atoms for config %d!",
-            g_config.nconf);
+      error(1, "Incomplete box of contributing atoms for config %d!", g_config.nconf);
 #endif /* CONTRIB */
 
 #if defined(STRESS)
@@ -359,11 +343,11 @@ void read_config(char const *filename)
 
     /* read the atoms */
     for (i = 0; i < cstate.atom_count; i++) {
-      atom_t *atom = g_config.atoms + g_config.natoms + i;
+      atom_t* atom = g_config.atoms + g_config.natoms + i;
 
       if (7 > fscanf(config_file, "%d %lf %lf %lf %lf %lf %lf\n", &(atom->type),
-                     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z),
-                     &(atom->force.x), &(atom->force.y), &(atom->force.z)))
+                     &(atom->pos.x), &(atom->pos.y), &(atom->pos.z), &(atom->force.x),
+                     &(atom->force.y), &(atom->force.z)))
         error(1, "Corrupt configuration file on line %d\n", line + 1);
 
       line++;
@@ -375,13 +359,11 @@ void read_config(char const *filename)
       }
 
       if (atom->type >= g_param.ntypes || atom->type < 0)
-        error(
-            1,
-            "Corrupt configuration file on line %d: Incorrect atom type (%d)\n",
-            line, atom->type);
+        error(1, "Corrupt configuration file on line %d: Incorrect atom type (%d)\n",
+              line, atom->type);
 
-      atom->absforce = sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) +
-                            dsquare(atom->force.z));
+      atom->absforce =
+          sqrt(dsquare(atom->force.x) + dsquare(atom->force.y) + dsquare(atom->force.z));
 
       atom->conf = g_config.nconf;
 
@@ -413,8 +395,7 @@ void read_config(char const *filename)
     cstate.cell_scale.y = (int)ceil(g_config.rcutmax * iheight.y);
     cstate.cell_scale.z = (int)ceil(g_config.rcutmax * iheight.z);
 
-    if (cstate.cell_scale.x > 1 || cstate.cell_scale.y > 1 ||
-        cstate.cell_scale.z > 1) {
+    if (cstate.cell_scale.x > 1 || cstate.cell_scale.y > 1 || cstate.cell_scale.z > 1) {
       // TODO
       warning(
           "The box size of at least one configuration is smaller than the "
@@ -463,18 +444,18 @@ void read_config(char const *filename)
   fclose(config_file);
 
   /* the calculation of the neighbor lists is now complete */
-  printf("done\n");
+  printf("Reading the config file >> %s << and calculating neighbor lists ... done\n",
+         filename);
 
   /* calculate the total number of the atom types */
   g_config.na_type =
-      (int **)realloc(g_config.na_type, (g_config.nconf + 1) * sizeof(int *));
+      (int**)realloc(g_config.na_type, (g_config.nconf + 1) * sizeof(int*));
 
   reg_for_free(g_config.na_type, "na_type");
 
   if (NULL == g_config.na_type) error(1, "Cannot allocate memory for na_type");
 
-  g_config.na_type[g_config.nconf] =
-      (int *)malloc(g_param.ntypes * sizeof(int));
+  g_config.na_type[g_config.nconf] = (int*)malloc(g_param.ntypes * sizeof(int));
 
   reg_for_free(g_config.na_type[g_config.nconf], "na_type[%d]", g_config.nconf);
 
@@ -485,13 +466,12 @@ void read_config(char const *filename)
       g_config.na_type[g_config.nconf][j] += g_config.na_type[i][j];
 
   /* print diagnostic message */
-  printf("\nRead %d configurations (%d with forces, %d with stresses)\n",
-         g_config.nconf, with_forces, with_stresses);
+  printf("\nRead %d configurations (%d with forces, %d with stresses)\n", g_config.nconf,
+         with_forces, with_stresses);
   printf("with a total of %d atoms (", g_config.natoms);
   for (i = 0; i < g_param.ntypes; i++) {
     if (cstate.have_elements)
-      printf("%d %s (%.2f%%)", g_config.na_type[g_config.nconf][i],
-             g_config.elements[i],
+      printf("%d %s (%.2f%%)", g_config.na_type[g_config.nconf][i], g_config.elements[i],
              100.0 * g_config.na_type[g_config.nconf][i] / g_config.natoms);
     else
       printf("%d type %d (%.2f%%)", g_config.na_type[g_config.nconf][i], i,
@@ -541,10 +521,9 @@ void read_config(char const *filename)
   g_calc.mdim += g_config.nconf;     /* nconf limiting constraints */
   g_calc.mdim += 2 * g_param.ntypes; /* g_param.ntypes dummy constraints */
 #ifdef TBEAM
-  g_calc.mdim +=
-      2 * g_param.ntypes; /* additional dummy constraints for s-band */
-#endif                    /* TBEAM */
-#endif                    /* EAM || ADP || MEAM */
+  g_calc.mdim += 2 * g_param.ntypes; /* additional dummy constraints for s-band */
+#endif                               /* TBEAM */
+#endif                               /* EAM || ADP || MEAM */
 
 /* mdim has additional components for analytic potentials */
 #ifdef APOT
@@ -555,8 +534,7 @@ void read_config(char const *filename)
 #endif /* APOT */
 
   /* copy forces into single vector */
-  if (NULL ==
-      (g_config.force_0 = (double *)malloc(g_calc.mdim * sizeof(double))))
+  if (NULL == (g_config.force_0 = (double*)malloc(g_calc.mdim * sizeof(double))))
     error(1, "Cannot allocate force vector");
   reg_for_free(g_config.force_0, "force_0");
 
@@ -631,8 +609,8 @@ void read_config(char const *filename)
     g_pot.calc_pot.begin[i] = min * 0.95;
   }
 #ifdef TBEAM
-  for (i = g_calc.paircol + 2 * g_param.ntypes;
-       i < g_calc.paircol + 3 * g_param.ntypes; i++) {
+  for (i = g_calc.paircol + 2 * g_param.ntypes; i < g_calc.paircol + 3 * g_param.ntypes;
+       i++) {
     g_pot.apot_table.begin[i] = min * 0.95;
     g_pot.opt_pot.begin[i] = min * 0.95;
     g_pot.calc_pot.begin[i] = min * 0.95;
@@ -683,8 +661,7 @@ void read_config(char const *filename)
     g_pot.calc_pot.invstep[i] = 1.0 / g_pot.calc_pot.step[i];
     for (j = 0; j < APOT_STEPS; j++) {
       int index = i * APOT_STEPS + (i + 1) * 2 + j;
-      g_pot.calc_pot.xcoord[index] =
-          g_pot.calc_pot.begin[i] + j * g_pot.calc_pot.step[i];
+      g_pot.calc_pot.xcoord[index] = g_pot.calc_pot.begin[i] + j * g_pot.calc_pot.step[i];
     }
   }
 
@@ -705,32 +682,30 @@ void read_config(char const *filename)
  *
  ****************************************************************/
 
-void create_memory_for_config(config_state *cstate)
+void create_memory_for_config(config_state* cstate)
 {
   int i = 0;
 
   /* increase memory for this many additional atoms */
-  g_config.atoms = (atom_t *)realloc(
+  g_config.atoms = (atom_t*)realloc(
       g_config.atoms, (g_config.natoms + cstate->atom_count) * sizeof(atom_t));
 
   if (g_config.atoms == NULL) error(1, "Cannot allocate memory for atoms");
 
   for (i = 0; i < cstate->atom_count; i++) {
-    g_config.atoms[g_config.natoms + i].neigh =
-        (neigh_t *)malloc(sizeof(neigh_t));
+    g_config.atoms[g_config.natoms + i].neigh = (neigh_t*)malloc(sizeof(neigh_t));
     if (g_config.atoms[g_config.natoms + i].neigh == NULL)
       error(1, "Cannot allocate memory for neighbors");
     reg_for_free(g_config.atoms[g_config.natoms + i].neigh, "test neigh");
   }
 
   g_config.coheng =
-      (double *)realloc(g_config.coheng, (g_config.nconf + 1) * sizeof(double));
+      (double*)realloc(g_config.coheng, (g_config.nconf + 1) * sizeof(double));
 
-  if (g_config.coheng == NULL)
-    error(1, "Cannot allocate memory for cohesive energy");
+  if (g_config.coheng == NULL) error(1, "Cannot allocate memory for cohesive energy");
 
-  g_config.conf_weight = (double *)realloc(
-      g_config.conf_weight, (g_config.nconf + 1) * sizeof(double));
+  g_config.conf_weight =
+      (double*)realloc(g_config.conf_weight, (g_config.nconf + 1) * sizeof(double));
 
   if (g_config.conf_weight == NULL)
     error(1, "Cannot allocate memory for configuration weights");
@@ -738,50 +713,44 @@ void create_memory_for_config(config_state *cstate)
     g_config.conf_weight[g_config.nconf] = 1.0;
 
   g_config.volume =
-      (double *)realloc(g_config.volume, (g_config.nconf + 1) * sizeof(double));
+      (double*)realloc(g_config.volume, (g_config.nconf + 1) * sizeof(double));
 
   if (g_config.volume == NULL) error(1, "Cannot allocate memory for volume");
 
 #if defined(STRESS)
-  g_config.stress = (sym_tens *)realloc(
-      g_config.stress, (g_config.nconf + 1) * sizeof(sym_tens));
+  g_config.stress =
+      (sym_tens*)realloc(g_config.stress, (g_config.nconf + 1) * sizeof(sym_tens));
 
   if (g_config.stress == NULL) error(1, "Cannot allocate memory for stress");
 #endif /* STRESS */
 
-  g_config.inconf =
-      (int *)realloc(g_config.inconf, (g_config.nconf + 1) * sizeof(int));
+  g_config.inconf = (int*)realloc(g_config.inconf, (g_config.nconf + 1) * sizeof(int));
 
-  if (g_config.inconf == NULL)
-    error(1, "Cannot allocate memory for atoms in conf");
+  if (g_config.inconf == NULL) error(1, "Cannot allocate memory for atoms in conf");
 
   g_config.cnfstart =
-      (int *)realloc(g_config.cnfstart, (g_config.nconf + 1) * sizeof(int));
+      (int*)realloc(g_config.cnfstart, (g_config.nconf + 1) * sizeof(int));
 
-  if (g_config.cnfstart == NULL)
-    error(1, "Cannot allocate memory for start of conf");
+  if (g_config.cnfstart == NULL) error(1, "Cannot allocate memory for start of conf");
 
   g_config.useforce =
-      (int *)realloc(g_config.useforce, (g_config.nconf + 1) * sizeof(int));
+      (int*)realloc(g_config.useforce, (g_config.nconf + 1) * sizeof(int));
 
-  if (g_config.useforce == NULL)
-    error(1, "Cannot allocate memory for useforce");
+  if (g_config.useforce == NULL) error(1, "Cannot allocate memory for useforce");
 
 #if defined(STRESS)
   g_config.usestress =
-      (int *)realloc(g_config.usestress, (g_config.nconf + 1) * sizeof(int));
+      (int*)realloc(g_config.usestress, (g_config.nconf + 1) * sizeof(int));
 
-  if (g_config.usestress == NULL)
-    error(1, "Cannot allocate memory for usestress");
+  if (g_config.usestress == NULL) error(1, "Cannot allocate memory for usestress");
 #endif /* STRESS */
 
   g_config.na_type =
-      (int **)realloc(g_config.na_type, (g_config.nconf + 2) * sizeof(int *));
+      (int**)realloc(g_config.na_type, (g_config.nconf + 2) * sizeof(int*));
 
   if (g_config.na_type == NULL) error(1, "Cannot allocate memory for na_type");
 
-  g_config.na_type[g_config.nconf] =
-      (int *)malloc(g_param.ntypes * sizeof(int));
+  g_config.na_type[g_config.nconf] = (int*)malloc(g_param.ntypes * sizeof(int));
 
   reg_for_free(g_config.na_type[g_config.nconf], "na_type[%d]", g_config.nconf);
 
@@ -795,10 +764,10 @@ void create_memory_for_config(config_state *cstate)
  *
  ****************************************************************/
 
-void read_chemical_elements(char *psrc, config_state *cstate)
+void read_chemical_elements(char* psrc, config_state* cstate)
 {
   int i = 0;
-  char const *pchar = strtok(psrc + 3, " \t");
+  char const* pchar = strtok(psrc + 3, " \t");
 
   if (!cstate->have_elements) {
     while (pchar != NULL && i < g_param.ntypes) {
@@ -815,8 +784,8 @@ void read_chemical_elements(char *psrc, config_state *cstate)
           strcpy(g_config.elements[i], pchar);
           cstate->num_fixed_elements++;
         } else {
-          error(0, "Mismatch found in configuration %d, line %d.\n",
-                cstate->config, cstate->line);
+          error(0, "Mismatch found in configuration %d, line %d.\n", cstate->config,
+                cstate->line);
           error(0, "Expected element >> %s << but found element >> %s <<.\n",
                 g_config.elements[i], pchar);
           error(0, "You can use list_config to identify that configuration.\n");
@@ -835,7 +804,7 @@ void read_chemical_elements(char *psrc, config_state *cstate)
  *
  ****************************************************************/
 
-void init_atom_memory(atom_t *atom)
+void init_atom_memory(atom_t* atom)
 {
   atom->type = 0;
   atom->num_neigh = 0;
@@ -914,7 +883,7 @@ void init_atom_memory(atom_t *atom)
  *
  ****************************************************************/
 
-void init_neigh_memory(neigh_t *neigh)
+void init_neigh_memory(neigh_t* neigh)
 {
   int i = 0;
 
@@ -979,7 +948,7 @@ void init_neigh_memory(neigh_t *neigh)
  ****************************************************************/
 
 #ifdef THREEBODY
-void init_angle_memory(angle_t *angle)
+void init_angle_memory(angle_t* angle)
 {
   angle->cos = 0.0;
 
@@ -1000,7 +969,7 @@ void init_angle_memory(angle_t *angle)
  *
  ****************************************************************/
 
-void init_neighbors(config_state *cstate, double *mindist)
+void init_neighbors(config_state* cstate, double* mindist)
 {
   int i = 0;
   int j = 0;
@@ -1028,12 +997,12 @@ void init_neighbors(config_state *cstate, double *mindist)
         for (iy = -cstate->cell_scale.y; iy <= cstate->cell_scale.y; iy++) {
           for (iz = -cstate->cell_scale.z; iz <= cstate->cell_scale.z; iz++) {
             if ((i == j) && (ix == 0) && (iy == 0) && (iz == 0)) continue;
-            dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x +
-                   iz * cstate->box_z.x;
-            dd.y = d.y + ix * cstate->box_x.y + iy * cstate->box_y.y +
-                   iz * cstate->box_z.y;
-            dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z +
-                   iz * cstate->box_z.z;
+            dd.x =
+                d.x + ix * cstate->box_x.x + iy * cstate->box_y.x + iz * cstate->box_z.x;
+            dd.y =
+                d.y + ix * cstate->box_x.y + iy * cstate->box_y.y + iz * cstate->box_z.y;
+            dd.z =
+                d.z + ix * cstate->box_x.z + iy * cstate->box_y.z + iz * cstate->box_z.z;
             double r = sqrt(SPROD(dd, dd));
             int type1 = g_config.atoms[i].type;
             int type2 = g_config.atoms[j].type;
@@ -1043,16 +1012,16 @@ void init_neighbors(config_state *cstate, double *mindist)
 
               if (r <= g_config.rmin[type1 * g_param.ntypes + type2]) {
                 warning("Configuration %i: Distance %i\n", cstate->config, r);
-                warning(" atom %d (type %d) at pos: %f %f %f\n",
-                        i - g_config.natoms, type1, g_config.atoms[i].pos.x,
-                        g_config.atoms[i].pos.y, g_config.atoms[i].pos.z);
-                warning(" atom %d (type %d) at pos: %f %f %f\n",
-                        j - g_config.natoms, type2, dd.x, dd.y, dd.z);
+                warning(" atom %d (type %d) at pos: %f %f %f\n", i - g_config.natoms,
+                        type1, g_config.atoms[i].pos.x, g_config.atoms[i].pos.y,
+                        g_config.atoms[i].pos.z);
+                warning(" atom %d (type %d) at pos: %f %f %f\n", j - g_config.natoms,
+                        type2, dd.x, dd.y, dd.z);
                 short_distance = 1;
               }
-              g_config.atoms[i].neigh = (neigh_t *)realloc(
-                  g_config.atoms[i].neigh,
-                  (g_config.atoms[i].num_neigh + 1) * sizeof(neigh_t));
+              g_config.atoms[i].neigh =
+                  (neigh_t*)realloc(g_config.atoms[i].neigh,
+                                    (g_config.atoms[i].num_neigh + 1) * sizeof(neigh_t));
               dd.x /= r;
               dd.y /= r;
               dd.z /= r;
@@ -1083,11 +1052,10 @@ void init_neighbors(config_state *cstate, double *mindist)
 
               /* pair potential */
               if (!short_distance) {
-                int col = (type1 <= type2)
-                              ? type1 * g_param.ntypes + type2 -
-                                    ((type1 * (type1 + 1)) / 2)
-                              : type2 * g_param.ntypes + type1 -
-                                    ((type2 * (type2 + 1)) / 2);
+                int col =
+                    (type1 <= type2)
+                        ? type1 * g_param.ntypes + type2 - ((type1 * (type1 + 1)) / 2)
+                        : type2 * g_param.ntypes + type1 - ((type2 * (type2 + 1)) / 2);
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 0);
 
 #if defined EAM || defined ADP || defined MEAM
@@ -1146,7 +1114,7 @@ void init_neighbors(config_state *cstate, double *mindist)
  *
  ****************************************************************/
 
-void set_neighbor_slot(neigh_t *neighbor, int col, double r, int store_slot)
+void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
 {
   int slot = 0;
   double step = 0.0;
@@ -1159,8 +1127,7 @@ void set_neighbor_slot(neigh_t *neighbor, int col, double r, int store_slot)
     if (rr < 0) {
       // TODO: rephrase
       error(0, "The distance %f is smaller than the beginning\n", r);
-      error(0, "of the potential #%d (r_begin=%f).\n", col,
-            g_pot.calc_pot.begin[col]);
+      error(0, "of the potential #%d (r_begin=%f).\n", col, g_pot.calc_pot.begin[col]);
       fflush(stdout);
       error(1, "Short distance!");
     }
@@ -1208,7 +1175,7 @@ void set_neighbor_slot(neigh_t *neighbor, int col, double r, int store_slot)
  *
  ****************************************************************/
 
-void init_angles(config_state *cstate)
+void init_angles(config_state* cstate)
 {
 /* compute the angular part */
 /* For TERSOFF we create a full neighbor list, for all other potentials only a
@@ -1217,7 +1184,7 @@ void init_angles(config_state *cstate)
   for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; i++) {
     int nnn = g_config.atoms[i].num_neigh;
     int ijk = 0;
-    g_config.atoms[i].angle_part = (angle_t *)malloc(sizeof(angle_t));
+    g_config.atoms[i].angle_part = (angle_t*)malloc(sizeof(angle_t));
 #ifdef TERSOFF
     for (int j = 0; j < nnn; j++) {
 #else
@@ -1231,29 +1198,26 @@ void init_angles(config_state *cstate)
       for (int k = j + 1; k < nnn; k++) {
 #endif /* TERSOFF */
 
-        g_config.atoms[i].angle_part = (angle_t *)realloc(
-            g_config.atoms[i].angle_part, (ijk + 1) * sizeof(angle_t));
+        g_config.atoms[i].angle_part =
+            (angle_t*)realloc(g_config.atoms[i].angle_part, (ijk + 1) * sizeof(angle_t));
 
         init_angle_memory(g_config.atoms[i].angle_part + ijk);
 
-        double ccos = g_config.atoms[i].neigh[j].dist_r.x *
-                          g_config.atoms[i].neigh[k].dist_r.x +
-                      g_config.atoms[i].neigh[j].dist_r.y *
-                          g_config.atoms[i].neigh[k].dist_r.y +
-                      g_config.atoms[i].neigh[j].dist_r.z *
-                          g_config.atoms[i].neigh[k].dist_r.z;
+        double ccos =
+            g_config.atoms[i].neigh[j].dist_r.x * g_config.atoms[i].neigh[k].dist_r.x +
+            g_config.atoms[i].neigh[j].dist_r.y * g_config.atoms[i].neigh[k].dist_r.y +
+            g_config.atoms[i].neigh[j].dist_r.z * g_config.atoms[i].neigh[k].dist_r.z;
 
         g_config.atoms[i].angle_part[ijk].cos = ccos;
 
-        int col =
-            2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
+        int col = 2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
 
         if (g_pot.format == 0 || g_pot.format == 3) {
           if ((fabs(ccos) - 1.0) > 1e-10) {
             int type1 = g_config.atoms[i].type;
             int type2 = g_config.atoms[i].neigh[j].type;
-            printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col,
-                   type1, type2);
+            printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col, type1,
+                   type2);
             fflush(stdout);
             error(1, "cos out of range, it is strange!");
           }
@@ -1293,7 +1257,7 @@ void init_angles(config_state *cstate)
  *
  ****************************************************************/
 
-double make_box(config_state *cstate)
+double make_box(config_state* cstate)
 {
   double volume = 0;
 
@@ -1336,7 +1300,7 @@ void write_pair_distribution_file()
 
   if (1 == g_param.write_pair) {
     char pairname[255];
-    FILE *pairfile;
+    FILE* pairfile;
 #ifdef APOT
     int pair_steps = APOT_STEPS / 2;
 #else
@@ -1349,8 +1313,7 @@ void write_pair_distribution_file()
     strcpy(pairname, g_files.config);
     strcat(pairname, ".pair");
     pairfile = fopen(pairname, "w");
-    fprintf(pairfile, "# radial distribution file for %d potential(s)\n",
-            g_calc.paircol);
+    fprintf(pairfile, "# radial distribution file for %d potential(s)\n", g_calc.paircol);
 
     for (i = 0; i < g_calc.paircol * pair_steps; i++) pair_table[i] = 0.0;
 
@@ -1369,8 +1332,7 @@ void write_pair_distribution_file()
             pos = (int)(g_config.atoms[i].neigh[j].r / pair_dist[k]);
 #ifdef DEBUG
             if (g_config.atoms[i].neigh[j].r <= 1) {
-              warning("Short distance (%f) found.\n",
-                      g_config.atoms[i].neigh[j].r);
+              warning("Short distance (%f) found.\n", g_config.atoms[i].neigh[j].r);
               warning("\tatom=%d neighbor=%d\n", i, j);
             }
 #endif /* DEBUG */
@@ -1385,8 +1347,7 @@ void write_pair_distribution_file()
     for (k = 0; k < g_calc.paircol; k++) {
       for (i = 0; i < pair_steps; i++) {
         pair_table[k * pair_steps + i] /= max_count;
-        fprintf(pairfile, "%f %f\n", i * pair_dist[k],
-                pair_table[k * pair_steps + i]);
+        fprintf(pairfile, "%f %f\n", i * pair_dist[k], pair_table[k * pair_steps + i]);
       }
       if (k != (g_calc.paircol - 1)) fprintf(pairfile, "\n\n");
     }
@@ -1402,7 +1363,7 @@ void write_pair_distribution_file()
  *
  ****************************************************************/
 
-void print_minimal_distances_matrix(const double *mindist)
+void print_minimal_distances_matrix(const double* mindist)
 {
   int i = 0;
   int j = 0;
@@ -1516,14 +1477,11 @@ void update_slots(void)
   for (i = 0; i < g_config.natoms; i++) {
     for (j = 0; j < g_config.atoms[i].num_angles; j++) {
       double rr = g_config.atoms[i].angle_part[j].cos + 1.1;
-      int col =
-          2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
-      g_config.atoms[i].angle_part[j].slot =
-          (int)(rr * g_pot.calc_pot.invstep[col]);
+      int col = 2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
+      g_config.atoms[i].angle_part[j].slot = (int)(rr * g_pot.calc_pot.invstep[col]);
       g_config.atoms[i].angle_part[j].step = g_pot.calc_pot.step[col];
       g_config.atoms[i].angle_part[j].shift =
-          (rr -
-           g_config.atoms[i].angle_part[j].slot * g_pot.calc_pot.step[col]) *
+          (rr - g_config.atoms[i].angle_part[j].slot * g_pot.calc_pot.step[col]) *
           g_pot.calc_pot.invstep[col];
       /* move slot to the right potential */
       g_config.atoms[i].angle_part[j].slot += g_pot.calc_pot.first[col];
@@ -1548,7 +1506,7 @@ void update_slots(void)
  *
  ****************************************************************/
 
-void update_neighbor_slots(neigh_t *neighbor, double r, int neighbor_slot)
+void update_neighbor_slots(neigh_t* neighbor, double r, int neighbor_slot)
 {
   int col = neighbor->col[neighbor_slot];
 

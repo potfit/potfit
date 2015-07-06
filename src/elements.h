@@ -44,9 +44,9 @@ void init_elements();
 double ele_mass_from_number(int num);
 
 /* get mass from name */
-double ele_mass_from_name(char *name);
+double ele_mass_from_name(char* name);
 
 /* get number from name */
-int ele_number_from_name(char *name);
+int ele_number_from_name(char* name);
 
 #endif /* ELEMENTS_H */

@@ -52,9 +52,9 @@
 #define GAUSS(a) (1.0 / sqrt(2 * M_PI) * (exp(-((a) * (a)) / 2.0)))
 
 #ifdef APOT
-void randomize_parameter(int, double *, double *);
+void randomize_parameter(int, double*, double*);
 #else
-void makebump(double *, double, double, int);
+void makebump(double*, double, double, int);
 #endif /* APOT */
 
 #ifdef APOT
@@ -72,16 +72,14 @@ void makebump(double *, double, double, int);
  *
  ****************************************************************/
 
-void randomize_parameter(int n, double *xi, double *v)
+void randomize_parameter(int n, double* xi, double* v)
 {
   double temp, rand;
   int done = 0, count = 0;
   double min, max;
 
-  min = g_pot.apot_table
-            .pmin[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
-  max = g_pot.apot_table
-            .pmax[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
+  min = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
+  max = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
 
   if (v[n] > max - min) v[n] = max - min;
 
@@ -110,7 +108,7 @@ void randomize_parameter(int n, double *xi, double *v)
  *
  ****************************************************************/
 
-void makebump(double *x, double width, double height, int center)
+void makebump(double* x, double width, double height, int center)
 {
   int i, j = 0;
 
@@ -124,8 +122,7 @@ void makebump(double *x, double width, double height, int center)
     }
   }
   for (i = 1; i <= 4.0 * width; i++) {
-    if ((center - i >= 0) &&
-        (g_todo.idx[center - i] >= g_pot.opt_pot.first[j])) {
+    if ((center - i >= 0) && (g_todo.idx[center - i] >= g_pot.opt_pot.first[j])) {
       x[g_todo.idx[center - i]] += GAUSS((double)i / width) * height;
     }
   }
@@ -144,26 +141,25 @@ void makebump(double *x, double width, double height, int center)
  *
  ****************************************************************/
 
-void run_simulated_annealing(double *xi)
+void run_simulated_annealing(double* xi)
 {
   int h = 0, j = 0, k = 0, n, m = 0; /* counters */
   int auto_T = 0;
   int loopagain; /* loop flag */
-#if defined(RESCALE) && !defined(APOT) && \
-    (defined(EAM) || defined(ADP) || defined(MEAM))
+#if defined(RESCALE) && !defined(APOT) && (defined(EAM) || defined(ADP) || defined(MEAM))
   int rescaleMe = 1;  /* rescaling flag */
 #endif                /* APOT */
   double T = -1.0;    /* Temperature */
   double F, Fopt, F2; /* Fn value */
-  double *Fvar;       /* backlog of Fn vals */
-  double *v;          /* step vector */
-  double *xopt, *xi2; /* optimal value */
-  double *fxi1;       /* two latest force vectors */
+  double* Fvar;       /* backlog of Fn vals */
+  double* v;          /* step vector */
+  double* xopt, *xi2; /* optimal value */
+  double* fxi1;       /* two latest force vectors */
 #ifndef APOT
   double width, height; /* gaussian bump size */
 #endif                  /* APOT */
-  FILE *ff;             /* exit flagfile */
-  int *naccept;         /* number of accepted changes in dir */
+  FILE* ff;             /* exit flagfile */
+  int* naccept;         /* number of accepted changes in dir */
 
   /* check for automatic temperature */
   if (tolower(g_param.anneal_temp[0]) == 'a') {
@@ -173,8 +169,7 @@ void run_simulated_annealing(double *xi)
     if (T < 0) error(1, "The value for anneal_temp (%f) is invalid!\n", T);
   }
 
-  if (T == 0.0 && auto_T != 1)
-    return; /* don't anneal if starttemp equal zero */
+  if (T == 0.0 && auto_T != 1) return; /* don't anneal if starttemp equal zero */
 
   Fvar = vect_double(KMAX + 5 + NEPS); /* Backlog of old F values */
   v = vect_double(g_calc.ndim);
@@ -185,7 +180,7 @@ void run_simulated_annealing(double *xi)
 #ifndef APOT
   // Optimum potential x-coord arrays
   int col, col2;
-  double *optbegin, *optend, *optstep, *optinvstep, *optxcoord;
+  double* optbegin, *optend, *optstep, *optinvstep, *optxcoord;
   optbegin = vect_double(g_param.ntypes);
   optend = vect_double(g_param.ntypes);
   optstep = vect_double(g_param.ntypes);
@@ -209,8 +204,8 @@ void run_simulated_annealing(double *xi)
   // optimum potential in the future, and the current potential
   // could be rescaled differently from the optimum
   col2 = 0;
-  for (col = g_calc.paircol + g_param.ntypes;
-       col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
+  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes;
+       ++col) {
     optbegin[col2] = g_pot.opt_pot.begin[col];
     optend[col2] = g_pot.opt_pot.end[col];
     optstep[col2] = g_pot.opt_pot.step[col];
@@ -308,8 +303,7 @@ void run_simulated_annealing(double *xi)
                 optinvstep[col2] = g_pot.opt_pot.invstep[col];
 
                 // Loop through each spline knot of F
-                for (n = g_pot.opt_pot.first[col]; n <= g_pot.opt_pot.last[col];
-                     ++n)
+                for (n = g_pot.opt_pot.first[col]; n <= g_pot.opt_pot.last[col]; ++n)
                   optxcoord[n] = g_pot.opt_pot.xcoord[n];
 
                 ++col2;
@@ -423,8 +417,8 @@ void run_simulated_annealing(double *xi)
 #if defined MEAM && !defined APOT
   // Need to put back xcoord of optimum F potential
   col2 = 0;
-  for (col = g_calc.paircol + g_param.ntypes;
-       col < g_calc.paircol + 2 * g_param.ntypes; ++col) {
+  for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes;
+       ++col) {
     g_pot.opt_pot.begin[col] = optbegin[col2];
     g_pot.opt_pot.end[col] = optend[col2];
     g_pot.opt_pot.step[col] = optstep[col2];

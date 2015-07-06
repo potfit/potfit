@@ -57,39 +57,39 @@
 
 #include "utils.h"
 
-int *vect_int(long dim)
+int* vect_int(long dim)
 {
-  int *vect, i;
-  vect = (int *)malloc((size_t)(dim * sizeof(int)));
+  int* vect, i;
+  vect = (int*)malloc((size_t)(dim * sizeof(int)));
   if (vect == NULL) error(1, "Error in integer vector allocation");
   for (i = 0; i < dim; i++) vect[i] = 0;
 
   return vect;
 }
 
-double *vect_double(long dim)
+double* vect_double(long dim)
 {
-  double *vect;
+  double* vect;
   int i;
-  vect = (double *)malloc((size_t)(dim * sizeof(double)));
+  vect = (double*)malloc((size_t)(dim * sizeof(double)));
   if (vect == NULL) error(1, "Error in double vector allocation");
   for (i = 0; i < dim; i++) vect[i] = 0.0;
 
   return vect;
 }
 
-double **mat_double(long rowdim, long coldim)
+double** mat_double(long rowdim, long coldim)
 {
   long i;
-  double **matrix;
+  double** matrix;
 
   /* matrix: array of array of pointers */
   /* matrix: pointer to rows */
-  matrix = (double **)malloc((size_t)rowdim * sizeof(double *));
+  matrix = (double**)malloc((size_t)rowdim * sizeof(double*));
   if (matrix == NULL) error(1, "Error in double matrix row allocation");
 
   /* matrix[0]: pointer to elements */
-  matrix[0] = (double *)malloc((size_t)rowdim * coldim * sizeof(double));
+  matrix[0] = (double*)malloc((size_t)rowdim * coldim * sizeof(double));
   if (matrix[0] == NULL) error(1, "Error in double matrix element allocation");
 
   for (i = 1; i < rowdim; i++) matrix[i] = matrix[i - 1] + coldim;
@@ -101,29 +101,29 @@ double **mat_double(long rowdim, long coldim)
   return matrix;
 }
 
-void free_vect_double(double *vect) { free(vect); }
+void free_vect_double(double* vect) { free(vect); }
 
-void free_vect_int(int *vect) { free(vect); }
+void free_vect_int(int* vect) { free(vect); }
 
-void free_mat_double(double **matrix)
+void free_mat_double(double** matrix)
 {
   free(matrix[0]);
   free(matrix);
 }
 
-void reg_for_free(void *p, const char *name, ...)
+void reg_for_free(void* p, const char* name, ...)
 {
   va_list ap;
 
-  g_memory.pointer_names = (char **)realloc(
-      g_memory.pointer_names, (g_memory.num_pointers + 1) * sizeof(char *));
+  g_memory.pointer_names = (char**)realloc(g_memory.pointer_names,
+                                           (g_memory.num_pointers + 1) * sizeof(char*));
   g_memory.pointer_names[g_memory.num_pointers] =
-      (char *)malloc((strlen(name) + 10) * sizeof(char));
+      (char*)malloc((strlen(name) + 10) * sizeof(char));
   va_start(ap, name);
   vsprintf(g_memory.pointer_names[g_memory.num_pointers], name, ap);
   va_end(ap);
-  g_memory.pointers = (void **)realloc(
-      g_memory.pointers, (g_memory.num_pointers + 1) * sizeof(void *));
+  g_memory.pointers =
+      (void**)realloc(g_memory.pointers, (g_memory.num_pointers + 1) * sizeof(void*));
   g_memory.pointers[g_memory.num_pointers] = p;
   g_memory.num_pointers++;
 }
@@ -158,7 +158,7 @@ vector vec_prod(vector u, vector v)
  *
  ****************************************************************/
 
-void power_1(double *result, double *x, double *y)
+void power_1(double* result, double* x, double* y)
 {
 #ifdef _32BIT
   *result = pow(*x, *y);
@@ -173,7 +173,7 @@ void power_1(double *result, double *x, double *y)
 #endif /* _32BIT */
 }
 
-void power_m(int dim, double *result, double *x, double *y)
+void power_m(int dim, double* result, double* x, double* y)
 {
 #ifdef _32BIT
   int i = 0;
@@ -199,7 +199,7 @@ void power_m(int dim, double *result, double *x, double *y)
  *
  ****************************************************************/
 
-void quicksort(double *x, int low, int high, double **p)
+void quicksort(double* x, int low, int high, double** p)
 {
   int newIndex;
   if (low < high) {
@@ -210,7 +210,7 @@ void quicksort(double *x, int low, int high, double **p)
   }
 }
 
-int partition(double *x, int low, int high, int index, double **p)
+int partition(double* x, int low, int high, int index, double** p)
 {
   int i, store;
   double ind_val = x[index], temp;
@@ -232,7 +232,7 @@ int partition(double *x, int low, int high, int index, double **p)
   return store;
 }
 
-void swap_population(double *a, double *b)
+void swap_population(double* a, double* b)
 {
   int i;
   double temp;

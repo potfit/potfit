@@ -51,10 +51,10 @@
 #define TAU_1 0.1   /* probability for changing F */
 #define TAU_2 0.1   /* probability for changing CR */
 
-void init_population(double **, double *, double *);
+void init_population(double**, double*, double*);
 
 #ifdef APOT
-void opposite_check(double **, double *, int);
+void opposite_check(double**, double*, int);
 #endif /* APOT */
 
 /****************************************************************
@@ -63,7 +63,7 @@ void opposite_check(double **, double *, int);
  *
  ****************************************************************/
 
-void init_population(double **pop, double *xi, double *cost)
+void init_population(double** pop, double* xi, double* cost)
 {
   int i, j;
   double temp, max, min, val;
@@ -78,10 +78,10 @@ void init_population(double **pop, double *xi, double *cost)
     for (j = 0; j < g_calc.ndim; j++) {
       val = xi[g_todo.idx[j]];
 #ifdef APOT
-      min = g_pot.apot_table
-                .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
-      max = g_pot.apot_table
-                .pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+      min =
+          g_pot.apot_table.pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+      max =
+          g_pot.apot_table.pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
       /* initialize with normal distribution */
       temp = normdist() / 3.0;
       if (fabs(temp) > 1) temp /= fabs(temp);
@@ -113,26 +113,25 @@ void init_population(double **pop, double *xi, double *cost)
  *
  ****************************************************************/
 
-void opposite_check(double **P, double *costP, int init)
+void opposite_check(double** P, double* costP, int init)
 {
   int i, j;
   double fxi[g_calc.mdim];
   double max, min;
   double minp[g_calc.ndim], maxp[g_calc.ndim];
-  static double *tot_cost; /* cost of two populations */
-  static double **tot_P;   /* two populations */
+  static double* tot_cost; /* cost of two populations */
+  static double** tot_P;   /* two populations */
 
   /* allocate memory if not done yet */
   if (tot_P == NULL) {
-    tot_P = (double **)malloc(2 * NP * sizeof(double *));
-    if (tot_P == NULL)
-      error(1, "Could not allocate memory for opposition vector!\n");
+    tot_P = (double**)malloc(2 * NP * sizeof(double*));
+    if (tot_P == NULL) error(1, "Could not allocate memory for opposition vector!\n");
     for (i = 0; i < 2 * NP; i++) {
-      tot_P[i] = (double *)malloc(D * sizeof(double));
+      tot_P[i] = (double*)malloc(D * sizeof(double));
       for (j = 0; j < D; j++) tot_P[i][j] = 0.0;
     }
   }
-  if (tot_cost == NULL) tot_cost = (double *)malloc(2 * NP * sizeof(double));
+  if (tot_cost == NULL) tot_cost = (double*)malloc(2 * NP * sizeof(double));
   for (i = 0; i < 2 * NP; i++) tot_cost[i] = 0.0;
 
   if (!init) {
@@ -154,12 +153,10 @@ void opposite_check(double **P, double *costP, int init)
   for (i = 0; i < NP; i++) {
     for (j = 0; j < g_calc.ndim; j++) {
       if (init) {
-        min =
-            g_pot.apot_table
-                .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
-        max =
-            g_pot.apot_table
-                .pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+        min = g_pot.apot_table
+                  .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+        max = g_pot.apot_table
+                  .pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
       } else {
         min = minp[j];
         max = maxp[j];
@@ -172,8 +169,7 @@ void opposite_check(double **P, double *costP, int init)
 
   /* calculate cost of opposite population */
   for (i = 0; i < NP; i++) tot_cost[i] = costP[i];
-  for (i = NP; i < 2 * NP; i++)
-    tot_cost[i] = (*g_calc_forces)(tot_P[i], fxi, 0);
+  for (i = NP; i < 2 * NP; i++) tot_cost[i] = (*g_calc_forces)(tot_P[i], fxi, 0);
 
   /* evaluate the NP best individuals from both populations */
   /* sort with quicksort and return NP best indivuals */
@@ -192,7 +188,7 @@ void opposite_check(double **P, double *costP, int init)
  *
  ****************************************************************/
 
-void run_differential_evolution(double *xi)
+void run_differential_evolution(double* xi)
 {
   int a, b;      /* store randomly picked numbers */
                  //  int 	c; 			/* additional vector */
@@ -214,13 +210,13 @@ void run_differential_evolution(double *xi)
   double pmin = 0.0; /* lower bound for parameter */
   double pmax = 0.0; /* upper bound for parameter */
 #endif               /* APOT */
-  double *best;      /* best configuration */
-  double *cost;      /* cost values for all configurations */
-  double *fxi;       /* force vector */
-  double *trial;     /* current trial configuration */
-  double **x1;       /* current population */
-  double **x2;       /* next generation */
-  FILE *ff;          /* exit flagfile */
+  double* best;      /* best configuration */
+  double* cost;      /* cost values for all configurations */
+  double* fxi;       /* force vector */
+  double* trial;     /* current trial configuration */
+  double** x1;       /* current population */
+  double** x2;       /* next generation */
+  FILE* ff;          /* exit flagfile */
 
   if (g_param.evo_threshold == 0.0) return;
 
@@ -228,18 +224,18 @@ void run_differential_evolution(double *xi)
   fxi = vect_double(g_calc.mdim);
 
   /* vector with new configuration */
-  trial = (double *)malloc(D * sizeof(double));
+  trial = (double*)malloc(D * sizeof(double));
 
   /* allocate memory for all configurations */
-  x1 = (double **)malloc(NP * sizeof(double *));
-  x2 = (double **)malloc(NP * sizeof(double *));
-  best = (double *)malloc(D * sizeof(double));
-  cost = (double *)malloc(NP * sizeof(double));
+  x1 = (double**)malloc(NP * sizeof(double*));
+  x2 = (double**)malloc(NP * sizeof(double*));
+  best = (double*)malloc(D * sizeof(double));
+  cost = (double*)malloc(NP * sizeof(double));
   if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
     error(1, "Could not allocate memory for population vector!\n");
   for (i = 0; i < NP; i++) {
-    x1[i] = (double *)malloc(D * sizeof(double));
-    x2[i] = (double *)malloc(D * sizeof(double));
+    x1[i] = (double*)malloc(D * sizeof(double));
+    x2[i] = (double*)malloc(D * sizeof(double));
     if (x1[i] == NULL || x2[i] == NULL)
       error(1, "Could not allocate memory for population vector!\n");
     for (j = 0; j < D; j++) {
@@ -324,10 +320,10 @@ void run_differential_evolution(double *xi)
 /*          temp = x1[e][j] + (1 - trial[D-2]) * (best[j] - x1[e][j]) +*/
 /*            trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);*/
 #ifdef APOT
-          pmin = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[j]]
-                                      [g_pot.apot_table.idxparam[j]];
-          pmax = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[j]]
-                                      [g_pot.apot_table.idxparam[j]];
+          pmin = g_pot.apot_table
+                     .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+          pmax = g_pot.apot_table
+                     .pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
           if (temp > pmax) {
             trial[g_todo.idx[j]] = pmax;
           } else if (temp < pmin) {
@@ -349,8 +345,8 @@ void run_differential_evolution(double *xi)
         if (*g_files.tempfile != '\0') {
           for (j = 0; j < g_calc.ndim; j++)
 #ifdef APOT
-            g_pot.apot_table.values[g_pot.apot_table.idxpot[j]]
-                                   [g_pot.apot_table.idxparam[j]] =
+            g_pot.apot_table
+                .values[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]] =
                 trial[g_todo.idx[j]];
           write_pot_table_potfit(g_files.tempfile);
 #else
@@ -381,8 +377,7 @@ void run_differential_evolution(double *xi)
 #endif /* APOT */
     avg = 0.0;
     for (i = 0; i < NP; i++) avg += cost[i];
-    printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP),
-           max - min);
+    printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP), max - min);
     fflush(stdout);
     for (i = 0; i < NP; i++)
       for (j = 0; j < D; j++) x1[i][j] = x2[i][j];

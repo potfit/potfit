@@ -61,8 +61,7 @@ void init_calc_table3();
  *
  ****************************************************************/
 
-void read_pot_table3(char const* potential_filename, FILE* pfile,
-                     potential_state* pstate)
+void read_pot_table3(char const* potential_filename, FILE* pfile, potential_state* pstate)
 {
   int nvals[pstate->num_pots];
 
@@ -178,8 +177,8 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
   }
 
   /* read EAM embedding function F(n) */
-  for (int i = g_calc.paircol + g_param.ntypes;
-       i < g_calc.paircol + 2 * g_param.ntypes; i++) {
+  for (int i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
+       i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
         error(1, "Premature end of potential file %s", pstate->filename);
@@ -380,8 +379,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
 // to remove degeneracy of f*f*g where f' = f/b and g' = b^2*g
 #ifndef MEAMf
       if ((!g_pot.invar_pot[i]) &&
-          (j < nvals[i] - 1 &&
-           (j != 0 || i != g_calc.paircol + 2 * g_param.ntypes)))
+          (j < nvals[i] - 1 && (j != 0 || i != g_calc.paircol + 2 * g_param.ntypes)))
 #else
       if (!invar_pot[i])
 #endif /* MEAMf */

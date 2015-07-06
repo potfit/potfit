@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -44,10 +44,11 @@
 #include "random.h"
 #include "utils.h"
 
-void read_input_files(int argc, char **argv);
+void read_input_files(int argc, char** argv);
 void allocate_global_variables();
-void start_mpi_worker(double *force);
+void start_mpi_worker(double* force);
 void free_global_variables();
+void init_interaction_name(const char* name);
 
 potfit_calculation g_calc;
 potfit_configurations g_config;
@@ -64,15 +65,14 @@ potfit_unknown g_todo;
  *
  ****************************************************************/
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   allocate_global_variables();
 
 #if defined(MPI)
   if (init_mpi(&argc, &argv) != MPI_SUCCESS) return EXIT_FAILURE;
 #else
-  printf("This is %s compiled on %s, %s.\n\n", POTFIT_VERSION, __DATE__,
-         __TIME__);
+  printf("This is %s compiled on %s, %s.\n\n", POTFIT_VERSION, __DATE__, __TIME__);
 #endif  // MPI
 
   read_input_files(argc, argv);
@@ -97,10 +97,9 @@ int main(int argc, char **argv)
 
   /* main force vector, all forces, energies, stresses, ... will be stored here
    */
-  double *force = (double *)malloc(g_calc.mdim * sizeof(double));
+  double* force = (double*)malloc(g_calc.mdim * sizeof(double));
 
-  if (force == NULL)
-    error(1, "Could not allocate memory for main force vector.");
+  if (force == NULL) error(1, "Could not allocate memory for main force vector.");
 
   memset(force, 0, g_calc.mdim * sizeof(double));
 
@@ -206,7 +205,7 @@ int main(int argc, char **argv)
  *
  ****************************************************************/
 
-void read_input_files(int argc, char **argv)
+void read_input_files(int argc, char** argv)
 {
   // only root process reads input files
   if (g_mpi.myid == 0) {
@@ -238,6 +237,10 @@ void read_input_files(int argc, char **argv)
 
 void allocate_global_variables()
 {
+  memset(&g_calc, 0, sizeof(g_calc));
+  memset(&g_config, 0, sizeof(g_config));
+  memset(&g_files, 0, sizeof(g_files));
+
   g_mpi.myid = 0;
   g_mpi.num_cpus = 1;
   g_mpi.firstatom = 0;
@@ -251,67 +254,55 @@ void allocate_global_variables()
   g_mpi.conf_len = NULL;
 #endif
 
+  memset(&g_param, 0, sizeof(g_param));
+
+  g_param.global_cell_scale = 1.0;
+
+  g_pot.gradient = NULL;
+  g_pot.invar_pot = NULL;
+  g_pot.format = -1;
+  g_pot.have_invar = 0;
+  memset(&g_pot.calc_pot, 0, sizeof(g_pot.calc_pot));
+  memset(&g_pot.opt_pot, 0, sizeof(g_pot.opt_pot));
+#if defined(APOT)
+  g_pot.smooth_pot = NULL;
+  g_pot.cp_start = 0;
+  g_pot.global_idx = 0;
+  g_pot.global_pot = 0;
+  g_pot.have_globals = 0;
+  g_pot.calc_list = NULL;
+  g_pot.compnodelist = NULL;
+  memset(&g_pot.apot_table, 0, sizeof(g_pot.apot_table));
+#endif  // APOT
+
   g_memory.pointer_names = NULL;
   g_memory.num_pointers = 0;
   g_memory.pointers = NULL;
   g_memory.u_address = NULL;
 
-  g_files.config = NULL;
-  g_files.distfile = NULL;
-  g_files.endpot = NULL;
-  g_files.flagfile = NULL;
-  g_files.imdpot = NULL;
-  g_files.maxchfile = NULL;
-  g_files.output_prefix = NULL;
-  g_files.output_lammps = NULL;
-  g_files.plotfile = NULL;
-  g_files.plotpointfile = NULL;
-  g_files.startpot = NULL;
-  g_files.tempfile = NULL;
-
 #if defined(PAIR)
-  g_todo.interaction_name = malloc(5 * sizeof(char));
-  strncpy(g_todo.interaction_name, "PAIR", 4);
-  g_todo.interaction_name[4] = '\0';
+  init_interaction_name("PAIR");
 #elif defined(EAM) && !defined(COULOMB)
 #if !defined(TBEAM)
-  g_todo.interaction_name = malloc(4 * sizeof(char));
-  strncpy(g_todo.interaction_name, "EAM", 3);
-  g_todo.interaction_name[3] = '\0';
+  init_interaction_name("EAM");
 #else
-  g_todo.interaction_name = malloc(6 * sizeof(char));
-  strncpy(g_todo.interaction_name, "TBEAM", 5);
-  g_todo.interaction_name[5] = '\0';
+  init_interaction_name("TBEAM");
 #endif /* TBEAM */
 #elif defined(ADP)
-  g_todo.interaction_name = malloc(6 * sizeof(char));
-  strncpy(g_todo.interaction_name, "TBEAM", 5);
-  g_todo.interaction_name[5] = '\0';
+  init_interaction_name("ADP");
 #elif defined(COULOMB) && !defined(EAM)
-  g_todo.interaction_name = malloc(7 * sizeof(char));
-  strncpy(g_todo.interaction_name, "ELSTAT", 6);
-  g_todo.interaction_name[6] = '\0';
+  init_interaction_name("ELSTAT");
 #elif defined(COULOMB) && defined(EAM)
-  g_todo.interaction_name = malloc(11 * sizeof(char));
-  strncpy(g_todo.interaction_name, "EAM_ELSTAT", 10);
-  g_todo.interaction_name[10] = '\0';
+  init_interaction_name("EAM_ELSTAT");
 #elif defined(MEAM)
-  g_todo.interaction_name = malloc(5 * sizeof(char));
-  strncpy(g_todo.interaction_name, "MEAM", 4);
-  g_todo.interaction_name[4] = '\0';
+  init_interaction_name("MEAM");
 #elif defined(STIWEB)
-  g_todo.interaction_name = malloc(7 * sizeof(char));
-  strncpy(g_todo.interaction_name, "STIWEB", 6);
-  g_todo.interaction_name[6] = '\0';
+  init_interaction_name("STIWEB");
 #elif defined(TERSOFF)
 #if defined(TERSOFFMOD)
-  g_todo.interaction_name = malloc(11 * sizeof(char));
-  strncpy(g_todo.interaction_name, "TERSOFFMOD", 10);
-  g_todo.interaction_name[10] = '\0';
+  init_interaction_name("TERSOFFMOD");
 #else
-  g_todo.interaction_name = malloc(8 * sizeof(char));
-  strncpy(g_todo.interaction_name, "TERSOFF", 7);
-  g_todo.interaction_name[7] = '\0';
+  init_interaction_name("TERSOFF");
 #endif /* TERSOFFMOD */
 #endif /* interaction type */
 }
@@ -322,7 +313,7 @@ void allocate_global_variables()
  *
  ****************************************************************/
 
-void start_mpi_worker(double *force)
+void start_mpi_worker(double* force)
 {
   /* Select correct spline interpolation and other functions */
   /* Root process has done this earlier */
@@ -333,12 +324,12 @@ void start_mpi_worker(double *force)
   g_calc_forces(g_pot.opt_pot.table, force, 0);
 #else
   g_calc_forces(g_pot.calc_pot.table, force, 0);
-#endif /* APOT */
+#endif  // APOT
 }
 
 /****************************************************************
  *
- *  destroy_global_variables -- de-allocate memory of global variables
+ *  free_global_variables -- de-allocate memory of global variables
  *
  ****************************************************************/
 
@@ -362,11 +353,25 @@ void free_global_variables()
 
 /****************************************************************
  *
+ *  init_interaction_name
+ *
+ ****************************************************************/
+
+void init_interaction_name (const char *name)
+{
+  int len = strlen(name);
+  g_todo.interaction_name = malloc((len + 1) * sizeof(char));
+  strncpy(g_todo.interaction_name, name, len);
+  g_todo.interaction_name[len] = '\0';
+}
+
+/****************************************************************
+ *
  *  error -- complain and abort
  *
  ****************************************************************/
 
-void error(int done, const char *msg, ...)
+void error(int done, const char* msg, ...)
 {
   va_list ap;
 
@@ -397,7 +402,7 @@ void error(int done, const char *msg, ...)
  *
  ****************************************************************/
 
-void warning(const char *msg, ...)
+void warning(const char* msg, ...)
 {
   va_list ap;
 

@@ -33,13 +33,13 @@
 #include "functions.h"
 #include "potential_input.h"
 
-void read_pot_line_F(char const *pbuf, potential_state *pstate);
-void read_pot_line_T(char const *pbuf, potential_state *pstate);
-void read_pot_line_I(char *pbuf, potential_state *pstate);
-void read_pot_line_G(char *pbuf, potential_state *pstate);
-void read_pot_line_C(char const *pbuf, potential_state *pstate);
+void read_pot_line_F(char const* pbuf, potential_state* pstate);
+void read_pot_line_T(char const* pbuf, potential_state* pstate);
+void read_pot_line_I(char* pbuf, potential_state* pstate);
+void read_pot_line_G(char* pbuf, potential_state* pstate);
+void read_pot_line_C(char const* pbuf, potential_state* pstate);
 
-void allocate_memory_for_potentials(potential_state *pstate);
+void allocate_memory_for_potentials(potential_state* pstate);
 
 void calculate_cutoffs();
 void read_maxch_file();
@@ -50,12 +50,12 @@ void read_maxch_file();
  *
  ****************************************************************/
 
-void read_pot_table(char const *potential_filename)
+void read_pot_table(char const* potential_filename)
 {
   char buffer[1024];
-  char *res = NULL;
+  char* res = NULL;
 
-  FILE *pfile;
+  FILE* pfile;
 
   potential_state pstate;
 
@@ -78,12 +78,10 @@ void read_pot_table(char const *potential_filename)
     /* read one line */
     res = fgets(buffer, 1024, pfile);
 
-    if (NULL == res)
-      error(1, "Unexpected end of file in %s", potential_filename);
+    if (NULL == res) error(1, "Unexpected end of file in %s", potential_filename);
 
     /* check if it is a header line */
-    if (buffer[0] != '#')
-      error(1, "Header corrupt in file %s", potential_filename);
+    if (buffer[0] != '#') error(1, "Header corrupt in file %s", potential_filename);
 
     switch (buffer[1]) {
       case 'C':
@@ -113,8 +111,7 @@ void read_pot_table(char const *potential_filename)
 
   /* do we have a format in the header? */
   if (!pstate.have_format)
-    error(1, "Format not specified in header of potential file %s",
-          potential_filename);
+    error(1, "Format not specified in header of potential file %s", potential_filename);
 
   allocate_memory_for_potentials(&pstate);
 
@@ -198,11 +195,10 @@ void read_pot_table(char const *potential_filename)
  *
  ****************************************************************/
 
-void read_pot_line_F(char const *pbuf, potential_state *pstate)
+void read_pot_line_F(char const* pbuf, potential_state* pstate)
 {
   /* format complete? */
-  if (2 != sscanf((char const *)(pbuf + 2), "%d %d", &g_pot.format,
-                  &pstate->num_pots))
+  if (2 != sscanf((char const*)(pbuf + 2), "%d %d", &g_pot.format, &pstate->num_pots))
     error(1, "Corrupt format header line in file %s", pstate->filename);
 
 #if !defined(APOT)
@@ -216,8 +212,7 @@ void read_pot_line_F(char const *pbuf, potential_state *pstate)
   if (g_pot.format != 0)
     printf(" - Potential file format %d detected\n", g_pot.format);
   else
-    printf(" - Potential file format %d (analytic potentials) detected\n",
-           g_pot.format);
+    printf(" - Potential file format %d (analytic potentials) detected\n", g_pot.format);
 
   /* only pair potentials for
     * - pair interactions
@@ -262,13 +257,12 @@ void read_pot_line_F(char const *pbuf, potential_state *pstate)
   }
   /* recognized format? */
   if ((g_pot.format != 0) && (g_pot.format != 3) && (g_pot.format != 4))
-    error(1, "Unrecognized potential format specified for file %s",
-          pstate->filename);
+    error(1, "Unrecognized potential format specified for file %s", pstate->filename);
 
-  g_pot.gradient = (int *)malloc(npots * sizeof(int));
-  g_pot.invar_pot = (int *)malloc(npots * sizeof(int));
+  g_pot.gradient = (int*)malloc(npots * sizeof(int));
+  g_pot.invar_pot = (int*)malloc(npots * sizeof(int));
 #if defined(APOT)
-  g_pot.smooth_pot = (int *)malloc(npots * sizeof(int));
+  g_pot.smooth_pot = (int*)malloc(npots * sizeof(int));
 #endif /* APOT */
 
   memset(g_pot.gradient, 0, npots * sizeof(int));
@@ -287,16 +281,15 @@ void read_pot_line_F(char const *pbuf, potential_state *pstate)
  *
  ****************************************************************/
 
-void read_pot_line_T(char const *pbuf, potential_state *pstate)
+void read_pot_line_T(char const* pbuf, potential_state* pstate)
 {
-  char *pchar = strchr(pbuf + 3, '\n');
+  char* pchar = strchr(pbuf + 3, '\n');
 
   if (pchar != NULL) *pchar = '\0';
 
   if (strcmp(pbuf + 3, g_todo.interaction_name) != 0) {
     error(0, "Wrong potential type found in potential file!\n");
-    error(0, "This binary only supports %s potentials.\n",
-          g_todo.interaction_name);
+    error(0, "This binary only supports %s potentials.\n", g_todo.interaction_name);
     error(1, "Your potential file contains a %s potential.\n", pbuf + 3);
   }
 }
@@ -308,11 +301,11 @@ void read_pot_line_T(char const *pbuf, potential_state *pstate)
  *
  ****************************************************************/
 
-void read_pot_line_I(char *pbuf, potential_state *pstate)
+void read_pot_line_I(char* pbuf, potential_state* pstate)
 {
   int have_invar = 0;
   int i = 0;
-  char *str = NULL;
+  char* str = NULL;
 
   if (pstate->have_format) {
 #if defined(APOT)
@@ -347,7 +340,7 @@ void read_pot_line_I(char *pbuf, potential_state *pstate)
  *
  ****************************************************************/
 
-void read_pot_line_G(char *pbuf, potential_state *pstate)
+void read_pot_line_G(char* pbuf, potential_state* pstate)
 {
 #if !defined(APOT)
   int i = 0;
@@ -355,7 +348,7 @@ void read_pot_line_G(char *pbuf, potential_state *pstate)
   if (pstate->have_format) {
     /* gradient complete */
     for (i = 0; i < pstate->num_pots; i++) {
-      char *str = strtok(((i == 0) ? pbuf + 2 : NULL), " \t\r\n");
+      char* str = strtok(((i == 0) ? pbuf + 2 : NULL), " \t\r\n");
 
       if (str == NULL)
         error(1, "Not enough items in #G header line.");
@@ -375,7 +368,7 @@ void read_pot_line_G(char *pbuf, potential_state *pstate)
  *
  ****************************************************************/
 
-void read_pot_line_C(char const *pbuf, potential_state *pstate)
+void read_pot_line_C(char const* pbuf, potential_state* pstate)
 {
   // TODO
 }
@@ -387,90 +380,87 @@ void read_pot_line_C(char const *pbuf, potential_state *pstate)
  *
  ****************************************************************/
 
-void allocate_memory_for_potentials(potential_state *pstate)
+void allocate_memory_for_potentials(potential_state* pstate)
 {
-  pot_table_t *pt = &g_pot.opt_pot;
+  pot_table_t* pt = &g_pot.opt_pot;
   int size = pstate->num_pots;
 
   /* allocate info block of function table */
   pt->len = 0;
   pt->ncols = size;
-  pt->begin = (double *)malloc(size * sizeof(double));
-  pt->end = (double *)malloc(size * sizeof(double));
-  pt->step = (double *)malloc(size * sizeof(double));
-  pt->invstep = (double *)malloc(size * sizeof(double));
-  pt->first = (int *)malloc(size * sizeof(int));
-  pt->last = (int *)malloc(size * sizeof(int));
+  pt->begin = (double*)malloc(size * sizeof(double));
+  pt->end = (double*)malloc(size * sizeof(double));
+  pt->step = (double*)malloc(size * sizeof(double));
+  pt->invstep = (double*)malloc(size * sizeof(double));
+  pt->first = (int*)malloc(size * sizeof(int));
+  pt->last = (int*)malloc(size * sizeof(int));
   if ((pt->begin == NULL) || (pt->end == NULL) || (pt->step == NULL) ||
       (pt->invstep == NULL) || (pt->first == NULL) || (pt->last == NULL))
-    error(1, "Cannot allocate info block for potential table %s",
-          pstate->filename);
+    error(1, "Cannot allocate info block for potential table %s", pstate->filename);
 
 #if defined(APOT)
-  apot_table_t *apt = &g_pot.apot_table;
+  apot_table_t* apt = &g_pot.apot_table;
 
   /* allocate memory for analytic potential table */
   apt->number = size;
   apt->total_par = 0;
 
-  apt->n_par = (int *)malloc(size * sizeof(int));
-  apt->begin = (double *)malloc(size * sizeof(double));
-  apt->end = (double *)malloc(size * sizeof(double));
-  apt->param_name = (char ***)malloc(size * sizeof(char **));
-  apt->fvalue = (fvalue_pointer *)malloc(size * sizeof(fvalue_pointer));
+  apt->n_par = (int*)malloc(size * sizeof(int));
+  apt->begin = (double*)malloc(size * sizeof(double));
+  apt->end = (double*)malloc(size * sizeof(double));
+  apt->param_name = (char***)malloc(size * sizeof(char**));
+  apt->fvalue = (fvalue_pointer*)malloc(size * sizeof(fvalue_pointer));
 
 #if defined(PAIR)
   if (g_param.enable_cp) {
-    apt->values = (double **)malloc((size + 1) * sizeof(double *));
-    apt->values[size] = (double *)malloc(g_param.ntypes * sizeof(double));
-    apt->invar_par = (int **)malloc(size * sizeof(int *));
+    apt->values = (double**)malloc((size + 1) * sizeof(double*));
+    apt->values[size] = (double*)malloc(g_param.ntypes * sizeof(double));
+    apt->invar_par = (int**)malloc(size * sizeof(int*));
     apt->chempot = apt->values[size];
-    apt->pmin = (double **)malloc((size + 1) * sizeof(double *));
-    apt->pmin[size] = (double *)malloc(g_param.ntypes * sizeof(double));
-    apt->pmax = (double **)malloc((size + 1) * sizeof(double *));
-    apt->pmax[size] = (double *)malloc(g_param.ntypes * sizeof(double));
+    apt->pmin = (double**)malloc((size + 1) * sizeof(double*));
+    apt->pmin[size] = (double*)malloc(g_param.ntypes * sizeof(double));
+    apt->pmax = (double**)malloc((size + 1) * sizeof(double*));
+    apt->pmax[size] = (double*)malloc(g_param.ntypes * sizeof(double));
   } else {
-    apt->values = (double **)malloc(size * sizeof(double *));
-    apt->invar_par = (int **)malloc(size * sizeof(int *));
-    apt->pmin = (double **)malloc(size * sizeof(double *));
-    apt->pmax = (double **)malloc(size * sizeof(double *));
+    apt->values = (double**)malloc(size * sizeof(double*));
+    apt->invar_par = (int**)malloc(size * sizeof(int*));
+    apt->pmin = (double**)malloc(size * sizeof(double*));
+    apt->pmax = (double**)malloc(size * sizeof(double*));
   }
 #endif
 
 #if defined(COULOMB)
-  apt->ratio = (double *)malloc(g_param.ntypes * sizeof(double));
-  apt->values = (double **)malloc((size + 5) * sizeof(double *));
-  apt->param_name = (char ***)malloc((size + 5) * sizeof(char **));
-  apt->pmin = (double **)malloc((size + 5) * sizeof(double *));
-  apt->pmax = (double **)malloc((size + 5) * sizeof(double *));
-  apt->invar_par = (int **)malloc((size + 5) * sizeof(int *));
+  apt->ratio = (double*)malloc(g_param.ntypes * sizeof(double));
+  apt->values = (double**)malloc((size + 5) * sizeof(double*));
+  apt->param_name = (char***)malloc((size + 5) * sizeof(char**));
+  apt->pmin = (double**)malloc((size + 5) * sizeof(double*));
+  apt->pmax = (double**)malloc((size + 5) * sizeof(double*));
+  apt->invar_par = (int**)malloc((size + 5) * sizeof(int*));
 
-  apt->values[size] = (double *)malloc((g_param.ntypes - 1) * sizeof(double));
-  apt->param_name[size] =
-      (char **)malloc((g_param.ntypes - 1) * sizeof(char *));
-  apt->pmin[size] = (double *)malloc((g_param.ntypes - 1) * sizeof(double));
-  apt->pmax[size] = (double *)malloc((g_param.ntypes - 1) * sizeof(double));
-  apt->invar_par[size] = (int *)malloc((g_param.ntypes - 1) * sizeof(int));
+  apt->values[size] = (double*)malloc((g_param.ntypes - 1) * sizeof(double));
+  apt->param_name[size] = (char**)malloc((g_param.ntypes - 1) * sizeof(char*));
+  apt->pmin[size] = (double*)malloc((g_param.ntypes - 1) * sizeof(double));
+  apt->pmax[size] = (double*)malloc((g_param.ntypes - 1) * sizeof(double));
+  apt->invar_par[size] = (int*)malloc((g_param.ntypes - 1) * sizeof(int));
 
-  apt->values[size + 1] = (double *)malloc(sizeof(double));
-  apt->param_name[size + 1] = (char **)malloc(sizeof(char *));
-  apt->pmin[size + 1] = (double *)malloc(sizeof(double));
-  apt->pmax[size + 1] = (double *)malloc(sizeof(double));
-  apt->invar_par[size + 1] = (int *)malloc(sizeof(int));
+  apt->values[size + 1] = (double*)malloc(sizeof(double));
+  apt->param_name[size + 1] = (char**)malloc(sizeof(char*));
+  apt->pmin[size + 1] = (double*)malloc(sizeof(double));
+  apt->pmax[size + 1] = (double*)malloc(sizeof(double));
+  apt->invar_par[size + 1] = (int*)malloc(sizeof(int));
 
-  apt->values[size + 2] = (double *)malloc(g_param.ntypes * sizeof(double));
-  apt->param_name[size + 2] = (char **)malloc(g_param.ntypes * sizeof(char *));
-  apt->pmin[size + 2] = (double *)malloc(g_param.ntypes * sizeof(double));
-  apt->pmax[size + 2] = (double *)malloc(g_param.ntypes * sizeof(double));
-  apt->invar_par[size + 2] = (int *)malloc(g_param.ntypes * sizeof(int));
+  apt->values[size + 2] = (double*)malloc(g_param.ntypes * sizeof(double));
+  apt->param_name[size + 2] = (char**)malloc(g_param.ntypes * sizeof(char*));
+  apt->pmin[size + 2] = (double*)malloc(g_param.ntypes * sizeof(double));
+  apt->pmax[size + 2] = (double*)malloc(g_param.ntypes * sizeof(double));
+  apt->invar_par[size + 2] = (int*)malloc(g_param.ntypes * sizeof(int));
 
   for (int i = 3; i < 5; i++) {
-    apt->values[size + i] = (double *)malloc(g_calc.paircol * sizeof(double));
-    apt->param_name[size + i] =
-        (char **)malloc(g_calc.paircol * sizeof(char *));
-    apt->pmin[size + i] = (double *)malloc(g_calc.paircol * sizeof(double));
-    apt->pmax[size + i] = (double *)malloc(g_calc.paircol * sizeof(double));
-    apt->invar_par[size + i] = (int *)malloc(g_calc.paircol * sizeof(int));
+    apt->values[size + i] = (double*)malloc(g_calc.paircol * sizeof(double));
+    apt->param_name[size + i] = (char**)malloc(g_calc.paircol * sizeof(char*));
+    apt->pmin[size + i] = (double*)malloc(g_calc.paircol * sizeof(double));
+    apt->pmax[size + i] = (double*)malloc(g_calc.paircol * sizeof(double));
+    apt->invar_par[size + i] = (int*)malloc(g_calc.paircol * sizeof(int));
   }
 
   apt->charge = apt->values[size];
@@ -482,10 +472,9 @@ void allocate_memory_for_potentials(potential_state *pstate)
 #endif /* DIPOLE */
 #endif /* COULOMB */
 
-  apt->names = (char **)malloc(size * sizeof(char *));
+  apt->names = (char**)malloc(size * sizeof(char*));
 
-  for (int i = 0; i < size; i++)
-    apt->names[i] = (char *)malloc(20 * sizeof(char));
+  for (int i = 0; i < size; i++) apt->names[i] = (char*)malloc(20 * sizeof(char));
 
   if ((apt->n_par == NULL) || (apt->begin == NULL) || (apt->end == NULL) ||
       (apt->fvalue == NULL) || (apt->names == NULL) || (apt->pmin == NULL) ||
@@ -506,20 +495,20 @@ void calculate_cutoffs()
 {
   const int n = g_param.ntypes;
 
-  pot_table_t *pt = &g_pot.opt_pot;
+  pot_table_t* pt = &g_pot.opt_pot;
 
-  g_config.rmin = (double *)malloc(n * n * sizeof(double));
+  g_config.rmin = (double*)malloc(n * n * sizeof(double));
 
   if (NULL == g_config.rmin) error(1, "Cannot allocate rmin");
 
-  g_config.rcut = (double *)malloc(n * n * sizeof(double));
+  g_config.rcut = (double*)malloc(n * n * sizeof(double));
 
   if (NULL == g_config.rcut) error(1, "Cannot allocate rcut");
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      int k = (i <= j) ? i * n + j - ((i * (i + 1)) / 2)
-                       : j * n + i - ((j * (j + 1)) / 2);
+      int k =
+          (i <= j) ? i * n + j - ((i * (i + 1)) / 2) : j * n + i - ((j * (j + 1)) / 2);
       g_config.rmin[i * n + j] = pt->begin[k];
       g_config.rcut[i * n + j] = pt->end[k];
     }
@@ -560,7 +549,7 @@ void read_maxch_file()
   if (g_param.usemaxch) {
     int i = 0;
 
-    FILE *pfile = NULL;
+    FILE* pfile = NULL;
 
     /* open file */
     pfile = fopen(g_files.maxchfile, "r");
@@ -568,9 +557,9 @@ void read_maxch_file()
     if (pfile == NULL) error(1, "Could not open file %s\n", g_files.maxchfile);
 
     /* read maximal changes file */
-    g_todo.maxchange = (double *)malloc(g_pot.opt_pot.len * sizeof(double));
+    g_todo.maxchange = (double*)malloc(g_pot.opt_pot.len * sizeof(double));
 
-    double *val = g_todo.maxchange;
+    double* val = g_todo.maxchange;
 
     for (i = 0; i < g_pot.opt_pot.len; i++) {
       if (1 > fscanf(pfile, " %lf\n", val))
@@ -592,11 +581,10 @@ void read_maxch_file()
  *
  ****************************************************************/
 
-void update_apot_table(double *xi)
+void update_apot_table(double* xi)
 {
   for (int i = 0; i < g_calc.ndim; i++)
-    g_pot.apot_table
-        .values[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]] =
+    g_pot.apot_table.values[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]] =
         xi[g_todo.idx[i]];
   if (g_pot.have_globals) {
     for (int i = 0; i < g_pot.apot_table.globals; i++) {
@@ -615,13 +603,13 @@ void update_apot_table(double *xi)
  *
  ****************************************************************/
 
-void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
+void update_calc_table(double* xi_opt, double* xi_calc, int do_all)
 {
   //   int   i, j, k, m, n, change;
   //   double f, h = 0;
 
-  double *val = xi_opt;
-  double *list = g_pot.calc_list + 2;
+  double* val = xi_opt;
+  double* list = g_pot.calc_list + 2;
 
   int h = 0;
 
@@ -642,8 +630,7 @@ void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
       if (h == 0) error(1, "The cutoff parameter for potential %d is 0!", i);
     }
 
-    (*val) =
-        apot_grad(g_pot.calc_pot.begin[i], val + 2, g_pot.apot_table.fvalue[i]);
+    (*val) = apot_grad(g_pot.calc_pot.begin[i], val + 2, g_pot.apot_table.fvalue[i]);
 
     val += 2;
 
@@ -664,18 +651,16 @@ void update_calc_table(double *xi_opt, double *xi_calc, int do_all)
 
         g_pot.apot_table.fvalue[i](g_pot.calc_pot.xcoord[k], val, &f);
 
-        *(xi_calc + k) = g_pot.smooth_pot[i]
-                             ? f * cutoff(g_pot.calc_pot.xcoord[k],
-                                          g_pot.apot_table.end[i], h)
-                             : f;
+        *(xi_calc + k) =
+            g_pot.smooth_pot[i]
+                ? f * cutoff(g_pot.calc_pot.xcoord[k], g_pot.apot_table.end[i], h)
+                : f;
 
         if (isnan(f) || isnan(*(xi_calc + k))) {
 #if defined(DEBUG)
           error(0, "Potential value was nan or inf. Aborting.\n");
-          error(0, "This occured in potential %d (%s)\n", i,
-                g_pot.apot_table.names[i]);
-          error(0, "at distance r=%f with the parameters:\n",
-                g_pot.calc_pot.xcoord[k]);
+          error(0, "This occured in potential %d (%s)\n", i, g_pot.apot_table.names[i]);
+          error(0, "at distance r=%f with the parameters:\n", g_pot.calc_pot.xcoord[k]);
           for (int m = 0; m < g_pot.apot_table.n_par[i]; m++)
             error(0, "%s %f\n", g_pot.apot_table.param_name[i][m], *(val + m));
           if (g_pot.smooth_pot[i]) error(0, "h %f\n", h);

@@ -90,13 +90,13 @@
  *
  ****************************************************************/
 
-double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
+double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
 {
   int col, i = flag;
   double tmpsum = 0.0, sum = 0.0;
-  const sw_t *sw = &g_pot.apot_table.sw;
+  const sw_t* sw = &g_pot.apot_table.sw;
 
-  atom_t *atom;
+  atom_t* atom;
   int h, j, k;
   int n_i, n_j, n_k;
   int self, uf;
@@ -105,9 +105,9 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 
   /* pointer for neighbor tables */
-  neigh_t *neigh_j, *neigh_k;
+  neigh_t* neigh_j, *neigh_k;
   /* pointer for angular neighbor table */
-  angle_t *angle;
+  angle_t* angle;
 
   /* pair variables */
   double phi_r, phi_a, inv_c, f_cut;
@@ -177,8 +177,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 
         /* 2nd loop: calculate pair forces and energies */
         for (i = 0; i < g_config.inconf[h]; i++) {
-          atom =
-              g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
           /* loop over neighbors */
           for (j = 0; j < atom->num_neigh; j++) {
@@ -243,8 +242,8 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
               if (tmp_r < -0.01 * *(sw->gamma[col])) {
                 tmp_r = 1.0 / tmp_r;
                 neigh_j->f = exp(*(sw->gamma[col]) * tmp_r);
-                neigh_j->df = -neigh_j->f * *(sw->gamma[col]) * tmp_r * tmp_r /
-                              neigh_j->r;
+                neigh_j->df =
+                    -neigh_j->f * *(sw->gamma[col]) * tmp_r * tmp_r / neigh_j->r;
               } else {
                 neigh_j->f = 0.0;
                 neigh_j->df = 0.0;
@@ -268,8 +267,7 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
                 /* Get pointer to neighbor k */
                 neigh_k = atom->neigh + k;
                 /* store lambda for atom triple i,j,k */
-                lambda =
-                    *(sw->lambda[atom->type][neigh_j->type][neigh_k->type]);
+                lambda = *(sw->lambda[atom->type][neigh_j->type][neigh_k->type]);
                 /* shortcut for types without threebody interaction */
                 if (0.0 == lambda) continue;
                 /* Force location for atom k */
@@ -321,24 +319,21 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
 
 #ifdef STRESS /* Distribute stress among atoms */
                   if (us) {
-                    forces[stresses + 0] -= force_j.x * neigh_j->dist.x +
-                                            force_k.x * neigh_k->dist.x;
-                    forces[stresses + 1] -= force_j.y * neigh_j->dist.y +
-                                            force_k.y * neigh_k->dist.y;
-                    forces[stresses + 2] -= force_j.z * neigh_j->dist.z +
-                                            force_k.z * neigh_k->dist.z;
-                    forces[stresses + 3] -= 0.5 * (force_j.x * neigh_j->dist.y +
-                                                   force_k.x * neigh_k->dist.y +
-                                                   force_j.y * neigh_j->dist.x +
-                                                   force_k.y * neigh_k->dist.x);
-                    forces[stresses + 4] -= 0.5 * (force_j.y * neigh_j->dist.z +
-                                                   force_k.y * neigh_k->dist.z +
-                                                   force_j.z * neigh_j->dist.y +
-                                                   force_k.z * neigh_k->dist.y);
-                    forces[stresses + 5] -= 0.5 * (force_j.z * neigh_j->dist.x +
-                                                   force_k.z * neigh_k->dist.x +
-                                                   force_j.x * neigh_j->dist.z +
-                                                   force_k.x * neigh_k->dist.z);
+                    forces[stresses + 0] -=
+                        force_j.x * neigh_j->dist.x + force_k.x * neigh_k->dist.x;
+                    forces[stresses + 1] -=
+                        force_j.y * neigh_j->dist.y + force_k.y * neigh_k->dist.y;
+                    forces[stresses + 2] -=
+                        force_j.z * neigh_j->dist.z + force_k.z * neigh_k->dist.z;
+                    forces[stresses + 3] -=
+                        0.5 * (force_j.x * neigh_j->dist.y + force_k.x * neigh_k->dist.y +
+                               force_j.y * neigh_j->dist.x + force_k.y * neigh_k->dist.x);
+                    forces[stresses + 4] -=
+                        0.5 * (force_j.y * neigh_j->dist.z + force_k.y * neigh_k->dist.z +
+                               force_j.z * neigh_j->dist.y + force_k.z * neigh_k->dist.y);
+                    forces[stresses + 5] -=
+                        0.5 * (force_j.z * neigh_j->dist.x + force_k.z * neigh_k->dist.x +
+                               force_j.x * neigh_j->dist.z + force_k.x * neigh_k->dist.z);
                   }
 #endif /* STRESS */
                 }
@@ -381,11 +376,11 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
           for (i = 0; i < 6; i++) {
             forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
             forces[stresses + i] -= g_config.force_0[stresses + i];
-            tmpsum += g_config.conf_weight[h] * g_param.sweight *
-                      dsquare(forces[stresses + i]);
+            tmpsum +=
+                g_config.conf_weight[h] * g_param.sweight * dsquare(forces[stresses + i]);
           }
         }
-#endif  /* STRESS */
+#endif /* STRESS */
         /* limiting constraints per configuration */
       } /* loop over configurations */
     }   /* parallel region */
@@ -402,28 +397,24 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
     /* gather forces, energies, stresses */
     if (g_mpi.myid == 0) { /* root node already has data in place */
       /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
-                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
+                  g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE,
-                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist,
-                  MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS,
-                  forces + g_calc.stress_p, g_mpi.conf_len, g_mpi.conf_dist,
-                  g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
+                  g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
     } else {
       /* forces */
-      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR,
-                  forces, g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0,
-                  MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+                  g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
       /* energies */
-      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf,
-                  MPI_DOUBLE, forces + g_calc.energy_p, g_mpi.conf_len,
-                  g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                  forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE,
+                  0, MPI_COMM_WORLD);
 #ifdef STRESS
       /* stresses */
       MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf,
@@ -458,22 +449,22 @@ double calc_forces_stiweb(double *xi_opt, double *forces, int flag)
  *
  ****************************************************************/
 
-void update_stiweb_pointers(double *xi)
+void update_stiweb_pointers(double* xi)
 {
   int i, j, k;
-  double *index = xi + 2;
-  sw_t *sw = &g_pot.apot_table.sw;
+  double* index = xi + 2;
+  sw_t* sw = &g_pot.apot_table.sw;
 
   /* allocate if this has not been done */
   if (0 == sw->init) {
-    sw->A = (double **)malloc(g_calc.paircol * sizeof(double *));
-    sw->B = (double **)malloc(g_calc.paircol * sizeof(double *));
-    sw->p = (double **)malloc(g_calc.paircol * sizeof(double *));
-    sw->q = (double **)malloc(g_calc.paircol * sizeof(double *));
-    sw->delta = (double **)malloc(g_calc.paircol * sizeof(double *));
-    sw->a1 = (double **)malloc(g_calc.paircol * sizeof(double *));
-    sw->gamma = (double **)malloc(g_calc.paircol * sizeof(double *));
-    sw->a2 = (double **)malloc(g_calc.paircol * sizeof(double *));
+    sw->A = (double**)malloc(g_calc.paircol * sizeof(double*));
+    sw->B = (double**)malloc(g_calc.paircol * sizeof(double*));
+    sw->p = (double**)malloc(g_calc.paircol * sizeof(double*));
+    sw->q = (double**)malloc(g_calc.paircol * sizeof(double*));
+    sw->delta = (double**)malloc(g_calc.paircol * sizeof(double*));
+    sw->a1 = (double**)malloc(g_calc.paircol * sizeof(double*));
+    sw->gamma = (double**)malloc(g_calc.paircol * sizeof(double*));
+    sw->a2 = (double**)malloc(g_calc.paircol * sizeof(double*));
     for (i = 0; i < g_calc.paircol; i++) {
       sw->A[i] = NULL;
       sw->B[i] = NULL;
@@ -484,11 +475,11 @@ void update_stiweb_pointers(double *xi)
       sw->gamma[i] = NULL;
       sw->a2[i] = NULL;
     }
-    sw->lambda = (double ****)malloc(g_calc.paircol * sizeof(double ***));
+    sw->lambda = (double****)malloc(g_calc.paircol * sizeof(double***));
     for (i = 0; i < g_param.ntypes; i++) {
-      sw->lambda[i] = (double ***)malloc(g_param.ntypes * sizeof(double **));
+      sw->lambda[i] = (double***)malloc(g_param.ntypes * sizeof(double**));
       for (j = 0; j < g_param.ntypes; j++) {
-        sw->lambda[i][j] = (double **)malloc(g_param.ntypes * sizeof(double *));
+        sw->lambda[i][j] = (double**)malloc(g_param.ntypes * sizeof(double*));
       }
     }
     sw->init = 1;

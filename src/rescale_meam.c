@@ -46,19 +46,18 @@
  *
  ****************************************************************/
 
-double rescale(pot_table_t *pt, double upper, int flag)
+double rescale(pot_table_t* pt, double upper, int flag)
 {
-  int i, j, h, col, col2, type1, type2, mincol, maxcol, first, dimnewxi, vals,
-      sign;
+  int i, j, h, col, col2, type1, type2, mincol, maxcol, first, dimnewxi, vals, sign;
   double min = 1e100, max = -1e100;
   double pos, grad, a;
-  double *xi, *newxi, *neword, *newstep, *maxrho, *minrho, *left, *right;
-  atom_t *atom;
-  neigh_t *neigh;
+  double* xi, *newxi, *neword, *newstep, *maxrho, *minrho, *left, *right;
+  atom_t* atom;
+  neigh_t* neigh;
 
   int jj, kk, ijk;
-  angle_t *angle;
-  neigh_t *neigh_j, *neigh_k;
+  angle_t* angle;
+  neigh_t* neigh_j, *neigh_k;
 
   /* Set potential array in xi */
   xi = pt->table;
@@ -70,14 +69,13 @@ double rescale(pot_table_t *pt, double upper, int flag)
              pt->last[g_calc.paircol + g_param.ntypes - 1];
 
   /* Allocate memory for dynamic arrays that will store the new F */
-  newxi = (double *)malloc(dimnewxi * sizeof(double));   // Size of F array
-  neword = (double *)malloc(dimnewxi * sizeof(double));  // Size of F array
-  newstep =
-      (double *)malloc(g_param.ntypes * sizeof(double));       // # of cols of F
-  maxrho = (double *)malloc(g_param.ntypes * sizeof(double));  // # of cols of F
-  minrho = (double *)malloc(g_param.ntypes * sizeof(double));  // # of cols of F
-  left = (double *)malloc(g_param.ntypes * sizeof(double));    // # of cols of F
-  right = (double *)malloc(g_param.ntypes * sizeof(double));   // # of cols of F
+  newxi = (double*)malloc(dimnewxi * sizeof(double));          // Size of F array
+  neword = (double*)malloc(dimnewxi * sizeof(double));         // Size of F array
+  newstep = (double*)malloc(g_param.ntypes * sizeof(double));  // # of cols of F
+  maxrho = (double*)malloc(g_param.ntypes * sizeof(double));   // # of cols of F
+  minrho = (double*)malloc(g_param.ntypes * sizeof(double));   // # of cols of F
+  left = (double*)malloc(g_param.ntypes * sizeof(double));     // # of cols of F
+  right = (double*)malloc(g_param.ntypes * sizeof(double));    // # of cols of F
 
   // Initialize max and min rho's for each column in F
   for (i = 0; i < g_param.ntypes; i++) {
@@ -104,8 +102,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
     // *(xi + first - 1) = value of other endpoint gradient
     //          (default: phi=0.0, rho=0.0, F=1e30)
     // g_pot.calc_pot.d2tab + first = array to hold 2nd deriv
-    spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-              *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
+    spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
+              *(xi + first - 1), pt->d2tab + first);
   }
 
   // The dreaded recalculation of atom->rho for each atom
@@ -138,24 +136,22 @@ double rescale(pot_table_t *pt, double upper, int flag)
         // Check that neighbor lies in range of rho_ij potential
         if (neigh->r < pt->end[col2]) {
           // Compute rho value and store it for atom i
-          atom->rho += splint_dir(pt, xi, neigh->slot[1], neigh->shift[1],
-                                  neigh->step[1]);
+          atom->rho +=
+              splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
         }
         // BEGIN COMPUTING rho values for f_ij potential
         // Get column for atom j (it behaves similarly to pair potential, phi)
         // just offset by "g_calc.paircol + 2*ntypes"
-        col2 =
-            (type1 <= type2)
-                ? g_calc.paircol + 2 * g_param.ntypes + type1 * g_param.ntypes +
-                      type2 - ((type1 * (type1 + 1)) / 2)
-                : g_calc.paircol + 2 * g_param.ntypes + type2 * g_param.ntypes +
-                      type1 - ((type2 * (type2 + 1)) / 2);
+        col2 = (type1 <= type2)
+                   ? g_calc.paircol + 2 * g_param.ntypes + type1 * g_param.ntypes +
+                         type2 - ((type1 * (type1 + 1)) / 2)
+                   : g_calc.paircol + 2 * g_param.ntypes + type2 * g_param.ntypes +
+                         type1 - ((type2 * (type2 + 1)) / 2);
 
         // Check that neighbor lies in range of f_ij potential
         if (neigh->r < pt->end[col2]) {
           // Store the f(r_ij) value
-          neigh->f = splint_dir(pt, xi, neigh->slot[2], neigh->shift[2],
-                                neigh->step[2]);
+          neigh->f = splint_dir(pt, xi, neigh->slot[2], neigh->shift[2], neigh->step[2]);
         } else {
           // Set f(r_ij) to 0 so it doesn't multiply in later
           neigh->f = 0;
@@ -235,8 +231,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
     // OR is minrho too far inside the range of F
     // OR same for maxrho
     if (flag || minrho[i] - pt->begin[j] < 0.0 ||
-        minrho[i] - pt->begin[j] > 0.95 * pt->step[j] ||
-        maxrho[i] - pt->end[j] > 0 ||
+        minrho[i] - pt->begin[j] > 0.95 * pt->step[j] || maxrho[i] - pt->end[j] > 0 ||
         maxrho[i] - pt->end[j] < -0.95 * pt->step[j])
       flag = 1;  // Continue with scaling
   }
@@ -247,8 +242,7 @@ double rescale(pot_table_t *pt, double upper, int flag)
   // See if update is still needed
   // Scaling factor will increase it by at least 5% in
   // either direction
-  if (flag || fabs(a) > 1.05 || fabs(a) < 0.95)
-    flag = 1;  // then continue with scaling
+  if (flag || fabs(a) > 1.05 || fabs(a) < 0.95) flag = 1;  // then continue with scaling
 
   // If no update needed then die
   if (!flag) return 0;
@@ -303,8 +297,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
   // Now that we have the new spline values for F
   // we need to write back the new F to the old potential table
   col = 0;  // Loop over F columns in the potential table
-  for (j = g_calc.paircol + g_param.ntypes;
-       j < g_calc.paircol + 2 * g_param.ntypes; ++j) {
+  for (j = g_calc.paircol + g_param.ntypes; j < g_calc.paircol + 2 * g_param.ntypes;
+       ++j) {
     // Loop over each spline point in the old table
     for (i = pt->first[j]; i <= pt->last[j]; ++i) {
       // Set the value in the old table to the new value
@@ -357,8 +351,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
     j = 0;
 
     // Loop through each F column
-    for (i = g_calc.paircol + g_param.ntypes;
-         i < g_calc.paircol + 2 * g_param.ntypes; ++i) {
+    for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
+         ++i) {
       // Reset first/last x-coord value in the table to scaled value
       pt->begin[i] = a * left[j];
       pt->end[i] = a * right[j];
@@ -390,8 +384,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
     j = 0;
 
     // Loop through each F column
-    for (i = g_calc.paircol + g_param.ntypes;
-         i < g_calc.paircol + 2 * g_param.ntypes; ++i) {
+    for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
+         ++i) {
       // Reset first/last x-coord value in the table to scaled value
       pt->begin[i] = a * right[j];
       pt->end[i] = a * left[j];
@@ -451,8 +445,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
 
     // Loop through each column in F
     // We will be setting back the values we stored earlier in reverse order
-    for (j = g_calc.paircol + g_param.ntypes;
-         j < g_calc.paircol + 2 * g_param.ntypes; ++j) {
+    for (j = g_calc.paircol + g_param.ntypes; j < g_calc.paircol + 2 * g_param.ntypes;
+         ++j) {
       // Loop through each spline knot in CORRECT ORDER for this column
       for (i = pt->first[j]; i <= pt->last[j]; ++i) {
         // Swap back value now in reverse order
@@ -483,8 +477,8 @@ double rescale(pot_table_t *pt, double upper, int flag)
     // *(xi + first - 1) = value of other endpoint gradient
     //          (default: phi=0.0, rho=0.0, F=1e30)
     // g_pot.calc_pot.d2tab + first = array to hold 2nd deriv
-    spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1,
-              *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
+    spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
+              *(xi + first - 1), pt->d2tab + first);
   }
 
   // Now we worry about the gauge conditions and set F'(rho-mean) = 0 FOR EAM
@@ -495,15 +489,13 @@ double rescale(pot_table_t *pt, double upper, int flag)
   for (i = 0; i < g_param.ntypes; ++i) {
     // Store gradient for F' at the point halfway between the domain of F
     // at each column in lambda
-    lambda[i] =
-        splint_grad(&opt_pot, pt->table, g_calc.paircol + g_param.ntypes + i,
-                    0.5 * (pt->begin[g_calc.paircol + g_param.ntypes + i] +
-                           pt->end[g_calc.paircol + g_param.ntypes + i]));
+    lambda[i] = splint_grad(&opt_pot, pt->table, g_calc.paircol + g_param.ntypes + i,
+                            0.5 * (pt->begin[g_calc.paircol + g_param.ntypes + i] +
+                                   pt->end[g_calc.paircol + g_param.ntypes + i]));
   }
 
   // Now output the gradient in each column of F at this point
-  for (i = 0; i < g_param.ntypes; i++)
-    printf("lambda[%d] = %f\n", i, lambda[i]);
+  for (i = 0; i < g_param.ntypes; i++) printf("lambda[%d] = %f\n", i, lambda[i]);
   i = 0;
 
   // Loop through all columns of pair potential, phi
@@ -515,12 +507,12 @@ double rescale(pot_table_t *pt, double upper, int flag)
         // Phi' = Phi + lambda_i * rho_j + lambda_j * rho_i
         pt->table[j] +=
             (pt->xcoord[j] < pt->end[g_calc.paircol + col2]
-                 ? lambda[col] * splint_ne(pt, pt->table, g_calc.paircol + col2,
-                                           pt->xcoord[j])
+                 ? lambda[col] *
+                       splint_ne(pt, pt->table, g_calc.paircol + col2, pt->xcoord[j])
                  : 0.0) +
             (pt->xcoord[j] < pt->end[g_calc.paircol + col]
-                 ? lambda[col2] * splint_ne(pt, pt->table, g_calc.paircol + col,
-                                            pt->xcoord[j])
+                 ? lambda[col2] *
+                       splint_ne(pt, pt->table, g_calc.paircol + col, pt->xcoord[j])
                  : 0.0);
       }  // End of Loop over spline points
 
@@ -528,24 +520,22 @@ double rescale(pot_table_t *pt, double upper, int flag)
       if (pt->table[pt->first[i] - 2] < 1.e30)  // natural spline
         pt->table[pt->first[i] - 2] +=
             (pt->begin[i] < pt->end[g_calc.paircol + col2]
-                 ? lambda[col] * splint_grad(pt, pt->table,
-                                             g_calc.paircol + col2,
-                                             pt->begin[i])
+                 ? lambda[col] *
+                       splint_grad(pt, pt->table, g_calc.paircol + col2, pt->begin[i])
                  : 0.0) +
             (pt->begin[i] < pt->end[g_calc.paircol + col]
-                 ? lambda[col2] * splint_grad(pt, pt->table,
-                                              g_calc.paircol + col,
-                                              pt->begin[i])
+                 ? lambda[col2] *
+                       splint_grad(pt, pt->table, g_calc.paircol + col, pt->begin[i])
                  : 0.0);
       if (pt->table[pt->first[i] - 1] < 1.e30)
         pt->table[pt->first[i] - 1] +=
             (pt->end[i] < pt->end[g_calc.paircol + col2]
-                 ? lambda[col] * splint_grad(pt, pt->table,
-                                             g_calc.paircol + col2, pt->end[i])
+                 ? lambda[col] *
+                       splint_grad(pt, pt->table, g_calc.paircol + col2, pt->end[i])
                  : 0.0) +
             (pt->end[i] < pt->end[g_calc.paircol + col]
-                 ? lambda[col2] * splint_grad(pt, pt->table,
-                                              g_calc.paircol + col, pt->end[i])
+                 ? lambda[col2] *
+                       splint_grad(pt, pt->table, g_calc.paircol + col, pt->end[i])
                  : 0.0);
       ++i;
     }  // END OF INNER LOOP OVER PHI
@@ -562,11 +552,9 @@ double rescale(pot_table_t *pt, double upper, int flag)
     // Fix the gradients as well
     if (pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 2] <
         1.e30)  // natural spline
-      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 2] -=
-          lambda[i];
+      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 2] -= lambda[i];
     if (pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 1] < 1.e30)
-      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 1] -=
-          lambda[i];
+      pt->table[pt->first[g_calc.paircol + g_param.ntypes + i] - 1] -= lambda[i];
     lambda[i] = 0.0;
   }
 

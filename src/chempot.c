@@ -41,8 +41,8 @@ int swap_chem_pot(int i, int j)
   if (i != j) {
     SWAP(g_pot.apot_table.values[g_pot.apot_table.number][i],
          g_pot.apot_table.values[g_pot.apot_table.number][j], temp);
-    SWAP(g_pot.compnodelist[i - g_param.ntypes],
-         g_pot.compnodelist[j - g_param.ntypes], temp);
+    SWAP(g_pot.compnodelist[i - g_param.ntypes], g_pot.compnodelist[j - g_param.ntypes],
+         temp);
     SWAP(g_pot.apot_table.pmin[g_pot.apot_table.number][i],
          g_pot.apot_table.pmin[g_pot.apot_table.number][j], temp);
     SWAP(g_pot.apot_table.pmax[g_pot.apot_table.number][i],
@@ -70,9 +70,9 @@ int sort_chem_pot_2d()
   return 0;
 }
 
-double chemical_potential_1d(int *n, double *mu) { return n[0] * mu[0]; }
+double chemical_potential_1d(int* n, double* mu) { return n[0] * mu[0]; }
 
-double chemical_potential_2d(int *n, double *mu)
+double chemical_potential_2d(int* n, double* mu)
 {
   int i = 0, ntot;
   double nfrac;
@@ -113,7 +113,7 @@ double chemical_potential_2d(int *n, double *mu)
   return temp * ntot;
 }
 
-double chemical_potential_3d(int *n, double *mu, int dim)
+double chemical_potential_3d(int* n, double* mu, int dim)
 {
   int i;
   double temp = 0;
@@ -128,7 +128,7 @@ void init_chemical_potential(int dim)
   if (dim == 2) sort_chem_pot_2d();
 }
 
-double chemical_potential(int dim, int *n, double *mu)
+double chemical_potential(int dim, int* n, double* mu)
 {
   if (dim == 1) return chemical_potential_1d(n, mu);
   if (dim == 2) return chemical_potential_2d(n, mu);

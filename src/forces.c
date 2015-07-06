@@ -45,12 +45,10 @@ double calc_forces_eam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_adp(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_meam(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_elstat(double* xi_opt, double* forces, int shutdown_flag);
-double calc_forces_eam_elstat(double* xi_opt, double* forces,
-                              int shutdown_flag);
+double calc_forces_eam_elstat(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_stiweb(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_tersoff(double* xi_opt, double* forces, int shutdown_flag);
-double calc_forces_tersoffmod(double* xi_opt, double* forces,
-                              int shutdown_flag);
+double calc_forces_tersoffmod(double* xi_opt, double* forces, int shutdown_flag);
 
 /****************************************************************
  *
@@ -175,14 +173,14 @@ void set_force_vector_pointers()
   g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #ifdef APOT
   g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
-                        g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p =
+      g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #else  /* EAM || ADP || MEAM */
 #ifdef APOT
   g_calc.punish_par_p = g_calc.stress_p + 6 * g_config.nconf;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
-                        g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p =
+      g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
 
@@ -193,16 +191,70 @@ void set_force_vector_pointers()
   g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #ifdef APOT
   g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
-                        g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p =
+      g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #else  /* EAM || ADP || MEAM */
 #ifdef APOT
   g_calc.punish_par_p = g_calc.energy_p + g_config.nconf;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
-                        g_pot.apot_table.invar_pots;
+  g_calc.punish_pot_p =
+      g_calc.punish_par_p + g_pot.apot_table.total_par - g_pot.apot_table.invar_pots;
 #endif /* APOT */
 #endif /* EAM || ADP || MEAM */
 
 #endif /* STRESS */
+}
+
+/****************************************************************
+ *
+ *  gather_forces
+ *      called after all parameters and potentials are read
+ *      additional assignments and initializations can be made here
+ *
+ ****************************************************************/
+
+void gather_forces(double* error_sum, double* forces)
+{
+#if defined(MPI)
+  double tmpsum = 0.0;
+
+  MPI_Reduce(error_sum, &tmpsum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  /* gather forces, energies, stresses */
+  if (g_mpi.myid == 0) {
+    /* root node already has data in place */
+    /* forces */
+    MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
+                g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
+    /* energies */
+    MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
+                g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#if defined(STRESS)
+    /* stresses */
+    MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
+                g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
+#endif  // STRESS
+  } else {
+    /* forces */
+    MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
+                g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
+    /* energies */
+    MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
+                forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE, 0,
+                MPI_COMM_WORLD);
+#if defined(STRESS)
+    /* stresses */
+    MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf,
+                g_mpi.MPI_STENS, forces + g_calc.stress_p, g_mpi.conf_len,
+                g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
+#endif  // STRESS
+  }
+
+  *error_sum = tmpsum;
+
+#else
+
+  return;
+
+#endif  // MPI
 }

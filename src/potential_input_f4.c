@@ -50,8 +50,7 @@ void init_calc_table4();
  *
  ****************************************************************/
 
-void read_pot_table4(char const* potential_filename, FILE* pfile,
-                     potential_state* pstate)
+void read_pot_table4(char const* potential_filename, FILE* pfile, potential_state* pstate)
 {
 //   int   i, k, l, j;
 #if defined(EAM) || defined(ADP)
@@ -193,8 +192,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
   }
 
   /* read EAM embedding function F(n) */
-  for (int i = g_calc.paircol + den_count;
-       i < g_calc.paircol + den_count + emb_count; i++) {
+  for (int i = g_calc.paircol + den_count; i < g_calc.paircol + den_count + emb_count;
+       i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
         error(1, "Premature end of potential file %s", pstate->filename);

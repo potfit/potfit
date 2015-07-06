@@ -57,8 +57,8 @@ void init_rng(int seed)
 #define R_SIZE 624
 #define RAND_MAX 2147483647
   {
-    uint32_t *array;
-    array = (uint32_t *)malloc(R_SIZE * sizeof(uint32_t));
+    uint32_t* array;
+    array = (uint32_t*)malloc(R_SIZE * sizeof(uint32_t));
     srand(seed);
     for (int i = 0; i < R_SIZE; i++) array[i] = rand();
 

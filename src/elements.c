@@ -35,11 +35,11 @@
 
 #define N_ELEMENTS 110
 
-element_t *element_table;
+element_t* element_table;
 
 void init_elements()
 {
-  element_table = (element_t *)malloc((N_ELEMENTS + 1) * sizeof(element_t));
+  element_table = (element_t*)malloc((N_ELEMENTS + 1) * sizeof(element_t));
 
   /* 1 - Hydrogen */
   strcpy(element_table[1].name, "Hydrogen");
@@ -494,23 +494,21 @@ double ele_mass_from_number(int num)
   }
 }
 
-double ele_mass_from_name(char *name)
+double ele_mass_from_name(char* name)
 {
   int i = 0;
   if (strlen(name) < 3) {
     for (i = 1; i < N_ELEMENTS; i++)
-      if (strcmp(name, element_table[i].short_name) == 0)
-        return element_table[i].mass;
+      if (strcmp(name, element_table[i].short_name) == 0) return element_table[i].mass;
   } else {
     for (i = 1; i < N_ELEMENTS; i++)
-      if (strcmp(name, element_table[i].name) == 0)
-        return element_table[i].mass;
+      if (strcmp(name, element_table[i].name) == 0) return element_table[i].mass;
   }
 
   return 0.0;
 }
 
-int ele_number_from_name(char *name)
+int ele_number_from_name(char* name)
 {
   int i = 0;
   if (strlen(name) < 3) {

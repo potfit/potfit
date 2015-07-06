@@ -31,21 +31,21 @@
 #ifndef POTFIT_FORCES_H
 #define POTFIT_FORCES_H
 
-extern double (*g_calc_forces)(double *xi_opt, double *forces,
-                               int shutdown_flag);
-extern double (*g_splint)(pot_table_t *, double *, int, double);
-extern double (*g_splint_grad)(pot_table_t *, double *, int, double);
-extern double (*g_splint_comb)(pot_table_t *, double *, int, double, double *);
+extern double (*g_calc_forces)(double* xi_opt, double* forces, int shutdown_flag);
+extern double (*g_splint)(pot_table_t*, double*, int, double);
+extern double (*g_splint_grad)(pot_table_t*, double*, int, double);
+extern double (*g_splint_comb)(pot_table_t*, double*, int, double, double*);
 
 void init_forces(int is_worker);
 void set_force_vector_pointers();
+void gather_forces(double* error_sum, double* forces);
 
 #if defined(STIWEB)
-void update_stiweb_pointers(double *);
-#endif
+void update_stiweb_pointers(double*);
+#endif  // STIWEB
 
 #if defined(TERSOFF)
-void update_tersoff_pointers(double *);
-#endif
+void update_tersoff_pointers(double*);
+#endif  // TERSOFF
 
 #endif  // POTFIT_FORCES_H
