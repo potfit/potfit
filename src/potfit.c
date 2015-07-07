@@ -36,6 +36,7 @@
 #include "errors.h"
 #include "forces.h"
 #include "functions.h"
+#include "memory.h"
 #include "mpi_utils.h"
 #include "optimize.h"
 #include "params.h"
@@ -44,11 +45,12 @@
 #include "random.h"
 #include "utils.h"
 
+// forward declarations of helper functions
+
 void read_input_files(int argc, char** argv);
-void allocate_global_variables();
 void start_mpi_worker(double* force);
-void free_global_variables();
-void init_interaction_name(const char* name);
+
+// potfit global variables
 
 potfit_calculation g_calc;
 potfit_configurations g_config;
@@ -95,8 +97,7 @@ int main(int argc, char** argv)
   g_calc.ndimtot = g_pot.opt_pot.len;
   g_todo.idx = g_pot.opt_pot.idx;
 
-  /* main force vector, all forces, energies, stresses, ... will be stored here
-   */
+  /* main force vector, all forces, energies, stresses, ... will be stored here */
   double* force = (double*)malloc(g_calc.mdim * sizeof(double));
 
   if (force == NULL) error(1, "Could not allocate memory for main force vector.");
@@ -208,11 +209,10 @@ int main(int argc, char** argv)
 void read_input_files(int argc, char** argv)
 {
   // only root process reads input files
-  if (g_mpi.myid == 0) {
+  if (g_mpi.myid == 0)
+  {
     read_parameters(argc, argv);
-
     read_pot_table(g_files.startpot);
-
     read_config(g_files.config);
 
     printf("Global energy weight: %f\n", g_param.eweight);
@@ -227,84 +227,6 @@ void read_input_files(int argc, char** argv)
 
     init_rng(g_param.rng_seed);
   }
-}
-
-/****************************************************************
- *
- *  allocate_global_variables -- initialize global variables and allocate memory
- *
- ****************************************************************/
-
-void allocate_global_variables()
-{
-  memset(&g_calc, 0, sizeof(g_calc));
-  memset(&g_config, 0, sizeof(g_config));
-  memset(&g_files, 0, sizeof(g_files));
-
-  g_mpi.myid = 0;
-  g_mpi.num_cpus = 1;
-  g_mpi.firstatom = 0;
-  g_mpi.firstconf = 0;
-  g_mpi.myatoms = 0;
-  g_mpi.myconf = 0;
-#if defined(MPI)
-  g_mpi.atom_dist = NULL;
-  g_mpi.atom_len = NULL;
-  g_mpi.conf_dist = NULL;
-  g_mpi.conf_len = NULL;
-#endif
-
-  memset(&g_param, 0, sizeof(g_param));
-
-  g_param.global_cell_scale = 1.0;
-
-  g_pot.gradient = NULL;
-  g_pot.invar_pot = NULL;
-  g_pot.format = -1;
-  g_pot.have_invar = 0;
-  memset(&g_pot.calc_pot, 0, sizeof(g_pot.calc_pot));
-  memset(&g_pot.opt_pot, 0, sizeof(g_pot.opt_pot));
-#if defined(APOT)
-  g_pot.smooth_pot = NULL;
-  g_pot.cp_start = 0;
-  g_pot.global_idx = 0;
-  g_pot.global_pot = 0;
-  g_pot.have_globals = 0;
-  g_pot.calc_list = NULL;
-  g_pot.compnodelist = NULL;
-  memset(&g_pot.apot_table, 0, sizeof(g_pot.apot_table));
-#endif  // APOT
-
-  g_memory.pointer_names = NULL;
-  g_memory.num_pointers = 0;
-  g_memory.pointers = NULL;
-  g_memory.u_address = NULL;
-
-#if defined(PAIR)
-  init_interaction_name("PAIR");
-#elif defined(EAM) && !defined(COULOMB)
-#if !defined(TBEAM)
-  init_interaction_name("EAM");
-#else
-  init_interaction_name("TBEAM");
-#endif /* TBEAM */
-#elif defined(ADP)
-  init_interaction_name("ADP");
-#elif defined(COULOMB) && !defined(EAM)
-  init_interaction_name("ELSTAT");
-#elif defined(COULOMB) && defined(EAM)
-  init_interaction_name("EAM_ELSTAT");
-#elif defined(MEAM)
-  init_interaction_name("MEAM");
-#elif defined(STIWEB)
-  init_interaction_name("STIWEB");
-#elif defined(TERSOFF)
-#if defined(TERSOFFMOD)
-  init_interaction_name("TERSOFFMOD");
-#else
-  init_interaction_name("TERSOFF");
-#endif /* TERSOFFMOD */
-#endif /* interaction type */
 }
 
 /****************************************************************
@@ -325,44 +247,6 @@ void start_mpi_worker(double* force)
 #else
   g_calc_forces(g_pot.calc_pot.table, force, 0);
 #endif  // APOT
-}
-
-/****************************************************************
- *
- *  free_global_variables -- de-allocate memory of global variables
- *
- ****************************************************************/
-
-void free_global_variables()
-{
-  if (g_files.config != NULL) free(g_files.config);
-  if (g_files.distfile != NULL) free(g_files.distfile);
-  if (g_files.endpot != NULL) free(g_files.endpot);
-  if (g_files.flagfile != NULL) free(g_files.flagfile);
-  if (g_files.imdpot != NULL) free(g_files.imdpot);
-  if (g_files.maxchfile != NULL) free(g_files.maxchfile);
-  if (g_files.output_prefix != NULL) free(g_files.output_prefix);
-  if (g_files.output_lammps != NULL) free(g_files.output_lammps);
-  if (g_files.plotfile != NULL) free(g_files.plotfile);
-  if (g_files.plotpointfile != NULL) free(g_files.plotpointfile);
-  if (g_files.startpot != NULL) free(g_files.startpot);
-  if (g_files.tempfile != NULL) free(g_files.tempfile);
-
-  free(g_todo.interaction_name);
-}
-
-/****************************************************************
- *
- *  init_interaction_name
- *
- ****************************************************************/
-
-void init_interaction_name (const char *name)
-{
-  int len = strlen(name);
-  g_todo.interaction_name = malloc((len + 1) * sizeof(char));
-  strncpy(g_todo.interaction_name, name, len);
-  g_todo.interaction_name[len] = '\0';
 }
 
 /****************************************************************
