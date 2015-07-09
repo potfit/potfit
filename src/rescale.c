@@ -67,14 +67,16 @@ double rescale(pot_table_t* pt, double upper, int flag)
   minrho = (double*)malloc(g_param.ntypes * sizeof(double));
   left = (double*)malloc(g_param.ntypes * sizeof(double));
   right = (double*)malloc(g_param.ntypes * sizeof(double));
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++)
+  {
     maxrho[i] = -1e100;
     minrho[i] = 1e100;
   }
   /* find Max/Min rho  */
   /* init splines - better safe than sorry */
   /* init second derivatives for splines */
-  for (col = 0; col < g_calc.paircol; col++) { /* just pair potentials */
+  for (col = 0; col < g_calc.paircol; col++)
+  { /* just pair potentials */
     first = pt->first[col];
     if (g_pot.format == 3 || g_pot.format == 0)
       spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
@@ -83,7 +85,8 @@ double rescale(pot_table_t* pt, double upper, int flag)
       spline_ne(pt->xcoord + first, pt->table + first, pt->last[col] - first + 1,
                 *(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
-  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++) { /* rho */
+  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++)
+  { /* rho */
     first = pt->first[col];
     if (g_pot.format == 3)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
@@ -93,7 +96,8 @@ double rescale(pot_table_t* pt, double upper, int flag)
                 *(xi + first - 2), 0.0, pt->d2tab + first);
   }
   for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes;
-       col++) { /* F */
+       col++)
+  { /* F */
     first = pt->first[col];
     /* gradient 0 at r_cut */
     if (g_pot.format == 3)
@@ -105,26 +109,35 @@ double rescale(pot_table_t* pt, double upper, int flag)
   }
 
   /* re-calculate atom_rho (might be a waste...) */
-  for (h = 0; h < g_config.nconf; h++) {
+  for (h = 0; h < g_config.nconf; h++)
+  {
     for (i = 0; i < g_config.inconf[h]; i++)
       g_config.atoms[g_config.cnfstart[h] + i].rho = 0.0;
-    for (i = 0; i < g_config.inconf[h]; i++) {
+    for (i = 0; i < g_config.inconf[h]; i++)
+    {
       atom = g_config.atoms + i + g_config.cnfstart[h];
       typ1 = atom->type;
-      for (j = 0; j < atom->num_neigh; j++) {
+      for (j = 0; j < atom->num_neigh; j++)
+      {
         neigh = atom->neigh + j;
-        if (neigh->nr > i + g_config.cnfstart[h]) {
+        if (neigh->nr > i + g_config.cnfstart[h])
+        {
           typ2 = neigh->type;
           col2 = g_calc.paircol + typ2;
-          if (typ2 == typ1) {
-            if (neigh->r < pt->end[col2]) {
+          if (typ2 == typ1)
+          {
+            if (neigh->r < pt->end[col2])
+            {
               fnval = splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
               atom->rho += fnval;
               g_config.atoms[neigh->nr].rho += fnval;
             }
-          } else {
+          }
+          else
+          {
             col = g_calc.paircol + typ1;
-            if (neigh->r < pt->end[col2]) {
+            if (neigh->r < pt->end[col2])
+            {
               atom->rho +=
                   splint_dir(pt, xi, neigh->slot[1], neigh->shift[1], neigh->step[1]);
             }
@@ -137,12 +150,15 @@ double rescale(pot_table_t* pt, double upper, int flag)
       minrho[typ1] = MIN(minrho[typ1], atom->rho);
     }
   }
-  for (i = 0; i < g_param.ntypes; i++) {
-    if (maxrho[i] > max) {
+  for (i = 0; i < g_param.ntypes; i++)
+  {
+    if (maxrho[i] > max)
+    {
       max = maxrho[i];
       maxcol = i;
     }
-    if (minrho[i] < min) {
+    if (minrho[i] < min)
+    {
       min = minrho[i];
       mincol = i;
     }
@@ -151,7 +167,8 @@ double rescale(pot_table_t* pt, double upper, int flag)
   sign = (max >= -min) ? 1 : -1;
 
   /* determine new left and right boundary, add 40 percent... */
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++)
+  {
     j = g_calc.paircol + g_param.ntypes + i;
     left[i] = minrho[i] - 0.3 * pt->step[j];
     right[i] = maxrho[i] + 0.3 * pt->step[j];
@@ -165,20 +182,24 @@ double rescale(pot_table_t* pt, double upper, int flag)
   /* determine scaling factor  */
   a = (sign == 1) ? upper / right[maxcol] : upper / left[mincol];
 
-  if (flag || fabs(a) > 1.05 || fabs(a) < 0.95) flag = 1;
+  if (flag || fabs(a) > 1.05 || fabs(a) < 0.95)
+    flag = 1;
 
   /* update needed? */
-  if (!flag) return 0.0; /* no */
+  if (!flag)
+    return 0.0; /* no */
 
   /* Let's update... */
   /* expand potential  */
   h = 0;
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++)
+  {
     col = g_calc.paircol + g_param.ntypes + i; /* 1. embedding function */
     vals = pt->last[col] - pt->first[col];
     neustep[i] = (right[i] - left[i]) / (double)vals;
     pos = left[i];
-    for (j = 0; j <= vals; j++) {
+    for (j = 0; j <= vals; j++)
+    {
       neuxi[h] = splint_ne(pt, xi, col, pos); /* inter- or extrapolation */
 
       neuord[h] = pos;
@@ -195,43 +216,55 @@ double rescale(pot_table_t* pt, double upper, int flag)
   /* write back values */
   col = 0; /* first value to be changed */
   for (j = g_calc.paircol + g_param.ntypes; j < g_calc.paircol + 2 * g_param.ntypes; j++)
-    for (i = pt->first[j]; i <= pt->last[j]; i++) {
+    for (i = pt->first[j]; i <= pt->last[j]; i++)
+    {
       xi[i] = neuxi[col];
       pt->xcoord[i] = neuord[col];
       col++;
     }
   printf("Scaling factor %f\n", a);
   /* scale */
-  for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++) {
-    for (j = pt->first[i]; j <= pt->last[i]; j++) {
+  for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++)
+  {
+    for (j = pt->first[i]; j <= pt->last[i]; j++)
+    {
       pt->table[j] *= a;
     }
-    if (*(xi + pt->first[i] - 2) < 1.e30) *(xi + pt->first[i] - 2) *= a;
+    if (*(xi + pt->first[i] - 2) < 1.e30)
+      *(xi + pt->first[i] - 2) *= a;
   }
 
   /* rescale all embed. by a */
-  if (sign == 1) {
+  if (sign == 1)
+  {
     j = 0;
     for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
-         i++) {
+         i++)
+    {
       pt->begin[i] = a * left[j];
       pt->end[i] = a * right[j];
       pt->step[i] = a * neustep[j];
       pt->invstep[i] = 1.0 / pt->step[i];
       /* gradient correction */
-      if (xi[pt->first[i] - 2] < 1.e30) xi[pt->first[i] - 2] /= a;
-      if (xi[pt->first[i] - 1] < 1.e30) xi[pt->first[i] - 1] /= a;
+      if (xi[pt->first[i] - 2] < 1.e30)
+        xi[pt->first[i] - 2] /= a;
+      if (xi[pt->first[i] - 1] < 1.e30)
+        xi[pt->first[i] - 1] /= a;
       pos = pt->begin[i];
-      for (h = pt->first[i]; h <= pt->last[i]; h++) {
+      for (h = pt->first[i]; h <= pt->last[i]; h++)
+      {
         pt->xcoord[h] = pos;
         pos += pt->step[i];
       }
       j++;
     }
-  } else { /* reverse - a negativ */
+  }
+  else
+  { /* reverse - a negativ */
     j = 0;
     for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
-         i++) {
+         i++)
+    {
       pt->begin[i] = a * right[j];
       pt->end[i] = a * left[j];
       pt->step[i] = -a * neustep[j];
@@ -247,16 +280,19 @@ double rescale(pot_table_t* pt, double upper, int flag)
         xi[pt->first[i] - 2] = 1.e30;
       xi[pt->first[i] - 1] = grad;
       pos = pt->begin[i];
-      for (h = pt->first[i]; h <= pt->last[i]; h++) {
+      for (h = pt->first[i]; h <= pt->last[i]; h++)
+      {
         pt->xcoord[h] = pos;
         pos += pt->step[i];
       }
       j++;
     }
     h = 0;
-    for (i = 0; i < g_param.ntypes; i++) { /* values in reverse order */
+    for (i = 0; i < g_param.ntypes; i++)
+    { /* values in reverse order */
       col = g_calc.paircol + g_param.ntypes + i;
-      for (j = pt->last[col]; j >= pt->first[col]; j--) {
+      for (j = pt->last[col]; j >= pt->first[col]; j--)
+      {
         neuxi[h] = xi[j];
         h++;
       }
@@ -264,13 +300,15 @@ double rescale(pot_table_t* pt, double upper, int flag)
     col = 0; /* and write back */
     for (j = g_calc.paircol + g_param.ntypes; j < g_calc.paircol + 2 * g_param.ntypes;
          j++)
-      for (i = pt->first[j]; i <= pt->last[j]; i++) {
+      for (i = pt->first[j]; i <= pt->last[j]; i++)
+      {
         xi[i] = neuxi[col];
         col++;
       }
   }
   /* re-initialise splines */
-  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++) { /* rho */
+  for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++)
+  { /* rho */
     first = pt->first[col];
     if (g_pot.format == 3)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
@@ -281,7 +319,8 @@ double rescale(pot_table_t* pt, double upper, int flag)
   }
 
   for (col = g_calc.paircol + g_param.ntypes; col < g_calc.paircol + 2 * g_param.ntypes;
-       col++) { /* F */
+       col++)
+  { /* F */
     first = pt->first[col];
     /* gradient 0 at r_cut */
     if (g_pot.format == 3)
@@ -293,17 +332,20 @@ double rescale(pot_table_t* pt, double upper, int flag)
   }
 
   /* correct gauge: U'(n_mean)=0 */
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++)
+  {
     g_todo.lambda[i] =
         (*g_splint_grad)(&g_pot.opt_pot, pt->table, g_calc.paircol + g_param.ntypes + i,
                          0.5 * (pt->begin[g_calc.paircol + g_param.ntypes + i] +
                                 pt->end[g_calc.paircol + g_param.ntypes + i]));
   }
-  for (i = 0; i < g_param.ntypes; i++) printf("lambda[%d] = %f\n", i, g_todo.lambda[i]);
+  for (i = 0; i < g_param.ntypes; i++)
+    printf("lambda[%d] = %f\n", i, g_todo.lambda[i]);
   i = 0;
 
   for (col = 0; col < g_param.ntypes; col++)
-    for (col2 = col; col2 < g_param.ntypes; col2++) {
+    for (col2 = col; col2 < g_param.ntypes; col2++)
+    {
       for (j = pt->first[i]; j <= pt->last[i]; j++)
         pt->table[j] +=
             (pt->xcoord[j] < pt->end[g_calc.paircol + col2]
@@ -338,7 +380,8 @@ double rescale(pot_table_t* pt, double upper, int flag)
                  : 0.0);
       i++;
     }
-  for (i = 0; i < g_param.ntypes; i++) {
+  for (i = 0; i < g_param.ntypes; i++)
+  {
     for (j = pt->first[g_calc.paircol + g_param.ntypes + i];
          j <= pt->last[g_calc.paircol + g_param.ntypes + i]; j++)
       pt->table[j] -= pt->xcoord[j] * g_todo.lambda[i];
@@ -353,7 +396,8 @@ double rescale(pot_table_t* pt, double upper, int flag)
   }
 
   /* init second derivatives for splines */
-  for (col = 0; col < g_calc.paircol; col++) { /* just pair potentials */
+  for (col = 0; col < g_calc.paircol; col++)
+  { /* just pair potentials */
     first = pt->first[col];
     if (g_pot.format == 3)
       spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
@@ -386,14 +430,15 @@ void embed_shift(pot_table_t* pt)
   double* xi;
   int i, j, first;
   xi = pt->table;
-  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
-       i++) {
+  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes; i++)
+  {
     first = pt->first[i];
     /* init splines - better safe than sorry */
     /* gradient 0 at r_cut */
     /********* DANGER ****************/
     /** NOT FOOLPROOF ***************/
-    if (pt->begin[i] <= 0) { /* 0 in domain of U(n) */
+    if (pt->begin[i] <= 0)
+    { /* 0 in domain of U(n) */
       if (g_pot.format == 3)
         spline_ed(pt->step[i], xi + first, pt->last[i] - first + 1, *(xi + first - 2),
                   *(xi + first - 1), pt->d2tab + first);
@@ -404,9 +449,11 @@ void embed_shift(pot_table_t* pt)
 #ifdef DEBUG
       printf("shifting by %f\n", shift);
 #endif /* DEBUG */
-    } else
+    }
+    else
       shift = xi[first];
-    for (j = first; j <= pt->last[i]; j++) xi[j] -= shift;
+    for (j = first; j <= pt->last[i]; j++)
+      xi[j] -= shift;
   }
 }
 #endif /* EAM || ADP */

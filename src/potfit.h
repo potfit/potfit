@@ -79,7 +79,7 @@ extern potfit_filenames g_files;
 extern potfit_mpi_config g_mpi;
 extern potfit_parameters g_param;
 extern potfit_potentials g_pot;
-extern potfit_memory g_memory;
+
 extern potfit_unknown g_todo;
 
 /****************************************************************

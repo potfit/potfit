@@ -190,7 +190,8 @@ typedef unsigned __int64 uint64_t;
 #include <altivec.h>
 #endif
 /** 128-bit data structure */
-union W128_T {
+union W128_T
+{
   vector unsigned int s;
   uint64_t u[2];
   uint32_t u32[4];
@@ -201,7 +202,8 @@ union W128_T {
 #include <emmintrin.h>
 
 /** 128-bit data structure */
-union W128_T {
+union W128_T
+{
   __m128i si;
   __m128d sd;
   uint64_t u[2];
@@ -210,7 +212,8 @@ union W128_T {
 };
 #else /* standard C */
 /** 128-bit data structure */
-union W128_T {
+union W128_T
+{
   uint64_t u[2];
   uint32_t u32[4];
   double d[2];
@@ -221,7 +224,8 @@ union W128_T {
 typedef union W128_T w128_t;
 
 /** the 128-bit internal state array */
-struct DSFMT_T {
+struct DSFMT_T
+{
   w128_t status[DSFMT_N + 1];
   int idx;
 };
@@ -291,7 +295,8 @@ inline static uint32_t dsfmt_genrand_uint32(dsfmt_t* dsfmt)
   uint32_t r;
   uint64_t* psfmt64 = &dsfmt->status[0].u[0];
 
-  if (dsfmt->idx >= DSFMT_N64) {
+  if (dsfmt->idx >= DSFMT_N64)
+  {
     dsfmt_gen_rand_all(dsfmt);
     dsfmt->idx = 0;
   }
@@ -313,7 +318,8 @@ inline static double dsfmt_genrand_close1_open2(dsfmt_t* dsfmt)
   double r;
   double* psfmt64 = &dsfmt->status[0].d[0];
 
-  if (dsfmt->idx >= DSFMT_N64) {
+  if (dsfmt->idx >= DSFMT_N64)
+  {
     dsfmt_gen_rand_all(dsfmt);
     dsfmt->idx = 0;
   }
@@ -406,12 +412,14 @@ inline static double dsfmt_gv_genrand_open_close(void)
 inline static double dsfmt_genrand_open_open(dsfmt_t* dsfmt)
 {
   double* dsfmt64 = &dsfmt->status[0].d[0];
-  union {
+  union
+  {
     double d;
     uint64_t u;
   } r;
 
-  if (dsfmt->idx >= DSFMT_N64) {
+  if (dsfmt->idx >= DSFMT_N64)
+  {
     dsfmt_gen_rand_all(dsfmt);
     dsfmt->idx = 0;
   }

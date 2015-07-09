@@ -129,7 +129,8 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
 #endif /* !MPI */
 
   /* This is the start of an infinite loop */
-  while (1) {
+  while (1)
+  {
     tmpsum = 0.0; /* sum of squares of local process */
 
 #ifndef MPI
@@ -139,9 +140,11 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
 #ifdef MPI
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (flag == 1) break; /* Exception: flag 1 means clean up */
+    if (flag == 1)
+      break; /* Exception: flag 1 means clean up */
 
-    if (g_mpi.myid == 0) apot_check_params(xi_opt);
+    if (g_mpi.myid == 0)
+      apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
 
@@ -150,24 +153,30 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
     /* region containing loop over configurations */
     {
       /* loop over configurations */
-      for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
+      for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++)
+      {
         uf = g_config.conf_uf[h - g_mpi.firstconf];
         /* reset energies and stresses */
         forces[g_calc.energy_p + h] = 0.0;
 #ifdef STRESS
         us = g_config.conf_us[h - g_mpi.firstconf];
         stresses = g_calc.stress_p + 6 * h;
-        for (i = 0; i < 6; i++) forces[stresses + i] = 0.0;
+        for (i = 0; i < 6; i++)
+          forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
         /* first loop over atoms: reset forces, densities */
-        for (i = 0; i < g_config.inconf[h]; i++) {
+        for (i = 0; i < g_config.inconf[h]; i++)
+        {
           n_i = 3 * (g_config.cnfstart[h] + i);
-          if (uf) {
+          if (uf)
+          {
             forces[n_i + 0] = -g_config.force_0[n_i + 0];
             forces[n_i + 1] = -g_config.force_0[n_i + 1];
             forces[n_i + 2] = -g_config.force_0[n_i + 2];
-          } else {
+          }
+          else
+          {
             forces[n_i + 0] = 0.0;
             forces[n_i + 1] = 0.0;
             forces[n_i + 2] = 0.0;
@@ -176,18 +185,21 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
         /* end first loop */
 
         /* 2nd loop: calculate pair forces and energies */
-        for (i = 0; i < g_config.inconf[h]; i++) {
+        for (i = 0; i < g_config.inconf[h]; i++)
+        {
           atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
           n_i = 3 * (g_config.cnfstart[h] + i);
           /* loop over neighbors */
-          for (j = 0; j < atom->num_neigh; j++) {
+          for (j = 0; j < atom->num_neigh; j++)
+          {
             neigh_j = atom->neigh + j;
             /* In small cells, an atom might interact with itself */
             self = (neigh_j->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
             /* pair potential part */
             col = neigh_j->col[0];
-            if (neigh_j->r < *(sw->a1[col])) {
+            if (neigh_j->r < *(sw->a1[col]))
+            {
               /* fn value and grad are calculated in the same step */
               x[0] = neigh_j->r;
               x[1] = x[0];
@@ -199,14 +211,16 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
               inv_c = 1.0 / (neigh_j->r - *(sw->a1[col]));
               f_cut = exp(*(sw->delta[col]) * inv_c);
               v2_val = (phi_r + phi_a) * f_cut;
-              if (uf) {
+              if (uf)
+              {
                 v2_grad = -v2_val * *(sw->delta[col]) * inv_c * inv_c -
                           f_cut * neigh_j->inv_r *
                               (*(sw->p[col]) * phi_r + *(sw->q[col]) * phi_a);
               }
               /* avoid double counting if atom is interacting with a copy of
                * itself */
-              if (self) {
+              if (self)
+              {
                 v2_val *= 0.5;
                 v2_grad *= 0.5;
               }
@@ -214,7 +228,8 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
               /* only half cohesive energy because of full neighbor list */
               forces[g_calc.energy_p + h] += 0.5 * v2_val;
 
-              if (uf) {
+              if (uf)
+              {
                 tmp_force.x = neigh_j->dist_r.x * v2_grad;
                 tmp_force.y = neigh_j->dist_r.y * v2_grad;
                 tmp_force.z = neigh_j->dist_r.z * v2_grad;
@@ -223,7 +238,8 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
                 forces[n_i + 2] += tmp_force.z;
 #ifdef STRESS
                 /* also calculate pair stresses */
-                if (us) {
+                if (us)
+                {
                   forces[stresses + 0] -= 0.5 * neigh_j->dist.x * tmp_force.x;
                   forces[stresses + 1] -= 0.5 * neigh_j->dist.y * tmp_force.y;
                   forces[stresses + 2] -= 0.5 * neigh_j->dist.z * tmp_force.z;
@@ -237,14 +253,18 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
 
             /* calculate for later */
             col = neigh_j->col[0];
-            if (neigh_j->r < *(sw->a2[col])) {
+            if (neigh_j->r < *(sw->a2[col]))
+            {
               tmp_r = neigh_j->r - *(sw->a2[col]);
-              if (tmp_r < -0.01 * *(sw->gamma[col])) {
+              if (tmp_r < -0.01 * *(sw->gamma[col]))
+              {
                 tmp_r = 1.0 / tmp_r;
                 neigh_j->f = exp(*(sw->gamma[col]) * tmp_r);
                 neigh_j->df =
                     -neigh_j->f * *(sw->gamma[col]) * tmp_r * tmp_r / neigh_j->r;
-              } else {
+              }
+              else
+              {
                 neigh_j->f = 0.0;
                 neigh_j->df = 0.0;
               }
@@ -252,16 +272,19 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
           } /* loop over neighbors j */
 
           /* loop over all neighbors */
-          for (j = 0; j < atom->num_neigh - 1; j++) {
+          for (j = 0; j < atom->num_neigh - 1; j++)
+          {
             /* Get pointer to neighbor j */
             neigh_j = atom->neigh + j;
             ijk = neigh_j->ijk_start;
             /* Force location for atom j */
             n_j = 3 * neigh_j->nr;
             /* check if we are inside the cutoff radius */
-            if (neigh_j->r < *(sw->a2[neigh_j->col[0]])) {
+            if (neigh_j->r < *(sw->a2[neigh_j->col[0]]))
+            {
               /* loop over remaining neighbors */
-              for (k = j + 1; k < atom->num_neigh; k++) {
+              for (k = j + 1; k < atom->num_neigh; k++)
+              {
                 /* Store pointer to angular part (g) */
                 angle = atom->angle_part + ijk++;
                 /* Get pointer to neighbor k */
@@ -269,11 +292,13 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
                 /* store lambda for atom triple i,j,k */
                 lambda = *(sw->lambda[atom->type][neigh_j->type][neigh_k->type]);
                 /* shortcut for types without threebody interaction */
-                if (0.0 == lambda) continue;
+                if (0.0 == lambda)
+                  continue;
                 /* Force location for atom k */
                 n_k = 3 * neigh_k->nr;
                 /* check if we are inside the cutoff radius */
-                if (neigh_k->r < *(sw->a2[neigh_k->col[0]])) {
+                if (neigh_k->r < *(sw->a2[neigh_k->col[0]]))
+                {
                   /* potential term */
                   tmp = angle->cos + 1.0 / 3.0;
                   v3_val = lambda * neigh_j->f * neigh_k->f * tmp * tmp;
@@ -318,7 +343,8 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
                   forces[n_k + 2] -= force_k.z;
 
 #ifdef STRESS /* Distribute stress among atoms */
-                  if (us) {
+                  if (us)
+                  {
                     forces[stresses + 0] -=
                         force_j.x * neigh_j->dist.x + force_k.x * neigh_k->dist.x;
                     forces[stresses + 1] -=
@@ -344,8 +370,10 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
         /* end second loop over all atoms */
 
         /* third loop over all atoms, sum up forces */
-        if (uf) {
-          for (i = 0; i < g_config.inconf[h]; i++) {
+        if (uf)
+        {
+          for (i = 0; i < g_config.inconf[h]; i++)
+          {
             n_i = 3 * (g_config.cnfstart[h] + i);
 #ifdef FWEIGHT
             /* Weigh by absolute value of force */
@@ -372,8 +400,10 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
                   dsquare(forces[g_calc.energy_p + h]);
 #ifdef STRESS
         /* stress contributions */
-        if (uf && us) {
-          for (i = 0; i < 6; i++) {
+        if (uf && us)
+        {
+          for (i = 0; i < 6; i++)
+          {
             forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
             forces[stresses + i] -= g_config.force_0[stresses + i];
             tmpsum +=
@@ -387,7 +417,8 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
 
     /* dummy constraints (global) */
     /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (g_mpi.myid == 0) {
+    if (g_mpi.myid == 0)
+    {
       tmpsum += apot_punish(xi_opt, forces);
     }
 #ifdef MPI
@@ -395,7 +426,8 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     /* gather forces, energies, stresses */
-    if (g_mpi.myid == 0) { /* root node already has data in place */
+    if (g_mpi.myid == 0)
+    { /* root node already has data in place */
       /* forces */
       MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
                   g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
@@ -407,7 +439,9 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
       MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
                   g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
-    } else {
+    }
+    else
+    {
       /* forces */
       MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
                   g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);
@@ -427,14 +461,17 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
 #endif /* MPI */
 
     /* root process exits this function now */
-    if (g_mpi.myid == 0) {
+    if (g_mpi.myid == 0)
+    {
       g_calc.fcalls++; /* Increase function call counter */
-      if (isnan(sum)) {
+      if (isnan(sum))
+      {
 #ifdef DEBUG
         printf("\n--> Force is nan! <--\n\n");
 #endif /* DEBUG */
         return 10e30;
-      } else
+      }
+      else
         return sum;
     }
   } /* infinite while loop */
@@ -456,7 +493,8 @@ void update_stiweb_pointers(double* xi)
   sw_t* sw = &g_pot.apot_table.sw;
 
   /* allocate if this has not been done */
-  if (0 == sw->init) {
+  if (0 == sw->init)
+  {
     sw->A = (double**)malloc(g_calc.paircol * sizeof(double*));
     sw->B = (double**)malloc(g_calc.paircol * sizeof(double*));
     sw->p = (double**)malloc(g_calc.paircol * sizeof(double*));
@@ -465,7 +503,8 @@ void update_stiweb_pointers(double* xi)
     sw->a1 = (double**)malloc(g_calc.paircol * sizeof(double*));
     sw->gamma = (double**)malloc(g_calc.paircol * sizeof(double*));
     sw->a2 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    for (i = 0; i < g_calc.paircol; i++) {
+    for (i = 0; i < g_calc.paircol; i++)
+    {
       sw->A[i] = NULL;
       sw->B[i] = NULL;
       sw->p[i] = NULL;
@@ -476,9 +515,11 @@ void update_stiweb_pointers(double* xi)
       sw->a2[i] = NULL;
     }
     sw->lambda = (double****)malloc(g_calc.paircol * sizeof(double***));
-    for (i = 0; i < g_param.ntypes; i++) {
+    for (i = 0; i < g_param.ntypes; i++)
+    {
       sw->lambda[i] = (double***)malloc(g_param.ntypes * sizeof(double**));
-      for (j = 0; j < g_param.ntypes; j++) {
+      for (j = 0; j < g_param.ntypes; j++)
+      {
         sw->lambda[i][j] = (double**)malloc(g_param.ntypes * sizeof(double*));
       }
     }
@@ -486,9 +527,11 @@ void update_stiweb_pointers(double* xi)
   }
 
   /* update only if the address has changed */
-  if (sw->A[0] != index) {
+  if (sw->A[0] != index)
+  {
     /* set the pair parameters (stiweb_2) */
-    for (i = 0; i < g_calc.paircol; i++) {
+    for (i = 0; i < g_calc.paircol; i++)
+    {
       sw->A[i] = index++;
       sw->B[i] = index++;
       sw->p[i] = index++;
@@ -498,7 +541,8 @@ void update_stiweb_pointers(double* xi)
       index += 2;
     }
     /* set the threebody parameters (stiweb_3) */
-    for (i = 0; i < g_calc.paircol; i++) {
+    for (i = 0; i < g_calc.paircol; i++)
+    {
       sw->gamma[i] = index++;
       sw->a2[i] = index++;
       index += 2;
@@ -506,7 +550,8 @@ void update_stiweb_pointers(double* xi)
     /* set the lambda pointer */
     for (i = 0; i < g_param.ntypes; i++)
       for (j = 0; j < g_param.ntypes; j++)
-        for (k = j; k < g_param.ntypes; k++) {
+        for (k = j; k < g_param.ntypes; k++)
+        {
           sw->lambda[i][j][k] = sw->lambda[i][k][j] = index++;
         }
   }

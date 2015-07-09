@@ -31,7 +31,10 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-void allocate_global_variables();
-void free_global_variables();
+void* Malloc(size_t size);
+void* Realloc(void* pvoid, size_t size);
 
-#endif // MEMORY_H
+void initialize_global_variables();
+void free_allocated_memory();
+
+#endif  // MEMORY_H

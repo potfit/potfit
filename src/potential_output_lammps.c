@@ -51,7 +51,8 @@ void write_pot_table_lammps()
   double epsilon, sigma, scale_p, scale_q;
 #endif /* STIWEB */
 
-  if (g_config.elements == NULL) {
+  if (g_config.elements == NULL)
+  {
     warning("There are no elements listed in you configuration file.\n");
     warning("A LAMMPS potential cannot be written without them.\n");
     return;
@@ -59,7 +60,8 @@ void write_pot_table_lammps()
 
 #ifdef STIWEB
   /* check if final potential is LAMMPS compliant (a1==a2) */
-  if (g_pot.apot_table.values[0][5] != g_pot.apot_table.values[g_calc.paircol][1]) {
+  if (g_pot.apot_table.values[0][5] != g_pot.apot_table.values[g_calc.paircol][1])
+  {
     warning("Your potential is not supported by LAMMPS.\n");
     warning("Please ensure that the values a1 and a2 are the same,\n");
     warning("  either by using global parameters or by fixing them.\n");
@@ -84,7 +86,8 @@ void write_pot_table_lammps()
 #endif /* !TERSOFFMOD */
 #endif /* TERSOFF */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) error(1, "Could not open file %s\n", filename);
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
   /* initialize periodic table */
   init_elements();
@@ -130,9 +133,12 @@ void write_pot_table_lammps()
 #endif /* TERSOFF */
 
   /* write data, one line per triple of elements */
-  for (i = 0; i < g_param.ntypes; i++) {
-    for (j = 0; j < g_param.ntypes; j++) {
-      for (k = 0; k < g_param.ntypes; k++) {
+  for (i = 0; i < g_param.ntypes; i++)
+  {
+    for (j = 0; j < g_param.ntypes; j++)
+    {
+      for (k = 0; k < g_param.ntypes; k++)
+      {
         col_j = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                          : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
         fprintf(outfile, "%s %s %s", g_config.elements[i], g_config.elements[j],
@@ -253,7 +259,8 @@ void write_pot_table_lammps()
 
   outfile = fopen(filename, "w");
 
-  if (NULL == outfile) error(1, "Could not open file %s\n", filename);
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
   /* initialize periodic table */
   init_elements();
@@ -265,12 +272,14 @@ void write_pot_table_lammps()
   fprintf(outfile, "-----\n");
   /* line 4: Nelements Element1 Element2 ... ElementN */
   fprintf(outfile, "%d", g_param.ntypes);
-  for (int i = 0; i < g_param.ntypes; i++) fprintf(outfile, " %s", g_config.elements[i]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
   fprintf(outfile, "\n");
 
   double temp = 999.9;
 
-  for (int i = 0; i < g_param.ntypes; i++) {
+  for (int i = 0; i < g_param.ntypes; i++)
+  {
     int k = g_calc.paircol + g_param.ntypes + i;
 #if defined(APOT)
     temp = MIN(temp, g_pot.apot_table.end[k]);
@@ -288,14 +297,16 @@ void write_pot_table_lammps()
 
 /* one block for every atom type */
 #if defined EAM || defined ADP
-  for (int i = 0; i < g_param.ntypes; i++) {
+  for (int i = 0; i < g_param.ntypes; i++)
+  {
     /* atomic number, mass, lattice constant, lattice type */
     fprintf(outfile, "%3d %f 0 ???\n", ele_number_from_name(g_config.elements[i]),
             ele_mass_from_name(g_config.elements[i]));
     double r = 0.0;
     /* embedding function F(n) */
     int k = g_calc.paircol + g_param.ntypes + i;
-    for (int j = 0; j < g_param.imdpotsteps; j++) {
+    for (int j = 0; j < g_param.imdpotsteps; j++)
+    {
 #ifdef APOT
       (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
       temp =
@@ -312,7 +323,8 @@ void write_pot_table_lammps()
     r = 0.0;
     k = g_calc.paircol + i;
     /* transfer function rho(r) */
-    for (int j = 0; j < g_param.imdpotsteps; j++) {
+    for (int j = 0; j < g_param.imdpotsteps; j++)
+    {
 #ifdef APOT
       (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
       temp =
@@ -330,12 +342,15 @@ void write_pot_table_lammps()
 #endif /* EAM || ADP */
 
   /* pair potentials */
-  for (int i = 0; i < g_param.ntypes; i++) {
-    for (int j = 0; j <= i; j++) {
+  for (int i = 0; i < g_param.ntypes; i++)
+  {
+    for (int j = 0; j <= i; j++)
+    {
       double r = 0.0;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
-      for (int l = 0; l < g_param.imdpotsteps; l++) {
+      for (int l = 0; l < g_param.imdpotsteps; l++)
+      {
 #ifdef APOT
         double temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
@@ -357,24 +372,28 @@ void write_pot_table_lammps()
 #ifdef ADP
   /* dipole distortion */
   for (int i = 0; i < g_param.ntypes; i++)
-    for (int j = i; j < g_param.ntypes; j++) {
+    for (int j = i; j < g_param.ntypes; j++)
+    {
       double r = 0.0;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += g_calc.paircol + 2 * g_param.ntypes;
-      for (int l = 0; l < g_param.imdpotsteps; l++) {
+      for (int l = 0; l < g_param.imdpotsteps; l++)
+      {
         fprintf(outfile, "%e\n", splint_ne(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
         r += dr;
       }
     }
   /* quadrupole distortion */
   for (int i = 0; i < g_param.ntypes; i++)
-    for (int j = i; j < g_param.ntypes; j++) {
+    for (int j = i; j < g_param.ntypes; j++)
+    {
       double r = 0.0;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += 2 * (g_calc.paircol + g_param.ntypes);
-      for (int l = 0; l < g_param.imdpotsteps; l++) {
+      for (int l = 0; l < g_param.imdpotsteps; l++)
+      {
         fprintf(outfile, "%e\n", splint_ne(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
         r += dr;
       }

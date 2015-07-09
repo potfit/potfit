@@ -31,7 +31,8 @@
 #ifndef POTENTIAL_INPUT_H
 #define POTENTIAL_INPUT_H
 
-typedef struct {
+typedef struct
+{
   char const* filename;
   int end_header;
   int have_format;

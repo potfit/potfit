@@ -32,16 +32,12 @@
 #define UTILS_H
 
 /* vector and matrix allocations */
-int* vect_int(long);
-double* vect_double(long);
+// int* vect_int(long);
+// double* vect_double(long);
 double** mat_double(long, long);
 void free_vect_int(int*);
 void free_vect_double(double*);
 void free_mat_double(double**);
-
-/* memory management */
-void reg_for_free(void*, const char*, ...);
-void free_all_pointers();
 
 /* vector procuct */
 vector vec_prod(vector, vector);

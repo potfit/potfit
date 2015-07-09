@@ -47,7 +47,8 @@ int init_mpi(int* argc, char*** argv)
   /* initialize the MPI communication */
   int rval = MPI_Init(argc, argv);
 
-  if (rval != MPI_SUCCESS) {
+  if (rval != MPI_SUCCESS)
+  {
     printf("Error initializing MPI communication! (Error: %d)\n", rval);
     return -1;
   }
@@ -71,7 +72,8 @@ int init_mpi(int* argc, char*** argv)
 
 void shutdown_mpi(void)
 {
-  if (!g_todo.init_done) {
+  if (!g_todo.init_done)
+  {
     fprintf(stderr,
             "MPI will be killed, because the initialization is not yet "
             "complete.\n");
@@ -106,7 +108,8 @@ void broadcast_params_mpi()
   int j;
 #endif /* APOT */
 
-  if (g_mpi.myid == 0) {
+  if (g_mpi.myid == 0)
+  {
     printf("Broadcasting data to MPI workers ... ");
     fflush(stdout);
   }
@@ -223,7 +226,8 @@ void broadcast_params_mpi()
   /* *INDENT-ON* */
 
   /* set displacements */
-  for (i = 1; i < count; i++) {
+  for (i = 1; i < count; i++)
+  {
     displs[i] -= displs[0];
   }
   displs[0] = 0;
@@ -262,7 +266,8 @@ void broadcast_params_mpi()
   /* *INDENT-ON* */
 
   /* set displacements */
-  for (i = 1; i < count; i++) {
+  for (i = 1; i < count; i++)
+  {
     displs[i] -= displs[0];
   }
   displs[0] = 0;
@@ -367,7 +372,8 @@ void broadcast_params_mpi()
   /* *INDENT-ON* */
 
   /* set displacements */
-  for (i = 1; i < count; i++) {
+  for (i = 1; i < count; i++)
+  {
     displs[i] -= displs[0];
   }
   displs[0] = 0;
@@ -389,7 +395,8 @@ void broadcast_params_mpi()
   MPI_Bcast(&g_todo.dp_tol, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&g_todo.dp_mix, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* DIPOLE */
-  if (g_mpi.myid > 0) {
+  if (g_mpi.myid > 0)
+  {
     g_config.inconf = (int*)malloc(g_config.nconf * sizeof(int));
     g_config.cnfstart = (int*)malloc(g_config.nconf * sizeof(int));
     g_config.force_0 = (double*)malloc(g_calc.mdim * sizeof(double));
@@ -414,7 +421,8 @@ void broadcast_params_mpi()
   MPI_Bcast(&g_pot.calc_pot.ncols, 1, MPI_INT, 0, MPI_COMM_WORLD);
   size = g_pot.calc_pot.ncols;
   calclen = g_pot.calc_pot.len;
-  if (g_mpi.myid > 0) {
+  if (g_mpi.myid > 0)
+  {
     g_pot.calc_pot.begin = (double*)malloc(size * sizeof(double));
     g_pot.calc_pot.end = (double*)malloc(size * sizeof(double));
     g_pot.calc_pot.step = (double*)malloc(size * sizeof(double));
@@ -451,10 +459,13 @@ void broadcast_params_mpi()
 #ifdef COULOMB
   MPI_Bcast(&g_pot.apot_table.total_ne_par, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
-  if (g_param.enable_cp) {
-    if (g_mpi.myid > 0) {
+  if (g_param.enable_cp)
+  {
+    if (g_mpi.myid > 0)
+    {
       g_config.na_type = (int**)malloc((g_config.nconf + 1) * sizeof(int*));
-      for (i = 0; i < (g_config.nconf + 1); i++) {
+      for (i = 0; i < (g_config.nconf + 1); i++)
+      {
         g_config.na_type[i] = (int*)malloc(g_param.ntypes * sizeof(int));
         reg_for_free(g_config.na_type[i], "na_type[%d]", i);
       }
@@ -463,7 +474,8 @@ void broadcast_params_mpi()
     for (i = 0; i < (g_config.nconf + 1); i++)
       MPI_Bcast(g_config.na_type[i], g_param.ntypes, MPI_INT, 0, MPI_COMM_WORLD);
   }
-  if (g_mpi.myid > 0) {
+  if (g_mpi.myid > 0)
+  {
     g_pot.calc_list = (double*)malloc(g_pot.opt_pot.len * sizeof(double));
     g_pot.apot_table.n_par = (int*)malloc(g_pot.apot_table.number * sizeof(int));
     g_pot.apot_table.begin = (double*)malloc(g_pot.apot_table.number * sizeof(double));
@@ -519,8 +531,10 @@ void broadcast_params_mpi()
   MPI_Bcast(&g_pot.apot_table.last_charge, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(g_pot.apot_table.ratio, g_param.ntypes, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* COULOMB */
-  if (g_pot.have_globals) {
-    if (g_mpi.myid > 0) {
+  if (g_pot.have_globals)
+  {
+    if (g_mpi.myid > 0)
+    {
       g_pot.apot_table.n_glob = (int*)malloc(g_pot.apot_table.globals * sizeof(int));
       g_pot.apot_table.global_idx =
           (int***)malloc(g_pot.apot_table.globals * sizeof(int**));
@@ -529,14 +543,18 @@ void broadcast_params_mpi()
     }
     MPI_Bcast(g_pot.apot_table.n_glob, g_pot.apot_table.globals, MPI_INT, 0,
               MPI_COMM_WORLD);
-    if (g_mpi.myid > 0) {
-      for (i = 0; i < g_pot.apot_table.globals; i++) {
+    if (g_mpi.myid > 0)
+    {
+      for (i = 0; i < g_pot.apot_table.globals; i++)
+      {
         g_pot.apot_table.global_idx[i] =
             (int**)malloc(g_pot.apot_table.n_glob[i] * sizeof(int*));
         reg_for_free(g_pot.apot_table.global_idx[i], "apot_table.global_idx[%d]", i);
       }
-      for (i = 0; i < g_pot.apot_table.globals; i++) {
-        for (j = 0; j < g_pot.apot_table.n_glob[i]; j++) {
+      for (i = 0; i < g_pot.apot_table.globals; i++)
+      {
+        for (j = 0; j < g_pot.apot_table.n_glob[i]; j++)
+        {
           g_pot.apot_table.global_idx[i][j] = (int*)malloc(2 * sizeof(int));
           reg_for_free(g_pot.apot_table.global_idx[i][j], "apot_table.global_idx[%d][%d]",
                        i, j);
@@ -554,7 +572,8 @@ void broadcast_params_mpi()
      Last nconf%num_cpus nodes: 1 additional config */
   each = (g_config.nconf / g_mpi.num_cpus);
   odd = (g_config.nconf % g_mpi.num_cpus) - g_mpi.num_cpus;
-  if (g_mpi.myid == 0) {
+  if (g_mpi.myid == 0)
+  {
     g_mpi.atom_len = (int*)malloc(g_mpi.num_cpus * sizeof(int));
     g_mpi.atom_dist = (int*)malloc(g_mpi.num_cpus * sizeof(int));
     g_mpi.conf_len = (int*)malloc(g_mpi.num_cpus * sizeof(int));
@@ -585,10 +604,13 @@ void broadcast_params_mpi()
               MPI_COMM_WORLD);
   /* this broadcasts all atoms */
   g_config.conf_atoms = (atom_t*)malloc(g_mpi.myatoms * sizeof(atom_t));
-  for (i = 0; i < g_config.natoms; i++) {
-    if (g_mpi.myid == 0) testatom = g_config.atoms[i];
+  for (i = 0; i < g_config.natoms; i++)
+  {
+    if (g_mpi.myid == 0)
+      testatom = g_config.atoms[i];
     MPI_Bcast(&testatom, 1, g_mpi.MPI_ATOM, 0, MPI_COMM_WORLD);
-    if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
+    if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms))
+    {
       g_config.conf_atoms[i - g_mpi.firstatom] = testatom;
     }
   }
@@ -617,7 +639,8 @@ void broadcast_params_mpi()
 #endif /* STRESS */
   reg_for_free(g_config.conf_atoms, "conf_atoms");
 
-  if (g_mpi.myid == 0) {
+  if (g_mpi.myid == 0)
+  {
     printf("done\n");
     fflush(stdout);
   }
@@ -637,19 +660,26 @@ void broadcast_neighbors()
 
   init_neigh_memory(&neigh);
 
-  for (i = 0; i < g_config.natoms; i++) {
+  for (i = 0; i < g_config.natoms; i++)
+  {
     atom = g_config.conf_atoms + i - g_mpi.firstatom;
-    if (g_mpi.myid == 0) neighs = g_config.atoms[i].num_neigh;
+    if (g_mpi.myid == 0)
+      neighs = g_config.atoms[i].num_neigh;
     MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
+    if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms))
+    {
       atom->neigh = (neigh_t*)malloc(neighs * sizeof(neigh_t));
-      for (j = 0; j < neighs; j++) init_neigh_memory(atom->neigh + j);
+      for (j = 0; j < neighs; j++)
+        init_neigh_memory(atom->neigh + j);
       reg_for_free(atom->neigh, "broadcast atom[%d]->neigh", i);
     }
-    for (j = 0; j < neighs; j++) {
-      if (g_mpi.myid == 0) neigh = g_config.atoms[i].neigh[j];
+    for (j = 0; j < neighs; j++)
+    {
+      if (g_mpi.myid == 0)
+        neigh = g_config.atoms[i].neigh[j];
       MPI_Bcast(&neigh, 1, g_mpi.MPI_NEIGH, 0, MPI_COMM_WORLD);
-      if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
+      if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms))
+      {
         atom->neigh[j] = neigh;
       }
     }
@@ -672,19 +702,26 @@ void broadcast_angles()
 
   init_angle_memory(&angle);
 
-  for (i = 0; i < g_config.natoms; ++i) {
+  for (i = 0; i < g_config.natoms; ++i)
+  {
     atom = g_config.conf_atoms + i - g_mpi.firstatom;
-    if (g_mpi.myid == 0) nangles = g_config.atoms[i].num_angles;
+    if (g_mpi.myid == 0)
+      nangles = g_config.atoms[i].num_angles;
     MPI_Bcast(&nangles, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
+    if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms))
+    {
       atom->angle_part = (angle_t*)malloc(nangles * sizeof(angle_t));
-      for (j = 0; j < nangles; j++) init_angle_memory(atom->angle_part + j);
+      for (j = 0; j < nangles; j++)
+        init_angle_memory(atom->angle_part + j);
       reg_for_free(atom->angle_part, "broadcast atom[%d]->angle_part", i);
     }
-    for (j = 0; j < nangles; ++j) {
-      if (g_mpi.myid == 0) angle = g_config.atoms[i].angle_part[j];
+    for (j = 0; j < nangles; ++j)
+    {
+      if (g_mpi.myid == 0)
+        angle = g_config.atoms[i].angle_part[j];
       MPI_Bcast(&angle, 1, g_mpi.MPI_ANGL, 0, MPI_COMM_WORLD);
-      if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
+      if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms))
+      {
         atom->angle_part[j] = angle;
       }
     }

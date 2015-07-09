@@ -31,7 +31,8 @@
 #ifndef ELEMENTS_H
 #define ELEMENTS_H
 
-typedef struct {
+typedef struct
+{
   char name[20];
   char short_name[20];
   double mass;

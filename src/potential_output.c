@@ -48,7 +48,8 @@ void write_pot_table4(char const* filename);
 
 void write_pot_table_potfit(char const* filename)
 {
-  switch (g_pot.format) {
+  switch (g_pot.format)
+  {
     case 0:
       write_pot_table0(filename);
       break;
@@ -76,7 +77,8 @@ void write_pot_table0(char const* filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) error(1, "Could not open file %s\n", filename);
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
   /* write header */
   fprintf(outfile, "#F 0 %d", apt->number);
@@ -84,7 +86,8 @@ void write_pot_table0(char const* filename)
 
   /* write elements */
   fprintf(outfile, "\n#C");
-  for (int i = 0; i < g_param.ntypes; i++) fprintf(outfile, " %s", g_config.elements[i]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
 
   /* write order of the interactions */
   fprintf(outfile, "\n##");
@@ -95,9 +98,11 @@ void write_pot_table0(char const* filename)
 
 #if defined EAM || defined ADP || defined MEAM
   /* transfer functions */
-  for (int i = 0; i < g_param.ntypes; i++) fprintf(outfile, " %s", g_config.elements[i]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
   /* embedding functions */
-  for (int i = 0; i < g_param.ntypes; i++) fprintf(outfile, " %s", g_config.elements[i]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
 #endif /* EAM || ADP || MEAM */
 
 #ifdef ADP
@@ -117,7 +122,8 @@ void write_pot_table0(char const* filename)
     for (int j = i; j < g_param.ntypes; j++)
       fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
   /* g terms */
-  for (int i = 0; i < g_param.ntypes; i++) fprintf(outfile, " %s", g_config.elements[i]);
+  for (int i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
 #endif /* MEAM */
 
 #ifdef STIWEB
@@ -141,9 +147,11 @@ void write_pot_table0(char const* filename)
 #endif /* TERSOFF */
 
   /* write invariant switch for individual potentials */
-  if (g_pot.have_invar) {
+  if (g_pot.have_invar)
+  {
     fprintf(outfile, "\n#I");
-    for (int i = 0; i < apt->number; i++) fprintf(outfile, " %d", g_pot.invar_pot[i]);
+    for (int i = 0; i < apt->number; i++)
+      fprintf(outfile, " %d", g_pot.invar_pot[i]);
   }
 
   /* end tag */
@@ -151,12 +159,14 @@ void write_pot_table0(char const* filename)
 
 #ifdef PAIR
   /* write chemical potentials if enabled */
-  if (g_param.enable_cp) {
+  if (g_param.enable_cp)
+  {
     for (int i = 0; i < g_param.ntypes; i++)
       fprintf(outfile, "cp_%s %.10f %.2f %.2f\n", g_config.elements[i], apt->chempot[i],
               apt->pmin[apt->number][i], apt->pmax[apt->number][i]);
 #ifdef CN
-    if (compnodes > 0) fprintf(outfile, "cn %d\n", compnodes);
+    if (compnodes > 0)
+      fprintf(outfile, "cn %d\n", compnodes);
     for (j = 0; j < compnodes; j++)
       fprintf(outfile, "%.2f %.10f %.2f %.2f\n", compnodelist[j],
               apt->chempot[ntypes + j], apt->pmin[apt->number][ntypes + j],
@@ -181,11 +191,13 @@ void write_pot_table0(char const* filename)
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 2][i],
             apt->dp_alpha[i], apt->pmin[apt->number + 2][i],
             apt->pmax[apt->number + 2][i]);
-  for (int i = 0; i < g_calc.paircol; i++) {
+  for (int i = 0; i < g_calc.paircol; i++)
+  {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 3][i],
             apt->dp_b[i], apt->pmin[apt->number + 3][i], apt->pmax[apt->number + 3][i]);
   }
-  for (int i = 0; i < g_calc.paircol; i++) {
+  for (int i = 0; i < g_calc.paircol; i++)
+  {
     fprintf(outfile, "%s\t %f\t %f\t %f\n", apt->param_name[apt->number + 4][i],
             apt->dp_c[i], apt->pmin[apt->number + 4][i], apt->pmax[apt->number + 4][i]);
   }
@@ -195,7 +207,8 @@ void write_pot_table0(char const* filename)
 #endif /* COULOMB */
 
   /* write globals section */
-  if (g_pot.have_globals) {
+  if (g_pot.have_globals)
+  {
     fprintf(outfile, "global\t%d\n", apt->globals);
     for (int i = 0; i < apt->globals; i++)
       fprintf(outfile, "%s\t%18.8f\t%12.4f\t%12.4f\n",
@@ -205,25 +218,34 @@ void write_pot_table0(char const* filename)
   }
 
   /* write data */
-  for (int i = 0; i < apt->number; i++) {
-    if (g_pot.smooth_pot[i]) {
+  for (int i = 0; i < apt->number; i++)
+  {
+    if (g_pot.smooth_pot[i])
+    {
       fprintf(outfile, "type\t%s_sc\n", apt->names[i]);
-    } else {
+    }
+    else
+    {
       fprintf(outfile, "type\t%s\n", apt->names[i]);
     }
 
     fprintf(outfile, "cutoff\t%f\n", apt->end[i]);
     fprintf(outfile, "# rmin\t%f\n", apt->begin[i]);
 
-    for (int j = 0; j < apt->n_par[i]; j++) {
-      if (apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] != '!') {
+    for (int j = 0; j < apt->n_par[i]; j++)
+    {
+      if (apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] != '!')
+      {
         fprintf(outfile, "%s\t%18.8f\t%12.4f\t%12.4f\n", apt->param_name[i][j],
                 apt->values[i][j], apt->pmin[i][j], apt->pmax[i][j]);
-      } else {
+      }
+      else
+      {
         fprintf(outfile, "%s\n", apt->param_name[i][j]);
       }
     }
-    if (i != (apt->number - 1)) fprintf(outfile, "\n");
+    if (i != (apt->number - 1))
+      fprintf(outfile, "\n");
   }
   fclose(outfile);
 #endif  // APOT
@@ -242,23 +264,28 @@ void write_pot_table3(char const* filename)
   int plot_flag = 0;
   pot_table_t* pt = &g_pot.opt_pot;
 
-  if (g_files.plotpointfile != NULL) plot_flag = 1;
+  if (g_files.plotpointfile != NULL)
+    plot_flag = 1;
 
   /* open file */
   pfile_table = fopen(filename, "w");
-  if (pfile_table == NULL) error(1, "Could not open file %s\n", filename);
+  if (pfile_table == NULL)
+    error(1, "Could not open file %s\n", filename);
 
   /* if needed: open file for plotpoints */
-  if (plot_flag) {
+  if (plot_flag)
+  {
     pfile_plot = fopen(g_files.plotpointfile, "w");
-    if (pfile_table == NULL) error(1, "Could not open file %s\n", filename);
+    if (pfile_table == NULL)
+      error(1, "Could not open file %s\n", filename);
   }
 
   /* write header */
   fprintf(pfile_table, "#F 3 %d", pt->ncols);
   fprintf(pfile_table, "\n#T %s", g_todo.interaction_name);
 
-  if (g_config.elements != NULL) {
+  if (g_config.elements != NULL)
+  {
     fprintf(pfile_table, "\n#C");
     for (int i = 0; i < g_param.ntypes; i++)
       fprintf(pfile_table, " %s", g_config.elements[i]);
@@ -295,14 +322,17 @@ void write_pot_table3(char const* filename)
 #endif /* MEAM */
   }
 
-  if (g_pot.have_invar) {
+  if (g_pot.have_invar)
+  {
     fprintf(pfile_table, "\n#I");
-    for (int i = 0; i < pt->ncols; i++) fprintf(pfile_table, " %d", g_pot.invar_pot[i]);
+    for (int i = 0; i < pt->ncols; i++)
+      fprintf(pfile_table, " %d", g_pot.invar_pot[i]);
   }
 
   fprintf(pfile_table, "\n#G");
 
-  for (int i = 0; i < pt->ncols; i++) fprintf(pfile_table, " %d", g_pot.gradient[i]);
+  for (int i = 0; i < pt->ncols; i++)
+    fprintf(pfile_table, " %d", g_pot.gradient[i]);
 
   fprintf(pfile_table, "\n#E\n");
 
@@ -313,25 +343,30 @@ void write_pot_table3(char const* filename)
   fprintf(pfile_table, "\n");
 
   /* write data */
-  for (int i = 0; i < pt->ncols; i++) {
+  for (int i = 0; i < pt->ncols; i++)
+  {
     double r = pt->begin[i];
     /* write gradient */
     fprintf(pfile_table, "%.16e %.16e\n", pt->table[pt->first[i] - 2],
             pt->table[pt->first[i] - 1]);
 
-    for (int j = pt->first[i]; j <= pt->last[i]; j++) {
+    for (int j = pt->first[i]; j <= pt->last[i]; j++)
+    {
       fprintf(pfile_table, "%.16e\n", pt->table[j]);
-      if (plot_flag) fprintf(pfile_plot, "%.6e %.6e %d\n", r, pt->table[j], j);
+      if (plot_flag)
+        fprintf(pfile_plot, "%.6e %.6e %d\n", r, pt->table[j], j);
       r += pt->step[i];
     }
     fprintf(pfile_table, "\n");
 
-    if (plot_flag) fprintf(pfile_plot, "\n\n");
+    if (plot_flag)
+      fprintf(pfile_plot, "\n\n");
   }
 
   fclose(pfile_table);
 
-  if (plot_flag) fclose(pfile_plot);
+  if (plot_flag)
+    fclose(pfile_plot);
 }
 
 /****************************************************************
@@ -347,23 +382,28 @@ void write_pot_table4(char const* filename)
   int plot_flag = 0;
   pot_table_t* pt = &g_pot.opt_pot;
 
-  if (g_files.plotpointfile != '\0') plot_flag = 1;
+  if (g_files.plotpointfile != '\0')
+    plot_flag = 1;
 
   /* open file */
   pfile_table = fopen(filename, "w");
-  if (pfile_table == NULL) error(1, "Could not open file %s\n", filename);
+  if (pfile_table == NULL)
+    error(1, "Could not open file %s\n", filename);
 
   /* if needed: open file for plotpoints */
-  if (plot_flag) {
+  if (plot_flag)
+  {
     pfile_plot = fopen(g_files.plotpointfile, "w");
-    if (pfile_plot == NULL) error(1, "Could not open file %s\n", filename);
+    if (pfile_plot == NULL)
+      error(1, "Could not open file %s\n", filename);
   }
 
   /* write header */
   fprintf(pfile_table, "#F 4 %d", pt->ncols);
   fprintf(pfile_table, "\n#T %s", g_todo.interaction_name);
 
-  if (g_config.elements != NULL) {
+  if (g_config.elements != NULL)
+  {
     fprintf(pfile_table, "\n#C");
 
     for (int i = 0; i < g_param.ntypes; i++)
@@ -396,14 +436,17 @@ void write_pot_table4(char const* filename)
 #endif /* EAM */
   }
 
-  if (g_pot.have_invar) {
+  if (g_pot.have_invar)
+  {
     fprintf(pfile_table, "\n#I");
-    for (int i = 0; i < pt->ncols; i++) fprintf(pfile_table, " %d", g_pot.invar_pot[i]);
+    for (int i = 0; i < pt->ncols; i++)
+      fprintf(pfile_table, " %d", g_pot.invar_pot[i]);
   }
 
   fprintf(pfile_table, "\n#G");
 
-  for (int i = 0; i < pt->ncols; i++) fprintf(pfile_table, " %d", g_pot.gradient[i]);
+  for (int i = 0; i < pt->ncols; i++)
+    fprintf(pfile_table, " %d", g_pot.gradient[i]);
 
   fprintf(pfile_table, "\n#E\n");
 
@@ -414,11 +457,13 @@ void write_pot_table4(char const* filename)
   fprintf(pfile_table, "\n");
 
   /* write data */
-  for (int i = 0; i < pt->ncols; i++) {
+  for (int i = 0; i < pt->ncols; i++)
+  {
     fprintf(pfile_table, "%.16e %.16e\n", pt->table[pt->first[i] - 2],
             pt->table[pt->first[i] - 1]);
 
-    for (int j = pt->first[i]; j <= pt->last[i]; j++) {
+    for (int j = pt->first[i]; j <= pt->last[i]; j++)
+    {
       fprintf(pfile_table, "%.16e %.16e\n", pt->xcoord[j], pt->table[j]);
 
       if (plot_flag)
@@ -426,11 +471,13 @@ void write_pot_table4(char const* filename)
     }
     fprintf(pfile_table, "\n");
 
-    if (plot_flag) fprintf(pfile_plot, "\n\n");
+    if (plot_flag)
+      fprintf(pfile_plot, "\n\n");
   }
   fclose(pfile_table);
 
-  if (plot_flag) fclose(pfile_plot);
+  if (plot_flag)
+    fclose(pfile_plot);
 }
 
 /****************************************************************
@@ -456,15 +503,18 @@ void write_plotpot_pair(pot_table_t* pt, char* filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) error(1, "Could not open file %s\n", filename);
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
 /* write data */
 #ifndef APOT
   for (i = 0; i < g_param.ntypes; i++)
-    for (j = i; j < g_param.ntypes; j++) {
+    for (j = i; j < g_param.ntypes; j++)
+    {
       r = pt->begin[k];
       r_step = (pt->end[k] - r) / (NPLOT - 1);
-      for (l = 0; l < NPLOT - 1; l++) {
+      for (l = 0; l < NPLOT - 1; l++)
+      {
         fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, k, r));
         r += r_step;
       }
@@ -472,20 +522,23 @@ void write_plotpot_pair(pot_table_t* pt, char* filename)
       k++;
     }
 #if defined EAM || defined ADP || defined MEAM
-  for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++) {
+  for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
-    for (l = 0; l < NPLOT - 1; l++) {
+    for (l = 0; l < NPLOT - 1; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
-       i++) {
+  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes; i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
-    for (l = 0; l < NPLOT; l++) {
+    for (l = 0; l < NPLOT; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
@@ -493,40 +546,47 @@ void write_plotpot_pair(pot_table_t* pt, char* filename)
   }
 #endif
 #ifdef MEAM
-  for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++) {
+  for (i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
-    for (l = 0; l < NPLOT - 1; l++) {
+    for (l = 0; l < NPLOT - 1; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
-  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes;
-       i++) {
+  for (i = g_calc.paircol + g_param.ntypes; i < g_calc.paircol + 2 * g_param.ntypes; i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
-    for (l = 0; l < NPLOT; l++) {
+    for (l = 0; l < NPLOT; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
     fprintf(outfile, "\n\n\n");
   }
   for (i = g_calc.paircol + 2 * g_param.ntypes;
-       i < 2 * g_calc.paircol + 2 * g_param.ntypes; i++) {
+       i < 2 * g_calc.paircol + 2 * g_param.ntypes; i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
-    for (l = 0; l < NPLOT - 1; l++) {
+    for (l = 0; l < NPLOT - 1; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
     fprintf(outfile, "%e %e\n\n\n", r, 0.0);
   }
   for (i = 2 * g_calc.paircol + 2 * g_param.ntypes;
-       i < 2 * g_calc.paircol + 3 * g_param.ntypes; i++) {
+       i < 2 * g_calc.paircol + 3 * g_param.ntypes; i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - pt->begin[i]) / (NPLOT - 1);
-    for (l = 0; l < NPLOT - 1; l++) {
+    for (l = 0; l < NPLOT - 1; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
@@ -535,10 +595,12 @@ void write_plotpot_pair(pot_table_t* pt, char* filename)
 #endif /* MEAM */
 #ifdef ADP
   for (i = g_calc.paircol + 2 * g_param.ntypes; i < 2 * (g_calc.paircol + g_param.ntypes);
-       i++) {
+       i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - r) / (NPLOT - 1);
-    for (l = 0; l < NPLOT - 1; l++) {
+    for (l = 0; l < NPLOT - 1; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
@@ -546,10 +608,12 @@ void write_plotpot_pair(pot_table_t* pt, char* filename)
     k++;
   }
   for (i = 2 * (g_calc.paircol + g_param.ntypes);
-       i < 3 * g_calc.paircol + 2 * g_param.ntypes; i++) {
+       i < 3 * g_calc.paircol + 2 * g_param.ntypes; i++)
+  {
     r = pt->begin[i];
     r_step = (pt->end[i] - r) / (NPLOT - 1);
-    for (l = 0; l < NPLOT - 1; l++) {
+    for (l = 0; l < NPLOT - 1; l++)
+    {
       fprintf(outfile, "%e %e\n", r, splint_ne(pt, pt->table, i, r));
       r += r_step;
     }
@@ -558,18 +622,22 @@ void write_plotpot_pair(pot_table_t* pt, char* filename)
   }
 #endif /* ADP */
 #else  /* APOT */
-  for (int i = 0; i < g_pot.apot_table.number; i++) {
+  for (int i = 0; i < g_pot.apot_table.number; i++)
+  {
     r = (g_param.plotmin == 0 ? 0.1 : g_param.plotmin);
     r_step = (g_pot.apot_table.end[i] - r) / (NPLOT - 1);
     h = g_pot.apot_table.values[i][g_pot.apot_table.n_par[i] - 1];
-    for (j = 0; j < NPLOT; j++) {
+    for (j = 0; j < NPLOT; j++)
+    {
       (*g_pot.apot_table.fvalue[i])(r, g_pot.apot_table.values[i], &temp);
       temp = g_pot.smooth_pot[i] ? temp * cutoff(r, g_pot.apot_table.end[i], h) : temp;
-      if (isnan(temp)) temp = 10e30;
+      if (isnan(temp))
+        temp = 10e30;
       fprintf(outfile, "%e %e\n", r, temp);
       r += r_step;
     }
-    if (i != (g_pot.apot_table.number - 1)) fprintf(outfile, "\n\n");
+    if (i != (g_pot.apot_table.number - 1))
+      fprintf(outfile, "\n\n");
   }
 #endif /* APOT */
 
@@ -601,48 +669,61 @@ void write_pairdist(pot_table_t* pt, char* filename)
 
   /* open file */
   outfile = fopen(filename, "w");
-  if (NULL == outfile) error(1, "Could not open file %s\n", filename);
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
 
   /* initialize distribution vector */
   freq = (int*)malloc(g_calc.ndimtot * sizeof(int));
-  for (i = 0; i < g_calc.ndimtot; i++) freq[i] = 0;
+  for (i = 0; i < g_calc.ndimtot; i++)
+    freq[i] = 0;
 
-  for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
-    for (i = 0; i < g_config.inconf[h]; i++) {
+  for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++)
+  {
+    for (i = 0; i < g_config.inconf[h]; i++)
+    {
       atom = g_config.atoms + i + g_config.cnfstart[h];
       typ1 = atom->type;
 
       /* pair potentials */
-      for (j = 0; j < atom->num_neigh; j++) {
+      for (j = 0; j < atom->num_neigh; j++)
+      {
         neigh = atom->neigh + j;
         typ2 = neigh->type;
         col = (typ1 <= typ2) ? typ1 * g_param.ntypes + typ2 - ((typ1 * (typ1 + 1)) / 2)
                              : typ2 * g_param.ntypes + typ1 - ((typ2 * (typ2 + 1)) / 2);
         /* this has already been calculated */
-        if (neigh->r < pt->end[col]) freq[neigh->slot[0]]++;
+        if (neigh->r < pt->end[col])
+          freq[neigh->slot[0]]++;
 #ifdef EAM
         /* transfer function */
         col = g_calc.paircol + typ2;
-        if (neigh->r < pt->end[col]) freq[neigh->slot[1]]++;
+        if (neigh->r < pt->end[col])
+          freq[neigh->slot[1]]++;
 #endif /* EAM */
       }
 #ifdef EAM
       /* embedding function - get index first */
       col = g_calc.paircol + g_param.ntypes + typ1;
-      if (g_pot.format == 3) {
+      if (g_pot.format == 3)
+      {
         rr = atom->rho - pt->begin[col];
 #ifdef RESCALE
-        if (rr < 0.0) error(1, "short distance");
+        if (rr < 0.0)
+          error(1, "short distance");
         j = (int)(rr * pt->invstep[col]) + pt->first[col];
 #else
-        if (rr < 0.0) rr = 0.0; /* extrapolation */
+        if (rr < 0.0)
+          rr = 0.0; /* extrapolation */
         j = MIN((int)(rr * pt->invstep[col]) + pt->first[col], pt->last[col]);
-#endif         /* RESCALE */
-      } else { /* format ==4 */
+#endif /* RESCALE */
+      }
+      else
+      { /* format ==4 */
         rr = atom->rho;
         k = pt->first[col];
         l = pt->last[col];
-        while (l - k > 1) {
+        while (l - k > 1)
+        {
           j = (k + l) >> 1;
           if (pt->xcoord[j] > rr)
             l = j;
@@ -657,8 +738,10 @@ void write_pairdist(pot_table_t* pt, char* filename)
   }
   /* finished calculating data - write it to output file */
   j = 0;
-  for (col = 0; col < pt->ncols; col++) {
-    for (i = pt->first[col]; i < pt->last[col]; i++) {
+  for (col = 0; col < pt->ncols; col++)
+  {
+    for (i = pt->first[col]; i < pt->last[col]; i++)
+    {
       rr = 0.5 * (pt->xcoord[i] + pt->xcoord[i + 1]);
       fprintf(outfile, "%f %d\n", rr, freq[i]);
     }
@@ -682,7 +765,8 @@ void write_coulomb_table()
 {
   apot_table_t* apt = &g_pot.apot_table;
 
-  if (g_param.ntypes == 2) {
+  if (g_param.ntypes == 2)
+  {
     double value, c1;
     FILE* outfile;
     char* filename1 = "Coulomb_00";
@@ -693,8 +777,10 @@ void write_coulomb_table()
 
     outfile = fopen(filename1, "a");
 
-    for (int i = 0; i < g_config.natoms; i++) {
-      for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+    for (int i = 0; i < g_config.natoms; i++)
+    {
+      for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
+      {
         value = apt->charge[0] * apt->charge[0] * g_config.atoms[i].neigh[j].fnval_el;
         fprintf(outfile, "%f\t%f\n", g_config.atoms[i].neigh[j].r, value);
       }
@@ -704,8 +790,10 @@ void write_coulomb_table()
 
     outfile = fopen(filename2, "a");
 
-    for (int i = 0; i < g_config.natoms; i++) {
-      for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+    for (int i = 0; i < g_config.natoms; i++)
+    {
+      for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
+      {
         value = apt->charge[0] * c1 * g_config.atoms[i].neigh[j].fnval_el;
         fprintf(outfile, "%f\t%f\n", g_config.atoms[i].neigh[j].r, value);
       }
@@ -715,14 +803,18 @@ void write_coulomb_table()
 
     outfile = fopen(filename3, "a");
 
-    for (int i = 0; i < g_config.natoms; i++) {
-      for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+    for (int i = 0; i < g_config.natoms; i++)
+    {
+      for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
+      {
         value = c1 * c1 * g_config.atoms[i].neigh[j].fnval_el;
         fprintf(outfile, "%f\t%f\n", g_config.atoms[i].neigh[j].r, value);
       }
     }
     fclose(outfile);
-  } else {
+  }
+  else
+  {
     printf("Coulomb-outfiles are only available in case of two atom types.");
   }
 }

@@ -60,11 +60,13 @@ void init_rng(int seed)
     uint32_t* array;
     array = (uint32_t*)malloc(R_SIZE * sizeof(uint32_t));
     srand(seed);
-    for (int i = 0; i < R_SIZE; i++) array[i] = rand();
+    for (int i = 0; i < R_SIZE; i++)
+      array[i] = rand();
 
     dsfmt_init_by_array(&g_dsfmt, array, R_SIZE);
 
-    for (int i = 0; i < 10e5; i++) eqdist();
+    for (int i = 0; i < 10e5; i++)
+      eqdist();
 
     free(array);
   }
@@ -85,8 +87,10 @@ double normdist()
   static double nd2;
   double x1, x2, sqr, cnst;
 
-  if (!(have)) {
-    do {
+  if (!(have))
+  {
+    do
+    {
       x1 = 2.0 * eqdist() - 1.0;
       x2 = 2.0 * eqdist() - 1.0;
       sqr = x1 * x1 + x2 * x2;
@@ -96,7 +100,9 @@ double normdist()
     nd2 = x2 * cnst;
     have = 1;
     return x1 * cnst;
-  } else {
+  }
+  else
+  {
     have = 0;
     return nd2;
   }

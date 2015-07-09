@@ -9,8 +9,8 @@ AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: All
 AlwaysBreakAfterDefinitionReturnType: false
 AlwaysBreakTemplateDeclarations: true
@@ -47,7 +47,7 @@ Standard:        Auto
 IndentWidth:     2
 TabWidth:        8
 UseTab:          Never
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Allman
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SpacesInAngles:  false

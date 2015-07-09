@@ -46,7 +46,8 @@
  *
  ****************************************************************/
 
-struct {
+struct
+{
   char** name;            /* identifier of the potential */
   int* num_params;        /* number of parameters */
   fvalue_pointer* fvalue; /* function pointer */
@@ -136,8 +137,10 @@ void add_potential(const char* name, int parameter, fvalue_pointer fval)
   int k = function_table.num_functions;
 
   /* only add potentials with unused names */
-  for (i = 0; i < k; i++) {
-    if (strcmp(function_table.name[i], name) == 0) {
+  for (i = 0; i < k; i++)
+  {
+    if (strcmp(function_table.name[i], name) == 0)
+    {
       error(1, "There already is a potential with the name \"%s\".", name);
     }
   }
@@ -154,7 +157,8 @@ void add_potential(const char* name, int parameter, fvalue_pointer fval)
     error(1, "Could not allocate memory for function_table!");
 
   /* assign values */
-  for (i = 0; i < 255; i++) function_table.name[k][i] = '\0';
+  for (i = 0; i < 255; i++)
+    function_table.name[k][i] = '\0';
   strncpy(function_table.name[k], name, strlen(name));
   function_table.num_params[k] = parameter;
   function_table.fvalue[k] = fval;
@@ -172,8 +176,10 @@ int apot_parameters(char* name)
 {
   int i;
 
-  for (i = 0; i < function_table.num_functions; i++) {
-    if (strcmp(function_table.name[i], name) == 0) {
+  for (i = 0; i < function_table.num_functions; i++)
+  {
+    if (strcmp(function_table.name[i], name) == 0)
+    {
       return function_table.num_params[i];
     }
   }
@@ -191,13 +197,17 @@ int apot_assign_functions(apot_table_t* apt)
 {
   int i, j;
 
-  for (i = 0; i < apt->number; i++) {
-    for (j = 0; j < function_table.num_functions; j++) {
-      if (strcmp(apt->names[i], function_table.name[j]) == 0) {
+  for (i = 0; i < apt->number; i++)
+  {
+    for (j = 0; j < function_table.num_functions; j++)
+    {
+      if (strcmp(apt->names[i], function_table.name[j]) == 0)
+      {
         apt->fvalue[i] = function_table.fvalue[j];
         break;
       }
-      if (j == function_table.num_functions - 1) return -1;
+      if (j == function_table.num_functions - 1)
+        return -1;
     }
   }
 
@@ -218,7 +228,8 @@ void check_apot_functions(void)
   int i;
 
   /* check for the correct function types for SW potential */
-  for (i = 0; i < pcol; i++) {
+  for (i = 0; i < pcol; i++)
+  {
     if (strcmp(g_pot.apot_table.names[i], "stiweb_2") != 0)
       error(1, "Only stiweb_2 potential is allowed for the %d. potential!\n", i + 1);
     if (strcmp(g_pot.apot_table.names[pcol + i], "stiweb_3") != 0)
@@ -231,15 +242,18 @@ void check_apot_functions(void)
           "type!\n");
 
   /* make sure the cutoff parameters (a1,a2) can be optimized correctly */
-  for (i = 0; i < pcol; i++) {
-    if (g_pot.apot_table.pmax[i][5] > g_pot.apot_table.end[i]) {
+  for (i = 0; i < pcol; i++)
+  {
+    if (g_pot.apot_table.pmax[i][5] > g_pot.apot_table.end[i])
+    {
       error(0,
             "The upper bound for the parameter a1 exceeds the cutoff radius in "
             "potential %d.\n",
             i + 1);
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
-    if (g_pot.apot_table.pmax[pcol + i][1] > g_pot.apot_table.end[pcol + i]) {
+    if (g_pot.apot_table.pmax[pcol + i][1] > g_pot.apot_table.end[pcol + i])
+    {
       error(0,
             "The upper bound for the parameter a2 exceeds the cutoff radius in "
             "potential %d.\n",
@@ -256,18 +270,22 @@ void check_apot_functions(void)
 
 #ifndef TERSOFFMOD
   /* check for the correct function types for TERSOFF potential */
-  for (i = 0; i < pcol; i++) {
+  for (i = 0; i < pcol; i++)
+  {
     if (strcmp(g_pot.apot_table.names[i], "tersoff_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
   }
-  for (i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++) {
+  for (i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++)
+  {
     if (strcmp(g_pot.apot_table.names[pcol + i], "tersoff_mix") != 0)
       error(1, "Only tersoff_mix potential is allowed for the %d. potential!\n", i + 1);
   }
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
-  for (i = 0; i < pcol; i++) {
-    if (g_pot.apot_table.pmax[i][9] < g_pot.apot_table.pmin[i][10]) {
+  for (i = 0; i < pcol; i++)
+  {
+    if (g_pot.apot_table.pmax[i][9] < g_pot.apot_table.pmin[i][10])
+    {
       error(0,
             "The upper bound for the parameter S is smaller than the lower "
             "bound\n");
@@ -277,14 +295,17 @@ void check_apot_functions(void)
   }
 #else
   /* check for the correct function types for TERSOFFMOD potential */
-  for (i = 0; i < pcol; i++) {
+  for (i = 0; i < pcol; i++)
+  {
     if (strcmp(g_pot.apot_table.names[i], "tersoff_mod_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
   }
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
-  for (i = 0; i < pcol; i++) {
-    if (g_pot.apot_table.pmax[i][15] < g_pot.apot_table.pmin[i][14]) {
+  for (i = 0; i < pcol; i++)
+  {
+    if (g_pot.apot_table.pmax[i][15] < g_pot.apot_table.pmin[i][14])
+    {
       error(0,
             "The upper bound for the parameter R2 is smaller than the lower "
             "bound\n");
@@ -505,7 +526,8 @@ void bjs_value(double r, double* p, double* f)
 
   if (r == 0.0)
     *f = 0.0;
-  else {
+  else
+  {
     power_1(&power, &r, &p[1]);
     *f = p[0] * (1.0 - p[1] * log(r)) * power + p[2] * r;
   }
@@ -984,7 +1006,8 @@ void newpot_value(double r, double* p, double* f) { *f = r* p[0] + p[1]; }
 
 double cutoff(double r, double r0, double h)
 {
-  if ((r - r0) > 0) return 0;
+  if ((r - r0) > 0)
+    return 0;
 
   static double val;
 
@@ -1008,34 +1031,47 @@ int apot_check_params(double* params)
   double temp;
 #endif /* TERSOFF */
 
-  for (i = 0; i < g_pot.apot_table.number; i++) {
+  for (i = 0; i < g_pot.apot_table.number; i++)
+  {
     /* last parameter of eopp potential is 2 pi periodic */
-    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0)
+    {
       k = j + 5;
-      if (params[k] > 2 * M_PI) do {
+      if (params[k] > 2 * M_PI)
+        do
+        {
           params[k] -= 2 * M_PI;
         } while (params[k] > 2 * M_PI);
-      if (params[k] < 0) do {
+      if (params[k] < 0)
+        do
+        {
           params[k] += 2 * M_PI;
         } while (params[k] < 0);
     }
 
     /* the third parameter of csw2 potential is 2 pi periodic */
-    if (strcmp(g_pot.apot_table.names[i], "csw2") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "csw2") == 0)
+    {
       k = j + 2;
-      if (params[k] > 2 * M_PI) do {
+      if (params[k] > 2 * M_PI)
+        do
+        {
           params[k] -= 2 * M_PI;
         } while (params[k] > 2 * M_PI);
-      if (params[k] < 0) do {
+      if (params[k] < 0)
+        do
+        {
           params[k] += 2 * M_PI;
         } while (params[k] < 0);
     }
 #ifdef TERSOFF
     /* the parameter S has to be greater than the parameter R */
     /* switch them if this is not the case */
-    if (strcmp(g_pot.apot_table.names[i], "tersoff_pot") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "tersoff_pot") == 0)
+    {
       k = j + 9;
-      if (params[k] < params[k + 1]) {
+      if (params[k] < params[k + 1])
+      {
         temp = params[k];
         params[k] = params[k + 1];
         params[k + 1] = temp;
@@ -1062,14 +1098,18 @@ double apot_punish(double* params, double* forces)
   double x, tmpsum = 0.0, min, max;
 
   /* loop over individual parameters */
-  for (i = 0; i < g_calc.ndim; i++) {
+  for (i = 0; i < g_calc.ndim; i++)
+  {
     min = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
     max = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
     /* punishment for out of bounds */
-    if (x = params[g_todo.idx[i]] - min, x < 0) {
+    if (x = params[g_todo.idx[i]] - min, x < 0)
+    {
       tmpsum += APOT_PUNISH * x * x;
       forces[g_calc.punish_par_p + i] = APOT_PUNISH * x * x;
-    } else if (x = params[g_todo.idx[i]] - max, x > 0) {
+    }
+    else if (x = params[g_todo.idx[i]] - max, x > 0)
+    {
       tmpsum += APOT_PUNISH * x * x;
       forces[g_calc.punish_par_p + i] = APOT_PUNISH * x * x;
     }
@@ -1077,20 +1117,25 @@ double apot_punish(double* params, double* forces)
 
   j = 2;
   /* loop over potentials */
-  for (i = 0; i < g_pot.apot_table.number; i++) {
+  for (i = 0; i < g_pot.apot_table.number; i++)
+  {
     /* punish eta_1 < eta_2 for eopp function */
-    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0)
+    {
       x = params[j + 1] - params[j + 3];
-      if (x < 0) {
+      if (x < 0)
+      {
         forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value * (1 + x) * (1 + x);
         tmpsum += g_param.apot_punish_value * (1 + x) * (1 + x);
       }
     }
 #if defined EAM || defined ADP || defined MEAM
     /* punish m=n for universal embedding function */
-    if (strcmp(g_pot.apot_table.names[i], "universal") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "universal") == 0)
+    {
       x = params[j + 2] - params[j + 1];
-      if (fabs(x) < 1e-6) {
+      if (fabs(x) < 1e-6)
+      {
         forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value / (x * x);
         tmpsum += g_param.apot_punish_value / (x * x);
       }
@@ -1248,8 +1293,10 @@ void elstat_shift(double r, double dp_kappa, double* fnval_tail, double* grad_ta
 
 void init_tails(double dp_kappa)
 {
-  for (int i = 0; i < g_config.natoms; i++) {
-    for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+  for (int i = 0; i < g_config.natoms; i++)
+  {
+    for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
+    {
       elstat_shift(
           g_config.atoms[i].neigh[j].r, dp_kappa, &g_config.atoms[i].neigh[j].fnval_el,
           &g_config.atoms[i].neigh[j].grad_el, &g_config.atoms[i].neigh[j].ggrad_el);
@@ -1322,28 +1369,35 @@ void debug_apot()
   fprintf(stderr, "##############################################\n");
   fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
           g_pot.apot_table.number, g_pot.apot_table.total_par);
-  for (i = 0; i < g_pot.apot_table.number; i++) {
+  for (i = 0; i < g_pot.apot_table.number; i++)
+  {
     fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
             g_pot.apot_table.names[i], g_pot.smooth_pot[i]);
     fprintf(stderr, "begin=%f end=%f\n", g_pot.apot_table.begin[i],
             g_pot.apot_table.end[i]);
-    for (j = 0; j < g_pot.apot_table.n_par[i]; j++) {
+    for (j = 0; j < g_pot.apot_table.n_par[i]; j++)
+    {
       fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
               g_pot.apot_table.param_name[i][j], g_pot.apot_table.values[i][j],
               g_pot.apot_table.pmin[i][j], g_pot.apot_table.pmax[i][j]);
     }
   }
 #ifdef PAIR
-  if (!g_param.enable_cp) {
+  if (!g_param.enable_cp)
+  {
     fprintf(stderr, "\nchemical potentials are DISABLED!\n");
-  } else {
+  }
+  else
+  {
     fprintf(stderr, "\nchemical potentials:\n");
     for (i = 0; i < g_param.ntypes; i++)
       fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, g_pot.apot_table.chempot[i],
               g_pot.apot_table.pmin[g_pot.apot_table.number][i],
               g_pot.apot_table.pmax[g_pot.apot_table.number][i]);
-    if (g_param.compnodes > 0) {
-      if (g_param.ntypes == 2) {
+    if (g_param.compnodes > 0)
+    {
+      if (g_param.ntypes == 2)
+      {
         fprintf(stderr, "composition nodes:\n");
         for (j = 0; j < g_param.compnodes; j++)
           fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",

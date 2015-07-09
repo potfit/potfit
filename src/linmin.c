@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -41,6 +41,7 @@
 
 #include "bracket.h"
 #include "forces.h"
+#include "memory.h"
 #include "utils.h"
 
 #define TOL 1.0e-1
@@ -71,17 +72,18 @@ double linmin(double xi[], double del[], double fxi1, double* x1, double* x2,
   /*saves 1 fcalc... */
   bx = 0.1;
 
-  if (vecu == NULL) {
-    vecu = vect_double(g_calc.ndimtot);
-    reg_for_free(vecu, "vecu");
-  }
-  for (j = 0; j < g_calc.ndimtot; j++) vecu[j] = xicom[j] + bx * delcom[j]; /*set vecu */
+  if (vecu == NULL)
+    vecu = (double*)Malloc(g_calc.ndimtot);
+
+  for (j = 0; j < g_calc.ndimtot; j++)
+    vecu[j] = xicom[j] + bx * delcom[j]; /*set vecu */
   fb = (*g_calc_forces)(vecu, fret2, 0);
 
   bracket(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
 
   fx = brent(ax, xx, bx, fx, TOL, &xmin, &xmin2, fret1, fret2);
-  for (j = 0; j < g_calc.ndimtot; j++) {
+  for (j = 0; j < g_calc.ndimtot; j++)
+  {
     del[j] *= xmin;
     xi[j] += del[j];
   }

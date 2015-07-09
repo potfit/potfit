@@ -34,7 +34,8 @@
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   double x;
   double y;
   double z;
@@ -46,7 +47,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   double xx;
   double yy;
   double zz;
@@ -61,7 +63,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   /* neighbor properties */
   int type;      /* type of neighboring atom */
   int nr;        /* number of neighboring atom */
@@ -112,7 +115,8 @@ typedef struct {
  ****************************************************************/
 
 #if defined(THREEBODY)
-typedef struct {
+typedef struct
+{
   double cos;
 #if defined(MEAM)
   int slot;
@@ -131,7 +135,8 @@ typedef struct {
  ****************************************************************/
 
 #if defined(STIWEB)
-typedef struct {
+typedef struct
+{
   int init;
   double** A;
   double** B;
@@ -152,7 +157,8 @@ typedef struct {
  ****************************************************************/
 
 #if defined(TERSOFF)
-typedef struct {
+typedef struct
+{
   int init;
   double** A;
   double** B;
@@ -194,7 +200,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   int type;
   int num_neigh;
   vector pos;
@@ -249,7 +256,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   int len;         /* total length of the table */
   int idxlen;      /* number of changeable potential values */
   int ncols;       /* number of columns */
@@ -275,7 +283,8 @@ typedef void (*fvalue_pointer)(double, double*, double*);
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   /* potentials */
   int number;     /* number of analytic potentials */
   int invar_pots; /* number of invariant analytic potentials */
@@ -339,13 +348,23 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
-  int fcalls;   /* number of force calculations */
-  int mdim;     /* total number of entries in force vector */
-  int ndim;     /* number of free optimization parameters in force vector */
-  int ndimtot;  /* total number of optimization parameters in force vector */
-  int paircol;  /* How many columns for pair potential ( ntypes*(ntypes+1)/2 ) */
-  double d_eps; /* ??? */
+typedef struct
+{
+  int fcalls;  /* number of force calculations */
+  int mdim;    /* total number of entries in force vector */
+  int ndim;    /* number of free optimization parameters in force vector */
+  int ndimtot; /* total number of optimization parameters in force vector */
+  int paircol; /* How many columns for pair potential ( ntypes*(ntypes+1)/2 ) */
+
+  double d_eps;   /* ??? */
+  double* force;  //
+
+  struct
+  {
+    double* vecu_bracket;
+    double* vecu_brent;
+    double* f_vec3;
+  } linmin;
 
   /* pointers for force-vector */
   int energy_p; /* offset of energies in force vector */
@@ -368,7 +387,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   int natoms; /* total number of atoms */
   int nconf;  /* total number of configurations */
 
@@ -410,7 +430,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   char* config;        /* file with atom configuration */
   char* distfile;      /* file for distributions */
   char* endpot;        /* file for end potential */
@@ -431,7 +452,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   int myid;     /* index of current process */
   int num_cpus; /* total numer of processes */
 
@@ -463,7 +485,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   int imdpotsteps; /* resolution of IMD potential */
   int ntypes;      /* number of atom types */
   int opt;         /* optimization flag */
@@ -499,7 +522,8 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   int* gradient; /* Gradient of potential fns.  */
   int* invar_pot;
   int format;     /* format of potential table */
@@ -525,25 +549,13 @@ typedef struct {
 
 /****************************************************************
  *
- *  potfit_memory: holds information for memory management
- *
- ****************************************************************/
-
-typedef struct {
-  char** pointer_names;
-  int num_pointers;
-  void** pointers;
-  double* u_address;
-} potfit_memory;
-
-/****************************************************************
- *
  *  potfit_unknown: strange parameters, need to be merge into any existing
  *struct
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   /* misc. stuff - has to belong somewhere */
   int* idx;
   int init_done;
@@ -570,6 +582,7 @@ typedef struct {
  *
  ****************************************************************/
 
-typedef struct {
+typedef struct
+{
   double d_eps; /* abortion criterion for powell_lsq */
 } potfit_optimization;

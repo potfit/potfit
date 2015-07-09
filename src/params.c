@@ -40,11 +40,13 @@
 
 void read_parameters(int argc, char** argv)
 {
-  if (argc != 2) error(1, "Usage: %s <paramfile>\n", argv[0]);
+  if (argc != 2)
+    error(1, "Usage: %s <paramfile>\n", argv[0]);
 
   printf("Reading parameter file >> %s << ... \n", argv[1]);
 
-  if (read_parameter_file(argv[1]) != 0) error(1, "Error reading parameter file.");
+  if (read_parameter_file(argv[1]) != 0)
+    error(1, "Error reading parameter file.");
 
   check_parameters_complete(argv[1]);
 
@@ -73,20 +75,24 @@ int read_parameter_file(char const* param_file)
   /* open parameter file, and read it */
   pfile = fopen(param_file, "r");
 
-  if (pfile == NULL) {
+  if (pfile == NULL)
+  {
     error(1, "Could not open parameter file %s.\n", param_file);
     return -1;
   }
 
-  do {
-    if (fgets(buffer, 1024, pfile) == NULL) break; /* probably EOF reached */
+  do
+  {
+    if (fgets(buffer, 1024, pfile) == NULL)
+      break; /* probably EOF reached */
 
     line++;
 
     token = strtok(buffer, " \t\r\n");
 
     /* skip blank and comment lines */
-    if (token == NULL || token[0] == '#') continue;
+    if (token == NULL || token[0] == '#')
+      continue;
 
     /* number of atom types */
     if (strcasecmp(token, "ntypes") == 0)
@@ -94,21 +100,26 @@ int read_parameter_file(char const* param_file)
           get_param_int("ntypes", &g_param.ntypes, line, param_file, 1, INT_MAX);
 
     /* file with start potential */
-    else if (strcasecmp(token, "startpot") == 0) {
+    else if (strcasecmp(token, "startpot") == 0)
+    {
       rval = get_param_string("startpot", &g_files.startpot, line, param_file);
 
-      if (rval < 0) return_error = -1;
+      if (rval < 0)
+        return_error = -1;
     }
 
     /* file for end potential */
-    else if (strcasecmp(token, "endpot") == 0) {
+    else if (strcasecmp(token, "endpot") == 0)
+    {
       rval = get_param_string("endpot", &g_files.endpot, line, param_file);
 
-      if (rval < 0) return_error = -1;
+      if (rval < 0)
+        return_error = -1;
     }
 
     /* prefix for general output files */
-    else if (strcasecmp(token, "output_prefix") == 0) {
+    else if (strcasecmp(token, "output_prefix") == 0)
+    {
       rval = get_param_string("output_prefix", &g_files.output_prefix, line, param_file);
 
       if (rval < 0)
@@ -118,7 +129,8 @@ int read_parameter_file(char const* param_file)
     }
 
     /* prefix for LAMMPS output files */
-    else if (strcasecmp(token, "output_lammps") == 0) {
+    else if (strcasecmp(token, "output_lammps") == 0)
+    {
       rval = get_param_string("output_lammps", &g_files.output_lammps, line, param_file);
 
       if (rval < 0)
@@ -128,7 +140,8 @@ int read_parameter_file(char const* param_file)
     }
 
     /* file for IMD potential */
-    else if (strcasecmp(token, "imdpot") == 0) {
+    else if (strcasecmp(token, "imdpot") == 0)
+    {
       rval = get_param_string("imdpot", &g_files.imdpot, line, param_file);
 
       if (rval < 0)
@@ -138,7 +151,8 @@ int read_parameter_file(char const* param_file)
     }
 
     /* file for plotting */
-    else if (strcasecmp(token, "plotfile") == 0) {
+    else if (strcasecmp(token, "plotfile") == 0)
+    {
       rval = get_param_string("plotfile", &g_files.plotfile, line, param_file);
 
       if (rval < 0)
@@ -148,7 +162,8 @@ int read_parameter_file(char const* param_file)
     }
 #if !defined(APOT)
     /* file for maximal change */
-    else if (strcasecmp(token, "maxchfile") == 0) {
+    else if (strcasecmp(token, "maxchfile") == 0)
+    {
       rval = get_param_string("maxchfile", &g_files.maxchfile, line, param_file);
 
       if (rval < 0)
@@ -306,14 +321,17 @@ int get_param_int(char const* param_name, int* value, int line, char const* para
 {
   char* str = strtok(NULL, " \t\r\n");
 
-  if (str == NULL) {
+  if (str == NULL)
+  {
     error(0, "Missing value in parameter file %s (line %d): %s is <undefined>",
           param_file, line, param_name);
     return -1;
-  } else
+  }
+  else
     *value = atoi(str);
 
-  if (*value < min || *value > max) {
+  if (*value < min || *value > max)
+  {
     error(0,
           "Illegal value in parameter file %s (line %d): %s is out of bounds! "
           "(min: %i, max: %i, given: %i)",
@@ -335,14 +353,17 @@ int get_param_double(char const* param_name, double* value, int line,
 {
   char* str = strtok(NULL, " \t\r\n");
 
-  if (str == NULL) {
+  if (str == NULL)
+  {
     error(0, "Missing value in parameter file %s (line %d): %s is <undefined>",
           param_file, line, param_name);
     return -1;
-  } else
+  }
+  else
     *value = atof(str);
 
-  if (*value < min || *value > max) {
+  if (*value < min || *value > max)
+  {
     error(0,
           "Illegal value in parameter file %s (line %d): %s is out of bounds! "
           "(min: %d, max: %d, given: %d)",
@@ -364,15 +385,19 @@ int get_param_string(char const* param_name, char** value, int line,
 {
   char* str = strtok(NULL, " \t\r\n");
 
-  if (str == NULL) {
+  if (str == NULL)
+  {
     error(0, "Missing value in parameter file %s (line %d): %s is <undefined>",
           param_file, line, param_name);
     return -1;
-  } else {
+  }
+  else
+  {
     int len = strlen(str) + 1;
     *value = (char*)malloc(len * sizeof(char));
     memset(*value, 0, len);
-    if (*value == NULL) {
+    if (*value == NULL)
+    {
       error(0, "Could not allocate memory for parameter %s\n", param_name);
       return -1;
     }
@@ -398,7 +423,8 @@ void check_parameters_complete(char const* paramfile)
     error(0, "Missing parameter or invalid value in %s : startpot is <undefined>",
           paramfile);
 
-  if (g_files.endpot == NULL) {
+  if (g_files.endpot == NULL)
+  {
     warning("endpot is missing in %s, setting it to %s_end\n", paramfile,
             g_files.startpot);
     g_files.endpot = (char*)malloc((strlen(g_files.startpot) + 5) * sizeof(char));

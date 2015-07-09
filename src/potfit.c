@@ -58,7 +58,7 @@ potfit_filenames g_files;
 potfit_mpi_config g_mpi;
 potfit_parameters g_param;
 potfit_potentials g_pot;
-potfit_memory g_memory;
+
 potfit_unknown g_todo;
 
 /****************************************************************
@@ -69,10 +69,11 @@ potfit_unknown g_todo;
 
 int main(int argc, char** argv)
 {
-  allocate_global_variables();
+  initialize_global_variables();
 
 #if defined(MPI)
-  if (init_mpi(&argc, &argv) != MPI_SUCCESS) return EXIT_FAILURE;
+  if (init_mpi(&argc, &argv) != MPI_SUCCESS)
+    return EXIT_FAILURE;
 #else
   printf("This is %s compiled on %s, %s.\n\n", POTFIT_VERSION, __DATE__, __TIME__);
 #endif  // MPI
@@ -98,13 +99,7 @@ int main(int argc, char** argv)
   g_todo.idx = g_pot.opt_pot.idx;
 
   /* main force vector, all forces, energies, stresses, ... will be stored here */
-  double* force = (double*)malloc(g_calc.mdim * sizeof(double));
-
-  if (force == NULL) error(1, "Could not allocate memory for main force vector.");
-
-  memset(force, 0, g_calc.mdim * sizeof(double));
-
-  reg_for_free(force, "force vector");
+  g_calc.force = (double*)Malloc(g_calc.mdim * sizeof(double));
 
   /* starting positions for the force vector */
   set_force_vector_pointers();
@@ -116,11 +111,15 @@ int main(int argc, char** argv)
   update_calc_table(g_pot.opt_pot.table, g_pot.calc_pot.table, 1);
 #endif /* APOT */
 
-  if (g_mpi.myid > 0) {
+  if (g_mpi.myid > 0)
+  {
     start_mpi_worker(force);
-  } else {
+  }
+  else
+  {
 #if defined(MPI)
-    if (g_mpi.num_cpus > g_config.nconf) {
+    if (g_mpi.num_cpus > g_config.nconf)
+    {
       warning("You are using more CPUs than you have configurations!\n");
       warning("While this will not do any harm, you are wasting %d CPUs.\n",
               g_mpi.num_cpus - g_config.nconf);
@@ -132,13 +131,18 @@ int main(int argc, char** argv)
 
     time(&start_time);
 
-    if (g_param.opt && g_calc.ndim > 0) {
+    if (g_param.opt && g_calc.ndim > 0)
+    {
       run_optimization();
-    } else if (g_calc.ndim == 0) {
+    }
+    else if (g_calc.ndim == 0)
+    {
       printf(
           "\nOptimization disabled due to 0 free parameters. Calculating "
           "errors.\n");
-    } else {
+    }
+    else
+    {
       printf("\nOptimization disabled. Calculating errors.\n\n");
     }
 
@@ -155,13 +159,15 @@ int main(int argc, char** argv)
     printf("\nPotential in format %d written to file \t%s\n", g_pot.format,
            g_files.endpot);
 
-    if (g_param.writeimd == 1) write_pot_table_imd(g_files.imdpot);
+    if (g_param.writeimd == 1)
+      write_pot_table_imd(g_files.imdpot);
 
     // TODO
     //     if (g_param.plot == 1)
     //       write_plotpot_pair(&g_pot.calc_pot, g_files.plotfile);
 
-    if (g_param.write_lammps == 1) write_pot_table_lammps();
+    if (g_param.write_lammps == 1)
+      write_pot_table_lammps();
 
 /* will not work with MPI */
 #if defined(PDIST) && !defined(MPI)
@@ -172,7 +178,8 @@ int main(int argc, char** argv)
     write_errors(force, tot);
 
     /* calculate total runtime */
-    if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0) {
+    if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0)
+    {
       printf("\nRuntime: %d hours, %d minutes and %d seconds.\n",
              (int)difftime(end_time, start_time) / 3600,
              ((int)difftime(end_time, start_time) % 3600) / 60,
@@ -192,10 +199,7 @@ int main(int argc, char** argv)
   shutdown_mpi();
 #endif /* MPI */
 
-  free(g_memory.u_address);
-  free_all_pointers();
-
-  free_global_variables();
+  free_allocated_memory();
 
   return 0;
 }
@@ -268,7 +272,8 @@ void error(int done, const char* msg, ...)
 
   fflush(stderr);
 
-  if (done == 1) {
+  if (done == 1)
+  {
 #if defined(MPI)
     /* go wake up other threads */
     g_calc_forces(NULL, NULL, 1);

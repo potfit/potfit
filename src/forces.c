@@ -99,17 +99,21 @@ void init_forces(int is_worker)
 
 /* Select correct spline interpolation and other functions */
 #if defined(APOT)
-  if (g_pot.format == 0) {
+  if (g_pot.format == 0)
+  {
     g_splint = splint_ed;
     g_splint_comb = splint_comb_ed;
     g_splint_grad = splint_grad_ed;
   }
 #else
-  if (g_pot.format == 3) {
+  if (g_pot.format == 3)
+  {
     g_splint = splint_ed;
     g_splint_comb = splint_comb_ed;
     g_splint_grad = splint_grad_ed;
-  } else if (g_pot.format >= 4) {
+  }
+  else if (g_pot.format >= 4)
+  {
     g_splint = splint_ne;
     g_splint_comb = splint_comb_ne;
     g_splint_grad = splint_grad_ne;
@@ -117,7 +121,8 @@ void init_forces(int is_worker)
 #endif /* APOT */
 
 #ifdef COULOMB
-  if (g_pot.apot_table.sw_kappa) init_tails(g_pot.apot_table.dp_kappa[0]);
+  if (g_pot.apot_table.sw_kappa)
+    init_tails(g_pot.apot_table.dp_kappa[0]);
 #endif /* COULOMB */
 
 /* set spline density corrections to 0 */
@@ -126,7 +131,8 @@ void init_forces(int is_worker)
 
   g_todo.lambda = (double*)malloc(g_param.ntypes * sizeof(double));
   reg_for_free(g_todo.lambda, "lambda");
-  for (i = 0; i < g_param.ntypes; i++) g_todo.lambda[i] = 0.0;
+  for (i = 0; i < g_param.ntypes; i++)
+    g_todo.lambda[i] = 0.0;
 #endif /* EAM || ADP || MEAM */
 }
 
@@ -221,7 +227,8 @@ void gather_forces(double* error_sum, double* forces)
   MPI_Reduce(error_sum, &tmpsum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* gather forces, energies, stresses */
-  if (g_mpi.myid == 0) {
+  if (g_mpi.myid == 0)
+  {
     /* root node already has data in place */
     /* forces */
     MPI_Gatherv(MPI_IN_PLACE, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces, g_mpi.atom_len,
@@ -234,7 +241,9 @@ void gather_forces(double* error_sum, double* forces)
     MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, g_mpi.MPI_STENS, forces + g_calc.stress_p,
                 g_mpi.conf_len, g_mpi.conf_dist, g_mpi.MPI_STENS, 0, MPI_COMM_WORLD);
 #endif  // STRESS
-  } else {
+  }
+  else
+  {
     /* forces */
     MPI_Gatherv(forces + g_mpi.firstatom * 3, g_mpi.myatoms, g_mpi.MPI_VECTOR, forces,
                 g_mpi.atom_len, g_mpi.atom_dist, g_mpi.MPI_VECTOR, 0, MPI_COMM_WORLD);

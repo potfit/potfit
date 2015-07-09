@@ -125,7 +125,8 @@ void run_powell_lsq(double* xi)
 #endif /* ACML */
 
   /* clear delta */
-  for (i = 0; i < g_calc.ndimtot; i++) delta[i] = 0.0;
+  for (i = 0; i < g_calc.ndimtot; i++)
+    delta[i] = 0.0;
 
   /* calculate the first force */
   F = g_calc_forces(xi, fxi1, 0);
@@ -135,7 +136,8 @@ void run_powell_lsq(double* xi)
   fflush(stdout);
 #endif /* APOT */
 
-  if (F < NOTHING) {
+  if (F < NOTHING)
+  {
     printf("Error already too small to optimize, aborting ...\n");
     return; /* If F is less than nothing, */
     /* what is there to do? */
@@ -147,12 +149,14 @@ void run_powell_lsq(double* xi)
   printf("%5d\t%17.6f\t%6d\n", m, F, g_calc.fcalls);
 #endif /* APOT */
 
-  do { /*outer loop, includes recalculating gamma */
+  do
+  { /*outer loop, includes recalculating gamma */
     m = 0;
 
     /* Init gamma */
     i = gamma_init(gamma, d, xi, fxi1);
-    if (0 != i) {
+    if (0 != i)
+    {
 #ifdef RESCALE
 #if defined EAM || defined ADP || defined MEAM
       /* perhaps rescaling helps? - Last resort... */
@@ -165,7 +169,8 @@ void run_powell_lsq(double* xi)
 #endif /* RESCALE */
 
       /* try again */
-      if (0 != i) {
+      if (0 != i)
+      {
 /* ok, now this is serious, better exit cleanly */
 #ifndef APOT
         write_pot_table_potfit(g_files.tempfile); /*emergency writeout */
@@ -189,7 +194,8 @@ void run_powell_lsq(double* xi)
     breakflag = 0;
 
     /*inner loop - only calculate changed rows/lines in gamma */
-    do {
+    do
+    {
       /* (a) solve linear equation */
 
       /* All in one driver routine */
@@ -209,17 +215,21 @@ void run_powell_lsq(double* xi)
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3], q[4], q[5],
              q[6], q[7]);
 #endif /* DEBUG && !APOT */
-      if (i > 0 && i <= g_calc.ndim) {
+      if (i > 0 && i <= g_calc.ndim)
+      {
         warning("Linear equation system singular after step %d i=%d\n", m, i);
         break;
       }
       /* (b) get delta by multiplying q with the direction vectors */
-      for (i = 0; i < g_calc.ndim; i++) {
+      for (i = 0; i < g_calc.ndim; i++)
+      {
         delta[g_todo.idx[i]] = 0.0;
-        for (j = 0; j < g_calc.ndim; j++) delta[g_todo.idx[i]] += d[i][j] * q[j];
+        for (j = 0; j < g_calc.ndim; j++)
+          delta[g_todo.idx[i]] += d[i][j] * q[j];
 #ifndef APOT
         if ((g_param.usemaxch) && (g_todo.maxchange[g_todo.idx[i]] > 0) &&
-            (fabs(delta[g_todo.idx[i]]) > g_todo.maxchange[g_todo.idx[i]])) {
+            (fabs(delta[g_todo.idx[i]]) > g_todo.maxchange[g_todo.idx[i]]))
+        {
           /* something seriously went wrong,
              parameter idx[i] out of control */
           warning("Direction vector component %d out of range in step %d\n",
@@ -232,7 +242,8 @@ void run_powell_lsq(double* xi)
 #else
         if ((xi[g_todo.idx[i]] + delta[g_todo.idx[i]]) <
             g_pot.apot_table
-                .pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]]) {
+                .pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]])
+        {
           delta[g_todo.idx[i]] =
               g_pot.apot_table
                   .pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]] -
@@ -240,7 +251,8 @@ void run_powell_lsq(double* xi)
         }
         if ((xi[g_todo.idx[i]] + delta[g_todo.idx[i]]) >
             g_pot.apot_table
-                .pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]]) {
+                .pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]])
+        {
           delta[g_todo.idx[i]] =
               g_pot.apot_table
                   .pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]] -
@@ -248,7 +260,8 @@ void run_powell_lsq(double* xi)
         }
 #endif /* !APOT */
       }
-      if (breakflag) break;
+      if (breakflag)
+        break;
       /*     and store delta */
       copy_vector(delta, delta_norm, g_calc.ndimtot);
 
@@ -263,13 +276,15 @@ void run_powell_lsq(double* xi)
 
       /* (d) if error estimate is too high after minimization
          in 5 directions: restart outer loop */
-      if (ferror + berror > 1.0 && m > 5) break;
+      if (ferror + berror > 1.0 && m > 5)
+        break;
 
       /* (e) find optimal direction to replace */
       j = 0;
       temp2 = 0.0;
       for (i = 0; i < g_calc.ndim; i++)
-        if ((temp = fabs(p[i] * q[i])) > temp2) {
+        if ((temp = fabs(p[i] * q[i])) > temp2)
+        {
           j = i;
           temp2 = temp;
         };
@@ -277,13 +292,15 @@ void run_powell_lsq(double* xi)
       /* (f) update gamma, but if fn returns 1, matrix will be sigular,
          break inner loop and restart with new matrix */
       if (gamma_update(gamma, xi1, xi2, fxi1, fxi2, delta_norm, j, g_calc.mdim,
-                       g_calc.ndimtot, F)) {
+                       g_calc.ndimtot, F))
+      {
         warning("Matrix gamma singular after step %d, restarting inner loop\n", m);
         break;
       }
 
       /* (g) set new direction vector */
-      for (i = 0; i < g_calc.ndim; i++) d[i][j] = delta_norm[g_todo.idx[i]];
+      for (i = 0; i < g_calc.ndim; i++)
+        d[i][j] = delta_norm[g_todo.idx[i]];
 
       /* (h) update linear equation system */
       lineqsys_update(gamma, lineqsys, fxi1, p, j, g_calc.ndim, g_calc.mdim);
@@ -309,9 +326,11 @@ void run_powell_lsq(double* xi)
     fflush(stdout);
 
     /* End fit if break flagfile exists */
-    if (*g_files.flagfile != '\0') {
+    if (*g_files.flagfile != '\0')
+    {
       ff = fopen(g_files.flagfile, "r");
-      if (NULL != ff) {
+      if (NULL != ff)
+      {
         printf(
             "Fit terminated prematurely in presence of break flagfile "
             "\"%s\"!\n",
@@ -326,10 +345,12 @@ void run_powell_lsq(double* xi)
 #ifdef RESCALE
 #if defined xEAM || defined xMEAM
     /* Check for rescaling... every fourth step */
-    if ((n % 4) == 0) {
+    if ((n % 4) == 0)
+    {
       temp = rescale(&opt_pot, 1.0, 0);
       /* Was rescaling necessary ? */
-      if (temp != 0.0) {
+      if (temp != 0.0)
+      {
         /* wake other threads and sync potentials */
         F = calc_forces(xi, fxi1, 2);
       }
@@ -338,7 +359,8 @@ void run_powell_lsq(double* xi)
 #endif /* RESCALE */
 
     /* write temp file  */
-    if (*g_files.tempfile != '\0') {
+    if (*g_files.tempfile != '\0')
+    {
 #ifndef APOT
       write_pot_table_potfit(g_files.tempfile); /*emergency writeout */
 #else
@@ -399,18 +421,24 @@ int gamma_init(double** gamma, double** d, double* xi, double* force_xi)
   double sum, temp, scale, store; /* Auxiliary var: Sum */
   /*   Set direction vectors to coordinate directions d_ij=KroneckerDelta_ij */
   /*Initialize direction vectors */
-  for (i = 0; i < g_calc.ndim; i++) {
-    for (j = 0; j < g_calc.ndim; j++) d[i][j] = (i == j) ? 1.0 : 0.0;
+  for (i = 0; i < g_calc.ndim; i++)
+  {
+    for (j = 0; j < g_calc.ndim; j++)
+      d[i][j] = (i == j) ? 1.0 : 0.0;
   }
   /* Initialize gamma by calculating numerical derivatives    */
-  if (force == NULL) {
+  if (force == NULL)
+  {
     force = (double*)malloc(g_calc.mdim * sizeof(double));
-    if (force == NULL) error(1, "Error in double vector allocation");
-    for (i = 0; i < g_calc.mdim; i++) force[i] = 0;
+    if (force == NULL)
+      error(1, "Error in double vector allocation");
+    for (i = 0; i < g_calc.mdim; i++)
+      force[i] = 0;
     reg_for_free(force, "force from init_gamma");
   }
 
-  for (i = 0; i < g_calc.ndim; i++) { /*initialize gamma */
+  for (i = 0; i < g_calc.ndim; i++)
+  { /*initialize gamma */
     store = xi[g_todo.idx[i]];
 #ifdef APOT
     scale =
@@ -423,7 +451,8 @@ int gamma_init(double** gamma, double** d, double* xi, double* force_xi)
 #endif /* APOT */
     sum = 0.0;
     (*g_calc_forces)(xi, force, 0);
-    for (j = 0; j < g_calc.mdim; j++) {
+    for (j = 0; j < g_calc.mdim; j++)
+    {
       temp = (force[j] - force_xi[j]) / (EPS * scale);
       gamma[j][i] = temp;
       sum += dsquare(temp);
@@ -431,10 +460,13 @@ int gamma_init(double** gamma, double** d, double* xi, double* force_xi)
     temp = sqrt(sum);
     xi[g_todo.idx[i]] = store; /*...and reset [idx[i]] again */
     /* scale gamma so that sum_j(gamma^2)=1                      */
-    if (temp > NOTHING) {
-      for (j = 0; j < g_calc.mdim; j++) gamma[j][i] /= temp; /*normalize gamma */
-      d[i][i] /= temp;                                       /* rescale d */
-    } else
+    if (temp > NOTHING)
+    {
+      for (j = 0; j < g_calc.mdim; j++)
+        gamma[j][i] /= temp; /*normalize gamma */
+      d[i][i] /= temp;       /* rescale d */
+    }
+    else
       return i + 1; /* singular matrix, abort */
   }
   return 0;
@@ -455,22 +487,28 @@ int gamma_update(double** gamma, double a, double b, double* fa, double* fb,
   double temp;
   double sum = 0.0;
   double mu = 0.0;
-  for (i = 0; i < m; i++) {
+  for (i = 0; i < m; i++)
+  {
     temp = ((fa[i] - fb[i]) / (a - b));
     gamma[i][j] = temp;
     mu += temp * fa[i];
   }
   mu /= fmin;
-  for (i = 0; i < m; i++) {
+  for (i = 0; i < m; i++)
+  {
     temp = gamma[i][j] - mu * fa[i];
     gamma[i][j] = temp;
     sum += temp * temp;
   }
   temp = sqrt(sum); /* normalization factor */
-  if (temp > NOTHING) {
-    for (i = 0; i < m; i++) gamma[i][j] /= temp;
-    for (i = 0; i < n; i++) delta[i] /= temp;
-  } else
+  if (temp > NOTHING)
+  {
+    for (i = 0; i < m; i++)
+      gamma[i][j] /= temp;
+    for (i = 0; i < n; i++)
+      delta[i] /= temp;
+  }
+  else
     return 1; /* Matrix will be singular: Restart! */
   return 0;
 }
@@ -489,19 +527,25 @@ void lineqsys_init(double** gamma, double** lineqsys, double* deltaforce, double
                /*   double  temp; */
   /* calculating vector p (lineqsys . q == P in LinEqSys) */
 
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; i++)
+  {
     p[i] = 0.0;
-    for (j = 0; j < m; j++) {
+    for (j = 0; j < m; j++)
+    {
       p[i] -= gamma[j][i] * deltaforce[j];
     }
   }
   /* calculating the linear equation system matrix gamma^t.gamma */
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; i++)
+  {
     lineqsys[i][i] = 0;
-    for (j = 0; j < m; j++) lineqsys[i][i] += dsquare(gamma[j][i]);
-    for (k = i + 1; k < n; k++) {
+    for (j = 0; j < m; j++)
+      lineqsys[i][i] += dsquare(gamma[j][i]);
+    for (k = i + 1; k < n; k++)
+    {
       lineqsys[i][k] = 0.0;
-      for (j = 0; j < m; j++) {
+      for (j = 0; j < m; j++)
+      {
         lineqsys[i][k] += gamma[j][i] * gamma[j][k];
       }
       lineqsys[k][i] = lineqsys[i][k];
@@ -521,10 +565,12 @@ void lineqsys_update(double** gamma, double** lineqsys, double* force_xi, double
                      int i, int n, int m)
 {
   int j, k;
-  for (k = 0; k < n; k++) {
+  for (k = 0; k < n; k++)
+  {
     p[k] = 0.0;
     lineqsys[i][k] = 0.0;
-    for (j = 0; j < m; j++) {
+    for (j = 0; j < m; j++)
+    {
       p[k] -= gamma[j][k] * force_xi[j];
       lineqsys[i][k] += gamma[j][i] * gamma[j][k];
     }
@@ -543,8 +589,10 @@ void lineqsys_update(double** gamma, double** lineqsys, double* force_xi, double
 void copy_matrix(double** a, double** b, int n, int m)
 {
   int i, j;
-  for (i = 0; i < m; i++) {
-    for (j = 0; j < n; j++) {
+  for (i = 0; i < m; i++)
+  {
+    for (j = 0; j < n; j++)
+    {
       b[j][i] = a[j][i];
     }
   }
@@ -560,7 +608,8 @@ void copy_matrix(double** a, double** b, int n, int m)
 void copy_vector(double* a, double* b, int n)
 {
   int i;
-  for (i = 0; i < n; i++) b[i] = a[i];
+  for (i = 0; i < n; i++)
+    b[i] = a[i];
 }
 
 /****************************************************************
@@ -573,9 +622,11 @@ void copy_vector(double* a, double* b, int n)
 void matdotvec(double** a, double* x, double* y, int n, int m)
 {
   int i, j;
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; i++)
+  {
     y[g_todo.idx[i]] = 0.0;
-    for (j = 0; j < m; j++) y[g_todo.idx[i]] += a[i][j] * x[j];
+    for (j = 0; j < m; j++)
+      y[g_todo.idx[i]] += a[i][j] * x[j];
   }
 }
 
@@ -589,8 +640,10 @@ double normalize_vector(double* v, int n)
 {
   int j;
   double temp, sum = 0.0;
-  for (j = 0; j < n; j++) sum += dsquare(v[j]);
+  for (j = 0; j < n; j++)
+    sum += dsquare(v[j]);
   temp = sqrt(sum);
-  for (j = 0; j < n; j++) v[j] /= temp;
+  for (j = 0; j < n; j++)
+    v[j] /= temp;
   return temp;
 }
