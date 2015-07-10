@@ -31,6 +31,7 @@
 #include "potfit.h"
 
 #include "functions.h"
+#include "memory.h"
 #include "utils.h"
 
 #ifndef M_PI
@@ -38,7 +39,7 @@
 #endif  // M_PI
 
 /* macro for simplified addition of new potential functions */
-#define add_pot(a, b) add_potential(#a, b, &a##_value)
+#define ADD_POT(a, b) add_potential(#a, b, &a##_value)
 
 /****************************************************************
  *
@@ -62,9 +63,9 @@ struct
 
 void apot_init(void)
 {
-  add_pot(lj, 2);
-  add_pot(eopp, 6);
-  add_pot(morse, 3);
+  ADD_POT(lj, 2);
+  ADD_POT(eopp, 6);
+  ADD_POT(morse, 3);
 #ifdef COULOMB
   add_potential("ms", 3, &ms_shift);
   add_potential("buck", 3, &buck_shift);
@@ -72,57 +73,51 @@ void apot_init(void)
   add_potential("ms", 3, &ms_value);
   add_potential("buck", 3, &buck_value);
 #endif /* COULOMB */
-  add_pot(softshell, 2);
-  add_pot(eopp_exp, 6);
-  add_pot(meopp, 7);
-  add_pot(power, 2);
-  add_pot(power_decay, 2);
-  add_pot(exp_decay, 2);
-  add_pot(bjs, 3);
-  add_pot(parabola, 3);
-  add_pot(csw, 4);
-  add_pot(universal, 4);
-  add_pot(const, 1);
-  add_pot(sqrt, 2);
-  add_pot(mexp_decay, 3);
-  add_pot(strmm, 5);
-  add_pot(double_morse, 7);
-  add_pot(double_exp, 5);
-  add_pot(poly_5, 5);
-  add_pot(kawamura, 9);
-  add_pot(kawamura_mix, 12);
-  add_pot(exp_plus, 3);
-  add_pot(mishin, 6);
-  add_pot(gen_lj, 5);
-  add_pot(gljm, 12);
-  add_pot(vas, 2);
-  add_pot(vpair, 7);
-  add_pot(csw2, 4);
-  add_pot(sheng_phi1, 5);
-  add_pot(sheng_phi2, 4);
-  add_pot(sheng_rho, 5);
-  add_pot(sheng_F, 4);
+  ADD_POT(softshell, 2);
+  ADD_POT(eopp_exp, 6);
+  ADD_POT(meopp, 7);
+  ADD_POT(power, 2);
+  ADD_POT(power_decay, 2);
+  ADD_POT(exp_decay, 2);
+  ADD_POT(bjs, 3);
+  ADD_POT(parabola, 3);
+  ADD_POT(csw, 4);
+  ADD_POT(universal, 4);
+  ADD_POT(const, 1);
+  ADD_POT(sqrt, 2);
+  ADD_POT(mexp_decay, 3);
+  ADD_POT(strmm, 5);
+  ADD_POT(double_morse, 7);
+  ADD_POT(double_exp, 5);
+  ADD_POT(poly_5, 5);
+  ADD_POT(kawamura, 9);
+  ADD_POT(kawamura_mix, 12);
+  ADD_POT(exp_plus, 3);
+  ADD_POT(mishin, 6);
+  ADD_POT(gen_lj, 5);
+  ADD_POT(gljm, 12);
+  ADD_POT(vas, 2);
+  ADD_POT(vpair, 7);
+  ADD_POT(csw2, 4);
+  ADD_POT(sheng_phi1, 5);
+  ADD_POT(sheng_phi2, 4);
+  ADD_POT(sheng_rho, 5);
+  ADD_POT(sheng_F, 4);
 
-#ifdef STIWEB
-  add_pot(stiweb_2, 6);
-  add_pot(stiweb_3, 2);
-  add_pot(lambda, (int)(0.5 * g_param.ntypes * g_param.ntypes * (g_param.ntypes + 1)));
-#endif /* STIWEB */
+#if defined(STIWEB)
+  ADD_POT(stiweb_2, 6);
+  ADD_POT(stiweb_3, 2);
+  ADD_POT(lambda, (int)(0.5 * g_param.ntypes * g_param.ntypes * (g_param.ntypes + 1)));
+#endif  // STIWEB
 
-#ifdef TERSOFF
-#ifndef TERSOFFMOD
-  add_pot(tersoff_pot, 11);
-  add_pot(tersoff_mix, 2);
+#if defined(TERSOFF)
+#if !defined(TERSOFFMOD)
+  ADD_POT(tersoff_pot, 11);
+  ADD_POT(tersoff_mix, 2);
 #else
-  add_pot(tersoff_mod_pot, 16);
-#endif /* !TERSOFFMOD */
-#endif /* TERSOFF */
-
-  reg_for_free(function_table.name, "function_table.name");
-  reg_for_free(function_table.num_params, "function_table.n_par");
-  reg_for_free(function_table.fvalue, "function_table.fvalue");
-  for (int i = 0; i < function_table.num_functions; i++)
-    reg_for_free(function_table.name[i], "function_table.name[i]");
+  ADD_POT(tersoff_mod_pot, 16);
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
 }
 
 /****************************************************************
@@ -133,11 +128,10 @@ void apot_init(void)
 
 void add_potential(const char* name, int parameter, fvalue_pointer fval)
 {
-  int i;
-  int k = function_table.num_functions;
+  const int k = function_table.num_functions;
 
   /* only add potentials with unused names */
-  for (i = 0; i < k; i++)
+  for (int i = 0; i < k; i++)
   {
     if (strcmp(function_table.name[i], name) == 0)
     {
@@ -146,19 +140,14 @@ void add_potential(const char* name, int parameter, fvalue_pointer fval)
   }
 
   /* allocate memory */
-  function_table.name = (char**)realloc(function_table.name, (k + 1) * sizeof(char*));
-  function_table.name[k] = (char*)malloc(255 * sizeof(char));
+  function_table.name = (char**)Realloc(function_table.name, (k + 1) * sizeof(char*));
+  function_table.name[k] = (char*)Malloc((strlen(name) + 1) * sizeof(char));
   function_table.num_params =
-      (int*)realloc(function_table.num_params, (k + 1) * sizeof(int));
+      (int*)Realloc(function_table.num_params, (k + 1) * sizeof(int));
   function_table.fvalue =
-      (fvalue_pointer*)realloc(function_table.fvalue, (k + 1) * sizeof(fvalue_pointer));
-  if (function_table.name[k] == NULL || function_table.num_params == NULL ||
-      function_table.fvalue == NULL)
-    error(1, "Could not allocate memory for function_table!");
+      (fvalue_pointer*)Realloc(function_table.fvalue, (k + 1) * sizeof(fvalue_pointer));
 
   /* assign values */
-  for (i = 0; i < 255; i++)
-    function_table.name[k][i] = '\0';
   strncpy(function_table.name[k], name, strlen(name));
   function_table.num_params[k] = parameter;
   function_table.fvalue[k] = fval;

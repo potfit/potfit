@@ -48,6 +48,7 @@
 
 #include "bracket.h"
 #include "forces.h"
+#include "memory.h"
 #include "optimize.h"
 #include "potential_input.h"
 #include "potential_output.h"
@@ -74,7 +75,7 @@ double normalize_vector(double*, int);
 
 void run_powell_lsq(double* xi)
 {
-#ifndef ACML
+#if !defined(ACML)
   char uplo[1] = "U";     /* char used in dsysvx */
   char fact[1] = "N";     /* char used in dsysvx */
 #endif                    /* ACML */
@@ -87,7 +88,7 @@ void run_powell_lsq(double* xi)
   double* delta;          /* Vector pointing into correct dir'n */
   double* delta_norm;     /* Normalized vector delta */
   double* fxi1, *fxi2;    /* two latest force vectors */
-#ifndef ACML              /* work arrays not needed for ACML */
+#if !defined(ACML)        /* work arrays not needed for ACML */
   double* work;           /* work array to be used by dsysvx */
   int* iwork;
   int worksize;                       /* Size of work array (dsysvx) */
@@ -98,7 +99,7 @@ void run_powell_lsq(double* xi)
   double* p, *q;                      /* Vectors needed in Powell's algorithm */
   double F, F2, F3 = 0, df, xi1, xi2; /* Fn values, changes, steps ... */
   double temp, temp2;                 /* as the name indicates: temporary vars */
-#ifdef APOT
+#if defined(APOT)
   int itemp, itemp2; /* the same for integer */
 #endif               /* APOT */
   double ferror = 0.0;
@@ -109,19 +110,19 @@ void run_powell_lsq(double* xi)
   gamma = mat_double(g_calc.mdim, g_calc.ndim);
   lineqsys = mat_double(g_calc.ndim, g_calc.ndim);
   les_inverse = mat_double(g_calc.ndim, g_calc.ndim);
-  perm_indx = vect_int(g_calc.ndim);
-  delta_norm = vect_double(g_calc.ndimtot);
+  perm_indx = (int*)Malloc(g_calc.ndim * sizeof(int));
+  delta_norm = (double*)Malloc(g_calc.ndimtot * sizeof(double));
   /*==0*/
-  force_xi = vect_double(g_calc.mdim);
-  p = vect_double(g_calc.ndim);
-  q = vect_double(g_calc.ndim);
-  delta = vect_double(g_calc.ndimtot); /* ==0 */
-  fxi1 = vect_double(g_calc.mdim);
-  fxi2 = vect_double(g_calc.mdim);
-#ifndef ACML /* work arrays not needed */
+  force_xi = (double*)Malloc(g_calc.mdim * sizeof(double));
+  p = (double*)Malloc(g_calc.ndim * sizeof(double));
+  q = (double*)Malloc(g_calc.ndim * sizeof(double));
+  delta = (double*)Malloc(g_calc.ndimtot * sizeof(double)); /* ==0 */
+  fxi1 = (double*)Malloc(g_calc.mdim * sizeof(double));
+  fxi2 = (double*)Malloc(g_calc.mdim * sizeof(double));
+#if !defined(ACML) /* work arrays not needed */
   worksize = 64 * g_calc.ndim;
-  work = (double*)malloc(worksize * sizeof(double));
-  iwork = (int*)malloc(g_calc.ndim * sizeof(int));
+  work = (double*)Malloc(worksize * sizeof(double));
+  iwork = (int*)Malloc(g_calc.ndim * sizeof(int));
 #endif /* ACML */
 
   /* clear delta */
@@ -386,23 +387,10 @@ void run_powell_lsq(double* xi)
 #endif /* APOT */
 
   /* Free memory */
-  free_vect_double(delta);
-  free_vect_double(fxi1);
-  free_vect_double(fxi2);
   free_mat_double(d);
   free_mat_double(gamma);
   free_mat_double(lineqsys);
   free_mat_double(les_inverse);
-  free_vect_int(perm_indx);
-  free_vect_double(delta_norm);
-  free_vect_double(force_xi);
-  free_vect_double(p);
-  free_vect_double(q);
-#ifndef ACML
-  free(work);
-  free(iwork);
-#endif /* ACML */
-  return;
 }
 
 /****************************************************************
@@ -428,19 +416,13 @@ int gamma_init(double** gamma, double** d, double* xi, double* force_xi)
   }
   /* Initialize gamma by calculating numerical derivatives    */
   if (force == NULL)
-  {
-    force = (double*)malloc(g_calc.mdim * sizeof(double));
-    if (force == NULL)
-      error(1, "Error in double vector allocation");
-    for (i = 0; i < g_calc.mdim; i++)
-      force[i] = 0;
-    reg_for_free(force, "force from init_gamma");
-  }
+    force = (double*)Malloc(g_calc.mdim * sizeof(double));
 
+  /*initialize gamma */
   for (i = 0; i < g_calc.ndim; i++)
-  { /*initialize gamma */
+  {
     store = xi[g_todo.idx[i]];
-#ifdef APOT
+#if defined(APOT)
     scale =
         g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]] -
         g_pot.apot_table.pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
@@ -448,7 +430,7 @@ int gamma_init(double** gamma, double** d, double* xi, double* force_xi)
 #else
     scale = 1.0;
     xi[g_todo.idx[i]] += EPS; /*increase xi[idx[i]]... */
-#endif /* APOT */
+#endif  // APOT
     sum = 0.0;
     (*g_calc_forces)(xi, force, 0);
     for (j = 0; j < g_calc.mdim; j++)

@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
   if (g_mpi.myid > 0)
   {
-    start_mpi_worker(force);
+    start_mpi_worker(g_calc.force);
   }
   else
   {
@@ -149,9 +149,9 @@ int main(int argc, char** argv)
     time(&end_time);
 
 #if defined(APOT)
-    double tot = g_calc_forces(g_pot.opt_pot.table, force, 0);
+    double tot = g_calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 #else
-    double tot = g_calc_forces(g_pot.calc_pot.table, force, 0);
+    double tot = g_calc_forces(g_pot.calc_pot.table, g_calc.force, 0);
 #endif /* APOT */
 
     write_pot_table_potfit(g_files.endpot);
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 #endif /* PDIST && !MPI */
 
     /* write the error files for forces, energies, stresses, ... */
-    write_errors(force, tot);
+    write_errors(g_calc.force, tot);
 
     /* calculate total runtime */
     if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0)
@@ -188,16 +188,16 @@ int main(int argc, char** argv)
              (double)difftime(end_time, start_time) / g_calc.fcalls);
     }
 
-#ifdef MPI
+#if defined(MPI)
     g_calc_forces(NULL, NULL, 1); /* go wake up other threads */
-#endif                            /* MPI */
+#endif                            // MPI
   }                               /* myid == 0 */
 
 /* do some cleanups before exiting */
-#ifdef MPI
+#if defined(MPI)
   /* kill MPI */
   shutdown_mpi();
-#endif /* MPI */
+#endif  // MPI
 
   free_allocated_memory();
 

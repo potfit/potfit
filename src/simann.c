@@ -35,6 +35,7 @@
 #include <ctype.h>
 
 #include "forces.h"
+#include "memory.h"
 #include "optimize.h"
 #include "potential_input.h"
 #include "potential_output.h"
@@ -162,9 +163,9 @@ void run_simulated_annealing(double* xi)
   double* v;          /* step vector */
   double* xopt, *xi2; /* optimal value */
   double* fxi1;       /* two latest force vectors */
-#ifndef APOT
+#if !defined(APOT)
   double width, height; /* gaussian bump size */
-#endif                  /* APOT */
+#endif                  // !APOT
   FILE* ff;             /* exit flagfile */
   int* naccept;         /* number of accepted changes in dir */
 
@@ -183,21 +184,22 @@ void run_simulated_annealing(double* xi)
   if (T == 0.0 && auto_T != 1)
     return; /* don't anneal if starttemp equal zero */
 
-  Fvar = vect_double(KMAX + 5 + NEPS); /* Backlog of old F values */
-  v = vect_double(g_calc.ndim);
-  xopt = vect_double(g_calc.ndimtot);
-  xi2 = vect_double(g_calc.ndimtot);
-  fxi1 = vect_double(g_calc.mdim);
-  naccept = vect_int(g_calc.ndim);
-#ifndef APOT
+  Fvar =
+      (double*)Malloc((KMAX + 5 + NEPS) * sizeof(double)); /* Backlog of old F values */
+  v = (double*)Malloc(g_calc.ndim * sizeof(double));
+  xopt = (double*)Malloc(g_calc.ndimtot * sizeof(double));
+  xi2 = (double*)Malloc(g_calc.ndimtot * sizeof(double));
+  fxi1 = (double*)Malloc(g_calc.mdim * sizeof(double));
+  naccept = (int*)Malloc(g_calc.ndim * sizeof(int));
+#if !defined(APOT)
   // Optimum potential x-coord arrays
   int col, col2;
   double* optbegin, *optend, *optstep, *optinvstep, *optxcoord;
-  optbegin = vect_double(g_param.ntypes);
-  optend = vect_double(g_param.ntypes);
-  optstep = vect_double(g_param.ntypes);
-  optinvstep = vect_double(g_param.ntypes);
-  optxcoord = vect_double(g_calc.ndimtot);
+  optbegin = (double*)Malloc(g_param.ntypes * sizeof(double));
+  optend = (double*)Malloc(g_param.ntypes * sizeof(double));
+  optstep = (double*)Malloc(g_param.ntypes * sizeof(double));
+  optinvstep = (double*)Malloc(g_param.ntypes * sizeof(double));
+  optxcoord = (double*)Malloc(g_calc.ndimtot * sizeof(double));
 #endif /* APOT */
 
   /* init step vector and optimum vector */

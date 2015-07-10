@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -31,6 +31,7 @@
 #include "potfit.h"
 
 #include "functions.h"
+#include "memory.h"
 #include "potential_input.h"
 #include "utils.h"
 
@@ -91,16 +92,6 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 
   read_analytic_potentials(&state);
 
-  /* clean up globals table */
-  if (g_pot.have_globals)
-  {
-    for (int i = 0; i < apt->globals; i++)
-    {
-      reg_for_free(apt->global_idx[i], "apt->global_idx[%d]", i);
-      for (int j = 0; j < apt->n_glob[i]; j++)
-        reg_for_free(apt->global_idx[i][j], "apt->global_idx[%d][%d]", i, j);
-    }
-  }
 #if defined(COULOMB)
   apt->total_ne_par = apt->total_par;
 #endif /* COULOMB */
@@ -171,31 +162,15 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
   pt->len += g_param.ntypes * (g_param.ntypes + 2);
 #endif /* DIPOLE */
 
-  pt->table = (double*)malloc(pt->len * sizeof(double));
-  reg_for_free(pt->table, "pt->table");
+  pt->table = (double*)Malloc(pt->len * sizeof(double));
 
-  g_pot.calc_list = (double*)malloc(pt->len * sizeof(double));
-  reg_for_free(g_pot.calc_list, "calc_list");
+  g_pot.calc_list = (double*)Malloc(pt->len * sizeof(double));
 
-  pt->idx = (int*)malloc(pt->len * sizeof(int));
-  reg_for_free(pt->idx, "pt->idx");
+  pt->idx = (int*)Malloc(pt->len * sizeof(int));
 
-  apt->idxpot = (int*)malloc(apt->total_par * sizeof(int));
-  reg_for_free(apt->idxpot, "apt->idxpot");
+  apt->idxpot = (int*)Malloc(apt->total_par * sizeof(int));
 
-  apt->idxparam = (int*)malloc(apt->total_par * sizeof(int));
-  reg_for_free(apt->idxparam, "apt->idxparam");
-
-  if ((NULL == pt->table) || (NULL == pt->idx) || (apt->idxpot == NULL) ||
-      (apt->idxparam == NULL))
-    error(1, "Cannot allocate memory for potential table.\n");
-
-  for (int i = 0; i < pt->len; i++)
-  {
-    pt->table[i] = 0.0;
-    g_pot.calc_list[i] = 0.0;
-    pt->idx[i] = 0;
-  }
+  apt->idxparam = (int*)Malloc(apt->total_par * sizeof(int));
 
   /* this is the indirect index */
   int k = 0;
@@ -368,7 +343,6 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 /****************************************************************
  *
  *  read_chemical_potentials:
- *      bla bla
  *
  ****************************************************************/
 
@@ -398,33 +372,21 @@ void read_chemical_potentials(apot_state* pstate)
     int i = apt->number;
 
     /* allocate memory for global parameters */
-    apt->names = (char**)realloc(apt->names, (i + 1) * sizeof(char*));
-    apt->names[i] = (char*)malloc(20 * sizeof(char));
+    apt->names = (char**)Realloc(apt->names, (i + 1) * sizeof(char*));
+    apt->names[i] = (char*)Malloc(20 * sizeof(char));
     strcpy(apt->names[i], "chemical potentials");
-    reg_for_free(apt->names[i], "apt->names[%d] (chem_pot)", i);
 
-    apt->invar_par = (int**)realloc(apt->invar_par, (i + 1) * sizeof(int*));
-    apt->invar_par[i] = (int*)malloc((g_param.ntypes + 1) * sizeof(int));
-    reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
+    apt->invar_par = (int**)Realloc(apt->invar_par, (i + 1) * sizeof(int*));
+    apt->invar_par[i] = (int*)Malloc((g_param.ntypes + 1) * sizeof(int));
 
-    apt->param_name = (char***)realloc(apt->param_name, (i + 1) * sizeof(char**));
-    apt->param_name[i] = (char**)malloc(g_param.ntypes * sizeof(char*));
-    reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
-
-    /* check if the allocation was successfull */
-    if (apt->names[i] == NULL || apt->invar_par[i] == NULL || apt->param_name[i] == NULL)
-      error(1, "Cannot allocate memory for chemical potentials.");
+    apt->param_name = (char***)Realloc(apt->param_name, (i + 1) * sizeof(char**));
+    apt->param_name[i] = (char**)Malloc(g_param.ntypes * sizeof(char*));
 
     /* loop over all atom types */
     for (int j = 0; j < g_param.ntypes; j++)
     {
       /* allocate memory for parameter name */
-      apt->param_name[i][j] = (char*)malloc(30 * sizeof(char));
-
-      if (apt->param_name[i][j] == NULL)
-        error(1, "Cannot allocate memory for chemical potential names.");
-
-      reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
+      apt->param_name[i][j] = (char*)Malloc(30 * sizeof(char));
 
       /* read one line */
       if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", buffer, &apt->chempot[j],
@@ -484,7 +446,7 @@ void read_chemical_potentials(apot_state* pstate)
     printf(" - Enabled %d chemical potential(s)\n", g_param.ntypes);
 
 /* disable composition nodes for now */
-#ifdef CN
+#if defined(CN)
     /* read composition nodes */
     if (2 > fscanf(infile, "%s %d", buffer, &compnodes))
     {
@@ -540,9 +502,9 @@ void read_chemical_potentials(apot_state* pstate)
              compnodes);
     if (compnodes == -1)
       compnodes = 0;
-#endif /* CN */
+#endif  // CN
   }
-#endif /* PAIR */
+#endif  // PAIR
 }
 
 /****************************************************************
@@ -723,62 +685,38 @@ void read_global_parameters(apot_state* pstate)
     g_pot.global_pot = i;
 
     /* allocate memory for global parameters */
-    apt->names = (char**)realloc(apt->names, (g_pot.global_pot + 1) * sizeof(char*));
-    apt->names[g_pot.global_pot] = (char*)malloc(20 * sizeof(char));
+    apt->names = (char**)Realloc(apt->names, (g_pot.global_pot + 1) * sizeof(char*));
+    apt->names[g_pot.global_pot] = (char*)Malloc(20 * sizeof(char));
     strcpy(apt->names[g_pot.global_pot], "global parameters");
-    reg_for_free(apt->names[g_pot.global_pot], "apt->names[%d] (global_pot)",
-                 g_pot.global_pot);
 
-    apt->n_glob = (int*)malloc(apt->globals * sizeof(int));
-    reg_for_free(apt->n_glob, "apt->n_glob");
+    apt->n_glob = (int*)Malloc(apt->globals * sizeof(int));
 
-    apt->global_idx = (int***)malloc(apt->globals * sizeof(int**));
-    reg_for_free(apt->global_idx, "apt->global_idx");
+    apt->global_idx = (int***)Malloc(apt->globals * sizeof(int**));
 
     apt->values =
-        (double**)realloc(apt->values, (g_pot.global_pot + 1) * sizeof(double*));
-    apt->values[g_pot.global_pot] = (double*)malloc(j * sizeof(double));
-    reg_for_free(apt->values[g_pot.global_pot], "apt->values[%d]", g_pot.global_pot);
+        (double**)Realloc(apt->values, (g_pot.global_pot + 1) * sizeof(double*));
+    apt->values[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
 
     apt->invar_par =
-        (int**)realloc(apt->invar_par, (g_pot.global_pot + 1) * sizeof(int*));
-    apt->invar_par[g_pot.global_pot] = (int*)malloc((j + 1) * sizeof(int));
-    reg_for_free(apt->invar_par[g_pot.global_pot], "apt->invar_par[%d]",
-                 g_pot.global_pot);
+        (int**)Realloc(apt->invar_par, (g_pot.global_pot + 1) * sizeof(int*));
+    apt->invar_par[g_pot.global_pot] = (int*)Malloc((j + 1) * sizeof(int));
 
-    apt->pmin = (double**)realloc(apt->pmin, (g_pot.global_pot + 1) * sizeof(double*));
-    apt->pmin[g_pot.global_pot] = (double*)malloc(j * sizeof(double));
-    reg_for_free(apt->pmin[g_pot.global_pot], "apt->pmin[%d]", g_pot.global_pot);
+    apt->pmin = (double**)Realloc(apt->pmin, (g_pot.global_pot + 1) * sizeof(double*));
+    apt->pmin[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
 
-    apt->pmax = (double**)realloc(apt->pmax, (g_pot.global_pot + 1) * sizeof(double*));
-    apt->pmax[g_pot.global_pot] = (double*)malloc(j * sizeof(double));
-    reg_for_free(apt->pmax[g_pot.global_pot], "apt->pmax[%d]", g_pot.global_pot);
+    apt->pmax = (double**)Realloc(apt->pmax, (g_pot.global_pot + 1) * sizeof(double*));
+    apt->pmax[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
 
     apt->param_name =
-        (char***)realloc(apt->param_name, (g_pot.global_pot + 1) * sizeof(char**));
-    apt->param_name[g_pot.global_pot] = (char**)malloc(j * sizeof(char*));
-    reg_for_free(apt->param_name[g_pot.global_pot], "apt->param_name[%d]",
-                 g_pot.global_pot);
+        (char***)Realloc(apt->param_name, (g_pot.global_pot + 1) * sizeof(char**));
+    apt->param_name[g_pot.global_pot] = (char**)Malloc(j * sizeof(char*));
 
-    pt->first = (int*)realloc(pt->first, (g_pot.global_pot + 1) * sizeof(int));
-
-    if (NULL == apt->values[g_pot.global_pot] || NULL == apt->pmin[g_pot.global_pot] ||
-        NULL == apt->n_glob || NULL == apt->global_idx ||
-        NULL == apt->pmax[g_pot.global_pot] || NULL == apt->param_name[g_pot.global_pot])
-      error(1, "Cannot allocate memory for global paramters.");
-
-    /* initialize properly */
-    apt->invar_par[i][j] = 0;
+    pt->first = (int*)Realloc(pt->first, (g_pot.global_pot + 1) * sizeof(int));
 
     /* read the global parameters */
     for (j = 0; j < apt->globals; j++)
     {
-      apt->param_name[g_pot.global_pot][j] = (char*)malloc(30 * sizeof(char));
-      reg_for_free(apt->param_name[g_pot.global_pot][j], "apt->param_name[%d][%d]",
-                   g_pot.global_pot, j);
-
-      if (NULL == apt->param_name[g_pot.global_pot][j])
-        error(1, "Error in allocating memory for global parameter name");
+      apt->param_name[g_pot.global_pot][j] = (char*)Malloc(30 * sizeof(char));
 
       strcpy(apt->param_name[g_pot.global_pot][j], "\0");
       int ret_val =
@@ -795,6 +733,7 @@ void read_global_parameters(apot_state* pstate)
 
       /* check for duplicate names */
       for (int k = j - 1; k >= 0; k--)
+      {
         if (strcmp(apt->param_name[g_pot.global_pot][j],
                    apt->param_name[g_pot.global_pot][k]) == 0)
         {
@@ -803,11 +742,14 @@ void read_global_parameters(apot_state* pstate)
                 apt->param_name[g_pot.global_pot][j], k + 1,
                 apt->param_name[g_pot.global_pot][k]);
         }
+      }
+
       apt->n_glob[j] = 0;
 
       /* check for invariance and proper value (respect boundaries) */
       /* parameter will not be optimized if min==max */
       apt->invar_par[i][j] = 0;
+
       if (apt->pmin[i][j] == apt->pmax[i][j])
       {
         apt->invar_par[i][j] = 1;
@@ -926,24 +868,15 @@ void read_analytic_potentials(apot_state* pstate)
     apt->begin[i] = 0.0001;
 
     /* allocate memory for this parameter */
-    apt->values[i] = (double*)malloc(apt->n_par[i] * sizeof(double));
-    reg_for_free(apt->values[i], "apt->values[%d]", i);
+    apt->values[i] = (double*)Malloc(apt->n_par[i] * sizeof(double));
 
-    apt->invar_par[i] = (int*)malloc((apt->n_par[i] + 1) * sizeof(int));
-    reg_for_free(apt->invar_par[i], "apt->invar_par[%d]", i);
+    apt->invar_par[i] = (int*)Malloc((apt->n_par[i] + 1) * sizeof(int));
 
-    apt->pmin[i] = (double*)malloc(apt->n_par[i] * sizeof(double));
-    reg_for_free(apt->pmin[i], "apt->pmin[%d]", i);
+    apt->pmin[i] = (double*)Malloc(apt->n_par[i] * sizeof(double));
 
-    apt->pmax[i] = (double*)malloc(apt->n_par[i] * sizeof(double));
-    reg_for_free(apt->pmax[i], "apt->pmax[%d]", i);
+    apt->pmax[i] = (double*)Malloc(apt->n_par[i] * sizeof(double));
 
-    apt->param_name[i] = (char**)malloc(apt->n_par[i] * sizeof(char*));
-    reg_for_free(apt->param_name[i], "apt->param_name[%d]", i);
-
-    if (NULL == apt->values[i] || NULL == apt->pmin[i] || NULL == apt->pmax[i] ||
-        NULL == apt->param_name[i])
-      error(1, "Cannot allocate memory for potential paramters.\nAborting");
+    apt->param_name[i] = (char**)Malloc(apt->n_par[i] * sizeof(char*));
 
     char c = 0;
 
@@ -968,12 +901,7 @@ void read_analytic_potentials(apot_state* pstate)
 
     for (int j = 0; j < apt->n_par[i]; j++)
     {
-      apt->param_name[i][j] = (char*)malloc(30 * sizeof(char));
-
-      if (NULL == apt->param_name[i][j])
-        error(1, "Error in allocating memory for parameter name");
-
-      reg_for_free(apt->param_name[i][j], "apt->param_name[%d][%d]", i, j);
+      apt->param_name[i][j] = (char*)Malloc(30 * sizeof(char));
 
       strcpy(apt->param_name[i][j], "empty");
 
@@ -1131,30 +1059,14 @@ void init_calc_table0()
   calc->ncols = opt->ncols;
   calc->begin = opt->begin;
   calc->end = opt->end;
-  calc->first = (int*)malloc(size * sizeof(int));
-  reg_for_free(calc->first, "calct->first");
-  calc->last = (int*)malloc(size * sizeof(int));
-  reg_for_free(calc->last, "calct->last");
-  calc->step = (double*)malloc(size * sizeof(double));
-  reg_for_free(calc->step, "calct->step");
-  calc->invstep = (double*)malloc(size * sizeof(double));
-  reg_for_free(calc->invstep, "calct->invstep");
-  calc->xcoord = (double*)malloc(calc->len * sizeof(double));
-  reg_for_free(calc->xcoord, "calct->xcoord");
-  calc->table = (double*)malloc(calc->len * sizeof(double));
-  reg_for_free(calc->table, "calct->table");
-  calc->d2tab = (double*)malloc(calc->len * sizeof(double));
-  reg_for_free(calc->d2tab, "calct->d2tab");
-  calc->idx = (int*)malloc(calc->len * sizeof(int));
-  reg_for_free(calc->idx, "calct->idx");
-  if (calc->first == NULL || calc->last == NULL || calc->step == NULL ||
-      calc->invstep == NULL || calc->xcoord == NULL || calc->table == NULL ||
-      calc->d2tab == NULL || calc->idx == NULL)
-    error(1, "Cannot allocate info block for calc potential table\n");
-
-  memset(calc->xcoord, 0, calc->len * sizeof(double));
-  memset(calc->table, 0, calc->len * sizeof(double));
-  memset(calc->d2tab, 0, calc->len * sizeof(double));
+  calc->first = (int*)Malloc(size * sizeof(int));
+  calc->last = (int*)Malloc(size * sizeof(int));
+  calc->step = (double*)Malloc(size * sizeof(double));
+  calc->invstep = (double*)Malloc(size * sizeof(double));
+  calc->xcoord = (double*)Malloc(calc->len * sizeof(double));
+  calc->table = (double*)Malloc(calc->len * sizeof(double));
+  calc->d2tab = (double*)Malloc(calc->len * sizeof(double));
+  calc->idx = (int*)Malloc(calc->len * sizeof(int));
 
   double f = 0;
   int x = 0;
