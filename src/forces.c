@@ -32,6 +32,7 @@
 
 #include "forces.h"
 #include "functions.h"
+#include "memory.h"
 #include "splines.h"
 #include "utils.h"
 
@@ -126,13 +127,8 @@ void init_forces(int is_worker)
 #endif /* COULOMB */
 
 /* set spline density corrections to 0 */
-#if defined EAM || defined ADP || defined MEAM
-  int i;
-
-  g_todo.lambda = (double*)malloc(g_param.ntypes * sizeof(double));
-  reg_for_free(g_todo.lambda, "lambda");
-  for (i = 0; i < g_param.ntypes; i++)
-    g_todo.lambda[i] = 0.0;
+#if defined(EAM) || defined(ADP) || defined(MEAM)
+  g_todo.lambda = (double*)Malloc(g_param.ntypes * sizeof(double));
 #endif /* EAM || ADP || MEAM */
 }
 

@@ -34,6 +34,7 @@
 
 #include "forces.h"
 #include "functions.h"
+#include "memory.h"
 #include "potential_input.h"
 #include "potential_output.h"
 #include "splines.h"
@@ -550,71 +551,36 @@ double calc_forces_tersoff(double* xi_opt, double* forces, int flag)
 
 void update_tersoff_pointers(double* xi)
 {
-  int i;
   int index = 2;
   tersoff_t* tersoff = &g_pot.apot_table.tersoff;
 
   /* allocate if this has not been done */
-  if (0 == tersoff->init)
+  if (tersoff->init == 0)
   {
-    tersoff->A = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->B = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->lambda = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->mu = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->gamma = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->n = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->c = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->d = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->h = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->S = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->R = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->chi = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->omega = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->c2 = (double*)malloc(g_calc.paircol * sizeof(double));
-    tersoff->d2 = (double*)malloc(g_calc.paircol * sizeof(double));
-    for (i = 0; i < g_calc.paircol; i++)
-    {
-      tersoff->A[i] = NULL;
-      tersoff->B[i] = NULL;
-      tersoff->lambda[i] = NULL;
-      tersoff->mu[i] = NULL;
-      tersoff->gamma[i] = NULL;
-      tersoff->n[i] = NULL;
-      tersoff->c[i] = NULL;
-      tersoff->d[i] = NULL;
-      tersoff->h[i] = NULL;
-      tersoff->S[i] = NULL;
-      tersoff->R[i] = NULL;
-      tersoff->chi[i] = NULL;
-      tersoff->omega[i] = NULL;
-      tersoff->c2[i] = 0.0;
-      tersoff->d2[i] = 0.0;
-    }
+    tersoff->A = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->B = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->lambda = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->mu = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->gamma = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->n = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->d = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->h = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->S = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->R = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->chi = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->omega = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c2 = (double*)Malloc(g_calc.paircol * sizeof(double));
+    tersoff->d2 = (double*)Malloc(g_calc.paircol * sizeof(double));
     tersoff->init = 1;
     tersoff->one = 1.0;
-
-    reg_for_free(tersoff->A, "tersoff->A");
-    reg_for_free(tersoff->B, "tersoff->B");
-    reg_for_free(tersoff->lambda, "tersoff->lambda");
-    reg_for_free(tersoff->mu, "tersoff->mu");
-    reg_for_free(tersoff->gamma, "tersoff->gamma");
-    reg_for_free(tersoff->n, "tersoff->n");
-    reg_for_free(tersoff->c, "tersoff->c");
-    reg_for_free(tersoff->d, "tersoff->d");
-    reg_for_free(tersoff->h, "tersoff->h");
-    reg_for_free(tersoff->S, "tersoff->S");
-    reg_for_free(tersoff->R, "tersoff->R");
-    reg_for_free(tersoff->chi, "tersoff->chi");
-    reg_for_free(tersoff->omega, "tersoff->omega");
-    reg_for_free(tersoff->c2, "tersoff->c2");
-    reg_for_free(tersoff->d2, "tersoff->d2");
   }
 
   /* update only if the address has changed */
   if (tersoff->A[0] != xi + index)
   {
     /* set the pair parameters */
-    for (i = 0; i < g_calc.paircol; i++)
+    for (int i = 0; i < g_calc.paircol; i++)
     {
       tersoff->A[i] = xi + index++;
       tersoff->B[i] = xi + index++;
@@ -629,7 +595,7 @@ void update_tersoff_pointers(double* xi)
       tersoff->R[i] = xi + index++;
       index += 2;
     }
-    for (i = 0; i < g_calc.paircol; i++)
+    for (int i = 0; i < g_calc.paircol; i++)
     {
       if (0 == (i % g_param.ntypes))
       {
@@ -646,7 +612,7 @@ void update_tersoff_pointers(double* xi)
   }
 
   /* calculate c2 and d2 */
-  for (i = 0; i < g_calc.paircol; i++)
+  for (int i = 0; i < g_calc.paircol; i++)
   {
     tersoff->c2[i] = *(tersoff->c[i]) * *(tersoff->c[i]);
     tersoff->d2[i] = *(tersoff->d[i]) * *(tersoff->d[i]);
@@ -1104,7 +1070,7 @@ double calc_forces_tersoffmod(double* xi_opt, double* forces, int flag)
       MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
                   forces + g_calc.energy_p, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE,
                   0, MPI_COMM_WORLD);
-#ifdef STRESS
+#if defined(STRESS)
       /* stresses */
       MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf,
                   g_mpi.MPI_STENS, forces + g_calc.stress_p, g_mpi.conf_len,
@@ -1144,72 +1110,36 @@ double calc_forces_tersoffmod(double* xi_opt, double* forces, int flag)
 
 void update_tersoff_pointers(double* xi)
 {
-  int i;
   int index = 2;
   tersoff_t* tersoff = &g_pot.apot_table.tersoff;
 
   /* allocate if this has not been done */
   if (0 == tersoff->init)
   {
-    tersoff->A = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->B = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->lambda = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->mu = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->eta = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->delta = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->alpha = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->beta = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->c1 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->c2 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->c3 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->c4 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->c5 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->h = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->R1 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    tersoff->R2 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    for (i = 0; i < g_calc.paircol; i++)
-    {
-      tersoff->A[i] = NULL;
-      tersoff->B[i] = NULL;
-      tersoff->lambda[i] = NULL;
-      tersoff->mu[i] = NULL;
-      tersoff->eta[i] = NULL;
-      tersoff->delta[i] = NULL;
-      tersoff->alpha[i] = NULL;
-      tersoff->beta[i] = NULL;
-      tersoff->c1[i] = NULL;
-      tersoff->c2[i] = NULL;
-      tersoff->c3[i] = NULL;
-      tersoff->c4[i] = NULL;
-      tersoff->c5[i] = NULL;
-      tersoff->h[i] = NULL;
-      tersoff->R1[i] = NULL;
-      tersoff->R2[i] = NULL;
-    }
+    tersoff->A = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->B = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->lambda = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->mu = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->eta = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->delta = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->alpha = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->beta = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c1 = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c2 = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c3 = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c4 = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->c5 = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->h = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->R1 = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    tersoff->R2 = (double**)Malloc(g_calc.paircol * sizeof(double*));
     tersoff->init = 1;
-    reg_for_free(tersoff->A, "tersoff->A");
-    reg_for_free(tersoff->B, "tersoff->B");
-    reg_for_free(tersoff->lambda, "tersoff->lambda");
-    reg_for_free(tersoff->mu, "tersoff->mu");
-    reg_for_free(tersoff->eta, "tersoff->eta");
-    reg_for_free(tersoff->delta, "tersoff->delta");
-    reg_for_free(tersoff->alpha, "tersoff->alpha");
-    reg_for_free(tersoff->beta, "tersoff->beta");
-    reg_for_free(tersoff->c1, "tersoff->c1");
-    reg_for_free(tersoff->c2, "tersoff->c2");
-    reg_for_free(tersoff->c3, "tersoff->c3");
-    reg_for_free(tersoff->c4, "tersoff->c4");
-    reg_for_free(tersoff->c5, "tersoff->c5");
-    reg_for_free(tersoff->h, "tersoff->h");
-    reg_for_free(tersoff->R1, "tersoff->R1");
-    reg_for_free(tersoff->R2, "tersoff->R2");
   }
 
   /* update only if the address has changed */
   if (tersoff->A[0] != xi + index)
   {
     /* set the pair parameters */
-    for (i = 0; i < g_calc.paircol; i++)
+    for (int i = 0; i < g_calc.paircol; i++)
     {
       tersoff->A[i] = xi + index++;
       tersoff->B[i] = xi + index++;

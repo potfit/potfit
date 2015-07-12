@@ -30,6 +30,7 @@
 
 #include "potfit.h"
 
+#include "memory.h"
 #include "utils.h"
 
 void write_errors(double* force, double tot)
@@ -41,14 +42,9 @@ void write_errors(double* force, double tot)
   double rms[3];
   char* component[6];
 
-/* set spline density corrections to 0 */
-#if defined EAM || defined ADP || defined MEAM
-  double* totdens = (double*)malloc(g_param.ntypes * sizeof(double));
-  reg_for_free(totdens, "totdens");
-#endif /* EAM || ADP || MEAM */
+#if !defined(MPI) && (defined(EAM) || defined(ADP) || defined(MEAM))
+  double totdens[g_param.ntypes];
 
-#if defined EAM || defined ADP || defined MEAM
-#ifndef MPI
   /* Not much sense in printing rho when not communicated... */
   if (g_param.write_output_files)
   {
@@ -63,19 +59,20 @@ void write_errors(double* force, double tot)
     outfile = stdout;
     printf("Local electron density rho\n");
   }
+
   for (i = 0; i < g_param.ntypes; i++)
-  {
     totdens[i] = 0.0;
-  }
+
   fprintf(outfile, "#    atomtype\trho\n");
-#ifdef MEAM
+#if defined(MEAM)
   fprintf(outfile, "#    atomtype\trho\trho_eam\trho_meam\n");
-#endif /* MEAM */
-  for (i = 0; i < g_config.natoms; i++)
+#endif // MEAM
+
+  for (int i = 0; i < g_config.natoms; i++)
   {
-#if defined EAM || defined ADP
+#if defined(EAM) || defined(ADP)
     fprintf(outfile, "%d\t%d\t%f\n", i, g_config.atoms[i].type, g_config.atoms[i].rho);
-#elif defined MEAM
+#elif defined(MEAM)
     fprintf(outfile, "%d\t%d\t%f\t%f\t%f\n", i, g_config.atoms[i].type,
             g_config.atoms[i].rho, g_config.atoms[i].rho_eam,
             g_config.atoms[i].rho - g_config.atoms[i].rho_eam);
@@ -83,7 +80,7 @@ void write_errors(double* force, double tot)
     totdens[g_config.atoms[i].type] += g_config.atoms[i].rho;
   }
   fprintf(outfile, "\n");
-  for (i = 0; i < g_param.ntypes; i++)
+  for (int i = 0; i < g_param.ntypes; i++)
   {
     totdens[i] /= (double)g_config.na_type[g_config.nconf][i];
     fprintf(outfile, "Average local electron density at atom sites type %d: %f\n", i,
@@ -94,8 +91,7 @@ void write_errors(double* force, double tot)
     printf("Local electron density data written to \t%s\n", file);
     fclose(outfile);
   }
-#endif /* !MPI */
-#endif /* EAM || ADP || MEAM */
+#endif // !MPI && !(EAM || ADP || MEAM)
 
 /* prepare for error calculations */
 #ifdef CONTRIB
@@ -381,8 +377,8 @@ void write_errors(double* force, double tot)
   /* forces */
   for (i = 0; i < g_config.natoms; i++)
   {
-#ifdef CONTRIB
-    if (atoms[i].contrib)
+#if defined(CONTRIB)
+    if (g_config.atoms[i].contrib)
     {
       contrib_atoms++;
 #endif /* CONTRIB */

@@ -45,7 +45,9 @@ void free_neigh_table(neigh_t* pneigh, int nneigh);
 void free_angle_table(angle_t* pangle, int nangle);
 #endif  // THREEBODY
 void free_pot_table(pot_table_t* ppot);
+#if defined(APOT)
 void free_apot_table(apot_table_t* papot);
+#endif
 
 typedef struct
 {
@@ -289,7 +291,7 @@ void free_atom_table(atom_t* patom, int natoms)
       free_neigh_table(patom[i].neigh, patom[i].num_neigh);
       free(patom[i].neigh);
 #if defined(THREEBODY)
-      free_angle_table(patom[i].angle_part, );
+      free_angle_table(patom[i].angle_part, patom[i].num_angles);
       free(patom[i].angle_part);
 #endif  // THREEBODY
     }
@@ -339,6 +341,8 @@ void free_pot_table(pot_table_t* ppot)
   free_void_pointer(ppot->idx);
 }
 
+#if defined(APOT)
+
 /****************************************************************
  *
  *  free_apot_table
@@ -364,3 +368,5 @@ void free_apot_table(apot_table_t* papot)
 //   free_double_pointer2(papot->chempot, g_param.ntypes);
 #endif  // PAIR
 }
+
+#endif // APOT

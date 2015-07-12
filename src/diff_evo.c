@@ -250,7 +250,7 @@ void run_differential_evolution(double* xi)
     return;
 
   /* vector for force calculation */
-  fxi = vect_double(g_calc.mdim);
+  fxi = (double*)malloc(g_calc.mdim * sizeof(double));
 
   /* vector with new configuration */
   trial = (double*)malloc(D * sizeof(double));

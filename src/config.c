@@ -79,7 +79,7 @@ void write_pair_distribution_file();
 void print_minimal_distances_matrix(double const* mindist);
 
 #if defined(CONTRIB)
-int does_contribute(vector);
+int does_contribute(vector atom_pos, config_state* cstate);
 #endif  // CONTRIB
 
 /****************************************************************
@@ -239,7 +239,7 @@ void read_config(char const* filename)
               if (cstate.have_contrib_box_vector & 1)
               {
                 error(0, "There can only be one box of contributing atoms\n");
-                error(1, "This occured in %s on line %d", filename, line);
+                error(1, "This occured in %s on line %d", filename, cstate.line);
               }
               read_box_vector(res + 5, &cstate.cbox_o, &cstate);
               cstate.have_contrib_box_vector &= 1;
@@ -261,7 +261,7 @@ void read_config(char const* filename)
               break;
             case 's':
             case 'S':
-              read_sphere_center(res + 5, cstate);
+              read_sphere_center(res + 5, &cstate);
               cstate.n_spheres++;
               break;
           }
@@ -372,8 +372,8 @@ void read_config(char const* filename)
       atom->conf = g_config.nconf;
 
 #if defined(CONTRIB)
-      if (have_contrib_box || n_spheres != 0)
-        atom->contrib = does_contribute(atom->pos);
+      if (cstate.have_contrib_box_vector || cstate.n_spheres != 0)
+        atom->contrib = does_contribute(atom->pos, &cstate);
       else
         atom->contrib = 1;
 #endif  // CONTRIB
@@ -539,7 +539,7 @@ void read_config(char const* filename)
 #if defined(ADP)
   for (int i = 0; i < g_calc.paircol; i++)
   {
-    j = g_calc.paircol + 2 * g_param.ntypes + i;
+    int j = g_calc.paircol + 2 * g_param.ntypes + i;
     g_pot.apot_table.begin[j] = min * 0.95;
     g_pot.opt_pot.begin[j] = min * 0.95;
     g_pot.calc_pot.begin[j] = min * 0.95;
@@ -554,7 +554,7 @@ void read_config(char const* filename)
   /* f_ij */
   for (int i = 0; i < g_calc.paircol; i++)
   {
-    j = g_calc.paircol + 2 * g_param.ntypes + i;
+    int j = g_calc.paircol + 2 * g_param.ntypes + i;
     g_pot.apot_table.begin[j] = min * 0.95;
     g_pot.opt_pot.begin[j] = min * 0.95;
     g_pot.calc_pot.begin[j] = min * 0.95;
@@ -564,7 +564,7 @@ void read_config(char const* filename)
      in the range of [-1:1]. Actually we use [-1.1:1.1] to be safe. */
   for (int i = 0; i < g_param.ntypes; i++)
   {
-    j = 2 * g_calc.paircol + 2 * g_param.ntypes + i;
+    int j = 2 * g_calc.paircol + 2 * g_param.ntypes + i;
     g_pot.apot_table.begin[j] = -1.1;
     g_pot.opt_pot.begin[j] = -1.1;
     g_pot.calc_pot.begin[j] = -1.1;
@@ -671,26 +671,26 @@ void read_sphere_center(char const* pline, config_state* cstate)
 {
   int n = cstate->n_spheres;
 
-  cstate.sphere_center =
+  cstate->sphere_center =
       (vector*)Realloc(&cstate->sphere_center, (n + 1) * sizeof(vector));
-  cstate.sphere_radius =
+  cstate->sphere_radius =
       (double*)Realloc(&cstate->sphere_radius, (n + 1) * sizeof(double));
 
-  if (sscanf(res + 5, "%lf %lf %lf %lf\n", &cstate.sphere_center[n].x,
-             &cstate.sphere_center[n].y, &cstate.sphere_center[n].z,
-             &cstate.sphere_radius[n]) == 4)
+  if (sscanf(pline, "%lf %lf %lf %lf\n", &cstate->sphere_center[n].x,
+             &cstate->sphere_center[n].y, &cstate->sphere_center[n].z,
+             &cstate->sphere_radius[n]) == 4)
   {
     if (g_param.global_cell_scale != 1.0)
     {
-      cstate.sphere_center[n].x *= global_cell_scale;
-      cstate.sphere_center[n].y *= global_cell_scale;
-      cstate.sphere_center[n].z *= global_cell_scale;
-      cstate.sphere_radius[n] *= global_cell_scale;
+      cstate->sphere_center[n].x *= g_param.global_cell_scale;
+      cstate->sphere_center[n].y *= g_param.global_cell_scale;
+      cstate->sphere_center[n].z *= g_param.global_cell_scale;
+      cstate->sphere_radius[n] *= g_param.global_cell_scale;
     }
   }
   else
     error(1, "%s: Error in sphere of contributing atoms, line %d\n", cstate->filename,
-          cstate.line);
+          cstate->line);
 }
 
 #endif  // CONTRIB
@@ -1247,7 +1247,7 @@ void print_minimal_distances_matrix(const double* mindist)
   printf("\n");
 }
 
-#ifdef CONTRIB
+#if defined(CONTRIB)
 
 /****************************************************************
  *
@@ -1255,34 +1255,32 @@ void print_minimal_distances_matrix(const double* mindist)
  *
  ****************************************************************/
 
-int does_contribute(vector pos)
+int does_contribute(vector pos, config_state* cstate)
 {
-  int i;
-  double n_a, n_b, n_c, r;
   vector dist;
 
-  if (have_contrib_box)
+  if (cstate->have_contrib_box_vector)
   {
-    dist.x = pos.x - cbox_o.x;
-    dist.y = pos.y - cbox_o.y;
-    dist.z = pos.z - cbox_o.z;
-    n_a = SPROD(dist, cbox_a) / SPROD(cbox_a, cbox_a);
-    n_b = SPROD(dist, cbox_b) / SPROD(cbox_b, cbox_b);
-    n_c = SPROD(dist, cbox_c) / SPROD(cbox_c, cbox_c);
+    dist.x = pos.x - cstate->cbox_o.x;
+    dist.y = pos.y - cstate->cbox_o.y;
+    dist.z = pos.z - cstate->cbox_o.z;
+    int n_a = SPROD(dist, cstate->cbox_a) / SPROD(cstate->cbox_a, cstate->cbox_a);
+    int n_b = SPROD(dist, cstate->cbox_b) / SPROD(cstate->cbox_b, cstate->cbox_b);
+    int n_c = SPROD(dist, cstate->cbox_c) / SPROD(cstate->cbox_c, cstate->cbox_c);
     if (n_a >= 0 && n_a <= 1)
       if (n_b >= 0 && n_b <= 1)
         if (n_c >= 0 && n_c <= 1)
           return 1;
   }
 
-  for (i = 0; i < n_spheres; i++)
+  for (int i = 0; i < cstate->n_spheres; i++)
   {
-    dist.x = (pos.x - sphere_centers[i].x);
-    dist.y = (pos.y - sphere_centers[i].y);
-    dist.z = (pos.z - sphere_centers[i].z);
-    r = SPROD(dist, dist);
+    dist.x = (pos.x - cstate->sphere_center[i].x);
+    dist.y = (pos.y - cstate->sphere_center[i].y);
+    dist.z = (pos.z - cstate->sphere_center[i].z);
+    double r = SPROD(dist, dist);
     r = sqrt(r);
-    if (r < r_spheres[i])
+    if (r < cstate->sphere_radius[i])
       return 1;
   }
 

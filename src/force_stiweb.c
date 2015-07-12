@@ -488,39 +488,27 @@ double calc_forces_stiweb(double* xi_opt, double* forces, int flag)
 
 void update_stiweb_pointers(double* xi)
 {
-  int i, j, k;
   double* index = xi + 2;
   sw_t* sw = &g_pot.apot_table.sw;
 
   /* allocate if this has not been done */
-  if (0 == sw->init)
+  if (sw->init == 0)
   {
-    sw->A = (double**)malloc(g_calc.paircol * sizeof(double*));
-    sw->B = (double**)malloc(g_calc.paircol * sizeof(double*));
-    sw->p = (double**)malloc(g_calc.paircol * sizeof(double*));
-    sw->q = (double**)malloc(g_calc.paircol * sizeof(double*));
-    sw->delta = (double**)malloc(g_calc.paircol * sizeof(double*));
-    sw->a1 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    sw->gamma = (double**)malloc(g_calc.paircol * sizeof(double*));
-    sw->a2 = (double**)malloc(g_calc.paircol * sizeof(double*));
-    for (i = 0; i < g_calc.paircol; i++)
-    {
-      sw->A[i] = NULL;
-      sw->B[i] = NULL;
-      sw->p[i] = NULL;
-      sw->q[i] = NULL;
-      sw->delta[i] = NULL;
-      sw->a1[i] = NULL;
-      sw->gamma[i] = NULL;
-      sw->a2[i] = NULL;
-    }
+    sw->A = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    sw->B = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    sw->p = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    sw->q = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    sw->delta = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    sw->a1 = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    sw->gamma = (double**)Malloc(g_calc.paircol * sizeof(double*));
+    sw->a2 = (double**)Malloc(g_calc.paircol * sizeof(double*));
     sw->lambda = (double****)malloc(g_calc.paircol * sizeof(double***));
-    for (i = 0; i < g_param.ntypes; i++)
+    for (int i = 0; i < g_param.ntypes; i++)
     {
-      sw->lambda[i] = (double***)malloc(g_param.ntypes * sizeof(double**));
-      for (j = 0; j < g_param.ntypes; j++)
+      sw->lambda[i] = (double***)Malloc(g_param.ntypes * sizeof(double**));
+      for (int j = 0; j < g_param.ntypes; j++)
       {
-        sw->lambda[i][j] = (double**)malloc(g_param.ntypes * sizeof(double*));
+        sw->lambda[i][j] = (double**)Malloc(g_param.ntypes * sizeof(double*));
       }
     }
     sw->init = 1;
@@ -530,7 +518,7 @@ void update_stiweb_pointers(double* xi)
   if (sw->A[0] != index)
   {
     /* set the pair parameters (stiweb_2) */
-    for (i = 0; i < g_calc.paircol; i++)
+    for (int i = 0; i < g_calc.paircol; i++)
     {
       sw->A[i] = index++;
       sw->B[i] = index++;
@@ -541,16 +529,16 @@ void update_stiweb_pointers(double* xi)
       index += 2;
     }
     /* set the threebody parameters (stiweb_3) */
-    for (i = 0; i < g_calc.paircol; i++)
+    for (int i = 0; i < g_calc.paircol; i++)
     {
       sw->gamma[i] = index++;
       sw->a2[i] = index++;
       index += 2;
     }
     /* set the lambda pointer */
-    for (i = 0; i < g_param.ntypes; i++)
-      for (j = 0; j < g_param.ntypes; j++)
-        for (k = j; k < g_param.ntypes; k++)
+    for (int i = 0; i < g_param.ntypes; i++)
+      for (int j = 0; j < g_param.ntypes; j++)
+        for (int k = j; k < g_param.ntypes; k++)
         {
           sw->lambda[i][j][k] = sw->lambda[i][k][j] = index++;
         }

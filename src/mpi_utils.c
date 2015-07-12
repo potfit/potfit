@@ -33,6 +33,7 @@
 #ifdef MPI
 
 #include "config.h"
+#include "memory.h"
 #include "mpi_utils.h"
 #include "utils.h"
 
@@ -397,14 +398,10 @@ void broadcast_params_mpi()
 #endif /* DIPOLE */
   if (g_mpi.myid > 0)
   {
-    g_config.inconf = (int*)malloc(g_config.nconf * sizeof(int));
-    g_config.cnfstart = (int*)malloc(g_config.nconf * sizeof(int));
-    g_config.force_0 = (double*)malloc(g_calc.mdim * sizeof(double));
-    g_config.conf_weight = (double*)malloc(g_config.nconf * sizeof(double));
-    reg_for_free(g_config.inconf, "inconf");
-    reg_for_free(g_config.cnfstart, "cnfstart");
-    reg_for_free(g_config.force_0, "force_0");
-    reg_for_free(g_config.conf_weight, "conf_weight");
+    g_config.inconf = (int*)Malloc(g_config.nconf * sizeof(int));
+    g_config.cnfstart = (int*)Malloc(g_config.nconf * sizeof(int));
+    g_config.force_0 = (double*)Malloc(g_calc.mdim * sizeof(double));
+    g_config.conf_weight = (double*)Malloc(g_config.nconf * sizeof(double));
   }
   MPI_Bcast(g_config.inconf, g_config.nconf, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(g_config.cnfstart, g_config.nconf, MPI_INT, 0, MPI_COMM_WORLD);
@@ -423,24 +420,15 @@ void broadcast_params_mpi()
   calclen = g_pot.calc_pot.len;
   if (g_mpi.myid > 0)
   {
-    g_pot.calc_pot.begin = (double*)malloc(size * sizeof(double));
-    g_pot.calc_pot.end = (double*)malloc(size * sizeof(double));
-    g_pot.calc_pot.step = (double*)malloc(size * sizeof(double));
-    g_pot.calc_pot.invstep = (double*)malloc(size * sizeof(double));
-    g_pot.calc_pot.first = (int*)malloc(size * sizeof(int));
-    g_pot.calc_pot.last = (int*)malloc(size * sizeof(int));
-    g_pot.calc_pot.table = (double*)malloc(calclen * sizeof(double));
-    g_pot.calc_pot.xcoord = (double*)malloc(calclen * sizeof(double));
-    g_pot.calc_pot.d2tab = (double*)malloc(calclen * sizeof(double));
-    reg_for_free(g_pot.calc_pot.begin, "calc_pot.begin");
-    reg_for_free(g_pot.calc_pot.end, "calc_pot.end");
-    reg_for_free(g_pot.calc_pot.step, "calc_pot.step");
-    reg_for_free(g_pot.calc_pot.invstep, "calc_pot.invstep");
-    reg_for_free(g_pot.calc_pot.first, "calc_pot.first");
-    reg_for_free(g_pot.calc_pot.last, "calc_pot.last");
-    reg_for_free(g_pot.calc_pot.table, "calc_pot.table");
-    reg_for_free(g_pot.calc_pot.xcoord, "calc_pot.xcoord");
-    reg_for_free(g_pot.calc_pot.d2tab, "calc_pot.d2tab");
+    g_pot.calc_pot.begin = (double*)Malloc(size * sizeof(double));
+    g_pot.calc_pot.end = (double*)Malloc(size * sizeof(double));
+    g_pot.calc_pot.step = (double*)Malloc(size * sizeof(double));
+    g_pot.calc_pot.invstep = (double*)Malloc(size * sizeof(double));
+    g_pot.calc_pot.first = (int*)Malloc(size * sizeof(int));
+    g_pot.calc_pot.last = (int*)Malloc(size * sizeof(int));
+    g_pot.calc_pot.table = (double*)Malloc(calclen * sizeof(double));
+    g_pot.calc_pot.xcoord = (double*)Malloc(calclen * sizeof(double));
+    g_pot.calc_pot.d2tab = (double*)Malloc(calclen * sizeof(double));
   }
   MPI_Bcast(g_pot.calc_pot.begin, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(g_pot.calc_pot.end, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -463,50 +451,31 @@ void broadcast_params_mpi()
   {
     if (g_mpi.myid > 0)
     {
-      g_config.na_type = (int**)malloc((g_config.nconf + 1) * sizeof(int*));
+      g_config.na_type = (int**)Malloc((g_config.nconf + 1) * sizeof(int*));
       for (i = 0; i < (g_config.nconf + 1); i++)
-      {
-        g_config.na_type[i] = (int*)malloc(g_param.ntypes * sizeof(int));
-        reg_for_free(g_config.na_type[i], "na_type[%d]", i);
-      }
-      reg_for_free(g_config.na_type, "na_type");
+        g_config.na_type[i] = (int*)Malloc(g_param.ntypes * sizeof(int));
     }
     for (i = 0; i < (g_config.nconf + 1); i++)
       MPI_Bcast(g_config.na_type[i], g_param.ntypes, MPI_INT, 0, MPI_COMM_WORLD);
   }
   if (g_mpi.myid > 0)
   {
-    g_pot.calc_list = (double*)malloc(g_pot.opt_pot.len * sizeof(double));
-    g_pot.apot_table.n_par = (int*)malloc(g_pot.apot_table.number * sizeof(int));
-    g_pot.apot_table.begin = (double*)malloc(g_pot.apot_table.number * sizeof(double));
-    g_pot.apot_table.end = (double*)malloc(g_pot.apot_table.number * sizeof(double));
-    g_pot.apot_table.idxpot = (int*)malloc(g_pot.apot_table.number * sizeof(int));
+    g_pot.calc_list = (double*)Malloc(g_pot.opt_pot.len * sizeof(double));
+    g_pot.apot_table.n_par = (int*)Malloc(g_pot.apot_table.number * sizeof(int));
+    g_pot.apot_table.begin = (double*)Malloc(g_pot.apot_table.number * sizeof(double));
+    g_pot.apot_table.end = (double*)Malloc(g_pot.apot_table.number * sizeof(double));
+    g_pot.apot_table.idxpot = (int*)Malloc(g_pot.apot_table.number * sizeof(int));
 #ifdef COULOMB
-    g_pot.apot_table.ratio = (double*)malloc(g_param.ntypes * sizeof(double));
+    g_pot.apot_table.ratio = (double*)Malloc(g_param.ntypes * sizeof(double));
 #endif /* COULOMB */
-    g_pot.smooth_pot = (int*)malloc(g_pot.apot_table.number * sizeof(int));
-    g_pot.invar_pot = (int*)malloc(g_pot.apot_table.number * sizeof(int));
-    g_config.rcut = (double*)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
-    g_config.rmin = (double*)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
+    g_pot.smooth_pot = (int*)Malloc(g_pot.apot_table.number * sizeof(int));
+    g_pot.invar_pot = (int*)Malloc(g_pot.apot_table.number * sizeof(int));
+    g_config.rcut = (double*)Malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
+    g_config.rmin = (double*)Malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
     g_pot.apot_table.fvalue =
-        (fvalue_pointer*)malloc(g_pot.apot_table.number * sizeof(fvalue_pointer));
-    g_pot.opt_pot.table = (double*)malloc(g_pot.opt_pot.len * sizeof(double));
-    g_pot.opt_pot.first = (int*)malloc(g_pot.apot_table.number * sizeof(int));
-    reg_for_free(g_pot.calc_list, "calc_list");
-    reg_for_free(g_pot.apot_table.n_par, "apot_table.n_par");
-    reg_for_free(g_pot.apot_table.begin, "apot_table.begin");
-    reg_for_free(g_pot.apot_table.end, "apot_table.end");
-    reg_for_free(g_pot.apot_table.idxpot, "apot_table.idxpot");
-#ifdef COULOMB
-    reg_for_free(g_pot.apot_table.ratio, "apot_table.ratio");
-#endif
-    reg_for_free(g_pot.smooth_pot, "smooth_pot");
-    reg_for_free(g_pot.invar_pot, "invar_pot");
-    reg_for_free(g_config.rcut, "rcut");
-    reg_for_free(g_config.rmin, "rmin");
-    reg_for_free(g_pot.apot_table.fvalue, "apot_table.fvalue");
-    reg_for_free(g_pot.opt_pot.table, "opt_pot.first");
-    reg_for_free(g_pot.opt_pot.first, "opt_pot.first");
+    (fvalue_pointer*)Malloc(g_pot.apot_table.number * sizeof(fvalue_pointer));
+    g_pot.opt_pot.table = (double*)Malloc(g_pot.opt_pot.len * sizeof(double));
+    g_pot.opt_pot.first = (int*)Malloc(g_pot.apot_table.number * sizeof(int));
   }
   MPI_Bcast(g_pot.smooth_pot, g_pot.apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(g_pot.invar_pot, g_pot.apot_table.number, MPI_INT, 0, MPI_COMM_WORLD);
@@ -535,11 +504,9 @@ void broadcast_params_mpi()
   {
     if (g_mpi.myid > 0)
     {
-      g_pot.apot_table.n_glob = (int*)malloc(g_pot.apot_table.globals * sizeof(int));
+      g_pot.apot_table.n_glob = (int*)Malloc(g_pot.apot_table.globals * sizeof(int));
       g_pot.apot_table.global_idx =
-          (int***)malloc(g_pot.apot_table.globals * sizeof(int**));
-      reg_for_free(g_pot.apot_table.n_glob, "apot_table.n_glob");
-      reg_for_free(g_pot.apot_table.global_idx, "apot_table.global_idx");
+      (int***)Malloc(g_pot.apot_table.globals * sizeof(int**));
     }
     MPI_Bcast(g_pot.apot_table.n_glob, g_pot.apot_table.globals, MPI_INT, 0,
               MPI_COMM_WORLD);
@@ -548,16 +515,13 @@ void broadcast_params_mpi()
       for (i = 0; i < g_pot.apot_table.globals; i++)
       {
         g_pot.apot_table.global_idx[i] =
-            (int**)malloc(g_pot.apot_table.n_glob[i] * sizeof(int*));
-        reg_for_free(g_pot.apot_table.global_idx[i], "apot_table.global_idx[%d]", i);
+        (int**)Malloc(g_pot.apot_table.n_glob[i] * sizeof(int*));
       }
       for (i = 0; i < g_pot.apot_table.globals; i++)
       {
         for (j = 0; j < g_pot.apot_table.n_glob[i]; j++)
         {
-          g_pot.apot_table.global_idx[i][j] = (int*)malloc(2 * sizeof(int));
-          reg_for_free(g_pot.apot_table.global_idx[i][j], "apot_table.global_idx[%d][%d]",
-                       i, j);
+          g_pot.apot_table.global_idx[i][j] = (int*)Malloc(2 * sizeof(int));
         }
       }
     }
@@ -574,10 +538,10 @@ void broadcast_params_mpi()
   odd = (g_config.nconf % g_mpi.num_cpus) - g_mpi.num_cpus;
   if (g_mpi.myid == 0)
   {
-    g_mpi.atom_len = (int*)malloc(g_mpi.num_cpus * sizeof(int));
-    g_mpi.atom_dist = (int*)malloc(g_mpi.num_cpus * sizeof(int));
-    g_mpi.conf_len = (int*)malloc(g_mpi.num_cpus * sizeof(int));
-    g_mpi.conf_dist = (int*)malloc(g_mpi.num_cpus * sizeof(int));
+    g_mpi.atom_len = (int*)Malloc(g_mpi.num_cpus * sizeof(int));
+    g_mpi.atom_dist = (int*)Malloc(g_mpi.num_cpus * sizeof(int));
+    g_mpi.conf_len = (int*)Malloc(g_mpi.num_cpus * sizeof(int));
+    g_mpi.conf_dist = (int*)Malloc(g_mpi.num_cpus * sizeof(int));
     for (i = 0; i < g_mpi.num_cpus; i++)
       g_mpi.conf_dist[i] = i * each + (((i + odd) > 0) ? (i + odd) : 0);
     for (i = 0; i < g_mpi.num_cpus - 1; i++)
@@ -591,10 +555,6 @@ void broadcast_params_mpi()
       g_mpi.atom_len[i] = g_mpi.atom_dist[i + 1] - g_mpi.atom_dist[i];
     g_mpi.atom_len[g_mpi.num_cpus - 1] =
         g_config.natoms - g_mpi.atom_dist[g_mpi.num_cpus - 1];
-    reg_for_free(g_mpi.atom_len, "atom_len");
-    reg_for_free(g_mpi.atom_dist, "atom_dist");
-    reg_for_free(g_mpi.conf_len, "conf_len");
-    reg_for_free(g_mpi.conf_dist, "conf_dist");
   }
   MPI_Scatter(g_mpi.atom_len, 1, MPI_INT, &g_mpi.myatoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Scatter(g_mpi.atom_dist, 1, MPI_INT, &g_mpi.firstatom, 1, MPI_INT, 0,
@@ -603,7 +563,7 @@ void broadcast_params_mpi()
   MPI_Scatter(g_mpi.conf_dist, 1, MPI_INT, &g_mpi.firstconf, 1, MPI_INT, 0,
               MPI_COMM_WORLD);
   /* this broadcasts all atoms */
-  g_config.conf_atoms = (atom_t*)malloc(g_mpi.myatoms * sizeof(atom_t));
+  g_config.conf_atoms = (atom_t*)Malloc(g_mpi.myatoms * sizeof(atom_t));
   for (i = 0; i < g_config.natoms; i++)
   {
     if (g_mpi.myid == 0)
@@ -618,10 +578,10 @@ void broadcast_params_mpi()
 #ifdef THREEBODY
   broadcast_angles();
 #endif /* THREEBODY */
-  g_config.conf_vol = (double*)malloc(g_mpi.myconf * sizeof(double));
-  g_config.conf_uf = (int*)malloc(g_mpi.myconf * sizeof(int));
+  g_config.conf_vol = (double*)Malloc(g_mpi.myconf * sizeof(double));
+  g_config.conf_uf = (int*)Malloc(g_mpi.myconf * sizeof(int));
 #ifdef STRESS
-  g_config.conf_us = (int*)malloc(g_mpi.myconf * sizeof(double));
+  g_config.conf_us = (int*)Malloc(g_mpi.myconf * sizeof(double));
 #endif /* STRESS */
   MPI_Scatterv(g_config.volume, g_mpi.conf_len, g_mpi.conf_dist, MPI_DOUBLE,
                g_config.conf_vol, g_mpi.myconf, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -632,12 +592,6 @@ void broadcast_params_mpi()
                g_config.conf_us, g_mpi.myconf, MPI_INT, 0, MPI_COMM_WORLD);
 #endif /* STRESS */
 
-  reg_for_free(g_config.conf_vol, "conf_vol");
-  reg_for_free(g_config.conf_uf, "conf_uf");
-#ifdef STRESS
-  reg_for_free(g_config.conf_us, "conf_us");
-#endif /* STRESS */
-  reg_for_free(g_config.conf_atoms, "conf_atoms");
 
   if (g_mpi.myid == 0)
   {
@@ -658,7 +612,7 @@ void broadcast_neighbors()
   neigh_t neigh;
   atom_t* atom;
 
-  init_neigh_memory(&neigh);
+  memset(&neigh, 0, sizeof(neigh));
 
   for (i = 0; i < g_config.natoms; i++)
   {
@@ -668,10 +622,9 @@ void broadcast_neighbors()
     MPI_Bcast(&neighs, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms))
     {
-      atom->neigh = (neigh_t*)malloc(neighs * sizeof(neigh_t));
+      atom->neigh = (neigh_t*)Malloc(neighs * sizeof(neigh_t));
       for (j = 0; j < neighs; j++)
-        init_neigh_memory(atom->neigh + j);
-      reg_for_free(atom->neigh, "broadcast atom[%d]->neigh", i);
+        memset(atom->neigh + j, 0, sizeof(neigh_t));
     }
     for (j = 0; j < neighs; j++)
     {
@@ -686,7 +639,7 @@ void broadcast_neighbors()
   }
 }
 
-#ifdef THREEBODY
+#if defined(THREEBODY)
 
 /***************************************************************************
  *
@@ -700,7 +653,7 @@ void broadcast_angles()
   angle_t angle;
   atom_t* atom;
 
-  init_angle_memory(&angle);
+  memset(&angle, 0, sizeof(angle));
 
   for (i = 0; i < g_config.natoms; ++i)
   {
@@ -712,8 +665,7 @@ void broadcast_angles()
     {
       atom->angle_part = (angle_t*)malloc(nangles * sizeof(angle_t));
       for (j = 0; j < nangles; j++)
-        init_angle_memory(atom->angle_part + j);
-      reg_for_free(atom->angle_part, "broadcast atom[%d]->angle_part", i);
+        memset(atom->angle_part + j, 0, sizeof(angle_t));
     }
     for (j = 0; j < nangles; ++j)
     {

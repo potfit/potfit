@@ -467,15 +467,15 @@ void read_chemical_potentials(apot_state* pstate)
     if (compnodes != -1)
     {
       apt->values[apt->number] =
-          (double*)realloc(apt->values[apt->number],
+          (double*)Realloc(apt->values[apt->number],
                            (g_param.ntypes + g_param.compnodes) * sizeof(double));
-      apt->pmin[apt->number] = (double*)realloc(
+      apt->pmin[apt->number] = (double*)Realloc(
           apt->pmin[apt->number], (g_param.ntypes + g_param.compnodes) * sizeof(double));
-      apt->pmax[apt->number] = (double*)realloc(
+      apt->pmax[apt->number] = (double*)Realloc(
           apt->pmax[apt->number], (g_param.ntypes + g_param.compnodes) * sizeof(double));
       apt->chempot = apt->values[apt->number];
       compnodelist =
-          (double*)malloc((g_param.ntypes + g_param.compnodes) * sizeof(double));
+          (double*)Malloc((g_param.ntypes + g_param.compnodes) * sizeof(double));
 
       for (j = 0; j < compnodes; j++)
       {
@@ -552,7 +552,7 @@ void read_elstat_table(apot_state* pstate)
   }
   for (int i = 0; i < g_param.ntypes - 1; i++)
   {
-    apt->param_name[apt->number][i] = (char*)malloc(30 * sizeof(char));
+    apt->param_name[apt->number][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", apt->param_name[apt->number][i],
                    &apt->charge[i], &apt->pmin[apt->number][i],
                    &apt->pmax[apt->number][i]))
@@ -564,10 +564,8 @@ void read_elstat_table(apot_state* pstate)
     {
       apt->invar_par[apt->number][i]++;
     }
-    reg_for_free(apt->param_name[apt->number][i], "apt->param_name[%d][%d]", apt->number,
-                 i);
   }
-  apt->param_name[apt->number + 1][0] = (char*)malloc(30 * sizeof(char));
+  apt->param_name[apt->number + 1][0] = (char*)Malloc(30 * sizeof(char));
   if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", apt->param_name[apt->number + 1][0],
                  &apt->dp_kappa[0], &apt->pmin[apt->number + 1][0],
                  &apt->pmax[apt->number + 1][0]))
@@ -579,8 +577,6 @@ void read_elstat_table(apot_state* pstate)
   {
     apt->invar_par[apt->number + 1][0]++;
   }
-  reg_for_free(apt->param_name[apt->number + 1][0], "apt->param_name[%d][%d]",
-               apt->number + 1, 0);
   apt->sw_kappa = apt->invar_par[apt->number + 1][0];
 #if !defined(DIPOLE)
   printf(" - Read elstat table\n");
@@ -592,7 +588,7 @@ void read_elstat_table(apot_state* pstate)
 
   for (int i = 0; i < g_param.ntypes; i++)
   {
-    apt->param_name[apt->number + 2][i] = (char*)malloc(30 * sizeof(char));
+    apt->param_name[apt->number + 2][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", apt->param_name[apt->number + 2][i],
                    &apt->dp_alpha[i], &apt->pmin[apt->number + 2][i],
                    &apt->pmax[apt->number + 2][i]))
@@ -604,12 +600,10 @@ void read_elstat_table(apot_state* pstate)
     {
       apt->invar_par[apt->number + 2][i]++;
     }
-    reg_for_free(apt->param_name[apt->number + 2][i], "apt->param_name[%d][%d]",
-                 apt->number + 2, i);
   }
   for (int i = 0; i < ncols; i++)
   {
-    apt->param_name[apt->number + 3][i] = (char*)malloc(30 * sizeof(char));
+    apt->param_name[apt->number + 3][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", apt->param_name[apt->number + 3][i],
                    &apt->dp_b[i], &apt->pmin[apt->number + 3][i],
                    &apt->pmax[apt->number + 3][i]))
@@ -621,12 +615,10 @@ void read_elstat_table(apot_state* pstate)
     {
       apt->invar_par[apt->number + 3][i]++;
     }
-    reg_for_free(apt->param_name[apt->number + 3][i], "apt->param_name[%d][%d]",
-                 apt->number + 3, i);
   }
   for (int i = 0; i < ncols; i++)
   {
-    apt->param_name[apt->number + 4][i] = (char*)malloc(30 * sizeof(char));
+    apt->param_name[apt->number + 4][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", apt->param_name[apt->number + 4][i],
                    &apt->dp_c[i], &apt->pmin[apt->number + 4][i],
                    &apt->pmax[apt->number + 4][i]))
@@ -638,8 +630,6 @@ void read_elstat_table(apot_state* pstate)
     {
       apt->invar_par[apt->number + 4][i]++;
     }
-    reg_for_free(apt->param_name[apt->number + 4][i], "apt->param_name[%d][%d]",
-                 apt->number + 4, i);
   }
 
   printf(" - Read elstat table\n");
@@ -944,20 +934,16 @@ void read_analytic_potentials(apot_state* pstate)
 
         if (-1 == l)
           error(1, "Could not find global parameter %s!\n", apt->param_name[i][j]);
+
         sprintf(apt->param_name[i][j], "%s!", apt->param_name[i][j]);
 
         /* write index array for global parameters */
-        if (++apt->n_glob[l] > 1)
-        {
-          apt->global_idx[l] =
-              (int**)realloc(apt->global_idx[l], apt->n_glob[l] * sizeof(int*));
-        }
-        else
-        {
-          apt->global_idx[l] = (int**)malloc(1 * sizeof(int*));
-        }
+        apt->n_glob[l]++;
 
-        apt->global_idx[l][apt->n_glob[l] - 1] = (int*)malloc(2 * sizeof(int));
+        apt->global_idx[l] =
+              (int**)Realloc(apt->global_idx[l], apt->n_glob[l] * sizeof(int*));
+
+        apt->global_idx[l][apt->n_glob[l] - 1] = (int*)Malloc(2 * sizeof(int));
         apt->global_idx[l][apt->n_glob[l] - 1][0] = i;
         apt->global_idx[l][apt->n_glob[l] - 1][1] = j;
 

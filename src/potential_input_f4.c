@@ -30,6 +30,7 @@
 
 #include "potfit.h"
 
+#include "memory.h"
 #include "potential_input.h"
 #include "utils.h"
 
@@ -77,22 +78,10 @@ void read_pot_table4(char const* potential_filename, FILE* pfile, potential_stat
     pt->len = pt->first[i] + nvals[i];
   }
   /* allocate the function table */
-  pt->table = (double*)malloc(pt->len * sizeof(double));
-  pt->xcoord = (double*)malloc(pt->len * sizeof(double));
-  pt->d2tab = (double*)malloc(pt->len * sizeof(double));
-  pt->idx = (int*)malloc(pt->len * sizeof(int));
-
-  if ((NULL == pt->table) || (NULL == pt->xcoord) || (NULL == pt->idx) ||
-      (NULL == pt->d2tab))
-    error(1, "Cannot allocate memory for potential table");
-
-  for (int i = 0; i < pt->len; i++)
-  {
-    pt->table[i] = 0.0;
-    pt->xcoord[i] = 0.0;
-    pt->d2tab[i] = 0.0;
-    pt->idx[i] = 0;
-  }
+  pt->table = (double*)Malloc(pt->len * sizeof(double));
+  pt->xcoord = (double*)Malloc(pt->len * sizeof(double));
+  pt->d2tab = (double*)Malloc(pt->len * sizeof(double));
+  pt->idx = (int*)Malloc(pt->len * sizeof(int));
 
   /* input loop */
   double* val = pt->table;
