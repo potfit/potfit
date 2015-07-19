@@ -493,7 +493,8 @@ void read_config(char const* filename)
   }
 #endif  // STRESS
 
-  write_pair_distribution_file();
+  if (g_param.write_pair == 1)
+    write_pair_distribution_file();
 
 /* assign correct distances to different tables */
 #if defined(APOT)
@@ -1148,70 +1149,67 @@ double make_box(config_state* cstate)
 
 void write_pair_distribution_file()
 {
-  if (1 == g_param.write_pair)
-  {
-    char pairname[255];
-    FILE* pairfile;
+  char pairname[255];
+  FILE* pairfile;
 #if defined(APOT)
-    int pair_steps = APOT_STEPS / 2;
+  int pair_steps = APOT_STEPS / 2;
 #else
-    int pair_steps = 500;
+  int pair_steps = 500;
 #endif  // APOT
-    double pair_table[g_calc.paircol * pair_steps];
-    double pair_dist[g_calc.paircol];
-    int pos, max_count = 0;
+  double pair_table[g_calc.paircol * pair_steps];
+  double pair_dist[g_calc.paircol];
+  int pos, max_count = 0;
 
-    sprintf(pairname, "%s.pair", g_files.config);
-    pairfile = fopen(pairname, "w");
-    fprintf(pairfile, "# radial distribution file for %d potential(s)\n", g_calc.paircol);
+  sprintf(pairname, "%s.pair", g_files.config);
+  pairfile = fopen(pairname, "w");
+  fprintf(pairfile, "# radial distribution file for %d potential(s)\n", g_calc.paircol);
 
-    for (int i = 0; i < g_calc.paircol * pair_steps; i++)
-      pair_table[i] = 0.0;
+  for (int i = 0; i < g_calc.paircol * pair_steps; i++)
+    pair_table[i] = 0.0;
 
-    for (int i = 0; i < g_param.ntypes; i++)
-      for (int k = 0; k < g_param.ntypes; k++)
-        pair_dist[(i <= k) ? i * g_param.ntypes + k - (i * (i + 1) / 2)
-                           : k * g_param.ntypes + i - (k * (k + 1) / 2)] =
-            g_config.rcut[i * g_param.ntypes + k] / pair_steps;
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int k = 0; k < g_param.ntypes; k++)
+      pair_dist[(i <= k) ? i * g_param.ntypes + k - (i * (i + 1) / 2)
+                          : k * g_param.ntypes + i - (k * (k + 1) / 2)] =
+          g_config.rcut[i * g_param.ntypes + k] / pair_steps;
 
-    for (int k = 0; k < g_calc.paircol; k++)
+  for (int k = 0; k < g_calc.paircol; k++)
+  {
+    for (int i = 0; i < g_config.natoms; i++)
     {
-      for (int i = 0; i < g_config.natoms; i++)
+      for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
       {
-        for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
-        {
-          int col = g_config.atoms[i].neigh[j].col[0];
+        int col = g_config.atoms[i].neigh[j].col[0];
 
-          if (col == k)
-          {
-            pos = (int)(g_config.atoms[i].neigh[j].r / pair_dist[k]);
+        if (col == k)
+        {
+          pos = (int)(g_config.atoms[i].neigh[j].r / pair_dist[k]);
 #if defined(DEBUG)
-            if (g_config.atoms[i].neigh[j].r <= 1)
-            {
-              warning("Short distance (%f) found.\n", g_config.atoms[i].neigh[j].r);
-              warning("\tatom=%d neighbor=%d\n", i, j);
-            }
-#endif  // DEBUG
-            pair_table[k * pair_steps + pos]++;
-            if ((int)pair_table[k * pair_steps + pos] > max_count)
-              max_count = (int)pair_table[k * pair_steps + pos];
+          if (g_config.atoms[i].neigh[j].r <= 1)
+          {
+            warning("Short distance (%f) found.\n", g_config.atoms[i].neigh[j].r);
+            warning("\tatom=%d neighbor=%d\n", i, j);
           }
+#endif  // DEBUG
+          pair_table[k * pair_steps + pos]++;
+          if ((int)pair_table[k * pair_steps + pos] > max_count)
+            max_count = (int)pair_table[k * pair_steps + pos];
         }
       }
     }
-
-    for (int k = 0; k < g_calc.paircol; k++)
-    {
-      for (int i = 0; i < pair_steps; i++)
-      {
-        pair_table[k * pair_steps + i] /= max_count;
-        fprintf(pairfile, "%f %f\n", i * pair_dist[k], pair_table[k * pair_steps + i]);
-      }
-      if (k != (g_calc.paircol - 1))
-        fprintf(pairfile, "\n\n");
-    }
-    fclose(pairfile);
   }
+
+  for (int k = 0; k < g_calc.paircol; k++)
+  {
+    for (int i = 0; i < pair_steps; i++)
+    {
+      pair_table[k * pair_steps + i] /= max_count;
+      fprintf(pairfile, "%f %f\n", i * pair_dist[k], pair_table[k * pair_steps + i]);
+    }
+    if (k != (g_calc.paircol - 1))
+      fprintf(pairfile, "\n\n");
+  }
+  fclose(pairfile);
 }
 
 /****************************************************************

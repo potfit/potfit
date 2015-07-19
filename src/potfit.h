@@ -28,8 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_H
-#define POTFIT_H
+#ifndef POTFIT_H_INCLUDED
+#define POTFIT_H_INCLUDED
 
 #include <math.h>
 #include <stdarg.h>
@@ -80,15 +80,16 @@ extern potfit_mpi_config g_mpi;
 extern potfit_parameters g_param;
 extern potfit_potentials g_pot;
 
+// this will to be removed
 extern potfit_unknown g_todo;
 
 /****************************************************************
  *
- *  general functions for setting up and terminating a potfit run
+ *  general functions for warning and error output
  *
  ****************************************************************/
 
 void error(int done, const char* msg, ...);
 void warning(const char* msg, ...);
 
-#endif /* POTFIT_H */
+#endif // POTFIT_H_INCLUDED

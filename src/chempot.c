@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -30,7 +30,7 @@
 
 #include "potfit.h"
 
-#if defined APOT && defined PAIR
+#if defined(APOT) && defined(PAIR)
 
 #include "functions.h"
 
@@ -56,14 +56,14 @@ int swap_chem_pot(int i, int j)
 
 int sort_chem_pot_2d()
 {
-  /* bubble sort */
-  int i, swapped;
+  int swapped = 0;
 
   if (g_param.compnodes > 0)
+  {
     do
     {
       swapped = 0;
-      for (i = 0; i < (g_param.compnodes - 1); i++)
+      for (int i = 0; i < (g_param.compnodes - 1); i++)
       {
         if (g_pot.compnodelist[i] > g_pot.compnodelist[i + 1])
         {
@@ -72,6 +72,7 @@ int sort_chem_pot_2d()
         }
       }
     } while (swapped);
+  }
 
   return 0;
 }

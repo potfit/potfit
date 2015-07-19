@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -28,8 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_FUNCTIONS_H
-#define POTFIT_FUNCTIONS_H
+#ifndef FUNCTIONS_H_INCLUDED
+#define FUNCTIONS_H_INCLUDED
 
 #if defined(APOT)
 
@@ -148,4 +148,4 @@ void shortrange_term(double, double, double, double*, double*);
 
 #endif  // APOT
 
-#endif  // POTFIT_FUNCTIONS_H
+#endif  // FUNCTIONS_H_INCLUDED

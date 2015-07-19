@@ -45,8 +45,8 @@ vector vec_prod(vector, vector);
 /* different power functions */
 static inline int isquare(int a) { return a * a; }
 static inline double dsquare(double a) { return a * a; }
-void power_1(double*, double*, double*);
-void power_m(int, double*, double*, double*);
+void power_1(double* result, double* base, double* exponent);
+void power_m(int count, double* result, double* base, double* exponent);
 
 #if defined APOT && defined EVO
 /* quicksort for ODE */

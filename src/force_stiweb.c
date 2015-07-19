@@ -35,6 +35,7 @@
 
 #include "forces.h"
 #include "functions.h"
+#include "memory.h"
 #include "potential_input.h"
 #include "potential_output.h"
 #include "splines.h"
