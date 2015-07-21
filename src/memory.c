@@ -369,4 +369,4 @@ void free_apot_table(apot_table_t* papot)
 #endif  // PAIR
 }
 
-#endif // APOT
+#endif  // APOT

@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -31,9 +31,10 @@
 
 #include "potfit.h"
 
-#ifdef EVO
+#if defined(EVO)
 
 #include "forces.h"
+#include "memory.h"
 #include "optimize.h"
 #include "potential_output.h"
 #include "random.h"
@@ -51,11 +52,13 @@
 #define TAU_1 0.1   /* probability for changing F */
 #define TAU_2 0.1   /* probability for changing CR */
 
-void init_population(double**, double*, double*);
+#if defined(APOT)
+void opposite_check(double** population, double* cost, int do_init);
+void quicksort(double* cost, int start, int end, double** population);
+int partition(double* cost, int start, int end, int index, double** population);
+void swap_population(double* population_1, double* population_2);
 
-#ifdef APOT
-void opposite_check(double**, double*, int);
-#endif /* APOT */
+#endif  // APOT
 
 /****************************************************************
  *
@@ -65,53 +68,54 @@ void opposite_check(double**, double*, int);
 
 void init_population(double** pop, double* xi, double* cost)
 {
-  int i, j;
-  double temp, max, min, val;
-  double fxi[g_calc.mdim];
-
-  for (i = 0; i < NP; i++)
+  for (int i = 0; i < NP; i++)
   {
-    for (j = 0; j < (D - 2); j++)
+    for (int j = 0; j < (D - 2); j++)
       pop[i][j] = xi[j];
     pop[i][D - 2] = F_LOWER + eqdist() * F_UPPER;
     pop[i][D - 1] = eqdist();
   }
-  for (i = 1; i < NP; i++)
+
+  for (int i = 1; i < NP; i++)
   {
-    for (j = 0; j < g_calc.ndim; j++)
+    for (int j = 0; j < g_calc.ndim; j++)
     {
-      val = xi[g_todo.idx[j]];
-#ifdef APOT
-      min =
+      double val = xi[g_todo.idx[j]];
+#if defined(APOT)
+      double min =
           g_pot.apot_table.pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
-      max =
+      double max =
           g_pot.apot_table.pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+
       /* initialize with normal distribution */
-      temp = normdist() / 3.0;
+      double temp = normdist() / 3.0;
+
       if (fabs(temp) > 1)
         temp /= fabs(temp);
+
       if (temp > 0)
         pop[i][g_todo.idx[j]] = val + temp * (max - val);
       else
         pop[i][g_todo.idx[j]] = val + temp * (val - min);
-#else  /* APOT */
-      min = -10.0 * val;
-      max = 10.0 * val;
-      /* initialize with uniform distribution in [-1:1] */
-      temp = eqdist();
-      /*      pop[i][idx[j]] = temp * 100.0;*/
-      pop[i][g_todo.idx[j]] = val + temp * (max - min);
+#else
+      pop[i][g_todo.idx[j]] = 10.0 * val * (2 * eqdist() - 1);
 #endif /* APOT */
     }
   }
-  for (i = 0; i < NP; i++)
-    cost[i] = (*g_calc_forces)(pop[i], fxi, 0);
-#ifdef APOT
+
+  double* forces = (double*)malloc(g_calc.mdim * sizeof(double));
+
+  for (int i = 0; i < NP; i++)
+    cost[i] = (*g_calc_forces)(pop[i], forces, 0);
+
+  free(forces);
+
+#if defined(APOT)
   opposite_check(pop, cost, 1);
-#endif /* APOT */
+#endif  // APOT
 }
 
-#ifdef APOT
+#if defined(APOT)
 
 /****************************************************************
  *
@@ -119,61 +123,57 @@ void init_population(double** pop, double* xi, double* cost)
  *
  ****************************************************************/
 
-void opposite_check(double** P, double* costP, int init)
+void opposite_check(double** population, double* cost, int do_init)
 {
-  int i, j;
   double fxi[g_calc.mdim];
   double max, min;
   double minp[g_calc.ndim], maxp[g_calc.ndim];
+
   static double* tot_cost; /* cost of two populations */
   static double** tot_P;   /* two populations */
 
   /* allocate memory if not done yet */
   if (tot_P == NULL)
   {
-    tot_P = (double**)malloc(2 * NP * sizeof(double*));
-    if (tot_P == NULL)
-      error(1, "Could not allocate memory for opposition vector!\n");
-    for (i = 0; i < 2 * NP; i++)
-    {
-      tot_P[i] = (double*)malloc(D * sizeof(double));
-      for (j = 0; j < D; j++)
-        tot_P[i][j] = 0.0;
-    }
-  }
-  if (tot_cost == NULL)
-    tot_cost = (double*)malloc(2 * NP * sizeof(double));
-  for (i = 0; i < 2 * NP; i++)
-    tot_cost[i] = 0.0;
+    tot_P = (double**)Malloc(2 * NP * sizeof(double*));
 
-  if (!init)
+    for (int i = 0; i < 2 * NP; i++)
+      tot_P[i] = (double*)Malloc(D * sizeof(double));
+  }
+
+  if (tot_cost == NULL)
+    tot_cost = (double*)Malloc(2 * NP * sizeof(double));
+
+  if (!do_init)
   {
-    for (i = 0; i < g_calc.ndim; i++)
+    for (int i = 0; i < g_calc.ndim; i++)
     {
       minp[i] = 10e30;
       maxp[i] = -10e30;
     }
-    for (i = 0; i < NP; i++)
+
+    for (int i = 0; i < NP; i++)
     {
-      for (j = 0; j < g_calc.ndim; j++)
+      for (int j = 0; j < g_calc.ndim; j++)
       {
-        if (P[i][g_todo.idx[j]] < minp[j])
-          minp[j] = P[i][g_todo.idx[j]];
-        if (P[i][g_todo.idx[j]] > maxp[j])
-          maxp[j] = P[i][g_todo.idx[j]];
+        if (population[i][g_todo.idx[j]] < minp[j])
+          minp[j] = population[i][g_todo.idx[j]];
+        if (population[i][g_todo.idx[j]] > maxp[j])
+          maxp[j] = population[i][g_todo.idx[j]];
       }
     }
   }
 
   /* generate opposite population */
-  for (i = 0; i < NP; i++)
-    for (j = 0; j < D; j++)
-      tot_P[i][j] = P[i][j];
-  for (i = 0; i < NP; i++)
+  for (int i = 0; i < NP; i++)
+    for (int j = 0; j < D; j++)
+      tot_P[i][j] = population[i][j];
+
+  for (int i = 0; i < NP; i++)
   {
-    for (j = 0; j < g_calc.ndim; j++)
+    for (int j = 0; j < g_calc.ndim; j++)
     {
-      if (init)
+      if (do_init)
       {
         min = g_pot.apot_table
                   .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
@@ -192,23 +192,97 @@ void opposite_check(double** P, double* costP, int init)
   }
 
   /* calculate cost of opposite population */
-  for (i = 0; i < NP; i++)
-    tot_cost[i] = costP[i];
-  for (i = NP; i < 2 * NP; i++)
+  for (int i = 0; i < NP; i++)
+    tot_cost[i] = cost[i];
+
+  double* forces = (double*)malloc(g_calc.mdim * sizeof(double));
+
+  for (int i = NP; i < 2 * NP; i++)
     tot_cost[i] = (*g_calc_forces)(tot_P[i], fxi, 0);
+
+  free(forces);
 
   /* evaluate the NP best individuals from both populations */
   /* sort with quicksort and return NP best indivuals */
+
   quicksort(tot_cost, 0, 2 * NP - 1, tot_P);
-  for (i = 0; i < NP; i++)
+
+  for (int i = 0; i < NP; i++)
   {
-    for (j = 0; j < D; j++)
-      P[i][j] = tot_P[i][j];
-    costP[i] = tot_cost[i];
+    memcpy(population[i], tot_P[i], D * sizeof(double));
+    cost[i] = tot_cost[i];
   }
 }
 
-#endif /* APOT */
+/****************************************************************
+ *
+ *  quicksort algorithm for opposition-based diff_evo
+ *
+ ****************************************************************/
+
+void quicksort(double* cost, int low, int high, double** population)
+{
+  if (low < high)
+  {
+    int index = (low + high) / 2;
+    int newIndex = partition(cost, low, high, index, population);
+    quicksort(cost, low, newIndex - 1, population);
+    quicksort(cost, newIndex + 1, high, population);
+  }
+}
+
+/****************************************************************
+ *
+ *  partition
+ *
+ ****************************************************************/
+
+int partition(double* cost, int low, int high, int index, double** population)
+{
+  const double ind_val = cost[index];
+  double temp = 0.0;
+
+  SWAP(cost[index], cost[high], temp);
+  swap_population(population[index], population[high]);
+
+  int current_index = low;
+
+  for (int i = low; i < high; i++)
+  {
+    if (cost[i] <= ind_val && i != current_index)
+    {
+      SWAP(cost[i], cost[current_index], temp);
+      swap_population(population[i], population[current_index]);
+      current_index++;
+    }
+  }
+
+  SWAP(cost[current_index], cost[high], temp);
+  swap_population(population[current_index], population[high]);
+
+  return current_index;
+}
+
+/****************************************************************
+ *
+ *  swap_population
+ *
+ ****************************************************************/
+
+void swap_population(double* pop_1, double* pop_2)
+{
+  int size = (g_calc.ndimtot + 2) * sizeof(double);
+  static double* temp = NULL;
+
+  if (temp == NULL)
+    temp = (double*)Malloc((g_calc.ndimtot + 2) * sizeof(double));
+
+  memcpy(temp, pop_1, size);
+  memcpy(pop_1, pop_2, size);
+  memcpy(pop_2, temp, size);
+}
+
+#endif  // APOT
 
 /****************************************************************
  *
@@ -218,152 +292,141 @@ void opposite_check(double** P, double* costP, int init)
 
 void run_differential_evolution(double* xi)
 {
-  int a, b;      /* store randomly picked numbers */
-                 //  int 	c; 			/* additional vector */
-                 //  int 	d; 			/* additional vector */
-                 //  int 	e; 			/* additional vector */
-  int i, j, k;   /* counters */
-  int count = 0; /* counter for loops */
+  int a, b;                /* store randomly picked numbers */
+                           //  int 	c; 			/* additional vector */
+                           //  int 	d; 			/* additional vector */
+                           //  int 	e; 			/* additional vector */
+  int count = 0;           /* counter for loops */
+  double cost_sum = 0.0;   /* average sum of squares for all configurations */
+  double crit = 1000.0;    /* treshold for stopping criterion */
+  double min_cost = 10e10; /* current minimum for all configurations */
+  double max_cost = 0.0;   /* current maximum for all configurations */
 #if defined(APOT)
-  int jsteps = 0;
-  double jumprate = JR;
-#endif                  /* APOT */
-  double avg = 0.0;     /* average sum of squares for all configurations */
-  double crit = 1000.0; /* treshold for stopping criterion */
-  double force = 0.0;   /* holds the current sum of squares */
-  double min = 10e10;   /* current minimum for all configurations */
-  double max = 0.0;     /* current maximum for all configurations */
-  double temp = 0.0;    /* temp storage */
-#ifdef APOT
-  double pmin = 0.0; /* lower bound for parameter */
-  double pmax = 0.0; /* upper bound for parameter */
-#endif               /* APOT */
-  double* best;      /* best configuration */
-  double* cost;      /* cost values for all configurations */
-  double* fxi;       /* force vector */
-  double* trial;     /* current trial configuration */
-  double** x1;       /* current population */
-  double** x2;       /* next generation */
-  FILE* ff;          /* exit flagfile */
+  int jump_steps = 0;
+  double jump_rate = JR;
+#endif /* APOT */
 
   if (g_param.evo_threshold == 0.0)
     return;
 
   /* vector for force calculation */
-  fxi = (double*)malloc(g_calc.mdim * sizeof(double));
+  double* forces = (double*)Malloc(g_calc.mdim * sizeof(double));
 
   /* vector with new configuration */
-  trial = (double*)malloc(D * sizeof(double));
+  double* trial = (double*)Malloc(D * sizeof(double));
 
   /* allocate memory for all configurations */
-  x1 = (double**)malloc(NP * sizeof(double*));
-  x2 = (double**)malloc(NP * sizeof(double*));
-  best = (double*)malloc(D * sizeof(double));
-  cost = (double*)malloc(NP * sizeof(double));
-  if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
-    error(1, "Could not allocate memory for population vector!\n");
-  for (i = 0; i < NP; i++)
+  double** pop_1 = (double**)Malloc(NP * sizeof(double*));
+  double** pop_2 = (double**)Malloc(NP * sizeof(double*));
+  double* best = (double*)Malloc(D * sizeof(double));
+  double* cost = (double*)Malloc(NP * sizeof(double));
+
+  for (int i = 0; i < NP; i++)
   {
-    x1[i] = (double*)malloc(D * sizeof(double));
-    x2[i] = (double*)malloc(D * sizeof(double));
-    if (x1[i] == NULL || x2[i] == NULL)
-      error(1, "Could not allocate memory for population vector!\n");
-    for (j = 0; j < D; j++)
-    {
-      x1[i][j] = 0;
-      x2[i][j] = 0;
-    }
+    pop_1[i] = (double*)Malloc(D * sizeof(double));
+    pop_2[i] = (double*)Malloc(D * sizeof(double));
   }
 
   printf("Initializing population ... ");
   fflush(stdout);
 
-  init_population(x1, xi, cost);
-  for (i = 0; i < NP; i++)
+  init_population(pop_1, xi, cost);
+
+  for (int i = 0; i < NP; i++)
   {
-    if (cost[i] < min)
+    if (cost[i] < min_cost)
     {
-      min = cost[i];
-      for (j = 0; j < D; j++)
-        best[j] = x1[i][j];
+      min_cost = cost[i];
+      memcpy(best, pop_1[i], D * sizeof(double));
     }
-    if (cost[i] > max)
-      max = cost[i];
+    if (cost[i] > max_cost)
+      max_cost = cost[i];
+
+    cost_sum += cost[i];
   }
-  for (i = 0; i < NP; i++)
-    avg += cost[i];
+
   printf("done\n");
 
-  crit = max - min;
+  crit = max_cost - min_cost;
 
   printf("Loops\t\tOptimum\t\tAverage error sum\t\tMax-Min\n");
-  printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count, min, avg / (NP), crit);
+  printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count, min_cost, cost_sum / (NP), crit);
   fflush(stdout);
 
   /* main differential evolution loop */
-  while (crit >= g_param.evo_threshold && min >= g_param.evo_threshold)
+  while (crit >= g_param.evo_threshold && min_cost >= g_param.evo_threshold)
   {
-    max = 0.0;
+    max_cost = 0.0;
     /* randomly create new populations */
-    for (i = 0; i < NP; i++)
+    for (int i = 0; i < NP; i++)
     {
       /* generate random numbers */
       do
         a = (int)floor(eqdist() * NP);
       while (a == i);
+
       do
         b = (int)floor(eqdist() * NP);
       while (b == i || b == a);
-      /*      do*/
-      /*        c = (int)floor(eqdist() * NP);*/
-      /*      while (c == i || c == a || c == b);*/
-      /*      do*/
-      /*        d = (int)floor(eqdist() * NP);*/
-      /*      while (d == i || d == a || d == b || d == c);*/
-      /*      do*/
-      /*        e = (int)floor(eqdist() * NP);*/
-      /*      while (e == i || e == a || e == b || e == c || e == d);*/
 
-      j = (int)floor(eqdist() * g_calc.ndim);
+      //       do
+      //         c = (int)floor(eqdist() * NP);
+      //       while (c == i || c == a || c == b);
+      //
+      //       do
+      //         d = (int)floor(eqdist() * NP);
+      //       while (d == i || d == a || d == b || d == c);
+      //
+      //       do
+      //         e = (int)floor(eqdist() * NP);
+      //       while (e == i || e == a || e == b || e == c || e == d);
+
+      int j = (int)floor(eqdist() * g_calc.ndim);
 
       /* self-adaptive parameters */
       if (eqdist() < TAU_1)
         trial[D - 2] = F_LOWER + eqdist() * F_UPPER;
       else
-        trial[D - 2] = x1[i][D - 2];
+        trial[D - 2] = pop_1[i][D - 2];
+
       if (eqdist() < TAU_2)
         trial[D - 1] = eqdist();
       else
-        trial[D - 1] = x1[i][D - 1];
+        trial[D - 1] = pop_1[i][D - 1];
+
+      double temp = 0.0;
 
       /* create trail vectors with different methods */
-      for (k = 1; k <= g_calc.ndim; k++)
+      for (int k = 1; k <= g_calc.ndim; k++)
       {
         if (eqdist() < trial[D - 1] || k == j)
         {
           /* DE/rand/1/exp */
-          /*          temp = x1[c][idx[j]] + trial[D - 2] * (x1[a][idx[j]] -
-           * x1[b][idx[j]]);*/
+          //           temp = pop_1[c][g_todo.idx[j]] + trial[D - 2] *
+          //           (pop_1[a][g_todo.idx[j]] - pop_1[b][g_todo.idx[j]]);
           /* DE/best/1/exp */
           temp = best[g_todo.idx[j]] +
-                 trial[D - 2] * (x1[a][g_todo.idx[j]] - x1[b][g_todo.idx[j]]);
+                 trial[D - 2] * (pop_1[a][g_todo.idx[j]] - pop_1[b][g_todo.idx[j]]);
 /* DE/rand/2/exp */
-/*          temp = x1[e][j] + trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] -
- * x1[d][j]);*/
+//           temp = pop_1[e][j] + trial[D-2] * (pop_1[a][j] + pop_1[b][j] - pop_1[c][j] -
+//           pop_1[d][j]);
 /* DE/best/2/exp */
-/*          temp = best[j] + trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] -
- * x1[d][j]);*/
+//           temp = best[j] + trial[D-2] * (pop_1[a][j] + pop_1[b][j] - pop_1[c][j] -
+//           pop_1[d][j]);
 /* DE/rand-to-best/1/exp */
-/*          temp = x1[c][j] + (1 - trial[D-2]) * (best[j] - x1[c][j]) +*/
-/*            trial[D-2] * (x1[a][j] - x1[b][j]);*/
+//           temp = pop_1[c][j] + (1 - trial[D-2]) * (best[j] - pop_1[c][j]) + trial[D-2]
+//           * (pop_1[a][j] - pop_1[b][j]);
 /* DE/rand-to-best/2/exp */
-/*          temp = x1[e][j] + (1 - trial[D-2]) * (best[j] - x1[e][j]) +*/
-/*            trial[D-2] * (x1[a][j] + x1[b][j] - x1[c][j] - x1[d][j]);*/
-#ifdef APOT
-          pmin = g_pot.apot_table
-                     .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
-          pmax = g_pot.apot_table
-                     .pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+//           temp = pop_1[e][j] + (1 - trial[D-2]) * (best[j] - pop_1[e][j]) + trial[D-2]
+//           * (pop_1[a][j] + pop_1[b][j] - pop_1[c][j] - pop_1[d][j]);
+#if defined(APOT)
+          double pmin =
+              g_pot.apot_table
+                  .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+          double pmax =
+              g_pot.apot_table
+                  .pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+
           if (temp > pmax)
           {
             trial[g_todo.idx[j]] = pmax;
@@ -376,77 +439,88 @@ void run_differential_evolution(double* xi)
             trial[g_todo.idx[j]] = temp;
 #else
           trial[g_todo.idx[j]] = temp;
-#endif /* APOT */
+#endif  // APOT
         }
         else
         {
-          trial[g_todo.idx[j]] = x1[i][g_todo.idx[j]];
+          trial[g_todo.idx[j]] = pop_1[i][g_todo.idx[j]];
         }
+
         j = (j + 1) % g_calc.ndim;
       }
 
-      force = (*g_calc_forces)(trial, fxi, 0);
-      if (force < min)
+      double force = (*g_calc_forces)(trial, forces, 0);
+
+      if (force < min_cost)
       {
-        for (j = 0; j < D; j++)
-          best[j] = trial[j];
+        memcpy(best, trial, D * sizeof(double));
+
         if (*g_files.tempfile != '\0')
         {
           for (j = 0; j < g_calc.ndim; j++)
-#ifdef APOT
+#if defined(APOT)
             g_pot.apot_table
                 .values[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]] =
                 trial[g_todo.idx[j]];
-          write_pot_table_potfit(g_files.tempfile);
 #else
             xi[g_todo.idx[j]] = trial[g_todo.idx[j]];
+#endif  // APOT
           write_pot_table_potfit(g_files.tempfile);
-#endif /* APOT */
         }
-        min = force;
+        min_cost = force;
       }
+
       if (force <= cost[i])
       {
-        for (j = 0; j < D; j++)
-          x2[i][j] = trial[j];
+        memcpy(pop_2[i], trial, D * sizeof(double));
+
         cost[i] = force;
-        if (force > max)
-          max = force;
+
+        if (force > max_cost)
+          max_cost = force;
       }
       else
       {
-        for (j = 0; j < D; j++)
-          x2[i][j] = x1[i][j];
-        if (cost[i] > max)
-          max = cost[i];
+        memcpy(pop_2[i], pop_1[i], D * sizeof(double));
+
+        if (cost[i] > max_cost)
+          max_cost = cost[i];
       }
     }
-#ifdef APOT
-    if (eqdist() < jumprate)
+
+#if defined(APOT)
+    if (eqdist() < jump_rate)
     {
-      opposite_check(x2, cost, 0);
-      jsteps++;
-      if (jsteps > 10)
+      opposite_check(pop_2, cost, 0);
+
+      jump_steps++;
+
+      if (jump_steps > 10)
       {
-        jumprate *= 0.9;
-        jsteps = 0;
+        jump_rate *= 0.9;
+        jump_steps = 0;
       }
     }
-#endif /* APOT */
-    avg = 0.0;
-    for (i = 0; i < NP; i++)
-      avg += cost[i];
-    printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min, avg / (NP), max - min);
+#endif  // APOT
+
+    cost_sum = 0.0;
+
+    for (int i = 0; i < NP; i++)
+      cost_sum += cost[i];
+
+    printf("%5d\t\t%15f\t%20f\t\t%.2e\n", count + 1, min_cost, cost_sum / (NP),
+           max_cost - min_cost);
     fflush(stdout);
-    for (i = 0; i < NP; i++)
-      for (j = 0; j < D; j++)
-        x1[i][j] = x2[i][j];
+
+    for (int i = 0; i < NP; i++)
+      memcpy(pop_1[i], pop_2[i], D * sizeof(double));
     count++;
 
     /* End optimization if break flagfile exists */
     if (*g_files.flagfile != '\0')
     {
-      ff = fopen(g_files.flagfile, "r");
+      FILE* ff = fopen(g_files.flagfile, "r");
+
       if (NULL != ff)
       {
         printf("\nEvolutionary algorithm terminated ");
@@ -457,27 +531,13 @@ void run_differential_evolution(double* xi)
       }
     }
 
-    crit = max - min;
+    crit = max_cost - min_cost;
   }
 
   printf("Finished differential evolution.\n");
   fflush(stdout);
 
-  for (j = 0; j < g_calc.ndimtot; j++)
-    xi[j] = best[j];
-
-  /* clean up */
-  for (i = 0; i < NP; i++)
-  {
-    free(x1[i]);
-    free(x2[i]);
-  }
-  free(x1);
-  free(x2);
-  free(trial);
-  free(cost);
-  free(best);
-  free(fxi);
+  memcpy(xi, best, g_calc.ndimtot * sizeof(double));
 }
 
 #endif /* EVO */

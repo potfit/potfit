@@ -1170,7 +1170,7 @@ void write_pair_distribution_file()
   for (int i = 0; i < g_param.ntypes; i++)
     for (int k = 0; k < g_param.ntypes; k++)
       pair_dist[(i <= k) ? i * g_param.ntypes + k - (i * (i + 1) / 2)
-                          : k * g_param.ntypes + i - (k * (k + 1) / 2)] =
+                         : k * g_param.ntypes + i - (k * (k + 1) / 2)] =
           g_config.rcut[i * g_param.ntypes + k] / pair_steps;
 
   for (int k = 0; k < g_calc.paircol; k++)

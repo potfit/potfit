@@ -66,7 +66,7 @@ void write_errors(double* force, double tot)
   fprintf(outfile, "#    atomtype\trho\n");
 #if defined(MEAM)
   fprintf(outfile, "#    atomtype\trho\trho_eam\trho_meam\n");
-#endif // MEAM
+#endif  // MEAM
 
   for (int i = 0; i < g_config.natoms; i++)
   {
@@ -91,7 +91,7 @@ void write_errors(double* force, double tot)
     printf("Local electron density data written to \t%s\n", file);
     fclose(outfile);
   }
-#endif // !MPI && !(EAM || ADP || MEAM)
+#endif  // !MPI && !(EAM || ADP || MEAM)
 
 /* prepare for error calculations */
 #ifdef CONTRIB

@@ -388,30 +388,30 @@ void allocate_memory_for_potentials(potential_state* pstate)
 #endif
 
 #if defined(COULOMB)
-apt->ratio = (double*)Malloc(g_param.ntypes * sizeof(double));
-apt->values = (double**)Malloc((size + 5) * sizeof(double*));
-apt->param_name = (char***)Malloc((size + 5) * sizeof(char**));
-apt->pmin = (double**)Malloc((size + 5) * sizeof(double*));
-apt->pmax = (double**)Malloc((size + 5) * sizeof(double*));
-apt->invar_par = (int**)Malloc((size + 5) * sizeof(int*));
+  apt->ratio = (double*)Malloc(g_param.ntypes * sizeof(double));
+  apt->values = (double**)Malloc((size + 5) * sizeof(double*));
+  apt->param_name = (char***)Malloc((size + 5) * sizeof(char**));
+  apt->pmin = (double**)Malloc((size + 5) * sizeof(double*));
+  apt->pmax = (double**)Malloc((size + 5) * sizeof(double*));
+  apt->invar_par = (int**)Malloc((size + 5) * sizeof(int*));
 
-apt->values[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
-apt->param_name[size] = (char**)Malloc((g_param.ntypes - 1) * sizeof(char*));
-apt->pmin[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
-apt->pmax[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
-apt->invar_par[size] = (int*)Malloc((g_param.ntypes - 1) * sizeof(int));
+  apt->values[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
+  apt->param_name[size] = (char**)Malloc((g_param.ntypes - 1) * sizeof(char*));
+  apt->pmin[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
+  apt->pmax[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
+  apt->invar_par[size] = (int*)Malloc((g_param.ntypes - 1) * sizeof(int));
 
-apt->values[size + 1] = (double*)Malloc(sizeof(double));
-apt->param_name[size + 1] = (char**)Malloc(sizeof(char*));
-apt->pmin[size + 1] = (double*)Malloc(sizeof(double));
-apt->pmax[size + 1] = (double*)Malloc(sizeof(double));
-apt->invar_par[size + 1] = (int*)Malloc(sizeof(int));
+  apt->values[size + 1] = (double*)Malloc(sizeof(double));
+  apt->param_name[size + 1] = (char**)Malloc(sizeof(char*));
+  apt->pmin[size + 1] = (double*)Malloc(sizeof(double));
+  apt->pmax[size + 1] = (double*)Malloc(sizeof(double));
+  apt->invar_par[size + 1] = (int*)Malloc(sizeof(int));
 
-apt->values[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
-apt->param_name[size + 2] = (char**)Malloc(g_param.ntypes * sizeof(char*));
-apt->pmin[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
-apt->pmax[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
-apt->invar_par[size + 2] = (int*)Malloc(g_param.ntypes * sizeof(int));
+  apt->values[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
+  apt->param_name[size + 2] = (char**)Malloc(g_param.ntypes * sizeof(char*));
+  apt->pmin[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
+  apt->pmax[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
+  apt->invar_par[size + 2] = (int*)Malloc(g_param.ntypes * sizeof(int));
 
   for (int i = 3; i < 5; i++)
   {
@@ -428,14 +428,14 @@ apt->invar_par[size + 2] = (int*)Malloc(g_param.ntypes * sizeof(int));
   apt->dp_alpha = apt->values[size + 2];
   apt->dp_b = apt->values[size + 3];
   apt->dp_c = apt->values[size + 4];
-#endif // DIPOLE
-#endif // COULOMB
+#endif  // DIPOLE
+#endif  // COULOMB
 
   apt->names = (char**)Malloc(size * sizeof(char*));
 
   for (int i = 0; i < size; i++)
     apt->names[i] = (char*)Malloc(20 * sizeof(char));
-#endif // APOT
+#endif  // APOT
 }
 
 /****************************************************************

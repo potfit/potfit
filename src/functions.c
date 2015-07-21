@@ -248,7 +248,7 @@ void check_apot_functions(void)
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
   }
-#endif // STIWEB
+#endif  // STIWEB
 
 #if defined(TERSOFF)
   /* paircol is not yet defined at this point */
@@ -300,8 +300,8 @@ void check_apot_functions(void)
     }
   }
 
-#endif // !TERSOFFMOD
-#endif // TERSOFF
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
 }
 
 /****************************************************************
@@ -323,7 +323,7 @@ void lj_value(double r, double* p, double* f)
   double x = (p[1] * p[1]) / (r * r);
   x = x * x * x;
 
-  *f = 4.0 * p[0] * x * (x - 1.0);
+  *f = 4.0 * p[0] * x*(x - 1.0);
 }
 
 /****************************************************************
@@ -430,7 +430,7 @@ void eopp_exp_value(double r, double* p, double* f)
 
 void meopp_value(double r, double* p, double* f)
 {
-  double x[2] = {r-p[6], r};
+  double x[2] = {r - p[6], r};
   double y[2] = {p[1], p[3]};
   double power[2] = {0, 0};
 
@@ -560,7 +560,8 @@ void universal_value(double r, double* p, double* f)
 
   power_m(2, power, x, y);
 
-  *f = p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
+  *f = p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
+       p[3] * r;
 }
 
 /****************************************************************
@@ -704,7 +705,7 @@ void mishin_value(double r, double* p, double* f)
 
   power_1(&power, &z, &p[4]);
 
-  *f = p[0] * power * temp * (1.0 + p[1] * temp) + p[2];
+  *f = p[0] * power* temp*(1.0 + p[1] * temp) + p[2];
 }
 
 /****************************************************************
@@ -736,7 +737,7 @@ void gen_lj_value(double r, double* p, double* f)
 
 void gljm_value(double r, double* p, double* f)
 {
-  double x[3] = {r/p[3], r/p[3], r-p[9]};
+  double x[3] = {r / p[3], r / p[3], r - p[9]};
   double y[3] = {p[1], p[2], p[10]};
   double power[3] = {0, 0, 0};
 
@@ -776,7 +777,8 @@ void vpair_value(double r, double* p, double* f)
 
   power_1(&power, &r, &p[1]);
 
-  *f = 14.4 * (p[0] / power - 0.5 * (p[4] * p[3] * p[3] + p[5] * p[2] * p[2] / x) * exp(-r / p[6]));
+  *f = 14.4 * (p[0] / power -
+               0.5 * (p[4] * p[3] * p[3] + p[5] * p[2] * p[2] / x) * exp(-r / p[6]));
 }
 
 /****************************************************************
@@ -811,7 +813,7 @@ void sheng_rho_value(double r, double* p, double* f)
   x = x * x * x;
 
   if (r > 1.45)
-    *f = 4.0 * p[3] * x * (x - 1.0);
+    *f = 4.0 * p[3] * x*(x - 1.0);
   else
     *f = p[0] * power + p[2];
 }
@@ -860,7 +862,7 @@ void stiweb_3_value(double r, double* p, double* f) { *f = exp(p[0] / (r - p[1])
 
 void lambda_value(double r, double* p, double* f) { *f = 0.0 * r* p[0]; }
 
-#endif // STIWEB
+#endif  // STIWEB
 
 #if defined(TERSOFF)
 #if !defined(TERSOFFMOD)
@@ -889,10 +891,10 @@ void tersoff_mix_value(double r, double* p, double* f) { *f = 0.0 * r* p[0]; }
  *
  ****************************************************************/
 
-void tersoff_mod_pot_value(double r, double* p, double* f) { *f = 0.0 * r * p[0]; }
+void tersoff_mod_pot_value(double r, double* p, double* f) { *f = 0.0 * r* p[0]; }
 
-#endif // !TERSOFFMOD
-#endif // TERSOFF
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
 
 /****************************************************************
  *
@@ -912,7 +914,7 @@ void tersoff_mod_pot_value(double r, double* p, double* f) { *f = 0.0 * r * p[0]
  *
  ****************************************************************/
 
-void newpot_value(double r, double* p, double* f) { *f = r * p[0] + p[1]; }
+void newpot_value(double r, double* p, double* f) { *f = r* p[0] + p[1]; }
 
 /* end of template */
 
@@ -1228,7 +1230,7 @@ void init_tails(double dp_kappa)
   }
 }
 
-#endif // COULOMB
+#endif  // COULOMB
 
 #if defined(DIPOLE)
 
@@ -1273,7 +1275,7 @@ void shortrange_term(double r, double b, double c, double* srval_tail,
   *srgrad_tail = -c* b* x[3] * x[5] / (24 * g_todo.dp_eps * r);
 }
 
-#endif // DIPOLE
+#endif  // DIPOLE
 
 /****************************************************************
  *
@@ -1321,15 +1323,15 @@ void debug_apot()
     {
       fprintf(stderr, "composition nodes:\n");
       for (int j = 0; j < g_param.compnodes; j++)
-        fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
-                g_pot.compnodelist[j], g_pot.apot_table.chempot[g_param.ntypes + j],
+        fprintf(stderr, "composition=%f value=%f min=%f max=%f\n", g_pot.compnodelist[j],
+                g_pot.apot_table.chempot[g_param.ntypes + j],
                 g_pot.apot_table.pmin[g_pot.apot_table.number][g_param.ntypes + j],
                 g_pot.apot_table.pmax[g_pot.apot_table.number][g_param.ntypes + j]);
     }
   }
-#endif // PAIR
+#endif  // PAIR
 
   exit(EXIT_FAILURE);
 }
 
-#endif // DEBUG
+#endif  // DEBUG

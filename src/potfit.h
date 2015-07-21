@@ -92,4 +92,4 @@ extern potfit_unknown g_todo;
 void error(int done, const char* msg, ...);
 void warning(const char* msg, ...);
 
-#endif // POTFIT_H_INCLUDED
+#endif  // POTFIT_H_INCLUDED

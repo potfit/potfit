@@ -941,7 +941,7 @@ void read_analytic_potentials(apot_state* pstate)
         apt->n_glob[l]++;
 
         apt->global_idx[l] =
-              (int**)Realloc(apt->global_idx[l], apt->n_glob[l] * sizeof(int*));
+            (int**)Realloc(apt->global_idx[l], apt->n_glob[l] * sizeof(int*));
 
         apt->global_idx[l][apt->n_glob[l] - 1] = (int*)Malloc(2 * sizeof(int));
         apt->global_idx[l][apt->n_glob[l] - 1][0] = i;

@@ -173,61 +173,6 @@ void power_m(int dim, double* result, double* x, double* y)
 #endif /* _32BIT */
 }
 
-#if defined APOT && defined EVO
-
-/****************************************************************
- *
- *  quicksort algorithm for opposition-based diff_evo
- *
- ****************************************************************/
-
-void quicksort(double* x, int low, int high, double** p)
-{
-  int newIndex;
-  if (low < high)
-  {
-    int index = (low + high) / 2;
-    newIndex = partition(x, low, high, index, p);
-    quicksort(x, low, newIndex - 1, p);
-    quicksort(x, newIndex + 1, high, p);
-  }
-}
-
-int partition(double* x, int low, int high, int index, double** p)
-{
-  int i, store;
-  double ind_val = x[index], temp;
-
-  SWAP(x[index], x[high], temp);
-  swap_population(p[index], p[high]);
-
-  store = low;
-
-  for (i = low; i < high; i++)
-    if (x[i] <= ind_val)
-    {
-      SWAP(x[i], x[store], temp);
-      swap_population(p[i], p[store]);
-      store++;
-    }
-  SWAP(x[store], x[high], temp);
-  swap_population(p[store], p[high]);
-
-  return store;
-}
-
-void swap_population(double* a, double* b)
-{
-  int i;
-  double temp;
-  for (i = 0; i < g_calc.ndimtot + 2; i++)
-  {
-    SWAP(a[i], b[i], temp);
-  }
-}
-
-#endif /* APOT && EVO */
-
 #ifdef _32BIT
 #undef _32BIT
 #endif /* _32BIT */

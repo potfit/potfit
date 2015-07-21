@@ -28,8 +28,8 @@
  *
  *****************************************************************/
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef UTILS_H_INCLUDED
+#define UTILS_H_INCLUDED
 
 /* vector and matrix allocations */
 // int* vect_int(long);
@@ -48,11 +48,4 @@ static inline double dsquare(double a) { return a * a; }
 void power_1(double* result, double* base, double* exponent);
 void power_m(int count, double* result, double* base, double* exponent);
 
-#if defined APOT && defined EVO
-/* quicksort for ODE */
-void quicksort(double*, int, int, double**);
-int partition(double*, int, int, int, double**);
-void swap_population(double*, double*);
-#endif /* APOT && EVO */
-
-#endif /* UTILS_H */
+#endif  // UTILS_H_INCLUDED
