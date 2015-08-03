@@ -31,13 +31,11 @@
 #ifndef MPI_UTILS_H
 #define MPI_UTILS_H
 
-#include <mpi.h>
-
-int   init_mpi(int* argc, char*** argv);
-void  shutdown_mpi(void);
-void  broadcast_params_mpi(void);
-void  broadcast_neighbors(void);
-void  broadcast_angles(void);
-void  potsync(void);
+int init_mpi(int* argc, char*** argv);
+void shutdown_mpi();
+void broadcast_params_mpi();
+void broadcast_neighbors();
+void broadcast_angles();
+void potsync();
 
 #endif /* POTFIT_H */

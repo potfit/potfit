@@ -1,16 +1,15 @@
 /****************************************************************
  *
- * random.h: Contains the dSFMT, a prng
- *      adapted from Mutsuo Saito and Makoto Matsumoto
+ * rescale.h:
  *
- *****************************************************************
+ ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *      Institute for Theoretical and Applied Physics
  *      University of Stuttgart, D-70550 Stuttgart, Germany
  *      http://potfit.sourceforge.net/
  *
- *****************************************************************
+ ****************************************************************
  *
  *   This file is part of potfit.
  *
@@ -27,13 +26,14 @@
  *   You should have received a copy of the GNU General Public License
  *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
- *****************************************************************/
+ ****************************************************************/
 
-#ifndef POTFIT_RANDOM_H
-#define POTFIT_RANDOM_H
+#ifndef POTFIT_RESCALE_H
+#define POTFIT_RESCALE_H
 
-void init_rng(int seed);
-double eqdist();
-double normdist();
+#if !defined APOT && (defined EAM || defined(ADP) || defined MEAM)
+double rescale(pot_table_t*, double, int);
+void embed_shift(pot_table_t*);
+#endif /* !APOT && (EAM || MEAM) */
 
-#endif  // POTFIT_RANDOM_H
+#endif  // POTFIT_RESCALE_H

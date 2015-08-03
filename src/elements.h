@@ -31,22 +31,23 @@
 #ifndef ELEMENTS_H
 #define ELEMENTS_H
 
-typedef struct {
-  char  name[20];
-  char  short_name[20];
+typedef struct
+{
+  char name[20];
+  char short_name[20];
   double mass;
 } element_t;
 
 /* initialize periodic table of elements */
-void  init_elements();
+void init_elements();
 
 /* get mass from number */
 double ele_mass_from_number(int num);
 
 /* get mass from name */
-double ele_mass_from_name(char *name);
+double ele_mass_from_name(char* name);
 
 /* get number from name */
-int   ele_number_from_name(char *name);
+int ele_number_from_name(char* name);
 
 #endif /* ELEMENTS_H */

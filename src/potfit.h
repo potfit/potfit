@@ -28,8 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_H
-#define POTFIT_H
+#ifndef POTFIT_H_INCLUDED
+#define POTFIT_H_INCLUDED
 
 #include <math.h>
 #include <stdarg.h>
@@ -38,17 +38,18 @@
 #include <string.h>
 
 #if defined(MPI)
-#include "mpi_utils.h"
+#include <mpi.h>
 #endif /* MPI */
-
-#include "random.h"
 
 #define POTFIT_VERSION "potfit-git"
 
-#define MAX(a,b)   ((a) > (b) ? (a) : (b))
-#define MIN(a,b)   ((a) < (b) ? (a) : (b))
-#define SPROD(a,b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
-#define SWAP(A,B,C) (C)=(A);(A)=(B);(B)=(C);
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define SPROD(a, b) (((a).x * (b).x) + ((a).y * (b).y) + ((a).z * (b).z))
+#define SWAP(A, B, C) \
+  (C) = (A);          \
+  (A) = (B);          \
+  (B) = (C);
 
 /****************************************************************
  *
@@ -68,22 +69,23 @@
 
 /****************************************************************
  *
- *  global variables
+ *  global variables (defined in potfit.c)
  *
  ****************************************************************/
 
-static potfit_calculation       g_calc;
-static potfit_configurations    g_config;
-static potfit_filenames         g_files;
-static potfit_mpi_config        g_mpi;
-static potfit_parameters        g_param;
-static potfit_potentials        g_pot;
-static potfit_memory            g_memory;
-static potfit_unknown           g_todo;
+extern potfit_calculation g_calc;
+extern potfit_configurations g_config;
+extern potfit_filenames g_files;
+extern potfit_mpi_config g_mpi;
+extern potfit_parameters g_param;
+extern potfit_potentials g_pot;
+
+// this will to be removed
+extern potfit_unknown g_todo;
 
 /****************************************************************
  *
- *  general functions for setting up and terminating a potfit run
+ *  general functions for warning and error output
  *
  ****************************************************************/
 
@@ -136,4 +138,4 @@ double rescale(pot_table_t *, double, int);
 void  embed_shift(pot_table_t *);
 #endif /* !APOT && (EAM || MEAM) */
 
-#endif /* POTFIT_H */
+#endif  // POTFIT_H_INCLUDED

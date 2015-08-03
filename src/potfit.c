@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -33,20 +33,33 @@
 #include "potfit.h"
 
 #include "config.h"
+#include "errors.h"
 #include "forces.h"
 #include "functions.h"
+#include "memory.h"
+#include "mpi_utils.h"
 #include "optimize.h"
 #include "params.h"
 #include "potential_input.h"
 #include "potential_output.h"
+#include "random.h"
 #include "utils.h"
 
-void  allocate_global_variables();
-void  start_mpi_worker(double* force);
-void  free_global_variables();
-//   int   i;
-//   double *force, tot;
-//   time_t t_begin = 0, t_end = 0;
+// forward declarations of helper functions
+
+void read_input_files(int argc, char** argv);
+void start_mpi_worker(double* force);
+
+// potfit global variables
+
+potfit_calculation g_calc;
+potfit_configurations g_config;
+potfit_filenames g_files;
+potfit_mpi_config g_mpi;
+potfit_parameters g_param;
+potfit_potentials g_pot;
+
+potfit_unknown g_todo;
 
 /****************************************************************
  *
@@ -54,16 +67,16 @@ void  free_global_variables();
  *
  ****************************************************************/
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  allocate_global_variables();
+  initialize_global_variables();
 
 #if defined(MPI)
   if (init_mpi(&argc, &argv) != MPI_SUCCESS)
     return EXIT_FAILURE;
 #else
   printf("This is %s compiled on %s, %s.\n\n", POTFIT_VERSION, __DATE__, __TIME__);
-#endif // MPI
+#endif  // MPI
 
   read_input_files(argc, argv);
 
@@ -71,7 +84,8 @@ int main(int argc, char **argv)
   /* let the others know what's going on */
   broadcast_params_mpi();
 #else
-  /* Identify subset of atoms/volumes belonging to individual process with complete set of atoms/volumes */
+  /* Identify subset of atoms/volumes belonging to individual process with
+   * complete set of atoms/volumes */
   g_config.conf_atoms = g_config.atoms;
   g_config.conf_vol = g_config.volume;
   g_config.conf_uf = g_config.useforce;
@@ -85,14 +99,7 @@ int main(int argc, char **argv)
   g_todo.idx = g_pot.opt_pot.idx;
 
   /* main force vector, all forces, energies, stresses, ... will be stored here */
-  double* force = (double *)malloc(g_calc.mdim * sizeof(double));
-
-  if (NULL == force)
-    error(1, "Could not allocate memory for main force vector.");
-
-  memset(force, 0, g_calc.mdim * sizeof(double));
-
-  reg_for_free(force, "force vector");
+  g_calc.force = (double*)Malloc(g_calc.mdim * sizeof(double));
 
   /* starting positions for the force vector */
   set_force_vector_pointers();
@@ -106,14 +113,16 @@ int main(int argc, char **argv)
 
   if (g_mpi.myid > 0)
   {
-    start_mpi_worker(force);
+    start_mpi_worker(g_calc.force);
   }
   else
   {
 #if defined(MPI)
-    if (g_mpi.num_cpus > g_config.nconf) {
+    if (g_mpi.num_cpus > g_config.nconf)
+    {
       warning("You are using more CPUs than you have configurations!\n");
-      warning("While this will not do any harm, you are wasting %d CPUs.\n", g_mpi.num_cpus - g_config.nconf);
+      warning("While this will not do any harm, you are wasting %d CPUs.\n",
+              g_mpi.num_cpus - g_config.nconf);
     }
 #endif /* MPI */
 
@@ -128,7 +137,9 @@ int main(int argc, char **argv)
     }
     else if (g_calc.ndim == 0)
     {
-      printf("\nOptimization disabled due to 0 free parameters. Calculating errors.\n");
+      printf(
+          "\nOptimization disabled due to 0 free parameters. Calculating "
+          "errors.\n");
     }
     else
     {
@@ -138,32 +149,33 @@ int main(int argc, char **argv)
     time(&end_time);
 
 #if defined(APOT)
-    double tot = g_calc_forces(g_pot.opt_pot.table, force, 0);
+    double tot = g_calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 #else
-    double tot = g_calc_forces(g_pot.calc_pot.table, force, 0);
+    double tot = g_calc_forces(g_pot.calc_pot.table, g_calc.force, 0);
 #endif /* APOT */
 
     write_pot_table_potfit(g_files.endpot);
 
-    printf("\nPotential in format %d written to file \t%s\n", g_pot.format, g_files.endpot);
+    printf("\nPotential in format %d written to file \t%s\n", g_pot.format,
+           g_files.endpot);
 
     if (g_param.writeimd == 1)
       write_pot_table_imd(g_files.imdpot);
 
     // TODO
-//     if (g_param.plot == 1)
-//       write_plotpot_pair(&g_pot.calc_pot, g_files.plotfile);
+    //     if (g_param.plot == 1)
+    //       write_plotpot_pair(&g_pot.calc_pot, g_files.plotfile);
 
     if (g_param.write_lammps == 1)
       write_pot_table_lammps();
 
-    /* will not work with MPI */
+/* will not work with MPI */
 #if defined(PDIST) && !defined(MPI)
-    write_pairdist(&opt_pot, distfile);
+    write_pairdist(&g_pot.opt_pot, g_files.distfile);
 #endif /* PDIST && !MPI */
 
     /* write the error files for forces, energies, stresses, ... */
-    write_errors(force, tot);
+    write_errors(g_calc.force, tot);
 
     /* calculate total runtime */
     if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0)
@@ -176,63 +188,49 @@ int main(int argc, char **argv)
              (double)difftime(end_time, start_time) / g_calc.fcalls);
     }
 
-#ifdef MPI
-    g_calc_forces(NULL, NULL, 1);	/* go wake up other threads */
-#endif /* MPI */
-  }     /* myid == 0 */
+#if defined(MPI)
+    g_calc_forces(NULL, NULL, 1); /* go wake up other threads */
+#endif                            // MPI
+  }                               /* myid == 0 */
 
-  /* do some cleanups before exiting */
-#ifdef MPI
+/* do some cleanups before exiting */
+#if defined(MPI)
   /* kill MPI */
   shutdown_mpi();
-#endif /* MPI */
+#endif  // MPI
 
-  free(g_memory.u_address);
-  free_all_pointers();
-
-  free_global_variables();
+  free_allocated_memory();
 
   return 0;
 }
 
 /****************************************************************
  *
- *  allocate_global_variables -- initialize global variables and allocate memory
+ *  read_input_files -- process all input files
  *
  ****************************************************************/
 
-void allocate_global_variables()
+void read_input_files(int argc, char** argv)
 {
-  g_mpi.myid = 0;
-  g_mpi.num_cpus = 1;
-  g_mpi.firstatom = 0;
-  g_mpi.firstconf = 0;
-  g_mpi.myatoms = 0;
-  g_mpi.myconf = 0;
-#if defined(MPI)
-  g_mpi.atom_dist = NULL;
-  g_mpi.atom_len = NULL;
-  g_mpi.conf_dist = NULL;
-  g_mpi.conf_len = NULL;
-#endif
+  // only root process reads input files
+  if (g_mpi.myid == 0)
+  {
+    read_parameters(argc, argv);
+    read_pot_table(g_files.startpot);
+    read_config(g_files.config);
 
-  g_memory.pointer_names = NULL;
-  g_memory.num_pointers = 0;
-  g_memory.pointers = NULL;
-  g_memory.u_address = NULL;
+    printf("Global energy weight: %f\n", g_param.eweight);
+#if defined(STRESS)
+    printf("Global stress weight: %f\n", g_param.sweight);
+#endif /* STRESS */
 
-  g_files.config = NULL;
-  g_files.distfile = NULL;
-  g_files.endpot = NULL;
-  g_files.flagfile = NULL;
-  g_files.imdpot = NULL;
-  g_files.maxchfile = NULL;
-  g_files.output_prefix = NULL;
-  g_files.output_lammps = NULL;
-  g_files.plotfile = NULL;
-  g_files.plotpointfile = NULL;
-  g_files.startpot = NULL;
-  g_files.tempfile = NULL;
+    /* initialize additional force variables and parameters */
+    init_forces(0);
+
+    g_todo.init_done = 1;
+
+    init_rng(g_param.rng_seed);
+  }
 }
 
 /****************************************************************
@@ -252,73 +250,7 @@ void start_mpi_worker(double* force)
   g_calc_forces(g_pot.opt_pot.table, force, 0);
 #else
   g_calc_forces(g_pot.calc_pot.table, force, 0);
-#endif /* APOT */
-}
-
-
-/****************************************************************
- *
- *  destroy_global_variables -- de-allocate memory of global variables
- *
- ****************************************************************/
-
-void free_global_variables()
-{
-  if (g_files.config != NULL)
-    free(g_files.config);
-  if (g_files.distfile != NULL)
-    free(g_files.distfile);
-  if (g_files.endpot != NULL)
-    free(g_files.endpot);
-  if (g_files.flagfile != NULL)
-    free(g_files.flagfile);
-  if (g_files.imdpot != NULL)
-    free(g_files.imdpot);
-  if (g_files.maxchfile != NULL)
-    free(g_files.maxchfile);
-  if (g_files.output_prefix != NULL)
-    free(g_files.output_prefix);
-  if (g_files.output_lammps != NULL)
-    free(g_files.output_lammps);
-  if (g_files.plotfile != NULL)
-    free(g_files.plotfile);
-  if (g_files.plotpointfile != NULL)
-    free(g_files.plotpointfile);
-  if (g_files.startpot != NULL)
-    free(g_files.startpot);
-  if (g_files.tempfile != NULL)
-    free(g_files.tempfile);
-}
-
-/****************************************************************
- *
- *  read_input_files -- process all input files
- *
- ****************************************************************/
-
-void read_input_files (int argc, char **argv)
-{
-  // only root process reads input files
-  if (g_mpi.myid == 0)
-  {
-    read_parameters(argc, argv);
-
-    read_pot_table(g_files.startpot);
-
-    read_config(g_files.config);
-
-    printf("Global energy weight: %f\n", g_param.eweight);
-#if defined(STRESS)
-    printf("Global stress weight: %f\n", g_param.sweight);
-#endif /* STRESS */
-
-    /* initialize additional force variables and parameters */
-    init_forces(0);
-
-    g_todo.init_done = 1;
-
-    init_rng(g_param.rng_seed);
-  }
+#endif  // APOT
 }
 
 /****************************************************************
@@ -327,7 +259,7 @@ void read_input_files (int argc, char **argv)
  *
  ****************************************************************/
 
-void error(int done, const char *msg, ...)
+void error(int done, const char* msg, ...)
 {
   va_list ap;
 
@@ -359,7 +291,7 @@ void error(int done, const char *msg, ...)
  *
  ****************************************************************/
 
-void warning(const char *msg, ...)
+void warning(const char* msg, ...)
 {
   va_list ap;
 

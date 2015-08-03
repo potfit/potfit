@@ -28,35 +28,24 @@
  *
  *****************************************************************/
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef UTILS_H_INCLUDED
+#define UTILS_H_INCLUDED
 
 /* vector and matrix allocations */
-int  *vect_int(long);
-double *vect_double(long);
-double **mat_double(long, long);
-void  free_vect_int(int *);
-void  free_vect_double(double *);
-void  free_mat_double(double **);
-
-/* memory management */
-void  reg_for_free(void *, const char *, ...);
-void  free_all_pointers();
+// int* vect_int(long);
+// double* vect_double(long);
+double** mat_double(long, long);
+void free_vect_int(int*);
+void free_vect_double(double*);
+void free_mat_double(double**);
 
 /* vector procuct */
 vector vec_prod(vector, vector);
 
 /* different power functions */
-static inline int isquare(int a) { return a*a; }
-static inline double dsquare(double a) { return a*a; }
-void  power_1(double *, double *, double *);
-void  power_m(int, double *, double *, double *);
+static inline int isquare(int a) { return a * a; }
+static inline double dsquare(double a) { return a * a; }
+void power_1(double* result, double* base, double* exponent);
+void power_m(int count, double* result, double* base, double* exponent);
 
-#if defined APOT && defined EVO
-/* quicksort for ODE */
-void  quicksort(double *, int, int, double **);
-int   partition(double *, int, int, int, double **);
-void  swap_population(double *, double *);
-#endif /* APOT && EVO */
-
-#endif /* UTILS_H */
+#endif  // UTILS_H_INCLUDED

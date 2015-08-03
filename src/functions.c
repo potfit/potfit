@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -31,14 +31,29 @@
 #include "potfit.h"
 
 #include "functions.h"
+#include "memory.h"
 #include "utils.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
-#endif // M_PI
+#endif  // M_PI
 
 /* macro for simplified addition of new potential functions */
-#define add_pot(a,b) add_potential(#a,b,&a ## _value)
+#define ADD_POT(a, b) add_potential(#a, b, &a##_value)
+
+/****************************************************************
+ *
+ *  function table: stores all available analytic potentials
+ *
+ ****************************************************************/
+
+struct
+{
+  char** name;            /* identifier of the potential */
+  int* num_params;        /* number of parameters */
+  fvalue_pointer* fvalue; /* function pointer */
+  int num_functions;      /* number of analytic function prototypes */
+} function_table;
 
 /****************************************************************
  *
@@ -48,9 +63,9 @@
 
 void apot_init(void)
 {
-  add_pot(lj, 2);
-  add_pot(eopp, 6);
-  add_pot(morse, 3);
+  ADD_POT(lj, 2);
+  ADD_POT(eopp, 6);
+  ADD_POT(morse, 3);
 #ifdef COULOMB
   add_potential("ms", 3, &ms_shift);
   add_potential("buck", 3, &buck_shift);
@@ -58,57 +73,51 @@ void apot_init(void)
   add_potential("ms", 3, &ms_value);
   add_potential("buck", 3, &buck_value);
 #endif /* COULOMB */
-  add_pot(softshell, 2);
-  add_pot(eopp_exp, 6);
-  add_pot(meopp, 7);
-  add_pot(power, 2);
-  add_pot(power_decay, 2);
-  add_pot(exp_decay, 2);
-  add_pot(bjs, 3);
-  add_pot(parabola, 3);
-  add_pot(csw, 4);
-  add_pot(universal, 4);
-  add_pot(const, 1);
-  add_pot(sqrt, 2);
-  add_pot(mexp_decay, 3);
-  add_pot(strmm, 5);
-  add_pot(double_morse, 7);
-  add_pot(double_exp, 5);
-  add_pot(poly_5, 5);
-  add_pot(kawamura, 9);
-  add_pot(kawamura_mix, 12);
-  add_pot(exp_plus, 3);
-  add_pot(mishin, 6);
-  add_pot(gen_lj, 5);
-  add_pot(gljm, 12);
-  add_pot(vas, 2);
-  add_pot(vpair, 7);
-  add_pot(csw2, 4);
-  add_pot(sheng_phi1, 5);
-  add_pot(sheng_phi2, 4);
-  add_pot(sheng_rho, 5);
-  add_pot(sheng_F, 4);
+  ADD_POT(softshell, 2);
+  ADD_POT(eopp_exp, 6);
+  ADD_POT(meopp, 7);
+  ADD_POT(power, 2);
+  ADD_POT(power_decay, 2);
+  ADD_POT(exp_decay, 2);
+  ADD_POT(bjs, 3);
+  ADD_POT(parabola, 3);
+  ADD_POT(csw, 4);
+  ADD_POT(universal, 4);
+  ADD_POT(const, 1);
+  ADD_POT(sqrt, 2);
+  ADD_POT(mexp_decay, 3);
+  ADD_POT(strmm, 5);
+  ADD_POT(double_morse, 7);
+  ADD_POT(double_exp, 5);
+  ADD_POT(poly_5, 5);
+  ADD_POT(kawamura, 9);
+  ADD_POT(kawamura_mix, 12);
+  ADD_POT(exp_plus, 3);
+  ADD_POT(mishin, 6);
+  ADD_POT(gen_lj, 5);
+  ADD_POT(gljm, 12);
+  ADD_POT(vas, 2);
+  ADD_POT(vpair, 7);
+  ADD_POT(csw2, 4);
+  ADD_POT(sheng_phi1, 5);
+  ADD_POT(sheng_phi2, 4);
+  ADD_POT(sheng_rho, 5);
+  ADD_POT(sheng_F, 4);
 
-#ifdef STIWEB
-  add_pot(stiweb_2, 6);
-  add_pot(stiweb_3, 2);
-  add_pot(lambda, (int)(0.5 * g_param.ntypes * g_param.ntypes * (g_param.ntypes + 1)));
-#endif /* STIWEB */
+#if defined(STIWEB)
+  ADD_POT(stiweb_2, 6);
+  ADD_POT(stiweb_3, 2);
+  ADD_POT(lambda, (int)(0.5 * g_param.ntypes * g_param.ntypes * (g_param.ntypes + 1)));
+#endif  // STIWEB
 
-#ifdef TERSOFF
-#ifndef TERSOFFMOD
-  add_pot(tersoff_pot, 11);
-  add_pot(tersoff_mix, 2);
+#if defined(TERSOFF)
+#if !defined(TERSOFFMOD)
+  ADD_POT(tersoff_pot, 11);
+  ADD_POT(tersoff_mix, 2);
 #else
-  add_pot(tersoff_mod_pot, 16);
-#endif /* !TERSOFFMOD */
-#endif /* TERSOFF */
-
-  reg_for_free(function_table.name, "function_table.name");
-  reg_for_free(function_table.num_params, "function_table.n_par");
-  reg_for_free(function_table.fvalue, "function_table.fvalue");
-  for (int i = 0; i < function_table.num_functions; i++)
-    reg_for_free(function_table.name[i], "function_table.name[i]");
+  ADD_POT(tersoff_mod_pot, 16);
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
 }
 
 /****************************************************************
@@ -117,29 +126,28 @@ void apot_init(void)
  *
  ****************************************************************/
 
-void add_potential(const char *name, int parameter, fvalue_pointer fval)
+void add_potential(const char* name, int parameter, fvalue_pointer fval)
 {
-  int   i;
-  int   k = function_table.num_functions;
+  const int k = function_table.num_functions;
 
   /* only add potentials with unused names */
-  for (i = 0; i < k; i++) {
-    if (strcmp(function_table.name[i], name) == 0) {
+  for (int i = 0; i < k; i++)
+  {
+    if (strcmp(function_table.name[i], name) == 0)
+    {
       error(1, "There already is a potential with the name \"%s\".", name);
     }
   }
 
   /* allocate memory */
-  function_table.name = (char **)realloc(function_table.name, (k + 1) * sizeof(char *));
-  function_table.name[k] = (char *)malloc(255 * sizeof(char));
-  function_table.num_params = (int *)realloc(function_table.num_params, (k + 1) * sizeof(int));
-  function_table.fvalue = (fvalue_pointer *) realloc(function_table.fvalue, (k + 1) * sizeof(fvalue_pointer));
-  if (function_table.name[k] == NULL || function_table.num_params == NULL || function_table.fvalue == NULL)
-    error(1, "Could not allocate memory for function_table!");
+  function_table.name = (char**)Realloc(function_table.name, (k + 1) * sizeof(char*));
+  function_table.name[k] = (char*)Malloc((strlen(name) + 1) * sizeof(char));
+  function_table.num_params =
+      (int*)Realloc(function_table.num_params, (k + 1) * sizeof(int));
+  function_table.fvalue =
+      (fvalue_pointer*)Realloc(function_table.fvalue, (k + 1) * sizeof(fvalue_pointer));
 
   /* assign values */
-  for (i = 0; i < 255; i++)
-    function_table.name[k][i] = '\0';
   strncpy(function_table.name[k], name, strlen(name));
   function_table.num_params[k] = parameter;
   function_table.fvalue[k] = fval;
@@ -153,12 +161,14 @@ void add_potential(const char *name, int parameter, fvalue_pointer fval)
  *
  ****************************************************************/
 
-int apot_parameters(char *name)
+int apot_parameters(char* name)
 {
-  int   i;
+  int i;
 
-  for (i = 0; i < function_table.num_functions; i++) {
-    if (strcmp(function_table.name[i], name) == 0) {
+  for (i = 0; i < function_table.num_functions; i++)
+  {
+    if (strcmp(function_table.name[i], name) == 0)
+    {
       return function_table.num_params[i];
     }
   }
@@ -172,18 +182,19 @@ int apot_parameters(char *name)
  *
  ****************************************************************/
 
-int apot_assign_functions(apot_table_t *apt)
+int apot_assign_functions(apot_table_t* apt)
 {
-  int   i, j;
-
-  for (i = 0; i < apt->number; i++) {
-    for (j = 0; j < function_table.num_functions; j++) {
-      if (strcmp(apt->names[i], function_table.name[j]) == 0) {
-	apt->fvalue[i] = function_table.fvalue[j];
-	break;
+  for (int i = 0; i < apt->number; i++)
+  {
+    for (int j = 0; j < function_table.num_functions; j++)
+    {
+      if (strcmp(apt->names[i], function_table.name[j]) == 0)
+      {
+        apt->fvalue[i] = function_table.fvalue[j];
+        break;
       }
       if (j == function_table.num_functions - 1)
-	return -1;
+        return -1;
     }
   }
 
@@ -198,76 +209,99 @@ int apot_assign_functions(apot_table_t *apt)
 
 void check_apot_functions(void)
 {
-#ifdef STIWEB
+#if defined(STIWEB)
   /* paircol is not yet defined at this point */
-  int   pcol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
-  int   i;
+  int pcol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
 
   /* check for the correct function types for SW potential */
-  for (i = 0; i < pcol; i++) {
-    if (strcmp(apot_table.names[i], "stiweb_2") != 0)
+  for (int i = 0; i < pcol; i++)
+  {
+    if (strcmp(g_pot.apot_table.names[i], "stiweb_2") != 0)
       error(1, "Only stiweb_2 potential is allowed for the %d. potential!\n", i + 1);
-    if (strcmp(apot_table.names[pcol + i], "stiweb_3") != 0)
-      error(1, "Only stiweb_3 potential is allowed for the %d. potential!\n", pcol + i + 1);
+    if (strcmp(g_pot.apot_table.names[pcol + i], "stiweb_3") != 0)
+      error(1, "Only stiweb_3 potential is allowed for the %d. potential!\n",
+            pcol + i + 1);
   }
-  if (strcmp(apot_table.names[2 * pcol], "lambda") != 0)
-    error(1, "The last potential for Stillinger-Weber has to be of the \"lambda\" type!\n");
+
+  if (strcmp(g_pot.apot_table.names[2 * pcol], "lambda") != 0)
+    error(1,
+          "The last potential for Stillinger-Weber has to be of the \"lambda\" "
+          "type!\n");
 
   /* make sure the cutoff parameters (a1,a2) can be optimized correctly */
-  for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][5] > g_pot.apot_table.end[i]) {
-      error(0, "The upper bound for the parameter a1 exceeds the cutoff radius in potential %d.\n", i + 1);
+  for (int i = 0; i < pcol; i++)
+  {
+    if (g_pot.apot_table.pmax[i][5] > g_pot.apot_table.end[i])
+    {
+      error(0,
+            "The upper bound for the parameter a1 exceeds the cutoff radius in "
+            "potential %d.\n",
+            i + 1);
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
-    if (apot_table.pmax[pcol + i][1] > g_pot.apot_table.end[pcol + i]) {
-      error(0, "The upper bound for the parameter a2 exceeds the cutoff radius in potential %d.\n", i + 1);
+    if (g_pot.apot_table.pmax[pcol + i][1] > g_pot.apot_table.end[pcol + i])
+    {
+      error(0,
+            "The upper bound for the parameter a2 exceeds the cutoff radius in "
+            "potential %d.\n",
+            i + 1);
       error(1, "a1 needs to be less or equal to the potential cutoff.\n");
     }
   }
-#endif /* STIWEB */
+#endif  // STIWEB
 
-#ifdef TERSOFF
+#if defined(TERSOFF)
   /* paircol is not yet defined at this point */
-  int   pcol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
-  int   i;
+  int pcol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
 
-#ifndef TERSOFFMOD
+#if !defined(TERSOFFMOD)
   /* check for the correct function types for TERSOFF potential */
-  for (i = 0; i < pcol; i++) {
-    if (strcmp(apot_table.names[i], "tersoff_pot") != 0)
+  for (int i = 0; i < pcol; i++)
+  {
+    if (strcmp(g_pot.apot_table.names[i], "tersoff_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
   }
-  for (i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++) {
-    if (strcmp(apot_table.names[pcol + i], "tersoff_mix") != 0)
+  for (int i = 0; i < g_param.ntypes * (g_param.ntypes - 1) / 2.0; i++)
+  {
+    if (strcmp(g_pot.apot_table.names[pcol + i], "tersoff_mix") != 0)
       error(1, "Only tersoff_mix potential is allowed for the %d. potential!\n", i + 1);
   }
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
-  for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][9] < g_pot.apot_table.pmin[i][10]) {
-      error(0, "The upper bound for the parameter S is smaller than the lower bound\n");
+  for (int i = 0; i < pcol; i++)
+  {
+    if (g_pot.apot_table.pmax[i][9] < g_pot.apot_table.pmin[i][10])
+    {
+      error(0,
+            "The upper bound for the parameter S is smaller than the lower "
+            "bound\n");
       error(0, "for the parameter R in potential %d.\n", i + 1);
       error(1, "Please change it, that the condition R < S can be fulfilled.\n");
     }
   }
 #else
   /* check for the correct function types for TERSOFFMOD potential */
-  for (i = 0; i < pcol; i++) {
-    if (strcmp(apot_table.names[i], "tersoff_mod_pot") != 0)
+  for (int i = 0; i < pcol; i++)
+  {
+    if (strcmp(g_pot.apot_table.names[i], "tersoff_mod_pot") != 0)
       error(1, "Only tersoff_pot potential is allowed for the %d. potential!\n", i + 1);
   }
 
   /* make sure the cutoff parameters (R, S) can be optimized correctly */
-  for (i = 0; i < pcol; i++) {
-    if (apot_table.pmax[i][15] < g_pot.apot_table.pmin[i][14]) {
-      error(0, "The upper bound for the parameter R2 is smaller than the lower bound\n");
+  for (int i = 0; i < pcol; i++)
+  {
+    if (g_pot.apot_table.pmax[i][15] < g_pot.apot_table.pmin[i][14])
+    {
+      error(0,
+            "The upper bound for the parameter R2 is smaller than the lower "
+            "bound\n");
       error(0, "for the parameter R1 in potential %d.\n", i + 1);
       error(1, "Please change it, that the condition R1 < R2 can be fulfilled.\n");
     }
   }
 
-#endif /* !TERSOFFMOD */
-#endif /* TERSOFF */
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
 }
 
 /****************************************************************
@@ -284,15 +318,12 @@ void check_apot_functions(void)
  *
  ****************************************************************/
 
-void lj_value(double r, double *p, double *f)
+void lj_value(double r, double* p, double* f)
 {
-  static double sig_d_rad6, sig_d_rad12;
+  double x = (p[1] * p[1]) / (r * r);
+  x = x * x * x;
 
-  sig_d_rad6 = (p[1] * p[1]) / (r * r);
-  sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
-  sig_d_rad12 = dsquare(sig_d_rad6);
-
-  *f = 4.0 * p[0] * (sig_d_rad12 - sig_d_rad6);
+  *f = 4.0 * p[0] * x*(x - 1.0);
 }
 
 /****************************************************************
@@ -303,14 +334,11 @@ void lj_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void eopp_value(double r, double *p, double *f)
+void eopp_value(double r, double* p, double* f)
 {
-  static double x[2], y[2], power[2];
-
-  x[0] = r;
-  x[1] = r;
-  y[0] = p[1];
-  y[1] = p[3];
+  double x[2] = {r, r};
+  double y[2] = {p[1], p[3]};
+  double power[2] = {0, 0};
 
   power_m(2, power, x, y);
 
@@ -325,9 +353,9 @@ void eopp_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void morse_value(double r, double *p, double *f)
+void morse_value(double r, double* p, double* f)
 {
-  *f = p[0] * (exp(-2 * p[1] * (r - p[2])) - 2.0 * exp(-p[1] * (r - p[2])));
+  *f = p[0] * (exp(-2.0 * p[1] * (r - p[2])) - 2.0 * exp(-p[1] * (r - p[2])));
 }
 
 /****************************************************************
@@ -338,11 +366,9 @@ void morse_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void ms_value(double r, double *p, double *f)
+void ms_value(double r, double* p, double* f)
 {
-  static double x;
-
-  x = 1.0 - r / p[2];
+  double x = 1.0 - r / p[2];
 
   *f = p[0] * (exp(p[1] * x) - 2.0 * exp((p[1] * x) / 2.0));
 }
@@ -355,12 +381,10 @@ void ms_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void buck_value(double r, double *p, double *f)
+void buck_value(double r, double* p, double* f)
 {
-  static double x, y;
-
-  x = (p[1] * p[1]) / (r * r);
-  y = x * x * x;
+  double x = (p[1] * p[1]) / (r * r);
+  double y = x * x * x;
 
   *f = p[0] * exp(-r / p[1]) - p[2] * y;
 }
@@ -371,12 +395,10 @@ void buck_value(double r, double *p, double *f)
  *
  *****************************************************************/
 
-void softshell_value(double r, double *p, double *f)
+void softshell_value(double r, double* p, double* f)
 {
-  static double x, y;
-
-  x = p[0] / r;
-  y = p[1];
+  double x = p[0] / r;
+  double y = p[1];
 
   power_1(f, &x, &y);
 }
@@ -389,9 +411,9 @@ void softshell_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void eopp_exp_value(double r, double *p, double *f)
+void eopp_exp_value(double r, double* p, double* f)
 {
-  static double power;
+  double power = 0;
 
   power_1(&power, &r, &p[3]);
 
@@ -406,14 +428,11 @@ void eopp_exp_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void meopp_value(double r, double *p, double *f)
+void meopp_value(double r, double* p, double* f)
 {
-  static double x[2], y[2], power[2];
-
-  x[0] = r - p[6];
-  x[1] = r;
-  y[0] = p[1];
-  y[1] = p[3];
+  double x[2] = {r - p[6], r};
+  double y[2] = {p[1], p[3]};
+  double power[2] = {0, 0};
 
   power_m(2, power, x, y);
 
@@ -426,14 +445,11 @@ void meopp_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void power_value(double r, double *p, double *f)
+void power_value(double r, double* p, double* f)
 {
-  static double x, y, power;
+  double power = 0;
 
-  x = r;
-  y = p[1];
-
-  power_1(&power, &x, &y);
+  power_1(&power, &r, &p[1]);
 
   *f = p[0] * power;
 }
@@ -444,16 +460,13 @@ void power_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void power_decay_value(double r, double *p, double *f)
+void power_decay_value(double r, double* p, double* f)
 {
-  static double x, y, power;
+  double power = 0;
 
-  x = 1.0 / r;
-  y = p[1];
+  power_1(&power, &r, &p[1]);
 
-  power_1(&power, &x, &y);
-
-  *f = p[0] * power;
+  *f = p[0] / power;
 }
 
 /****************************************************************
@@ -462,10 +475,7 @@ void power_decay_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void exp_decay_value(double r, double *p, double *f)
-{
-  *f = p[0] * exp(-p[1] * r);
-}
+void exp_decay_value(double r, double* p, double* f) { *f = p[0] * exp(-p[1] * r); }
 
 /****************************************************************
  *
@@ -475,14 +485,16 @@ void exp_decay_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void bjs_value(double r, double *p, double *f)
+void bjs_value(double r, double* p, double* f)
 {
-  static double power;
-
   if (r == 0.0)
     *f = 0.0;
-  else {
+  else
+  {
+    double power = 0;
+
     power_1(&power, &r, &p[1]);
+
     *f = p[0] * (1.0 - p[1] * log(r)) * power + p[2] * r;
   }
 }
@@ -493,7 +505,7 @@ void bjs_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void parabola_value(double r, double *p, double *f)
+void parabola_value(double r, double* p, double* f)
 {
   *f = (r * r) * p[0] + r * p[1] + p[2];
 }
@@ -506,7 +518,7 @@ void parabola_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void csw_value(double r, double *p, double *f)
+void csw_value(double r, double* p, double* f)
 {
   static double power;
 
@@ -523,7 +535,7 @@ void csw_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void csw2_value(double r, double *p, double *f)
+void csw2_value(double r, double* p, double* f)
 {
   static double power;
 
@@ -540,18 +552,16 @@ void csw2_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void universal_value(double r, double *p, double *f)
+void universal_value(double r, double* p, double* f)
 {
-  static double x[2], y[2], power[2];
-
-  x[0] = r;
-  x[1] = r;
-  y[0] = p[1];
-  y[1] = p[2];
+  double x[2] = {r, r};
+  double y[2] = {p[1], p[2]};
+  double power[2] = {0, 0};
 
   power_m(2, power, x, y);
 
-  *f = p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) + p[3] * r;
+  *f = p[0] * (p[2] / (p[2] - p[1]) * power[0] - p[1] / (p[2] - p[1]) * power[1]) +
+       p[3] * r;
 }
 
 /****************************************************************
@@ -560,10 +570,7 @@ void universal_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void const_value(double r, double *p, double *f)
-{
-  *f = *p + 0.0 * r;
-}
+void const_value(double r, double* p, double* f) { *f = *p; }
 
 /****************************************************************
  *
@@ -573,10 +580,7 @@ void const_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void sqrt_value(double r, double *p, double *f)
-{
-  *f = p[0] * sqrt(r / p[1]);
-}
+void sqrt_value(double r, double* p, double* f) { *f = p[0] * sqrt(r / p[1]); }
 
 /****************************************************************
  *
@@ -584,7 +588,7 @@ void sqrt_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void mexp_decay_value(double r, double *p, double *f)
+void mexp_decay_value(double r, double* p, double* f)
 {
   *f = p[0] * exp(-p[1] * (r - p[2]));
 }
@@ -597,11 +601,9 @@ void mexp_decay_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void strmm_value(double r, double *p, double *f)
+void strmm_value(double r, double* p, double* f)
 {
-  static double r_0;
-
-  r_0 = r - p[4];
+  double r_0 = r - p[4];
 
   *f = 2.0 * p[0] * exp(-p[1] / 2.0 * r_0) - p[2] * (1.0 + p[3] * r_0) * exp(-p[3] * r_0);
 }
@@ -614,11 +616,11 @@ void strmm_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void double_morse_value(double r, double *p, double *f)
+void double_morse_value(double r, double* p, double* f)
 {
-  *f =
-    (p[0] * (exp(-2.0 * p[1] * (r - p[2])) - 2.0 * exp(-p[1] * (r - p[2]))) +
-    p[3] * (exp(-2.0 * p[4] * (r - p[5])) - 2.0 * exp(-p[4] * (r - p[5])))) + p[6];
+  *f = (p[0] * (exp(-2.0 * p[1] * (r - p[2])) - 2.0 * exp(-p[1] * (r - p[2]))) +
+        p[3] * (exp(-2.0 * p[4] * (r - p[5])) - 2.0 * exp(-p[4] * (r - p[5])))) +
+       p[6];
 }
 
 /****************************************************************
@@ -629,7 +631,7 @@ void double_morse_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void double_exp_value(double r, double *p, double *f)
+void double_exp_value(double r, double* p, double* f)
 {
   *f = (p[0] * exp(-p[1] * dsquare(r - p[2])) + exp(-p[3] * (r - p[4])));
 }
@@ -642,13 +644,12 @@ void double_exp_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void poly_5_value(double r, double *p, double *f)
+void poly_5_value(double r, double* p, double* f)
 {
-  static double dr;
+  double dr = (r - 1.0) * (r - 1.0);
 
-  dr = (r - 1.0) * (r - 1.0);
-
-  *f = p[0] + 0.5 * p[1] * dr + p[2] * (r - 1.0) * dr + p[3] * (dr * dr) + p[4] * (dr * dr) * (r - 1.0);
+  *f = p[0] + 0.5 * p[1] * dr + p[2] * (r - 1.0) * dr + p[3] * (dr * dr) +
+       p[4] * (dr * dr) * (r - 1.0);
 }
 
 /****************************************************************
@@ -659,25 +660,25 @@ void poly_5_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void kawamura_value(double r, double *p, double *f)
+void kawamura_value(double r, double* p, double* f)
 {
-  static double r6;
+  double r6 = r * r * r;
 
-  r6 = r * r * r;
-  r6 *= r6;
+  r6 = r6 * r6;
 
-  *f = p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] + p[6])) - p[7] * p[8] / r6;
+  *f = p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] + p[6])) -
+       p[7] * p[8] / r6;
 }
 
-void kawamura_mix_value(double r, double *p, double *f)
+void kawamura_mix_value(double r, double* p, double* f)
 {
-  static double r6;
+  double r6 = r * r * r;
 
-  r6 = r * r * r;
-  r6 *= r6;
+  r6 = r6 * r6;
 
-  *f = p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] + p[6])) - p[7] * p[8] / r6
-    + p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2.0 * exp(-p[10] * (r - p[11])));
+  *f = p[0] * p[1] / r + p[2] * (p[5] + p[6]) * exp((p[3] + p[4] - r) / (p[5] + p[6])) -
+       p[7] * p[8] / r6 +
+       p[2] * p[9] * (exp(-2 * p[10] * (r - p[11])) - 2.0 * exp(-p[10] * (r - p[11])));
 }
 
 /****************************************************************
@@ -686,10 +687,7 @@ void kawamura_mix_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void exp_plus_value(double r, double *p, double *f)
-{
-  *f = p[0] * exp(-p[1] * r) + p[2];
-}
+void exp_plus_value(double r, double* p, double* f) { *f = p[0] * exp(-p[1] * r) + p[2]; }
 
 /****************************************************************
  *
@@ -699,18 +697,15 @@ void exp_plus_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void mishin_value(double r, double *p, double *f)
+void mishin_value(double r, double* p, double* f)
 {
-  static double z;
-  static double temp;
-  static double power;
-
-  z = r - p[3];
-  temp = exp(-p[5] * r);
+  double z = r - p[3];
+  double temp = exp(-p[5] * r);
+  double power = 0;
 
   power_1(&power, &z, &p[4]);
 
-  *f = p[0] * power * temp * (1.0 + p[1] * temp) + p[2];
+  *f = p[0] * power* temp*(1.0 + p[1] * temp) + p[2];
 }
 
 /****************************************************************
@@ -721,14 +716,11 @@ void mishin_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void gen_lj_value(double r, double *p, double *f)
+void gen_lj_value(double r, double* p, double* f)
 {
-  static double x[2], y[2], power[2];
-
-  x[0] = r / p[3];
-  x[1] = x[0];
-  y[0] = p[1];
-  y[1] = p[2];
+  double x[2] = {r / p[3], r / p[3]};
+  double y[2] = {p[1], p[2]};
+  double power[2] = {0, 0};
 
   power_m(2, power, x, y);
 
@@ -743,24 +735,18 @@ void gen_lj_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void gljm_value(double r, double *p, double *f)
+void gljm_value(double r, double* p, double* f)
 {
-  static double x[3], y[3], power[3];
-
-  x[0] = r / p[3];
-  x[1] = x[0];
-  x[2] = r - p[9];
-  y[0] = p[1];
-  y[1] = p[2];
-  y[2] = p[10];
+  double x[3] = {r / p[3], r / p[3], r - p[9]};
+  double y[3] = {p[1], p[2], p[10]};
+  double power[3] = {0, 0, 0};
 
   power_m(3, power, x, y);
 
   double temp = exp(-p[11] * power[2]);
 
-  *f =
-    p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
-    p[5] * (p[6] * power[2] * temp * (1.0 + p[7] * temp) + p[8]);
+  *f = p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
+       p[5] * (p[6] * power[2] * temp * (1.0 + p[7] * temp) + p[8]);
 }
 
 /****************************************************************
@@ -771,10 +757,7 @@ void gljm_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void vas_value(double r, double *p, double *f)
-{
-  *f = exp(p[0] / (r - p[1]));
-}
+void vas_value(double r, double* p, double* f) { *f = exp(p[0] / (r - p[1])); }
 
 /****************************************************************
  *
@@ -785,22 +768,17 @@ void vas_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void vpair_value(double r, double *p, double *f)
+void vpair_value(double r, double* p, double* f)
 {
-  static double x[7], y, z;
+  double power = 0;
+  double x = r * r;
 
-  y = r;
-  z = p[1];
+  x = x * x;
 
-  power_1(&x[0], &y, &z);
-  x[1] = r * r;
-  x[2] = x[1] * x[1];
-  x[3] = p[2] * p[2];
-  x[4] = p[3] * p[3];
-  x[5] = p[4] * x[4] + p[5] * x[3];
-  x[6] = exp(-r / p[6]);
+  power_1(&power, &r, &p[1]);
 
-  *f = 14.4 * (p[0] / x[0] - 0.5 * (x[5] / x[2]) * x[6]);
+  *f = 14.4 * (p[0] / power -
+               0.5 * (p[4] * p[3] * p[3] + p[5] * p[2] * p[2] / x) * exp(-r / p[6]));
 }
 
 /****************************************************************
@@ -809,59 +787,47 @@ void vpair_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void sheng_phi1_value(double r, double *p, double *f)
+void sheng_phi1_value(double r, double* p, double* f)
 {
-  static double x, y, z;
+  double y = r - p[4];
+  double z = -p[3] * y * y;
 
-  x = -p[1] * r * r;
-  y = r - p[4];
-  z = -p[3] * y * y;
-
-  *f = p[0] * exp(x) + p[2] * exp(z);
+  *f = p[0] * exp(-p[1] * r * r) + p[2] * exp(z);
 }
 
-void sheng_phi2_value(double r, double *p, double *f)
+void sheng_phi2_value(double r, double* p, double* f)
 {
-  static double x, y, z;
+  double y = r - p[3];
+  double z = p[2] * p[2] + y * y;
 
-  x = -p[1] * r * r;
-  y = r - p[3];
-  z = p[2] * p[2] + y * y;
-
-  *f = p[0] * exp(x) + p[2] / z;
+  *f = p[0] * exp(-p[1] * r * r) + p[2] / z;
 }
 
-void sheng_rho_value(double r, double *p, double *f)
+void sheng_rho_value(double r, double* p, double* f)
 {
-  static double sig_d_rad6, sig_d_rad12, x, y, power;
-  static int h, k;
+  double power = 0;
 
-  h = (r > 1.45) ? 1 : 0;
-  k = (r <= 1.45) ? 1 : 0;
+  power_1(&power, &r, &p[1]);
 
-  x = r;
-  y = p[1];
-  power_1(&power, &x, &y);
+  double x = (p[4] * p[4]) / (r * r);
+  x = x * x * x;
 
-  sig_d_rad6 = (p[4] * p[4]) / (r * r);
-  sig_d_rad6 = sig_d_rad6 * sig_d_rad6 * sig_d_rad6;
-  sig_d_rad12 = dsquare(sig_d_rad6);
-
-  *f = (p[0] * power + p[2]) * k + (4.0 * p[3] * (sig_d_rad12 - sig_d_rad6)) * h;
+  if (r > 1.45)
+    *f = 4.0 * p[3] * x*(x - 1.0);
+  else
+    *f = p[0] * power + p[2];
 }
 
-void sheng_F_value(double r, double *p, double *f)
+void sheng_F_value(double r, double* p, double* f)
 {
-  static double x, y, power;
+  double power = 0;
 
-  x = r;
-  y = p[1];
-  power_1(&power, &x, &y);
+  power_1(&power, &r, &p[1]);
 
   *f = p[0] * power + p[2] * r + p[3];
 }
 
-#ifdef STIWEB
+#if defined(STIWEB)
 
 /****************************************************************
  *
@@ -869,14 +835,11 @@ void sheng_F_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void stiweb_2_value(double r, double *p, double *f)
+void stiweb_2_value(double r, double* p, double* f)
 {
-  static double x[2], y[2], power[2];
-
-  x[0] = r;
-  x[1] = r;
-  y[0] = -p[2];
-  y[1] = -p[3];
+  double x[2] = {r, r};
+  double y[2] = {-p[2], -p[3]};
+  double power[2] = {0, 0};
 
   power_m(2, power, x, y);
 
@@ -889,10 +852,7 @@ void stiweb_2_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void stiweb_3_value(double r, double *p, double *f)
-{
-  *f = exp(p[0] / (r - p[1]));
-}
+void stiweb_3_value(double r, double* p, double* f) { *f = exp(p[0] / (r - p[1])); }
 
 /****************************************************************
  *
@@ -900,15 +860,12 @@ void stiweb_3_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void lambda_value(double r, double *p, double *f)
-{
-  *f = 0.0 * r * p[0];
-}
+void lambda_value(double r, double* p, double* f) { *f = 0.0 * r* p[0]; }
 
-#endif /* STIWEB */
+#endif  // STIWEB
 
-#ifdef TERSOFF
-#ifndef TERSOFFMOD
+#if defined(TERSOFF)
+#if !defined(TERSOFFMOD)
 
 /****************************************************************
  *
@@ -916,10 +873,7 @@ void lambda_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void tersoff_pot_value(double r, double *p, double *f)
-{
-  *f = 0.0 * r * p[0];
-}
+void tersoff_pot_value(double r, double* p, double* f) { *f = 0.0 * r* p[0]; }
 
 /****************************************************************
  *
@@ -927,10 +881,7 @@ void tersoff_pot_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void tersoff_mix_value(double r, double *p, double *f)
-{
-  *f = 0.0 * r * p[0];
-}
+void tersoff_mix_value(double r, double* p, double* f) { *f = 0.0 * r* p[0]; }
 
 #else
 
@@ -940,13 +891,10 @@ void tersoff_mix_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void tersoff_mod_pot_value(double r, double *p, double *f)
-{
-  *f = 0.0 * r * p[0];
-}
+void tersoff_mod_pot_value(double r, double* p, double* f) { *f = 0.0 * r* p[0]; }
 
-#endif /* !TERSOFFMOD */
-#endif /* TERSOFF */
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
 
 /****************************************************************
  *
@@ -966,10 +914,7 @@ void tersoff_mod_pot_value(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void newpot_value(double r, double *p, double *f)
-{
-  *f = r * p[0] + p[1];
-}
+void newpot_value(double r, double* p, double* f) { *f = r* p[0] + p[1]; }
 
 /* end of template */
 
@@ -1005,56 +950,63 @@ double cutoff(double r, double r0, double h)
  *
  ****************************************************************/
 
-int apot_check_params(double *params)
+int apot_check_params(double* params)
 {
-  int   i, j = 2, k;
+  int i, j = 2, k;
 #ifdef TERSOFF
   double temp;
 #endif /* TERSOFF */
 
-  for (i = 0; i < g_pot.apot_table.number; i++) {
-
+  for (i = 0; i < g_pot.apot_table.number; i++)
+  {
     /* last parameter of eopp potential is 2 pi periodic */
-    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0)
+    {
       k = j + 5;
       if (params[k] > 2 * M_PI)
-	do {
-	  params[k] -= 2 * M_PI;
-	} while (params[k] > 2 * M_PI);
+        do
+        {
+          params[k] -= 2 * M_PI;
+        } while (params[k] > 2 * M_PI);
       if (params[k] < 0)
-	do {
-	  params[k] += 2 * M_PI;
-	} while (params[k] < 0);
+        do
+        {
+          params[k] += 2 * M_PI;
+        } while (params[k] < 0);
     }
 
     /* the third parameter of csw2 potential is 2 pi periodic */
-    if (strcmp(g_pot.apot_table.names[i], "csw2") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "csw2") == 0)
+    {
       k = j + 2;
       if (params[k] > 2 * M_PI)
-	do {
-	  params[k] -= 2 * M_PI;
-	} while (params[k] > 2 * M_PI);
+        do
+        {
+          params[k] -= 2 * M_PI;
+        } while (params[k] > 2 * M_PI);
       if (params[k] < 0)
-	do {
-	  params[k] += 2 * M_PI;
-	} while (params[k] < 0);
+        do
+        {
+          params[k] += 2 * M_PI;
+        } while (params[k] < 0);
     }
 #ifdef TERSOFF
     /* the parameter S has to be greater than the parameter R */
     /* switch them if this is not the case */
-    if (strcmp(g_pot.apot_table.names[i], "tersoff_pot") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "tersoff_pot") == 0)
+    {
       k = j + 9;
-      if (params[k] < params[k + 1]) {
-	temp = params[k];
-	params[k] = params[k + 1];
-	params[k + 1] = temp;
+      if (params[k] < params[k + 1])
+      {
+        temp = params[k];
+        params[k] = params[k + 1];
+        params[k + 1] = temp;
       }
     }
 #endif /* TERSOFF */
 
     /* jump to next potential */
     j += 2 + apot_parameters(g_pot.apot_table.names[i]) + g_pot.smooth_pot[i];
-
   }
 
   return 0;
@@ -1066,20 +1018,24 @@ int apot_check_params(double *params)
  *
  ****************************************************************/
 
-double apot_punish(double *params, double *forces)
+double apot_punish(double* params, double* forces)
 {
-  int   i, j;
+  int i, j;
   double x, tmpsum = 0.0, min, max;
 
   /* loop over individual parameters */
-  for (i = 0; i < g_calc.ndim; i++) {
+  for (i = 0; i < g_calc.ndim; i++)
+  {
     min = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
     max = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
     /* punishment for out of bounds */
-    if (x = params[g_todo.idx[i]] - min, x < 0) {
+    if (x = params[g_todo.idx[i]] - min, x < 0)
+    {
       tmpsum += APOT_PUNISH * x * x;
       forces[g_calc.punish_par_p + i] = APOT_PUNISH * x * x;
-    } else if (x = params[g_todo.idx[i]] - max, x > 0) {
+    }
+    else if (x = params[g_todo.idx[i]] - max, x > 0)
+    {
       tmpsum += APOT_PUNISH * x * x;
       forces[g_calc.punish_par_p + i] = APOT_PUNISH * x * x;
     }
@@ -1087,23 +1043,27 @@ double apot_punish(double *params, double *forces)
 
   j = 2;
   /* loop over potentials */
-  for (i = 0; i < g_pot.apot_table.number; i++) {
-
+  for (i = 0; i < g_pot.apot_table.number; i++)
+  {
     /* punish eta_1 < eta_2 for eopp function */
-    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0)
+    {
       x = params[j + 1] - params[j + 3];
-      if (x < 0) {
-	forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value * (1 + x) * (1 + x);
+      if (x < 0)
+      {
+        forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value * (1 + x) * (1 + x);
         tmpsum += g_param.apot_punish_value * (1 + x) * (1 + x);
       }
     }
 #if defined EAM || defined ADP || defined MEAM
     /* punish m=n for universal embedding function */
-    if (strcmp(g_pot.apot_table.names[i], "universal") == 0) {
+    if (strcmp(g_pot.apot_table.names[i], "universal") == 0)
+    {
       x = params[j + 2] - params[j + 1];
-      if (fabs(x) < 1e-6) {
-	forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value / (x * x);
-	tmpsum += g_param.apot_punish_value / (x * x);
+      if (fabs(x) < 1e-6)
+      {
+        forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value / (x * x);
+        tmpsum += g_param.apot_punish_value / (x * x);
       }
     }
 #endif /* EAM */
@@ -1121,7 +1081,7 @@ double apot_punish(double *params, double *forces)
  *
  ****************************************************************/
 
-double apot_grad(double r, double *p, void (*function) (double, double *, double *))
+double apot_grad(double r, double* p, void (*function)(double, double*, double*))
 {
   double a, b, h = 0.0001;
 
@@ -1131,7 +1091,7 @@ double apot_grad(double r, double *p, void (*function) (double, double *, double
   return (a - b) / (2.0 * h);
 }
 
-#ifdef COULOMB
+#if defined(COULOMB)
 
 /****************************************************************
  *
@@ -1139,9 +1099,9 @@ double apot_grad(double r, double *p, void (*function) (double, double *, double
  *
  ****************************************************************/
 
-void ms_init(double r, double *pot, double *grad, double *p)
+void ms_init(double r, double* pot, double* grad, double* p)
 {
-  static double x[4];
+  double x[4];
 
   x[0] = 1 - r / p[2];
   x[1] = exp(p[1] * x[0]);
@@ -1158,9 +1118,9 @@ void ms_init(double r, double *pot, double *grad, double *p)
  *
  ****************************************************************/
 
-void buck_init(double r, double *pot, double *grad, double *p)
+void buck_init(double r, double* pot, double* grad, double* p)
 {
-  static double x[3];
+  double x[3];
 
   x[0] = dsquare(p[1]) / dsquare(r);
   x[1] = p[2] * x[0] * x[0] * x[0];
@@ -1176,14 +1136,14 @@ void buck_init(double r, double *pot, double *grad, double *p)
  *
  ****************************************************************/
 
-void ms_shift(double r, double *p, double *f)
+void ms_shift(double r, double* p, double* f)
 {
-  static double pot, grad, pot_cut, grad_cut;
+  double pot, grad, pot_cut, grad_cut;
 
   ms_init(r, &pot, &grad, p);
-  ms_init(dp_cut, &pot_cut, &grad_cut, p);
+  ms_init(g_todo.dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - (r - g_todo.dp_cut) * grad_cut;
 }
 
 /****************************************************************
@@ -1192,14 +1152,14 @@ void ms_shift(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void buck_shift(double r, double *p, double *f)
+void buck_shift(double r, double* p, double* f)
 {
-  static double pot, grad, pot_cut, grad_cut;
+  double pot, grad, pot_cut, grad_cut;
 
   buck_init(r, &pot, &grad, p);
-  buck_init(dp_cut, &pot_cut, &grad_cut, p);
+  buck_init(g_todo.dp_cut, &pot_cut, &grad_cut, p);
 
-  *f = pot - pot_cut - r * (r - dp_cut) * grad_cut;
+  *f = pot - pot_cut - r*(r - g_todo.dp_cut) * grad_cut;
 }
 
 /****************************************************************
@@ -1208,16 +1168,16 @@ void buck_shift(double r, double *p, double *f)
  *
  ****************************************************************/
 
-void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, double *ggtail)
+void elstat_value(double r, double dp_kappa, double* ftail, double* gtail, double* ggtail)
 {
-  static double x[4];
+  double x[4];
 
   x[0] = r * r;
   x[1] = dp_kappa * dp_kappa;
-  x[2] = 2 * dp_eps * dp_kappa / sqrt(M_PI);
+  x[2] = 2 * g_todo.dp_eps * dp_kappa / sqrt(M_PI);
   x[3] = exp(-x[0] * x[1]);
 
-  *ftail = dp_eps * erfc(dp_kappa * r) / r;
+  *ftail = g_todo.dp_eps* erfc(dp_kappa * r) / r;
   *gtail = -(*ftail + x[2] * x[3]) / x[0];
   *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
 }
@@ -1228,22 +1188,23 @@ void elstat_value(double r, double dp_kappa, double *ftail, double *gtail, doubl
  *
  ****************************************************************/
 
-void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_tail, double *ggrad_tail)
+void elstat_shift(double r, double dp_kappa, double* fnval_tail, double* grad_tail,
+                  double* ggrad_tail)
 {
-  static double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
-  static double x[3];
+  double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
+  double x[3];
 
   x[0] = r * r;
-  x[1] = dp_cut * dp_cut;
+  x[1] = g_todo.dp_cut * g_todo.dp_cut;
   x[2] = x[0] - x[1];
 
   elstat_value(r, dp_kappa, &ftail, &gtail, &ggtail);
-  elstat_value(dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
+  elstat_value(g_todo.dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
 
   *fnval_tail = ftail - ftail_cut - x[2] * gtail_cut / 2;
   *grad_tail = gtail - gtail_cut;
   *ggrad_tail = 0.0;
-#ifdef DIPOLE
+#if defined(DIPOLE)
   *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
   *grad_tail -= x[2] * ggtail_cut / 2;
   *ggrad_tail = ggtail - ggtail_cut;
@@ -1258,19 +1219,20 @@ void elstat_shift(double r, double dp_kappa, double *fnval_tail, double *grad_ta
 
 void init_tails(double dp_kappa)
 {
-  int   i, j;
-
-  for (i = 0; i < natoms; i++)
-    for (j = 0; j < atoms[i].num_neigh; j++)
-      elstat_shift(atoms[i].neigh[j].r, dp_kappa, &atoms[i].neigh[j].fnval_el,
-	&atoms[i].neigh[j].grad_el, &atoms[i].neigh[j].ggrad_el);
-
-  return;
+  for (int i = 0; i < g_config.natoms; i++)
+  {
+    for (int j = 0; j < g_config.atoms[i].num_neigh; j++)
+    {
+      elstat_shift(
+          g_config.atoms[i].neigh[j].r, dp_kappa, &g_config.atoms[i].neigh[j].fnval_el,
+          &g_config.atoms[i].neigh[j].grad_el, &g_config.atoms[i].neigh[j].ggrad_el);
+    }
+  }
 }
 
-#endif /* COULOMB */
+#endif  // COULOMB
 
-#ifdef DIPOLE
+#if defined(DIPOLE)
 
 /****************************************************************
  *
@@ -1280,7 +1242,7 @@ void init_tails(double dp_kappa)
 
 double shortrange_value(double r, double a, double b, double c)
 {
-  static double x[5];
+  double x[5];
 
   x[0] = b * r;
   x[1] = x[0] * x[0];
@@ -1288,7 +1250,7 @@ double shortrange_value(double r, double a, double b, double c)
   x[3] = x[1] * x[1];
   x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
 
-  return a * c * x[4] * exp(-x[0]) / dp_eps;
+  return a * c * x[4] * exp(-x[0]) / g_todo.dp_eps;
 }
 
 /****************************************************************
@@ -1297,9 +1259,10 @@ double shortrange_value(double r, double a, double b, double c)
  *
  ****************************************************************/
 
-void shortrange_term(double r, double b, double c, double *srval_tail, double *srgrad_tail)
+void shortrange_term(double r, double b, double c, double* srval_tail,
+                     double* srgrad_tail)
 {
-  static double x[6];
+  double x[6];
 
   x[0] = b * r;
   x[1] = x[0] * x[0];
@@ -1308,11 +1271,11 @@ void shortrange_term(double r, double b, double c, double *srval_tail, double *s
   x[4] = 1 + x[0] + x[1] / 2 + x[2] / 6 + x[3] / 24;
   x[5] = exp(-x[0]);
 
-  *srval_tail = c * x[4] * x[5] / dp_eps;
-  *srgrad_tail = -c * b * x[3] * x[5] / (24 * dp_eps * r);
+  *srval_tail = c* x[4] * x[5] / g_todo.dp_eps;
+  *srgrad_tail = -c* b* x[3] * x[5] / (24 * g_todo.dp_eps * r);
 }
 
-#endif /* DIPOLE */
+#endif  // DIPOLE
 
 /****************************************************************
  *
@@ -1320,46 +1283,55 @@ void shortrange_term(double r, double b, double c, double *srval_tail, double *s
  *
  ****************************************************************/
 
-#ifdef DEBUG
+#if defined(DEBUG)
 
 void debug_apot()
 {
-  int   i, j;
-
   fflush(stdout);
   fprintf(stderr, "\n##############################################\n");
   fprintf(stderr, "###########      DEBUG OUTPUT      ###########\n");
   fprintf(stderr, "##############################################\n");
   fprintf(stderr, "\nThere are %d potentials with a total of %d parameters.\n",
-    g_pot.apot_table.number, g_pot.apot_table.total_par);
-  for (i = 0; i < g_pot.apot_table.number; i++) {
-    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1, g_pot.apot_table.names[i], g_pot.smooth_pot[i]);
-    fprintf(stderr, "begin=%f end=%f\n", g_pot.apot_table.begin[i], g_pot.apot_table.end[i]);
-    for (j = 0; j < g_pot.apot_table.n_par[i]; j++) {
+          g_pot.apot_table.number, g_pot.apot_table.total_par);
+  for (int i = 0; i < g_pot.apot_table.number; i++)
+  {
+    fprintf(stderr, "\npotential #%d (type=%s, smooth=%d)\n", i + 1,
+            g_pot.apot_table.names[i], g_pot.smooth_pot[i]);
+    fprintf(stderr, "begin=%f end=%f\n", g_pot.apot_table.begin[i],
+            g_pot.apot_table.end[i]);
+    for (int j = 0; j < g_pot.apot_table.n_par[i]; j++)
+    {
       fprintf(stderr, "parameter %d: name=%s value=%f min=%f max=%f\n", j + 1,
-              g_pot.apot_table.param_name[i][j], g_pot.apot_table.values[i][j], g_pot.apot_table.pmin[i][j], g_pot.apot_table.pmax[i][j]);
+              g_pot.apot_table.param_name[i][j], g_pot.apot_table.values[i][j],
+              g_pot.apot_table.pmin[i][j], g_pot.apot_table.pmax[i][j]);
     }
   }
-#ifdef PAIR
-  if (!g_param.enable_cp) {
+
+#if defined(PAIR)
+  if (!g_param.enable_cp)
+  {
     fprintf(stderr, "\nchemical potentials are DISABLED!\n");
-  } else {
+  }
+  else
+  {
     fprintf(stderr, "\nchemical potentials:\n");
-    for (i = 0; i < g_param.ntypes; i++)
+    for (int i = 0; i < g_param.ntypes; i++)
       fprintf(stderr, "cp_%d=%f min=%f max=%f\n", i, g_pot.apot_table.chempot[i],
-              g_pot.apot_table.pmin[g_pot.apot_table.number][i], g_pot.apot_table.pmax[g_pot.apot_table.number][i]);
-    if (g_param.compnodes > 0) {
-      if (g_param.ntypes == 2) {
-	fprintf(stderr, "composition nodes:\n");
-	for (j = 0; j < g_param.compnodes; j++)
-	  fprintf(stderr, "composition=%f value=%f min=%f max=%f\n",
-                  g_pot.compnodelist[j], g_pot.apot_table.chempot[g_param.ntypes + j],
-           g_pot.apot_table.pmin[g_pot.apot_table.number][g_param.ntypes + j], g_pot.apot_table.pmax[g_pot.apot_table.number][g_param.ntypes + j]);
-      }
+              g_pot.apot_table.pmin[g_pot.apot_table.number][i],
+              g_pot.apot_table.pmax[g_pot.apot_table.number][i]);
+    if (g_param.compnodes > 0 && g_param.ntypes == 2)
+    {
+      fprintf(stderr, "composition nodes:\n");
+      for (int j = 0; j < g_param.compnodes; j++)
+        fprintf(stderr, "composition=%f value=%f min=%f max=%f\n", g_pot.compnodelist[j],
+                g_pot.apot_table.chempot[g_param.ntypes + j],
+                g_pot.apot_table.pmin[g_pot.apot_table.number][g_param.ntypes + j],
+                g_pot.apot_table.pmax[g_pot.apot_table.number][g_param.ntypes + j]);
     }
   }
-#endif /* PAIR */
+#endif  // PAIR
+
   exit(EXIT_FAILURE);
 }
 
-#endif /* DEBUG */
+#endif  // DEBUG

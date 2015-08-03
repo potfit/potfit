@@ -1,16 +1,15 @@
 /****************************************************************
  *
- * random.h: Contains the dSFMT, a prng
- *      adapted from Mutsuo Saito and Makoto Matsumoto
+ * errors.h:
  *
- *****************************************************************
+ ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *      Institute for Theoretical and Applied Physics
  *      University of Stuttgart, D-70550 Stuttgart, Germany
  *      http://potfit.sourceforge.net/
  *
- *****************************************************************
+ ****************************************************************
  *
  *   This file is part of potfit.
  *
@@ -27,13 +26,11 @@
  *   You should have received a copy of the GNU General Public License
  *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
- *****************************************************************/
+ ****************************************************************/
 
-#ifndef POTFIT_RANDOM_H
-#define POTFIT_RANDOM_H
+#ifndef POTFIT_ERRORS_H
+#define POTFIT_ERRORS_H
 
-void init_rng(int seed);
-double eqdist();
-double normdist();
+void write_errors(double* force, double error_sum);
 
-#endif  // POTFIT_RANDOM_H
+#endif  // POTFIT_ERRORS_H

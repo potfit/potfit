@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -29,20 +29,24 @@
  *
  ****************************************************************/
 
-/*** rewritten for double precision and zero-offset vectors and matrices 	***/
-/*** adapted to Powell requrirements (return vector instead of value)... 	***/
-/*** adapted to double variables (ITAP standard) by PB, ITAP, 2002-10-24	***/
-/*** by Peter Brommer, ITAP, 2002-10-10 					***/
+/*** rewritten for double precision and zero-offset vectors and matrices
+ * ***/
+/*** adapted to Powell requrirements (return vector instead of value)...
+ * ***/
+/*** adapted to double variables (ITAP standard) by PB, ITAP, 2002-10-24
+ * ***/
+/*** by Peter Brommer, ITAP, 2002-10-10 ***/
 
 #include "potfit.h"
 
-#include "utils.h"
-#include "forces.h"
 #include "bracket.h"
+#include "forces.h"
+#include "memory.h"
+#include "utils.h"
 
 #define TOL 1.0e-1
 
-double *xicom, *delcom;
+double* xicom, *delcom;
 
 /****************************************************************
  *
@@ -52,10 +56,11 @@ double *xicom, *delcom;
  *
  ****************************************************************/
 
-double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, double *fret1, double *fret2)
+double linmin(double xi[], double del[], double fxi1, double* x1, double* x2,
+              double* fret1, double* fret2)
 {
-  int   j;
-  static double *vecu = NULL;	/* Vector of location u */
+  int j;
+  static double* vecu = NULL; /* Vector of location u */
   double xx, fx, fb, bx, ax;
   double fa = fxi1;
   double xmin;
@@ -63,22 +68,22 @@ double linmin(double xi[], double del[], double fxi1, double *x1, double *x2, do
 
   xicom = xi;
   delcom = del;
-  ax = 0.0;			/*do not change without correcting fa, */
+  ax = 0.0; /*do not change without correcting fa, */
   /*saves 1 fcalc... */
   bx = 0.1;
 
-  if (vecu == NULL) {
-    vecu = vect_double(g_calc.ndimtot);
-    reg_for_free(vecu, "vecu");
-  }
+  if (vecu == NULL)
+    vecu = (double*)Malloc(g_calc.ndimtot);
+
   for (j = 0; j < g_calc.ndimtot; j++)
-    vecu[j] = xicom[j] + bx * delcom[j];	/*set vecu */
+    vecu[j] = xicom[j] + bx * delcom[j]; /*set vecu */
   fb = (*g_calc_forces)(vecu, fret2, 0);
 
   bracket(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
 
   fx = brent(ax, xx, bx, fx, TOL, &xmin, &xmin2, fret1, fret2);
-  for (j = 0; j < g_calc.ndimtot; j++) {
+  for (j = 0; j < g_calc.ndimtot; j++)
+  {
     del[j] *= xmin;
     xi[j] += del[j];
   }

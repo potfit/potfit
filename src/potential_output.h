@@ -35,20 +35,19 @@ void write_pot_table_potfit(char const* filename);
 void write_pot_table_imd(char const* prefix);
 void write_pot_table_lammps();
 
-
-void  write_plotpot_pair(pot_table_t *, char *);
-void  write_altplot_pair(pot_table_t *, char *);
+void write_plotpot_pair(pot_table_t*, char*);
+void write_altplot_pair(pot_table_t*, char*);
 #ifdef PDIST
-void  write_pairdist(pot_table_t *, char *);
+void write_pairdist(pot_table_t*, char*);
 #endif /* PDIST */
 
 /* functions for electrostatic calculations  */
 #ifdef COULOMB
-void  write_coulomb_table(void);
+void write_coulomb_table(void);
 #endif /* COULOMB */
 
 #ifdef APOT
-void  write_imd_data_pair(FILE *, char *, int, int);
+void write_imd_data_pair(FILE*, char*, int, int);
 #endif /* APOT */
 
 #endif /* POTENTIAL_H */

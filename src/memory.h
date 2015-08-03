@@ -1,16 +1,15 @@
 /****************************************************************
  *
- * random.h: Contains the dSFMT, a prng
- *      adapted from Mutsuo Saito and Makoto Matsumoto
+ * memory.h: potfit memory management header file
  *
- *****************************************************************
+ ****************************************************************
  *
- * Copyright 2002-2014
- *      Institute for Theoretical and Applied Physics
- *      University of Stuttgart, D-70550 Stuttgart, Germany
- *      http://potfit.sourceforge.net/
+ * Copyright 2002-2015
+ *	Institute for Theoretical and Applied Physics
+ *	University of Stuttgart, D-70550 Stuttgart, Germany
+ *	http://potfit.sourceforge.net/
  *
- *****************************************************************
+ ****************************************************************
  *
  *   This file is part of potfit.
  *
@@ -29,11 +28,13 @@
  *
  *****************************************************************/
 
-#ifndef POTFIT_RANDOM_H
-#define POTFIT_RANDOM_H
+#ifndef MEMORY_H
+#define MEMORY_H
 
-void init_rng(int seed);
-double eqdist();
-double normdist();
+void* Malloc(size_t size);
+void* Realloc(void* pvoid, size_t size);
 
-#endif  // POTFIT_RANDOM_H
+void initialize_global_variables();
+void free_allocated_memory();
+
+#endif  // MEMORY_H

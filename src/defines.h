@@ -28,25 +28,25 @@
  *
  ****************************************************************/
 
-#ifndef POTFIT_DEFINE_H
-#define POTFIT_DEFINE_H
+#ifndef POTFIT_DEFINES_H
+#define POTFIT_DEFINES_H
 
 /* general flag for threebody potentials (MEAM, Tersoff, SW, ...) */
-#if defined MEAM || defined STIWEB || defined TERSOFF
+#if defined(MEAM) || defined(STIWEB) || defined(TERSOFF)
 #define THREEBODY
 #endif /* MEAM || TERSOFF || STIWEB */
 
 /* define EAM if TBEAM is defined */
-#if defined TBEAM && !defined EAM
+#if defined(TBEAM) && !defined(EAM)
 #define EAM
 #endif /* TBEAM && !EAM */
 
-#ifdef APOT
-#define APOT_STEPS 500          /* number of sampling points for analytic pot */
-#define APOT_PUNISH 10e6        /* general value for apot punishments */
-#endif /* APOT */
+#if defined(APOT)
+#define APOT_STEPS 500   /* number of sampling points for analytic pot */
+#define APOT_PUNISH 10e6 /* general value for apot punishments */
+#endif                   /* APOT */
 
-#if defined EAM || defined ADP || defined MEAM
+#if defined(EAM) || defined(ADP) || defined(MEAM)
 #define DUMMY_WEIGHT 100.0
 #endif /* EAM || ADP || MEAM */
 
@@ -58,8 +58,10 @@
  *
  *  In potfit all potentials are calculated via spline interpolations of pre-
  *  calculated potential tables. To speed up the spline calculation,
- *  the exact position of a neighbor distance has to be known with respect to the
- *  tabulated values. For each potential function in a force routine there should
+ *  the exact position of a neighbor distance has to be known with respect to
+ *the
+ *  tabulated values. For each potential function in a force routine there
+ *should
  *  be a different slot with the corresponding potential table information.
  *
  *  SLOTS = 1 for the following interactions:
@@ -94,19 +96,19 @@
 
 #define SLOTS 1
 
-#if defined EAM || defined STIWEB
+#if defined(EAM) || defined(STIWEB)
 #undef SLOTS
 #define SLOTS 2
 #endif /* EAM || STIWEB */
 
-#if defined TBEAM || defined MEAM
+#if defined(TBEAM) || defined(MEAM)
 #undef SLOTS
 #define SLOTS 3
 #endif /* TBEAM || MEAM */
 
-#if defined ADP
+#if defined(ADP)
 #undef SLOTS
 #define SLOTS 4
 #endif /* ADP */
 
-#endif
+#endif  // POTFIT_DEFINES_H

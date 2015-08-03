@@ -37,46 +37,41 @@ dsfmt_t g_dsfmt;
 
 /****************************************************************
  *
- * initialize pRNG with seed from parameter file
- *
- ****************************************************************/
-
-void init_rng(int seed)
-{
-  int i = 0;
-
-  /* properly initialize random number generator */
-  #define R_SIZE 624
-  #define RAND_MAX 2147483647
-  {
-    uint32_t *array;
-    array = (uint32_t *) malloc(R_SIZE * sizeof(uint32_t));
-    srand(seed);
-    for (i = 0; i < R_SIZE; i++)
-      array[i] = rand();
-
-    dsfmt_init_by_array(&g_dsfmt, array, R_SIZE);
-
-    for (i = 0; i < 10e5; i++)
-      eqdist();
-
-    free(array);
-  }
-  #undef R_SIZE
-  #undef RAND_MAX
-}
-
-/****************************************************************
- *
  *  eqdist
  *      return double precision pseudorandom number which
  *      distributes uniformly in the range [0, 1).
  *
  ****************************************************************/
 
-double eqdist()
+double eqdist() { return dsfmt_genrand_close_open(&g_dsfmt); }
+
+/****************************************************************
+ *
+ * initialize pRNG with seed from parameter file
+ *
+ ****************************************************************/
+
+void init_rng(int seed)
 {
-  return dsfmt_genrand_close_open(&g_dsfmt);
+/* properly initialize random number generator */
+#define R_SIZE 624
+#define RAND_MAX 2147483647
+  {
+    uint32_t* array;
+    array = (uint32_t*)malloc(R_SIZE * sizeof(uint32_t));
+    srand(seed);
+    for (int i = 0; i < R_SIZE; i++)
+      array[i] = rand();
+
+    dsfmt_init_by_array(&g_dsfmt, array, R_SIZE);
+
+    for (int i = 0; i < 10e5; i++)
+      eqdist();
+
+    free(array);
+  }
+#undef R_SIZE
+#undef RAND_MAX
 }
 
 /****************************************************************
@@ -94,7 +89,8 @@ double normdist()
 
   if (!(have))
   {
-    do {
+    do
+    {
       x1 = 2.0 * eqdist() - 1.0;
       x2 = 2.0 * eqdist() - 1.0;
       sqr = x1 * x1 + x2 * x2;
@@ -104,7 +100,9 @@ double normdist()
     nd2 = x2 * cnst;
     have = 1;
     return x1 * cnst;
-  } else {
+  }
+  else
+  {
     have = 0;
     return nd2;
   }

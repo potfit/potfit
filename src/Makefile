@@ -101,6 +101,7 @@ endif
 
 POTFITHDR   	+= bracket.h
 POTFITHDR 	+= elements.h
+POTFITHDR 	+= memory.h
 POTFITHDR 	+= optimize.h
 POTFITHDR 	+= potfit.h
 POTFITHDR 	+= potential_input.h
@@ -116,6 +117,7 @@ POTFITSRC 	+= elements.c
 POTFITSRC 	+= errors.c
 POTFITSRC 	+= forces.c
 POTFITSRC 	+= linmin.c
+POTFITSRC 	+= memory.c
 POTFITSRC 	+= optimize.c
 POTFITSRC	+= params.c
 POTFITSRC 	+= potential_input.c
