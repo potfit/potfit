@@ -439,6 +439,22 @@ void read_config(char const* filename)
 
     init_angles(&cstate);
 
+    // Addition by AI 17/7/2015
+    #ifdef LMP
+       g_config.lattice = (lattice_t *)realloc(g_config.lattice,(g_config.nconf+1)*sizeof(lattice_t));
+       if(g_config.lattice==NULL){error(1, "Cannot allocate memory for lattice vector");}
+       g_config.lattice[g_config.nconf].xx = g_config.box_x.x;
+       g_config.lattice[g_config.nconf].xy = g_config.box_x.y;
+       g_config.lattice[g_config.nconf].xz = g_config.box_x.z;
+       g_config.lattice[g_config.nconf].yx = g_config.box_y.x;
+       g_config.lattice[g_config.nconf].yy = g_config.box_y.y;
+       g_config.lattice[g_config.nconf].yz = g_config.box_y.z;
+       g_config.lattice[g_config.nconf].zx = g_config.box_z.x;
+       g_config.lattice[g_config.nconf].zy = g_config.box_z.y;
+       g_config.lattice[g_config.nconf].zz = g_config.box_z.z;
+    #endif
+    // End addition
+
     /* increment natoms and configuration number */
     g_config.natoms += cstate.atom_count;
     g_config.nconf++;

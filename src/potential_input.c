@@ -63,8 +63,14 @@ void read_pot_table(char const* potential_filename)
 
   pstate.filename = potential_filename;
 
+  // Added by AI 23.07.2015
+  #ifdef GENERAL
+  g_calc.paircol = 0;
+  #else
   /* set paircol to the number of pair potentials */
   g_calc.paircol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
+  #endif /* GENERAL */
+  // End of Addition
 
   /* open file */
   pfile = fopen(potential_filename, "r");
@@ -250,6 +256,10 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 #if defined(TERSOFF) && !defined(TERSOFFMOD)
   npots = g_param.ntypes * g_param.ntypes;
 #endif /* TERSOFF && !TERSOFFMOD */
+
+#if defined(LMP)
+  npots = 0;
+#endif /* LMP */
 
   if (pstate->num_pots == npots) {
     printf(" - Using %d %s potentials to calculate forces\n", npots, interaction_name);
@@ -488,6 +498,221 @@ void allocate_memory_for_potentials(potential_state* pstate)
         apt->dp_c = apt->values[size + 4];
       #endif /* DIPOLE */
     #endif /* COULOMB */
+
+	// Addition by AI 23.07.2015
+	#ifdef LMP // "size = 0" in this Case
+	    int sizereax;
+	    int sr0,sr1,sr2,sr3,sr4,srO,srH; // Num of Parameters for N-body Interaction
+	    int srsum;
+	    int comb;
+	    int comb0,comb1,comb2,comb3,comb4,combO,combH;
+	  
+	    sr0 = 39; apt->rf_sr0 = sr0;
+	    sr1 = 32; apt->rf_sr1 = sr1;
+	    sr2 = 16; apt->rf_sr2 = sr2;
+	    srO = 6;  apt->rf_srO = srO;
+	    sr3 = 7;  apt->rf_sr3 = sr3;
+	    sr4 = 7;  apt->rf_sr4 = sr4;
+	    srH = 4;  apt->rf_srH = srH;
+	    sizereax = sr0 + sr1 + sr2 + sr3 + sr4 + srO + srH;
+
+	    comb0 = 1;
+	    comb1 = g_param.ntypes;
+	    comb2 = g_param.ntypes*(g_param.ntypes+1)/2; // Commutative: ij=ji
+	    comb3 = g_param.ntypes*g_param.ntypes*(g_param.ntypes+1)/2; // Commutative: ijk=kji
+	    comb4 = g_param.ntypes*g_param.ntypes*(g_param.ntypes*g_param.ntypes+1)/2; // Commutative: ijkl=lkji
+	    combO = g_param.ntypes*(g_param.ntypes+1)/2; // Commutative: ij=ji
+	    combH = g_param.ntypes*g_param.ntypes*g_param.ntypes; // Noncommutative
+	    apt->rf_comb0 = comb0;
+	    apt->rf_comb1 = comb1;
+	    apt->rf_comb2 = comb2;
+	    apt->rf_comb3 = comb3;
+	    apt->rf_comb4 = comb4;
+	    apt->rf_combO = combO;
+	    apt->rf_combH = combH;
+
+	//    printf("size = %d, sizereax = %d\n",size,sizereax);
+	    apt->values     = (double **) malloc((size + sizereax) * sizeof(double  *));
+	    apt->param_name = (char ***)malloc((size + sizereax) * sizeof(char **));
+	    apt->pmin       = (double **) malloc((size + sizereax) * sizeof(double  *));
+	    apt->pmax       = (double **) malloc((size + sizereax) * sizeof(double  *));
+	    apt->invar_par  = (int **)  malloc((size + sizereax) * sizeof(int   *));
+
+	    srsum = 0;
+	// 0-Body Params -- 1 Combination for each Param
+	//    comb = 1;
+	    comb = comb0;
+	    for(int i=srsum;i<srsum+sr0;i++) {
+	      apt->values    [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *) malloc(comb*(sizeof(int  )));
+	    }
+	    srsum += sr0;
+
+	// 1-Body Params -- N Combinations for each Param
+	//    comb = ntypes;
+	    comb = comb1;
+	    for (int i=srsum;i<srsum+sr1;i++) {
+	      apt->values    [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *) malloc(comb*(sizeof(int  )));
+	    }
+	    srsum += sr1;
+
+	// 2-Body Params -- (N+1)!/(N-1)!2! Combinations for each Param
+	//    comb = ntypes*(ntypes+1)/2;
+	    comb = comb2;
+	    for (int i=srsum;i<srsum+sr2;i++) {
+	      apt->values    [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *) malloc(comb*(sizeof(int  )));
+	    }
+	    srsum += sr2;
+
+	// Off-Diagonal Term (2-Body) // Kubo 20120606
+	//    comb = ntypes*(ntypes+1)/2;
+	    comb = combO;
+	    for (int i=srsum;i<srsum+srO;i++) {
+	      apt->values    [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *) malloc(comb*(sizeof(int  )));
+	    }
+	    srsum += srO;
+
+	// 3-Body Params -- N^2(N+1)/2 Combinations for each Param
+	//    comb = ntypes*ntypes*(ntypes+1)/2;
+	    comb = comb3;
+	    for(int i=srsum;i<srsum+sr3;i++){
+	      apt->values    [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *) malloc(comb*(sizeof(int  )));
+	    }
+	    srsum += sr3;
+
+	// 4-Body Params -- N^2(N^2+1)/2 Combinations for each Param
+	//    comb = ntypes*ntypes*(ntypes*ntypes+1)/2;
+	    comb = comb4;
+	    for(int i=srsum;i<srsum+sr4;i++){
+	      apt->values    [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *) malloc(comb*(sizeof(int  )));
+	    }
+	    srsum += sr4;
+
+	// H-Bond Params -- N^3 Combinations for each Param
+	//    comb = ntypes*ntypes*ntypes;
+	    comb = combH;
+	    for(int i=srsum;i<srsum+srH;i++){
+	      apt->values    [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *) malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *) malloc(comb*(sizeof(int  )));
+	    }
+	    srsum += srH;
+
+	//    reax_table_t *rpt = apt->reax_table;
+	// 0-Body (General)
+	    for(int i=0;i<39;i++){apt->vpar[i] = apt->values[size+i];}
+	    int k = 39;
+
+	// 1-Body (Atom)
+	    apt->rat    = apt->values[size+k]; k++; // Correction for Overcoordination
+	    apt->aval   = apt->values[size+k]; k++; // Overcoordination Energy
+	    apt->amas   = apt->values[size+k]; k++; // Mass (Not Used)
+	    apt->rvdw   = apt->values[size+k]; k++; // vdW Energy
+	    apt->eps    = apt->values[size+k]; k++; // vdW Energy
+	    apt->gam    = apt->values[size+k]; k++; // Coulomb Energy/ Charge Distribution
+	    apt->rapt   = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->stlp   = apt->values[size+k]; k++; // Determine Nr of Lone Pairs
+	    apt->alf    = apt->values[size+k]; k++; // vdW Energy
+	    apt->vop    = apt->values[size+k]; k++; // vdW Energy
+	    apt->valf   = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->valp1  = apt->values[size+k]; k++; // Undercoodination
+	    apt->valp2  = apt->values[size+k]; k++; // (Not Used)
+	    apt->chi    = apt->values[size+k]; k++; // Charge Distribution
+	    apt->eta    = apt->values[size+k]; k++; // Charge Distribution 
+	    apt->vnphb  = apt->values[size+k]; k++; // Hydrogen Bond
+	    apt->vnq    = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->vlp1   = apt->values[size+k]; k++; // Lone Pair Energy
+	    apt->vincr  = apt->values[size+k]; k++; // (Not Used)
+	    apt->bo131  = apt->values[size+k]; k++; // Correction for Overcoodination
+	    apt->bo132  = apt->values[size+k]; k++; // Correction for Overcoodination
+	    apt->bo133  = apt->values[size+k]; k++; // Correction for Overcoodination
+	    apt->sigqeq = apt->values[size+k]; k++; // (Not Used)
+	    apt->def    = apt->values[size+k]; k++; // (Not Used)
+	    apt->vovun  = apt->values[size+k]; k++; // Over/Undercoordination Energy
+	    apt->vval1  = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->vrom   = apt->values[size+k]; k++; // (Not Used)
+	    apt->vval3  = apt->values[size+k]; k++; // Correction for Overcoodination
+	    apt->vval4  = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->rcore2 = apt->values[size+k]; k++; // (Not Used)
+	    apt->ecore2 = apt->values[size+k]; k++; // (Not Used)
+	    apt->acore2 = apt->values[size+k]; k++; // (Not Used)
+
+	// 2-Body (Bond)
+	    apt->de1    = apt->values[size+k]; k++; // Bond Energy/ Overcoordination Energy
+	    apt->de2    = apt->values[size+k]; k++; // Bond Energy
+	    apt->de3    = apt->values[size+k]; k++; // Bond Energy
+	    apt->psi    = apt->values[size+k]; k++; // Bond Energy
+	    apt->pdo    = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->v13cor = apt->values[size+k]; k++; // Correction for Overcoodination
+	    apt->popi   = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->vover  = apt->values[size+k]; k++; // Overcoordination Energy
+	    apt->psp    = apt->values[size+k]; k++; // Bond Energy
+	    apt->pdp    = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->ptp    = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->bom    = apt->values[size+k]; k++; // (Not Used)
+	    apt->bop1   = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->bop2   = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->ovc    = apt->values[size+k]; k++; // Correction for Overcoodination
+	    apt->vuncor = apt->values[size+k]; k++; // (Not Used)
+
+	// Off-Diagonal
+	    apt->deodmh = apt->values[size+k]; k++; // vdW Energy
+	    apt->rodmh  = apt->values[size+k]; k++; // vdW Energy
+	    apt->godmh  = apt->values[size+k]; k++; // vdW Energy
+	    apt->rsig   = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->rpi    = apt->values[size+k]; k++; // Determine Bond Order
+	    apt->rpi2   = apt->values[size+k]; k++; // Determine Bond Order
+
+	// 3-Body (Angle)
+	    apt->th0    = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->vka    = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->vka3   = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->vka8   = apt->values[size+k]; k++; // Valency Angle Conjugation Energy
+	    apt->vkac   = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->vkap   = apt->values[size+k]; k++; // Valency Angle Energy
+	    apt->vval2  = apt->values[size+k]; k++; // Valency Angle Energy
+
+	// 4-Body (Torsion)
+	    apt->v1     = apt->values[size+k]; k++; // Torsion Angle Energy
+	    apt->v2     = apt->values[size+k]; k++; // Torsion Angle Energy
+	    apt->v3     = apt->values[size+k]; k++; // Torsion Angle Energy
+	    apt->v4     = apt->values[size+k]; k++; // Torsion Angle Energy
+	    apt->vconj  = apt->values[size+k]; k++; // Conjugation Energy
+	    apt->v2bo   = apt->values[size+k]; k++; // (Not Used)
+	    apt->v3bo   = apt->values[size+k]; k++; // (Not Used)
+
+	// Hydrogen Bond
+	    apt->rhb    = apt->values[size+k]; k++; // Hydrogen Bond Energy
+	    apt->dehb   = apt->values[size+k]; k++; // Hydrogen Bond Energy
+	    apt->vhb1   = apt->values[size+k]; k++; // Hydrogen Bond Energy
+	    apt->vhb2   = apt->values[size+k]; k++; // Hydrogen Bond Energy 
+	#endif /* LMP */
+	// End of addition
 
     apt->names = (char **)malloc(size * sizeof(char *));
 

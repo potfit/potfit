@@ -113,11 +113,11 @@ SHELL = /bin/bash
 # i686-icc 	32bit Intel Compiler
 # i686-gcc  	32bit GNU Compiler
 
-SYSTEM 		= x86_64-clang
+SYSTEM 		= x86_64-icc
 
 # Base directory of your installation of the MKL or ACML
 
-MKLDIR          = /opt/intel/composer_xe_2013.3.163/mkl
+MKLDIR          = /opt/intel/composer_xe_2011_sp1.10.319/mkl
 ACML4DIR  	= /opt/acml4.4.0/gfortran64
 ACML5DIR  	= /opt/acml/gfortran64
 LIBMDIR 	= /opt/acml/libm
@@ -142,7 +142,7 @@ ifeq (x86_64-icc,${SYSTEM})
   OMPI_CLINKER  = icc
 
 # general optimization flags
-  OPT_FLAGS     += -fast -xHost
+  OPT_FLAGS     += -std=c99 #-O3 -xHost
 
 # profiling and debug flags
   PROF_FLAGS    += --profile-functions
@@ -151,9 +151,15 @@ ifeq (x86_64-icc,${SYSTEM})
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+  MKLPATH       = ${MKLDIR}/lib/intel64
+ 
   CINCLUDE 	+= -I${MKLDIR}/include
-  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
-		   -lmkl_core -Wl,--end-group -lpthread
+#  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
+#		   -lmkl_core -Wl,--end-group -lpthread
+
+  LIBS          += -L${MKLPATH} ${MKLPATH}/libmkl_solver_lp64_sequential.a \
+                   -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
+                   -lmkl_core -Wl,--end-group -lpthread
 endif
 
 # AMD Core Math Library
@@ -190,6 +196,7 @@ ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      += -I${MKLDIR}/include
   LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
+
 endif
 
 # AMD Core Math Library

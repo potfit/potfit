@@ -280,6 +280,21 @@ typedef void (*fvalue_pointer)(double, double *, double *);
  *  potential table: holds tabulated potential data
  *
  ****************************************************************/
+// Addition by AI 17/7/2015
+#ifdef LMP
+typedef struct { // lattice_t
+  double xx;
+  double xy;
+  double xz;
+  double yx;
+  double yy;
+  double yz;
+  double zx;
+  double zy;
+  double zz;
+} lattice_t;
+#endif
+// End of addition
 
 typedef struct {
   /* potentials */
@@ -333,29 +348,113 @@ typedef struct {
   tersoff_t tersoff;
 #endif
 
+// Added by AI 17/7/2015
+#if defined (LMP)
+  int rf_sr0; // Num of Params for 0-Body Interaction (General)
+  int rf_sr1; // Num of Params for 1-Body Interaction (Atom)
+  int rf_sr2; // Num of Params for 2-Body Interaction (Bond)
+  int rf_sr3; // Num of Params for 3-Body Interaction (Angle)
+  int rf_sr4; // Num of Params for 4-Body Interaction (Torsion)
+  int rf_srO; // Num of Params for 2-Body Interaction (Off-Diagonal)
+  int rf_srH; // Num of Params for 3-Body Interaction (Hydrogen-Bond)
+
+  int rf_comb0; // Num of Combination for 0-Body Interaction (General)
+  int rf_comb1; // Num of Combination for 1-Body Interaction (Atom)
+  int rf_comb2; // Num of Combination for 2-Body Interaction (Bond)
+  int rf_comb3; // Num of Combination for 3-Body Interaction (Angle)
+  int rf_comb4; // Num of Combination for 4-Body Interaction (Torsion)
+  int rf_combO; // Num of Combination for 2-Body Interaction (Off-Diagonal)
+  int rf_combH; // Num of Combination for 3-Body Interaction (Hydrogen-Bond)
+
+// 0-Body (General)
+  double *vpar[39];
+
+// 1-Body (Atom)
+  double *rat;     // Correction for Overcoordination
+  double *aval;    // Overcoordination Energy
+  double *amas;    // Mass (Not Used)
+  double *rvdw;    // vdW Energy
+  double *eps;     // vdW Energy
+  double *gam;     // Coulomb Energy/ Charge Distribution
+  double *rapt;    // Determine Bond Order
+  double *stlp;    // Determine Nr of Lone Pairs
+  double *alf;     // vdW Energy
+  double *vop;     // vdW Energy
+  double *valf;    // Valency Angle Energy
+  double *valp1;   // Undercoodination
+  double *valp2;   // (Not Used)
+  double *chi;     // Charge Distribution
+  double *eta;     // Charge Distribution 
+  double *vnphb;   // Hydrogen Bond
+  double *vnq;     // Determine Bond Order
+  double *vlp1;    // Lone Pair Energy
+  double *vincr;   // (Not Used)
+  double *bo131;   // Correction for Overcoodination
+  double *bo132;   // Correction for Overcoodination
+  double *bo133;   // Correction for Overcoodination
+  double *sigqeq;  // (Not Used)
+  double *def;     // (Not Used)
+  double *vovun;   // Over/Undercoordination Energy
+  double *vval1;   // Valency Angle Energy
+  double *vrom;    // (Not Used)
+  double *vval3;   // Correction for Overcoodination
+  double *vval4;   // Valency Angle Energy
+  double *rcore2;  // (Not Used)
+  double *ecore2;  // (Not Used)
+  double *acore2;  // (Not Used)
+
+// 2-Body (Bond)
+  double *de1;     // Bond Energy/ Overcoordination Energy
+  double *de2;     // Bond Energy
+  double *de3;     // Bond Energy
+  double *psi;     // Bond Energy
+  double *pdo;     // Determine Bond Order
+  double *v13cor;  // Correction for Overcoodination
+  double *popi;    // Determine Bond Order
+  double *vover;   // Overcoordination Energy
+  double *psp;     // Bond Energy
+  double *pdp;     // Determine Bond Order
+  double *ptp;     // Determine Bond Order
+  double *bom;     // (Not Used)
+  double *bop1;    // Determine Bond Order
+  double *bop2;    // Determine Bond Order
+  double *ovc;     // Correction for Overcoodination
+  double *vuncor;  // (Not Used)
+// Off-Diagonal
+  double *deodmh;  // vdW Energy
+  double *rodmh;   // vdW Energy
+  double *godmh;   // vdW Energy
+  double *rsig;    // Determine Bond Order
+  double *rpi;     // Determine Bond Order
+  double *rpi2;    // Determine Bond Order
+// Hydrogen Bond
+  double *rhb;     // Hydrogen Bond Energy
+  double *dehb;    // Hydrogen Bond Energy
+  double *vhb1;    // Hydrogen Bond Energy
+  double *vhb2;    // Hydrogen Bond Energy
+
+// 3-Body (Angle)
+  double *th0;     // Valency Angle Energy
+  double *vka;     // Valency Angle Energy
+  double *vka3;    // Valency Angle Energy
+  double *vka8;    // Valency Angle Conjugation Energy
+  double *vkac;    // Valency Angle Energy
+  double *vkap;    // Valency Angle Energy
+  double *vval2;   // Valency Angle Energy
+
+// 4-Body (Torsion)
+  double *v1;      // Torsion Angle Energy
+  double *v2;      // Torsion Angle Energy
+  double *v3;      // Torsion Angle Energy
+  double *v4;      // Torsion Angle Energy
+  double *vconj;   // Conjugation Energy
+  double *v2bo;    // (Not Used)
+  double *v3bo;    // (Not Used)
+#endif
+// End of Addition
+
   fvalue_pointer *fvalue; /* function pointers for analytic potentials */
 } apot_table_t;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 typedef struct {
   /* system variables */
@@ -430,6 +529,11 @@ typedef struct {
    vector *sphere_centers;  /* centers of the spheres of contrib. atoms */
   #endif /* CONTRIB */
    vector tbox_x, tbox_y, tbox_z;
+  // Addition by AI 17/7/2015
+  #ifdef LMP
+  lattice_t *lattice;
+  #endif /* LMP */
+  // End of addition
 } potfit_configurations;
 
 typedef struct {
@@ -507,6 +611,11 @@ typedef struct {
   #ifdef APOT
   apot_table_t apot_table; /* potential in analytic form */
   #endif /* APOT */
+   // Addition by AI 17/7/2015
+  #ifdef LMP
+  void* lammpsObj;
+  #endif /* LMP */
+  // End of addition
 } potfit_potentials;
 
 typedef struct {

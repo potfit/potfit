@@ -195,6 +195,15 @@ ifneq (,$(strip $(findstring parab,${MAKETARGET})))
   POTFITSRC      += parabola.c
 endif
 
+# Added AI 17/7/2015
+ifneq (,$(strip $(findstring lmp,${MAKETARGET})))
+  POTFITHDR      += lmp.h
+  POTFITSRC      += lmp.cpp
+  POTFITSRC      += force_lmp.c
+else
+endif
+# End of Edition
+
 MPISRC          = mpi_utils.c
 
 #########################################################
@@ -301,6 +310,22 @@ ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
   INTERACTION = 1
 endif
 
+# Edited by AI 17/7/2015
+# Implement LAMMPS lib.
+ifneq (,$(strip $(findstring lmp,${MAKETARGET})))
+  ifneq (,$(findstring 1,${INTERACTION}))
+  ERROR += More than one potential model specified
+  endif
+  ifeq (,$(strip $(findstring apot,${MAKETARGET})))
+    ERROR += LAMMPS does not support tabulated potentials
+  endif
+  CFLAGS  += -DLMP
+  INTERACTION = 1
+else
+  ERROR += "POP:"${MAKETARGET}
+endif
+# End of Edition
+
 ifneq (,$(findstring 0,${INTERACTION}))
   ERROR += "No interaction model specified."
 endif
@@ -381,8 +406,16 @@ ifneq (,$(findstring resc,${MAKETARGET}))
 CFLAGS += -DRESCALE
 endif
 
+ifneq (,$(findstring lmp,${MAKETARGET}))
+#CFLAGS += -O
+CFLAGS += -I./lammps/
+#CFLAGS += -I./lammps/STUBS
+endif
+
 # Substitute .o for .c to get the names of the object files
-OBJECTS := $(subst .c,.o,${SOURCES})
+OBJECTS := $(subst .cpp,.o,${SOURCES})
+OBJECTS := $(subst .c,.o,${OBJECTS})
+CXX := $(subst cc,c++,${CC})
 
 ###########################################################################
 #
@@ -412,6 +445,11 @@ utils.o: utils.c
 		exit 1; \
 		}
 
+# special rule for lmp.cpp
+lmp.o: lmp.cpp
+	@echo " [CXX] lmp.cpp"
+	@${CXX} -DOMPI_SKIP_MPICXX ${CFLAGS} -c lmp.cpp
+
 # generic compilation rule
 %.o: %.c
 ifeq (,${MAKETARGET})
@@ -427,6 +465,17 @@ else
 		exit 1; \
 		}
 endif
+
+# Added by AI 17/7/2015
+# For LAMMPS lib.
+ifneq (,$(strip $(findstring lmp,${MAKETARGET})))
+  LIBS += -llmp_openmpi
+  LIBS += -ljpeg
+  LIBS += -L./lammps/
+  #OBJECTS += -L./lammps/STUBS/
+  LIBS += -lmpi
+endif
+# End of Addition
 
 # How to link
 ${MAKETARGET}: ${OBJECTS}

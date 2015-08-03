@@ -122,6 +122,12 @@ static const char interaction_name[11] = "TERSOFFMOD";
 static const char interaction_name[8] = "TERSOFF";
 #endif /* TERSOFFMOD */
 void  update_tersoff_pointers(double *);
+//ADDITION by AI 17/77/2015
+#elif defined LMP
+static const char interaction_name[4] = "LMP";
+int rxp_num; // number of parameters of reaxFF potential
+
+//END OF ADDITION
 #endif /* interaction type */
 
 /* rescaling functions for EAM [rescale.c] */
