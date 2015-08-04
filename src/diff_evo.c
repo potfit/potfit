@@ -138,7 +138,14 @@ void opposite_check(double** population, double* cost, int do_init)
     tot_P = (double**)Malloc(2 * NP * sizeof(double*));
 
     for (int i = 0; i < 2 * NP; i++)
+    {
       tot_P[i] = (double*)Malloc(D * sizeof(double));
+      // Edited by AI 20150804 ===//
+      #ifdef LMP
+          for(int j=0;j<D-2;j++){tot_P[i][j] = population[i%NP][j];}
+      #endif
+      //   // End of Edition ============//
+    }
   }
 
   if (tot_cost == NULL)
@@ -331,6 +338,12 @@ void run_differential_evolution(double* xi)
   fflush(stdout);
 
   init_population(pop_1, xi, cost);
+
+// Edited by Kubo 20130701 ===//
+#ifdef LMP
+   for(int i=0;i<D-2;i++){trial[i] = xi[i];}
+#endif
+// End of Edition ============//
 
   for (int i = 0; i < NP; i++)
   {

@@ -35,7 +35,7 @@
   extern "C" {
 #endif
 
-double lammps(int, int, int, double *,double *,double *,int *,double *, void*);
+double lammps(int, int, int, double *,double *,double *,int *,double *,double*, void*);
 void open_lammps(void **);
 void close_lammps(void *);
 double get_energy(void *);

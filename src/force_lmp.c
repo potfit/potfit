@@ -32,25 +32,12 @@
 
 #ifdef LMP
 #include "potfit.h"
-
+#include "lmp.h"
 #include "functions.h"
 #include "potential_input.h"
 #include "splines.h"
 #include "utils.h"
 #include "time.h"
-
-double lammps( // RETURN: Total Energy
-int me,
-int   natm, //-------- IN: Num of Atoms
-int   ntps, //-------- IN: Num of Atomic Types (=ntypes)
-double *lvec, //-------- IN: Lattice Vector Length (x,y,z)
-double *avec, //-------- IN: Lattice Vector Angle (xy,xz,yz)
-double *coordtmp, //---- IN: Coords[3N] (rx1,ry1,rz1,rx2,ry2,rz2,...)
-int  *asp, //--------- IN: Atomic Species[N] (a1,a2,...)
-double *forcetmp, //--- OUT: Forces[3N] (fx1,fy1,fz1,fx2,fy2,fz2,...)
-double *potrearr,
-void* lammpsOBJ //------- IN: Potaential Param[npot+tags]
-);
 
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
@@ -63,50 +50,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double *xi = NULL;
   apot_table_t *apt = &g_pot.apot_table;
 
-  // create communicator for each node
-  //MPI_Comm new_comm;
+    xi = xi_opt;
 
-  //MPI_Comm_split(MPI_COMM_WORLD, myid, myid, &new_comm);
-  //MPI_Group orig_group, new_group;
-  //MPI_Comm_group(MPI_COMM_WORLD, &orig_group);
- // int ranks[1];
-  //ranks[0] = myid;
-  //MPI_Group_incl(orig_group, 1, ranks, &new_group);
-  //printf("Entered force calculation: %d. Will create lammps object now.\r\n", myid);
-  //fflush(stdout);  
-//MPI_Comm_create(MPI_COMM_WORLD, new_group, &new_comm);
-//  clock_t t1, t2;
-
-  //t1 = clock();
-  //LAMMPS* lammpsOBJ = new LAMMPS(0,NULL, MPI_COMM_SELF); 
-  //t2 = clock(); 
-  //float diff = (((float)t2 - (float)t1) / 1000000.0F ) * 1000;   
-  //printf("MyID: %d, LAMMPS Init.: %f ms\n", myid, diff);
-  // Edited by Kubo 20120528 ===================================//
-// From ------------------------------------------------------//
-/*
-  switch (format) {
-      case 0:
-        xi = calc_pot.table;
-        break;
-      case 3:			// fall through
-      case 4:
-        xi = xi_opt;		// calc-table is opt-table
-        break;
-      case 5:
-        xi = calc_pot.table;	// we need to update the calc-table
-  }
-  */
-
-// To --------------------------------------------------------//
-  //if (flag != 1)
-     xi = xi_opt;
-   
-  //if (myid > 0)
- //show_ff(4, xi);
- //return 0;
-// End of Edition ============================================//
- 
   /* This is the start of an infinite loop */
   while (1) {
     tmpsum = 0.;		/* sum of squares of local process */
@@ -123,16 +68,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     /* exchange potential and flag value */
     MPI_Bcast(xi,calc_pot.len,MPI_DOUBLE,0,MPI_COMM_WORLD);
 #endif /* APOT */
-    //if (flag==1) {
-    //printf("OUTPUT: %d %d", myid, flag);
    
-    //return 0;
-    //break; }
-    
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    //printf("CLOSE: %d %d\n", myid, flag);
-    //fflush(stdout);
 
     if(flag==1){break;}   /* Exception: flag 1 means clean up */
 
@@ -141,40 +78,15 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
 #else /* APOT */
-    /* if flag==2 then the potential parameters have changed -> sync */
     if(flag==2){potsync();}
 #endif /* APOT */
 #endif /* MPI */
 
-//return 0;
-
     /* init second derivatives for splines */
-
-// Edited by Kubo 20120528 ===================================//
-// Comm-Out
-/*
-    // pair potentials
-    for(col=0;col<paircol;col++){
-      first = calc_pot.first[col];
-      if (format == 0 || format == 3)
-        spline_ed(calc_pot.step[col], xi + first,
-                  calc_pot.last[col] - first + 1,
-                  *(xi + first - 2), 0.0,
-                  calc_pot.d2tab + first);
-      else			// format >= 4 ! 
-        spline_ne(calc_pot.xcoord + first, xi + first,
-                  calc_pot.last[col] - first + 1,
-                  *(xi + first - 2), 0.0,
-                  calc_pot.d2tab + first);
-    }
-*/
-// End of Edition ============================================//
 
 #ifndef MPI
     myconf = nconf;
 #endif /* MPI */
-  //printf("CHKPNT 1: %d\n", myid);
-  //fflush(stdout);  
     /* region containing loop over configurations,
        also OMP-parallelized region */
     {
@@ -186,11 +98,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 
       neigh_t *neigh;
-
-      // create communicator for each node
-      //MPI_Comm new_comm;
-      //MPI_Comm_split(MPI_COMM_WORLD, myid, myid, &new_comm);
-      //LAMMPS* lammpsOBJ = new LAMMPS(0,NULL, new_comm /*MPI_COMM_WORLD/*); 
 
       /* pair variables */
       double  phi_val, phi_grad;
@@ -209,16 +116,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
         for(i=0;i<6;i++){forces[g_calc.stress_p+6*h+i] = 0.;}
 #endif /* STRESS */
 
-// Edited by Kubo 20120522 ===//
-// From ----------------------//
-//#ifdef APOT
-//          if (enable_cp)
-//            forces[energy_p + h] +=
-//                chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
-//#endif /* APOT */
-// To ------------------------//
-          forces[g_calc.energy_p+h] = g_config.force_0[g_calc.energy_p+h];
-// End of Edition ============//
+         forces[g_calc.energy_p+h] = g_config.force_0[g_calc.energy_p+h];
 
 	/* first loop over atoms: reset forces, densities */
           for (i = 0; i < g_config.inconf[h]; i++) {

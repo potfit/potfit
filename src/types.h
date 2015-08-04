@@ -352,7 +352,7 @@ typedef struct
   tersoff_t tersoff;
 #endif
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
 // Added by AI 17/7/2015
 #if defined (LMP)
   int rf_sr0; // Num of Params for 0-Body Interaction (General)
@@ -543,6 +543,12 @@ typedef struct
   sym_tens* conf_stress; /* local stress of each configuration */
   sym_tens* stress;      /* global stress of each configuration */
 #endif                   /* STRESS */
+
+// Addition by AI 17/7/2015
+#ifdef LMP
+ lattice_t *lattice;
+#endif /* LMP */
+// End of addition
 } potfit_configurations;
 
 /****************************************************************

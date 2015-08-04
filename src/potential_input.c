@@ -65,12 +65,12 @@ void read_pot_table(char const* potential_filename)
   pstate.filename = potential_filename;
 
   // Added by AI 23.07.2015
-  #ifdef GENERAL
+  #ifdef LMP
   g_calc.paircol = 0;
   #else
   /* set paircol to the number of pair potentials */
   g_calc.paircol = (g_param.ntypes * (g_param.ntypes + 1)) / 2;
-  #endif /* GENERAL */
+  #endif /* LMP */
   // End of Addition
 
   /* open file */
