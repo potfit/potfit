@@ -98,33 +98,32 @@ void init_forces(int is_worker)
 #endif
 #endif
 
-/* Select correct spline interpolation and other functions */
-#if defined(APOT)
-  if (g_pot.format == 0)
+  /* Select correct spline interpolation and other functions */
+  switch (g_pot.format_type)
   {
-    g_splint = splint_ed;
-    g_splint_comb = splint_comb_ed;
-    g_splint_grad = splint_grad_ed;
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+    {
+      g_splint = splint_ed;
+      g_splint_comb = splint_comb_ed;
+      g_splint_grad = splint_grad_ed;
+      break;
+    }
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+    {
+      g_splint = splint_ne;
+      g_splint_comb = splint_comb_ne;
+      g_splint_grad = splint_grad_ne;
+      break;
+    }
   }
-#else
-  if (g_pot.format == 3)
-  {
-    g_splint = splint_ed;
-    g_splint_comb = splint_comb_ed;
-    g_splint_grad = splint_grad_ed;
-  }
-  else if (g_pot.format >= 4)
-  {
-    g_splint = splint_ne;
-    g_splint_comb = splint_comb_ne;
-    g_splint_grad = splint_grad_ne;
-  }
-#endif /* APOT */
 
-#ifdef COULOMB
+#if defined(COULOMB)
   if (g_pot.apot_table.sw_kappa)
     init_tails(g_pot.apot_table.dp_kappa[0]);
-#endif /* COULOMB */
+#endif  // COULOMB
 
 /* set spline density corrections to 0 */
 #if defined(EAM) || defined(ADP) || defined(MEAM)

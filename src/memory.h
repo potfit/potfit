@@ -33,6 +33,9 @@
 
 void* Malloc(size_t size);
 void* Realloc(void* pvoid, size_t size);
+void* Malloc_Local(size_t size);
+void* Realloc_Local(void* pvoid, size_t size);
+void free_local_memory();
 
 void initialize_global_variables();
 void free_allocated_memory();

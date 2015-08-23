@@ -30,13 +30,14 @@
 
 #include "potfit.h"
 
-#if defined RESCALE && !defined APOT
+#if defined(RESCALE) && !defined(APOT)
 
+#include "memory.h"
 #include "splines.h"
 
 /* Doesn't make much sense without MEAM */
 
-#ifdef MEAM
+#if defined(MEAM)
 
 /****************************************************************
  *
@@ -48,10 +49,9 @@
 
 double rescale(pot_table_t* pt, double upper, int flag)
 {
-  int i, j, h, col, col2, type1, type2, mincol, maxcol, first, dimnewxi, vals, sign;
+  int i, j, h, col, col2, type1, type2, mincol, maxcol, first, vals, sign;
   double min = 1e100, max = -1e100;
   double pos, grad, a;
-  double* xi, *newxi, *neword, *newstep, *maxrho, *minrho, *left, *right;
   atom_t* atom;
   neigh_t* neigh;
 
@@ -60,22 +60,29 @@ double rescale(pot_table_t* pt, double upper, int flag)
   neigh_t* neigh_j, *neigh_k;
 
   /* Set potential array in xi */
-  xi = pt->table;
+  double* const xi = pt->table;
 
   /* Last index of F(type n) - Last index of rho(type n)
      The total number of splines and gradients for F and all of its
      types for an alloy */
-  dimnewxi = pt->last[g_calc.paircol + 2 * g_param.ntypes - 1] -
-             pt->last[g_calc.paircol + g_param.ntypes - 1];
+  const int dimnewxi = pt->last[g_calc.paircol + 2 * g_param.ntypes - 1] -
+                       pt->last[g_calc.paircol + g_param.ntypes - 1];
 
   /* Allocate memory for dynamic arrays that will store the new F */
-  newxi = (double*)malloc(dimnewxi * sizeof(double));          // Size of F array
-  neword = (double*)malloc(dimnewxi * sizeof(double));         // Size of F array
-  newstep = (double*)malloc(g_param.ntypes * sizeof(double));  // # of cols of F
-  maxrho = (double*)malloc(g_param.ntypes * sizeof(double));   // # of cols of F
-  minrho = (double*)malloc(g_param.ntypes * sizeof(double));   // # of cols of F
-  left = (double*)malloc(g_param.ntypes * sizeof(double));     // # of cols of F
-  right = (double*)malloc(g_param.ntypes * sizeof(double));    // # of cols of F
+  double* const newxi =
+      (double*)Malloc_Local(dimnewxi * sizeof(double));  // Size of F array
+  double* const neword =
+      (double*)Malloc_Local(dimnewxi * sizeof(double));  // Size of F array
+  double* const newstep =
+      (double*)Malloc_Local(g_param.ntypes * sizeof(double));  // # of cols of F
+  double* const maxrho =
+      (double*)Malloc_Local(g_param.ntypes * sizeof(double));  // # of cols of F
+  double* const minrho =
+      (double*)Malloc_Local(g_param.ntypes * sizeof(double));  // # of cols of F
+  double* const left =
+      (double*)Malloc_Local(g_param.ntypes * sizeof(double));  // # of cols of F
+  double* const right =
+      (double*)Malloc_Local(g_param.ntypes * sizeof(double));  // # of cols of F
 
   // Initialize max and min rho's for each column in F
   for (i = 0; i < g_param.ntypes; i++)
@@ -617,13 +624,9 @@ double rescale(pot_table_t* pt, double upper, int flag)
   }
 
 #endif /* EAM */
-  free(newxi);
-  free(neword);
-  free(newstep);
-  free(maxrho);
-  free(minrho);
-  free(left);
-  free(right);
+
+  free_local_memory();
+
   return a;
 }
 

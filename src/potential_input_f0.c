@@ -1051,6 +1051,7 @@ void init_calc_table0()
   calc->invstep = (double*)Malloc(size * sizeof(double));
   calc->xcoord = (double*)Malloc(calc->len * sizeof(double));
   calc->table = (double*)Malloc(calc->len * sizeof(double));
+  printf("Allocated %d bytes for g_pot.calc_pot.table @ %p\n", calc->len, calc->table);
   calc->d2tab = (double*)Malloc(calc->len * sizeof(double));
   calc->idx = (int*)Malloc(calc->len * sizeof(int));
 

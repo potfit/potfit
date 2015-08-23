@@ -53,13 +53,16 @@ typedef struct
 {
   void** pointers;
   int num_pointers;
+  void** local_pointers;
+  int num_local_pointers;
 } potfit_memory;
 
 potfit_memory g_memory;
 
 /****************************************************************
  *
- *  Malloc
+ *  Malloc:
+ *    allocate memory, initialize it and register it for freeing
  *
  ****************************************************************/
 
@@ -72,7 +75,12 @@ void* Malloc(size_t size)
 
   memset(p, 0, size);
 
-  g_memory.pointers = (void**)realloc(g_memory.pointers, g_memory.num_pointers + 1);
+  g_memory.pointers =
+      (void**)realloc(g_memory.pointers, sizeof(void*) * (g_memory.num_pointers + 1));
+
+  if (g_memory.pointers == NULL)
+    error(1, "Error allocating resources");
+
   g_memory.pointers[g_memory.num_pointers] = p;
   g_memory.num_pointers++;
 
@@ -81,35 +89,98 @@ void* Malloc(size_t size)
 
 /****************************************************************
  *
- *  initialize_global_variables
+ *  Realloc:
+ *    reallocate memory and update the freeing array accordingly
+ *    initialization is difficult because we don't know to former size
  *
  ****************************************************************/
 
 void* Realloc(void* pvoid, size_t size)
 {
+  if (pvoid == NULL)
+    return Malloc(size);
+
   void* temp = realloc(pvoid, size);
 
   if (temp == NULL)
     error(1, "Error allocating resources");
 
-  if (pvoid == NULL)
+  for (int i = 0; i < g_memory.num_pointers; i++)
   {
-    g_memory.pointers = (void**)realloc(g_memory.pointers, g_memory.num_pointers + 1);
-    g_memory.pointers[g_memory.num_pointers] = temp;
-    g_memory.num_pointers++;
-  }
-  else if (temp != pvoid)
-  {
-    for (int i = 0; i < g_memory.num_pointers; i++)
-    {
-      if (pvoid == g_memory.pointers[i])
-      {
-        g_memory.pointers[i] = temp;
-      }
-    }
+    if (pvoid == g_memory.pointers[i])
+      g_memory.pointers[i] = temp;
   }
 
   return temp;
+}
+
+/****************************************************************
+ *
+ *  Malloc_Local:
+ *    allocate memory for a local variable
+ *
+ ****************************************************************/
+
+void* Malloc_Local(size_t size)
+{
+  void* p = malloc(size);
+
+  if (p == NULL)
+    error(1, "Error allocating local resources");
+
+  memset(p, 0, size);
+
+  g_memory.local_pointers = (void**)realloc(
+      g_memory.local_pointers, sizeof(void*) * (g_memory.num_local_pointers + 1));
+
+  if (g_memory.local_pointers == NULL)
+    error(1, "Error allocating local resources");
+
+  g_memory.local_pointers[g_memory.num_local_pointers] = p;
+  g_memory.num_local_pointers++;
+
+  return p;
+}
+
+/****************************************************************
+ *
+ *  Realloc_Local:
+ *    reallocate memory for a local variable
+ *
+ ****************************************************************/
+
+void* Realloc_Local(void* pvoid, size_t size)
+{
+  if (pvoid == NULL)
+    return Malloc_Local(size);
+
+  void* temp = realloc(pvoid, size);
+
+  if (temp == NULL)
+    error(1, "Error allocating local resources");
+
+  for (int i = 0; i < g_memory.num_local_pointers; i++)
+  {
+    if (pvoid == g_memory.local_pointers[i])
+      g_memory.local_pointers[i] = temp;
+  }
+
+  return temp;
+}
+
+/****************************************************************
+ *
+ *  free_local_memory:
+ *    free all memory allocated via *_Local methods
+ *
+ ****************************************************************/
+
+void free_local_memory()
+{
+  for (int i = 0; i < g_memory.num_local_pointers; i++)
+    free(g_memory.local_pointers[i]);
+
+  free(g_memory.local_pointers);
 }
 
 /****************************************************************
@@ -143,7 +214,7 @@ void initialize_global_variables()
 
   g_pot.gradient = NULL;
   g_pot.invar_pot = NULL;
-  g_pot.format = -1;
+  g_pot.format_type = POTENTIAL_FORMAT_UNKNOWN;
   g_pot.have_invar = 0;
   memset(&g_pot.calc_pot, 0, sizeof(g_pot.calc_pot));
   memset(&g_pot.opt_pot, 0, sizeof(g_pot.opt_pot));
@@ -186,6 +257,8 @@ void initialize_global_variables()
 
   g_memory.pointers = NULL;
   g_memory.num_pointers = 0;
+  g_memory.local_pointers = NULL;
+  g_memory.num_local_pointers = 0;
 }
 
 /****************************************************************

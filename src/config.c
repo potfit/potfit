@@ -62,6 +62,7 @@ typedef struct
 #endif  // CONTRIB
 } config_state;
 
+void reset_cstate(config_state* cstate);
 void create_memory_for_config(config_state* cstate);
 void init_atom_memory(atom_t* atom);
 void read_box_vector(char const* pline, vector* pvect, config_state* cstate);
@@ -100,8 +101,6 @@ void read_config(char const* filename)
   int with_forces = 0;
   int with_stresses = 0;
 
-  double* mindist = NULL;
-
   FILE* config_file = NULL;
 
   fpos_t filepos;
@@ -123,7 +122,8 @@ void read_config(char const* filename)
   }
 
   /* initialize minimum distance array */
-  mindist = (double*)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
+  double* mindist =
+      (double*)Malloc_Local(g_param.ntypes * g_param.ntypes * sizeof(double));
 
   /* set maximum cutoff distance as starting value for mindist */
   for (int i = 0; i < g_param.ntypes * g_param.ntypes; i++)
@@ -155,14 +155,15 @@ void read_config(char const* filename)
   {
     res = fgets(buffer, 1024, config_file);
 
-    cstate.line++;
+    ++cstate.line;
 
-    if (NULL == res)
+    if (res == NULL)
       error(1, "Unexpected end of file in %s", filename);
 
     if (res[0] == '#' && res[1] == 'N')
     {
-      memset(&cstate, 0, sizeof(cstate));
+      reset_cstate(&cstate);
+      ++cstate.config;
 
       if (sscanf(res + 3, "%d %d", &cstate.atom_count, &cstate.use_force) < 2)
         error(1, "%s: Error in atom number specification on line %d\n", filename,
@@ -175,14 +176,14 @@ void read_config(char const* filename)
 #if !defined(THREEBODY)
     if (cstate.atom_count < 2)
       error(1,
-            "The configuration %d (starting on line %d) has not enough atoms. "
-            "Please remove it.",
+            "Configuration %d (starting on line %d) has not enough atoms, please remove "
+            "it.",
             g_config.nconf + 1, cstate.line);
 #else
     if (cstate.atom_count < 3)
       error(1,
-            "The configuration %d (starting on line %d) has not enough atoms. "
-            "Please remove it.",
+            "Configuration %d (starting on line %d) has not enough atoms, please remove "
+            "it.",
             g_config.nconf + 1, cstate.line);
 #endif /* !THREEBODY */
 
@@ -216,17 +217,17 @@ void read_config(char const* filename)
         case 'x':
         case 'X':
           read_box_vector(res + 3, &cstate.box_x, &cstate);
-          cstate.have_box_vector &= 1;
+          cstate.have_box_vector ^= 1;
           break;
         case 'y':
         case 'Y':
           read_box_vector(res + 3, &cstate.box_y, &cstate);
-          cstate.have_box_vector &= 2;
+          cstate.have_box_vector ^= 2;
           break;
         case 'z':
         case 'Z':
           read_box_vector(res + 3, &cstate.box_z, &cstate);
-          cstate.have_box_vector &= 4;
+          cstate.have_box_vector ^= 4;
           break;
 #if defined(CONTRIB)
         case 'b':
@@ -239,7 +240,7 @@ void read_config(char const* filename)
               if (cstate.have_contrib_box_vector & 1)
               {
                 error(0, "There can only be one box of contributing atoms\n");
-                error(1, "This occured in %s on line %d", filename, cstate.line);
+                error(1, "  This occured in %s on line %d", filename, cstate.line);
               }
               read_box_vector(res + 5, &cstate.cbox_o, &cstate);
               cstate.have_contrib_box_vector &= 1;
@@ -309,10 +310,17 @@ void read_config(char const* filename)
           break;
         }
 #endif /* STRESS */
+        case 'f':
+        case 'F':
+          break;
         default:
         {
-          warning("Unknown header line in %s detected:\n", filename);
-          warning("Line %d : %s\n", cstate.line, res);
+          if (res[1] != '#')
+          {
+            warning("Ignoring unknown header item in line %d of file >> %s <<:\n",
+                    cstate.line, filename);
+            warning("  \"%s\"\n", res);
+          }
           break;
         }
       }
@@ -320,10 +328,10 @@ void read_config(char const* filename)
     } while (res[1] != 'F');
 
     if (cstate.have_energy == 0)
-      error(1, "%s: missing energy in configuration %d!", filename, g_config.nconf);
+      error(1, "%s: missing energy in configuration %d!", filename, g_config.nconf + 1);
 
     if (cstate.have_box_vector != 7)
-      error(1, "Incomplete box vectors for config %d!", g_config.nconf);
+      error(1, "Incomplete box vectors for config %d!", g_config.nconf + 1);
 
 #if defined(CONTRIB)
     if (cstate.have_contrib_box_vector != 15)
@@ -593,9 +601,64 @@ void read_config(char const* filename)
 
   print_minimal_distances_matrix(mindist);
 
-  free(mindist);
+  free_local_memory();
+}
 
-  return;
+/****************************************************************
+ *
+ *  reset_cstate
+ *
+ ****************************************************************/
+
+void reset_cstate(config_state* cstate)
+{
+  cstate->atom_count = 0;
+  cstate->use_force = 0;
+  cstate->have_elements = 0;
+  cstate->have_energy = 0;
+  cstate->have_stress = 0;
+  cstate->have_stress = 0;
+  cstate->box_x.x = 0.0;
+  cstate->box_x.y = 0.0;
+  cstate->box_x.z = 0.0;
+  cstate->box_y.x = 0.0;
+  cstate->box_y.y = 0.0;
+  cstate->box_y.z = 0.0;
+  cstate->box_z.x = 0.0;
+  cstate->box_z.y = 0.0;
+  cstate->box_z.z = 0.0;
+  cstate->tbox_x.x = 0.0;
+  cstate->tbox_x.y = 0.0;
+  cstate->tbox_x.z = 0.0;
+  cstate->tbox_y.x = 0.0;
+  cstate->tbox_y.y = 0.0;
+  cstate->tbox_y.z = 0.0;
+  cstate->tbox_z.x = 0.0;
+  cstate->tbox_z.y = 0.0;
+  cstate->tbox_z.z = 0.0;
+  cstate->cell_scale.x = 0.0;
+  cstate->cell_scale.y = 0.0;
+  cstate->cell_scale.z = 0.0;
+  cstate->have_box_vector = 0;
+  cstate->stresses = NULL;
+#if defined(CONTRIB)
+  cstate->have_contrib_box_vector = 0;
+  cstate->n_spheres = 0;
+  cstate->cbox_o.x = 0.0;
+  cstate->cbox_o.y = 0.0;
+  cstate->cbox_o.z = 0.0;
+  cstate->cbox_a.x = 0.0;
+  cstate->cbox_a.y = 0.0;
+  cstate->cbox_a.z = 0.0;
+  cstate->cbox_b.x = 0.0;
+  cstate->cbox_b.y = 0.0;
+  cstate->cbox_b.z = 0.0;
+  cstate->cbox_c.x = 0.0;
+  cstate->cbox_c.y = 0.0;
+  cstate->cbox_c.z = 0.0;
+  cstate->sphere_center = NULL;
+  cstate->sphere_radius = NULL;
+#endif  // CONTRIB
 }
 
 /****************************************************************
@@ -772,13 +835,9 @@ void init_box_vectors(config_state* cstate)
 
   if (cstate->cell_scale.x > 1 || cstate->cell_scale.y > 1 || cstate->cell_scale.z > 1)
   {
-    // TODO
-    warning(
-        "The box size of at least one configuration is smaller than the "
-        "cutoff distance.\n");
-    warning(
-        "Using additional periodic images for energy and force "
-        "calculations.\n");
+    warning("The box size of configuration %d is smaller than the cutoff distance.\n",
+            cstate->config);
+    warning("  Using additional periodic images for energy and force calculations.\n");
   }
 
 #if defined(DEBUG)
@@ -870,28 +929,30 @@ void init_neighbors(config_state* cstate, double* mindist)
               dd.x /= r;
               dd.y /= r;
               dd.z /= r;
-              int k = g_config.atoms[i].num_neigh++;
-              memset(g_config.atoms[i].neigh + k, 0, sizeof(neigh_t));
-              g_config.atoms[i].neigh[k].type = type2;
-              g_config.atoms[i].neigh[k].nr = j;
-              g_config.atoms[i].neigh[k].r = r;
-              g_config.atoms[i].neigh[k].r2 = r * r;
-              g_config.atoms[i].neigh[k].inv_r = 1.0 / r;
-              g_config.atoms[i].neigh[k].dist_r = dd;
-              g_config.atoms[i].neigh[k].dist.x = dd.x * r;
-              g_config.atoms[i].neigh[k].dist.y = dd.y * r;
-              g_config.atoms[i].neigh[k].dist.z = dd.z * r;
-#if defined(ADP)
-              g_config.atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
-              g_config.atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
-              g_config.atoms[i].neigh[k].sqrdist.zz = dd.z * dd.z * r * r;
-              g_config.atoms[i].neigh[k].sqrdist.yz = dd.y * dd.z * r * r;
-              g_config.atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
-              g_config.atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
-#endif  // ADP
 
-              // TODO
-              //               mindist[col] = MIN(mindist[col], r);
+              int k = g_config.atoms[i].num_neigh++;
+
+              neigh_t* n = g_config.atoms[i].neigh + k;
+
+              memset(n, 0, sizeof(neigh_t));
+
+              n->type = type2;
+              n->nr = j;
+              n->r = r;
+              n->r2 = r * r;
+              n->inv_r = 1.0 / r;
+              n->dist_r = dd;
+              n->dist.x = dd.x * r;
+              n->dist.y = dd.y * r;
+              n->dist.z = dd.z * r;
+#if defined(ADP)
+              n->sqrdist.xx = dd.x * dd.x * r * r;
+              n->sqrdist.yy = dd.y * dd.y * r * r;
+              n->sqrdist.zz = dd.z * dd.z * r * r;
+              n->sqrdist.yz = dd.y * dd.z * r * r;
+              n->sqrdist.zx = dd.z * dd.x * r * r;
+              n->sqrdist.xy = dd.x * dd.y * r * r;
+#endif  // ADP
 
               /* pre-compute index and shift into potential table */
 
@@ -903,6 +964,8 @@ void init_neighbors(config_state* cstate, double* mindist)
                         ? type1 * g_param.ntypes + type2 - ((type1 * (type1 + 1)) / 2)
                         : type2 * g_param.ntypes + type1 - ((type2 * (type2 + 1)) / 2);
                 set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 0);
+
+                mindist[col] = MIN(mindist[col], r);
 
 #if defined(EAM) || defined(ADP) || defined(MEAM)
                 /* transfer function */
@@ -963,43 +1026,51 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
   double istep = 0.0;
   double shift = 0.0;
 
-  if (g_pot.format == 0 || g_pot.format == 3)
+  switch (g_pot.format_type)
   {
-    double rr = r - g_pot.calc_pot.begin[col];
-
-    if (rr < 0)
+    case POTENTIAL_FORMAT_ANALYTIC:
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
     {
-      // TODO: rephrase
-      error(0, "The distance %f is smaller than the beginning\n", r);
-      error(0, "of the potential #%d (r_begin=%f).\n", col, g_pot.calc_pot.begin[col]);
-      fflush(stdout);
-      error(1, "Short distance!");
+      double rr = r - g_pot.calc_pot.begin[col];
+
+      if (rr < 0)
+      {
+        // TODO: rephrase
+        error(0, "The distance %f is smaller than the beginning\n", r);
+        error(0, "of the potential #%d (r_begin=%f).\n", col, g_pot.calc_pot.begin[col]);
+        fflush(stdout);
+        error(1, "Short distance!");
+      }
+
+      istep = g_pot.calc_pot.invstep[col];
+      slot = (int)(rr * istep);
+      shift = (rr - slot * g_pot.calc_pot.step[col]) * istep;
+      slot += g_pot.calc_pot.first[col];
+      step = g_pot.calc_pot.step[col];
+      break;
     }
-
-    istep = g_pot.calc_pot.invstep[col];
-    slot = (int)(rr * istep);
-    shift = (rr - slot * g_pot.calc_pot.step[col]) * istep;
-    slot += g_pot.calc_pot.first[col];
-    step = g_pot.calc_pot.step[col];
-  }
-  else /* format == 4 ! */
-  {
-    int klo = g_pot.calc_pot.first[col];
-    int khi = g_pot.calc_pot.last[col];
-
-    /* bisection */
-    while (khi - klo > 1)
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
     {
-      slot = (khi + klo) >> 1;
-      if (g_pot.calc_pot.xcoord[slot] > r)
-        khi = slot;
-      else
-        klo = slot;
-    }
+      int klo = g_pot.calc_pot.first[col];
+      int khi = g_pot.calc_pot.last[col];
 
-    slot = klo;
-    step = g_pot.calc_pot.xcoord[khi] - g_pot.calc_pot.xcoord[klo];
-    shift = (r - g_pot.calc_pot.xcoord[klo]) / step;
+      /* bisection */
+      while (khi - klo > 1)
+      {
+        slot = (khi + klo) >> 1;
+        if (g_pot.calc_pot.xcoord[slot] > r)
+          khi = slot;
+        else
+          klo = slot;
+      }
+
+      slot = klo;
+      step = g_pot.calc_pot.xcoord[khi] - g_pot.calc_pot.xcoord[klo];
+      shift = (r - g_pot.calc_pot.xcoord[klo]) / step;
+      break;
+    }
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected.");
   }
 
   /* independent of format - we should be left of last index */
@@ -1031,7 +1102,7 @@ void init_angles(config_state* cstate)
   {
     int nnn = g_config.atoms[i].num_neigh;
     int ijk = 0;
-    g_config.atoms[i].angle_part = (angle_t*)malloc(sizeof(angle_t));
+    g_config.atoms[i].angle_part = (angle_t*)Malloc(sizeof(angle_t));
 #if defined(TERSOFF)
     for (int j = 0; j < nnn; j++)
     {
@@ -1064,7 +1135,8 @@ void init_angles(config_state* cstate)
 
         int col = 2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
 
-        if (g_pot.format == 0 || g_pot.format == 3)
+        if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC ||
+            g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
         {
           if ((fabs(ccos) - 1.0) > 1e-10)
           {

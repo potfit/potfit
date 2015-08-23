@@ -121,15 +121,17 @@ void read_pot_table(char const* potential_filename)
 
   allocate_memory_for_potentials(&pstate);
 
-  switch (g_pot.format)
+  switch (g_pot.format_type)
   {
-    case 0:
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
       read_pot_table0(potential_filename, pfile);
       break;
-    case 3:
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
       read_pot_table3(potential_filename, pfile, &pstate);
       break;
-    case 4:
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
       read_pot_table4(potential_filename, pfile, &pstate);
       break;
   }
@@ -151,22 +153,60 @@ void read_pot_table(char const* potential_filename)
 
 void read_pot_line_F(char const* pbuf, potential_state* pstate)
 {
+  int format = -1;
+
   /* format complete? */
-  if (2 != sscanf((char const*)(pbuf + 2), "%d %d", &g_pot.format, &pstate->num_pots))
+
+  int rval = sscanf(pbuf + 2, "%d %d", &format, &pstate->num_pots);
+
+  if (rval != 2)
     error(1, "Corrupt format header line in file %s", pstate->filename);
 
+  switch (format)
+  {
+    case 0:
+    {
 #if !defined(APOT)
-  if (g_pot.format == 0)
-    error(1, "potfit binary compiled without analytic potential support.\n");
-#else
-  if (g_pot.format > 0)
-    error(1, "potfit binary compiled without tabulated potential support.\n");
-#endif /* !APOT */
+      error(1, "potfit binary compiled without analytic potential support.\n");
+#endif
+      g_pot.format_type = POTENTIAL_FORMAT_ANALYTIC;
+      break;
+    }
+    case 3:
+    {
+#if defined(APOT)
+      error(1, "potfit binary compiled without tabulated potential support.\n");
+#endif
+      g_pot.format_type = POTENTIAL_FORMAT_TABULATED_EQ_DIST;
+      break;
+    }
+    case 4:
+    {
+#if defined(APOT)
+      error(1, "potfit binary compiled without tabulated potential support.\n");
+#endif
+      g_pot.format_type = POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST;
+      break;
+    }
+    default:
+      break;
+  }
 
-  if (g_pot.format != 0)
-    printf(" - Potential file format %d detected\n", g_pot.format);
-  else
-    printf(" - Potential file format %d (analytic potentials) detected\n", g_pot.format);
+  switch (g_pot.format_type)
+  {
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unrecognized potential format specified in file %s", pstate->filename);
+      break;
+    case POTENTIAL_FORMAT_ANALYTIC:
+      printf(" - Potential file format 0 (analytic potentials) detected\n");
+      break;
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+      printf(" - Potential file format 3 (tabulated eqdist) detected\n");
+      break;
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+      printf(" - Potential file format 4 (tabulated non-eqdist) detected\n");
+      break;
+  }
 
   /* only pair potentials for
     * - pair interactions
@@ -212,9 +252,6 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
     error(1, "For g_param.ntypes=%d there should be %d, but there are %d.",
           g_param.ntypes, npots, pstate->num_pots);
   }
-  /* recognized format? */
-  if ((g_pot.format != 0) && (g_pot.format != 3) && (g_pot.format != 4))
-    error(1, "Unrecognized potential format specified for file %s", pstate->filename);
 
   g_pot.gradient = (int*)Malloc(npots * sizeof(int));
   g_pot.invar_pot = (int*)Malloc(npots * sizeof(int));
@@ -451,15 +488,8 @@ void calculate_cutoffs()
 
   pot_table_t* pt = &g_pot.opt_pot;
 
-  g_config.rmin = (double*)malloc(n * n * sizeof(double));
-
-  if (NULL == g_config.rmin)
-    error(1, "Cannot allocate rmin");
-
-  g_config.rcut = (double*)malloc(n * n * sizeof(double));
-
-  if (NULL == g_config.rcut)
-    error(1, "Cannot allocate rcut");
+  g_config.rmin = (double*)Malloc(n * n * sizeof(double));
+  g_config.rcut = (double*)Malloc(n * n * sizeof(double));
 
   for (int i = 0; i < n; i++)
   {
@@ -521,7 +551,7 @@ void read_maxch_file()
       error(1, "Could not open file %s\n", g_files.maxchfile);
 
     /* read maximal changes file */
-    g_todo.maxchange = (double*)malloc(g_pot.opt_pot.len * sizeof(double));
+    g_todo.maxchange = (double*)Malloc(g_pot.opt_pot.len * sizeof(double));
 
     double* val = g_todo.maxchange;
 
@@ -538,7 +568,7 @@ void read_maxch_file()
 #endif /* !APOT */
 }
 
-#ifdef APOT
+#if defined(APOT)
 
 /****************************************************************
  *

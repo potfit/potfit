@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -28,15 +28,10 @@
  *
  ****************************************************************/
 
-#ifndef OPTIMIZE_H
-#define OPTIMIZE_H
+#ifndef POTFIT_OPTIMIZE_H
+#define POTFIT_OPTIMIZE_H
 
 // main optimization entry point
 void run_optimization();
 
-// individual optimization algorithms
-void run_simulated_annealing();
-void run_differential_evolution();
-void run_powell_lsq();
-
-#endif /* OPTIMIZE_H */
+#endif  // POTFIT_OPTIMIZE_H

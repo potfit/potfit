@@ -31,14 +31,6 @@
 #ifndef UTILS_H_INCLUDED
 #define UTILS_H_INCLUDED
 
-/* vector and matrix allocations */
-// int* vect_int(long);
-// double* vect_double(long);
-double** mat_double(long, long);
-void free_vect_int(int*);
-void free_vect_double(double*);
-void free_mat_double(double**);
-
 /* vector procuct */
 vector vec_prod(vector, vector);
 

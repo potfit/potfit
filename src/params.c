@@ -30,6 +30,7 @@
 
 #include "potfit.h"
 
+#include "memory.h"
 #include "params.h"
 
 /****************************************************************
@@ -394,13 +395,7 @@ int get_param_string(char const* param_name, char** value, int line,
   else
   {
     int len = strlen(str) + 1;
-    *value = (char*)malloc(len * sizeof(char));
-    memset(*value, 0, len);
-    if (*value == NULL)
-    {
-      error(0, "Could not allocate memory for parameter %s\n", param_name);
-      return -1;
-    }
+    *value = (char*)Malloc(len * sizeof(char));
     strncpy(*value, str, len);
   }
 
@@ -427,7 +422,7 @@ void check_parameters_complete(char const* paramfile)
   {
     warning("endpot is missing in %s, setting it to %s_end\n", paramfile,
             g_files.startpot);
-    g_files.endpot = (char*)malloc((strlen(g_files.startpot) + 5) * sizeof(char));
+    g_files.endpot = (char*)Malloc((strlen(g_files.startpot) + 5) * sizeof(char));
     sprintf(g_files.endpot, "%s_end", g_files.startpot);
   }
 

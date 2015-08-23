@@ -59,7 +59,6 @@ double* xicom, *delcom;
 double linmin(double xi[], double del[], double fxi1, double* x1, double* x2,
               double* fret1, double* fret2)
 {
-  int j;
   static double* vecu = NULL; /* Vector of location u */
   double xx, fx, fb, bx, ax;
   double fa = fxi1;
@@ -75,20 +74,24 @@ double linmin(double xi[], double del[], double fxi1, double* x1, double* x2,
   if (vecu == NULL)
     vecu = (double*)Malloc(g_calc.ndimtot);
 
-  for (j = 0; j < g_calc.ndimtot; j++)
+  for (int j = 0; j < g_calc.ndimtot; j++)
     vecu[j] = xicom[j] + bx * delcom[j]; /*set vecu */
+
   fb = (*g_calc_forces)(vecu, fret2, 0);
 
   bracket(&ax, &xx, &bx, &fa, &fx, &fb, fret1, fret2);
 
   fx = brent(ax, xx, bx, fx, TOL, &xmin, &xmin2, fret1, fret2);
-  for (j = 0; j < g_calc.ndimtot; j++)
+
+  for (int j = 0; j < g_calc.ndimtot; j++)
   {
     del[j] *= xmin;
     xi[j] += del[j];
   }
+
   *x1 = xmin;
   *x2 = xmin2;
+
   return fx;
 }
 

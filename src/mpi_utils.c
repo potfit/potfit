@@ -413,7 +413,7 @@ void broadcast_params_mpi()
   MPI_Bcast(&g_param.sweight, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   /* Broadcast the potential... */
-  MPI_Bcast(&g_pot.format, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&g_pot.format_type, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&g_pot.calc_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&g_pot.calc_pot.ncols, 1, MPI_INT, 0, MPI_COMM_WORLD);
   size = g_pot.calc_pot.ncols;
@@ -662,7 +662,7 @@ void broadcast_angles()
     MPI_Bcast(&nangles, 1, MPI_INT, 0, MPI_COMM_WORLD);
     if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms))
     {
-      atom->angle_part = (angle_t*)malloc(nangles * sizeof(angle_t));
+      atom->angle_part = (angle_t*)Malloc(nangles * sizeof(angle_t));
       for (j = 0; j < nangles; j++)
         memset(atom->angle_part + j, 0, sizeof(angle_t));
     }

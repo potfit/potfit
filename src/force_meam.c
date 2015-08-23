@@ -136,17 +136,17 @@ double calc_forces_meam(double* xi_opt, double* forces, int flag)
   vector dfj, dfk;
   angle_t* angle;
 
-  switch (g_pot.format)
+  switch (g_pot.format_type)
   {
-    case 0:
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
       xi = g_pot.calc_pot.table;
       break;
-    case 3: /* fall through */
-    case 4:
-      xi = xi_opt; /* calc-table is opt-table */
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+      xi = xi_opt;
       break;
-    case 5:
-      xi = g_pot.calc_pot.table; /* we need to update the calc-table */
   }
 
   /* This is the start of an infinite loop */
@@ -159,7 +159,7 @@ double calc_forces_meam(double* xi_opt, double* forces, int flag)
     rho_sum_loc = 0.0;
 
 #if defined APOT && !defined MPI
-    if (g_pot.format == 0)
+    if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC)
     {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);

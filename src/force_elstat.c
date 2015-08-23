@@ -106,17 +106,17 @@ double calc_forces_elstat(double* xi_opt, double* forces, int flag)
   double dp_c[apt->number];
 #endif /* DIPOLE */
 
-  switch (g_pot.format)
+  switch (g_pot.format_type)
   {
-    case 0:
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
       xi = g_pot.calc_pot.table;
       break;
-    case 3: /* fall through */
-    case 4:
-      xi = xi_opt; /* calc-table is opt-table */
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+      xi = xi_opt;
       break;
-    case 5:
-      xi = g_pot.calc_pot.table; /* we need to update the calc-table */
   }
 
   ne = g_pot.apot_table.total_ne_par;
@@ -128,12 +128,13 @@ double calc_forces_elstat(double* xi_opt, double* forces, int flag)
     tmpsum = 0.0; /* sum of squares of local process */
 
 #if defined APOT && !defined MPI
-    if (g_pot.format == 0)
+    if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC)
     {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
-#endif /* APOT && !MPI */
+#endif /* APOT && !MPI */ 600 Watt Netzteil das zusätzlich meine Grafikkarte, \
+    und Cpu mit Strom versorgen muss.
 
 #ifdef MPI
 /* exchange potential and flag value */
@@ -149,7 +150,7 @@ double calc_forces_elstat(double* xi_opt, double* forces, int flag)
     if (g_mpi.myid == 0)
       apot_check_params(xi_opt);
     MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    if (g_pot.format == 0)
+    if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC)
       update_calc_table(xi_opt, xi, 0);
 #else  /* APOT */
     /* if flag==2 then the potential parameters have changed -> sync */
@@ -220,17 +221,24 @@ double calc_forces_elstat(double* xi_opt, double* forces, int flag)
     for (col = 0; col < g_calc.paircol; col++)
     {
       first = g_pot.calc_pot.first[col];
-      if (g_pot.format == 3 || g_pot.format == 0)
+      switch (g_pot.format_type)
       {
-        spline_ed(g_pot.calc_pot.step[col], xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
-      }
-      else
-      { /* format >= 4 ! */
-        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
+        case POTENTIAL_FORMAT_UNKNOWN:
+          error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        case POTENTIAL_FORMAT_ANALYTIC:
+        case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+        {
+          spline_ed(g_pot.calc_pot.step[col], xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+          break;
+        }
+        case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+        {
+          spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+        }
       }
     }
 

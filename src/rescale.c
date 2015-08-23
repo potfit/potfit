@@ -31,14 +31,15 @@
 
 #include "potfit.h"
 
-#if defined RESCALE && !defined APOT
+#if defined(RESCALE) && !defined(APOT)
 
 #include "forces.h"
+#include "memory.h"
 #include "splines.h"
 
 /* Doesn't make much sense without EAM or ADP  */
 
-#if defined EAM || defined ADP
+#if defined(EAM) || defined(ADP)
 
 /****************************************************************
  *
@@ -50,35 +51,35 @@
 
 double rescale(pot_table_t* pt, double upper, int flag)
 {
-  int mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign, dimneuxi;
-  double* xi, *neuxi, *neuord, *neustep, *maxrho, *minrho, *left, *right;
-  atom_t* atom;
+  int mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign;
   neigh_t* neigh;
   double fnval, pos, grad, a;
   double min = 1e100, max = -1e100;
 
-  xi = pt->table;
-  dimneuxi = pt->last[g_calc.paircol + 2 * g_param.ntypes - 1] -
-             pt->last[g_calc.paircol + g_param.ntypes - 1];
-  neuxi = (double*)malloc(dimneuxi * sizeof(double));
-  neuord = (double*)malloc(dimneuxi * sizeof(double));
-  neustep = (double*)malloc(g_param.ntypes * sizeof(double));
-  maxrho = (double*)malloc(g_param.ntypes * sizeof(double));
-  minrho = (double*)malloc(g_param.ntypes * sizeof(double));
-  left = (double*)malloc(g_param.ntypes * sizeof(double));
-  right = (double*)malloc(g_param.ntypes * sizeof(double));
+  double* xi = pt->table;
+  int dimneuxi = pt->last[g_calc.paircol + 2 * g_param.ntypes - 1] -
+                 pt->last[g_calc.paircol + g_param.ntypes - 1];
+  double* neuxi = (double*)Malloc_Local(dimneuxi * sizeof(double));
+  double* neuord = (double*)Malloc_Local(dimneuxi * sizeof(double));
+  double* neustep = (double*)Malloc_Local(g_param.ntypes * sizeof(double));
+  double* maxrho = (double*)Malloc_Local(g_param.ntypes * sizeof(double));
+  double* minrho = (double*)Malloc_Local(g_param.ntypes * sizeof(double));
+  double* left = (double*)Malloc_Local(g_param.ntypes * sizeof(double));
+  double* right = (double*)Malloc_Local(g_param.ntypes * sizeof(double));
+
   for (i = 0; i < g_param.ntypes; i++)
   {
     maxrho[i] = -1e100;
     minrho[i] = 1e100;
   }
+
   /* find Max/Min rho  */
   /* init splines - better safe than sorry */
   /* init second derivatives for splines */
   for (col = 0; col < g_calc.paircol; col++)
   { /* just pair potentials */
     first = pt->first[col];
-    if (g_pot.format == 3 || g_pot.format == 0)
+    if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
       spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
                 *(pt->table + first - 2), 0.0, pt->d2tab + first);
     else /* format == 4 ! */
@@ -88,7 +89,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
   for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++)
   { /* rho */
     first = pt->first[col];
-    if (g_pot.format == 3)
+    if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
                 0.0, pt->d2tab + first);
     else /* format == 4 ! */
@@ -100,7 +101,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
   { /* F */
     first = pt->first[col];
     /* gradient 0 at r_cut */
-    if (g_pot.format == 3)
+    if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
                 *(xi + first - 1), pt->d2tab + first);
     else /* format == 4 */
@@ -115,7 +116,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
       g_config.atoms[g_config.cnfstart[h] + i].rho = 0.0;
     for (i = 0; i < g_config.inconf[h]; i++)
     {
-      atom = g_config.atoms + i + g_config.cnfstart[h];
+      atom_t* atom = g_config.atoms + i + g_config.cnfstart[h];
       typ1 = atom->type;
       for (j = 0; j < atom->num_neigh; j++)
       {
@@ -310,7 +311,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
   for (col = g_calc.paircol; col < g_calc.paircol + g_param.ntypes; col++)
   { /* rho */
     first = pt->first[col];
-    if (g_pot.format == 3)
+    if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
                 0.0, pt->d2tab + first);
     else /* format == 4 ! */
@@ -323,7 +324,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
   { /* F */
     first = pt->first[col];
     /* gradient 0 at r_cut */
-    if (g_pot.format == 3)
+    if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
       spline_ed(pt->step[col], xi + first, pt->last[col] - first + 1, *(xi + first - 2),
                 *(xi + first - 1), pt->d2tab + first);
     else /* format == 4 */
@@ -399,7 +400,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
   for (col = 0; col < g_calc.paircol; col++)
   { /* just pair potentials */
     first = pt->first[col];
-    if (g_pot.format == 3)
+    if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
       spline_ed(pt->step[col], pt->table + first, pt->last[col] - first + 1,
                 *(pt->table + first - 2), 0.0, pt->d2tab + first);
     else /* format == 4 ! */
@@ -407,12 +408,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
                 *(pt->table + first - 2), 0.0, pt->d2tab + first);
   }
 
-  free(neuxi);
-  free(neustep);
-  free(maxrho);
-  free(minrho);
-  free(left);
-  free(right);
+  free_local_memory();
 
   /* return factor */
   return a;
@@ -439,16 +435,16 @@ void embed_shift(pot_table_t* pt)
     /** NOT FOOLPROOF ***************/
     if (pt->begin[i] <= 0)
     { /* 0 in domain of U(n) */
-      if (g_pot.format == 3)
+      if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
         spline_ed(pt->step[i], xi + first, pt->last[i] - first + 1, *(xi + first - 2),
                   *(xi + first - 1), pt->d2tab + first);
       else /* format == 4 ! */
         spline_ne(pt->xcoord + first, xi + first, pt->last[i] - first + 1,
                   *(xi + first - 2), *(xi + first - 1), pt->d2tab + first);
       shift = (*g_splint)(pt, xi, i, 0.0);
-#ifdef DEBUG
+#if defined(DEBUG)
       printf("shifting by %f\n", shift);
-#endif /* DEBUG */
+#endif  // DEBUG
     }
     else
       shift = xi[first];
@@ -456,5 +452,6 @@ void embed_shift(pot_table_t* pt)
       xi[j] -= shift;
   }
 }
+
 #endif /* EAM || ADP */
 #endif /* RESCALE && !APOT */

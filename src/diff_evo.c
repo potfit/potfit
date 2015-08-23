@@ -57,7 +57,6 @@ void opposite_check(double** population, double* cost, int do_init);
 void quicksort(double* cost, int start, int end, double** population);
 int partition(double* cost, int start, int end, int index, double** population);
 void swap_population(double* population_1, double* population_2);
-
 #endif  // APOT
 
 /****************************************************************
@@ -103,12 +102,12 @@ void init_population(double** pop, double* xi, double* cost)
     }
   }
 
-  double* forces = (double*)malloc(g_calc.mdim * sizeof(double));
+  double* forces = (double*)Malloc_Local(g_calc.mdim * sizeof(double));
 
   for (int i = 0; i < NP; i++)
     cost[i] = (*g_calc_forces)(pop[i], forces, 0);
 
-  free(forces);
+  free_local_memory();
 
 #if defined(APOT)
   opposite_check(pop, cost, 1);
@@ -195,12 +194,12 @@ void opposite_check(double** population, double* cost, int do_init)
   for (int i = 0; i < NP; i++)
     tot_cost[i] = cost[i];
 
-  double* forces = (double*)malloc(g_calc.mdim * sizeof(double));
+  double* forces = (double*)Malloc_Local(g_calc.mdim * sizeof(double));
 
   for (int i = NP; i < 2 * NP; i++)
     tot_cost[i] = (*g_calc_forces)(tot_P[i], fxi, 0);
 
-  free(forces);
+  free_local_memory();
 
   /* evaluate the NP best individuals from both populations */
   /* sort with quicksort and return NP best indivuals */
