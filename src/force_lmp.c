@@ -32,7 +32,7 @@
 
 #ifdef LMP
 #include "potfit.h"
-#include "lmp.h"
+#include "library.h"
 #include "functions.h"
 #include "potential_input.h"
 #include "splines.h"

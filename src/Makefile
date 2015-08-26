@@ -199,8 +199,8 @@ endif
 
 # Added AI 17/7/2015
 ifneq (,$(strip $(findstring lmp,${MAKETARGET})))
-  POTFITHDR      += lmp.h
-  POTFITSRC      += lmp.cpp
+#  POTFITHDR      += lmp.h
+#  POTFITSRC      += lmp.cpp
   POTFITSRC      += force_lmp.c
 else
 endif
@@ -415,9 +415,9 @@ CFLAGS += -I./lammps/
 endif
 
 # Substitute .o for .c to get the names of the object files
-OBJECTS := $(subst .cpp,.o,${SOURCES})
-OBJECTS := $(subst .c,.o,${OBJECTS})
-CXX := $(subst cc,c++,${CC})
+#OBJECTS := $(subst .cpp,.o,${SOURCES})
+OBJECTS := $(subst .c,.o,${SOURCES})
+#CXX := $(subst cc,c++,${CC})
 
 ###########################################################################
 #
@@ -448,9 +448,9 @@ utils.o: utils.c
 		}
 
 # special rule for lmp.cpp
-lmp.o: lmp.cpp
-	@echo " [CXX] lmp.cpp"
-	@${CXX} -DOMPI_SKIP_MPICXX ${CFLAGS} -c lmp.cpp
+#lmp.o: lmp.cpp
+#	@echo " [CXX] lmp.cpp"
+#	@${CXX} -DOMPI_SKIP_MPICXX ${CFLAGS} -c lmp.cpp
 
 # generic compilation rule
 %.o: %.c

@@ -39,7 +39,7 @@
 #endif  // M_PI
 
 /* macro for simplified addition of new potential functions */
-#define ADD_POT(a, b) add_potential(#a, b, &a##_value)
+#define ADD_POT(a, b) add_potential(#a, b, &a ## _value)
 
 /****************************************************************
  *
@@ -76,16 +76,16 @@ void apot_init(void)
   ADD_POT(softshell, 2);
   ADD_POT(eopp_exp, 6);
   ADD_POT(meopp, 7);
-  ADD_POT(power, 2);
   ADD_POT(power_decay, 2);
-  ADD_POT(exp_decay, 2);
+  ADD_POT(power, 2);
+  ADD_POT(mexp_decay, 3);
   ADD_POT(bjs, 3);
   ADD_POT(parabola, 3);
   ADD_POT(csw, 4);
   ADD_POT(universal, 4);
   ADD_POT(const, 1);
   ADD_POT(sqrt, 2);
-  ADD_POT(mexp_decay, 3);
+  ADD_POT(exp_decay, 2);
   ADD_POT(strmm, 5);
   ADD_POT(double_morse, 7);
   ADD_POT(double_exp, 5);
@@ -139,9 +139,12 @@ void add_potential(const char* name, int parameter, fvalue_pointer fval)
     }
   }
 
+  const int kk = strlen(name) + 1;
+
   /* allocate memory */
   function_table.name = (char**)Realloc(function_table.name, (k + 1) * sizeof(char*));
-  function_table.name[k] = (char*)Malloc((strlen(name) + 1) * sizeof(char));
+  function_table.name[k] = (char*)malloc(kk * sizeof(char));
+
   function_table.num_params =
       (int*)Realloc(function_table.num_params, (k + 1) * sizeof(int));
   function_table.fvalue =

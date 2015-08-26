@@ -52,8 +52,8 @@ void read_dummy(void *ptr,char *str)
 void open_lammps(void **ptr)
 {
 	//MPI_Init(0,NULL);
-	LAMMPS *lammps = new LAMMPS(0,NULL,MPI_COMM_SELF);
-	*ptr = (LAMMPS *)lammps;
+	//LAMMPS *lammps = new LAMMPS(0,NULL,MPI_COMM_SELF);
+	//*ptr = (LAMMPS *)lammps;
 }
 
 void lammps_input(void *ptr,char *str)

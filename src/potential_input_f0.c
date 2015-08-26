@@ -87,7 +87,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 
   /* initialize the function table for analytic potentials */
   apot_init();
-
+  
   read_chemical_potentials(&state);
 
   read_elstat_table(&state);
@@ -168,15 +168,17 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
   pt->len += g_param.ntypes * (g_param.ntypes + 2);
 #endif /* DIPOLE */
 
-  pt->table = (double *)Malloc(pt->len * sizeof(double));
+// Modification by AI 20.08.2015
+  pt->table = (double *)malloc(pt->len * sizeof(double)); 
 
-  g_pot.calc_list = (double *)Malloc(pt->len * sizeof(double));
+  g_pot.calc_list = (double *)malloc(pt->len * sizeof(double));
 
-  pt->idx = (int *)Malloc(pt->len * sizeof(int));
+  pt->idx = (int *)malloc(pt->len * sizeof(int));
 
-  apt->idxpot = (int *)Malloc(apt->total_par * sizeof(int));
+  apt->idxpot = (int *)malloc(apt->total_par * sizeof(int));
 
-  apt->idxparam = (int *)Malloc(apt->total_par * sizeof(int));
+  apt->idxparam = (int *)malloc(apt->total_par * sizeof(int));
+// End of modification
 
   if ((NULL == pt->table) || (NULL == pt->idx) || (apt->idxpot == NULL) || (apt->idxparam == NULL))
     error(1, "Cannot allocate memory for potential table.\n");
@@ -819,7 +821,7 @@ void read_reaxff_potentials(apot_state* pstate)
   comb = apt->rf_comb0;
   for(ib=0;ib<sr0;ib++){ // vpar
     for(i=0;i<comb;i++){
-      apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+      apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
       strcpy(apt->param_name[apt->number+ib][i],"");
       if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
             &apt->vpar[ib][i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
@@ -840,7 +842,7 @@ void read_reaxff_potentials(apot_state* pstate)
 //  comb = ntypes;
   comb = apt->rf_comb1;
   for(i=0;i<comb;i++){ // rat
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rat[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -855,7 +857,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // aval
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->aval[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -870,7 +872,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // amas
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->amas[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -885,7 +887,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // rvdw
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rvdw[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -900,7 +902,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // eps
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->eps[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -915,7 +917,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // gam
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->gam[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -930,7 +932,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // rapt
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rapt[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -944,7 +946,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // stlp
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->stlp[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -958,7 +960,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // alf
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->alf[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -972,7 +974,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vop
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vop[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -986,7 +988,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // valf
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->valf[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1000,7 +1002,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // valp1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->valp1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1014,7 +1016,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // valp2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->valp2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1028,7 +1030,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // chi
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->chi[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1042,7 +1044,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // eta
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->eta[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1056,7 +1058,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vnphb
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vnphb[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1070,7 +1072,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vnq
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vnq[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1084,7 +1086,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vlp1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vlp1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1098,7 +1100,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vincr
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vincr[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1112,7 +1114,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // bo131
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->bo131[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1126,7 +1128,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // bo132
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->bo132[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1140,7 +1142,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // bo133
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->bo133[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1154,7 +1156,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // sigqeq
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->sigqeq[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1168,7 +1170,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // def
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->def[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1182,7 +1184,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vovun
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vovun[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1196,7 +1198,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vval1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vval1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1210,7 +1212,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vrom
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vrom[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1224,7 +1226,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vval3
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vval3[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1238,7 +1240,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vval4
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vval4[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1252,7 +1254,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // rcore2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rcore2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1266,7 +1268,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // ecore2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->ecore2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1280,7 +1282,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // acore2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->acore2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1298,7 +1300,7 @@ void read_reaxff_potentials(apot_state* pstate)
 //  comb = ntypes*(ntypes+1)/2;
   comb = apt->rf_comb2;
   for(i=0;i<comb;i++){ // de1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->de1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1312,7 +1314,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // de2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->de2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1326,7 +1328,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // de3
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->de3[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1340,7 +1342,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // psi
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->psi[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1354,7 +1356,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // pdo
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->pdo[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1368,7 +1370,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // v13cor
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->v13cor[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1382,7 +1384,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // popi
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->popi[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1396,7 +1398,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vover
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vover[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1410,7 +1412,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // psp
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->psp[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1424,7 +1426,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // pdp
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->pdp[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1438,7 +1440,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // ptp
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->ptp[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1452,7 +1454,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // bom
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->bom[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1466,7 +1468,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // bop1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->bop1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1480,7 +1482,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // bop2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->bop2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1494,7 +1496,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // ovc
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->ovc[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1508,7 +1510,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vuncor
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vuncor[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1524,7 +1526,7 @@ void read_reaxff_potentials(apot_state* pstate)
 // Off-Diagonal --------------------//
   comb = apt->rf_combO;
   for(i=0;i<comb;i++){ // deodmh
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->deodmh[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1538,7 +1540,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // rodmh
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rodmh[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1552,7 +1554,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // godmh
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->godmh[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1566,7 +1568,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // rsig
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rsig[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1581,7 +1583,7 @@ void read_reaxff_potentials(apot_state* pstate)
   ib++;
 
   for(i=0;i<comb;i++){ // rpi
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rpi[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1595,7 +1597,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // rpi2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rpi2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1611,7 +1613,7 @@ void read_reaxff_potentials(apot_state* pstate)
 /*
 // Hydrogen Bond --------------------//
   for(i=0;i<comb;i++){ // rhb
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rhb[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1625,7 +1627,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // dehb
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->dehb[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1639,7 +1641,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vhb1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vhb1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1653,7 +1655,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vhb2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vhb2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1672,7 +1674,7 @@ void read_reaxff_potentials(apot_state* pstate)
 //  comb = ntypes*ntypes*(ntypes+1)/2;
   comb = apt->rf_comb3;
   for(i=0;i<comb;i++){ // th0
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->th0[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1686,7 +1688,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vka
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vka[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1700,7 +1702,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vka3
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vka3[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1714,7 +1716,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vka8
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vka8[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1728,7 +1730,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vkac
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vkac[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1742,7 +1744,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vkap
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vkap[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1756,7 +1758,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vval2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vval2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1774,7 +1776,7 @@ void read_reaxff_potentials(apot_state* pstate)
 //  comb = ntypes*ntypes*(ntypes*ntypes+1)/2;
   comb = apt->rf_comb4;
   for(i=0;i<comb;i++){ // v1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->v1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1788,7 +1790,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // v2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->v2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1802,7 +1804,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // v3
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->v3[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1816,7 +1818,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // v4
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->v4[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1830,7 +1832,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vconj
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vconj[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1844,7 +1846,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // v2bo
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->v2bo[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1858,7 +1860,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // v3bo
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->v3bo[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1876,7 +1878,7 @@ void read_reaxff_potentials(apot_state* pstate)
 //  comb = ntypes*ntypes*ntypes;
   comb = apt->rf_combH;
   for(i=0;i<comb;i++){ // rhb
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->rhb[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1890,7 +1892,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // dehb
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->dehb[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1904,7 +1906,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vhb1
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vhb1[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
@@ -1918,7 +1920,7 @@ void read_reaxff_potentials(apot_state* pstate)
   }
   ib++;
   for(i=0;i<comb;i++){ // vhb2
-    apt->param_name[apt->number+ib][i] = (char*)Malloc(30*sizeof(char));
+    apt->param_name[apt->number+ib][i] = (char*)malloc(30*sizeof(char));
     if(4>fscanf(pstate->pfile,"%s %lf %lf %lf",apt->param_name[apt->number+ib][i],
           &apt->vhb2[i],&apt->pmin[apt->number+ib][i],&apt->pmax[apt->number+ib][i])){
 //      error(1, "Could not read parameter for atomtype #%d\n", i);
