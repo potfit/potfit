@@ -117,11 +117,7 @@ void write_errors(double* force, double tot)
   }
 
   for (i = 0; i < 6; i++)
-  {
-    component[i] = (char*)malloc(3 * sizeof(char));
-    if (NULL == component[i])
-      error(1, "Could not allocate memory for component strings");
-  }
+    component[i] = (char*)Malloc_Local(3 * sizeof(char));
 
   strcpy(component[0], "x");
   strcpy(component[1], "y");
@@ -484,6 +480,5 @@ void write_errors(double* force, double tot)
     fclose(outfile);
   }
 
-  for (i = 0; i < 6; i++)
-    free(component[i]);
+  free_local_memory();
 }

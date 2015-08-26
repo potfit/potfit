@@ -223,14 +223,12 @@ double splint_dir(pot_table_t* pt, double* xi, int k, double b, double step)
 double splint_comb_dir(pot_table_t* pt, double* xi, int k, double b, double step,
                        double* grad)
 {
-  double a, p1, p2, d21, d22;
-
   /* indices into potential table */
-  a = 1.0 - b;
-  p1 = xi[k];
-  d21 = pt->d2tab[k++];
-  p2 = xi[k];
-  d22 = pt->d2tab[k];
+  double a = 1.0 - b;
+  double p1 = xi[k];
+  double d21 = pt->d2tab[k++];
+  double p2 = xi[k];
+  double d22 = pt->d2tab[k];
   *grad =
       (p2 - p1) / step + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
 

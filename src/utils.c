@@ -57,68 +57,6 @@
 
 #include "utils.h"
 
-// int* vect_int(long dim)
-// {
-//   int* vect, i;
-//   vect = (int*)malloc((size_t)(dim * sizeof(int)));
-//   if (vect == NULL)
-//     error(1, "Error in integer vector allocation");
-//   for (i = 0; i < dim; i++)
-//     vect[i] = 0;
-//
-//   return vect;
-// }
-//
-// double* vect_double(long dim)
-// {
-//   double* vect;
-//   int i;
-//   vect = (double*)malloc((size_t)(dim * sizeof(double)));
-//   if (vect == NULL)
-//     error(1, "Error in double vector allocation");
-//   for (i = 0; i < dim; i++)
-//     vect[i] = 0.0;
-//
-//   return vect;
-// }
-
-double** mat_double(long rowdim, long coldim)
-{
-  long i;
-  double** matrix;
-
-  /* matrix: array of array of pointers */
-  /* matrix: pointer to rows */
-  matrix = (double**)malloc((size_t)rowdim * sizeof(double*));
-  if (matrix == NULL)
-    error(1, "Error in double matrix row allocation");
-
-  /* matrix[0]: pointer to elements */
-  matrix[0] = (double*)malloc((size_t)rowdim * coldim * sizeof(double));
-  if (matrix[0] == NULL)
-    error(1, "Error in double matrix element allocation");
-
-  for (i = 1; i < rowdim; i++)
-    matrix[i] = matrix[i - 1] + coldim;
-
-  int j, k;
-  for (j = 0; j < rowdim; j++)
-    for (k = 0; k < coldim; k++)
-      matrix[j][k] = 0.0;
-
-  return matrix;
-}
-
-void free_vect_double(double* vect) { free(vect); }
-
-void free_vect_int(int* vect) { free(vect); }
-
-void free_mat_double(double** matrix)
-{
-  free(matrix[0]);
-  free(matrix);
-}
-
 /* vector product */
 vector vec_prod(vector u, vector v)
 {

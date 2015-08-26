@@ -32,6 +32,7 @@
 
 #include "elements.h"
 #include "functions.h"
+#include "memory.h"
 #include "potential_output.h"
 #include "splines.h"
 #include "utils.h"
@@ -170,27 +171,15 @@ void write_pot_table_imd(char const* prefix)
 
 void write_pot_table_imd(char const* prefix)
 {
-  //   int   i, j, k, m, m2, col1, col2;
-  //   double r2;
-  // #if defined(APOT)
-  //   double temp = 0.0;
-  // #if defined (EAM) || defined(ADP) || defined(MEAM)
-  //   double root = 0.0;
-  // #endif
-  // #endif
-  // #if !defined(APOT) && (defined (EAM) || defined(ADP) || defined(MEAM))
-  //   double temp = 0.0;
-  //   double temp2;
-  //   double root;
-  // #endif /* !APOT */
   char filename[255];
-  FILE* outfile;
   pot_table_t* pt = &g_pot.opt_pot;
 
   /* allocate memory */
-  double* r2begin = (double*)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
-  double* r2end = (double*)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
-  double* r2step = (double*)malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
+  double* r2begin =
+      (double*)Malloc_Local(g_param.ntypes * g_param.ntypes * sizeof(double));
+  double* r2end = (double*)Malloc_Local(g_param.ntypes * g_param.ntypes * sizeof(double));
+  double* r2step =
+      (double*)Malloc_Local(g_param.ntypes * g_param.ntypes * sizeof(double));
 
   if ((r2begin == NULL) || (r2end == NULL) || (r2step == NULL))
     error(1, "Cannot allocate memory in  write_pot_table_imd");
@@ -199,7 +188,7 @@ void write_pot_table_imd(char const* prefix)
   sprintf(filename, "%s_phi.imd.pt", prefix);
 
   /* open file */
-  outfile = fopen(filename, "w");
+  FILE* outfile = fopen(filename, "w");
 
   if (NULL == outfile)
     error(1, "Could not open file %s\n", filename);
@@ -648,10 +637,6 @@ void write_pot_table_imd(char const* prefix)
   printf("IMD MEAM g potential data written to\t%s\n", filename);
 #endif /* MEAM */
 
-  free(r2begin);
-  free(r2end);
-  free(r2step);
-
 /* write endpot for IMD with electrostatics */
 #if defined(COULOMB) && defined(APOT)
   apot_table_t* apt = &g_pot.apot_table;
@@ -725,6 +710,8 @@ void write_pot_table_imd(char const* prefix)
   fclose(outfile);
   printf("Electrostatic table for IMD written to \t%s\n", filename);
 #endif /* COULOMB && APOT */
+
+  free_local_memory();
 }
 
 #endif /* STIWEB */

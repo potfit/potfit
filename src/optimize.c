@@ -32,20 +32,27 @@
 
 #include "optimize.h"
 
+// individual optimization algorithms
+void run_simulated_annealing(double* const xi);
+void run_differential_evolution(double* const xi);
+void run_powell_lsq(double* const xi);
+
 void run_optimization()
 {
   printf("\nStarting optimization with %d parameters.\n", g_calc.ndim);
   fflush(stdout);
 
+  double* xi = g_pot.opt_pot.table;
+
 #if !defined(EVO)
-  run_simulated_annealing();
+  run_simulated_annealing(xi);
 #else  /* EVO */
-  run_differential_evolution();
+  run_differential_evolution(xi);
 #endif /* EVO */
 
   printf("\nStarting powell minimization ...\n");
 
-  run_powell_lsq();
+  run_powell_lsq(xi);
 
   printf("\nFinished powell minimization, calculating errors ...\n");
 }

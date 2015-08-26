@@ -94,27 +94,33 @@
 
 double calc_forces_eam(double* xi_opt, double* forces, int flag)
 {
-  int first, col, i = flag;
-  double tmpsum = 0.0, sum = 0.0;
+  int first = 0;
+  int col = 0;
+  int i = flag;
+  double tmpsum = 0.0;
+  double sum = 0.0;
   double* xi = NULL;
 
-  double rho_sum_loc = 0.0, rho_sum = 0.0;
+  double rho_sum_loc = 0.0;
+  double rho_sum = 0.0;
 
 /* TBEAM: additional s-band contribution */
-#ifdef TBEAM
-  double rho_s_sum_loc = 0.0, rho_s_sum = 0.0;
-#endif /* TBEAM */
+#if defined(TBEAM)
+  double rho_s_sum_loc = 0.0;
+  double rho_s_sum = 0.0;
+#endif  // TBEAM
 
   atom_t* atom;
   int h, j;
   int n_i, n_j;
   int self;
   int uf;
-#ifdef APOT
-  double temp_eng;
+#if defined(APOT)
+  double temp_eng = 0.0;
 #endif /* APOT */
-#ifdef STRESS
-  int us, stresses;
+#if defined(STRESS)
+  int us = 0;
+  int stresses = 0;
 #endif /* STRESS */
 
   /* pointer for neighbor table */
@@ -128,22 +134,22 @@ double calc_forces_eam(double* xi_opt, double* forces, int flag)
   int col_F;
   double eam_force;
   double rho_val, rho_grad, rho_grad_j;
-#ifdef TBEAM
+#if defined(TBEAM)
   int col_F_s;
   double rho_s_val, rho_s_grad, rho_s_grad_j;
-#endif /* TBEAM */
+#endif  // TBEAM
 
-  switch (g_pot.format)
+  switch (g_pot.format_type)
   {
-    case 0:
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
       xi = g_pot.calc_pot.table;
       break;
-    case 3: /* fall through */
-    case 4:
-      xi = xi_opt; /* calc-table is opt-table */
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+      xi = xi_opt;
       break;
-    case 5:
-      xi = g_pot.calc_pot.table; /* we need to update the calc-table */
   }
 
   /* This is the start of an infinite loop */
@@ -156,7 +162,7 @@ double calc_forces_eam(double* xi_opt, double* forces, int flag)
 #endif /* TBEAM */
 
 #if defined APOT && !defined MPI
-    if (g_pot.format == 0)
+    if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC)
     {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
@@ -192,14 +198,25 @@ double calc_forces_eam(double* xi_opt, double* forces, int flag)
     for (col = 0; col < g_calc.paircol + g_param.ntypes; col++)
     {
       first = g_pot.calc_pot.first[col];
-      if (g_pot.format == 0 || g_pot.format == 3)
-        spline_ed(g_pot.calc_pot.step[col], xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
-      else /* format >= 4 ! */
-        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
+      switch (g_pot.format_type)
+      {
+        case POTENTIAL_FORMAT_UNKNOWN:
+          error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        case POTENTIAL_FORMAT_ANALYTIC:
+        case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+        {
+          spline_ed(g_pot.calc_pot.step[col], xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+          break;
+        }
+        case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+        {
+          spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+        }
+      }
     }
 
     /* [paircol + g_param.ntypes, ..., paircol + 2 * g_param.ntypes - 1] =
@@ -210,14 +227,25 @@ double calc_forces_eam(double* xi_opt, double* forces, int flag)
       first = g_pot.calc_pot.first[col];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
-      if (g_pot.format == 0 || g_pot.format == 3)
-        spline_ed(g_pot.calc_pot.step[col], xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
-                  *(xi + first - 1), g_pot.calc_pot.d2tab + first);
-      else /* format >= 4 ! */
-        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
-                  *(xi + first - 1), g_pot.calc_pot.d2tab + first);
+      switch (g_pot.format_type)
+      {
+        case POTENTIAL_FORMAT_UNKNOWN:
+          error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        case POTENTIAL_FORMAT_ANALYTIC:
+        case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+        {
+          spline_ed(g_pot.calc_pot.step[col], xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
+                    *(xi + first - 1), g_pot.calc_pot.d2tab + first);
+          break;
+        }
+        case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+        {
+          spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
+                    *(xi + first - 1), g_pot.calc_pot.d2tab + first);
+        }
+      }
     }
 
 #ifdef TBEAM
@@ -227,14 +255,25 @@ double calc_forces_eam(double* xi_opt, double* forces, int flag)
          col < g_calc.paircol + 3 * g_param.ntypes; col++)
     {
       first = g_pot.calc_pot.first[col];
-      if (g_pot.format == 0 || g_pot.format == 3)
-        spline_ed(g_pot.calc_pot.step[col], xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
-      else /* format >= 4 ! */
-        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
+      switch (g_pot.format_type)
+      {
+        case POTENTIAL_FORMAT_UNKNOWN:
+          error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        case POTENTIAL_FORMAT_ANALYTIC:
+        case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+        {
+          spline_ed(g_pot.calc_pot.step[col], xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+          break;
+        }
+        case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+        {
+          spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+        }
+      }
     }
 
     /* [paircol + 3 * g_param.ntypes, ..., paircol + 4 * g_param.ntypes - 1] =
@@ -245,16 +284,27 @@ double calc_forces_eam(double* xi_opt, double* forces, int flag)
       first = g_pot.calc_pot.first[col];
       /* gradient at left boundary matched to square root function,
          when 0 not in domain(F), else natural spline */
-      if (g_pot.format == 0 || g_pot.format == 3)
-        spline_ed(g_pot.calc_pot.step[col], xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
-                  *(xi + first - 1), g_pot.calc_pot.d2tab + first);
-      else /* format >= 4 ! */
-        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
-                  *(xi + first - 1), g_pot.calc_pot.d2tab + first);
+      switch (g_pot.format_type)
+      {
+        case POTENTIAL_FORMAT_UNKNOWN:
+          error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        case POTENTIAL_FORMAT_ANALYTIC:
+        case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+        {
+          spline_ed(g_pot.calc_pot.step[col], xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
+                    *(xi + first - 1), g_pot.calc_pot.d2tab + first);
+          break;
+        }
+        case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+        {
+          spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
+                    *(xi + first - 1), g_pot.calc_pot.d2tab + first);
+        }
+      }
     }
-#endif /* TBEAM */
+#endif  // TBEAM
 
 #ifndef MPI
     g_mpi.myconf = g_config.nconf;

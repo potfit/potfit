@@ -31,6 +31,7 @@
 #include "potfit.h"
 
 #include "functions.h"
+#include "memory.h"
 #include "potential_output.h"
 #include "splines.h"
 
@@ -48,17 +49,17 @@ void write_pot_table4(char const* filename);
 
 void write_pot_table_potfit(char const* filename)
 {
-  switch (g_pot.format)
+  switch (g_pot.format_type)
   {
-    case 0:
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
       write_pot_table0(filename);
       break;
-    case 3:
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
       write_pot_table3(filename);
-    case 4:
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
       write_pot_table4(filename);
-    default:
-      warning("Unknown potential format detected: %d", g_pot.format);
   }
 }
 
@@ -656,7 +657,6 @@ void write_plotpot_pair(pot_table_t* pt, char* filename)
 
 void write_pairdist(pot_table_t* pt, char* filename)
 {
-  int* freq; /* frequency... */
   int h, i, j, typ1, typ2, col;
 #if defined(EAM)
   int k = 0;
@@ -673,9 +673,7 @@ void write_pairdist(pot_table_t* pt, char* filename)
     error(1, "Could not open file %s\n", filename);
 
   /* initialize distribution vector */
-  freq = (int*)malloc(g_calc.ndimtot * sizeof(int));
-  for (i = 0; i < g_calc.ndimtot; i++)
-    freq[i] = 0;
+  int* freq = (int*)Malloc_Local(g_calc.ndimtot * sizeof(int));
 
   for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++)
   {
@@ -694,20 +692,20 @@ void write_pairdist(pot_table_t* pt, char* filename)
         /* this has already been calculated */
         if (neigh->r < pt->end[col])
           freq[neigh->slot[0]]++;
-#ifdef EAM
+#if defined(EAM)
         /* transfer function */
         col = g_calc.paircol + typ2;
         if (neigh->r < pt->end[col])
           freq[neigh->slot[1]]++;
-#endif /* EAM */
+#endif  // EAM
       }
-#ifdef EAM
+#if defined(EAM)
       /* embedding function - get index first */
       col = g_calc.paircol + g_param.ntypes + typ1;
-      if (g_pot.format == 3)
+      if (g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST)
       {
         rr = atom->rho - pt->begin[col];
-#ifdef RESCALE
+#if defined(RESCALE)
         if (rr < 0.0)
           error(1, "short distance");
         j = (int)(rr * pt->invstep[col]) + pt->first[col];
@@ -749,6 +747,8 @@ void write_pairdist(pot_table_t* pt, char* filename)
   }
   fclose(outfile);
   printf("Distribution data written to\t\t%s\n", filename);
+
+  free_local_memory();
 }
 
 #endif /* PDIST */

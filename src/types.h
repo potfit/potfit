@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
+ * Copyright 2002-2015
  *	Institute for Theoretical and Applied Physics
  *	University of Stuttgart, D-70550 Stuttgart, Germany
  *	http://potfit.sourceforge.net/
@@ -28,11 +28,15 @@
  *
  ****************************************************************/
 
-/****************************************************************
- *
- *  plain old vector
- *
- ****************************************************************/
+typedef enum
+{
+  POTENTIAL_FORMAT_UNKNOWN = 0,
+  POTENTIAL_FORMAT_ANALYTIC,
+  POTENTIAL_FORMAT_TABULATED_EQ_DIST,
+  POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST
+} POTENTIAL_FORMAT;
+
+// plain old vector
 
 typedef struct
 {
@@ -41,11 +45,7 @@ typedef struct
   double z;
 } vector;
 
-/****************************************************************
- *
- *  symmetric tensor in the same order as used by VASP
- *
- ****************************************************************/
+// symmetric tensor in the same order as used by VASP
 
 typedef struct
 {
@@ -57,11 +57,7 @@ typedef struct
   double zx;
 } sym_tens;
 
-/****************************************************************
- *
- *  neighbor table (each atom has one for each neighbor)
- *
- ****************************************************************/
+//  neighbor table (each atom has one for each neighbor)
 
 typedef struct
 {
@@ -108,11 +104,7 @@ typedef struct
 #endif
 } neigh_t;
 
-/****************************************************************
- *
- *  angular neighbor table (each atom has one for each triple of neighbors)
- *
- ****************************************************************/
+// angular neighbor table (each atom has one for each triple of neighbors)
 
 #if defined(THREEBODY)
 typedef struct
@@ -128,11 +120,7 @@ typedef struct
 } angle_t;
 #endif  // THREEBODY
 
-/****************************************************************
- *
- *  pointers to access Stillinger-Weber parameters directly
- *
- ****************************************************************/
+// pointers to access Stillinger-Weber parameters directly
 
 #if defined(STIWEB)
 typedef struct
@@ -150,11 +138,7 @@ typedef struct
 } sw_t;
 #endif
 
-/****************************************************************
- *
- *  pointers to access Tersoff/TersoffMOD parameters directly
- *
- ****************************************************************/
+//  pointers to access Tersoff/TersoffMOD parameters directly
 
 #if defined(TERSOFF)
 typedef struct
@@ -194,11 +178,7 @@ typedef struct
 } tersoff_t;
 #endif  // TERSOFF
 
-/****************************************************************
- *
- *  atom data
- *
- ****************************************************************/
+// atom data table
 
 typedef struct
 {
@@ -250,11 +230,7 @@ typedef struct
 #endif
 } atom_t;
 
-/****************************************************************
- *
- *  potential table: holds tabulated potential data
- *
- ****************************************************************/
+// potential table: holds tabulated potential data
 
 typedef struct
 {
@@ -277,11 +253,6 @@ typedef struct
 /* function pointer for analytic potential evaluation */
 typedef void (*fvalue_pointer)(double, double*, double*);
 
-/****************************************************************
- *
- *  potential table: holds analytic potential data
- *
- ****************************************************************/
 // Addition by AI 17/7/2015
 #ifdef LMP
 typedef struct { // lattice_t
@@ -296,7 +267,8 @@ typedef struct { // lattice_t
   double zz;
 } lattice_t;
 #endif
-// End of addition
+
+// potential table: holds analytic potential data
 
 typedef struct
 {
@@ -352,7 +324,6 @@ typedef struct
   tersoff_t tersoff;
 #endif
 
-//<<<<<<< HEAD
 // Added by AI 17/7/2015
 #if defined (LMP)
   int rf_sr0; // Num of Params for 0-Body Interaction (General)
@@ -463,11 +434,7 @@ typedef struct
 
 #endif /* APOT */
 
-/****************************************************************
- *
- *  potfit_calculation: holds data for force calculation
- *
- ****************************************************************/
+// potfit_calculation table: holds data for force calculation
 
 typedef struct
 {
@@ -502,11 +469,7 @@ typedef struct
 #endif              /* APOT */
 } potfit_calculation;
 
-/****************************************************************
- *
- *  potfit_configurations: holds reference configurations data
- *
- ****************************************************************/
+// potfit_configurations table: holds reference configurations data
 
 typedef struct
 {
@@ -551,11 +514,7 @@ typedef struct
 // End of addition
 } potfit_configurations;
 
-/****************************************************************
- *
- *  potfit_filenames: holds all kinds of filenames
- *
- ****************************************************************/
+// potfit_filenames: holds all kinds of filenames
 
 typedef struct
 {
@@ -573,11 +532,7 @@ typedef struct
   char* tempfile;      /* backup potential file */
 } potfit_filenames;
 
-/****************************************************************
- *
- *  potfit_mpi_config: holds information needed for MPI calculation
- *
- ****************************************************************/
+// potfit_mpi_config: holds information needed for MPI calculation
 
 typedef struct
 {
@@ -606,11 +561,7 @@ typedef struct
 #endif /* MPI */
 } potfit_mpi_config;
 
-/****************************************************************
- *
- *  potfit_parameters: holds information from parameter file
- *
- ****************************************************************/
+// potfit_parameters: holds information from parameter file
 
 typedef struct
 {
@@ -643,18 +594,14 @@ typedef struct
   double global_cell_scale; /* global scaling parameter */
 } potfit_parameters;
 
-/****************************************************************
- *
- *  potfit_potentials: holds information from potential file
- *
- ****************************************************************/
+// potfit_potentials: holds information from potential file
 
 typedef struct
 {
   int* gradient; /* Gradient of potential fns.  */
   int* invar_pot;
-  int format;     /* format of potential table */
-  int have_invar; /* Are invariant pots specified?  */
+  POTENTIAL_FORMAT format_type; /* format of potential table */
+  int have_invar;               /* Are invariant pots specified?  */
 #if defined(APOT)
   int* smooth_pot;
   int cp_start;         /* cp in opt_pot.table */
@@ -679,12 +626,7 @@ void* lammpsObj;
 // End of addition
 } potfit_potentials;
 
-/****************************************************************
- *
- *  potfit_unknown: strange parameters, need to be merge into any existing
- *struct
- *
- ****************************************************************/
+// potfit_unknown: strange parameters, need to be merge into any existing struct
 
 typedef struct
 {
@@ -708,11 +650,7 @@ typedef struct
   char* interaction_name;
 } potfit_unknown;
 
-/****************************************************************
- *
- *  ???
- *
- ****************************************************************/
+// ???
 
 typedef struct
 {

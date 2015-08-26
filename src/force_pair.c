@@ -98,8 +98,6 @@ double calc_forces_pair(double* xi_opt, double* forces, int flag)
   int i = 0;
 
   double* xi = NULL;
-  double error_sum = 0.0;
-
   atom_t* atom = NULL;
 
   int h, j;
@@ -119,26 +117,26 @@ double calc_forces_pair(double* xi_opt, double* forces, int flag)
   double phi_grad = 0.0;
   vector tmp_force;
 
-  switch (g_pot.format)
+  switch (g_pot.format_type)
   {
-    case 0:
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
       xi = g_pot.calc_pot.table;
       break;
-    case 3: /* fall through */
-    case 4:
-      xi = xi_opt; /* calc-table is opt-table */
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+      xi = xi_opt;
       break;
-    case 5:
-      xi = g_pot.calc_pot.table; /* we need to update the calc-table */
   }
 
   /* This is the start of an infinite loop */
   while (1)
   {
-    error_sum = 0.0; /* sum of squares of local process */
+    double error_sum = 0.0; /* sum of squares of local process */
 
 #if defined(APOT) && !defined(MPI)
-    if (g_pot.format == 0)
+    if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC)
     {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
@@ -173,14 +171,26 @@ double calc_forces_pair(double* xi_opt, double* forces, int flag)
     for (col = 0; col < g_calc.paircol; col++)
     {
       first = g_pot.calc_pot.first[col];
-      if (0 == g_pot.format || 3 == g_pot.format)
-        spline_ed(g_pot.calc_pot.step[col], xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
-      else /* format >= 4 ! */
-        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
-                  g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
-                  g_pot.calc_pot.d2tab + first);
+
+      switch (g_pot.format_type)
+      {
+        case POTENTIAL_FORMAT_UNKNOWN:
+          error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        case POTENTIAL_FORMAT_ANALYTIC:
+        case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+        {
+          spline_ed(g_pot.calc_pot.step[col], xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+          break;
+        }
+        case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+        {
+          spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+                    g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0,
+                    g_pot.calc_pot.d2tab + first);
+        }
+      }
     }
 
 #ifndef MPI

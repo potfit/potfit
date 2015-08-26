@@ -280,7 +280,7 @@ void restore_pot_data(const pot_data_t* pot_data)
  *
  ****************************************************************/
 
-void run_simulated_annealing(double* xi)
+void run_simulated_annealing(double* const xi)
 {
   int loop_counter = 0;
   int loop_again = 0;
@@ -302,8 +302,8 @@ void run_simulated_annealing(double* xi)
   double* v = (double*)Malloc(g_calc.ndim * sizeof(double));
 
   /* optimal value */
-  double* xi_opt = (double*)Malloc(g_calc.ndimtot * sizeof(double));
-  double* xi_new = (double*)Malloc(g_calc.ndimtot * sizeof(double));
+  double* const xi_opt = (double*)Malloc(g_calc.ndimtot * sizeof(double));
+  double* const xi_new = (double*)Malloc(g_calc.ndimtot * sizeof(double));
 
   /* latest force vector */
   double* forces = (double*)Malloc(g_calc.mdim * sizeof(double));

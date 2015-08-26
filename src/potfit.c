@@ -156,8 +156,26 @@ int main(int argc, char** argv)
 
     write_pot_table_potfit(g_files.endpot);
 
-    printf("\nPotential in format %d written to file \t%s\n", g_pot.format,
-           g_files.endpot);
+    {
+      int format = -1;
+
+      switch (g_pot.format_type)
+      {
+        case POTENTIAL_FORMAT_UNKNOWN:
+          error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        case POTENTIAL_FORMAT_ANALYTIC:
+          format = 0;
+          break;
+        case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+          format = 3;
+          break;
+        case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+          format = 4;
+          break;
+      }
+
+      printf("\nPotential in format %d written to file \t%s\n", format, g_files.endpot);
+    }
 
     if (g_param.writeimd == 1)
       write_pot_table_imd(g_files.imdpot);
@@ -281,6 +299,8 @@ void error(int done, const char* msg, ...)
     shutdown_mpi();
 #endif /* MPI */
     fprintf(stderr, "\n");
+    free_local_memory();
+    free_allocated_memory();
     exit(EXIT_FAILURE);
   }
 }

@@ -503,7 +503,7 @@ void update_stiweb_pointers(double* xi)
     sw->a1 = (double**)Malloc(g_calc.paircol * sizeof(double*));
     sw->gamma = (double**)Malloc(g_calc.paircol * sizeof(double*));
     sw->a2 = (double**)Malloc(g_calc.paircol * sizeof(double*));
-    sw->lambda = (double****)malloc(g_calc.paircol * sizeof(double***));
+    sw->lambda = (double****)Malloc(g_calc.paircol * sizeof(double***));
     for (int i = 0; i < g_param.ntypes; i++)
     {
       sw->lambda[i] = (double***)Malloc(g_param.ntypes * sizeof(double**));
