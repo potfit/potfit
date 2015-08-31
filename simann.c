@@ -102,13 +102,14 @@ void randomize_parameter(int n, double *xi, double *v)
 
 void makebump(double *x, double width, double height, int center)
 {
+  int i = 0;
   int j = 0;
 
   /* find pot to which center belongs */
   while (opt_pot.last[j] < idx[center])
     j++;
 
-  for (int i = 0; i <= 4.0 * width; i++)
+  for (i = 0; i <= 4.0 * width; i++)
   {
     int pos = center + i;
     /* using idx avoids moving fixed points */
@@ -116,7 +117,7 @@ void makebump(double *x, double width, double height, int center)
       x[idx[pos]] += GAUSS((double)i / width) * height;
   }
 
-  for (int i = 1; i <= 4.0 * width; i++)
+  for (i = 1; i <= 4.0 * width; i++)
   {
     int pos = center - i;
     if ((idx[pos] >= opt_pot.begin[j]) && (idx[pos] <= opt_pot.last[j]))
