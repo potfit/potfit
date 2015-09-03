@@ -168,17 +168,30 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
   pt->len += g_param.ntypes * (g_param.ntypes + 2);
 #endif /* DIPOLE */
 
+#if defined(LMP)
+  pt->len += apt->rf_sr0*apt->rf_comb0;
+  pt->len += apt->rf_sr1*apt->rf_comb1;
+  pt->len += apt->rf_sr2*apt->rf_comb2;
+  pt->len += apt->rf_sr3*apt->rf_comb3;
+  pt->len += apt->rf_sr4*apt->rf_comb4;
+  pt->len += apt->rf_srO*apt->rf_combO;
+  pt->len += apt->rf_srH*apt->rf_combH;
+#endif
+
+
 // Modification by AI 20.08.2015
-  pt->table = (double *)malloc(pt->len * sizeof(double)); 
+  pt->table = (double *)Malloc(pt->len * sizeof(double)); 
 
-  g_pot.calc_list = (double *)malloc(pt->len * sizeof(double));
+  g_pot.calc_list = (double *)Malloc(pt->len * sizeof(double));
 
-  pt->idx = (int *)malloc(pt->len * sizeof(int));
+  pt->idx = (int *)Malloc(pt->len * sizeof(int));
 
-  apt->idxpot = (int *)malloc(apt->total_par * sizeof(int));
+  apt->idxpot = (int *)Malloc(apt->total_par * sizeof(int));
 
-  apt->idxparam = (int *)malloc(apt->total_par * sizeof(int));
+  apt->idxparam = (int *)Malloc(apt->total_par * sizeof(int));
 // End of modification
+
+
 
   if ((NULL == pt->table) || (NULL == pt->idx) || (apt->idxpot == NULL) || (apt->idxparam == NULL))
     error(1, "Cannot allocate memory for potential table.\n");
@@ -320,6 +333,175 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
   pt->idxlen += (2 * ncols);
 #endif /* DIPOLE */
 
+// Edited by Kubo 20120524 ===================================//
+// Addition --------------------------------------------------//
+#ifdef LMP
+  int istart, iend; // Loop-Start, Loop-End
+  int nsr,i,j;  // Num of Params for N-body Interaction
+//  int comb; // Num of Combination Type (i,ij,ijk,ijkl,...)
+// 0-Body
+  nsr = apt->rf_sr0;
+//  comb = 1;
+  int comb = apt->rf_comb0;
+  istart = apt->number;
+  iend   = istart + nsr;
+  for(i=istart;i<iend;i++){
+    for(j=0;j<comb;j++){
+      *val = apt->values[i][j];
+      val++;
+      if(!apt->invar_par[i][j]){
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
+      }else{
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += comb*nsr;
+// 1-Body
+  nsr = apt->rf_sr1;
+//  comb = ntypes;
+  comb = apt->rf_comb1;
+//  istart = apt->number + apt->rf_sr0;
+  istart += apt->rf_sr0;
+  iend   = istart + nsr;
+  for(i=istart;i<iend;i++){
+    for(j=0;j<comb;j++){
+      *val = apt->values[i][j];
+      val++;
+      if(!apt->invar_par[i][j]){
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
+      }else{
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += comb*nsr;
+// 2-Body
+  nsr = apt->rf_sr2;
+//  comb = ntypes*(ntypes+1)/2;
+  comb = apt->rf_comb2;
+//  istart = apt->number + apt->rf_sr0 + apt->rf_sr1;
+  istart += apt->rf_sr1;
+  iend   = istart + nsr;
+  for(i=istart;i<iend;i++){
+    for(j=0;j<comb;j++){
+      *val = apt->values[i][j];
+      val++;
+      if(!apt->invar_par[i][j]){
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
+      }else{
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += comb*nsr;
+// Off-Diagonal
+  nsr = apt->rf_srO;
+  comb = apt->rf_combO;
+  istart += apt->rf_sr2;
+  iend = istart + nsr;
+  for(i=istart;i<iend;i++){
+    for(j=0;j<comb;j++){
+      *val = apt->values[i][j];
+      val++;
+      if(!apt->invar_par[i][j]){
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
+      }else{
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += comb*nsr;
+// 3-Body
+  nsr = apt->rf_sr3;
+//  comb = ntypes*(ntypes+1)*(ntypes+2)/6;
+  comb = apt->rf_comb3;
+//  istart = apt->number + apt->rf_sr0 + apt->rf_sr1 + apt->rf_sr2;
+//  istart += apt->rf_sr2;
+  istart += apt->rf_srO;
+  iend   = istart + nsr;
+  for(i=istart;i<iend;i++){
+    for(j=0;j<comb;j++){
+      *val = apt->values[i][j];
+      val++;
+      if(!apt->invar_par[i][j]){
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
+      }else{
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += comb*nsr;
+// 4-Body
+  nsr = apt->rf_sr4;
+//  comb = ntypes*(ntypes+1)*(ntypes+2)*(ntypes+3)/24;
+  comb = apt->rf_comb4;
+//  istart = apt->number + apt->rf_sr0 + apt->rf_sr1 + apt->rf_sr2 + apt->rf_sr3;
+  istart += apt->rf_sr3;
+  iend   = istart + nsr;
+  for(i=istart;i<iend;i++){
+    for(j=0;j<comb;j++){
+      *val = apt->values[i][j];
+      val++;
+      if(!apt->invar_par[i][j]){
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
+      }else{
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += comb*nsr;
+
+// Hydrogen-Bond
+  nsr = apt->rf_srH;
+  comb = apt->rf_combH;
+  istart += apt->rf_sr4;
+  iend = istart + nsr;
+  for(i=istart;i<iend;i++){
+    for(j=0;j<comb;j++){
+      *val = apt->values[i][j];
+      val++;
+      if(!apt->invar_par[i][j]){
+        pt->idx[k] = l++;
+        apt->idxpot[k] = i;
+        apt->idxparam[k++] = j;
+      }else{
+        l++;
+        apt->total_par -= apt->invar_par[i][j];
+        pt->idxlen -= apt->invar_par[i][j];
+      }
+    }
+  }
+  pt->idxlen += comb*nsr;
+
+#endif
+// End of Edition ============================================//
+
+
   if (g_pot.have_globals)
   {
     int i = g_pot.global_pot;
@@ -351,6 +533,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
   check_apot_functions();
 
   init_calc_table0();
+
 
   return;
 }
@@ -1934,6 +2117,17 @@ void read_reaxff_potentials(apot_state* pstate)
     //reg_for_free(apt->param_name[apt->number+ib][i],"apt->param_name[%d][%d]",apt->number+ib,i);
   }
   ib++;
+  apt->total_par += apt->rf_sr0*apt->rf_comb0;
+  apt->total_par += apt->rf_sr1*apt->rf_comb1;
+  apt->total_par += apt->rf_sr2*apt->rf_comb2;
+  apt->total_par += apt->rf_sr3*apt->rf_comb3;
+  apt->total_par += apt->rf_sr4*apt->rf_comb4;
+  apt->total_par += apt->rf_srO*apt->rf_combO;
+  apt->total_par += apt->rf_srH*apt->rf_combH;
+  /*for(int k = 0; k < 111; k++)
+  {
+     printf("%s: %f %f %f\n", apt->param_name[k][0], apt->values[k][0], apt->pmin[k][0], apt->pmax[k][0]);
+  }*/
 
 #endif /* LMP */
 // End of Edition ============================================//

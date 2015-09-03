@@ -126,7 +126,7 @@ void read_pot_table(char const* potential_filename)
     error(1, "Format not specified in header of potential file %s", potential_filename);
 
   allocate_memory_for_potentials(&pstate);
-
+ 
   switch (g_pot.format_type)
   {
     case POTENTIAL_FORMAT_UNKNOWN:
@@ -145,7 +145,7 @@ void read_pot_table(char const* potential_filename)
   fclose(pfile);
 
   printf("Reading potential file >> %s << ... done\n", potential_filename);
-
+  
   calculate_cutoffs();
 
   read_maxch_file();
@@ -504,24 +504,31 @@ void allocate_memory_for_potentials(potential_state* pstate)
 	    apt->rf_comb4 = comb4;
 	    apt->rf_combO = combO;
 	    apt->rf_combH = combH;
+	    
+	    /*apt->total_par = apt->rf_sr0*apt->rf_comb0
+                  + apt->rf_sr1*apt->rf_comb1
+                  +(apt->rf_sr2+2)*apt->rf_comb2
+                  +(apt->rf_srO+2)*apt->rf_combO
+                  +(apt->rf_sr3+3)*apt->rf_comb3
+                  +(apt->rf_sr4+4)*apt->rf_comb4
+                  +(apt->rf_srH+3)*apt->rf_combH;*/
 
-	//    printf("size = %d, sizereax = %d\n",size,sizereax);
-	    apt->values     = (double **)malloc((size + sizereax) * sizeof(double  *));
-	    apt->param_name = (char ***)malloc((size + sizereax) * sizeof(char **));
-	    apt->pmin       = (double **)malloc((size + sizereax) * sizeof(double  *));
-	    apt->pmax       = (double **)malloc((size + sizereax) * sizeof(double  *));
-	    apt->invar_par  = (int **)malloc((size + sizereax) * sizeof(int   *));
+	    apt->values     = (double **)Malloc((size + sizereax) * sizeof(double  *));
+	    apt->param_name = (char ***)Malloc((size + sizereax) * sizeof(char **));
+	    apt->pmin       = (double **)Malloc((size + sizereax) * sizeof(double  *));
+	    apt->pmax       = (double **)Malloc((size + sizereax) * sizeof(double  *));
+	    apt->invar_par  = (int **)Malloc((size + sizereax) * sizeof(int   *));
 
 	    srsum = 0;
 	// 0-Body Params -- 1 Combination for each Param
 	//    comb = 1;
 	    comb = comb0;
 	    for(int i=srsum;i<srsum+sr0;i++) {
-	      apt->values    [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
-	      apt->pmin      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->pmax      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->invar_par [size + i] = (int  *)malloc(comb*(sizeof(int  )));
+	      apt->values    [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)Malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *)Malloc(comb*(sizeof(int  )));
 	    }
 	    srsum += sr0;
 
@@ -529,11 +536,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
 	//    comb = ntypes;
 	    comb = comb1;
 	    for (int i=srsum;i<srsum+sr1;i++) {
-	      apt->values    [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
-	      apt->pmin      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->pmax      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->invar_par [size + i] = (int  *)malloc(comb*(sizeof(int  )));
+	      apt->values    [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)Malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *)Malloc(comb*(sizeof(int  )));
 	    }
 	    srsum += sr1;
 
@@ -541,11 +548,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
 	//    comb = ntypes*(ntypes+1)/2;
 	    comb = comb2;
 	    for (int i=srsum;i<srsum+sr2;i++) {
-	      apt->values    [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
-	      apt->pmin      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->pmax      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->invar_par [size + i] = (int  *)malloc(comb*(sizeof(int  )));
+	      apt->values    [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)Malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *)Malloc(comb*(sizeof(int  )));
 	    }
 	    srsum += sr2;
 
@@ -553,11 +560,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
 	//    comb = ntypes*(ntypes+1)/2;
 	    comb = combO;
 	    for (int i=srsum;i<srsum+srO;i++) {
-	      apt->values    [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
-	      apt->pmin      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->pmax      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->invar_par [size + i] = (int  *)malloc(comb*(sizeof(int  )));
+	      apt->values    [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)Malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *)Malloc(comb*(sizeof(int  )));
 	    }
 	    srsum += srO;
 
@@ -565,11 +572,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
 	//    comb = ntypes*ntypes*(ntypes+1)/2;
 	    comb = comb3;
 	    for(int i=srsum;i<srsum+sr3;i++){
-	      apt->values    [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
-	      apt->pmin      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->pmax      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->invar_par [size + i] = (int  *)malloc(comb*(sizeof(int  )));
+	      apt->values    [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)Malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *)Malloc(comb*(sizeof(int  )));
 	    }
 	    srsum += sr3;
 
@@ -577,11 +584,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
 	//    comb = ntypes*ntypes*(ntypes*ntypes+1)/2;
 	    comb = comb4;
 	    for(int i=srsum;i<srsum+sr4;i++){
-	      apt->values    [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
-	      apt->pmin      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->pmax      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->invar_par [size + i] = (int  *)malloc(comb*(sizeof(int  )));
+	      apt->values    [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)Malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *)Malloc(comb*(sizeof(int  )));
 	    }
 	    srsum += sr4;
 
@@ -589,11 +596,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
 	//    comb = ntypes*ntypes*ntypes;
 	    comb = combH;
 	    for(int i=srsum;i<srsum+srH;i++){
-	      apt->values    [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->param_name[size + i] = (char **)malloc(comb*(sizeof(char*)));
-	      apt->pmin      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->pmax      [size + i] = (double *)malloc(comb*(sizeof(double )));
-	      apt->invar_par [size + i] = (int  *)malloc(comb*(sizeof(int  )));
+	      apt->values    [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->param_name[size + i] = (char **)Malloc(comb*(sizeof(char*)));
+	      apt->pmin      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->pmax      [size + i] = (double *)Malloc(comb*(sizeof(double )));
+	      apt->invar_par [size + i] = (int  *)Malloc(comb*(sizeof(int  )));
 	    }
 	    srsum += srH;
 

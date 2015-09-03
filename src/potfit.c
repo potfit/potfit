@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     time(&end_time);
 
 #if defined(APOT)
-    double tot = g_calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
+    double tot = g_calc_forces(g_pot.opt_pot.table, g_calc.force, 0); 
 #else
     double tot = g_calc_forces(g_pot.calc_pot.table, g_calc.force, 0);
 #endif /* APOT */

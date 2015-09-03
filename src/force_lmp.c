@@ -39,18 +39,24 @@
 #include "utils.h"
 #include "time.h"
 
-double calc_forces(double *xi_opt, double *forces, int flag)
-{
-  void write_ff(int n,double *p);
-  void rearrange_ff(int n,double *p,double *q);
-  void show_ff(int n,double *p);
+void write_ff(int n,double *p);
+void rearrange_ff(int n,double *p,double *q);
+void show_ff(int n,double *p);
 
-  int   first, col, i;
+
+double calc_forces_lmp(double *xi_opt, double *forces, int flag)
+{
+   int   first, col, i;
   double  tmpsum = 0., sum = 0.;
   double *xi = NULL;
   apot_table_t *apt = &g_pot.apot_table;
 
     xi = xi_opt;
+
+/* for (int i = 0; i< 200; i++)
+ {
+	printf("Param xi %d: %f\n", i, xi[i]);
+ }*/
 
   /* This is the start of an infinite loop */
   while (1) {
@@ -144,11 +150,19 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   double  forcetmp[3*natm]; //----- Force Calced by Subroutine
   double  forcetmp_sep[3*natm]; // force calculated by subroutine in the case if separation is needed
   double  en_sep;
+  //calculate number of parameters
+    int rxp_num = 1+ apt->rf_sr0*apt->rf_comb0
+                  +1+ apt->rf_sr1*apt->rf_comb1
+                  +1+(apt->rf_sr2+2)*apt->rf_comb2
+                  +1+(apt->rf_srO+2)*apt->rf_combO
+                  +1+(apt->rf_sr3+3)*apt->rf_comb3
+                  +1+(apt->rf_sr4+4)*apt->rf_comb4
+                  +1+(apt->rf_srH+3)*apt->rf_combH;  
+
   double potrearr[rxp_num];
- 
   for(i=0;i<natm;i++){
     atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
-    asp[i] = atom->type+1;
+    asp[i] = atom->type+1;    
     coordtmp[3*i+0] = atom->pos.x;
     coordtmp[3*i+1] = atom->pos.y;
     coordtmp[3*i+2] = atom->pos.z;
@@ -156,7 +170,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     forcetmp[3*i+1] = 0.0;
     forcetmp[3*i+2] = 0.0; 
   }
-
   double lvec[3],avec[3];
   double lat_a = sqrt(g_config.lattice[h].xx*g_config.lattice[h].xx+g_config.lattice[h].xy*g_config.lattice[h].xy+g_config.lattice[h].xz*g_config.lattice[h].xz);
   double lat_b = sqrt(g_config.lattice[h].yx*g_config.lattice[h].yx+g_config.lattice[h].yy*g_config.lattice[h].yy+g_config.lattice[h].yz*g_config.lattice[h].yz);
@@ -174,19 +187,19 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   lvec[1] = sqrt(lat_b*lat_b-avec[0]*avec[0]);
   avec[2] = (lat_b*lat_c*lat_cosgamma-avec[0]*avec[1])/lvec[1];
   lvec[2] = sqrt(lat_c*lat_c-avec[1]*avec[1]-avec[2]*avec[2]) + 2 * d;
-  
-  rearrange_ff(g_param.ntypes,xi,potrearr);
+ 
+  rearrange_ff(g_param.ntypes, xi, potrearr);
   forces[g_calc.energy_p+h] = lammps(g_mpi.myid, g_config.inconf[h], g_param.ntypes, lvec, avec, coordtmp, asp, forcetmp, potrearr, g_pot.lammpsObj); 
-
   
-  // shift of ni
+  //printf("Energy: %f\n", forces[g_calc.energy_p+h]); 
+ // shift of ni
   /*for(i=0;i<natm;i++){
     if (asp[i] == nickelId + 1)
 	coordtmp[3*i+2] +=d;
   }*/
   
   // subtract basis B2 nizr state
-  lvec[0] = 3.22;
+  /*lvec[0] = 3.22;
   lvec[1] = 3.22;
   lvec[2] = 3.22;
 
@@ -195,17 +208,18 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   coordtmp[2] = 0;
   coordtmp[3] = 1.61;
   coordtmp[4] = 1.61;
-  coordtmp[5] = 1.61;
+  coordtmp[5] = 1.61;*/
   // end of subtract B2 Nizr
   
-  forces[g_calc.energy_p+h] -= lammps(g_mpi.myid, g_config.inconf[h], g_param.ntypes, lvec, avec, coordtmp, asp, forcetmp_sep, potrearr, g_pot.lammpsObj);
-  
+  //forces[g_calc.energy_p+h] -= lammps(g_mpi.myid, g_config.inconf[h], g_param.ntypes, lvec, avec, coordtmp, asp, forcetmp_sep, potrearr, g_pot.lammpsObj);
+  //return -1;
+
   if(uf){
     for(i=0;i<g_config.inconf[h];i++){
       k = 3*(g_config.cnfstart[h]+i);
-      forces[k]   += forcetmp[3*i+0] - forcetmp_sep[3*i+0];
-      forces[k+1] += forcetmp[3*i+1] - forcetmp_sep[3*i+1];
-      forces[k+2] += forcetmp[3*i+2] - forcetmp_sep[3*i+2];
+      forces[k]   += forcetmp[3*i+0];// - forcetmp_sep[3*i+0];
+      forces[k+1] += forcetmp[3*i+1];// - forcetmp_sep[3*i+1];
+      forces[k+2] += forcetmp[3*i+2];// - forcetmp_sep[3*i+2];
 
      //printf("%d %d %f %f %f  %f  %f  %f\n", asp[i], i+1, coordtmp[3*i+0], coordtmp[3*i+1], coordtmp[3*i+2],  forcetmp[3*i+0]*23.045126829,forcetmp[3*i+1]*23.045126829, forcetmp[3*i+2]*23.045126829);
       //printf("OR:  %f  %f  %f\n",forces[k],forces[k+1],forces[k+2]);

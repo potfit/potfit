@@ -35,6 +35,9 @@
 #include "memory.h"
 #include "splines.h"
 #include "utils.h"
+#if defined(LMP)
+#include "library.h" 
+#endif
 
 double (*g_calc_forces)(double* xi_opt, double* forces, int shutdown_flag);
 double (*g_splint)(pot_table_t*, double*, int, double);
@@ -50,6 +53,8 @@ double calc_forces_eam_elstat(double* xi_opt, double* forces, int shutdown_flag)
 double calc_forces_stiweb(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_tersoff(double* xi_opt, double* forces, int shutdown_flag);
 double calc_forces_tersoffmod(double* xi_opt, double* forces, int shutdown_flag);
+double calc_forces_lmp(double* xi_opt, double* forces, int shutdown_flag);
+
 
 /****************************************************************
  *
@@ -96,6 +101,11 @@ void init_forces(int is_worker)
 #else
   g_calc_forces = &calc_forces_tersoff;
 #endif
+#endif
+
+#if defined(LMP)
+  open_lammps(&g_pot.lammpsObj);
+  g_calc_forces = &calc_forces_lmp;
 #endif
 
   /* Select correct spline interpolation and other functions */
