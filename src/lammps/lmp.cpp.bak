@@ -1,0 +1,316 @@
+#include "stdio.h"
+#include "string.h"
+#include "mpi.h"
+#include "lammps.h"
+#include "input.h"
+#include "atom.h"
+#include "domain.h"
+#include "force.h"
+#include "pair.h"
+#include "bond.h"
+#include "angle.h"
+#include "dihedral.h"
+#include "improper.h"
+#include "kspace.h"
+#include "pair_reax_c.h"
+#include "universe.h"
+
+using namespace	LAMMPS_NS;
+
+void make_dummy(int numatoms,int numtypes)
+{
+    FILE *dummy = fopen("data.dummy","w");
+    fprintf(dummy,"\nMasses\n");
+    fprintf(dummy,"\n");
+    for(int i=1;i<=numtypes;i++) fprintf(dummy,"%d 1.0\n",i);
+    fprintf(dummy,"\n");
+    fprintf(dummy,"Atoms\n");
+    fprintf(dummy,"\n");
+    for(int i=1;i<=numatoms;i++) fprintf(dummy,"%d 1 0 0.0 0.0 0.0\n",i);
+    fprintf(dummy,"\n");
+    fclose(dummy);
+}
+
+void read_dummy(void *ptr,char *str)
+{
+	LAMMPS *lammps = (LAMMPS *)ptr;
+	lammps->domain->box_exist = 0;
+	lammps->input->one(str);
+}
+
+void open_lammps(void *ptr)
+{
+	MPI_Init(0,NULL);
+	LAMMPS *lammps = new LAMMPS(0,NULL,MPI_COMM_WORLD);
+	ptr = (LAMMPS *)lammps;
+}
+
+void lammps_input(void *ptr,char *str)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	lammps ->input->one(str);
+}
+
+void close_lammps(void *ptr)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	delete lammps;
+	MPI_Finalize();
+}
+
+void input_num_and_type(void *ptr,int numatoms,int numtypes)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	lammps->atom->natoms = numatoms;
+	lammps->atom->ntypes = numtypes;
+}
+
+void input_box(void *ptr,double *boxsizehi)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	double *boxsizelo = new double[3];
+	for(int i=0;i<3;i++)
+	{
+		boxsizelo[i] = 0.0;
+		lammps->domain->boxlo[i] = boxsizelo[i];
+		lammps->domain->boxhi[i] = boxsizehi[i];
+	}
+}
+
+void input_tilt(void *ptr,double *tilt)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	lammps->domain->triclinic = 1;
+	lammps->domain->xy = tilt[0];
+	lammps->domain->xz = tilt[1];
+	lammps->domain->yz = tilt[2];
+}
+
+void input_coord(void *ptr,double *coords,int *type,int numatoms)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	double **c = lammps->atom->x;
+	int *types = lammps->atom->type;
+	int offset;
+	for(int i=0;i<numatoms;i++)
+	{
+		offset = 3*i;
+		c[i][0] = coords[offset+0];
+		c[i][1] = coords[offset+1];
+		c[i][2] = coords[offset+2];
+/*		c[i][0] = coords[i][0];
+		c[i][1] = coords[i][1];
+		c[i][2] = coords[i][2];  */
+		types[i] = type[i];
+	}
+}
+
+void get_coord(void *ptr,double *ccopy)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	double **x = lammps->atom->x;
+	int *tag = lammps->atom->tag;
+	int nlocal = lammps->atom->nlocal;
+	int id,offset;
+	for(int i=0;i<nlocal;i++)
+	{
+	    id = tag[i];
+	    offset = 3*(id-1);
+    	ccopy[offset+0] = x[id-1][0];
+    	ccopy[offset+1] = x[id-1][1];
+    	ccopy[offset+2] = x[id-1][2];
+	}
+}
+
+void get_force(void *ptr,double *f_list)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	double **f = lammps->atom->f;
+	int *tag = lammps->atom->tag;
+	int nlocal = lammps->atom->nlocal;
+	int id,offset;
+	for(int i=0;i<nlocal;i++)
+	{
+    	id = tag[i];
+    	offset = 3*(id-1);
+    	f_list[offset+0] = f[id-1][0];
+    	f_list[offset+1] = f[id-1][1];
+    	f_list[offset+2] = f[id-1][2];
+/*	    f_list[id-1][0] = f[id-1][0];
+	    f_list[id-1][1] = f[id-1][1];
+	    f_list[id-1][2] = f[id-1][2];  */
+	}
+
+/*	FILE *fp = fopen("force.txt","w");
+	for(int i=0;i<nlocal;i++)
+	{
+		id = tag[i];
+		offset = 3*(id-1);
+		fprintf(fp,"%d\t%lf\t%lf\t%lf\n",id,f_list[offset+0],f_list[offset+1],f_list[offset+2]);
+	} */
+}
+
+double get_energy(void *ptr)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+
+    int nlocal = lammps->atom->nlocal;
+    int npair = nlocal;
+    int nbond = nlocal;
+    int ntotal = nlocal;
+    if(lammps->force->newton) npair += lammps->atom->nghost;
+    if(lammps->force->newton_bond) nbond += lammps->atom->nghost;
+    if(lammps->force->newton) ntotal += lammps->atom->nghost;
+    double *e_list = new double[ntotal];
+printf("%d\t%d\t%d\t%d\n",nlocal,npair,nbond,ntotal);
+    for(int i=0;i<ntotal;i++) e_list[i] = 0.0;
+    if(lammps->force->pair)
+    {
+        double *eatomp = lammps->force->pair->eatom;
+        for(int i=0;i<npair;i++) e_list[i] += eatomp[i];
+    }
+    if(lammps->force->bond)
+    {
+        double *eatomb = lammps->force->bond->eatom;
+        for(int i=0;i<nbond;i++) e_list[i] += eatomb[i];
+    }
+    if(lammps->force->angle)
+    {
+        double *eatoma = lammps->force->angle->eatom;
+        for(int i=0;i<nbond;i++) e_list[i] += eatoma[i];
+    }
+    if(lammps->force->dihedral)
+    {
+        double *eatomd = lammps->force->dihedral->eatom;
+        for(int i=0;i<nbond;i++) e_list[i] += eatomd[i];
+    }
+    if(lammps->force->improper)
+    {
+        double *eatomi = lammps->force->improper->eatom;
+        for(int i=0;i<nbond;i++) e_list[i] += eatomi[i];
+    }
+    if(lammps->force->kspace)
+    {
+        double *eatomk = lammps->force->kspace->eatom;
+        for(int i=0;i<nlocal;i++) e_list[i] = eatomk[i];
+    }
+	double sum = 0.0;
+	for(int i=0;i<ntotal;i++) sum += e_list[i];
+	return sum;
+
+/*	int *tag = lammps->atom->tag;
+	int id;
+    FILE *fp = fopen("energy.txt","w");
+    for(int i=0;i<nlocal;i++)
+     {
+        id = tag[i];
+        fprintf(fp,"%d\t%lf\n",id,e_list[id]);
+      } */
+}
+
+int get_numtotal(void *ptr)
+{
+	LAMMPS *lammps = (LAMMPS *) ptr;
+	int numlocal = lammps->atom->nlocal;
+	int numtotal = numlocal;
+	if(lammps->force->newton) numtotal += lammps->atom->nghost;
+	return numtotal;
+}
+
+void remove_dummy()
+{
+    remove("data.dummy");
+}
+
+/* ----------------------------------------------------------------------
+ *    main program to drive LAMMPS
+ *    units:distance = Angstroms,energy = Kcal/mol,force = Kcal/molAngstrome
+ *    ------------------------------------------------------------------------- */
+
+double lammps(int numatoms,int numtypes,double *boxsize,double *tilt,double *coords,int *type,double *f_list,double *param)
+{
+      return 0;
+	char str[256];
+	strcpy(str,"read_data data.dummy");
+	char input1[3][256]={"log none","units real","atom_style charge"};
+	char pair_style[256] = "pair_style reax/c NULL";
+	char input2[][256]={"compute pe all pe/atom","fix 1 all nve","fix 2 all qeq/reax 1 0.0 10.0 1.0e-6 reax/c","thermo_style custom etotal","timestep 0.0"};
+	char run[256] = {"run 0"};
+
+    char pair_coeff[256],numt[256],space[256];
+//    strcpy(pair_coeff,"pair_coeff * * ffield.reax");
+    int narg = 3 + numtypes;
+    char **ch = new char*[narg];
+    for(int i=0;i<narg;i++) ch[i] = new char[256];
+    ch[0] = "*";ch[1] = "*";ch[2] = "ffield.reax";
+    for(int i=3;i<narg;i++)
+    {
+        sprintf(numt,"%d",i-2);
+        strcpy(ch[i],numt);
+    }
+/*    for(int i=0;i<numtypes;i++)
+    {
+        sprintf(numt,"%d",i+1);
+        strcpy(space," ");
+        strcat(space,numt);
+        strcat(pair_coeff,space);
+    } */
+
+	//make data,dummy for coordinate input
+	make_dummy(numatoms,numtypes);
+
+	// Start LAMMPS
+	MPI_Init(0,NULL);
+	LAMMPS *lammps = new LAMMPS(0,NULL,MPI_COMM_WORLD);
+	// input units and atom_style
+	for(int i=0;i<3;i++) lammps_input(lammps,input1[i]);
+	
+	// input number of atoms and atom type
+	input_num_and_type(lammps,numatoms,numtypes);
+
+	// input box size
+	input_box(lammps,boxsize);
+
+	// input tilt angle if necessary
+	if(tilt[0] != 0 || tilt[1] != 0 || tilt[2] != 0)
+	{
+		input_tilt(lammps,tilt);
+	}
+
+	// input coordinate
+	read_dummy(lammps,str);
+	input_coord(lammps,coords,type,numatoms);
+
+	// input pair_style and pair_coeff
+	lammps_input(lammps,pair_style);
+	lammps->force->pair->coeff2(narg,ch,param);
+//	lammps->force->pair->coeff(narg,ch);
+//	lammps_input(lammps,pair_coeff);
+
+	// input other commands
+	for(int i=0;i<5;i++) lammps_input(lammps,input2[i]);
+    
+	// run
+    lammps_input(lammps,run);
+    
+	// get force
+	for(int i=0;i<3*numatoms;i++) f_list[i] = 0.0;
+/*	for(int i=0;i<numatoms;i++)
+	{
+	    f_list[i][0] = 0.0;
+	    f_list[i][1] = 0.0;
+	    f_list[i][2] = 0.0;
+	} */
+	get_force(lammps,f_list);
+
+	// get energy
+	double energy = get_energy(lammps);
+
+    // close lammps
+	close_lammps(lammps);
+	
+	// remove data.dummy
+	remove_dummy();
+	
+	return energy;
+}

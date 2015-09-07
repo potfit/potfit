@@ -1,0 +1,23 @@
+#include "mpi.h"
+
+#ifdef _cplusplus
+extern "C"{
+#endif
+void make_dummy(int,int);
+void read_dummy(void *,char *);
+void open_lammps(void *);
+void lammps_input(void *,char *);
+void close_lammps(void *);
+void input_num_and_type(void *,int,int);
+void input_box(void *,double *);
+void input_tilt(void *,double *);
+void input_coord(void *,double *,int *,int);
+void get_coord(void *,double *);
+void get_force(void *,double *);
+double get_energy(void *);
+int get_numtotal(void *);
+void remove_dummy();
+double lammps(int,int,double *,double *,double *,int *,double *,double *);
+#ifdef _cplusplus
+}
+#endif

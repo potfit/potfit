@@ -1,0 +1,1138 @@
+/home/nakao/lammps/lammps/src/balance.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Balancing ...\n");
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"  iteration count = %d\n",count);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"  initial/final max atoms/proc = %d %d\n",
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"  initial/final imbalance factor = %g %g\n",
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"  iteration count = %d\n",count);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"  initial/final max atoms/proc = %d %d\n",
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"  initial/final imbalance factor = %g %g\n",
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"  x cuts:");
+/home/nakao/lammps/lammps/src/balance.cpp:	fprintf(screen," %g",comm->xsplit[i]);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"  y cuts:");
+/home/nakao/lammps/lammps/src/balance.cpp:	fprintf(screen," %g",comm->ysplit[i]);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"  z cuts:");
+/home/nakao/lammps/lammps/src/balance.cpp:	fprintf(screen," %g",comm->zsplit[i]);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"  x cuts:");
+/home/nakao/lammps/lammps/src/balance.cpp:	fprintf(logfile," %g",comm->xsplit[i]);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"  y cuts:");
+/home/nakao/lammps/lammps/src/balance.cpp:	fprintf(logfile," %g",comm->ysplit[i]);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"  z cuts:");
+/home/nakao/lammps/lammps/src/balance.cpp:	fprintf(logfile," %g",comm->zsplit[i]);
+/home/nakao/lammps/lammps/src/balance.cpp:      fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/balance.cpp:    fprintf(fp,"ITEM: TIMESTEP\n");
+/home/nakao/lammps/lammps/src/balance.cpp:    fprintf(fp,"%ld\n",tstep);
+/home/nakao/lammps/lammps/src/balance.cpp:    fprintf(fp,"ITEM: NUMBER OF SQUARES\n");
+/home/nakao/lammps/lammps/src/balance.cpp:    fprintf(fp,"%d\n",nprocs);
+/home/nakao/lammps/lammps/src/balance.cpp:    fprintf(fp,"ITEM: SQUARES\n");
+/home/nakao/lammps/lammps/src/balance.cpp:	  fprintf(fp,"%d %d %d %d %d %d\n",m+1,m+1,c1,c2,c3,c4);
+/home/nakao/lammps/lammps/src/balance.cpp:	    fprintf(fp,"%d %d %d %d %d %d %d %d %d %d\n",
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"ITEM: TIMESTEP\n");
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"%ld\n",tstep);
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"ITEM: NUMBER OF NODES\n");
+/home/nakao/lammps/lammps/src/balance.cpp:    fprintf(fp,"%d\n",nx*ny);
+/home/nakao/lammps/lammps/src/balance.cpp:    fprintf(fp,"%d\n",nx*ny*nz);
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"ITEM: BOX BOUNDS\n");
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"%g %g\n",boxlo[0],boxhi[0]);
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"%g %g\n",boxlo[1],boxhi[1]);
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"%g %g\n",boxlo[2],boxhi[2]);
+/home/nakao/lammps/lammps/src/balance.cpp:  fprintf(fp,"ITEM: NODES\n");
+/home/nakao/lammps/lammps/src/balance.cpp:	fprintf(fp,"%d %d %g %g %g\n",m+1,1,
+/home/nakao/lammps/lammps/src/balance.cpp:	  fprintf(fp,"%d %d %g %g %g\n",m+1,1,
+/home/nakao/lammps/lammps/src/change_box.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Changing box ...\n");
+/home/nakao/lammps/lammps/src/comm.cpp:      fprintf(screen,"  using %d OpenMP thread(s) per MPI task\n",nthreads);
+/home/nakao/lammps/lammps/src/comm.cpp:      fprintf(logfile,"  using %d OpenMP thread(s) per MPI task\n",nthreads);
+/home/nakao/lammps/lammps/src/comm.cpp:      fprintf(screen,"  %d by %d by %d MPI processor grid\n",
+/home/nakao/lammps/lammps/src/comm.cpp:	fprintf(screen,"  %d by %d by %d core grid within node\n",
+/home/nakao/lammps/lammps/src/comm.cpp:      fprintf(logfile,"  %d by %d by %d MPI processor grid\n",
+/home/nakao/lammps/lammps/src/comm.cpp:	fprintf(logfile,"  %d by %d by %d core grid within node\n",
+/home/nakao/lammps/lammps/src/create_atoms.cpp:      fprintf(screen,"Created " BIGINT_FORMAT " atoms\n",
+/home/nakao/lammps/lammps/src/create_atoms.cpp:      fprintf(logfile,"Created " BIGINT_FORMAT " atoms\n",
+/home/nakao/lammps/lammps/src/delete_atoms.cpp:    if (screen) fprintf(screen,"Deleted " BIGINT_FORMAT 
+/home/nakao/lammps/lammps/src/delete_atoms.cpp:    if (logfile) fprintf(logfile,"Deleted " BIGINT_FORMAT 
+/home/nakao/lammps/lammps/src/delete_atoms.cpp:    fprintf(screen,"System init for delete_atoms ...\n");
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:    fprintf(screen,"System init for delete_bonds ...\n");
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Deleting bonds ...\n");
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (screen) fprintf(screen,
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (logfile) fprintf(logfile,
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (screen) fprintf(screen,
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (logfile) fprintf(logfile,
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (screen) fprintf(screen,
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (logfile) fprintf(logfile,
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (screen) fprintf(screen,
+/home/nakao/lammps/lammps/src/delete_bonds.cpp:      if (logfile) fprintf(logfile,
+/home/nakao/lammps/lammps/src/dihedral_charmm.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_charmm.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_charmm.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_charmm.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_harmonic.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_harmonic.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_harmonic.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_harmonic.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_helix.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_helix.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_helix.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_helix.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_multi_harmonic.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_multi_harmonic.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_multi_harmonic.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_multi_harmonic.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_opls.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_opls.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_opls.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/dihedral_opls.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/displace_atoms.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Displacing atoms ...\n");
+/home/nakao/lammps/lammps/src/domain.cpp:	fprintf(screen,"%sorthogonal box = (%g %g %g) to (%g %g %g)\n",
+/home/nakao/lammps/lammps/src/domain.cpp:	fprintf(screen,format,
+/home/nakao/lammps/lammps/src/domain.cpp:	fprintf(logfile,"%sorthogonal box = (%g %g %g) to (%g %g %g)\n",
+/home/nakao/lammps/lammps/src/domain.cpp:	fprintf(logfile,format,
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: TIMESTEP\n");
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",update->ntimestep);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: NUMBER OF ATOMS\n");
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",ndump);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: BOX BOUNDS %s\n",boundstr);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"%g %g\n",boxxlo,boxxhi);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"%g %g\n",boxylo,boxyhi);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"%g %g\n",boxzlo,boxzhi);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: ATOMS %s\n",columns);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: TIMESTEP\n");
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",update->ntimestep);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: NUMBER OF ATOMS\n");
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",ndump);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: BOX BOUNDS xy xz yz %s\n",boundstr);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"%g %g %g\n",boxxlo,boxxhi,boxxy);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"%g %g %g\n",boxylo,boxyhi,boxxz);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"%g %g %g\n",boxzlo,boxzhi,boxyz);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:  fprintf(fp,"ITEM: ATOMS %s\n",columns);
+/home/nakao/lammps/lammps/src/dump_atom.cpp:    fprintf(fp,format,
+/home/nakao/lammps/lammps/src/dump_atom.cpp:    fprintf(fp,format,
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,str,n);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"A = %g Angstrom (basic length-scale)\n",scale);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(1,1) = %g A\n",domain->xprd);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(1,2) = 0 A \n");
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(1,3) = 0 A \n");
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(2,1) = %g A \n",domain->xy);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(2,2) = %g A\n",domain->yprd);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(2,3) = 0 A \n");
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(3,1) = %g A \n",domain->xz);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(3,2) = %g A \n",domain->yz);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"H0(3,3) = %g A\n",domain->zprd);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,".NO_VELOCITY.\n");
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:    fprintf(fp,"entry_count = %d\n",nfield-2);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:      fprintf(fp,"auxiliary[%d] = %s\n",i,auxname[i]);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:	if (rmass) fprintf(fp,"%g\n",rmass[i]);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:	else fprintf(fp,"%g\n",mass[itype]);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:	fprintf(fp,"%s\n",typenames[itype]);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:		  fprintf(fp,vformat[j],static_cast<int> (rbuf[i][j]));
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:		else fprintf(fp,vformat[j],rbuf[i][j]);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:		fprintf(fp,vformat[j],unwrap_coord);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:		  fprintf(fp,vformat[j],static_cast<int> (rbuf[i][j]));
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:		else fprintf(fp,vformat[j],rbuf[i][j]);
+/home/nakao/lammps/lammps/src/dump_cfg.cpp:	    fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: TIMESTEP\n");
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",update->ntimestep);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: NUMBER OF ATOMS\n");
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",ndump);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: BOX BOUNDS %s\n",boundstr);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"%g %g\n",boxxlo,boxxhi);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"%g %g\n",boxylo,boxyhi);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"%g %g\n",boxzlo,boxzhi);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: ATOMS %s\n",columns);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: TIMESTEP\n");
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",update->ntimestep);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: NUMBER OF ATOMS\n");
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,BIGINT_FORMAT "\n",ndump);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: BOX BOUNDS xy xz yz %s\n",boundstr);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"%g %g %g\n",boxxlo,boxxhi,boxxy);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"%g %g %g\n",boxylo,boxyhi,boxxz);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"%g %g %g\n",boxzlo,boxzhi,boxyz);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:  fprintf(fp,"ITEM: ATOMS %s\n",columns);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:      if (vtype[j] == INT) fprintf(fp,vformat[j],static_cast<int> (mybuf[m]));
+/home/nakao/lammps/lammps/src/dump_custom.cpp:      else if (vtype[j] == DOUBLE) fprintf(fp,vformat[j],mybuf[m]);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:	fprintf(fp,vformat[j],typenames[(int) mybuf[m]]);
+/home/nakao/lammps/lammps/src/dump_custom.cpp:    fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/dump_local.cpp:    fprintf(fp,"ITEM: TIMESTEP\n");
+/home/nakao/lammps/lammps/src/dump_local.cpp:    fprintf(fp,BIGINT_FORMAT "\n",update->ntimestep);
+/home/nakao/lammps/lammps/src/dump_local.cpp:    fprintf(fp,"ITEM: NUMBER OF %s\n",label);
+/home/nakao/lammps/lammps/src/dump_local.cpp:    fprintf(fp,BIGINT_FORMAT "\n",ndump);
+/home/nakao/lammps/lammps/src/dump_local.cpp:    fprintf(fp,"ITEM: %s %s\n",label,columns);
+/home/nakao/lammps/lammps/src/dump_local.cpp:      if (vtype[j] == INT) fprintf(fp,vformat[j],static_cast<int> (mybuf[m]));
+/home/nakao/lammps/lammps/src/dump_local.cpp:      else fprintf(fp,vformat[j],mybuf[m]);
+/home/nakao/lammps/lammps/src/dump_local.cpp:    fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/dump_xyz.cpp:    fprintf(fp,BIGINT_FORMAT "\n",n);
+/home/nakao/lammps/lammps/src/dump_xyz.cpp:    fprintf(fp,"Atoms\n");
+/home/nakao/lammps/lammps/src/dump_xyz.cpp:    fprintf(fp,format,
+/home/nakao/lammps/lammps/src/error.cpp:    if (universe->uscreen) fprintf(universe->uscreen,
+/home/nakao/lammps/lammps/src/error.cpp:    if (universe->ulogfile) fprintf(universe->ulogfile,
+/home/nakao/lammps/lammps/src/error.cpp:    fprintf(universe->uscreen,"ERROR on proc %d: %s (%s:%d)\n",
+/home/nakao/lammps/lammps/src/error.cpp:    if (screen) fprintf(screen,"ERROR: %s (%s:%d)\n",str,file,line);
+/home/nakao/lammps/lammps/src/error.cpp:    if (logfile) fprintf(logfile,"ERROR: %s (%s:%d)\n",str,file,line);
+/home/nakao/lammps/lammps/src/error.cpp:  if (screen) fprintf(screen,"ERROR on proc %d: %s (%s:%d)\n",
+/home/nakao/lammps/lammps/src/error.cpp:    fprintf(universe->uscreen,"ERROR on proc %d: %s (%s:%d)\n",
+/home/nakao/lammps/lammps/src/error.cpp:  if (screen) fprintf(screen,"WARNING: %s (%s:%d)\n",str,file,line);
+/home/nakao/lammps/lammps/src/error.cpp:  if (logflag && logfile) fprintf(logfile,"WARNING: %s (%s:%d)\n",
+/home/nakao/lammps/lammps/src/error.cpp:  if (screen) fprintf(screen,"%s (%s:%d)\n",str,file,line);
+/home/nakao/lammps/lammps/src/error.cpp:  if (logflag && logfile) fprintf(logfile,"%s (%s:%d)\n",str,file,line);
+/home/nakao/lammps/lammps/src/ewald.cpp:    if (screen) fprintf(screen,"Ewald initialization ...\n");
+/home/nakao/lammps/lammps/src/ewald.cpp:    if (logfile) fprintf(logfile,"Ewald initialization ...\n");
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(screen,"  G vector (1/distance) = %g\n",g_ewald);
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(screen,"  estimated absolute RMS force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(screen,"  estimated relative force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(screen,"  KSpace vectors: actual max1d max3d = %d %d %d\n",
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(logfile,"  G vector (1/distnace) = %g\n",g_ewald);
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(logfile,"  estimated absolute RMS force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(logfile,"  estimated relative force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/ewald.cpp:      fprintf(logfile,"  KSpace vectors: actual max1d max3d = %d %d %d\n",
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Minimization stats:\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Stopping criterion = %s\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Energy initial, next-to-last, final = \n"
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Force two-norm initial, final = %g %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Force max component initial, final = %g %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Final line search alpha, max atom move = %g %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Iterations, force evaluations = %d %d\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Minimization stats:\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Stopping criterion = %s\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Energy initial, next-to-last, final = \n"
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Force two-norm initial, final = %g %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Force max component initial, final = %g %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Final line search alpha, max atom move = %g %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Iterations, force evaluations = %d %d\n",
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:    if (screen) fprintf(screen,"PRD stats:\n");
+/home/nakao/lammps/lammps/src/finish.cpp:    if (logfile) fprintf(logfile,"PRD stats:\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Dephase  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Dephase  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Dynamics time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Dynamics time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Quench   time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Quench   time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Other    time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Other    time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:    if (screen) fprintf(screen,"TAD stats:\n");
+/home/nakao/lammps/lammps/src/finish.cpp:    if (logfile) fprintf(logfile,"TAD stats:\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  NEB      time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  NEB      time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Dynamics time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Dynamics time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Quench   time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Quench   time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Comm     time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Comm     time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Output   time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Output   time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"  Other    time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"  Other    time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Pair  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Pair  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,"Bond  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,"Bond  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,"Kspce time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,"Kspce time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Neigh time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Neigh time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Comm  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Comm  time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Outpt time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Outpt time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Other time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Other time (%%) = %g (%g)\n",
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"FFT time (%% of Kspce) = %g (%g)\n",time3d,fraction);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"FFT Gflps 3d (1d only) = %g %g\n",flop3,flop1);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"FFT time (%% of Kspce) = %g (%g)\n",time3d,fraction);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"FFT Gflps 3d (1d only) = %g %g\n",flop3,flop1);
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Nlocal:    %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	for (i = 0; i < 10; i++) fprintf(screen," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Nlocal:    %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	for (i = 0; i < 10; i++) fprintf(logfile," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Nghost:    %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	for (i = 0; i < 10; i++) fprintf(screen," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Nghost:    %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	for (i = 0; i < 10; i++) fprintf(logfile," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Neighs:    %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	for (i = 0; i < 10; i++) fprintf(screen," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Neighs:    %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	for (i = 0; i < 10; i++) fprintf(logfile," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,"FullNghs:  %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	  for (i = 0; i < 10; i++) fprintf(screen," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,"FullNghs: %g ave %g max %g min\n",ave,max,min);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,"Histogram:");
+/home/nakao/lammps/lammps/src/finish.cpp:	  for (i = 0; i < 10; i++) fprintf(logfile," %d",histo[i]);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (screen) fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:      if (logfile) fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,
+/home/nakao/lammps/lammps/src/finish.cpp:	else fprintf(screen,"Total # of neighbors = %g\n",nall);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,"Ave neighs/atom = %g\n",nall/atom->natoms);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(screen,"Ave special neighs/atom = %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Neighbor list builds = %d\n",neighbor->ncalls);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(screen,"Dangerous builds = %d\n",neighbor->ndanger);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,
+/home/nakao/lammps/lammps/src/finish.cpp:	else fprintf(logfile,"Total # of neighbors = %g\n",nall);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,"Ave neighs/atom = %g\n",nall/atom->natoms);
+/home/nakao/lammps/lammps/src/finish.cpp:	  fprintf(logfile,"Ave special neighs/atom = %g\n",
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Neighbor list builds = %d\n",neighbor->ncalls);
+/home/nakao/lammps/lammps/src/finish.cpp:	fprintf(logfile,"Dangerous builds = %d\n",neighbor->ndanger);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:    if (title1) fprintf(fp,"%s\n",title1);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:    else fprintf(fp,"# Time-correlated data for fix %s\n",id);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:    if (title2) fprintf(fp,"%s\n",title2);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:    else fprintf(fp,"# Timestep Number-of-time-windows\n");
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:    if (title3) fprintf(fp,"%s\n",title3);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:      fprintf(fp,"# Index TimeDelta Ncount");
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	  fprintf(fp," %s*%s",arg[6+i],arg[6+i]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	    fprintf(fp," %s*%s",arg[6+i],arg[6+j]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	    fprintf(fp," %s*%s",arg[6+i],arg[6+j]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	    fprintf(fp," %s*%s",arg[6+i],arg[6+j]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	    fprintf(fp," %s*%s",arg[6+i],arg[6+j]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	    fprintf(fp," %s*%s",arg[6+i],arg[6+j]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:      fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:    fprintf(fp,BIGINT_FORMAT " %d\n",ntimestep,nrepeat);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:      fprintf(fp,"%d %d %d",i+1,i*nevery,count[i]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	  fprintf(fp," %g",prefactor*corr[i][j]/count[i]);
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:	  fprintf(fp," 0.0");
+/home/nakao/lammps/lammps/src/fix_ave_correlate.cpp:      fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:    if (title1) fprintf(fp,"%s\n",title1);
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:    else fprintf(fp,"# Histogrammed data for fix %s\n",id);
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:    if (title2) fprintf(fp,"%s\n",title2);
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:    else fprintf(fp,"# TimeStep Number-of-bins "
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:    if (title3) fprintf(fp,"%s\n",title3);
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:    else fprintf(fp,"# Bin Coord Count Count/Total\n");
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:    fprintf(fp,BIGINT_FORMAT " %d %g %g %g %g\n",ntimestep,nbins,
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:	fprintf(fp,"%d %g %g %g\n",
+/home/nakao/lammps/lammps/src/fix_ave_histo.cpp:	fprintf(fp,"%d %g %g %g\n",i+1,coord[i],0.0,0.0);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:    if (title1) fprintf(fp,"%s\n",title1);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:    else fprintf(fp,"# Spatial-averaged data for fix %s and group %s\n",
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:    if (title2) fprintf(fp,"%s\n",title2);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:    else fprintf(fp,"# Timestep Number-of-bins\n");
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:    if (title3) fprintf(fp,"%s\n",title3);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:      if (ndim == 1) fprintf(fp,"# Bin Coord Ncount");
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:      else if (ndim == 2) fprintf(fp,"# Bin Coord1 Coord2 Ncount");
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:      else if (ndim == 3) fprintf(fp,"# Bin Coord1 Coord2 Coord3 Ncount");
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:      for (int i = 0; i < nvalues; i++) fprintf(fp," %s",arg[6+3*ndim+i]);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:      fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:    fprintf(fp,BIGINT_FORMAT " %d\n",ntimestep,nbins);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	fprintf(fp,"  %d %g %g",m+1,coord[m][0],
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	  fprintf(fp," %g",values_total[m][i]/norm);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	fprintf(fp,"  %d %g %g %g",m+1,coord[m][0],coord[m][1],
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	  fprintf(fp," %g",values_total[m][i]/norm);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	fprintf(fp,"  %d %g %g %g %g",m+1,coord[m][0],coord[m][1],coord[m][2],
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	  fprintf(fp," %g",values_total[m][i]/norm);
+/home/nakao/lammps/lammps/src/fix_ave_spatial.cpp:	fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    if (title1) fprintf(fp,"%s\n",title1);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    else fprintf(fp,"# Time-averaged data for fix %s\n",id);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    if (title2) fprintf(fp,"%s\n",title2);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      fprintf(fp,"# TimeStep");
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      for (int i = 0; i < nvalues; i++) fprintf(fp," %s",arg[6+i]);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    } else fprintf(fp,"# TimeStep Number-of-rows\n");
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    if (title3 && mode == VECTOR) fprintf(fp,"%s\n",title3);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      fprintf(fp,"# Row");
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:	if (which[i] == COMPUTE) fprintf(fp," c_%s",ids[i]);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:	else if (which[i] == FIX) fprintf(fp," f_%s",ids[i]);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:	else if (which[i] == VARIABLE) fprintf(fp," v_%s",ids[i]);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:	if (argindex[i]) fprintf(fp,"[%d]",argindex[i]);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    fprintf(fp,BIGINT_FORMAT,ntimestep);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    for (i = 0; i < nvalues; i++) fprintf(fp," %g",vector_total[i]/norm);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:    fprintf(fp,BIGINT_FORMAT " %d\n",ntimestep,nrows);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      fprintf(fp,"%d",i+1);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      for (j = 0; j < nvalues; j++) fprintf(fp," %g",array_total[i][j]/norm);
+/home/nakao/lammps/lammps/src/fix_ave_time.cpp:      fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/fix_orient_fcc.cpp:      if (screen) fprintf(screen,
+/home/nakao/lammps/lammps/src/fix_orient_fcc.cpp:      if (logfile) fprintf(logfile,
+/home/nakao/lammps/lammps/src/fix_orient_fcc.cpp:	fprintf(screen,"  neighs: min = %d, max = %d, ave = %g\n",
+/home/nakao/lammps/lammps/src/fix_orient_fcc.cpp:	fprintf(logfile,"  neighs: min = %d, max = %d, ave = %g\n",
+/home/nakao/lammps/lammps/src/fix_print.cpp:    if (title) fprintf(fp,"%s\n",title);
+/home/nakao/lammps/lammps/src/fix_print.cpp:    else fprintf(fp,"# Fix print output for fix %s\n",id);
+/home/nakao/lammps/lammps/src/fix_print.cpp:    if (screenflag && screen) fprintf(screen,copy);
+/home/nakao/lammps/lammps/src/fix_print.cpp:    if (screenflag && logfile) fprintf(logfile,copy);
+/home/nakao/lammps/lammps/src/fix_print.cpp:      fprintf(fp,copy);
+/home/nakao/lammps/lammps/src/fix_qeq_comb.cpp:    fprintf(fp,"Charge equilibration on step " BIGINT_FORMAT "\n",
+/home/nakao/lammps/lammps/src/fix_qeq_comb.cpp:      fprintf(fp,"  iteration: %d, enegtot %.6g, "
+/home/nakao/lammps/lammps/src/fix_qeq_comb.cpp:      fprintf(fp,"Charges did not converge in %d iterations\n",iloop);
+/home/nakao/lammps/lammps/src/fix_qeq_comb.cpp:      fprintf(fp,"Charges converged in %d iterations to %.10f tolerance\n",
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:    fprintf(fp,"# Timestep " BIGINT_FORMAT " \n",ntimestep);
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:    fprintf(fp,"# \n");
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:    fprintf(fp,"# Number of particles %d \n",npart_tot);
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:    fprintf(fp,"# \n");
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:    fprintf(fp,"# Max number of bonds per atom %d with "
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:    fprintf(fp,"# Particle connection table and bond orders \n");
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:    fprintf(fp,"# id type nb id_1...id_nb mol bo_1...bo_nb abo nlp q \n");
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:	fprintf(fp," %d %d %d",nint(buf[j-1]),nint(buf[j+0]),nint(buf[j+1]));
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:	  fprintf(fp," %d",nint(buf[j+k]));
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:	fprintf(fp," %d",nint(buf[j+k]));
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:	  fprintf(fp,"%14.3f",buf[j+k]);
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:	fprintf(fp,"%14.3f%14.3f%14.3f\n",buf[j+k],buf[j+k+1],buf[j+k+2]);
+/home/nakao/lammps/lammps/src/fix_reaxc_bonds.cpp:  if (me == 0) fprintf(fp,"# \n");
+/home/nakao/lammps/lammps/src/fix_restrain.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/fix_restrain.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/fix_restrain.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/fix_restrain.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/fix_rigid.cpp:    if (screen) fprintf(screen,"%d rigid bodies with %d atoms\n",nbody,nsum);
+/home/nakao/lammps/lammps/src/fix_rigid.cpp:    if (logfile) fprintf(logfile,"%d rigid bodies with %d atoms\n",nbody,nsum);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:  if (me == 0 && screen) fprintf(screen,"Finding SHAKE clusters ...\n");
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(screen,"  %d = # of size 2 clusters\n",count2/2);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(screen,"  %d = # of size 3 clusters\n",count3/3);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(screen,"  %d = # of size 4 clusters\n",count4/4);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(screen,"  %d = # of frozen angles\n",count1/3);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(logfile,"  %d = # of size 2 clusters\n",count2/2);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(logfile,"  %d = # of size 3 clusters\n",count3/3);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(logfile,"  %d = # of size 4 clusters\n",count4/4);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(logfile,"  %d = # of frozen angles\n",count1/3);
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(screen,
+/home/nakao/lammps/lammps/src/fix_shake.cpp:	  fprintf(screen,"  %d %g %g\n",i,
+/home/nakao/lammps/lammps/src/fix_shake.cpp:	  fprintf(screen,"  %d %g %g\n",i,
+/home/nakao/lammps/lammps/src/fix_shake.cpp:      fprintf(logfile,
+/home/nakao/lammps/lammps/src/fix_shake.cpp:	  fprintf(logfile,"  %d %g %g\n",i,
+/home/nakao/lammps/lammps/src/fix_shake.cpp:	  fprintf(logfile,"  %d %g %g\n",i,
+/home/nakao/lammps/lammps/src/fix_tmd.cpp:      fprintf(fp,"%s %s\n","# Step rho_target rho_old gamma_back",
+/home/nakao/lammps/lammps/src/fix_tmd.cpp:      fprintf(fp,
+/home/nakao/lammps/lammps/src/fix_tmd.cpp:    if (screen) fprintf(screen,"Reading TMD target file %s ...\n",file);
+/home/nakao/lammps/lammps/src/fix_ttm.cpp:      fprintf(fp,BIGINT_FORMAT,update->ntimestep);
+/home/nakao/lammps/lammps/src/fix_ttm.cpp:            fprintf(fp," %f",T_a);
+/home/nakao/lammps/lammps/src/fix_ttm.cpp:      fprintf(fp,"\t");
+/home/nakao/lammps/lammps/src/fix_ttm.cpp:            fprintf(fp,"%f ",T_electron[ixnode][iynode][iznode]);
+/home/nakao/lammps/lammps/src/fix_ttm.cpp:      fprintf(fp,"\n");
+/home/nakao/lammps/lammps/src/group.cpp:    if (screen) fprintf(screen,"%.15g atoms in group %s\n",all,names[igroup]);
+/home/nakao/lammps/lammps/src/group.cpp:      fprintf(logfile,"%.15g atoms in group %s\n",all,names[igroup]);
+/home/nakao/lammps/lammps/src/image.cpp:  fprintf (fp,"P6\n%d %d\n255\n",width,height);
+/home/nakao/lammps/lammps/src/image.cpp:      fprintf(fp,"%c%c%c",
+/home/nakao/lammps/lammps/src/improper_cvff.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_cvff.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_cvff.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_cvff.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_harmonic.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_harmonic.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_harmonic.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_harmonic.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_umbrella.cpp:	fprintf(screen,"  1st atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_umbrella.cpp:	fprintf(screen,"  2nd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_umbrella.cpp:	fprintf(screen,"  3rd atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/improper_umbrella.cpp:	fprintf(screen,"  4th atom: %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/input.cpp:      if (echo_screen && screen) fprintf(screen,"%s",line); 
+/home/nakao/lammps/lammps/src/input.cpp:      if (echo_log && logfile) fprintf(logfile,"%s",line);
+/home/nakao/lammps/lammps/src/input.cpp:    if (echo_screen && screen) fprintf(screen,"%s\n",line); 
+/home/nakao/lammps/lammps/src/input.cpp:    if (echo_log && logfile) fprintf(logfile,"%s\n",line);
+/home/nakao/lammps/lammps/src/input.cpp:	if (echo_screen && screen) fprintf(screen,"%s",str); 
+/home/nakao/lammps/lammps/src/input.cpp:	if (echo_log && logfile) fprintf(logfile,"%s",str);
+/home/nakao/lammps/lammps/src/input.cpp:    if (screen) fprintf(screen,"%s\n",arg[0]);
+/home/nakao/lammps/lammps/src/input.cpp:    if (logfile) fprintf(logfile,"%s\n",arg[0]);
+/home/nakao/lammps/lammps/src/lammps.cpp:      if (screen) fprintf(screen,"LAMMPS (%s)\n",universe->version);
+/home/nakao/lammps/lammps/src/lammps.cpp:      if (logfile) fprintf(logfile,"LAMMPS (%s)\n",universe->version);
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(universe->uscreen,"LAMMPS (%s)\n",universe->version);
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(universe->uscreen,"Running on %d partitions of processors\n",
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(universe->ulogfile,"LAMMPS (%s)\n",universe->version);
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(universe->ulogfile,"Running on %d partitions of processors\n",
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(screen,"LAMMPS (%s)\n",universe->version);
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(screen,"Processor partition = %d\n",universe->iworld);
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(logfile,"LAMMPS (%s)\n",universe->version);
+/home/nakao/lammps/lammps/src/lammps.cpp:	fprintf(logfile,"Processor partition = %d\n",universe->iworld);
+/home/nakao/lammps/lammps/src/lattice.cpp:      fprintf(screen,"Lattice spacing in x,y,z = %g %g %g\n",
+/home/nakao/lammps/lammps/src/lattice.cpp:      fprintf(logfile,"Lattice spacing in x,y,z = %g %g %g\n",
+バイナリファイル /home/nakao/lammps/lammps/src/liblmp_linux.a に一致しました
+バイナリファイル /home/nakao/lammps/lammps/src/lmp_linux に一致しました
+/home/nakao/lammps/lammps/src/min.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Setting up minimization ...\n");
+/home/nakao/lammps/lammps/src/min_hftn.cpp:    //fprintf (_fpPrint, "     alpha = %11.8f  neval=%4d\n", dAlpha, neval);
+/home/nakao/lammps/lammps/src/min_hftn.cpp:  fprintf (_fpPrint, "  Iter   Evals      Energy         |F|_2"
+/home/nakao/lammps/lammps/src/min_hftn.cpp:    fprintf (_fpPrint, sFormat1,
+/home/nakao/lammps/lammps/src/min_hftn.cpp:      fprintf (_fpPrint, sFormatA,
+/home/nakao/lammps/lammps/src/min_hftn.cpp:      fprintf (_fpPrint, sFormatR,
+/home/nakao/lammps/lammps/src/modify.cpp:	if (screen) fprintf(screen,str,fix[ifix]->id,fix[ifix]->style);
+/home/nakao/lammps/lammps/src/modify.cpp:	if (logfile) fprintf(logfile,str,fix[ifix]->id,fix[ifix]->style);
+/home/nakao/lammps/lammps/src/modify.cpp:	if (screen) fprintf(screen,str,fix[ifix]->id,fix[ifix]->style);
+/home/nakao/lammps/lammps/src/modify.cpp:	if (logfile) fprintf(logfile,str,fix[ifix]->id,fix[ifix]->style);
+/home/nakao/lammps/lammps/src/output.cpp:      fprintf(screen,"Memory usage per processor = %g Mbytes\n",mbytes);
+/home/nakao/lammps/lammps/src/output.cpp:      fprintf(logfile,"Memory usage per processor = %g Mbytes\n",mbytes);
+/home/nakao/lammps/lammps/src/pair.cpp:    fprintf(fp,"# Pair potential %s for atom types %d %d: i,r,energy,force\n",
+/home/nakao/lammps/lammps/src/pair.cpp:      fprintf(fp,"\n%s\nN %d R %g %g\n\n",arg[7],n,inner,outer);
+/home/nakao/lammps/lammps/src/pair.cpp:      fprintf(fp,"\n%s\nN %d RSQ %g %g\n\n",arg[7],n,inner,outer);
+/home/nakao/lammps/lammps/src/pair.cpp:      fprintf(fp,"\n%s\nN %d BITMAP %g %g\n\n",arg[7],ntable,inner,outer);
+/home/nakao/lammps/lammps/src/pair.cpp:    if (me == 0) fprintf(fp,"%d %g %g %g\n",i+1,r,e,f);
+/home/nakao/lammps/lammps/src/pair_comb.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Pair COMB:\n");
+/home/nakao/lammps/lammps/src/pair_comb.cpp:    fprintf(screen,"  generating Coulomb integral lookup table ...\n");
+/home/nakao/lammps/lammps/src/pair_comb.cpp:    fprintf(screen,"  will apply over-coordination correction ...\n");
+/home/nakao/lammps/lammps/src/pair_comb.cpp:    fprintf(screen,"  will not apply over-coordination correction ...\n");
+/home/nakao/lammps/lammps/src/pair_reax_c.cpp:    // fprintf( stderr, "3\n" );
+/home/nakao/lammps/lammps/src/pair_reax_c.cpp:  //fprintf( stderr, "4\n" );
+/home/nakao/lammps/lammps/src/pair_reax_c.cpp:  //fprintf( stderr, "5\n" );
+/home/nakao/lammps/lammps/src/pair_reax_c.cpp:  //fprintf( stderr, "6\n" );
+/home/nakao/lammps/lammps/src/pppm.cpp:    if (screen) fprintf(screen,"PPPM initialization ...\n");
+/home/nakao/lammps/lammps/src/pppm.cpp:    if (logfile) fprintf(logfile,"PPPM initialization ...\n");
+/home/nakao/lammps/lammps/src/pppm.cpp:    if (screen) fprintf(screen,"  brick FFT buffer size/proc = %d %d %d\n",
+/home/nakao/lammps/lammps/src/pppm.cpp:    if (logfile) fprintf(logfile,"  brick FFT buffer size/proc = %d %d %d\n",
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(screen,"  G vector (1/distance)= %g\n",g_ewald);
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(screen,"  grid = %d %d %d\n",nx_pppm,ny_pppm,nz_pppm);
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(screen,"  stencil order = %d\n",order);
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(screen,"  estimated absolute RMS force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(screen,"  estimated relative force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(screen,"  using %s precision FFTs\n",fft_prec);
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(logfile,"  G vector (1/distance) = %g\n",g_ewald);
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(logfile,"  grid = %d %d %d\n",nx_pppm,ny_pppm,nz_pppm);
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(logfile,"  stencil order = %d\n",order);
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(logfile,"  estimated absolute RMS force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(logfile,"  estimated relative force accuracy = %g\n",
+/home/nakao/lammps/lammps/src/pppm.cpp:      fprintf(logfile,"  using %s precision FFTs\n",fft_prec);
+/home/nakao/lammps/lammps/src/pppm_cg.cpp:	fprintf(screen,
+/home/nakao/lammps/lammps/src/pppm_cg.cpp:	fprintf(logfile,
+/home/nakao/lammps/lammps/src/procmap.cpp:    fprintf(fp,"LAMMPS mapping of processors to 3d grid\n");
+/home/nakao/lammps/lammps/src/procmap.cpp:    fprintf(fp,"partition = %d\n",universe->iworld+1);
+/home/nakao/lammps/lammps/src/procmap.cpp:    fprintf(fp,"Px Py Pz = %d %d %d\n",procgrid[0],procgrid[1],procgrid[2]);
+/home/nakao/lammps/lammps/src/procmap.cpp:    fprintf(fp,"world-ID universe-ID original-ID: I J K: name\n\n");
+/home/nakao/lammps/lammps/src/procmap.cpp:      fprintf(fp,"%d %d %d: %d %d %d: %s\n",
+/home/nakao/lammps/lammps/src/read_data.cpp:      if (screen) fprintf(screen,"Scanning data file ...\n");
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"Reading data file ...\n");
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " atoms\n",natoms);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " atoms\n",natoms);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " velocities\n",natoms);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " velocities\n",natoms);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " %s\n",natoms,type);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " %s\n",natoms,type);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " bonds\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " bonds\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " angles\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " angles\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " dihedrals\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " dihedrals\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " impropers\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " impropers\n",sum/factor);
+/home/nakao/lammps/lammps/src/read_data.cpp:      if (screen) fprintf(screen,"  %d = max bonds/atom\n",bond_per_atom);
+/home/nakao/lammps/lammps/src/read_data.cpp:      if (logfile) fprintf(logfile,"  %d = max bonds/atom\n",bond_per_atom);
+/home/nakao/lammps/lammps/src/read_data.cpp:      if (screen) fprintf(screen,"  %d = max angles/atom\n",angle_per_atom);
+/home/nakao/lammps/lammps/src/read_data.cpp:      if (logfile) fprintf(logfile,"  %d = max angles/atom\n",angle_per_atom);
+/home/nakao/lammps/lammps/src/read_data.cpp:	fprintf(screen,"  %d = max dihedrals/atom\n",dihedral_per_atom);
+/home/nakao/lammps/lammps/src/read_data.cpp:	fprintf(logfile,"  %d = max dihedrals/atom\n",dihedral_per_atom);
+/home/nakao/lammps/lammps/src/read_data.cpp:	fprintf(screen,"  %d = max impropers/atom\n",improper_per_atom);
+/home/nakao/lammps/lammps/src/read_data.cpp:	fprintf(logfile,"  %d = max impropers/atom\n",improper_per_atom);
+/home/nakao/lammps/lammps/src/read_restart.cpp:    if (screen) fprintf(screen,"Reading restart file ...\n");
+/home/nakao/lammps/lammps/src/read_restart.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " atoms\n",natoms);
+/home/nakao/lammps/lammps/src/read_restart.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " atoms\n",natoms);
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " bonds\n",atom->nbonds);
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " bonds\n",atom->nbonds);
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " angles\n",
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " angles\n",
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " dihedrals\n",
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " dihedrals\n",
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " impropers\n",
+/home/nakao/lammps/lammps/src/read_restart.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " impropers\n",
+/home/nakao/lammps/lammps/src/read_restart.cpp:	if (screen) fprintf(screen,"  restart file = %s, LAMMPS = %s\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d: local_cap=%d total_cap=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  // fprintf( stderr, "p%d: bond order storage\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf(stderr, "Problem in initializing far nbrs list. Terminating!\n");
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf(stderr, "not enough space for %s matrix. terminating!\n", name);
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "reallocating %s matrix, n = %d, m = %d\n", name, n, m );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "memory allocated: %s = %dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "not enough space for hbonds list. terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "not enough space for bonds list. terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "p%d bin_my_atoms: l:%d - atom%d @ %.5f %.5f %.5f"	\
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:	fprintf( stderr, "p%d gc[%d,%d,%d]->top=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d max_atoms=%d, my_max=%d, all_max=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d-allocated %dx%dx%d grid: nbrs=%d atoms=%d space=%dMB\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d@reallocate: n: %d, N: %d, numH: %d\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d@reallocate: local_cap: %d, total_cap: %d, Hcap: %d\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d: realloc.num_far: %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d: realloc.H: %d, realloc.Htop: %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d: realloc.Hbonds: %d, realloc.num_hbonds: %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d: realloc.bonds: %d, num_bonds: %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d: realloc.num_3body: %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "p%d: reallocating system and workspace -"\
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "not enough space for atom_list: total_cap=%d",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "terminating...\n" );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "no space for workspace: local_cap=%d total_cap=%d",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "terminating...\n" );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:	fprintf( stderr, "step%d-ran out of space on far_nbrs: top=%d, max=%d",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "p%d: reallocating far_nbrs: num_fars=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "p%d: reallocating H matrix: Htop=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf(stderr, "p%d: reallocating hbonds: total_hbonds=%d space=%dMB\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "p%d: reallocating bonds: total_bonds=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "p%d: reallocating 3body list: num_3body=%d, space=%dMB\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "Problem in initializing angles list. Terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf(stderr, "reallocating gcell: g->max_atoms: %d\n", g->max_atoms);
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "p%d: reallocating mpi_buf: old_recv=%d\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "p%d: nbr%d old_send=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:    fprintf( stderr, "p%d: reallocating mpi_buf: recv=%d send=%d total=%dMB\n",
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "p%d: nbr%d new_send=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "%s", msg );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:      fprintf( stderr, "terminating...\n" );
+/home/nakao/lammps/lammps/src/reaxc_allocate.cpp:  fprintf( stderr, "p%d @ step%d: reallocate done\n", 
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:  fprintf( stderr, "p%d dist: entered\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:  fprintf( stderr, "p%d dist: done\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:    fprintf( stderr, "rvec_unpacker: cnt=%d  i =%d  index[i]=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:  fprintf( stderr, "p%d coll: entered\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:    fprintf( stderr, "p%d coll[%d] nbr1: str=%d cnt=%d recv=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:    fprintf( stderr, "p%d coll[%d] nbr2: str=%d cnt=%d recv=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:  fprintf( stderr, "p%d coll: done\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_basic_comm.cpp:      fprintf( stderr, "id_all[%d]: %d\n", i, workspace->id_all[i] );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:  //fprintf( stderr, "i=%d j=%d start=%d end=%d\n", i, pj, start_pj, end_pj );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    // fprintf( stdout, "\tl: %d nbr:%d\n", l, nbr_l->nbr+1 );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:  //  fprintf( stderr, "%d %d %d, due_i:[%g %g %g]\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:  //  fprintf( stderr, "%d %d %d, due_j:[%g %g %g]\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:       fprintf( stderr, "%3d %3d %3d: dvec[%10.6f %10.6f %10.6f]"
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:	 fprintf( stderr, "%3d %3d %3d: dvec[%10.6f %10.6f %10.6f]"
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:     fprintf( stderr, "%3d %3d %3d: dvec[%10.6f %10.6f %10.6f]" 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    /*fprintf( stderr, "%d %d %g %g %g\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    /*fprintf( stderr, "Cln_BOp_s: %f, pbo2: %f, C12:%f\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf( stderr, "Cln_BOp_pi: %f, pbo4: %f, C34:%f\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf( stderr, "Cln_BOp_pi2: %f, pbo6: %f, C56:%f\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    /*fprintf(stderr, "pbo1: %f, pbo2:%f\n", twbp->p_bo1, twbp->p_bo2);
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf(stderr, "pbo3: %f, pbo4:%f\n", twbp->p_bo3, twbp->p_bo4);
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf(stderr, "pbo5: %f, pbo6:%f\n", twbp->p_bo5, twbp->p_bo6);
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf( stderr, "r_s: %f, r_p: %f, r_pp: %f\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf( stderr, "C12: %g, C34:%g, C56:%g\n", C12, C34, C56 );*/
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    /*fprintf( stderr, "\tfactors: %g %g %g\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    /*fprintf( stderr, "dBOpi:\t[%g, %g, %g]\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf( stderr, "dBOpi:\t[%g, %g, %g]\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf( stderr, "dBOpi2:\t[%g, %g, %g]\n\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    //fprintf( stdout, "%d(%d) %24.15f\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:  // fprintf( stderr, "done with uncorrected bond orders\n" );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    // fprintf( stderr, "i:%d Dp:%g Dbocp:%g s:%d e:%d\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      // fprintf( stderr, "\tj:%d - ubo: %8.3f\n", j+1, bo_ij->BO );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:	/* fprintf( stderr, "%6d%6d%12.6f%12.6f%12.6f\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:	    /*fprintf( stderr,"%d %d\t%g %g   j:%g %g  p_boc:%g %g\n"
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:	    //fprintf( stderr, "\tCf1:%g  %g\n", Cf1_ij, Cf1_ji );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:	  /*fprintf( stderr, "\tBO: %f, A0: %f, A1: %f" 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:	/* fprintf( stderr, "%d %d\t%g %g %g %g\n"
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:	/* fprintf( stderr, "%d %d  BO:%f BO_s:%f BO_pi:%f BO_pi2:%f\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    // fprintf( stderr, "dDelta computations\nj:" );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      // fprintf( stderr, "%d  ", j );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:      fprintf( stdout, "dDel: %d %d [%g %g %g]\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:  /* fprintf( stderr, "\tCalculated actual bond orders ...\n" );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:     fprintf( stderr, "j\tDelta\tDelta_e\tDelta_boc\tnlp"
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:     fprintf( stderr, "Atom\tDelta\t\tDelta_e\t\tDelta_boc\tnlp"
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    //fprintf( stderr, "%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    //fprintf( stdout, "%d(%d) %24.15f\n", 
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:  fprintf( stderr, "Number of bonds: %d\n", num_bonds );
+/home/nakao/lammps/lammps/src/reaxc_bond_orders.cpp:    /*fprintf( stderr, "\tstart: %d   end: %d   mid: %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_bonds.cpp:	//fprintf( out_control->ebond, "%6d%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_bonds.cpp:	fprintf( out_control->ebond, "%6d%6d%12.4f%12.4f%12.4f\n",
+/home/nakao/lammps/lammps/src/reaxc_bonds.cpp:	    //fprintf( out_control->ebond, 
+/home/nakao/lammps/lammps/src/reaxc_control.cpp:    fprintf( stderr, "error opening the control file! terminating...\n" );
+/home/nakao/lammps/lammps/src/reaxc_control.cpp:    //fprintf( stderr, "%s\n", s );
+/home/nakao/lammps/lammps/src/reaxc_control.cpp:      fprintf( stderr, "WARNING: unknown parameter %s\n", tmp[0] );
+/home/nakao/lammps/lammps/src/reaxc_control.cpp:  // fprintf( stderr,"%d %d %10.5f %d %10.5f %10.5f\n",
+/home/nakao/lammps/lammps/src/reaxc_control.cpp:  fprintf( stderr, "control file read\n" );
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:    fprintf( stderr, "error opening the force filed file! terminating...\n" );
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:    fprintf( stderr, "WARNING: number of globals in ffield file is 0!\n" );
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:      fprintf(stderr, "Inconsistent ffield file (reaxc_ffield.cpp) \n");
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:        fprintf(stderr, "Inconsistent ffield file (reaxc_ffield.cpp) \n");
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:	    fprintf( stderr, "Warning: inconsistent vdWaals-parameters\n"	\
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:	  fprintf( stderr, "vdWaals type for element %s: Shielding+inner-wall",
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:	  fprintf( stderr, "Warning: inconsistent vdWaals-parameters\n"	\
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:	  fprintf( stderr,"vdWaals type for element%s: No Shielding,inner-wall",
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:	  fprintf( stderr, "Warning: inconsistent vdWaals-parameters\n"	\
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:	  fprintf( stderr,"vdWaals type for element%s: Shielding,no inner-wall",
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:	fprintf( stderr, "Error: inconsistent vdWaals-parameters\n"\
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:  fprintf( stderr, "vdWaals type: %d\n", reax->gp.vdw_type );
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:      fprintf( stderr, "Warning: changed valency_val to valency_boc for %s\n",
+/home/nakao/lammps/lammps/src/reaxc_ffield.cpp:  fprintf( stderr, "force field read\n" );
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:    fprintf( stderr, "p%d: starting f%d\n", system->my_rank, i );
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:    fprintf( stderr, "p%d: f%d done\n", system->my_rank, i );
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf( stderr, "p%d: nonbonded forces done\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	fprintf( stderr, "step%d-bondchk failed: i=%d end(i)=%d str(i+1)=%d\n",
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	  fprintf(stderr,"step%d-hbondchk failed: H=%d end(H)=%d str(H+1)=%d\n",
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:      //fprintf( stderr, "%d%d i=%d x_i: %f %f %f,j=%d x_j: %f %f %f, d=%f\n",
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	    //fprintf( stdout, "%d%d %d %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	    // fprintf( stderr, "%d %d\n", atom1, atom2 );
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	  //fprintf( stdout, "%d%d - %d(%d) %d(%d)\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  //fprintf( stderr, "after the first init loop\n" );
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	    //fprintf( stdout, "%d%d - %d(%d) %d(%d) new\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf( stderr, "p%d @ step%d: Htop = %d num_bonds = %d num_hbonds = %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:      fprintf( stderr, "%d %d %.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	    // fprintf( stderr, "%d %d\n", atom1, atom2 );
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:	  //fprintf( stdout, "%d%d - %d(%d) %d(%d)\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf( stderr, "p%d @ step%d: num_bonds = %d num_hbonds = %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf( stderr, "p%d @ estimate storages: Htop = %d, num_3body = %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf( stderr, "p%d @ step%d: completed bonded\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf(stderr, "p%d @ step%d: qeq completed\n", system->my_rank, data->step);
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf( stderr, "p%d @ step%d: nonbonded forces completed\n", 
+/home/nakao/lammps/lammps/src/reaxc_forces.cpp:  fprintf( stderr, "p%d @ step%d: total forces computed\n", 
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:      // fprintf( stderr, "j: %d, top: %d, hb_start_j: %d, hb_end_j:%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:	    /*fprintf( stdout, 
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:	    /* fprintf( out_control->ehb, 
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:	       fprintf( out_control->ehb, "%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:	    fprintf( out_control->ehb, 
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:  fprintf( stderr, "Number of hydrogen bonds: %d\n", num_hb_intrs );
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:  fprintf( stderr, "Hydrogen Bond Energy: %g\n", data->my_en.e_hb );
+/home/nakao/lammps/lammps/src/reaxc_hydrogen_bonds.cpp:  fprintf( stderr, "hydbonds: ext_press (%24.15e %24.15e %24.15e)\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      // fprintf( stderr, "v = %f %f %f\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      // fprintf( stderr, "scale = %f\n", scale );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      // fprintf( stderr, "v = %f %f %f\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d GRID:\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: n=%d local_cap=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: N=%d total_cap=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: numH=%d H_cap=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "WARNING: Nose-Hoover NVT is still under testing.\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "data->N_f: %8.3f\n", data->N_f );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: n=%d local_cap=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: N=%d total_cap=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: numH=%d H_cap=%d\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Warning: non-zero lower Taper-radius cutoff\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Negative upper Taper-radius cutoff\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Warning: very low Taper-radius cutoff: %f\n", swb );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf(stderr, "Problem in initializing far nbrs list. Terminating!\n");
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated far_nbrs: num_far=%d, space=%dMB\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated H matrix: Htop=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "not enough space for hbonds list. terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: allocated hbonds: total_hbonds=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "not enough space for bonds list. terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated bonds: total_bonds=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Problem in initializing angles list. Terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated 3-body list: num_3body=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Problem in initializing dDelta list. Terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated dDelta list: num_ddelta=%d space=%ldMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Problem in initializing dBO list. Terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated dbond list: num_dbonds=%d space=%ldMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "not enough space for hbonds list. terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: allocated hbonds: total_hbonds=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "not enough space for bonds list. terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated bonds: total_bonds=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Problem in initializing angles list. Terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated 3-body list: num_3body=%d, space=%dMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Problem in initializing dDelta list. Terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated dDelta list: num_ddelta=%d space=%ldMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "Problem in initializing dBO list. Terminating!\n" );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: allocated dbond list: num_dbonds=%d space=%ldMB\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: init_mpi_datatypes: could not create datatypes\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: mpi_data couldn't be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized mpi datatypes\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: %s\n", system->my_rank, msg ); 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: system could not be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: system initialized\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: %s\n", system->my_rank, msg ); 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: sim_data couldn't be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized simulation data\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d:init_workspace: not enough memory\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d:workspace couldn't be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized workspace\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: %s\n", system->my_rank, msg );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: system could not be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized lists\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: %s\n", system->my_rank, msg );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: could not open output files! terminating...\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: output files opened\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: %s\n", system->my_rank, msg );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: couldn't create lookup table! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: initialized lookup tables\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized force functions\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf(stderr,"p%d: initialized force test functions\n",system->my_rank);
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: init_mpi_datatypes: could not create datatypes\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: mpi_data couldn't be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized mpi datatypes\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: %s\n", system->my_rank, msg ); 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: system could not be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: system initialized\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: %s\n", system->my_rank, msg ); 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: sim_data couldn't be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized simulation data\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d:init_workspace: not enough memory\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d:workspace couldn't be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized workspace\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: %s\n", system->my_rank, msg );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: system could not be initialized! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized lists\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: %s\n", system->my_rank, msg );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: could not open output files! terminating...\n", 
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: output files opened\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: %s\n", system->my_rank, msg );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:      fprintf( stderr, "p%d: couldn't create lookup table! terminating.\n",
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf( stderr, "p%d: initialized lookup tables\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:  fprintf( stderr, "p%d: initialized force functions\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_init_md.cpp:    fprintf(stderr,"p%d: initialized force test functions\n",system->my_rank);
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->out, "%-6s%14s%14s%14s%11s%13s%13s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->out, "%-6s%24s%24s%24s%13s%16s%13s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->pot, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->pot, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->log, "%6s%8s%8s%8s%8s%8s%8s%8s%8s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf(out_control->prs,"%8s%13s%13s%13s%13s%13s%13s%13s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    // 	fprintf( out_control->dpl, "%6s%20s%30s",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    // 	fprintf( out_control->drft, "%7s%20s%20s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "%s:\n", name );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tmin[%8.3f %8.3f %8.3f]\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tmax[%8.3f %8.3f %8.3f]\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tdims[%8.3f%8.3f%8.3f]\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( out, "box: {" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //     fprintf( out, "{" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //       fprintf( out, "%8.3f ", box->box[i][j] );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //     fprintf( out, "}" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( out, "}\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( out, "box_trans: {" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //     fprintf( out, "{" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // 	fprintf( out, "%8.3f ", box->trans[i][j] );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //     fprintf( out, "}" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( out, "}\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( out, "box_trinv: {" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //     fprintf( out, "{" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // 	fprintf( out, "%8.3f ", box->trans_inv[i][j] );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //     fprintf( out, "}" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( out, "}\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tnumber of grid cells: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tgcell lengths: %8.3f %8.3f %8.3f\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tinverses of gcell lengths: %8.3f %8.3f %8.3f\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\t---------------------------------\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tnumber of native gcells: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tnative gcell span: %d-%d  %d-%d  %d-%d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\t---------------------------------\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tvlist gcell stretch: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tnonbonded nbrs gcell stretch: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tbonded nbrs gcell stretch: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\t---------------------------------\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tghost gcell span: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tnonbonded ghost gcell span: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf(out, "\thbonded ghost gcell span: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\tbonded ghost gcell span: %d %d %d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //fprintf(out, "\t---------------------------------\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  //fprintf(out, "\tmax number of gcells at the boundary: %d\n", g->gcell_cap);
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "\t---------------------------------\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( stderr, "GCELL MARKS:\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	  fprintf( stderr, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( stderr, "\tgcells from(%2d %2d %2d) to (%2d %2d %2d): %d - %s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out, "-------------------------------------\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	  fprintf( f, "p%-2d GCELL BOUNDARIES with r(%2d %2d %2d):\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	  fprintf( f, "\tsend_type %s: send(%d %d %d) to (%d %d %d)\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	  fprintf( f, "\trecv_type %s: recv(%d %d %d) to (%d %d %d)\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	  fprintf( f, "p%d gcell(%2d %2d %2d) of type %d(%s)\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	  fprintf( f, "\tatom list start: %d, end: %d\n\t", gc->str, gc->end );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	    fprintf( f, "%5d", system->my_atoms[l].orig_id );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	  fprintf( f, "\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	  fprintf( f, "p%d gcell(%2d %2d %2d) of type %d(%s)\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	  fprintf( f, "\tatom list start: %d, end: %d\n\t", gc->str, gc->end );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	    fprintf( f, "%5d", system->my_atoms[l].orig_id );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  	  fprintf( f, "\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( stderr, "error in opening my_atoms file" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( stderr, "p%d had %d atoms\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( fh, "p%-2d %-5d %2d %24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( stderr, "error in opening my_ext_atoms file" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  // fprintf( stderr, "p%d had %d atoms\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( fh, "p%-2d %-5d imprt%-5d %2d %24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( fout, "%6d%6d%24.15e%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( fout, "%6d%6d%24.15e%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( stderr, "%d %d %.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( f, "%d %d %.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( f, "%d %d %.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( f, "%d %d %.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out, "%6d%2d%24.15e%24.15e%24.15e%24.15e%24.15e%24.15e%24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out, "%d %d %.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	  fprintf( out, "%d %d %.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( fout, "%6d%10.4f%10.4f%10.4f\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( fout, "%6d %10.7f %10.7f %10.7f\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      //fprintf( f, "%6d%6d%23.15e%23.15e%23.15e%23.15e%23.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( f, "%8d%8d %24.15f %24.15f\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( f, "%6d:", id_i);
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf(f, "%6d", temp[j] );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf(f, "\n");
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( stderr, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( stderr, "%6s\t%-38s\n", "atom", "atom.f[0,1,2]");
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( stderr, "%6d %f %f %f\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->out, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->pot, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->out, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->pot, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->log, "%6d%8.3f%8.3f%8.3f%8.3f%8.3f%8.3f%8.3f%6d\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->prs, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->prs, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( stderr, "output_results... done\n" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ebond, "step: %d\n%6s%6s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->elp, "step: %d\n%6s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->eov, "step: %d\n%6s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->eun, "step: %d\n%6s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->eval, "step: %d\n%6s%6s%6s%12s%12s%12s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->epen, "step: %d\n%6s%6s%6s%12s%12s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ecoa, "step: %d\n%6s%6s%6s%12s%12s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ehb,  "step: %d\n%6s%6s%6s%12s%12s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->etor, "step: %d\n%6s%6s%6s%6s%12s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->econ,"step:%d\n%6s%6s%6s%6s%12s%12s%12s%12s%12s%12s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->evdw, "step: %d\n%6s%6s%12s%12s%12s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ecou, "step: %d\n%6s%6s%12s%12s%12s%12s%12s\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fbo, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fbo, "%6s%6s%12s%12s%12s%12s%12s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->fbo, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fdbo, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fdbo, "%6s%6s%6s%24s%24s%24s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      /* fprintf( out_control->fdbo, "%6d %6d\tstart: %6d\tend: %6d\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->fdbo, "%6d%6d%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->fdbo, "%6d%6d%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:	fprintf( out_control->fdbo, "%6d%6d%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( f, "step: %d\n", step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    //fprintf( f, "%6d %23.15e %23.15e %23.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    //fprintf( f, "%6d%12.6f%12.6f%12.6f\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( f, "%6d %19.9e %19.9e %19.9e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->flist, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->flist, "%6s\t%-38s\n", "atom", "Far_nbrs_list");
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->flist, "%6d:",id_i);
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf(out_control->flist, "%6d",temp[j]);
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->flist, "\n");
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->blist, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->blist, "%6s\t%-38s\n", "atom", "Bond_list");
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->blist, "%6d:", id_i);
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf(out_control->blist, "%6d",temp[j]);
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf(out_control->blist, "\n");
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( stderr, "p%d had %d atoms\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( stderr, "p%d, atom%d: %d  %s  %8.3f %8.3f %8.3f\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fbond, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fbond, "%6s%24s%24s%24s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf(out_control->fbond, "%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->flp, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->flp, "%6s%24s\n", "atom", "f_lonepair" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf(out_control->flp, "%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fov, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fov, "%6s%-38s%-38s%-38s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->fov, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fun, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fun, "%6s%-38s%-38s%-38s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->fun, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->f3body, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->f3body, "%6s%-37s%-37s%-37s%-38s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->f3body, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->f3body, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->f3body, "%6d %24.15e%24.15e%24.15e ",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->f3body, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fhb, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fhb, "%6s\t%-38s\n", "atom", "f_hb[0,1,2]" );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf(out_control->fhb, "%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->f4body, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->f4body, "%6s\t%-38s%-38s%-38s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->f4body, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:      fprintf( out_control->f4body, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fnonb, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->fnonb, "%6s\t%-38s%-38s%-38s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->fnonb, 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ftot, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ftot, "%6s\t%-38s\n", "atom", "atom.f[0,1,2]");
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->ftot, "%6d%24.15e%24.15e%24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ftot2, "step: %d\n", data->step );
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:  fprintf( out_control->ftot2, "%6s\t%-38s%-38s\n", 
+/home/nakao/lammps/lammps/src/reaxc_io_tools.cpp:    fprintf( out_control->ftot2, "%6d%24.15e%24.15e%24.15e%24.15e%24.15e%24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_list.cpp:  fprintf( stderr, "list: n=%d num_intrs=%d type=%d\n", n, num_intrs, type );
+/home/nakao/lammps/lammps/src/reaxc_list.cpp:    fprintf( stderr, "ERROR: no %d list type defined!\n", l->type );
+/home/nakao/lammps/lammps/src/reaxc_list.cpp:    fprintf( stderr, "ERROR: no %d list type defined!\n", l->type );
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp://  fprintf( out_control->elp, "%24.15e%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp://  fprintf( out_control->elp, "%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:    fprintf( out_control->elp, "%6d%12.4f%12.4f%12.4f\n",
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:	    fprintf(out_control->elp,"C2cor%6d%6d%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:	/*fprintf( stdout, "%4d%4d%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:/*	  fprintf( out_control->eov, "%6d%12.6f\n", 
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp://	  fprintf( out_control->eov, "%6d%12.6f\n", 
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp://	  fprintf( out_control->eov, "%6d%24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:    //fprintf( out_control->elp, "%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:    //fprintf( out_control->elp, "%6d%12.4f%12.4f%12.4f\n",
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:    //fprintf( out_control->eov, "%6d%24.15e%24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:    fprintf( out_control->eov, "%6d%12.4f%12.4f\n", 
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:    //fprintf( out_control->eun, "%6d%24.15e%24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_multi_body.cpp:    fprintf( out_control->eun, "%6d%12.4f%12.4f\n", 
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:    //fprintf( stderr, "i:%d, start_i: %d, end_i: %d\n", i, start_i, end_i );
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      /* fprintf(stderr, "%5d %5d %10.6f %10.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:	/* fprintf( stderr, "nonbonded(%d,%d): rel_box (%f %f %f) 
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      // fprintf( out_control->evdw, 
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      //fprintf( out_control->evdw, "%6d%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      fprintf( out_control->evdw, "%6d%6d%12.4f%12.4f%12.4f\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      //fprintf(out_control->ecou,"%6d%6d%24.15e%24.15e%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      fprintf( out_control->ecou, "%6d%6d%12.4f%12.4f%12.4f%12.4f%12.4f\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:  fprintf( stderr, "nonbonded: ext_press (%12.6f %12.6f %12.6f)\n", 
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      //fprintf(stderr, "r: %f, i: %d, base: %f, dif: %f\n", r, i, base, dif);
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      //fprintf( out_control->evdw, "%6d%6d%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      fprintf( out_control->evdw, "%6d%6d%12.4f%12.4f%12.4f\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      //fprintf(out_control->ecou,"%6d%6d%24.15e%24.15e%24.15e%24.15e%24.15e\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:      fprintf( out_control->ecou, "%6d%6d%12.4f%12.4f%12.4f%12.4f%12.4f\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:  // fprintf( stderr,
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:  // fprintf( stdout, "%d %d\t%g\t%g  %g\t%g  %g\t%g  %g\n",
+/home/nakao/lammps/lammps/src/reaxc_nonbonded.cpp:  // fprintf(stderr,"LR_Lookup: %3d %3d %5.3f-%8.5f %8.5f %8.5f %8.5f %8.5f\n",
+/home/nakao/lammps/lammps/src/reaxc_reset_tools.cpp:	fprintf(stderr, 
+/home/nakao/lammps/lammps/src/reaxc_reset_tools.cpp:  // fprintf( stderr, "p%d: n:%d num_intrs:%d  num_H:%d\n",
+/home/nakao/lammps/lammps/src/reaxc_reset_tools.cpp:	fprintf(stderr, 
+/home/nakao/lammps/lammps/src/reaxc_reset_tools.cpp:  // fprintf( stderr, "p%d: cleared hbonds\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_reset_tools.cpp:  fprintf( stderr, "p%d @ step%d: reset done\n", system->my_rank, data->step );
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  fprintf( stderr, "xcm:  %24.15e %24.15e %24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  fprintf( stderr, "vcm:  %24.15e %24.15e %24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  fprintf( stderr, "amcm: %24.15e %24.15e %24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  /* fprintf( stderr, "mat:  %f %f %f\n     %f %f %f\n     %f %f %f\n",
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:     fprintf( stderr, "inv:  %g %g %g\n     %g %g %g\n     %g %g %g\n",
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  fprintf( stderr, "avcm: %24.15e %24.15e %24.15e\n", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:      fprintf( stderr, "%8d%8.2f%8.2f%8.2f", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:      fprintf( stderr, "%8.2f%8.2f%8.2f", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:      fprintf( stderr, "%8.2f%8.2f%8.2f\n", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  fprintf(stderr,"p%d:p_int(%10.5f %10.5f %10.5f)p_ext(%10.5f %10.5f %10.5f)\n",
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  fprintf( stderr, "p%d: %10.5f %10.5f %10.5f\n", 
+/home/nakao/lammps/lammps/src/reaxc_system_props.cpp:  fprintf( stderr, "p%d: %10.5f %10.5f %10.5f\n", 
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:  // fprintf( stderr, "CONECT line includes invalid pdb serial number %d.\n", 
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:  // fprintf( stderr, "Please correct the input file.Terminating...\n" );
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "%s\nInput %d - Out of range %d-%d. Terminating...\n", 
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:  fprintf( stderr, "Unknown atom type %s. Terminating...\n", s );
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "WARNING: trying to allocate %ld bytes for array %s. ",
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "returning NULL.\n" );
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "ERROR: failed to allocate %ld bytes for array %s", 
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "WARNING: trying to allocate %d elements for array %s. ",
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "returning NULL.\n" );
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "WARNING: elements size for array %s is %d. ",
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "returning NULL.\n" );
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "ERROR: failed to allocate %d bytes for array %s", 
+/home/nakao/lammps/lammps/src/reaxc_tool_box.cpp:    fprintf( stderr, "WARNING: trying to free the already NULL pointer %s!\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:  /* fprintf( out_control->etor, 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:     fprintf( out_control->etor, "%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:     fprintf( out_control->etor, "%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:     fprintf( out_control->etor, "%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:     fprintf( out_control->etor, "%12.6f%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:     fprintf( out_control->etor, "%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:  /* fprintf( out_control->etor, "%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:     fprintf( out_control->etor, "%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		  /* fprintf( out_control->etor, 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		     fprintf( out_control->etor, "%12.8f\n", dfn11 ); */
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		  /* fprintf( out_control->etor, 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		  /* fprintf( out_control->etor, 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		  /* fprintf( out_control->etor, 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		  /* fprintf( out_control->etor, "%12.6f%12.6f%12.6f%12.6f\n",
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		  fprintf(out_control->etor, 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:		  fprintf(out_control->econ, 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:  fprintf( stderr, "Number of torsion angles: %d\n", num_frb_intrs );
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:  fprintf( stderr, "Torsion Energy: %g\t Conjugation Energy: %g\n", 
+/home/nakao/lammps/lammps/src/reaxc_torsion_angles.cpp:  fprintf( stderr, "4body: ext_press (%12.6f %12.6f %12.6f)\n",
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( stderr, 
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( out_control->strj, INT2_LINE, 
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( out_control->strj, INT2_LINE, 
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:  /* fprintf( stderr, "p%d: init_traj: atom_line_len = %d "		\
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:  fprintf( stderr, "p%d: initiated trajectory\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:  fprintf( stderr, "p%d: header written\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:  fprintf( stderr, "p%d: atom descriptions written\n", system->my_rank );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( stderr, 
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:	  fprintf(stderr, "write_traj_bonds: FATAL! invalid bond_info option");
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:      fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:    fprintf( out_control->strj, "%s", out_control->buffer );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:  fprintf( stderr, "p%d: appending frame %d\n", system->my_rank, data->step );
+/home/nakao/lammps/lammps/src/reaxc_traj.cpp:  fprintf( stderr, "p%d: appended frame %d\n", system->my_rank, data->step );
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:    // fprintf( out_control->eval, "j: %d\n", j );
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:	// fprintf( out_control->eval, "i: %d\n", i );
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:	  // fprintf( out_control->eval, "pk: %d\n", pk );
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:	       fprintf( fval, "%6d %6d %6d %7.3f %7.3f %7.3f\n", 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:	       fprintf( fval, "%6d %6d %6d %7.3f %7.3f %7.3f\n", 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:	      // fprintf( out_control->eval, "%6d%6d%6d -- exists in thbp\n", 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		    // fprintf( out_control->eval, "%6d%12.8f\n", 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		/*fprintf( out_control->eval, "%12.8f%12.8f%12.8f%12.8f\n",
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf(out_control->eval, "%13.8f%13.8f%13.8f%13.8f%13.8f\n",
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf( out_control->eval, "%12.8f%12.8f%12.8f%12.8f\n",
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf( out_control->eval, 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf( out_control->eval, 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf( out_control->eval, 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf( out_control->eval, 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf( out_control->epen, 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:		fprintf( out_control->ecoa, 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:      fprintf( stderr, "step%d-ran out of space on angle_list: top=%d, max=%d",
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:  //fprintf( stderr,"%d: Number of angle interactions: %d\n", 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:  fprintf( stderr, "Number of angle interactions: %d\n", num_thb_intrs );
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:  fprintf( stderr, 
+/home/nakao/lammps/lammps/src/reaxc_valence_angles.cpp:  fprintf( stderr, "3body: ext_press (%12.6f %12.6f %12.6f)\n", 
+/home/nakao/lammps/lammps/src/reaxc_vector.cpp:  fprintf( fout, "%s:", vname );
+/home/nakao/lammps/lammps/src/reaxc_vector.cpp:    fprintf( fout, "%24.15e\n", v[i] );
+/home/nakao/lammps/lammps/src/reaxc_vector.cpp:  fprintf( fout, "\n" );
+/home/nakao/lammps/lammps/src/reaxc_vector.cpp:      fprintf(fp,"[");
+/home/nakao/lammps/lammps/src/reaxc_vector.cpp:	fprintf(fp,"%8.3f,\t",t[i][j]);
+/home/nakao/lammps/lammps/src/reaxc_vector.cpp:      fprintf(fp,"]\n");
+/home/nakao/lammps/lammps/src/replicate.cpp:  if (me == 0 && screen) fprintf(screen,"Replicating atoms ...\n");
+/home/nakao/lammps/lammps/src/replicate.cpp:    if (screen) fprintf(screen,"  " BIGINT_FORMAT " atoms\n",natoms);
+/home/nakao/lammps/lammps/src/replicate.cpp:    if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " atoms\n",natoms);
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " bonds\n",atom->nbonds);
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " bonds\n",atom->nbonds);
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " angles\n",
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " angles\n",
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " dihedrals\n",
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " dihedrals\n",
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (screen) fprintf(screen,"  " BIGINT_FORMAT " impropers\n",
+/home/nakao/lammps/lammps/src/replicate.cpp:      if (logfile) fprintf(logfile,"  " BIGINT_FORMAT " impropers\n",
+/home/nakao/lammps/lammps/src/respa.cpp:      fprintf(screen,"Respa levels:\n");
+/home/nakao/lammps/lammps/src/respa.cpp:	fprintf(screen,"  %d =",i);
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_bond == i) fprintf(screen," bond");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_angle == i) fprintf(screen," angle");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_dihedral == i) fprintf(screen," dihedral");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_improper == i) fprintf(screen," improper");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_pair == i) fprintf(screen," pair");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_inner == i) fprintf(screen," pair-inner");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_middle == i) fprintf(screen," pair-middle");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_outer == i) fprintf(screen," pair-outer");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_kspace == i) fprintf(screen," kspace");
+/home/nakao/lammps/lammps/src/respa.cpp:	fprintf(screen,"\n");
+/home/nakao/lammps/lammps/src/respa.cpp:      fprintf(logfile,"Respa levels:\n");
+/home/nakao/lammps/lammps/src/respa.cpp:	fprintf(logfile,"  %d =",i);
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_bond == i) fprintf(logfile," bond");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_angle == i) fprintf(logfile," angle");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_dihedral == i) fprintf(logfile," dihedral");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_improper == i) fprintf(logfile," improper");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_pair == i) fprintf(logfile," pair");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_inner == i) fprintf(logfile," pair-inner");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_middle == i) fprintf(logfile," pair-middle");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_outer == i) fprintf(logfile," pair-outer");
+/home/nakao/lammps/lammps/src/respa.cpp:	if (level_kspace == i) fprintf(logfile," kspace");
+/home/nakao/lammps/lammps/src/respa.cpp:	fprintf(logfile,"\n");
+/home/nakao/lammps/lammps/src/respa.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Setting up run ...\n");
+/home/nakao/lammps/lammps/src/set.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Setting atom values ...\n");
+/home/nakao/lammps/lammps/src/set.cpp:      if (screen) fprintf(screen,"  %d settings made for %s\n",
+/home/nakao/lammps/lammps/src/set.cpp:      if (logfile) fprintf(logfile,"  %d settings made for %s\n",
+/home/nakao/lammps/lammps/src/set.cpp:  if (comm->me == 0 && screen) fprintf(screen,"  system init for set ...\n");
+/home/nakao/lammps/lammps/src/special.cpp:  if (me == 0 && screen) fprintf(screen,"Finding 1-2 1-3 1-4 neighbors ...\n");
+/home/nakao/lammps/lammps/src/special.cpp:    if (screen) fprintf(screen,"  %d = max # of 1-2 neighbors\n",maxall);
+/home/nakao/lammps/lammps/src/special.cpp:    if (logfile) fprintf(logfile,"  %d = max # of 1-2 neighbors\n",maxall);
+/home/nakao/lammps/lammps/src/special.cpp:    if (screen) fprintf(screen,"  %d = max # of 1-3 neighbors\n",maxall);
+/home/nakao/lammps/lammps/src/special.cpp:    if (logfile) fprintf(logfile,"  %d = max # of 1-3 neighbors\n",maxall);
+/home/nakao/lammps/lammps/src/special.cpp:    if (screen) fprintf(screen,"  %d = max # of 1-4 neighbors\n",maxall);
+/home/nakao/lammps/lammps/src/special.cpp:    if (logfile) fprintf(logfile,"  %d = max # of 1-4 neighbors\n",maxall);
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(screen,"  %d = max # of special neighbors\n",atom->maxspecial);
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(logfile,"  %d = max # of special neighbors\n",atom->maxspecial);
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(screen,
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(logfile,
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(screen,
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(logfile,
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(screen,
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(logfile,
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(screen,
+/home/nakao/lammps/lammps/src/special.cpp:      fprintf(logfile,
+/home/nakao/lammps/lammps/src/thermo.cpp:    if (screen) fprintf(screen,line);
+/home/nakao/lammps/lammps/src/thermo.cpp:    if (logfile) fprintf(logfile,line);
+/home/nakao/lammps/lammps/src/thermo.cpp:    if (screen) fprintf(screen,line);
+/home/nakao/lammps/lammps/src/thermo.cpp:      fprintf(logfile,line);
+/home/nakao/lammps/lammps/src/variable.cpp:      fprintf(fp,"%d\n",universe->nworlds);
+/home/nakao/lammps/lammps/src/variable.cpp:      fprintf(fp,"%d\n",nextindex+1);
+/home/nakao/lammps/lammps/src/variable.cpp:	fprintf(universe->uscreen,
+/home/nakao/lammps/lammps/src/variable.cpp:	fprintf(universe->ulogfile,
+/home/nakao/lammps/lammps/src/verlet.cpp:  if (comm->me == 0 && screen) fprintf(screen,"Setting up run ...\n");
+/home/nakao/lammps/lammps/src/write_restart.cpp:    fprintf(screen,"System init for write_restart ...\n");
