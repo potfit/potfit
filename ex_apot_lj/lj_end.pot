@@ -1,0 +1,12 @@
+#F 0 1
+#T PAIR
+#C Ar
+## Ar-Ar
+#I 0
+#E
+
+type	Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+cutoff	2.000000
+# rmin	2.375000
+ÈH[t=	        0.36000000	      0.0000	      1.0000
+ÈH[t=	        2.35000000	      1.0000	      4.0000

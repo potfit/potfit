@@ -502,6 +502,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	char tmp_value[255];
 	int jj, kk, tmp_size;
 	void* pkim;
+	int status;
 	FreeParamType FreeParamSet;
 
 
@@ -665,8 +666,16 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 
 	/* create KIM object with 1 atom and 1 species */
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
-  
-  /* initialze the data struct for the free parameters with type double */
+	
+	/* we use half or full neighbor list?  1 = half, 0 =full; this will be used 
+	 *  in config.c to build up the neighbor list */
+  is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
+  if (KIM_STATUS_OK > status) {
+	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_is_half_neighbors",status);
+		exit(1);
+	}
+
+/* initialze the data struct for the free parameters with type double */
   get_free_param_double(pkim, &FreeParamSet);
 
   /* nest the optimizable params */

@@ -1,0 +1,56 @@
+#F 5 1
+#T PAIR
+#I 0
+#E
+
+
+# KIM Model name
+type EDIP_BOP_Bazant_Kaxiras_Si__MO_958932894036_001
+
+
+#check_kim_opt_param
+
+# cutoff
+cutoff KIM
+
+# uncomment the following line to see which parameters of the Model are optimizable
+#check_kim_opt_param
+# the number of paramters that will be optimized 
+num_opt_param  17
+
+# the parameters that will be optimized and their lowest and highest allowable values
+
+PARAM_FREE_A
+5.0		7.0		9.0
+PARAM_FREE_B  
+1.2		0.1		2.2
+PARAM_FREE_rh
+1.2		0.1		2.2
+PARAM_FREE_sig 
+0.2		0.01	1.2
+PARAM_FREE_lam
+1.2		0.1		2.2
+PARAM_FREE_gam 
+1.2		0.1		2.2
+PARAM_FREE_b  
+3.0   2.0  4.0
+PARAM_FREE_c 
+2.8   1.8  4.0
+PARAM_FREE_mu  
+0.6   0.1  1.4
+PARAM_FREE_Qo 
+280  249   349
+PARAM_FREE_eta 
+0.2  0.01  0.4
+PARAM_FREE_bet
+0.005  0.001  0.001
+PARAM_FREE_alp
+2.8   1.5   4.5
+PARAM_FREE_u1 
+-0.1  -0.3  0
+PARAM_FREE_u2
+28    25   35
+PARAM_FREE_u3
+0.24  0.18  0.34
+PARAM_FREE_u4
+0.56  0.4   0.8

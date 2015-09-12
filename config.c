@@ -580,6 +580,12 @@ void read_config(char *filename)
       2 * cell_scale[0] + 1, 2 * cell_scale[1] + 1, 2 * cell_scale[2] + 1);
 #endif /* DEBUG */
 
+
+
+/*MODIFIED */
+if (is_half_neighbors == 1) {     /* is half or full neighbor list; global var */
+
+
     /* compute the neighbor table */
     for (i = natoms; i < natoms + count; i++) {
       atoms[i].num_neigh = 0;
@@ -961,6 +967,397 @@ void read_config(char *filename)
 
       reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
     }				/* first loop over atoms */
+
+
+
+ } else{   /* half or full neighbor list*/
+
+    /* compute the neighbor table */
+    for (i = natoms; i < natoms + count; i++) {
+      atoms[i].num_neigh = 0;
+      /* loop over all atoms for threebody interactions */
+#ifdef THREEBODY
+      for (j = natoms; j < natoms + count; j++) {
+#else
+/* the following line is modified for full nieghbor list */
+      for (j = natoms; j < natoms + count; j++) {
+#endif /* THREEBODY */
+	d.x = atoms[j].pos.x - atoms[i].pos.x;
+	d.y = atoms[j].pos.y - atoms[i].pos.y;
+	d.z = atoms[j].pos.z - atoms[i].pos.z;
+	for (ix = -cell_scale[0]; ix <= cell_scale[0]; ix++) {
+	  for (iy = -cell_scale[1]; iy <= cell_scale[1]; iy++) {
+	    for (iz = -cell_scale[2]; iz <= cell_scale[2]; iz++) {
+	      if ((i == j) && (ix == 0) && (iy == 0) && (iz == 0))
+		continue;
+	      dd.x = d.x + ix * box_x.x + iy * box_y.x + iz * box_z.x;
+	      dd.y = d.y + ix * box_x.y + iy * box_y.y + iz * box_z.y;
+	      dd.z = d.z + ix * box_x.z + iy * box_y.z + iz * box_z.z;
+	      r = sqrt(SPROD(dd, dd));
+	      type1 = atoms[i].type;
+	      type2 = atoms[j].type;
+	      if (r <= rcut[type1 * ntypes + type2]) {
+		if (r <= rmin[type1 * ntypes + type2]) {
+		  sh_dist = nconf;
+		  fprintf(stderr, "Configuration %d: Distance %f\n", nconf, r);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n",
+		    i - natoms, type1, atoms[i].pos.x, atoms[i].pos.y, atoms[i].pos.z);
+		  fprintf(stderr, "atom %d (type %d) at pos: %f %f %f\n", j - natoms, type2, dd.x, dd.y,
+		    dd.z);
+		}
+		atoms[i].neigh =
+		  (neigh_t *)realloc(atoms[i].neigh, (atoms[i].num_neigh + 1) * sizeof(neigh_t));
+		dd.x /= r;
+		dd.y /= r;
+		dd.z /= r;
+		k = atoms[i].num_neigh++;
+		init_neigh(atoms[i].neigh + k);
+		atoms[i].neigh[k].type = type2;
+		atoms[i].neigh[k].nr = j;
+		atoms[i].neigh[k].r = r;
+		atoms[i].neigh[k].r2 = r * r;
+		atoms[i].neigh[k].inv_r = 1.0 / r;
+		atoms[i].neigh[k].dist_r = dd;
+		atoms[i].neigh[k].dist.x = dd.x * r;
+		atoms[i].neigh[k].dist.y = dd.y * r;
+		atoms[i].neigh[k].dist.z = dd.z * r;
+#ifdef ADP
+		atoms[i].neigh[k].sqrdist.xx = dd.x * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.yy = dd.y * dd.y * r * r;
+		atoms[i].neigh[k].sqrdist.zz = dd.z * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.yz = dd.y * dd.z * r * r;
+		atoms[i].neigh[k].sqrdist.zx = dd.z * dd.x * r * r;
+		atoms[i].neigh[k].sqrdist.xy = dd.x * dd.y * r * r;
+#endif /* ADP */
+
+
+
+
+
+/* added for KIM potential, this is not needed  */
+#ifndef KIM
+
+		col = (type1 <= type2) ? type1 * ntypes + type2 - ((type1 * (type1 + 1)) / 2)
+		  : type2 * ntypes + type1 - ((type2 * (type2 + 1)) / 2);
+		atoms[i].neigh[k].col[0] = col;
+		mindist[col] = MIN(mindist[col], r);
+
+		/* pre-compute index and shift into potential table */
+
+		/* pair potential */
+		if (!sh_dist) {
+		  if (format == 0 || format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "Short distance!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* independent of format - we should be left of last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[0] = shift;
+		  atoms[i].neigh[k].slot[0] = slot;
+		  atoms[i].neigh[k].step[0] = step;
+
+#if defined EAM || defined ADP || defined MEAM
+		  /* transfer function */
+		  col = paircol + type2;
+		  atoms[i].neigh[k].col[1] = col;
+		  if (format == 0 || format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[1] = shift;
+		  atoms[i].neigh[k].slot[1] = slot;
+		  atoms[i].neigh[k].step[1] = step;
+
+#ifdef TBEAM
+		  /* transfer function - d band */
+		  col = paircol + 2 * ntypes + type2;
+		  atoms[i].neigh[k].col[2] = col;
+		  if (format == 0 || format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[2] = shift;
+		  atoms[i].neigh[k].slot[2] = slot;
+		  atoms[i].neigh[k].step[2] = step;
+#endif /* TBEAM */
+
+#endif /* EAM || ADP || MEAM */
+
+#ifdef MEAM
+		  /* Store slots and stuff for f(r_ij) */
+		  col = paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
+		  atoms[i].neigh[k].col[2] = col;
+		  if (0 == format || 3 == format) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[2] = shift;
+		  atoms[i].neigh[k].slot[2] = slot;
+		  atoms[i].neigh[k].step[2] = step;
+#endif /* MEAM */
+
+#ifdef ADP
+		  /* dipole part */
+		  col = paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
+		  atoms[i].neigh[k].col[2] = col;
+		  if (format == 0 || format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[2] = shift;
+		  atoms[i].neigh[k].slot[2] = slot;
+		  atoms[i].neigh[k].step[2] = step;
+
+		  /* quadrupole part */
+		  col = 2 * paircol + 2 * ntypes + atoms[i].neigh[k].col[0];
+		  atoms[i].neigh[k].col[3] = col;
+		  if (format == 0 || format == 3) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[3] = shift;
+		  atoms[i].neigh[k].slot[3] = slot;
+		  atoms[i].neigh[k].step[3] = step;
+#endif /* ADP */
+
+#ifdef STIWEB
+		  /* Store slots and stuff for exp. function */
+		  col = paircol + atoms[i].neigh[k].col[0];
+		  atoms[i].neigh[k].col[1] = col;
+		  if (0 == format || 3 == format) {
+		    rr = r - calc_pot.begin[col];
+		    if (rr < 0) {
+		      fprintf(stderr, "The distance %f is smaller than the beginning\n", r);
+		      fprintf(stderr, "of the potential #%d (r_begin=%f).\n", col, calc_pot.begin[col]);
+		      fflush(stdout);
+		      error(1, "short distance in config.c!");
+		    }
+		    istep = calc_pot.invstep[col];
+		    slot = (int)(rr * istep);
+		    shift = (rr - slot * calc_pot.step[col]) * istep;
+		    slot += calc_pot.first[col];
+		    step = calc_pot.step[col];
+		  } else {	/* format == 4 ! */
+		    klo = calc_pot.first[col];
+		    khi = calc_pot.last[col];
+		    /* bisection */
+		    while (khi - klo > 1) {
+		      slot = (khi + klo) >> 1;
+		      if (calc_pot.xcoord[slot] > r)
+			khi = slot;
+		      else
+			klo = slot;
+		    }
+		    slot = klo;
+		    step = calc_pot.xcoord[khi] - calc_pot.xcoord[klo];
+		    shift = (r - calc_pot.xcoord[klo]) / step;
+
+		  }
+		  /* Check if we are at the last index */
+		  if (slot >= calc_pot.last[col]) {
+		    slot--;
+		    shift += 1.0;
+		  }
+		  atoms[i].neigh[k].shift[1] = shift;
+		  atoms[i].neigh[k].slot[1] = slot;
+		  atoms[i].neigh[k].step[1] = step;
+#endif /* STIWEB */
+
+		}		/* !sh_dist */
+
+#endif /* kim */
+/* added ends */
+
+	      }			/* r < r_cut */
+	    }			/* loop over images in z direction */
+	  }			/* loop over images in y direction */
+	}			/* loop over images in x direction */
+      }				/* second loop over atoms (neighbors) */
+
+      reg_for_free(atoms[i].neigh, "neighbor table atom %d", i);
+    }				/* first loop over atoms */
+
+}  /* half or full neighbor list*/
+
+
 
 /*added */
 #ifndef KIM 

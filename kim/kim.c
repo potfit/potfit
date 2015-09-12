@@ -206,7 +206,8 @@ int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
   /* set various values */
   *numberOfParticles = Natoms;
   *numberOfSpecies   = Nspecies;  
-  *numberContrib     = Natoms;
+	if (1==halfflag)
+		*numberContrib   = Natoms;
 
   /* set coords values */
   for (i = 0; i < *numberOfParticles; i++) {
@@ -1186,7 +1187,9 @@ int write_descriptor_file(int Nspecies, char** species)
     "ZeroBasedLists              flag\n\n"
     "Neigh_LocaAccess            flag\n\n"
     "NEIGH_RVEC_H                flag\n\n"
-    "MI_OPBC_H                   flag\n\n\n"
+    "NEIGH_RVEC_F                flag\n\n"
+    "MI_OPBC_H                   flag\n\n"
+    "MI_OPBC_F		               flag\n\n\n"
     );
 
   /* Model output */

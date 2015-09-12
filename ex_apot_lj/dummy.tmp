@@ -1,0 +1,23 @@
+#F 5 1
+#C Ar
+## Ar-Ar
+#E
+
+# KIM Model name
+type  Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
+
+# cutoff
+cutoff    6.0000000000000000e+00
+
+# uncomment the following line to check the optimizable parameters of the KIM Model
+#check_kim_opt_param
+
+# the number of optimizable parameters that will be listed below
+num_opt_param  2
+
+# parameters
+PARAM_FREE_epsilon
+  6.6123797318889987e-01   0.0000000000000000e+00   1.0000000000000000e+00
+
+PARAM_FREE_sigma
+  2.1453920872934256e+00   1.0000000000000000e+00   4.0000000000000000e+00
