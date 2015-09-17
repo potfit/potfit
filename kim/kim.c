@@ -504,7 +504,7 @@ void init_optimizable_param()
 
 /***************************************************************************
 *
-* Get free parameters of type double  
+* Get free parameters of type double for the descriptor file of the model
 *
 * put all free parameters of type `double' into the data struct (only type
 * `double' parameters are optimizable. `int' ones may be some flag.) However

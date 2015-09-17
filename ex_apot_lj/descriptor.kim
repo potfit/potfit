@@ -69,7 +69,6 @@ MI_OPBC_H                   flag
 
 MI_OPBC_F		               flag
 
-
 #######################################################################################################
 MODEL_INPUT:
 # Name                      Type         Unit                Shape             Requirements

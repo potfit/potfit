@@ -61,10 +61,14 @@ ZeroBasedLists              flag
 
 Neigh_LocaAccess            flag
 
+MI_OPBC_F		               flag
+
+
 NEIGH_RVEC_H                flag
 
-MI_OPBC_H                   flag
+NEIGH_RVEC_F                flag
 
+MI_OPBC_H                   flag
 
 #######################################################################################################
 MODEL_INPUT:

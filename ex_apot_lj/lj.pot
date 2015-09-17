@@ -6,7 +6,7 @@
 type  Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
 
 # cutoff 
-cutoff KIM 
+cutoff 5 
 
 # uncomment the following line to see which KIM parameters are optimizable 
 #check_kim_opt_param

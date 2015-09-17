@@ -66,10 +66,10 @@ EXTERN char** name_opt_param;  /* optimizable parameter names (read in from inpu
 
 EXTERN int num_opt_param;  /* number of optimizalbe params( read in from input) */
 
-EXTERN int is_half_neighbors;  /* using half neighbor list? 1 = half, 0 = full */
-
 EXTERN int* size_opt_param;  /* size of each parameter (number of values each
                               * parameter name represents) */
+
+EXTERN int is_half_neighbors;  /* using half neighbor list? 1 = half, 0 = full */
 
 EXTERN double* box_side_len;  /*box_side_len is used to enable MI_OPBC_H in KIM. 
                                * box_side_len is used to store the info of box

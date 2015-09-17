@@ -502,6 +502,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	char tmp_value[255];
 	int jj, kk, tmp_size;
 	void* pkim;
+	char const* NBC;
 	int status;
 	FreeParamType FreeParamSet;
 
@@ -667,8 +668,17 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	/* create KIM object with 1 atom and 1 species */
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
 	
-	/* we use half or full neighbor list?  1 = half, 0 =full; this will be used 
-	 *  in config.c to build up the neighbor list */
+	/* NBC */
+	status = KIM_API_get_NBC_method(pkim, &NBC); 
+  if (KIM_STATUS_OK > status) {
+	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method",status);
+		exit(1);
+	}
+	printf("NBC being used: %s.\n\n", NBC); 
+
+
+	/* use half or full neighbor list?  1 = half, 0 =full; this will be used 
+	 * in config.c to build up the neighbor list */
   is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
   if (KIM_STATUS_OK > status) {
 	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_is_half_neighbors",status);
@@ -741,8 +751,13 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 				} else if (1 > sscanf(tmp_value, "%lf", &apt->values[i][jj])) {
 					error(1, " Value %d of (%s) is not float.\n", kk+1, FreeParamSet.name[k]);
 				}
+				if(!(apt->pmin[i][j]<=apt->values[i][j] && apt->values[i][j]<=apt->pmax[i][j]))
+				{
+					error(1, "Parameter (%s) in (%s) is not within its limits.\n",
+								name_opt_param[j], filename);
+				}
 			} else {
-				error(0, "Not enough value(s) for (%s) are provided in %s. "
+				error(0, "Not enough value(s) for (%s) are provided in (%s). "
 						"You listed %d value(s), but required are %d.\n", 
 						FreeParamSet.name[k], filename, kk, tmp_size);
 				error(1, "Or line %d of (%s) are of wrong type. Only `KIM' and float "
@@ -765,7 +780,8 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	/* If it is anaytic potential (every PARAM_FREE* is scalar), keyword `cutoff' has
 	 * to be specified in the input file. 
 	 * You can give value directly, or give `KIM' to use the cutoff from KIM
-	 * model. If it is tabualted potential, cutoff will read in from KIM model, even
+	 * model. If it is tabualted potential, cutoff will be implicitly determined by the
+	 * last value of r data pointr, so the cutoff will read in from KIM model, even
 	 * if it is given in the input file. */
 	
 	int have_cutoff;
