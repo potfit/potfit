@@ -727,6 +727,7 @@ ${MAKETARGET}: ${OBJECTS}
 ifeq (,${BIN_DIR})
 	@${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
 else
+	@mkdir -p ${BIN_DIR}
 	@${CC} ${LFLAGS_${PARALLEL}} -o ${BIN_DIR}/$@ ${OBJECTS} ${LIBS}
 endif
 ifneq (,${STRIP})
