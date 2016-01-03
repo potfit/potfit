@@ -818,6 +818,7 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 	}
 
 	/* get cutoff from KIM if cutoff has not been determined yet. */
+/*  
 	if (!have_cutoff) {
 		for (j = 0; j < FreeParamSet.Nparam; j++) { 
 			if (strncmp(FreeParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
@@ -831,6 +832,24 @@ void read_pot_table0(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *i
 					"cutoff to potfit failed.");
 		}
 	}
+
+*/
+
+
+	/* get cutoff from KIM if cutoff has not been determined yet. */
+ /* local variable */
+	if (!have_cutoff) {
+    int status;
+    double* pcutoff;
+    
+    pcutoff = KIM_API_get_data(pkim, "cutoff", &status);
+    if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
+      return(status);
+    }
+      apt->end[i] = *pcutoff;
+  }
+
 
 
 	printf(" - Successfully read %d potential table(s)\n", apt->number);
@@ -1035,19 +1054,37 @@ void read_pot_table3(pot_table_t *pt, int size, char *filename, FILE *infile)
 	}
 
 	/* set end (end is cutoff) */
-	int have_cutoff = 0;
-	double tmp_cutoff;
-	for (j = 0; j < FreeParamSet.Nparam; j++) { 
-		if (strncmp(FreeParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
-			pt->end[0] = *FreeParamSet.value[j];
-			have_cutoff = 1;
-			break;
-		}
-	}
-	if(!have_cutoff) {
-		error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. copy "
-				"cutoff to potfit failed.");
-	}
+/*   int have_cutoff = 0;
+   double tmp_cutoff;
+   for (j = 0; j < FreeParamSet.Nparam; j++) { 
+    if (strncmp(FreeParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
+      pt->end[0] = *FreeParamSet.value[j];
+      have_cutoff = 1;
+      break;
+    }
+   }
+   if(!have_cutoff) {
+    error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. copy "
+        "cutoff to potfit failed.");
+   }
+*/
+
+
+  int status;
+  double* pcutoff;
+  
+  pcutoff = KIM_API_get_data(pkim, "cutoff", &status);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
+    return(status);
+  }
+    pt->end[0] = *pcutoff;
+
+
+
+
+
+
 
 	/* free memory */
 	free_model_object(&pkim);

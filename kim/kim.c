@@ -794,15 +794,22 @@ int publish_cutoff(void* pkim, double cutoff)
   /* local variable */
   int status;
   double* pcutoff;
-  
+ 
+  /* update cutoff */
   pcutoff = KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
     return(status);
   }
-
   *pcutoff = cutoff;
-  
+ 
+  /* reinit KIM model */
+  status = KIM_API_model_reinit(pkim);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
+    return status;
+  }
+ 
   return KIM_STATUS_OK;
 }
 
