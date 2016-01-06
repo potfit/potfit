@@ -361,7 +361,11 @@ inline int isquare(int i)
   return i * i;
 }
 
+/* modified */
+/* inline double dsquare(double d)
+*/
 double dsquare(double d)
+/* modified ends */
 {
   return d * d;
 }

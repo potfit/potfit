@@ -132,6 +132,10 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
 
 int publish_param(void* pkim, FreeParamType* FreeParam, double* PotTable);
 
+/* used in potential.c */
+void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *infile);
+void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FILE *infile);
+
 /* assigned to function pointer `write_pot_table' in `potfit.c' */
 void write_pot_table5(pot_table_t *pt, char *filename);
 

@@ -1,5 +1,5 @@
 /****************************************************************
-*
+ *
  * potfit.c: Contains main potfit program
  *
  ****************************************************************
@@ -41,10 +41,11 @@
 #include "splines.h"
 #include "utils.h"
 
-/*added (to use `write_pot_table5') */
+/* added (to use "write_pot_table5") */
+#ifdef KIM
 #include "kim/kim.h"
-/*added ends*/
-
+#endif /* KIM */
+/* added ends */
 
 /****************************************************************
  *
@@ -81,21 +82,17 @@ int main(int argc, char **argv)
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
 
-
-/* added */
-/****************************************************************
-* Initialize KIM 
-****************************************************************/
+/* added *  
+/* Initialize KIM */
 #ifdef KIM
 	init_KIM();
 #endif /* KIM */
 /*added ends */
 
 
-    /* Select correct spline interpolation and other functions */
-/*added*/
+/* added */
 #ifndef KIM
-
+    /* Select correct spline interpolation and other functions */
 #ifdef APOT
     if (format == 0) {
       splint = splint_ed;
@@ -187,11 +184,13 @@ int main(int argc, char **argv)
 #ifdef MPI
   MPI_Bcast(opt_pot.table, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif /* MPI */
-/*added*/
+
+/* added (not needed for KIM) */
 #ifndef KIM
   update_calc_table(opt_pot.table, calc_pot.table, 1);
 #endif /* KIM */
 /*added ends*/
+
 #endif /* APOT */
 
   /* Select correct spline interpolation and other functions */
@@ -215,16 +214,18 @@ int main(int argc, char **argv)
     }
 #endif /* !APOT */
 
+/* added */
+#ifdef KIM
+    calc_forces(opt_pot.table, force, 0);
+#else  /* KIM */
     /* all but root go to calc_forces */
 #ifdef APOT
     calc_forces(opt_pot.table, force, 0);
 #else
-/*added (modified) calc_pot = opt_pot for tabulated; we do not initialize calc_pot in
- potfit-KIM*/
-/*    calc_forces(calc_pot.table, force, 0);
-*/
-      calc_forces(opt_pot.table, force, 0);
+    calc_forces(calc_pot.table, force, 0);
 #endif /* APOT */
+#endif /* KIM */
+/* added ends */
   } else {			/* root thread does minimization */
 #ifdef MPI
     if (num_cpus > nconf) {
@@ -251,9 +252,7 @@ int main(int argc, char **argv)
     }
     time(&t_end);
 
-
-
-/*added*/
+/* added */
 #ifndef KIM
 
 #ifdef APOT
@@ -282,8 +281,8 @@ int main(int argc, char **argv)
       write_pot_table(&opt_pot, endpot);
       printf("\nPotential in format 5 written to file: %s\n", endpot);
     } 
-#endif
-
+#endif /* !KIM */
+/* added ends */
 
 /*added*/
 #ifndef KIM
@@ -299,8 +298,8 @@ int main(int argc, char **argv)
       write_pot_table_lammps(&calc_pot);
 #endif /* APOT */
 
-#endif /* KIM */
-/*added ends*/
+#endif /* !KIM */
+/* added ends */
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
@@ -311,9 +310,15 @@ int main(int argc, char **argv)
     write_errors(force, tot);
 
 #ifdef MPI
-/*added (modified) we do not use calc_pot in potfit-KIM. */
-/*    calc_forces(calc_pot.table, force, 1);*/ /* go wake up other threads */
-   calc_forces(opt_pot.table, force, 1);	/* go wake up other threads */
+
+/* added */
+#ifndef KIM
+    calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
+#else 
+    calc_forces(opt_pot.table, force, 1);	/* go wake up other threads */
+#endif /* !KIM */
+/* added ends */
+
 #endif /* MPI */
   }				/* myid == 0 */
 
@@ -335,12 +340,10 @@ int main(int argc, char **argv)
   free(u_address);
   free_all_pointers();
 
-
 /* added */
 /* free KIM stuff */
-	free_KIM();
+free_KIM();
 /* added ends */
-
 
   return 0;
 }
@@ -366,10 +369,16 @@ void error(int done, char *msg, ...)
   if (done == 1) {
 #ifdef MPI
     double *force = NULL;
+
+/* added */
+#ifndef KIM
     /* go wake up other threads */
-/*added (modified) we do not use calc_pot in potfit-KIM. */
-/*    calc_forces(calc_pot.table, force, 1); */
+    calc_forces(calc_pot.table, force, 1);
+#else 
     calc_forces(opt_pot.table, force, 1);
+#endif 
+/* added ends */
+
     fprintf(stderr, "\n");
     shutdown_mpi();
 #endif /* MPI */

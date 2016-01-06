@@ -1,4 +1,5 @@
-/**************************************************************** *
+/****************************************************************
+ *
  * potfit.h: potfit header file
  *
  ****************************************************************
@@ -30,7 +31,7 @@
 #ifndef POTFIT_H
 #define POTFIT_H
 
-#define POTFIT_VERSION "potfit-git"
+#define POTFIT_VERSION "potfit-0.7.1"
 
 #ifdef __INTEL_COMPILER
 
@@ -256,8 +257,6 @@ EXTERN vector *sphere_centers;	/* centers of the spheres of contrib. atoms */
 #endif /* CONTRIB */
 EXTERN vector tbox_x, tbox_y, tbox_z;
 
-
-
 /* potential variables */
 EXTERN int *gradient;		/* Gradient of potential fns.  */
 EXTERN int *invar_pot;
@@ -297,6 +296,7 @@ EXTERN int firstconf INIT(0);
 EXTERN int myatoms INIT(0);
 EXTERN int myconf INIT(0);
 
+/* pointers for force-vector */
 EXTERN int energy_p INIT(0);	/* pointer to energies */
 #ifdef STRESS
 EXTERN int stress_p INIT(0);	/* pointer to stresses */

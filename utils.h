@@ -59,7 +59,10 @@ double normdist();
 
 /* different power functions */
 inline int isquare(int);
+/* modified */
+/*inline double dsquare(double); */
 double dsquare(double);
+/* modified ends */
 void  power_1(double *, double *, double *);
 void  power_m(int, double *, double *, double *);
 

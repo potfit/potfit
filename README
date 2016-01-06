@@ -1,0 +1,17 @@
+The following files are changed: 
+
+MAKEFILE
+
+potfit.h  # actually, they are the same, only a few comments are different
+potfit.c # DONE
+
+config.c # DONE 
+
+potential_input.c  # DONE
+
+simann.c # DONE
+
+types.h # DONE
+
+utils.h # only inline functions are here, (ideally, no modification needed ) keyword "modified" is used 
+utils.c
