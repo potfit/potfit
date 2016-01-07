@@ -359,11 +359,6 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
 #else /* !KIM */
       case 5:
-
-/* DEBUG */
-printf("hello, flag2\n");
-fflush(stdout);
-
 #ifndef NOLIMITS
 	read_pot_table5_no_nolimits(pt, apt, filename, infile);
 	break;
@@ -1997,6 +1992,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
  *  	FILE * ... open file handle of the potential file
  *
  ****************************************************************/
+#ifndef NOLIMITS
 
 void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *infile)
 {
@@ -2268,7 +2264,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 						"You listed %d value(s), but required are %d.\n", 
 						FreeParamSet.name[k], filename, kk, tmp_size);
 				error(1, "Or line %d of (%s) are of wrong type. Only `KIM' and float "
-						"data are acceptable.\n", kk+1,FreeParamSet.name[k]);
+						"data are acceptable. Or you may want to try compiling with nolimits.\n", kk+1,FreeParamSet.name[k]);
 			}
 			jj++;
 		}  
@@ -2480,6 +2476,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	return;
 }
 
+#else /* NOLIMITS */
 
 /****************************************************************
  *
@@ -2599,6 +2596,7 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	return;
 }
 
+#endif /* NOLIMITS */
 #endif /* !KIM */
 /* added ends */
 
