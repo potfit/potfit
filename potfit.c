@@ -341,8 +341,10 @@ int main(int argc, char **argv)
   free_all_pointers();
 
 /* added */
+#ifdef KIM
 /* free KIM stuff */
 free_KIM();
+#endif
 /* added ends */
 
   return 0;
