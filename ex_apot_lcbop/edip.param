@@ -1,7 +1,7 @@
 ntypes		1
-config		sys_b.force
-startpot	lj.pot
-endpot		lj_end.pot
+config	  training_set.dat	
+startpot	edip.pot
+endpot		edip_end.pot
 tempfile	dummy.tmp
 
 imdpot		dummy.imd

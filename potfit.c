@@ -41,7 +41,7 @@
 #include "splines.h"
 #include "utils.h"
 
-/* added (to use "write_pot_table5") */
+/* added */
 #ifdef KIM
 #include "kim/kim.h"
 #endif /* KIM */
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     printf("Global stress weight: %f\n", sweight);
 #endif /* STRESS */
 
-/* added *  
+/* added */
 /* Initialize KIM */
 #ifdef KIM
 	init_KIM();

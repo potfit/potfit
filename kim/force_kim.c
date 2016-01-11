@@ -172,6 +172,41 @@ double calc_forces(double *xi_opt, double *forces, int flag)
           exit(1);
         }
 
+
+
+/* 
+double* coords;
+KIM_API_getm_data(pkimObj[h], &status, 1*3,
+                              "coordinates",         &coords,              1);
+        if (KIM_STATUS_OK > status) {
+              KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
+              return status;
+            }
+
+
+
+       FILE* fp = fopen("potfit_force", "w");
+       for (i = 0; i < inconf[h]; i++){
+           fprintf(fp, "%18.10e %18.10e %18.10e %18.10e %18.10e %18.10e\n",
+             coords[DIM*i+0], coords[DIM*i+1], coords[DIM*i+2], kimforce[DIM*i+0], kimforce[DIM*i+1], kimforce[DIM*i+2]);
+         }
+         fflush(fp);
+         fclose(fp);
+
+         fp = fopen("potfit_energy", "w");
+         fprintf(fp, "total energy%18.10e\n", *kimenergy);
+         fprintf(fp, "average energy%18.10e", *kimenergy/(double)inconf[h]);
+         fflush(fp);
+         fclose(fp);
+
+         printf("finished job, let's exit. \n");
+         exit(1);
+
+
+*/
+
+
+
         /* forces contributation */
         for (i = 0; i < inconf[h]; i++) {
           atom = conf_atoms + i + cnfstart[h] - firstatom;

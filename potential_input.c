@@ -148,10 +148,10 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
 #else /* !KIM */
       if(format != 5)
-        error(1,"Potential file format in file (%s) should be `5' to use KIM",filename);
+        error(1,"Potential format in file '%s' should be '5' to use KIM potential.\n",filename);
       if(size != 1) {
-        warning("The number of potentials should always be 1 when KIM Model is used. "
-            "You specifiy %d in file (%s), and it is reset to 1.\n", size,filename);
+        warning("The number of potentials should always be '1' when KIM Potential is used.\n"
+            "You specified %d in file '%s', and it is reset to 1.\n", size,filename);
         size = 1;
       }
 #endif /* !KIM */
@@ -174,7 +174,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
     }
 
 /* added */
-/* KIM does not support T and I */
+/* KIM does not support T, I and G */
 #ifndef KIM 
 
     /* header line with potential type */
@@ -374,6 +374,8 @@ void read_pot_table(pot_table_t *pt, char *filename)
   fclose(infile);
 
   printf("Reading potential file >> %s << ... done\n", filename);
+
+
 /* added */
 #ifndef KIM
 
@@ -404,7 +406,7 @@ void read_pot_table(pot_table_t *pt, char *filename)
 
 #else /* !KIM */
 
-		/* copy cutoff, cutoff equal pt->end[0] */
+		/* copy cutoff, cutoff equal pt->end[0], because there is only one potential */
 		/* compute rcut and rmin */
 		rcut = (double *)malloc(ntypes * ntypes * sizeof(double));
 		if (NULL == rcut)
@@ -414,14 +416,12 @@ void read_pot_table(pot_table_t *pt, char *filename)
 			error(1, "Cannot allocate rmin");
 		for (i = 0; i < ntypes; i++)
 			for (j = 0; j < ntypes; j++) {
-/*				k = (i <= j) ? i * ntypes + j - ((i * (i + 1)) / 2)
-					: j * ntypes + i - ((j * (j + 1)) / 2);
-*/				rmin[i * ntypes + j] = 0.0;
+				rmin[i * ntypes + j] = 0.0;
 				rcut[i * ntypes + j] = pt->end[0];
 			}
 
 #endif /* !KIM */
-
+/* added ends */
 
 
 #ifndef APOT
@@ -1981,9 +1981,8 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
 
 /****************************************************************
  *
- *  read potential in analytic format:
- *  	for more information an how to specify an analytic potential
- *  	please check the documentation
+ *  read KIM potential without specifying the lower and upper limits
+ *  for each parameter. 
  *
  *  parameters:
  *  	pot_table_t * ... pointer to the potential table
@@ -2264,7 +2263,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 						"You listed %d value(s), but required are %d.\n", 
 						FreeParamSet.name[k], filename, kk, tmp_size);
 				error(1, "Or line %d of (%s) are of wrong type. Only `KIM' and float "
-						"data are acceptable. Or you may want to try compiling with nolimits.\n", kk+1,FreeParamSet.name[k]);
+						"data are acceptable.\nOr you may want to try compiling with nolimits.\n", kk+1,FreeParamSet.name[k]);
 			}
 			jj++;
 		}  

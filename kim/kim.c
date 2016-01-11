@@ -882,27 +882,26 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
     sscanf(buffer, "%s", name);
   } while (strncmp(name, "type", 4) != 0 && !feof(infile));
   if (strncmp(name, "type", 4) != 0) {
-    error(1, "Keyword `type' is missing in file: %s.", filename);
+    error(1, "Keyword 'type' is missing in file: %s.", filename);
   }
   if (1 > sscanf(buffer, "%*s %s", name))
-    error(1, "Cannot read KIM Model name file: %s.", filename);
+    error(1, "KIM Model name missing in file: %s.", filename);
+
   /* copy name*/
   strcpy(kim_model_name, name);
   printf("\nKIM Model being used: %s.\n\n", kim_model_name);
  
-
   /* find `check_kim_opt_param' or `num_opt_param'. The two keywords are mutually
 	 * exculsive, which comes first will be read, and the other one will be ignored. */
   fsetpos(infile, &startpos);
+
   do {
     fgets(buffer, 255, infile);
     sscanf(buffer, "%s", name);
   } while (strcmp(name, "check_kim_opt_param") != 0 
-						&& strcmp(name, "num_opt_param") != 0 && !feof(infile));
+					 && strcmp(name, "num_opt_param") != 0 
+           && !feof(infile));
   
-	if (strcmp(name, "check_kim_opt_param") != 0 && strcmp(name, "num_opt_param") != 0){
-    error(1, "Cannot find keyword `num_opt_param' in file: %s.", filename);
-	}
 	/* read `check_kim_opt_param' or `num_opt_param' */
 	if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
 		/* create a temporary KIM objects to query the info */
@@ -930,19 +929,22 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
       printf("]\n");
    }
     printf("\n - Note that KIM array parameter is row based, while listing the "
-        "initial values of such parameter, you should ensure that the sequence is "
+        "initial values for such parameter, you should ensure that the sequence is "
         "correct. For example, if the extent of a parameter `PARAM_FREE_A' is "
-        "[ 2 2 ], then you should list the initial values like: A[0 0], A[0 1], "
+        "[ 2 2 ], then you should list the initial values as: A[0 0], A[0 1], "
         "A[1 0], A[1 1].\n");
+
 	 /* free the temporary kim model */
-	 free_model_object(&pkim);
-	 exit(1); 
+	  free_model_object(&pkim);
+	  exit(1); 
+
   } else if (strncmp(buffer,"num_opt_param", 13) == 0) {
     if(1 != sscanf(buffer, "%*s%d", &num_opt_param)) {
-      error(1, "Cannot read `num_opt_param' in file: %s.", filename);  
+      error(1, "Cannot read 'num_opt_param' in file: %s.", filename);  
     }
+  } else {
+    error(1, "Keyword 'num_opt_param' is missing in file: %s.", filename);
   }
-
 
   /* allocate memory */ 
   name_opt_param = (char**)malloc(num_opt_param*sizeof(char*)); 
@@ -970,13 +972,14 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 			ret_val = sscanf(buffer, "%s", name);
 		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
 		if (feof(infile) ) {
-			error(0, "Not enough parameter(s) `PARAM_FREE_*' in file %s!\n", filename);
+			error(0, "Not enough parameter(s) `PARAM_FREE_*' in file: %s!\n", filename);
 			error(1, "You listed %d parameter(s), but required are %d.\n", j, num_opt_param);
 		}
 		if (ret_val == 1) {
 			strcpy(name_opt_param[j], name); 
 		} else {
-			error(1, "Could not read parameter #%d in file %s.", j + 1, filename);
+			error(0, "parameter '%d' in file '%s' corrupted\n.", j + 1, filename);
+			error(1, "Each parameter name should be in a single line\n");
 		}
 	}
 
