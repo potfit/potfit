@@ -3,6 +3,8 @@
 
 type  Pair_Lennard_Jones_Truncated_Nguyen_Ar__MO_398194508715_000
 
+#type EAM_Dynamo_Angelo_Moody_NiAlH__MO_418978237058_001
+
 # cutoff 
 cutoff 5 
 
@@ -13,10 +15,10 @@ cutoff 5
 num_opt_param  2 
 
 #first parameter
-PARAM_FREE_epsilon
+PARAM_FREE_epsilon 
 KIM  0.0	1.00
 
 #second parameter
 PARAM_FREE_sigma   
-2.35  1.0  4.0
+2.35  0.0  4.0
 

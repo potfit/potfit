@@ -23,6 +23,8 @@
 
 void init_KIM() 
 {
+  int i;
+  
   printf("\nInitializing KIM ... started\n");
 
   /* write the `descritor.kim' file for this test */
@@ -33,6 +35,11 @@ void init_KIM()
   
   /* create free parameter data sturct and nest optimizable parameters */
   init_optimizable_param();
+
+  for (i = 0; i <nconf; i++) {
+    /* Publish cutoff (only needs to be published once, so here) */
+    publish_cutoff(pkimObj[i], rcutmax);
+  }
 
   printf("Initializing KIM ... done\n");
 }
@@ -495,9 +502,6 @@ void init_optimizable_param()
     get_free_param_double(pkimObj[i], &FreeParamAllConfig[i]);  
     nest_optimizable_param(pkimObj[i], &FreeParamAllConfig[i], 
                                name_opt_param, num_opt_param);
- 
-    /* Publish cutoff (only needs to be published once, so here) */
-    publish_cutoff(pkimObj[i], rcutmax);
   }
 }
 
@@ -696,7 +700,7 @@ int nest_optimizable_param(void* pkim, FreeParamType* FreeParam,
       size_opt_param[i] = tmp_size; 
       total_size += tmp_size;
     } else {
-      error(1, "The parameter `%s' is not optimizable, check spelling.\n",
+      error(1, "The parameter '%s' is not optimizable, check spelling.\n",
           input_param_name[i]);
     }
   }
@@ -870,6 +874,7 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
   char  buffer[255], name[255];
   fpos_t startpos; 
 	void* pkim;
+  int status;
 
   /* save starting position */
   fgetpos(infile, &startpos);
@@ -904,7 +909,8 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
   
 	/* read `check_kim_opt_param' or `num_opt_param' */
 	if (strncmp(buffer,"check_kim_opt_param", 19) == 0) {
-		/* create a temporary KIM objects to query the info */
+
+  	/* create a temporary KIM objects to query the info */
 		/* write temporary descriptor file */
 		write_temporary_descriptor_file(kim_model_name);
 		/* create KIM object with 1 atom and 1 species */
@@ -928,7 +934,9 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
       }
       printf("]\n");
    }
-    printf("\n - Note that KIM array parameter is row based, while listing the "
+    printf("\n - Note that empty parameter extent (i.e. '[ ]') indicates that the "
+           "parameter is a scalar.\n");
+    printf(" - Note also that KIM array parameter is row based, while listing the "
         "initial values for such parameter, you should ensure that the sequence is "
         "correct. For example, if the extent of a parameter `PARAM_FREE_A' is "
         "[ 2 2 ], then you should list the initial values as: A[0 0], A[0 1], "
@@ -972,14 +980,14 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 			ret_val = sscanf(buffer, "%s", name);
 		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
 		if (feof(infile) ) {
-			error(0, "Not enough parameter(s) `PARAM_FREE_*' in file: %s!\n", filename);
+			error(0, "Not enough parameter(s) 'PARAM_FREE_*' in file: %s.\n", filename);
 			error(1, "You listed %d parameter(s), but required are %d.\n", j, num_opt_param);
 		}
 		if (ret_val == 1) {
 			strcpy(name_opt_param[j], name); 
 		} else {
 			error(0, "parameter '%d' in file '%s' corrupted\n.", j + 1, filename);
-			error(1, "Each parameter name should be in a single line\n");
+			error(1, "Each parameter name should be in a single line.\n");
 		}
 	}
 
@@ -1086,8 +1094,8 @@ int write_temporary_descriptor_file(char* modelname)
     return(status);
   }
  
-  /* write a temporary `descriptor.kim' file, used only to query  model info */
-  /* we'll write `descriptor.kim' file with the species read from potfit later. */
+  /* write a temporary `descriptor.kim' file, used only to query model info */
+  /* we'll write `descriptor.kim' file with the species reading from potfit later. */
   status = write_descriptor_file(Nspecies, species); 
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);

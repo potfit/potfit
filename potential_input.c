@@ -1981,8 +1981,7 @@ void read_pot_table4(pot_table_t *pt, int size, char *filename, FILE *infile)
 
 /****************************************************************
  *
- *  read KIM potential without specifying the lower and upper limits
- *  for each parameter. 
+ *  read KIM potential with lower and upper limits for each parameter. 
  *
  *  parameters:
  *  	pot_table_t * ... pointer to the potential table
@@ -2153,18 +2152,6 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	read_potential_keyword(pt, filename, infile, &FreeParamSet);
 
 	/* write the descriptor.kim file for the test */
-	/* We know all the information to write a descriptor file except for the species. But
-	 * at this point, we don't know the species that the test have (actually, that info is
-	 * read in from the configuration file later). So, a temporary KIM object will be
-	 * created to query the species supported by the Model. We cannot just simply get all
-	 * the species that the model supports and write it once for all. Because then the
-	 * descriptor file does not know what species are really in the test, and if the
-	 * species in the test is not supported by the Model, no error would be thrown out.
-	 * So, here, only the first species supported by the model (the species in the test is
-	 * a subset of the species supported by the Model) is written into the
-	 * `descriptor.kim' file just to make the two descriptor file matche and work. After
-	 * reading the species info from the `configuration' file, the descriptor file
-	 * would be written again with the correct species info from the test. */
 	write_temporary_descriptor_file(kim_model_name);
 
 	/* create KIM object with 1 atom and 1 species */
@@ -2177,8 +2164,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 		exit(1);
 	}
 	printf("NBC being used: %s.\n\n", NBC); 
-
-
+  
 	/* use half or full neighbor list?  1 = half, 0 =full; this will be used 
 	 * in config.c to build up the neighbor list */
   is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
@@ -2251,19 +2237,18 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 				if (strncmp(tmp_value, "KIM", 3) == 0) {
 					apt->values[i][jj] = *FreeParamSet.nestedvalue[jj];
 				} else if (1 > sscanf(tmp_value, "%lf", &apt->values[i][jj])) {
-					error(1, " Value %d of (%s) is not float.\n", kk+1, FreeParamSet.name[k]);
+					error(1, "First data for parameter '%s' corrupted, it should be a type float or 'KIM'.\n",
+                    FreeParamSet.name[k]);
 				}
-				if(!(apt->pmin[i][j]<=apt->values[i][j] && apt->values[i][j]<=apt->pmax[i][j]))
+				if(apt->pmin[i][j]>apt->values[i][j] || apt->pmax[i][j] < apt->values[i][j])
 				{
-					error(1, "Parameter (%s) in (%s) is not within its limits.\n",
+					error(1, "Value of parameter '%s' is not within its limits in file '%s'.\n",
 								name_opt_param[j], filename);
 				}
 			} else {
-				error(0, "Not enough value(s) for (%s) are provided in (%s). "
-						"You listed %d value(s), but required are %d.\n", 
-						FreeParamSet.name[k], filename, kk, tmp_size);
-				error(1, "Or line %d of (%s) are of wrong type. Only `KIM' and float "
-						"data are acceptable.\nOr you may want to try compiling with nolimits.\n", kk+1,FreeParamSet.name[k]);
+				error(0, "Data for parameter '%s' corrupted in file '%s'.\n",
+                 FreeParamSet.name[k], filename);
+        error(1, "Or you may want to try compiling with nolimits enabled.\n", kk+1,FreeParamSet.name[k]);
 			}
 			jj++;
 		}  
@@ -2280,10 +2265,9 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 
 	/* find cutoff */
 	/* If it is anaytic potential (every PARAM_FREE* is scalar), keyword `cutoff' has
-	 * to be specified in the input file. 
-	 * You can give value directly, or give `KIM' to use the cutoff from KIM
-	 * model. If it is tabualted potential, cutoff will be implicitly determined by the
-	 * last value of r data pointr, so the cutoff will read in from KIM model, even
+	 * to be specified in the input file. You can give value directly, or give `KIM' 
+   * to use the cutoff from KIM model.
+   * If it is tabualted potential, cutoff will read in from KIM model, even
 	 * if it is given in the input file. */
 	
 	int have_cutoff;
@@ -2297,49 +2281,29 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	if (apt->n_par[i] == num_opt_param) {
 		if (strcmp(name, "cutoff") == 0) {
 			if(2 > sscanf(buffer, "%s %s", name, tmp_value)) {
-				error(1,"Error reading in `cutoff'\n");
+				error(1,"Error reading in cutoff in file '%s'.\n", filename);
 			} else {
 				if (strcmp(tmp_value, "KIM") == 0) {
 					have_cutoff = 0;
 				} else {
 					if(1 > sscanf(tmp_value,"%lf", &apt->end[i])){
-						error(1,"Error reading in `cutoff'.\n");
+				    error(1,"Error reading in cutoff in file '%s'.\n", filename);
 					}
 					have_cutoff = 1; 
 				}
 			}
 		} else {
-			error(1,"`cutoff' is missing in %s.\n", filename);
+			error(1,"'cutoff' is missing in file: %s.\n", filename);
 		}
 	} else {
 		if (strcmp(name, "cutoff") == 0) {
-			printf("`cutoff' read in from %s is deprecated. Will use the `cutoff' in "
+			printf("'cutoff' read in from file '%s' is deprecated. Will use the 'cutoff' in "
 					" the KIM model throughout the fitting.\n", filename);
 		}
 		have_cutoff = 0;
 	}
 
 	/* get cutoff from KIM if cutoff has not been determined yet. */
-/*  
-	if (!have_cutoff) {
-		for (j = 0; j < FreeParamSet.Nparam; j++) { 
-			if (strncmp(FreeParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
-				apt->end[i] = *FreeParamSet.value[j];
-				have_cutoff = 1;
-				break;
-			}
-		}
-		if(!have_cutoff) {
-			error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. Copy "
-					"cutoff to potfit failed.");
-		}
-	}
-
-*/
-
-
-	/* get cutoff from KIM if cutoff has not been determined yet. */
- /* local variable */
 	if (!have_cutoff) {
     int status;
     double* pcutoff;
@@ -2351,10 +2315,6 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
     }
       apt->end[i] = *pcutoff;
   }
-
-
-
-	printf(" - Successfully read %d potential table(s)\n", apt->number);
 
 
 #ifdef PAIR
@@ -2472,6 +2432,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	/* free memory */
 	free_model_object(&pkim);
 
+	printf(" - Successfully read potential parameters that will be optimized.\n");
 	return;
 }
 
@@ -2479,18 +2440,11 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 
 /****************************************************************
  *
- *  read potential in third format:
- *
- *  Sampling points are equidistant.
- *
- *  Header:  one line for each function with
- *           rbegin rstart npoints
- *
- *  Table: Function values at sampling points,
- *         functions separated by blank lines
+ *  read KIM potential without specifying the lower and upper limits
+ *  for each parameter. 
  *
  *  parameters:
- * 	pot_table_t * ... pointer to the potential table
+ * 	  pot_table_t * ... pointer to the potential table
  *  	int ... number of potential functions
  *  	char * ... name of the potential file (for error messages)
  *  	FILE * ... open file handle of the potential file
@@ -2503,6 +2457,8 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	char  buffer[255], name[255];
 	fpos_t filepos, startpos; 
 	void* pkim;
+  int status;
+	char const* NBC;
 	FreeParamType FreeParamSet;
 
 	/* save starting position */
@@ -2512,23 +2468,27 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	read_potential_keyword(pt, filename, infile, &FreeParamSet);
 
 	/* write the descriptor.kim file for the test */
-	/* We know all the information to write a descriptor file except for the species. But
-	 * at this point, we don't know the species that the test have (actually, that info is
-	 * read in from the configuration file later). So, a temporary KIM object will be
-	 * created to query the species supported by the Model. We cannot just simply get all
-	 * the species that the model supports and write it once for all. Because then the
-	 * descriptor file does not know what species are really in the test, and if the
-	 * species in the test is not supported by the Model, no error would be thrown out.
-	 * So, here, only the first species supported by the model (the species in the test is
-	 * a subset of the species supported by the Model) is written into the
-	 * `descriptor.kim' file just to make the two descriptor file matche and work. After
-	 * reading the species info from the `configuration' file, the descriptor file
-	 * would be written again with the correct species info from the test. */
 	write_temporary_descriptor_file(kim_model_name);
 
 	/* create KIM object with 1 atom and 1 species */
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
   
+  /* NBC */
+	status = KIM_API_get_NBC_method(pkim, &NBC); 
+  if (KIM_STATUS_OK > status) {
+	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method",status);
+		exit(1);
+	}
+	printf("NBC being used: %s.\n\n", NBC); 
+  
+	/* use half or full neighbor list?  1 = half, 0 =full; this will be used 
+	 * in config.c to build up the neighbor list */
+  is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
+  if (KIM_STATUS_OK > status) {
+	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_is_half_neighbors",status);
+		exit(1);
+	}
+
   /* initialze the data struct for the free parameters with type double */
   get_free_param_double(pkim, &FreeParamSet);
 
@@ -2556,23 +2516,6 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	}
 
 	/* set end (end is cutoff) */
-/*   int have_cutoff = 0;
-   double tmp_cutoff;
-   for (j = 0; j < FreeParamSet.Nparam; j++) { 
-    if (strncmp(FreeParamSet.name[j], "PARAM_FREE_cutoff", 17) == 0 ) {
-      pt->end[0] = *FreeParamSet.value[j];
-      have_cutoff = 1;
-      break;
-    }
-   }
-   if(!have_cutoff) {
-    error(1, "`PARAM_FREE_cutoff' cannot be found in `descriptor.kim'. copy "
-        "cutoff to potfit failed.");
-   }
-*/
-
-
-  int status;
   double* pcutoff;
   
   pcutoff = KIM_API_get_data(pkim, "cutoff", &status);
@@ -2581,11 +2524,6 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
     return(status);
   }
     pt->end[0] = *pcutoff;
-
-
-
-
-
 
 
 	/* free memory */
