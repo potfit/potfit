@@ -71,7 +71,7 @@ EXTERN int* size_opt_param;  /* size of each parameter (number of values each
 
 EXTERN int is_half_neighbors;  /* using half neighbor list? 1 = half, 0 = full */
 
-EXTERN const char* NBC_method;       /* neighbor list and boundary conditions */
+EXTERN char NBC_method[64];       /* neighbor list and boundary conditions */
 
 EXTERN double* box_side_len;  /*box_side_len is used to enable MI_OPBC_H in KIM. 
                                * box_side_len is used to store the info of box
@@ -149,12 +149,6 @@ void write_pot_table5(pot_table_t *pt, char *filename);
 int free_model_object(void** pkim);
 
 void free_KIM();
-
-#ifdef PAIR
-/* used only for check purpose (could be deleted ) */
-int AnalyticForce(double epsilon, double sigma, double cutoff,
-									double r, double* phi_val, double* phi_grad); 
-#endif /* PAIR */
 
 
 #endif /* KIM_H */

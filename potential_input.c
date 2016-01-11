@@ -2003,6 +2003,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	char tmp_value[255];
 	int jj, kk, tmp_size;
 	void* pkim;
+  const char* NBCstr;
 	int status;
 	FreeParamType FreeParamSet;
 
@@ -2157,11 +2158,12 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
 	
 	/* NBC */
-	status = KIM_API_get_NBC_method(pkim, &NBC_method); 
+	status = KIM_API_get_NBC_method(pkim, &NBCstr); 
   if (KIM_STATUS_OK > status) {
 	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method",status);
 		exit(1);
 	}
+  strcpy(NBC_method, NBCstr);
 	printf("NBC being used: %s.\n\n", NBC_method); 
   
 	/* use half or full neighbor list?  1 = half, 0 =full; this will be used 
@@ -2456,6 +2458,7 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	char  buffer[255], name[255];
 	fpos_t filepos, startpos; 
 	void* pkim;
+  const char* NBCstr;
   int status;
 	FreeParamType FreeParamSet;
 
@@ -2472,11 +2475,12 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
   
   /* NBC */
-	status = KIM_API_get_NBC_method(pkim, &NBC_method); 
+	status = KIM_API_get_NBC_method(pkim, &NBCstr); 
   if (KIM_STATUS_OK > status) {
 	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method",status);
 		exit(1);
 	}
+  strcpy(NBC_method, NBCstr);
 	printf("NBC being used: %s.\n\n", NBC_method); 
   
 	/* use half or full neighbor list?  1 = half, 0 =full; this will be used 

@@ -116,7 +116,7 @@ void read_config(char *filename)
   if (NULL == infile)
     error(1, "Could not open file %s\n", filename);
 
-  printf("Reading the config file >> %s << and calculating neighbor lists ... ", filename);
+  printf("Reading the config file >> %s << and calculating neighbor lists ...\n", filename);
   fflush(stdout);
 
   /* read configurations until the end of the file */
@@ -511,10 +511,19 @@ void read_config(char *filename)
 /* added */
 #ifdef KIM 
     if (strcmp(NBC_method, "MI_OPBC_F") == 0 || strcmp(NBC_method, "MI_OPBC_H") == 0) {
-      /* store the box size info in box_side_len */
-      box_side_len[3*nconf + 0] = box_x.x;
-      box_side_len[3*nconf + 1] = box_y.y;
-      box_side_len[3*nconf + 2] = box_z.z;
+      double small_value = 1e-8;
+      if(   box_x.y > small_value || box_x.z > small_value 
+          || box_y.z > small_value || box_y.x > small_value 
+          || box_z.x > small_value || box_z.y > small_value){
+        error(1,"KIM: simulation box of configuration %d is not orthogonal. Try to use 'NEIGH_RVEC' "
+                "instead of 'MI_OPBC'.\n", nconf);
+
+      } else {
+        /* store the box size info in box_side_len */
+        box_side_len[3*nconf + 0] = box_x.x;
+        box_side_len[3*nconf + 1] = box_y.y;
+        box_side_len[3*nconf + 2] = box_z.z;
+      }
     }
 #endif 
 /* added ends */

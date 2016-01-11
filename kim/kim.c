@@ -285,6 +285,7 @@ int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
     boxSideLen[2] = box_side_len[DIM*which_conf + 2];
   }   
 
+
   return KIM_STATUS_OK;
 }
 
@@ -1204,8 +1205,8 @@ int write_descriptor_file(int Nspecies, char** species)
     "# Name                      Type\n\n"
     "ZeroBasedLists              flag\n\n"
     "Neigh_LocaAccess            flag\n\n"
-    "NEIGH_RVEC_H                flag\n\n"
-    "NEIGH_RVEC_F                flag\n\n"
+    "#NEIGH_RVEC_H                flag\n\n"
+    "#NEIGH_RVEC_F                flag\n\n"
     "MI_OPBC_H                   flag\n\n"
     "MI_OPBC_F		               flag\n\n\n"
     );
@@ -1284,48 +1285,5 @@ void free_KIM()
 	}	
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/***************************************************************************
- * 
- * Calculate analytic Lennard-Jones potential value and gradient
- *
- * This is just a temporary test, we don't need it once it is checked
- *
- * transferred variable:
- * phi_val: potential value
- * phi_grad: gradient of potential 
- ***************************************************************************/
-
-int AnalyticForce(double epsilon, double sigma, double cutoff,
-    double r, double* phi_val, double* phi_grad)
-{ 
-  /* local variables */
-  double sor;
-  double sor6;
-  double sor12;
-
-  sor   = sigma/(double)r;
-  sor6  = pow(sor,6);
-  sor12 = pow(sor6,2);
-
-  if( r > cutoff) {
-    *phi_val  = 0.0;
-    *phi_grad = 0.0;
-  } else {
-    *phi_val  = 4.0*epsilon*(sor12 - sor6);
-    *phi_grad = 24.0*epsilon*(-2.0*sor12 + sor6)/(double)r;
-  }
-  return 0;
-}
 
 
