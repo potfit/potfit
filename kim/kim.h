@@ -71,6 +71,8 @@ EXTERN int* size_opt_param;  /* size of each parameter (number of values each
 
 EXTERN int is_half_neighbors;  /* using half neighbor list? 1 = half, 0 = full */
 
+EXTERN const char* NBC_method;       /* neighbor list and boundary conditions */
+
 EXTERN double* box_side_len;  /*box_side_len is used to enable MI_OPBC_H in KIM. 
                                * box_side_len is used to store the info of box
                                * size of each configuration. box_side_len[0], 

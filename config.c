@@ -33,11 +33,11 @@
 #include "config.h"
 #include "utils.h"
 
-/*added (to use "box_side_length" )*/ 
+/* added */ 
 #ifdef KIM
 #include "kim/kim.h"
 #endif 
-/*added ends*/
+/* added ends */
 
 /****************************************************************
  *
@@ -218,10 +218,12 @@ void read_config(char *filename)
 
 /* added */
 #ifdef KIM
-/* realloc memory for box_side_len */
-	box_side_len = (double *)realloc(box_side_len, 3*(nconf+1)*sizeof(double));
-	if(NULL == box_side_len) 
-		error(1, "Cannot allocate memory for box_side_len");
+    if (strcmp(NBC_method, "MI_OPBC_F") == 0 || strcmp(NBC_method, "MI_OPBC_H") == 0) {
+      /* realloc memory for box_side_len */
+      box_side_len = (double *)realloc(box_side_len, 3*(nconf+1)*sizeof(double));
+      if(NULL == box_side_len) 
+        error(1, "Cannot allocate memory for box_side_len");
+    }
 #endif /* KIM */
 /* added ends */
 
@@ -508,10 +510,12 @@ void read_config(char *filename)
 
 /* added */
 #ifdef KIM 
-/* store the box size info in box_side_len */
-    box_side_len[3*nconf + 0] = box_x.x;
-    box_side_len[3*nconf + 1] = box_y.y;
-    box_side_len[3*nconf + 2] = box_z.z;
+    if (strcmp(NBC_method, "MI_OPBC_F") == 0 || strcmp(NBC_method, "MI_OPBC_H") == 0) {
+      /* store the box size info in box_side_len */
+      box_side_len[3*nconf + 0] = box_x.x;
+      box_side_len[3*nconf + 1] = box_y.y;
+      box_side_len[3*nconf + 2] = box_z.z;
+    }
 #endif 
 /* added ends */
 
@@ -1079,8 +1083,8 @@ void read_config(char *filename)
 /* elements info has to be given */
 #ifdef KIM 
   if(!have_elements) {
-    error(1, "Elements info cannot be found. You need to include the line beginning "
-    "with `#C' at least in one of the configuration(s) in file: %s.", filename);
+    error(1, "Elements info cannot be found. You need to include the info beginning "
+    "with '#C' in file: %s.", filename);
   }
 #endif /* KIM */
 /*added ends*/
@@ -1129,7 +1133,9 @@ void read_config(char *filename)
 
 /* added */
 #ifdef KIM
-	reg_for_free(box_side_len, "box side lengths");
+  if (strcmp(NBC_method, "MI_OPBC_F") == 0 || strcmp(NBC_method, "MI_OPBC_H") == 0) {
+  	reg_for_free(box_side_len, "box side lengths");
+  }
 #endif 
 /* added ends*/
 
