@@ -841,9 +841,8 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
 
   /* set_compute flag */
   if (!kim_model_has_energy) {
-    **energy = 0.0;
     compute_energy = 0;
-    warning("KIM Model does not provide `energy'; Potential energy set to zero.\n");
+    error(1,"KIM Model does not provide `energy'.\n");
   } else {
     compute_energy = 1;
   }
@@ -853,7 +852,7 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
       compute_forces = 1;
     } else {
       compute_forces = 0;
-      warning("KIM Model does not provide `forces'.\n");
+      error(1,"KIM Model does not provide `forces'.\n");
     } 
   }else {
     compute_forces = 0;
@@ -864,7 +863,7 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
       compute_virial = 1;
     } else {
       compute_virial = 0;
-      warning("KIM Model does not provide `stress'.\n");
+      error(1,"KIM Model does not provide `virial'.\n");
     } 
   }else {
     compute_virial = 0;
@@ -883,14 +882,13 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
   /* get data */
   KIM_API_getm_data(pkim, &status, 3*3,
                     "energy", energy, compute_energy, 
-                    "forces", force, compute_forces,
+                    "forces", force,  compute_forces,
                     "virial", virial, compute_virial );
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
     return status;
   }
 
-  
   /* Call model compute */
   status = KIM_API_model_compute(pkim);
   if (KIM_STATUS_OK > status)
