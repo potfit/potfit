@@ -2003,7 +2003,6 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	char tmp_value[255];
 	int jj, kk, tmp_size;
 	void* pkim;
-  const char* NBCstr;
 	int status;
 	FreeParamType FreeParamSet;
 
@@ -2157,24 +2156,9 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	/* create KIM object with 1 atom and 1 species */
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
 	
-	/* NBC */
-	status = KIM_API_get_NBC_method(pkim, &NBCstr); 
-  if (KIM_STATUS_OK > status) {
-	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method",status);
-		exit(1);
-	}
-  strcpy(NBC_method, NBCstr);
-	printf("NBC being used: %s.\n\n", NBC_method); 
-  
-	/* use half or full neighbor list?  1 = half, 0 =full; this will be used 
-	 * in config.c to build up the neighbor list */
-  is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
-  if (KIM_STATUS_OK > status) {
-	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_is_half_neighbors",status);
-		exit(1);
-	}
+  get_compute_const(pkim);
 
-/* initialze the data struct for the free parameters with type double */
+  /* initialze the data struct for the free parameters with type double */
   get_free_param_double(pkim, &FreeParamSet);
 
   /* nest the optimizable params */
@@ -2458,7 +2442,6 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	char  buffer[255], name[255];
 	fpos_t filepos, startpos; 
 	void* pkim;
-  const char* NBCstr;
   int status;
 	FreeParamType FreeParamSet;
 
@@ -2474,22 +2457,7 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	/* create KIM object with 1 atom and 1 species */
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
   
-  /* NBC */
-	status = KIM_API_get_NBC_method(pkim, &NBCstr); 
-  if (KIM_STATUS_OK > status) {
-	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method",status);
-		exit(1);
-	}
-  strcpy(NBC_method, NBCstr);
-	printf("NBC being used: %s.\n\n", NBC_method); 
-  
-	/* use half or full neighbor list?  1 = half, 0 =full; this will be used 
-	 * in config.c to build up the neighbor list */
-  is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
-  if (KIM_STATUS_OK > status) {
-	  KIM_API_report_error(__LINE__, __FILE__, "KIM_API_is_half_neighbors",status);
-		exit(1);
-	}
+  get_compute_const(pkim);
 
   /* initialze the data struct for the free parameters with type double */
   get_free_param_double(pkim, &FreeParamSet);

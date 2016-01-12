@@ -166,7 +166,19 @@ double calc_forces(double *xi_opt, double *forces, int flag)
         kim_us = us;
 #endif /* STRESS*/
 
-        status = calc_force_KIM( pkimObj[h], &kimenergy,  &kimforce,  &kimvirial, uf, kim_us);
+
+        /* set compute flag */
+ /*       KIM_API_setm_compute(pkimObj[h], &status, 3*3,
+                              "energy",   1,          1,
+                              "forces",   uf,         1,
+                              "virial",   kim_us,     1);
+        if (KIM_STATUS_OK > status) {
+          KIM_API_report_error(__LINE__, __FILE__, "KIM_API_setm_compute", status);
+          return status;
+        }
+*/
+        /* compute forces */
+        status = calc_force_KIM(pkimObj[h], &kimenergy,  &kimforce,  &kimvirial, uf, kim_us);
         if (KIM_STATUS_OK > status) {
           KIM_API_report_error(__LINE__, __FILE__, "KIM: compute forces failed", status);
           exit(1);

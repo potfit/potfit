@@ -73,7 +73,13 @@ EXTERN int is_half_neighbors;  /* using half neighbor list? 1 = half, 0 = full *
 
 EXTERN char NBC_method[64];       /* neighbor list and boundary conditions */
 
-EXTERN double* box_side_len;  /*box_side_len is used to enable MI_OPBC_H in KIM. 
+EXTERN int kim_model_has_energy;  /* flag, whether KIM model has the routine to 
+                                     compute energy, forces, and virial */
+EXTERN int kim_model_has_forces;
+
+EXTERN int kim_model_has_virial;
+
+EXTERN double* box_side_len;  /*box_side_len is used to enable MI_OPBC in KIM. 
                                * box_side_len is used to store the info of box
                                * size of each configuration. box_side_len[0], 
                                * box_side_len[1], box_side_len[2] store box_x.x,
@@ -81,8 +87,7 @@ EXTERN double* box_side_len;  /*box_side_len is used to enable MI_OPBC_H in KIM.
                                * respectively. box_side_len[3] stores box_x.x
                                * of the second config...  Note this is only 
                                * possible when box_x.y = 0, and similar for other
-                               * components of the box. If not, we need to come 
-                               * up with other methods.*/ 
+                               * components of the box. */ 
 
 
 /* function prototypes */
@@ -143,6 +148,11 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 
 /* assigned to function pointer `write_pot_table' in `potfit.c' */
 void write_pot_table5(pot_table_t *pt, char *filename);
+
+/* set compute flags and get NBC method */
+void get_compute_const(void* pkim); 
+
+int get_KIM_mode_has_flags();
 
 
 /* free memory */

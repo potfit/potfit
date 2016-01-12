@@ -321,10 +321,10 @@ int setup_neighborlist_KIM_access(void* pkim, NeighObjectType* NeighObject)
 *
 * Create neighborlist and initialize 
 *
-* potfit gloval variables:
-* atom
+* potfit global variables:
 *
 *******************************************************************************/
+
 int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start)
 {
   /* local variables */
@@ -507,6 +507,86 @@ void init_optimizable_param()
 }
 
 
+
+
+/******************************************************************************* 
+* 
+*  Get NBC, is_half_neighbors and the computation flags of model
+*
+*******************************************************************************/
+void get_compute_const(void* pkim) 
+{
+  /* local variables */
+  int status;
+  const char* NBCstr;
+  
+  /* NBC */
+  status = KIM_API_get_NBC_method(pkim, &NBCstr);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_NBC_method",status);
+    exit(1);
+  }
+  strcpy(NBC_method, NBCstr);
+  printf("NBC being used: %s.\n\n", NBC_method);
+
+  /* use half or full neighbor list?  1 = half, 0 =full; this will be used
+   * in config.c to build up the neighbor list */
+  is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_is_half_neighbors",status);
+    exit(1);
+  }
+
+  /* model ability flag */ 
+  get_KIM_model_has_flags();
+
+  return;
+}
+
+
+/******************************************************************************* 
+* 
+*  get the computation flags of model
+*
+*******************************************************************************/
+
+int get_KIM_model_has_flags()
+{
+  void* pkim;
+  int status;
+
+  /* get KIM API object representing the KIM Model only */
+  status = KIM_API_model_info(&pkim, kim_model_name);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_info", status);
+    return(status);
+  }
+
+  /* determine if the KIM Model can compute the total energy */
+  KIM_API_get_index(pkim, (char*) "energy", &status);
+  kim_model_has_energy = (status == KIM_STATUS_OK);
+
+  /* determine if the KIM Model can compute the forces */
+  KIM_API_get_index(pkim, (char*) "forces", &status);
+  kim_model_has_forces = (status == KIM_STATUS_OK);
+
+  /* determine if the KIM Model can compute the virial */
+  KIM_API_get_index(pkim, (char*) "virial", &status);
+  kim_model_has_virial = (status == KIM_STATUS_OK);
+  KIM_API_get_index(pkim, (char*) "process_dEdr", &status);
+  kim_model_has_virial = kim_model_has_virial || (status == KIM_STATUS_OK);
+
+  /* tear down KIM API object */
+  KIM_API_free(&pkim, &status);
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    return(status);
+  }
+
+  return KIM_STATUS_OK;
+}
+
+
 /***************************************************************************
 *
 * Get free parameters of type double for the descriptor file of the model
@@ -519,7 +599,9 @@ void init_optimizable_param()
 * `PARAM_FREE_cutoff' will also be included in ParamType->name.
 * Although it is not an optimiazble parameter, but we may want to copy it to
 * potfit to calculate the neighbor list. 
+*
 ***************************************************************************/
+
 int get_free_param_double(void* pkim, FreeParamType* FreeParam) 
 {
   /*local vars*/
@@ -752,31 +834,63 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
               int useforce, int usestress)
 { 
   /* local variables */
+  int compute_energy;
+  int compute_forces;
+  int compute_virial;
   int status;
-  
-  /* potfit will always compute energy, so is here */
-  KIM_API_getm_data(pkim, &status, 1*3, "energy", energy, 1);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
-    return status;
+
+  /* set_compute flag */
+  if (!kim_model_has_energy) {
+    **energy = 0.0;
+    compute_energy = 0;
+    warning("KIM Model does not provide `energy'; Potential energy set to zero.\n");
+  } else {
+    compute_energy = 1;
   }
 
   if (useforce) {
-    KIM_API_getm_data(pkim, &status, 1*3, "forces", force, 1);
+    if (kim_model_has_forces) {
+      compute_forces = 1;
+    } else {
+      compute_forces = 0;
+      warning("KIM Model does not provide `forces'.\n");
+    } 
+  }else {
+    compute_forces = 0;
   }
+
+  if (usestress) {
+    if (kim_model_has_virial) {
+      compute_virial = 1;
+    } else {
+      compute_virial = 0;
+      warning("KIM Model does not provide `stress'.\n");
+    } 
+  }else {
+    compute_virial = 0;
+  }
+
+  /* set compute flag */
+  KIM_API_setm_compute(pkim, &status, 3*3,
+                    "energy", compute_energy, 1, 
+                    "forces", compute_forces, 1,
+                    "virial", compute_virial, 1 );
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_setm_compute", status);
+    return status;
+  }
+
+  /* get data */
+  KIM_API_getm_data(pkim, &status, 3*3,
+                    "energy", energy, compute_energy, 
+                    "forces", force, compute_forces,
+                    "virial", virial, compute_virial );
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
     return status;
   }
 
-  if(usestress) {
-    KIM_API_getm_data(pkim, &status, 1*3, "virial", virial, 1);
-  }
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
-    return status;
-  }
-
+  
   /* Call model compute */
   status = KIM_API_model_compute(pkim);
   if (KIM_STATUS_OK > status)
@@ -1205,10 +1319,10 @@ int write_descriptor_file(int Nspecies, char** species)
     "# Name                      Type\n\n"
     "ZeroBasedLists              flag\n\n"
     "Neigh_LocaAccess            flag\n\n"
-    "#NEIGH_RVEC_H                flag\n\n"
-    "#NEIGH_RVEC_F                flag\n\n"
+    "NEIGH_RVEC_H                flag\n\n"
+    "NEIGH_RVEC_F                flag\n\n"
     "MI_OPBC_H                   flag\n\n"
-    "MI_OPBC_F		               flag\n\n\n"
+    "MI_OPBC_F                   flag\n\n\n"
     );
 
   /* Model output */
