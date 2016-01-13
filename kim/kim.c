@@ -237,25 +237,13 @@ int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
 
   /* set species types */
   for (i = 0; i < *numberOfParticles; i++) { 
-    /* check type code in range (in potfit, atom types range from 0 to (ntype-1))*/
-    if (atoms[start+i].type >= 0 && atoms[start+i].type < *numberOfSpecies) {
-      j = atoms[start+i].type;
-      species_code = KIM_API_get_species_code(pkim, elements[j], &status); 
-      if (KIM_STATUS_OK > status) {
-        KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_species_code," 
-                            "the species names need to be exactly the same "
-                            "as that in KIM standard file", status);
-        return status;
-      }
-      particleSpecies[i] = species_code;
-    }
-    else {
-      status = KIM_STATUS_FAIL;     
-      KIM_API_report_error(__LINE__, __FILE__, "Unexpected species detected, "
-                          "the element(s) in potfit config file is not supported "
-                          "by the KIM Model you specified.", status);
+    j = atoms[start+i].type;
+    species_code = KIM_API_get_species_code(pkim, elements[j], &status); 
+    if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_species_code", status);
       return status;
     }
+    particleSpecies[i] = species_code;
   }
 
   /* set boxSideLengths if MI_OPBC is used */
