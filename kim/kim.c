@@ -27,9 +27,6 @@ void init_KIM()
   
   printf("\nInitializing KIM ... started\n");
 
-  /* write the `descritor.kim' file for this test */
-  write_descriptor_file(ntypes, elements);
-
   /* create KIM objects and do the necessary initialization */
   init_object();
   
@@ -63,8 +60,10 @@ void init_KIM()
 void init_object()
 {
   /* local variables */
-  int status;
   NeighObjectType* NeighObject;
+  int status;
+  int u_f;
+  int u_s;
   int i;
 
   /* Allocate memory for KIM objects */
@@ -74,8 +73,21 @@ void init_object()
     exit(1);
   }
 	reg_for_free(pkimObj, "pkimObj");
-  
-	for (i = 0; i < nconf; i++) { 
+
+  for (i = 0; i < nconf; i++) { 
+     
+
+    /* write descriptor file */
+    u_f = useforce[i];
+    u_s = 0;
+#ifdef STRESS
+    u_s = usestress[i];
+#endif
+    status = write_final_descriptor_file(u_f, u_s);
+    if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "write_final_descriptor file", status);
+      exit(1);
+    }
 
     /* QUESTION: does each config has the same number of species? e.g. there are
      * two types of species, but a specific config may one have one species). If
@@ -833,56 +845,13 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
               int useforce, int usestress)
 { 
   /* local variables */
-  int compute_energy;
-  int compute_forces;
-  int compute_virial;
-  int status;
-
-  /* set_compute flag */
-  if (!kim_model_has_energy) {
-    compute_energy = 0;
-    error(1,"KIM Model does not provide `energy'.\n");
-  } else {
-    compute_energy = 1;
-  }
-
-  if (useforce) {
-    if (kim_model_has_forces) {
-      compute_forces = 1;
-    } else {
-      compute_forces = 0;
-      error(1,"KIM Model does not provide `forces'.\n");
-    } 
-  }else {
-    compute_forces = 0;
-  }
-
-  if (usestress) {
-    if (kim_model_has_virial) {
-      compute_virial = 1;
-    } else {
-      compute_virial = 0;
-      error(1,"KIM Model does not provide `virial'.\n");
-    } 
-  }else {
-    compute_virial = 0;
-  }
-
-  /* set compute flag */
-  KIM_API_setm_compute(pkim, &status, 3*3,
-                    "energy", compute_energy, 1, 
-                    "forces", compute_forces, 1,
-                    "process_dEdr", compute_virial,  kim_model_has_virial );
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_setm_compute", status);
-    return status;
-  }
+   int status;
 
   /* get data */
   KIM_API_getm_data(pkim, &status, 3*3,
-                    "energy", energy, compute_energy, 
-                    "forces", force,  compute_forces,
-                    "virial", virial, compute_virial );
+                    "energy", energy, 1, 
+                    "forces", force,  useforce,
+                    "virial", virial, usestress);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
     return status;
@@ -913,19 +882,21 @@ int publish_cutoff(void* pkim, double cutoff)
  
   /* update cutoff */
   pcutoff = KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
-    return(status);
+  if (KIM_STATUS_OK != status) {
+#ifndef NOLIMITS /* if defines nolimits; KIM cutoff is always used */
+    warning("Publish cutoff to KIM failed. The cutoff in the KIM Model is used.\n"
+            "Possibly the KIM Model has no 'PARAM_FREE_cutoff'.\n\n");
+#endif 
+  } else {
+    *pcutoff = cutoff;
+    /* reinit KIM model */
+    status = KIM_API_model_reinit(pkim);
+    if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
+      return status;
+    }
   }
-  *pcutoff = cutoff;
- 
-  /* reinit KIM model */
-  status = KIM_API_model_reinit(pkim);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_model_reinit", status);
-    return status;
-  }
- 
+
   return KIM_STATUS_OK;
 }
 
@@ -1173,6 +1144,65 @@ void write_pot_table5(pot_table_t* pt, char *filename)
 }
 
 
+/******************************************************************************
+*
+* write final descriptor file
+*
+* arguments:
+*
+* u_f: flag; use force?
+* u_s: flag; use stress? 
+*
+******************************************************************************/
+
+int write_final_descriptor_file(int u_f, int u_s)
+{
+  int compute_energy;
+  int compute_forces;
+  int compute_virial;
+  int status;
+
+  /* set_compute flag */
+  if (!kim_model_has_energy) {
+    compute_energy = 0;
+    error(1,"KIM Model does not provide `energy'.\n");
+  } else {
+    compute_energy = 1;
+  }
+
+  if (u_f) {
+    if (kim_model_has_forces) {
+      compute_forces = 1;
+    } else {
+      compute_forces = 0;
+      error(1,"KIM Model does not provide `forces'.\n");
+    } 
+  }else {
+    compute_forces = 0;
+  }
+
+  if (u_s) {
+    if (kim_model_has_virial) {
+      compute_virial = 1;
+    } else {
+      compute_virial = 0;
+      error(1,"KIM Model does not provide `virial'.\n");
+    } 
+  }else {
+    compute_virial = 0;
+  }
+
+  /* write the `descritor.kim' file for this test */
+  status = write_descriptor_file(ntypes, elements, 
+                              compute_energy, compute_forces, compute_virial); 
+  if (KIM_STATUS_OK > status) {
+    KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);
+    return(status);
+  }
+
+  return KIM_STATUS_OK;
+}
+
 
 /******************************************************************************
  * 
@@ -1208,7 +1238,7 @@ int write_temporary_descriptor_file(char* modelname)
  
   /* write a temporary `descriptor.kim' file, used only to query model info */
   /* we'll write `descriptor.kim' file with the species reading from potfit later. */
-  status = write_descriptor_file(Nspecies, species); 
+  status = write_descriptor_file(Nspecies, species, 0, 0, 0); 
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);
     return(status);
@@ -1233,10 +1263,14 @@ int write_temporary_descriptor_file(char* modelname)
  * arguments:
  * Nspecies: number of species that will be written into the descriptor file
  * species: the names of the species, e.g. Al, Cu 
+ * compute_erergy: flag; whether to write 'energy' in the Model Output section
+ * compute_forces: flag; whether to write 'forces' in the Model Output section
+ * compute_virial: flag; whether to write 'virial' in the Model Output section
  *
  *****************************************************************************/
 
-int write_descriptor_file(int Nspecies, char** species)
+int write_descriptor_file(int Nspecies, char** species, int compute_energy, 
+                          int compute_forces, int compute_virial)
 {
   /* local variables */
   int i;
@@ -1347,9 +1381,19 @@ int write_descriptor_file(int Nspecies, char** species)
     "compute                     method       none                []\n\n"
     "reinit                      method       none                []\n\n"
     "cutoff                      double       length              []\n\n"
-    "energy                      double       energy              []\n\n"
-    "forces                      double       force               [numberOfParticles,3]\n\n"
-    "virial                      double       energy              [6]" 
+  );
+ 
+  if(compute_energy)
+    fprintf(outfile,
+      "energy                      double       energy              []\n\n"
+    ); 
+  if(compute_forces)
+    fprintf(outfile,
+      "forces                      double       force               [numberOfParticles,3]\n\n"
+    ); 
+  if(compute_virial)
+    fprintf(outfile,
+      "virial                      double       energy              [6]" 
   );
   
   fflush(outfile);

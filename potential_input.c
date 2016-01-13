@@ -2249,13 +2249,21 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 
 
 	/* find cutoff */
-	/* If it is anaytic potential (every PARAM_FREE* is scalar), keyword `cutoff' has
+	int have_cutoff;
+  int have_PARAM_FREE_cutoff;
+          have_cutoff = 0;	
+  /* If it is anaytic potential (every PARAM_FREE* is scalar), keyword `cutoff' has
 	 * to be specified in the input file. You can give value directly, or give `KIM' 
    * to use the cutoff from KIM model.
    * If it is tabualted potential, cutoff will read in from KIM model, even
 	 * if it is given in the input file. */
 	
-	int have_cutoff;
+  /* whether we have PARAM_FREE_cutoff in the KIM Model. 
+  If not, cannot publish cutoff, then have_cutoff needs to be 0. */
+
+  KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
+   if (KIM_STATUS_OK == status)  have_PARAM_FREE_cutoff = 1;
+
 
 	fsetpos(infile, &startpos);
 	do {
@@ -2270,12 +2278,14 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 			} else {
 				if (strcmp(tmp_value, "KIM") == 0) {
 					have_cutoff = 0;
-				} else {
+				} else if (have_PARAM_FREE_cutoff){
 					if(1 > sscanf(tmp_value,"%lf", &apt->end[i])){
 				    error(1,"Error reading in cutoff in file '%s'.\n", filename);
 					}
 					have_cutoff = 1; 
-				}
+				} else {
+          have_cutoff = 0;
+        }
 			}
 		} else {
 			error(1,"'cutoff' is missing in file: %s.\n", filename);

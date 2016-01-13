@@ -99,7 +99,8 @@ void init_KIM();
 void free_KIM();
 
 /* called by `init_KIM' */
-int write_descriptor_file(int Nspecies, char** species);
+int write_descriptor_file(int Nspecies, char** species, int compute_energy,
+                          int compute_forces, int compute_virial);
 
 void init_object();
 
@@ -122,15 +123,18 @@ int get_neigh(void* kimmdl, int* mode, int *request, int* part,
 int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 								    			FreeParamType* FreeParam);
 
-/* called in `potential_input.c' and by `read_potential_keyword'  `init_optimizable_param' */
+/* called in `potential_input.c' and by `read_potential_keyword' */
 int write_temporary_descriptor_file(char* modelname);
+
+/* called by `init_obj' */
+int write_final_descriptor_file(int u_f, int u_s);
 
 int get_free_param_double(void* pkim, FreeParamType* FreeParam);
 
 int nest_optimizable_param(void* pkim, FreeParamType* FreeParam, 
                               char** input_param_name, int input_param_num);
 
-/* called by `init_optimizable_param' */
+/* called by `init_KIM' */
 int publish_cutoff(void* pkim, double cutoff);
 
 /* called in `force_kim.c' */
