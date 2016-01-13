@@ -372,18 +372,17 @@ int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start)
     }
   }
 
-  /* If the number of neighbors of an atom is zero, set the BeginIdx to the last
+  /* If the number of neighbors of the last atom is zero, set the BeginIdx to the last
    * position in neghbor list. The purpose is to ensure that the BeginIdx of the
    * last atom will not go beyond the limit of neighborlist length.
-   * e.g. say there are 128 atoms in the config, and we use half neighbor list,
-   * then the 128th atom will have no neighbors. Then the the begin index for the
+   * e.g. say there are 128 atoms in a cluster, and we use half neighbor list,
+   * then the 128th atom will have no neighbors. The begin index for the
    * last atom, BeginIdx[127] will go beyond the limit of Neighbor list, which may
-   * result in segfault in `get_niegh'. */  
-  for (i = 0; i < Natoms; i++) {
-    if( NeighObject->NNeighbors[i] == 0) {
-      NeighObject->BeginIdx[i] = k-1;
-    }
+   * result in segfault in `get_neigh'. */  
+  if( NeighObject->NNeighbors[Natoms-1] == 0) {
+    NeighObject->BeginIdx[Natoms-1] = k-1; 
   }
+
 
   return KIM_STATUS_OK;
 }
@@ -873,7 +872,7 @@ int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
   KIM_API_setm_compute(pkim, &status, 3*3,
                     "energy", compute_energy, 1, 
                     "forces", compute_forces, 1,
-                    "virial", compute_virial, 1 );
+                    "process_dEdr", compute_virial,  kim_model_has_virial );
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_setm_compute", status);
     return status;
