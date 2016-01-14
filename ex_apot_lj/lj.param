@@ -1,5 +1,5 @@
 ntypes		1
-config		sys_b.force
+config		sys_c.force
 startpot	lj.pot
 endpot		lj_end.pot
 tempfile	dummy.tmp

@@ -16,8 +16,8 @@
 
 /*******************************************************************************
 *
-* Init KIM objects, each object for a reference configuration. Init optimizable
-* parameters: nest them a single variable. 
+* Init KIM objects, each object for a reference configuration.
+* Init optimizable parameters; nest them a single variable. 
 *
 *******************************************************************************/
 
@@ -51,6 +51,8 @@ void init_KIM()
 * inconf
 * ntypes
 * cnfstart
+* useforce
+* usestress
 *
 * potfit-KIM global variables:
 * kim_model_name
@@ -76,7 +78,6 @@ void init_object()
 
   for (i = 0; i < nconf; i++) { 
      
-
     /* write descriptor file */
     u_f = useforce[i];
     u_s = 0;
@@ -193,9 +194,9 @@ int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start)
   int* particleSpecies;
   double* coords; 
   int* numberContrib;
+  /* other locals */
   const char* NBCstr;
   int NBC;
-  /* other locals */
   int status; 
   int species_code; 
   int halfflag;
@@ -382,7 +383,6 @@ int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start)
   if( NeighObject->NNeighbors[Natoms-1] == 0) {
     NeighObject->BeginIdx[Natoms-1] = k-1; 
   }
-
 
   return KIM_STATUS_OK;
 }
@@ -578,7 +578,7 @@ int get_KIM_model_has_flags()
   /* tear down KIM API object */
   KIM_API_free(&pkim, &status);
   if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_free", status);
     return(status);
   }
 
@@ -596,8 +596,6 @@ int get_KIM_model_has_flags()
 * optimize it or not.
 *
 * `PARAM_FREE_cutoff' will also be included in ParamType->name.
-* Although it is not an optimiazble parameter, but we may want to copy it to
-* potfit to calculate the neighbor list. 
 *
 ***************************************************************************/
 
@@ -611,7 +609,7 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
   char buffer[128];
   char name[64];
   char type[16];
-  int NumFreeParamDouble = 0;
+  int NumFreeParamDouble;
   int i;
 
   /* get the maxStringLength of free parameters */
@@ -628,17 +626,11 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
     return(status);
   }
 
-  /* allocate initial memory */
-  FreeParam->name = (char**) malloc(sizeof(char*));
-  if (NULL==FreeParam->name) {
-    KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
-    exit(1);
-  }
-	reg_for_free(FreeParam->name, "FreeParam->name");
-
   /* infinite loop to find PARAM_FREE_* of type `double' */
   /* It's safe to do pstr = strstr(pstr+1,"PARAM_FREE") because the ``PARAM_FREE''
     will never ever occur at the beginning of the ``descriptor.kim'' file */  
+  FreeParam->name = NULL;
+  NumFreeParamDouble = 0;
   while (1) {
     pstr = strstr(pstr+1,"PARAM_FREE");
     if (pstr == NULL) {
@@ -648,13 +640,12 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
       sscanf(buffer, "%s%s", name, type);
       if (strcmp(type, "double") == 0) {
         NumFreeParamDouble++;          
-        if (NumFreeParamDouble > 1) {
-          FreeParam->name = (char**) realloc(FreeParam->name, (NumFreeParamDouble)*sizeof(char*));
-          if (NULL==FreeParam->name) {
-            KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
-            exit(1);
-          }
-        } /*maxStringLength+1 to hold the `\0' at end*/
+        FreeParam->name = (char**) realloc(FreeParam->name, (NumFreeParamDouble)*sizeof(char*));
+        if (NULL==FreeParam->name) {
+          KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
+          exit(1);
+        }
+        /*maxStringLength+1 to hold the `\0' at end*/
         FreeParam->name[NumFreeParamDouble - 1] = (char*) malloc((maxStringLength+1)*sizeof(char));
         if (NULL==FreeParam->name[NumFreeParamDouble - 1]) {
           KIM_API_report_error(__LINE__, __FILE__,"malloc unsuccessful", -1);
@@ -665,6 +656,8 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
       }
     }
   }
+  
+	reg_for_free(FreeParam->name, "FreeParam->name");
 
   FreeParam->Nparam = NumFreeParamDouble;
 
@@ -733,6 +726,8 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
   /* nestedvalue is not allocated here, give NULL pointer to it */
   FreeParam->nestedvalue = NULL;
 
+  /* free the memory of model kim str */
+  free(pstr);
 
   return KIM_STATUS_OK;
 }
@@ -1120,7 +1115,7 @@ void write_pot_table5(pot_table_t* pt, char *filename)
     fprintf(outfile, "\n%s", name_opt_param[i]);
 #ifndef NOLIMITS
     for (j = 0; j < size_opt_param[i]; j++) {
-      fprintf(outfile, "\n%24.16e %24.16e %24.16e", pt->table[k], apot_table.pmin[0][k],
+      fprintf(outfile, "\n%18.10e %18.10e %18.10e", pt->table[k], apot_table.pmin[0][k],
               apot_table.pmax[0][k]); 
       k++;
     }
@@ -1235,7 +1230,7 @@ int write_temporary_descriptor_file(char* modelname)
   /* free the temporary object */
   KIM_API_free(&pkim, &status);
   if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
+    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_free", status);
     return(status);
   }
 
@@ -1424,7 +1419,7 @@ void free_KIM()
 	int i;
 	
 	for(i = 0; i < nconf; i++) {
-		free_model_object(pkimObj[i]);
+		free_model_object(&pkimObj[i]);
 	}	
 }
 

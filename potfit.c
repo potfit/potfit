@@ -119,7 +119,6 @@ int main(int argc, char **argv)
 #endif /* !KIM */
 /*added ends*/
 
-
     /* initialize additional force variables and parameters */
     init_forces();
 
@@ -275,18 +274,6 @@ int main(int argc, char **argv)
     }
 #endif /* !APOT */
 
-#else /* !KIM */
-    tot = calc_forces(opt_pot.table, force, 0);
-    if (opt) {
-      write_pot_table(&opt_pot, endpot);
-      printf("\nPotential in format 5 written to file: %s\n", endpot);
-    } 
-#endif /* !KIM */
-/* added ends */
-
-/*added*/
-#ifndef KIM
-
     if (1 == writeimd)
       write_pot_table_imd(&calc_pot, imdpot);
 
@@ -298,8 +285,15 @@ int main(int argc, char **argv)
       write_pot_table_lammps(&calc_pot);
 #endif /* APOT */
 
+#else /* !KIM */
+    tot = calc_forces(opt_pot.table, force, 0);
+    if (opt) {
+      write_pot_table(&opt_pot, endpot);
+      printf("\nPotential in format 5 written to file: %s\n", endpot);
+    } 
 #endif /* !KIM */
 /* added ends */
+
 
     /* will not work with MPI */
 #if defined PDIST && !defined MPI
@@ -310,15 +304,7 @@ int main(int argc, char **argv)
     write_errors(force, tot);
 
 #ifdef MPI
-
-/* added */
-#ifndef KIM
     calc_forces(calc_pot.table, force, 1);	/* go wake up other threads */
-#else 
-    calc_forces(opt_pot.table, force, 1);	/* go wake up other threads */
-#endif /* !KIM */
-/* added ends */
-
 #endif /* MPI */
   }				/* myid == 0 */
 
@@ -337,15 +323,15 @@ int main(int argc, char **argv)
   shutdown_mpi();
 #endif /* MPI */
 
-  free(u_address);
-  free_all_pointers();
-
 /* added */
 #ifdef KIM
 /* free KIM stuff */
 free_KIM();
 #endif
 /* added ends */
+
+  free(u_address);
+  free_all_pointers();
 
   return 0;
 }

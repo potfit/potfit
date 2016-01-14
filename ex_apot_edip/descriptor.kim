@@ -67,7 +67,7 @@ NEIGH_RVEC_F                flag
 
 MI_OPBC_H                   flag
 
-MI_OPBC_F		               flag
+MI_OPBC_F                   flag
 
 
 #######################################################################################################
@@ -109,4 +109,3 @@ energy                      double       energy              []
 
 forces                      double       force               [numberOfParticles,3]
 
-virial                      double       energy              [6]
