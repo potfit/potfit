@@ -112,6 +112,14 @@
 
 ###########################################################################
 #
+#  Set the shell for systems where bash is not the default
+#
+###########################################################################
+
+SHELL = /bin/bash
+
+###########################################################################
+#
 #  Adjust these variables to your system
 #
 ###########################################################################
@@ -125,11 +133,11 @@
 #
 #SYSTEM 		= x86_64-icc 	# Use this as fallback
 #SYSTEM 		= $(shell uname -m)-icc
-SYSTEM 		= i686-kim
+SYSTEM 		 = i686-kim
 
 # This is the directory where the potfit binary will be moved to.
 # If it is empty, the binary will not be moved.
-#BIN_DIR 	= ${HOME}/bin
+#BIN_DIR 	= ${HOME}/bin/i386-linux
 #BIN_DIR 	=
 
 # Base directory of your installation of the MKL or ACML
@@ -158,7 +166,6 @@ MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
 ACML4PATH 	= ${ACML4DIR}/lib
 ACML5PATH 	= ${ACML5DIR}/lib
-RELEASE		= 1
 
 ###########################################################################
 #
@@ -184,9 +191,8 @@ ifeq (x86_64-icc,${SYSTEM})
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE 	+= -I${MKLDIR}/include
-  LIBS 		+=  -DMKL_ILP64 -mkl=sequential  -lpthread -lm
-
-
+  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
+		   -lmkl_core -Wl,--end-group -lpthread
 endif
 
 # AMD Core Math Library
@@ -211,8 +217,7 @@ ifeq (x86_64-gcc,${SYSTEM})
   OMPI_CLINKER  = gcc
 
 # general optimization flags
-  #OPT_FLAGS     += -O3 -march=native -Wno-unused
-  OPT_FLAGS     += -O3 -Wno-unused
+  OPT_FLAGS     += -O3 -march=native -Wno-unused
 
 # profiling and debug flags
   PROF_FLAGS    += -g3 -pg
@@ -285,13 +290,14 @@ endif
 
 ifeq (i686-gcc,${SYSTEM})
 # compiler
-  CC_SERIAL	= gcc-4.8 -m32
-  CC_MPI	= mpicc -m32
-  OMPI_CC     	= gcc-4.8 -m32
-  OMPI_CLINKER 	= gcc-4.8 -m32
+  CC_SERIAL	= gcc
+  CC_MPI	= mpicc
+  OMPI_CC     	= gcc
+  OMPI_CLINKER 	= gcc
 
 # general optimization flags
-  OPT_FLAGS	+= -O3 -Wno-unused
+  OPT_FLAGS	+= -O3 -march=native -Wno-unused
+
 # profiling and debug flags
   PROF_FLAGS	+= -g3 -pg
   PROF_LIBS	+= -g3 -pg
@@ -300,10 +306,8 @@ ifeq (i686-gcc,${SYSTEM})
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      += -I${MKLDIR}/include
-#  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
-#		   -Wl,--end-group -lpthread -Wl,--as-needed
-  LIBS		+= -lmkl_intel -lmkl_sequential -lmkl_core \
-		   -lpthread
+  LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
+		   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library
@@ -339,6 +343,19 @@ ifeq (,$(strip $(findstring acml,${MAKETARGET})))
    LIBS   += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
 					   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
+
+# AMD Core Math Library
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  CINCLUDE     	+= -I$(ACML4DIR)/include
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -Wl,--as-needed
+endif
+ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
+  CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -Wl,--as-needed
+endif
+
+  export        OMPI_CC OMPI_CLINKER
 endif
 
 ###########################################################################
@@ -399,47 +416,13 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 		  powell_lsq.c random.c simann.c splines.c utils.c
 
 
-
-# added
-###########################################################################
-# to compile with kim 
-# nothing new, just add kim in the maketarget
-# e.g. make potfit_kim
-###########################################################################
-# if kim
-
-
-potfit_kim: potfit_apot_pair_kim
-					mv potfit_apot_pair_kim potfit_kim
-potfit_kim_nolimits: potfit_eam_kim_nolimits
-					mv potfit_eam_kim_nolimits potfit_kim_nolimits
-
+# added (if kim)
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
 	
   POTFITSRC      += kim/kim.c kim/force_kim.c
+  POTFITHDR      += kim/kim.h kim/force_kim.h
   
-  ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-    POTFITHDR      += functions.h
-    POTFITSRC      += functions.c
-    ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-      POTFITSRC      += chempot.c
-    endif
-  endif
-
-  ifneq (,$(strip $(findstring evo,${MAKETARGET})))
-    POTFITSRC      += diff_evo.c
-  endif
-
-  ifneq (,$(strip $(findstring parab,${MAKETARGET})))
-    POTFITSRC      += parabola.c
-  endif
-
-
 else # kim
-
-
-
-
 
   ifneq (,$(strip $(findstring pair,${MAKETARGET})))
     POTFITSRC      += force_pair.c 
@@ -457,56 +440,53 @@ else # kim
     endif
   endif
 
-  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-      POTFITSRC      += force_elstat.c
-    endif
-  endif
+endif #kim 
 
-  ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-      POTFITSRC      += force_elstat.c
-    endif
-  endif
+ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+	ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+		POTFITSRC      += force_elstat.c
+	endif
+endif
 
-  ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-    POTFITSRC      += force_adp.c
-  endif
+ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+	ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+		POTFITSRC      += force_elstat.c
+	endif
+endif
 
-  ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
-    POTFITSRC      += force_stiweb.c
-  endif
+ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+	POTFITSRC      += force_adp.c
+endif
 
-  ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
-    POTFITSRC      += force_tersoff.c
-  endif
+ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
+	POTFITSRC      += force_stiweb.c
+endif
 
-  ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-    POTFITHDR      += functions.h
-    POTFITSRC      += functions.c
-    ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-      POTFITSRC      += chempot.c
-    endif
-  else
-    ifneq (,$(strip $(findstring meam,${MAKETARGET})))
-      POTFITSRC 	+= rescale_meam.c
-    else
-      POTFITSRC      += rescale.c
-    endif
-  endif
+ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
+	POTFITSRC      += force_tersoff.c
+endif
 
-  ifneq (,$(strip $(findstring evo,${MAKETARGET})))
-    POTFITSRC      += diff_evo.c
-  endif
+ifneq (,$(strip $(findstring apot,${MAKETARGET})))
+	POTFITHDR      += functions.h
+	POTFITSRC      += functions.c
+	ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+		POTFITSRC      += chempot.c
+	endif
+else
+	ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+		POTFITSRC 	+= rescale_meam.c
+	else
+		POTFITSRC      += rescale.c
+	endif
+endif
 
-  ifneq (,$(strip $(findstring parab,${MAKETARGET})))
-    POTFITSRC      += parabola.c
-  endif
+ifneq (,$(strip $(findstring evo,${MAKETARGET})))
+	POTFITSRC      += diff_evo.c
+endif
 
-endif  #kim
-# added ends
-
-
+ifneq (,$(strip $(findstring parab,${MAKETARGET})))
+	POTFITSRC      += parabola.c
+endif
 
 MPISRC          = mpi_utils.c
 
@@ -529,8 +509,7 @@ endif
 
 INTERACTION = 0
 
-
-# pair interactions
+# pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
   CFLAGS += -DPAIR
   INTERACTION = 1
@@ -696,8 +675,6 @@ CFLAGS += -DRESCALE
 endif
 
 
-
-############################################
 # added    to enable KIM and NOLIMITS in the preprocessor
 ifneq (,$(findstring kim,${MAKETARGET}))
   CFLAGS += -DKIM
@@ -710,18 +687,6 @@ endif
 
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})
-
-###########################################################################
-#
-# 	Check for bzr binary
-#
-###########################################################################
-
-ifneq (,$(shell `which git 2> /dev/null`))
-  GIT = 1
-else
-  GIT = 0
-endif
 
 ###########################################################################
 #
@@ -760,7 +725,7 @@ ${MAKETARGET}: ${OBJECTS}
 ifneq (,${STRIP})
   ifeq (,$(findstring prof,${MAKETARGET}))
     ifeq (,$(findstring debug,${MAKETARGET}))
-#	${STRIP}  -R .comment $@
+	${STRIP} --strip-unneeded -R .comment $@
     endif
   endif
 endif
@@ -780,6 +745,15 @@ else
 	@exit
 endif
 
+
+#added
+potfit_kim: potfit_apot_pair_kim
+					mv potfit_apot_pair_kim potfit_kim
+potfit_kim_nolimits: potfit_eam_kim_nolimits
+					mv potfit_eam_kim_nolimits potfit_kim_nolimits
+#added ends
+
+
 potfit:
 	@echo -e "\nError:\tYou cannot compile potfit without any options."
 	@echo -e "\tAt least an interaction is required.\n"
@@ -792,20 +766,6 @@ ifneq (,${ERROR})
 else
 ifneq (,${MAKETARGET})
 	@echo "${WARNING}"
-ifeq (0,${RELEASE})
-ifeq (1,${GIT})
-	@echo -e "Writing git data to version.h\n"
-	@rm -f version.h
-	@echo -e "#define VERSION_INFO \"potfit-git (r"`git rev-list HEAD | wc -l`")\"\n" > version.h
-else
-	@echo -e "Writing fake git data to version.h\n"
-	@rm -f version.h
-	@echo -e "#define VERSION_INFO \"potfit-`basename ${PWD}` (r ???)\"" > version.h
-endif
-else
-	@rm -f version.h
-	@echo  "#define VERSION_INFO \"potfit-0.7.0\"" > version.h
-endif
 	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
 else
 	@echo 'No TARGET specified.'
@@ -820,12 +780,9 @@ endif
 clean:
 	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h 
 
-# added 
+# adde remove kim stuff
 ###########################################################################
-# remove kim stuff
-###########################################################################
-	rm -f  potfit_* kim/*.o
-# added ends
+	rm -f kim/*.o potfit_* 
 
 
 help:

@@ -8,3 +8,5 @@ potfit_*
 *.pyc
 .DS_Store
 kim.log
+descriptor.kim
+*.tmp
