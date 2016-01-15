@@ -747,10 +747,10 @@ endif
 
 
 #added
-potfit_kim: potfit_apot_pair_kim
-					mv potfit_apot_pair_kim potfit_kim
-potfit_kim_nolimits: potfit_eam_kim_nolimits
-					mv potfit_eam_kim_nolimits potfit_kim_nolimits
+#potfit_kim: potfit_apot_pair_kim
+#					mv potfit_apot_pair_kim potfit_kim
+#potfit_kim_nolimits: potfit_eam_kim_nolimits
+#					mv potfit_eam_kim_nolimits potfit_kim_nolimits
 #added ends
 
 
@@ -781,7 +781,6 @@ clean:
 	rm -f *.o *.u *~ \#* *.V *.T *.O *.il version.h 
 
 # adde remove kim stuff
-###########################################################################
 	rm -f kim/*.o potfit_* 
 
 

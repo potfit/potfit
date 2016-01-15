@@ -526,7 +526,7 @@ void get_compute_const(void* pkim)
     exit(1);
   }
   strcpy(NBC_method, NBCstr);
-  printf("NBC being used: %s.\n\n", NBC_method);
+  printf("KIM NBC: %s.\n", NBC_method);
 
   /* use half or full neighbor list?  1 = half, 0 =full; this will be used
    * in config.c to build up the neighbor list */
@@ -960,7 +960,7 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 
   /* copy name*/
   strcpy(kim_model_name, name);
-  printf("\nKIM Model being used: %s.\n\n", kim_model_name);
+  printf("\nKIM Model: %s.\n", kim_model_name);
  
   /* find `check_kim_opt_param' or `num_opt_param'. The two keywords are mutually
 	 * exculsive, which comes first will be read, and the other one will be ignored. */
@@ -980,7 +980,11 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
 		/* write temporary descriptor file */
 		write_temporary_descriptor_file(kim_model_name);
 		/* create KIM object with 1 atom and 1 species */
-		setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
+		status = setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
+		if (KIM_STATUS_OK > status) {
+      KIM_API_report_error(__LINE__, __FILE__, "setup_KIM_API_object", status);
+      exit(1);
+    }
 		/* initialze the data struct for the free parameters with type double */
 		get_free_param_double(pkim, FreeParam);
 
@@ -1144,6 +1148,7 @@ int write_final_descriptor_file(int u_f, int u_s)
   int compute_forces;
   int compute_virial;
   int status;
+
 
   /* set_compute flag */
   if (!kim_model_has_energy) {

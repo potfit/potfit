@@ -2155,7 +2155,11 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 
 	/* create KIM object with 1 atom and 1 species */
 	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
-	
+	if (KIM_STATUS_OK > status) {
+		KIM_API_report_error(__LINE__, __FILE__, "setup_KIM_API_object", status);
+		exit(1);
+	}
+
   get_compute_const(pkim);
 
   /* initialze the data struct for the free parameters with type double */
@@ -2247,6 +2251,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	}
 	apt->invar_par[i][apt->n_par[i]] = 0;
 
+	printf("Successfully read potential parameters that will be optimized.\n\n");
 
 	/* find cutoff */
 	int have_cutoff;
@@ -2427,7 +2432,6 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	/* free memory */
 	free_model_object(&pkim);
 
-	printf(" - Successfully read potential parameters that will be optimized.\n");
 	return;
 }
 
@@ -2465,8 +2469,12 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	write_temporary_descriptor_file(kim_model_name);
 
 	/* create KIM object with 1 atom and 1 species */
-	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
-  
+	status = setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
+	if (KIM_STATUS_OK > status) {
+		KIM_API_report_error(__LINE__, __FILE__, "setup_KIM_API_object", status);
+		exit(1);
+	}
+
   get_compute_const(pkim);
 
   /* initialze the data struct for the free parameters with type double */
@@ -2509,7 +2517,7 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	/* free memory */
 	free_model_object(&pkim);
   
-	printf(" - Successfully read potential parameters that will be optimized.\n");
+	printf("Successfully read potential parameters that will be optimized.\n\n");
 	return;
 }
 

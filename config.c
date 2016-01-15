@@ -116,7 +116,7 @@ void read_config(char *filename)
   if (NULL == infile)
     error(1, "Could not open file %s\n", filename);
 
-  printf("Reading the config file >> %s << and calculating neighbor lists ...\n", filename);
+  printf("Reading the config file >> %s << and calculating neighbor lists ...", filename);
   fflush(stdout);
 
   /* read configurations until the end of the file */
