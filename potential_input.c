@@ -2154,7 +2154,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	write_temporary_descriptor_file(kim_model_name);
 
 	/* create KIM object with 1 atom and 1 species */
-	setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
+	status = setup_KIM_API_object(&pkim, 1, 1, kim_model_name);
 	if (KIM_STATUS_OK > status) {
 		KIM_API_report_error(__LINE__, __FILE__, "setup_KIM_API_object", status);
 		exit(1);
