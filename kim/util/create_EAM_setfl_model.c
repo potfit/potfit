@@ -1,8 +1,8 @@
-/*
-	To create an EAM_Dynamo setfl model, where the user will give all the info.  
-
-	Contributor: Mingjian Wen
-*/
+/*************************************************************************
+*	To create an EAM_Dynamo setfl model, where the user will give all the info.  
+*
+*	Contributor: Mingjian Wen (wenxx151@umn.edu), University of Minnesota
+**************************************************************************/
 
 #include<stdio.h>
 #include<string.h>
@@ -13,7 +13,6 @@ int main() {
 		/* local variables */
 	char SysCmd[256];
 	char tmpstring[256];
-	char flag_make[256];
 	int i,j;
   FILE *pFile;
 
@@ -91,18 +90,18 @@ int main() {
 						  &atomic_mass[i],	&lattice_const[i], lattice_type[i]);
 	}
 
-	printf("\nDo you want to make the model right now? Type `yes' or 'no'.\n");
-  fgets(tmpstring, 80, stdin);
-	sscanf(tmpstring,"%s", flag_make);
-
 	
 
 /*************************************************************************
 * Create model dir
 **************************************************************************/
+	
+	/* delete model directory in case it exists */
+	strcpy(SysCmd, "rm -rf ");
+	strcat(SysCmd, model_name);
+	system(SysCmd);
 
-	/* create model directoy */
-/*NOTE(change) it would be better check whether the dir exits or not */
+	/* create model directory */
 	strcpy(SysCmd, "mkdir ");
 	strcat(SysCmd, model_name);
 	system(SysCmd);
@@ -163,7 +162,7 @@ int main() {
 
 /*************************************************************************** 
 * Create parameter file EAM
-/***************************************************************************/ 
+***************************************************************************/ 
 
 	sprintf(tmpstring, "%s/%s.params", model_name, model_name);	
 	pFile = fopen(tmpstring,"w");
@@ -219,15 +218,16 @@ int main() {
 
 
 /***************************************************************************
-* System call to make the model 
+* more info about how to make the model 
 ***************************************************************************/
-	/* create Makefile.KIM_Config and make model */
- 	if(!strncmp(flag_make, "yes", 3)) {
-		system("kim-api1-build-config --makefile-kim-config > Makefile.KIM_Config");
-		printf("\n\nMaking KIM model ... starting\n");
-	  sprintf(SysCmd,"cd %s; make", model_name);
-		system(SysCmd);
-	}
+	printf("\nCreate the model: %s; ... done\n\n",model_name);
+	printf("- Please move the model `%s' to the directory where you want to run "
+			"potfit, and modifiy the values in file `%s.params'.\n",model_name,model_name);
+	printf("\n- Then in that directory do:\n\n");
+	printf("%% kim-api-build-config --makefile-kim-config > Makefile.KIM_Config\n");
+	printf("%% cd %s\n", model_name);
+	printf("%% make \n\n");
+	printf("It's ready to use the Model then.\n\n");
 
 	return 0;
 }
