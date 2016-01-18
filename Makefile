@@ -440,31 +440,32 @@ else # kim
     endif
   endif
 
+  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
+    ifeq (,$(strip $(findstring eam,${MAKETARGET})))
+      POTFITSRC      += force_elstat.c
+    endif
+  endif
+
+  ifneq (,$(strip $(findstring adp,${MAKETARGET})))
+    POTFITSRC      += force_adp.c
+  endif
+
+  ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
+    POTFITSRC      += force_stiweb.c
+  endif
+
+  ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
+    POTFITSRC      += force_tersoff.c
+  endif
+
 endif #kim 
-
-ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-	ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-		POTFITSRC      += force_elstat.c
-	endif
-endif
-
-ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
-	ifeq (,$(strip $(findstring eam,${MAKETARGET})))
-		POTFITSRC      += force_elstat.c
-	endif
-endif
-
-ifneq (,$(strip $(findstring adp,${MAKETARGET})))
-	POTFITSRC      += force_adp.c
-endif
-
-ifneq (,$(strip $(findstring stiweb,${MAKETARGET})))
-	POTFITSRC      += force_stiweb.c
-endif
-
-ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
-	POTFITSRC      += force_tersoff.c
-endif
+# added ends
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 	POTFITHDR      += functions.h
@@ -682,7 +683,37 @@ endif
 ifneq (,$(findstring nolimits,${MAKETARGET}))
   CFLAGS += -DNOLIMITS
 endif
-#added ends#
+
+# compability with KIM 
+ifneq (,$(findstring kim,${MAKETARGET}))
+  ifneq (,$(findstring dist,${MAKETARGET}))
+    ERROR += "KIM potential does not support dist option!"
+  endif
+  ifneq (,$(findstring resc,${MAKETARGET}))
+    ERROR += "KIM potential does not support resc option!"
+  endif
+endif 
+
+ifneq (,$(findstring kim,${MAKETARGET}))
+  ifneq (,$(findstring adp,${MAKETARGET}))
+    ERROR += "Need not specify adp to use KIM potential!"
+  else ifneq (,$(findstring coulomb,${MAKETARGET}))
+    ERROR += "Need not to specify coulomb to use KIM potential!"
+  else ifneq (,$(findstring dipole,${MAKETARGET}))
+    ERROR += "Need not to specify dipole to use KIM potential!"
+  else ifneq (,$(findstring meam,${MAKETARGET}))
+    ERROR += "Need not to specify meam to use KIM potential!"
+  else ifneq (,$(findstring stiweb,${MAKETARGET}))
+    ERROR += "Need not to specify stiweb to use KIM potential!"
+  else ifneq (,$(findstring tbeam,${MAKETARGET}))
+    ERROR += "Need not to specify tbeam to use KIM potential!"
+  else ifneq (,$(findstring tersoff,${MAKETARGET}))
+    ERROR += "Need not to specify tersoff to use KIM potential!"
+  else ifneq (,$(findstring tersoffmod,${MAKETARGET}))
+    ERROR += "Need not to specify tersoffmod to use KIM potential!"
+  endif
+endif 
+#added ends
 
 
 # Substitute .o for .c to get the names of the object files
@@ -747,10 +778,10 @@ endif
 
 
 #added
-#potfit_kim: potfit_apot_pair_kim
-#					mv potfit_apot_pair_kim potfit_kim
-#potfit_kim_nolimits: potfit_eam_kim_nolimits
-#					mv potfit_eam_kim_nolimits potfit_kim_nolimits
+potfit_kim: potfit_apot_pair_kim
+					mv potfit_apot_pair_kim potfit_kim
+potfit_kim_nolimits: potfit_eam_kim_nolimits
+					mv potfit_eam_kim_nolimits potfit_kim_nolimits
 #added ends
 
 
