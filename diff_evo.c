@@ -338,6 +338,9 @@ void diff_evo(double *xi)
 	  best[j] = trial[j];
 	if (*tempfile != '\0') {
 	  for (j = 0; j < ndim; j++)
+
+/* added */
+#ifndef KIM
 #ifdef APOT
 	    apot_table.values[apot_table.idxpot[j]][apot_table.idxparam[j]] = trial[idx[j]];
 	  write_pot_table(&apot_table, tempfile);
@@ -345,6 +348,13 @@ void diff_evo(double *xi)
 	    xi[idx[j]] = trial[idx[j]];
 	  write_pot_table(&opt_pot, tempfile);
 #endif /* APOT */
+
+#else /* !KIM */
+	    xi[idx[j]] = trial[idx[j]];
+	  write_pot_table(&opt_pot, tempfile);
+#endif /* !KIM */
+/* added ends */
+ 
 	}
 	min = force;
       }

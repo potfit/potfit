@@ -150,6 +150,11 @@ void powell_lsq(double *xi)
       /* try again */
       if (0 != i) {
 	/* ok, now this is serious, better exit cleanly */
+
+
+/* added */
+#ifndef KIM
+
 #ifndef APOT
 	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
 	warning("F does not depend on xi[%d], fit impossible!\n", idx[i - 1]);
@@ -162,6 +167,13 @@ void powell_lsq(double *xi)
 	  itemp2 + 1, apot_table.param_name[itemp][itemp2], itemp + 1);
 	warning("Fit impossible!\n");
 #endif /* APOT */
+
+#else /* !KIM */
+	write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
+	warning("F does not depend on xi[%d], fit impossible!\n", idx[i - 1]);
+#endif /* KIM */
+/* added ends */
+
 	break;
       }
     }
@@ -305,12 +317,19 @@ void powell_lsq(double *xi)
 
     /* write temp file  */
     if (*tempfile != '\0') {
+/* added */
+#ifndef KIM
 #ifndef APOT
       write_pot_table(&opt_pot, tempfile);	/*emergency writeout */
 #else
       update_apot_table(xi);
       write_pot_table(&apot_table, tempfile);
 #endif /* APOT */
+
+#else /* !KIM */
+	write_pot_table(&opt_pot, tempfile);
+#endif /* KIM */
+/* added ends */
     }
 
     /*End fit if whole series didn't improve F */
