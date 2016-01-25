@@ -420,7 +420,7 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
   
   POTFITSRC      += kim/kim.c kim/force_kim.c
-  POTFITHDR      += kim/kim.h kim/force_kim.h
+  POTFITHDR      += kim/kim.h
   ifeq (,$(strip $(findstring nolimits,${MAKETARGET})))
     POTFITHDR      += functions.h
     POTFITSRC      += functions.c
