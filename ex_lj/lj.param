@@ -5,7 +5,6 @@ config		sys_c.force
 startpot	lj.pot
 endpot		lj_end.pot
 tempfile	dummy.tmp
-plotfile  dummy
 flagfile	STOP
 
 #general options
@@ -14,10 +13,9 @@ write_pair	1
 # minimization options
 opt		1
 anneal_temp	10
-eng_weight	100
+eng_weight	1
 stress_weight	10
 seed		42
-apot_punish 1
 
 #options for output
 output_prefix	out

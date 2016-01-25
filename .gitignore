@@ -10,3 +10,5 @@ potfit_*
 kim.log
 descriptor.kim
 *.tmp
+dummy*
+out*

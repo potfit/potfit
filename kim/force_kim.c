@@ -121,28 +121,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   while (1) {
     tmpsum = 0.0;   /* sum of squares of local process */
 
-#ifdef MPI
-#ifndef APOT
-    /* exchange potential and flag value */
-    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* APOT */
-    MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    if (1 == flag)
-      break;      /* Exception: flag 1 means clean up */
-
-#ifdef APOT
-    if (0 == myid)
-      apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    update_calc_table(xi_opt, xi, 0);
-#else /* APOT */
-    /* if flag==2 then the potential parameters have changed -> sync */
-    if (2 == flag)
-      potsync();
-#endif /* APOT */
-#endif /* MPI */
-
 #ifndef MPI
     myconf = nconf;
 #endif /* MPI */

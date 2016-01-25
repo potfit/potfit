@@ -10,6 +10,8 @@ config.c # DONE
 potential_input.c  # DONE
 
 simann.c # DONE
+powell_lsq.c  #DONE    only changed write_pot_file
+diff_evo.c  #DONE    only changed write_pot_file
 
 types.h # DONE
 

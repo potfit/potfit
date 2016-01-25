@@ -418,10 +418,15 @@ POTFITSRC 	= bracket.c brent.c config.c elements.c errors.c forces.c linmin.c \
 
 # added (if kim)
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
-	
+  
   POTFITSRC      += kim/kim.c kim/force_kim.c
   POTFITHDR      += kim/kim.h kim/force_kim.h
-  
+  ifeq (,$(strip $(findstring nolimits,${MAKETARGET})))
+    POTFITHDR      += functions.h
+    POTFITSRC      += functions.c
+    POTFITSRC      += chempot.c
+  endif
+
 else # kim
 
   ifneq (,$(strip $(findstring pair,${MAKETARGET})))
@@ -470,15 +475,15 @@ endif #kim
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 	POTFITHDR      += functions.h
 	POTFITSRC      += functions.c
-	ifneq (,$(strip $(findstring pair,${MAKETARGET})))
+  ifneq (,$(strip $(findstring pair,${MAKETARGET})))
 		POTFITSRC      += chempot.c
-	endif
+  endif
 else
-	ifneq (,$(strip $(findstring meam,${MAKETARGET})))
+  ifneq (,$(strip $(findstring meam,${MAKETARGET})))
 		POTFITSRC 	+= rescale_meam.c
-	else
+  else
 		POTFITSRC      += rescale.c
-	endif
+  endif
 endif
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
@@ -595,6 +600,12 @@ ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
   INTERACTION = 1
 endif
 
+# added
+ifneq (,$(findstring kim,${MAKETARGET}))
+  INTERACTION = 1
+endif 
+# added ends
+
 ifneq (,$(findstring 0,${INTERACTION}))
   ERROR += "No interaction model specified."
 endif
@@ -679,9 +690,11 @@ endif
 # added    to enable KIM and NOLIMITS in the preprocessor
 ifneq (,$(findstring kim,${MAKETARGET}))
   CFLAGS += -DKIM
-endif
-ifneq (,$(findstring nolimits,${MAKETARGET}))
-  CFLAGS += -DNOLIMITS
+  ifneq (,$(findstring nolimits,${MAKETARGET}))
+    CFLAGS += -DNOLIMITS -DEAM
+  else
+    CFLAGS += -DAPOT -DPAIR
+  endif
 endif
 
 # compability with KIM 
@@ -775,15 +788,6 @@ else
 	@echo -e "Please adjust the Makefile.\n"
 	@exit
 endif
-
-
-#added
-potfit_kim: potfit_apot_pair_kim
-					mv potfit_apot_pair_kim potfit_kim
-potfit_kim_nolimits: potfit_eam_kim_nolimits
-					mv potfit_eam_kim_nolimits potfit_kim_nolimits
-#added ends
-
 
 potfit:
 	@echo -e "\nError:\tYou cannot compile potfit without any options."

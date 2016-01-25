@@ -1,7 +1,7 @@
 ntypes		1
-config	  training_set_Nov4.txt	
-startpot	edip.pot
-endpot		edip_end.pot
+config		sys_c.force
+startpot	lj.pot
+endpot		lj_end.pot
 tempfile	dummy.tmp
 
 imdpot		dummy.imd
@@ -12,10 +12,11 @@ write_pair	1
 write_lammps	1
 
 imdpotsteps	5000
-output_prefix	out
+output_prefix	dummy
 
 opt		1
 anneal_temp	10
-eng_weight 1	
+eng_weight	100
 stress_weight	10
 seed		42
+
