@@ -1305,13 +1305,13 @@ int write_descriptor_file(int Nspecies, char** species, int compute_energy,
 
   /* versioni and units  */
   fprintf(outfile,
-    "#######################################################################################################\n"
+    "###############################################################################\n"
     "#\n"
     "# Release: This file is part of the kim-api-v1.6.3 package.\n"
     "#\n"
     "# See src/standard.kim for documentation about this file\n"
     "#\n"
-    "#######################################################################################################\n\n"
+    "###############################################################################\n\n"
     "KIM_API_Version := 1.6.3\n\n"
     "Unit_length      := A\n"
     "Unit_energy      := eV\n"
@@ -1323,17 +1323,17 @@ int write_descriptor_file(int Nspecies, char** species, int compute_energy,
   /* particle species */
   /* code does not matter, so just give it 0 */
   fprintf(outfile, 
-    "#######################################################################################################\n"
+    "###############################################################################\n"
     "PARTICLE_SPECIES:\n"
-    "# Symbol/name               Type                    code\n\n" 
+    "# Symbol/name           Type                code\n\n" 
   );
   for (i = 0; i < Nspecies; i++) {
-    fprintf(outfile, "%s                          spec                    0\n\n", species[i]);
+    fprintf(outfile, "%s                      spec                0\n\n", species[i]);
   }
 
   /* conversions */
   fprintf(outfile, 
-    "\n#######################################################################################################\n"
+    "\n###############################################################################\n"
     "CONVENTIONS:\n"
     "# Name                      Type\n\n"
     "ZeroBasedLists              flag\n\n"
@@ -1346,42 +1346,42 @@ int write_descriptor_file(int Nspecies, char** species, int compute_energy,
 
   /* Model output */
   fprintf(outfile, 
-    "#######################################################################################################\n"
+    "#################################################################################\n"
     "MODEL_INPUT:\n"
-    "# Name                      Type         Unit                Shape             Requirements\n\n"
-    "numberOfParticles           integer      none                []\n\n"
-    "numberOfSpecies             integer      none                []\n\n"
-    "particleSpecies             integer      none                [numberOfParticles]\n\n"
-    "coordinates                 double       length              [numberOfParticles,3]\n\n"
-    "boxSideLengths              double       length              [3]\n\n"
-    "numberContributingParticles integer      none                []\n\n"
-    "get_neigh                   method       none                []\n\n"
-    "neighObject                 pointer      none                []\n\n\n"
+    "# Name                      Type       Unit        Shape         Requirements\n\n"
+    "numberOfParticles           integer    none        []\n\n"
+    "numberOfSpecies             integer    none        []\n\n"
+    "particleSpecies             integer    none        [numberOfParticles]\n\n"
+    "coordinates                 double     length      [numberOfParticles,3]\n\n"
+    "boxSideLengths              double     length      [3]\n\n"
+    "numberContributingParticles integer    none        []\n\n"
+    "get_neigh                   method     none        []\n\n"
+    "neighObject                 pointer    none        []\n\n\n"
   );
 
   /* Model output */
   fprintf(outfile,  
-    "#######################################################################################################\n"
+    "##################################################################################\n"
     "MODEL_OUTPUT:\n"
-    "# Name                      Type         Unit                Shape\n\n"
+    "# Name                      Type       Unit        Shape        Requirements\n\n"
     "# Requirements\n\n" 
-    "destroy                     method       none                []\n\n"
-    "compute                     method       none                []\n\n"
-    "reinit                      method       none                []\n\n"
-    "cutoff                      double       length              []\n\n"
+    "destroy                     method     none        []\n\n"
+    "compute                     method     none        []\n\n"
+    "reinit                      method     none        []           optional\n\n"
+    "cutoff                      double     length      []\n\n"
   );
  
   if(compute_energy)
     fprintf(outfile,
-      "energy                      double       energy              []\n\n"
+      "energy                    double     energy      []\n\n"
     ); 
   if(compute_forces)
     fprintf(outfile,
-      "forces                      double       force               [numberOfParticles,3]\n\n"
+      "forces                    double     force       [numberOfParticles,3]\n\n"
     ); 
   if(compute_virial)
     fprintf(outfile,
-      "virial                      double       energy              [6]" 
+      "virial                    double     energy      [6]" 
   );
   
   fflush(outfile);
