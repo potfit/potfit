@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include "../potfit.h" 
+#include "../utils.h" 
 
 
 /*******************************************************************************
@@ -1149,7 +1150,6 @@ int write_final_descriptor_file(int u_f, int u_s)
   int compute_virial;
   int status;
 
-
   /* set_compute flag */
   if (!kim_model_has_energy) {
     compute_energy = 0;
@@ -1181,7 +1181,7 @@ int write_final_descriptor_file(int u_f, int u_s)
   }
 
   /* write the `descritor.kim' file for this test */
-  status = write_descriptor_file(ntypes, elements, 
+  status = write_descriptor_file(ntypes, (const char**) elements, 
                               compute_energy, compute_forces, compute_virial); 
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "write_descriptor_file", status);
@@ -1206,7 +1206,7 @@ int write_temporary_descriptor_file(char* modelname)
 {
 	/* local variables */
 	void* pkim;
-	char* species[1];
+	const char* species[1];
 	int status;
 	int Nspecies = 1;
 
@@ -1218,7 +1218,7 @@ int write_temporary_descriptor_file(char* modelname)
   }
 
   /* get the first species supported by the model */
-  status = KIM_API_get_model_species(pkim, 0, &species[0]);
+  status = KIM_API_get_model_species(pkim, 0, species);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_model_species", status);
     return(status);
@@ -1257,7 +1257,7 @@ int write_temporary_descriptor_file(char* modelname)
  *
  *****************************************************************************/
 
-int write_descriptor_file(int Nspecies, char** species, int compute_energy, 
+int write_descriptor_file(int Nspecies, const char** species, int compute_energy, 
                           int compute_forces, int compute_virial)
 {
   /* local variables */

@@ -355,11 +355,18 @@ EXTERN double calc_forces(double *, double *, int);
 EXTERN double (*splint) (pot_table_t *, double *, int, double);
 EXTERN double (*splint_grad) (pot_table_t *, double *, int, double);
 EXTERN double (*splint_comb) (pot_table_t *, double *, int, double, double *);
+
+/*added*/
+#ifndef KIM
 #ifdef APOT
 EXTERN void (*write_pot_table) (apot_table_t *, char *);
 #else
 EXTERN void (*write_pot_table) (pot_table_t *, char *);
 #endif /* APOT */
+#else /* KIM */
+EXTERN void (*write_pot_table) (pot_table_t *, char *);
+#endif /* KIM */
+/*added ends*/
 
 /****************************************************************
  *

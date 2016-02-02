@@ -331,15 +331,13 @@ ifeq (i686-kim,${SYSTEM})
 
   CC_SERIAL      = $(shell kim-api-build-config --cc)
   CINCLUDE      += $(shell kim-api-build-config --includes)
-  FLAGS         += $(shell kim-api-build-config --cflags)
+  FLAGS         += $(shell kim-api-build-config --cflags) -march=native -std=c99
   LFLAGS_SERIAL += $(shell kim-api-build-config --ldflags)
   LIBS          += $(shell kim-api-build-config --ldlibs)
 
 # Intel Math Kernel Library
 ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      += -I${MKLDIR}/include
- # LIBS		+= -Wl,--start-group -lmkl_sequential -lmkl_core \
-#		   -Wl,--end-group -lpthread -Wl,--as-needed
    LIBS   += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
 					   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
@@ -469,8 +467,6 @@ else # kim
     POTFITSRC      += force_tersoff.c
   endif
 
-endif #kim 
-# added ends
 
 ifneq (,$(strip $(findstring apot,${MAKETARGET})))
 	POTFITHDR      += functions.h
@@ -485,6 +481,9 @@ else
 		POTFITSRC      += rescale.c
   endif
 endif
+
+endif #kim 
+# added ends
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
 	POTFITSRC      += diff_evo.c

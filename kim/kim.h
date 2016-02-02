@@ -99,7 +99,7 @@ void init_KIM();
 void free_KIM();
 
 /* called by `init_KIM' */
-int write_descriptor_file(int Nspecies, char** species, int compute_energy,
+int write_descriptor_file(int Nspecies, const char** species, int compute_energy,
                           int compute_forces, int compute_virial);
 
 void init_object();
@@ -153,10 +153,10 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 /* assigned to function pointer `write_pot_table' in `potfit.c' */
 void write_pot_table5(pot_table_t *pt, char *filename);
 
-/* set compute flags and get NBC method */
+/* set compute flags and get NBC method, called in `potential_input.c' */
 void get_compute_const(void* pkim); 
 
-int get_KIM_mode_has_flags();
+int get_KIM_model_has_flags();
 
 
 /* free memory */

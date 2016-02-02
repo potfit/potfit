@@ -355,20 +355,18 @@ double normdist()
  *  square functions for integer and double values
  *
  ****************************************************************/
-
+/*
 inline int isquare(int i)
 {
   return i * i;
 }
 
-/* modified */
-/* inline double dsquare(double d)
-*/
+inline double dsquare(double d)
 double dsquare(double d)
-/* modified ends */
 {
   return d * d;
 }
+*/
 
 /****************************************************************
  *

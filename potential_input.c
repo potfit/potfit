@@ -2001,7 +2001,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	fpos_t filepos, startpos;
 	double  tmp_pmin, tmp_pmax;
 	char tmp_value[255];
-	int jj, kk, tmp_size;
+	int jj, kk;
 	void* pkim;
 	int status;
 	FreeParamType FreeParamSet;
@@ -2311,7 +2311,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
     pcutoff = KIM_API_get_data(pkim, "cutoff", &status);
     if (KIM_STATUS_OK > status) {
       KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
-      return(status);
+      exit(1);
     }
       apt->end[i] = *pcutoff;
   }
@@ -2509,7 +2509,7 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
   pcutoff = KIM_API_get_data(pkim, "cutoff", &status);
   if (KIM_STATUS_OK > status) {
     KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
-    return(status);
+    exit(1);
   }
     pt->end[0] = *pcutoff;
 

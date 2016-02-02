@@ -2,7 +2,7 @@ The following files are changed:
 
 MAKEFILE
 
-potfit.h  # actually, they are the same, only a few comments are different
+potfit.h  # write_potfit_table is different 
 potfit.c # DONE
 
 config.c # DONE 

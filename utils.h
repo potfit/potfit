@@ -58,11 +58,16 @@ double eqdist();
 double normdist();
 
 /* different power functions */
-inline int isquare(int);
+
 /* modified */
-/*inline double dsquare(double); */
-double dsquare(double);
+inline int isquare(int i) {
+  return i * i;
+}  
+inline double dsquare(double d) {
+  return d * d;
+}
 /* modified ends */
+
 void  power_1(double *, double *, double *);
 void  power_m(int, double *, double *, double *);
 
