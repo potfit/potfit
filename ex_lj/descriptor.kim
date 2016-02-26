@@ -29,13 +29,13 @@
 #    Stephen M. Whalen
 #
 
-#######################################################################################################
+###############################################################################
 #
 # Release: This file is part of the kim-api-v1.6.3 package.
 #
 # See src/standard.kim for documentation about this file
 #
-#######################################################################################################
+###############################################################################
 
 KIM_API_Version := 1.6.3
 
@@ -46,14 +46,14 @@ Unit_temperature := K
 Unit_time        := ps
 
 
-#######################################################################################################
+###############################################################################
 PARTICLE_SPECIES:
-# Symbol/name               Type                    code
+# Symbol/name           Type                code
 
-Ar                          spec                    0
+Ar                      spec                0
 
 
-#######################################################################################################
+###############################################################################
 CONVENTIONS:
 # Name                      Type
 
@@ -70,42 +70,42 @@ NEIGH_RVEC_H                flag
 NEIGH_RVEC_F                flag
 
 
-#######################################################################################################
+#################################################################################
 MODEL_INPUT:
-# Name                      Type         Unit                Shape             Requirements
+# Name                      Type       Unit        Shape         Requirements
 
-numberOfParticles           integer      none                []
+numberOfParticles           integer    none        []
 
-numberOfSpecies             integer      none                []
+numberOfSpecies             integer    none        []
 
-particleSpecies             integer      none                [numberOfParticles]
+particleSpecies             integer    none        [numberOfParticles]
 
-coordinates                 double       length              [numberOfParticles,3]
+coordinates                 double     length      [numberOfParticles,3]
 
-boxSideLengths              double       length              [3]
+boxSideLengths              double     length      [3]
 
-numberContributingParticles integer      none                []
+numberContributingParticles integer    none        []
 
-get_neigh                   method       none                []
+get_neigh                   method     none        []
 
-neighObject                 pointer      none                []
+neighObject                 pointer    none        []
 
 
-#######################################################################################################
+##################################################################################
 MODEL_OUTPUT:
-# Name                      Type         Unit                Shape
+# Name                      Type       Unit        Shape        Requirements
 
 # Requirements
 
-destroy                     method       none                []
+destroy                     method     none        []
 
-compute                     method       none                []
+compute                     method     none        []
 
-reinit                      method       none                []
+reinit                      method     none        []           optional
 
-cutoff                      double       length              []
+cutoff                      double     length      []
 
-energy                      double       energy              []
+energy                    double     energy      []
 
-forces                      double       force               [numberOfParticles,3]
+forces                    double     force       [numberOfParticles,3]
 

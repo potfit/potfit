@@ -115,7 +115,10 @@ void makebump(double *x, double width, double height, int center)
     j++;
   for (i = 0; i <= 4.0 * width; i++) {
     /* using idx avoids moving fixed points */
-    if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
+
+/* added changed */      
+/*    if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
+*/    if ((center + i < ndim) && (idx[center + i] < opt_pot.last[j])) {
       x[idx[center + i]] += GAUSS((double)i / width) * height;
     }
   }

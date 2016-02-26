@@ -1,0 +1,62 @@
+#F 5 1
+#C Mo 
+#E
+
+# KIM Model name
+type Three_Body_Stillinger_Weber_MoS__MO_000000111111_000
+
+# cutoff
+cutoff  KIM
+
+# uncomment the following line to check the optimizable parameters of the KIM Model
+#check_kim_opt_param
+
+# the number of optimizable parameters that will be listed
+num_opt_param 2 
+
+# parameters 
+PARAM_FREE_A
+1.0    0.5    2
+1.0    0.5    2
+1.0    0.5    2
+
+#PARAM_FREE_B
+#181.8799   100  300
+#45.4357    20    80
+#125.0923   100  300
+#
+#PARAM_FREE_p                      
+#4   1    10
+#4   1    10
+#4   1    10
+#
+#PARAM_FREE_q                      
+#0   -5   5 
+#0   -5   5 
+#0   -5   5 
+#
+#PARAM_FREE_lambda                 
+#0   -1   1
+#1.0801   0.5   3.5
+#0   -1   1
+#
+#PARAM_FREE_gamma                  
+#0   -1   1
+#0.8568   0.2   2
+#0   -1   1
+#
+#PARAM_FREE_sigma                  
+#0.6097   0.1   1
+#0.7590   0.1   1
+#0.6501   0.1   1
+#
+PARAM_FREE_epsilon                
+3.5040   1     5
+6.0672   2     8
+0.4651   0.1   1
+#
+#PARAM_FREE_costheta
+#0     -1   1 
+#0.1525  0.1  0.2
+#0     -1   1 
+

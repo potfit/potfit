@@ -764,11 +764,11 @@ endif
 
 # How to link
 ${MAKETARGET}: ${OBJECTS}
-	${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
+	${CC} -g ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
 ifneq (,${STRIP})
   ifeq (,$(findstring prof,${MAKETARGET}))
     ifeq (,$(findstring debug,${MAKETARGET}))
-	${STRIP} --strip-unneeded -R .comment $@
+#	${STRIP} --strip-unneeded -R .comment $@
     endif
   endif
 endif
