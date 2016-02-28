@@ -2244,7 +2244,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 	}
 
 
-	/* invarable parameters. Here all are optimizable. */
+	/* invariable parameters. Here all are optimizable. */
 	/* the last slot is the number of invar */
 	for (j = 0; j < apt->n_par[i]; j++) {
 		apt->invar_par[i][j] = 0;
@@ -2452,9 +2452,10 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 
 void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FILE *infile)
 {
-	int   i, j, k, ret_val;
+	int   i, j, k, jj, kk;
 	char  buffer[255], name[255];
 	fpos_t filepos, startpos; 
+	char tmp_value[255];
 	void* pkim;
   int status;
 	FreeParamType FreeParamSet;
@@ -2497,10 +2498,43 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	if ((NULL == pt->table) || (NULL == pt->idx) )
 		error(1, "Cannot allocate memory for potential table");
 
-	/* copy parameters values to potfit */
-	for (i = 0; i < FreeParamSet.Nnestedvalue; i++) {
-		pt->table[i] = *FreeParamSet.nestedvalue[i];
-		pt->idx[i] = i;
+	/* read parameter values */
+  /* j: jth optimizable parameter 
+     k: kth free parameter, index of jth optimizable param in the free param struct 
+    jj: the current slot in the nested apot->value
+    kk: the current slot of the jth param
+  */
+	jj = 0;  
+	fsetpos(infile, &startpos);
+	for (j = 0; j < num_opt_param; j++) {
+		buffer[0] = '\0';
+		name[0] = '\0';
+		/* find the keyword `PARAM_FREE_*' */
+		do {
+			fgets(buffer, 255, infile);
+			sscanf(buffer, "%s", name);
+		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
+		/* k is the palce(slot) that the param in the FreeParam struct */
+		for ( k = 0; k < FreeParamSet.Nparam; k++) {
+			if (strcmp(FreeParamSet.name[k], name_opt_param[j]) == 0)
+				break;
+		}
+		for (kk = 0; kk < size_opt_param[j]; kk++) {
+			fgets(buffer, 255, infile);
+			if ( 1 == sscanf(buffer, "%s", tmp_value)) {
+				/*if give `KIM', use KIM parameter, otherwise use readin */
+				if (strncmp(tmp_value, "KIM", 3) == 0) {
+					pt->table[jj] = *FreeParamSet.nestedvalue[jj];
+				} else if (1 > sscanf(tmp_value, "%lf", &pt->table[jj])) {
+					error(1, "First data for parameter '%s' corrupted, it should be a type float or 'KIM'.\n",
+                    FreeParamSet.name[k]);
+				}
+			} else {
+				error(1, "Data for parameter '%s' corrupted in file '%s'.\n", FreeParamSet.name[k], filename);
+			}
+		  pt->idx[jj] = jj;
+			jj++;
+		}  
 	}
 
 	/* set end (end is cutoff) */
