@@ -1114,18 +1114,18 @@ void write_pot_table5(pot_table_t* pt, char *filename)
   fprintf(outfile, "\nnum_opt_param  %d", num_opt_param);
   
   /* write data */
-  k = 0; 
+  k = 0;
   fprintf(outfile, "\n\n# parameters");
   for (i = 0; i < num_opt_param; i++) {
     fprintf(outfile, "\n%s", name_opt_param[i]);
-#ifndef NOLIMITS
     for (j = 0; j < size_opt_param[i]; j++) {
-      fprintf(outfile, "\n%18.10e %18.10e %18.10e", pt->table[k], apot_table.pmin[0][k],
-              apot_table.pmax[0][k]); 
+      fprintf(outfile, "\n%18.10e ", pt->table[k]);
+#ifndef NOLIMITS
+      fprintf(outfile, "%18.10e %18.10e", apot_table.pmin[0][k], apot_table.pmax[0][k]);
+#endif
       k++;
     }
     fprintf(outfile, "\n");
-#endif  
   }
 
   fclose(outfile);
