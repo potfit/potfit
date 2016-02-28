@@ -2148,7 +2148,7 @@ void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filen
 
 
 	/* read the keywords and the names of parameters that will be optimized */
-	read_potential_keyword(pt, filename, infile, &FreeParamSet);
+	read_potential_keyword(pt, filename, infile);
 
 	/* write the descriptor.kim file for the test */
 	write_temporary_descriptor_file(kim_model_name);
@@ -2463,7 +2463,7 @@ void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FI
 	fgetpos(infile, &startpos);
 
 	/* read the keywords and the names of parameters that will be optimized */
-	read_potential_keyword(pt, filename, infile, &FreeParamSet);
+	read_potential_keyword(pt, filename, infile);
 
 	/* write the descriptor.kim file for the test */
 	write_temporary_descriptor_file(kim_model_name);

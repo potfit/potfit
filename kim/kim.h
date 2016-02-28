@@ -120,8 +120,7 @@ int get_neigh(void* kimmdl, int* mode, int *request, int* part,
               int* numnei, int** nei1part, double** Rij);					
 
 /* called in `potential_input.c' */
-int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
-								    			FreeParamType* FreeParam);
+int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile);
 
 /* called in `potential_input.c' and by `read_potential_keyword' */
 int write_temporary_descriptor_file(char* modelname);

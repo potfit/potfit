@@ -933,13 +933,13 @@ int publish_param(void* pkim, FreeParamType* FreeParam, double* PotTable)
 * 
 ******************************************************************************/
 
-int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
-													FreeParamType* FreeParam)
+int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile)
 {
 	/* local variables */
   int   i, j, k, ret_val;
   char  buffer[255], name[255];
-  fpos_t startpos; 
+  fpos_t startpos;
+  FreeParamType FreeParam;
 	void* pkim;
   int status;
 
@@ -987,7 +987,7 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
       exit(1);
     }
 		/* initialze the data struct for the free parameters with type double */
-		get_free_param_double(pkim, FreeParam);
+		get_free_param_double(pkim, &FreeParam);
 
 		printf(" - The following potential parameters are available to fit. Include the "
         "name(s) (and the initial value(s) and lower and upper boundaries if "
@@ -995,13 +995,13 @@ int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile,
         "in file: %s.\n",filename);
     printf("         param name                 param extent\n");
     printf("        ############               ##############\n");
-    for(k = 0; k < FreeParam->Nparam; k++ ) {
-      if (strncmp(FreeParam->name[k], "PARAM_FREE_cutoff", 17) == 0){
+    for(k = 0; k < FreeParam.Nparam; k++ ) {
+      if (strncmp(FreeParam.name[k], "PARAM_FREE_cutoff", 17) == 0){
         continue;
       }
-      printf("     %-35s[ ", FreeParam->name[k]);
-      for(j = 0; j < FreeParam->rank[k]; j++) {
-        printf("%d ", FreeParam->shape[k][j]);
+      printf("     %-35s[ ", FreeParam.name[k]);
+      for(j = 0; j < FreeParam.rank[k]; j++) {
+        printf("%d ", FreeParam.shape[k][j]);
       }
       printf("]\n");
    }
