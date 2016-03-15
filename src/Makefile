@@ -54,7 +54,6 @@ ifneq (,$(strip $(findstring mpi,${MAKETARGET})))
 PARALLEL = MPI
 endif
 
-
 ###########################################################################
 #
 #  Compiler, flags, libraries
@@ -91,7 +90,6 @@ CFLAGS += ${PROF_FLAGS}
 LIBS   += ${PROF_LIBS}
 endif
 
-
 ###########################################################################
 #
 # potfit sources
@@ -99,15 +97,21 @@ endif
 ###########################################################################
 
 POTFITHDR   	+= bracket.h
+POTFITHDR 	+= config.h
+POTFITHDR 	+= defines.h
 POTFITHDR 	+= elements.h
+POTFITHDR 	+= errors.h
 POTFITHDR 	+= force.h
 POTFITHDR 	+= memory.h
+POTFITHDR 	+= mpi_utils.h
 POTFITHDR 	+= optimize.h
+POTFITHDR 	+= params.h
 POTFITHDR 	+= potfit.h
 POTFITHDR 	+= potential_input.h
 POTFITHDR 	+= potential_output.h
 POTFITHDR 	+= random.h
 POTFITHDR 	+= splines.h
+POTFITHDR 	+= types.h
 POTFITHDR 	+= utils.h
 
 POTFITSRC 	+= bracket.c
@@ -198,11 +202,6 @@ endif
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
   POTFITSRC      += diff_evo.c
 endif
-
-ifneq (,$(strip $(findstring parab,${MAKETARGET})))
-  POTFITSRC      += parabola.c
-endif
-
 
 #########################################################
 #
@@ -491,4 +490,3 @@ distclean:
 
 help:
 	@echo "Usage: make potfit[_<parallel>][_<option>[_<option>...]]"
-
