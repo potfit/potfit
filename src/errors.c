@@ -527,8 +527,12 @@ void write_eam_punishments(double* force)
     }
 #if !defined(RESCALE)
     fprintf(outfile, "\nNORESCALE: <n>!=1\n");
-    fprintf(outfile, "<n>=%f\n",
-            force[g_calc.dummy_p + g_param.ntypes] / DUMMY_WEIGHT + 1);
+    fprintf(outfile, "<n>=%f (deviation of %f)\n",
+            force[g_calc.dummy_p + g_param.ntypes] / DUMMY_WEIGHT + 1,
+            force[g_calc.dummy_p + g_param.ntypes] / DUMMY_WEIGHT);
+    fprintf(outfile,
+            "Punishment value is calculated as ((<n>-1)*DUMMY_WEIGHT)^2.\n");
+    fprintf(outfile, "DUMMY_WEIGHT is defined as %f\n", DUMMY_WEIGHT);
     fprintf(outfile, "Additional punishment of %f added.\n",
             dsquare(force[g_calc.dummy_p + g_param.ntypes]));
 #endif  // !RESCALE
