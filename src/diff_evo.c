@@ -299,7 +299,7 @@ void run_differential_evolution(double* xi)
 
   // vector with new configuration
   double* trial = (double*)Malloc(D * sizeof(double));
-  memcpy(trial, xi, D * sizeof(double));
+  memcpy(trial, xi, (D - 2) * sizeof(double));
 
   // allocate memory for all configurations
   double** pop_1 = (double**)Malloc(NP * sizeof(double*));
