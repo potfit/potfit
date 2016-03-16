@@ -139,6 +139,21 @@ void set_force_vector_pointers()
 }
 
 /****************************************************************
+  gather_variable
+****************************************************************/
+
+void gather_variable(double* var)
+{
+#if defined(MPI)
+  // Reduce variable
+  double tmpvar = 0.0;
+  MPI_Reduce(&var, &tmpvar, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (g_mpi.myid == 0)
+    *var = tmpvar;
+#endif  // MPI
+}
+
+/****************************************************************
   gather_forces
     called after all parameters and potentials are read
     additional assignments and initializations can be made here
@@ -199,4 +214,34 @@ void gather_forces(double* error_sum, double* forces)
   *error_sum = tmpsum;
 
 #endif  // MPI
+}
+
+/****************************************************************
+  update_splines
+****************************************************************/
+
+void update_splines(double* xi, int start_col, int num_col, int grad_flag)
+{
+  for (int col = start_col; col < start_col + num_col; col++) {
+    int first = g_pot.calc_pot.first[col];
+    double grad_left = (grad_flag & 1) ? *(xi + first - 2) : 0.0;
+    double grad_right = (grad_flag & 2) ? *(xi + first - 1) : 0.0;
+    switch (g_pot.format_type) {
+      case POTENTIAL_FORMAT_UNKNOWN:
+        error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+      case POTENTIAL_FORMAT_ANALYTIC:
+      case POTENTIAL_FORMAT_TABULATED_EQ_DIST: {
+        spline_ed(g_pot.calc_pot.step[col], xi + first,
+                  g_pot.calc_pot.last[col] - first + 1,
+                  grad_left, grad_right, g_pot.calc_pot.d2tab + first);
+        break;
+      }
+      case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST: {
+        spline_ne(g_pot.calc_pot.xcoord + first, xi + first,
+                  g_pot.calc_pot.last[col] - first + 1,
+                  grad_left, grad_right, g_pot.calc_pot.d2tab + first);
+        break;
+      }
+    }
+  }
 }

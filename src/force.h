@@ -41,7 +41,10 @@ void init_force_common(int is_worker);
 void init_force(int is_worker);
 
 void set_force_vector_pointers();
+void gather_variable(double* var);
 void gather_forces(double* error_sum, double* forces);
+
+void update_splines(double* xi, int start_col, int num_col, int grad_flag);
 
 #if defined(STIWEB)
 void update_stiweb_pointers(double*);
