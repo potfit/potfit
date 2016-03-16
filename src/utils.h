@@ -42,4 +42,5 @@ void power_m(int count, double* result, const double* base,
 
 static inline int min(int a, int b) { return a < b ? a : b; }
 static inline int max(int a, int b) { return a > b ? a : b; }
+
 #endif  // UTILS_H_INCLUDED

@@ -27,18 +27,20 @@
  *
  *****************************************************************/
 
-#include "potfit.h"
-
 #include <stdint.h>
 
-/* 32-bit */
+#include "potfit.h"
+
+#include "utils.h"
+
+// 32-bit
 #if UINTPTR_MAX == 0xffffffff
 #if !defined(ACML)
 #include <mkl_vml.h>
 #endif  // ACML
 #define _32BIT
 
-/* 64-bit */
+// 64-bit
 #elif UINTPTR_MAX == 0xffffffffffffffff
 #if !defined(ACML)
 #include <mkl_vml.h>
@@ -48,15 +50,12 @@
 #include <amdlibm.h>
 #endif  // ACML
 
-/* wtf */
+// wtf
 #else
 #error Unknown integer size
-
 #endif  // UINTPTR_MAX
 
-#include "utils.h"
-
-/* vector product */
+// vector product
 vector vec_prod(vector u, vector v)
 {
   vector w;

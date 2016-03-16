@@ -30,13 +30,8 @@
 #ifndef ELEMENTS_H_INCLUDED
 #define ELEMENTS_H_INCLUDED
 
-// get mass from number
 double ele_mass_from_number(int num);
-
-// get mass from name
 double ele_mass_from_name(const char* name);
-
-// get number from name
 int ele_number_from_name(const char* name);
 
 #endif  // ELEMENTS_H_INCLUDED

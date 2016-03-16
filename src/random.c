@@ -43,6 +43,7 @@ dsfmt_t g_dsfmt;
  ****************************************************************/
 
 double eqdist() { return dsfmt_genrand_close_open(&g_dsfmt); }
+
 /****************************************************************
  *
  * initialize pRNG with seed from parameter file
@@ -81,7 +82,9 @@ double normdist()
 {
   static int have_number = 0;
   static double nd2 = 0.0;
-  double x1, x2, sqr, cnst;
+  double x1 = 0.0;
+  double x2 = 0.0;
+  double sqr = 0.0;
 
   if (!have_number) {
     do {
@@ -89,8 +92,8 @@ double normdist()
       x2 = 2.0 * eqdist() - 1.0;
       sqr = x1 * x1 + x2 * x2;
     } while (sqr >= 1.0 || sqr == 0);
-    /* Box Muller Transformation */
-    cnst = sqrt(-2.0 * log(sqr) / sqr);
+    // Box Muller Transformation
+    double cnst = sqrt(-2.0 * log(sqr) / sqr);
     nd2 = x2 * cnst;
     have_number = 1;
     return x1 * cnst;
