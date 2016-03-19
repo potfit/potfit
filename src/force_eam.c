@@ -200,8 +200,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       forces[g_calc.energy_p + config_idx] = 0.0;
 #if defined(STRESS)
       int stress_idx = g_calc.stress_p + 6 * config_idx;
-      for (int i = 0; i < 6; i++)
-        forces[stress_idx + i] = 0.0;
+      memset(forces + stress_idx, 0, 6 * sizeof(double));
 #endif  // STRESS
 
 #if defined(RESCALE)
