@@ -50,7 +50,7 @@ void write_pot_table_potfit(char const* filename)
 {
   switch (g_pot.format_type) {
     case POTENTIAL_FORMAT_UNKNOWN:
-      error(1, "Unknown potential format detected! (%s:%d)", __FILE__,
+      error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__,
             __LINE__);
     case POTENTIAL_FORMAT_ANALYTIC:
       write_pot_table0(filename);
@@ -669,7 +669,7 @@ void write_pairdist(pot_table_t* pt, const char* filename)
         rr = atom->rho - pt->begin[col];
 #if defined(RESCALE)
         if (rr < 0.0)
-          error(1, "short distance");
+          error(1, "short distance\n");
         j = (int)(rr * pt->invstep[col]) + pt->first[col];
 #else
         if (rr < 0.0)

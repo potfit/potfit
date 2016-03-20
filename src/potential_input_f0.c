@@ -355,7 +355,7 @@ void read_chemical_potentials(apot_state* pstate)
       /* read one line */
       if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf", buffer, &apt->chempot[j],
                      &apt->pmin[i][j], &apt->pmax[i][j]))
-        error(1, "Could not read chemical potential for %d. atomtype.", j);
+        error(1, "Could not read chemical potential for %d. atomtype.\n", j);
 
       /* split cp and _# */
       char* token = strchr(buffer, '_');
@@ -490,7 +490,7 @@ void read_elstat_table(apot_state* pstate)
   /* read electrostatic parameters */
   fscanf(pstate->pfile, " %s", buffer);
   if (strcmp("ratio", buffer) != 0) {
-    error(1, "Could not read ratio");
+    error(1, "Could not read ratio\n");
   }
 
   apot_table_t* apt = &g_pot.apot_table;
@@ -517,7 +517,7 @@ void read_elstat_table(apot_state* pstate)
                  apt->param_name[apt->number + 1][0], &apt->dp_kappa[0],
                  &apt->pmin[apt->number + 1][0],
                  &apt->pmax[apt->number + 1][0])) {
-    error(1, "Could not read kappa");
+    error(1, "Could not read kappa\n");
   }
   apt->invar_par[apt->number + 1][0] = 0;
   if (apt->pmin[apt->number + 1][0] == apt->pmax[apt->number + 1][0]) {
@@ -604,7 +604,7 @@ void read_global_parameters(apot_state* pstate)
   /* check for global keyword */
   if (strcmp(buffer, "global") == 0) {
     if (2 > fscanf(pstate->pfile, "%s %d", buffer, &apt->globals))
-      error(1, "Premature end of potential file %s", pstate->filename);
+      error(1, "Premature end of potential file %s\n", pstate->filename);
     g_pot.have_globals = 1;
     apt->total_par += apt->globals;
 
@@ -656,9 +656,7 @@ void read_global_parameters(apot_state* pstate)
       if (4 > ret_val)
         if (strcmp(apt->param_name[g_pot.global_pot][j], "type") == 0) {
           error(0, "Not enough global parameters!\n");
-          error(1,
-                "You specified %d parameter(s), but needed are %d.\nAborting",
-                j, apt->globals);
+          error(1, "You specified %d parameter(s), but needed are %d.\n", j, apt->globals);
         }
 
       /* check for duplicate names */
@@ -737,10 +735,10 @@ void read_analytic_potentials(apot_state* pstate)
 
     // read type
     if (2 > fscanf(pstate->pfile, "%s %s", buffer, name))
-      error(1, "Premature end of potential file %s", pstate->filename);
+      error(1, "Premature end of potential file %s\n", pstate->filename);
     if (strcmp(buffer, "type") != 0)
       error(1,
-            "Unknown keyword in file %s, expected \"type\" but found \"%s\".",
+            "Unknown keyword in file %s, expected \"type\" but found \"%s\".\n",
             pstate->filename, buffer);
 
     // split name and _sc
@@ -759,7 +757,7 @@ void read_analytic_potentials(apot_state* pstate)
     if (apot_get_num_parameters(name) == -1)
       error(1,
             "Unknown function type in file %s, please define \"%s\" in "
-            "functions.c.",
+            "functions.c.\n",
             pstate->filename, name);
 
     strcpy(apt->names[i], name);
@@ -772,12 +770,10 @@ void read_analytic_potentials(apot_state* pstate)
 
     // read cutoff
     if (2 > fscanf(pstate->pfile, "%s %lf", buffer, &apt->end[i]))
-      error(1, "Could not read cutoff for potential #%d in file %s\nAborting",
+      error(1, "Could not read cutoff for potential #%d in file %s\n",
             i, pstate->filename);
     if (strcmp(buffer, "cutoff") != 0)
-      error(1,
-            "No cutoff found for the %d. potential (%s) after \"type\" in file "
-            "%s.\nAborting",
+      error(1, "No cutoff found for the %d. potential (%s) after \"type\" in file " "%s.\n",
             i + 1, apt->names[i], pstate->filename);
 
     // set very small begin, needed for EAM embedding function
@@ -900,7 +896,7 @@ void read_analytic_potentials(apot_state* pstate)
               error(1, "You specified %d parameter(s), but required are %d.\n",
                     j, apt->n_par[i]);
             }
-            error(1, "Could not read parameter #%d of potential #%d in file %s",
+            error(1, "Could not read parameter #%d of potential #%d in file %s\n",
                   j + 1, i + 1, pstate->filename);
           }
         }

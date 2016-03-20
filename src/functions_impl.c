@@ -254,7 +254,7 @@ void bjs_value(const double r, const double* p, double* f)
   if (r == 0.0)
     *f = 0.0;
   else {
-    double power = 0;
+    double power = 0.0;
 
     power_1(&power, &r, &p[1]);
 

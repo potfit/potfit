@@ -170,7 +170,7 @@ double get_annealing_temperature(const double* xi, double* xi_new,
     T = dF / log(u / (u * chi + (1 - chi) * m1));
 
     if (isnan(T) || isinf(T))
-      error(1, "Simann failed because T was %f, please set it manually.", T);
+      error(1, "Simann failed because T was %f, please set it manually.\n", T);
     if (T < 0)
       T = -T;
 

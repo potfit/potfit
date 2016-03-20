@@ -89,11 +89,11 @@ void read_pot_table(char const* potential_filename)
     res = fgets(buffer, 1024, pfile);
 
     if (NULL == res)
-      error(1, "Unexpected end of file in %s", potential_filename);
+      error(1, "Unexpected end of file in %s\n", potential_filename);
 
     // check if it is a header line
     if (buffer[0] != '#')
-      error(1, "Header corrupt in file %s", potential_filename);
+      error(1, "Header corrupt in file %s\n", potential_filename);
 
     switch (buffer[1]) {
       case 'C':
@@ -116,14 +116,14 @@ void read_pot_table(char const* potential_filename)
       case '#':
         continue;
       default:
-        warning("Ignoring potential header line starting with #%c.", buffer[1]);
+        warning("Ignoring potential header line starting with #%c.\n", buffer[1]);
     }
 
   } while (!pstate.end_header);
 
   // do we have a format in the header?
   if (!pstate.have_format)
-    error(1, "Format not specified in header of potential file %s",
+    error(1, "Format not specified in header of potential file %s\n",
           potential_filename);
 
   allocate_memory_for_potentials(&pstate);
@@ -171,7 +171,7 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
   int rval = sscanf(pbuf + 2, "%d %d", &format, &pstate->num_pots);
 
   if (rval != 2)
-    error(1, "Corrupt format header line in file %s", pstate->filename);
+    error(1, "Corrupt format header line in file %s\n", pstate->filename);
 
   switch (format) {
     case 0:
@@ -198,7 +198,7 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 
   switch (g_pot.format_type) {
     case POTENTIAL_FORMAT_UNKNOWN:
-      error(1, "Unrecognized potential format specified in file %s",
+      error(1, "Unrecognized potential format specified in file %s\n",
             pstate->filename);
       break;
     case POTENTIAL_FORMAT_ANALYTIC:
@@ -301,7 +301,7 @@ void read_pot_line_I(char* pbuf, potential_state* pstate)
       str = strtok(((i == 0) ? pbuf + 2 : NULL), " \t\r\n");
 
       if (str == NULL) {
-        error(1, "Not enough items in #I header line.");
+        error(1, "Not enough items in #I header line.\n");
       } else {
         g_pot.invar_pot[i] = atoi(str);
         if (g_pot.invar_pot[i] == 1) {
@@ -315,7 +315,7 @@ void read_pot_line_I(char* pbuf, potential_state* pstate)
 
     g_pot.have_invar = have_invar;
   } else
-    error(1, "#I needs to be specified after #F in file %s", pstate->filename);
+    error(1, "#I needs to be specified after #F in file %s\n", pstate->filename);
 }
 
 /****************************************************************
@@ -334,13 +334,13 @@ void read_pot_line_G(char* pbuf, potential_state* pstate)
       char* str = strtok(((i == 0) ? pbuf + 2 : NULL), " \t\r\n");
 
       if (str == NULL)
-        error(1, "Not enough items in #G header line.");
+        error(1, "Not enough items in #G header line.\n");
       else
         g_pot.gradient[i] = atoi(str);
     }
     pstate->have_gradient = 1;
   } else
-    error(1, "#G needs to be specified after #F in file %s", pstate->filename);
+    error(1, "#G needs to be specified after #F in file %s\n", pstate->filename);
 #endif  // !APOT
 }
 
@@ -364,7 +364,7 @@ void read_pot_line_C(char* pbuf, potential_state* pstate)
       names[i][len] = '\0';
     }
   } else
-    error(1, "#C needs to be specified after #F in file %s", pstate->filename);
+    error(1, "#C needs to be specified after #F in file %s\n", pstate->filename);
 
   g_config.elements = (char**)Malloc(g_param.ntypes * sizeof(char*));
   for (int i = 0; i < g_param.ntypes; i++) {
@@ -540,7 +540,7 @@ void read_maxch_file()
 
     for (int i = 0; i < g_pot.opt_pot.len; ++i) {
       if (1 > fscanf(pfile, " %lf\n", val))
-        error(1, "Premature end of maxch file %s", g_files.maxchfile);
+        error(1, "Premature end of maxch file %s\n", g_files.maxchfile);
       else
         val++;
     }

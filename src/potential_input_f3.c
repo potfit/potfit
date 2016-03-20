@@ -70,7 +70,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
   /* read the info block of the function table */
   for (int i = 0; i < pstate->num_pots; i++) {
     if (3 > fscanf(pfile, "%lf %lf %d", &pt->begin[i], &pt->end[i], &nvals[i]))
-      error(1, "Premature end of potential file %s", pstate->filename);
+      error(1, "Premature end of potential file %s\n", pstate->filename);
 
     pt->step[i] = (pt->end[i] - pt->begin[i]) / (nvals[i] - 1);
     pt->invstep[i] = 1.0 / pt->step[i];
@@ -101,7 +101,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
   for (int i = 0; i < g_calc.paircol; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -118,7 +118,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf\n", val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
@@ -134,7 +134,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
   for (int i = g_calc.paircol; i < g_calc.paircol + g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -151,7 +151,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf\n", val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
@@ -167,7 +167,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
        i < g_calc.paircol + 2 * g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1.e30;
       *(val + 1) = 1.e30;
@@ -184,7 +184,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf\n", val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
@@ -201,7 +201,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
        i < g_calc.paircol + 3 * g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -218,7 +218,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf\n", val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
@@ -234,7 +234,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
        i < g_calc.paircol + 4 * g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1.e30;
       *(val + 1) = 1.e30;
@@ -251,7 +251,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf\n", val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
@@ -270,7 +270,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
        i < 2 * (g_calc.paircol + g_param.ntypes); i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -287,7 +287,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf\n", val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
@@ -303,7 +303,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
        i < 3 * g_calc.paircol + 2 * g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1.e30;
       *(val + 1) = 1.e30;
@@ -320,7 +320,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf\n", val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
@@ -339,7 +339,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read gradient */
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       ;
     } else {
       *val = 1e30;
@@ -356,7 +356,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
       l++;
     for (int j = 0; j < nvals[i]; j++) { /* read values */
       if (1 > fscanf(pfile, "%lf\n", val)) {
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
         ;
       } else
         val++;
@@ -382,7 +382,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
     /* read gradient */
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       ;
     } else {
       *val = 0;
@@ -399,7 +399,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
       l++;
     for (int j = 0; j < nvals[i]; j++) { /* read values */
       if (1 > fscanf(pfile, "%lf\n", val)) {
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
         ;
       } else
         val++;

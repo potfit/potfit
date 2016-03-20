@@ -228,7 +228,7 @@ void update_splines(double* xi, int start_col, int num_col, int grad_flag)
     double grad_right = (grad_flag & 2) ? *(xi + first - 1) : 0.0;
     switch (g_pot.format_type) {
       case POTENTIAL_FORMAT_UNKNOWN:
-        error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+        error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__, __LINE__);
       case POTENTIAL_FORMAT_ANALYTIC:
       case POTENTIAL_FORMAT_TABULATED_EQ_DIST: {
         spline_ed(g_pot.calc_pot.step[col], xi + first,

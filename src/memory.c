@@ -61,12 +61,12 @@ potfit_memory g_memory;
 void* Malloc(size_t size)
 {
   if (size == 0)
-    error(1, "Allocating memory with size=0!");
+    error(1, "Allocating memory with size=0!\n");
 
   void* p = malloc(size);
 
   if (p == NULL)
-    error(1, "Error allocating resources");
+    error(1, "Error allocating resources\n");
 
   memset(p, 0, size);
 
@@ -74,7 +74,7 @@ void* Malloc(size_t size)
       g_memory.pointers, sizeof(void*) * (g_memory.num_pointers + 1));
 
   if (g_memory.pointers == NULL)
-    error(1, "Error allocating resources");
+    error(1, "Error allocating resources\n");
 
   g_memory.pointers[g_memory.num_pointers] = p;
   g_memory.num_pointers++;
@@ -93,7 +93,7 @@ void* Malloc(size_t size)
 void* Realloc(void* pvoid, size_t size)
 {
   if (size == 0)
-    error(1, "Reallocating memory with size=0!");
+    error(1, "Reallocating memory with size=0!\n");
 
   if (pvoid == NULL)
     return Malloc(size);
@@ -101,7 +101,7 @@ void* Realloc(void* pvoid, size_t size)
   void* temp = realloc(pvoid, size);
 
   if (temp == NULL)
-    error(1, "Error reallocating resources");
+    error(1, "Error reallocating resources\n");
 
   for (int i = 0; i < g_memory.num_pointers; i++) {
     if (pvoid == g_memory.pointers[i])
@@ -138,6 +138,7 @@ void initialize_global_variables()
 #endif  // MPI
 
   memset(&g_param, 0, sizeof(g_param));
+  g_param.sweight = -1.0;
 
   g_param.global_cell_scale = 1.0;
 #if defined(EVO)

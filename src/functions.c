@@ -71,7 +71,7 @@ void add_potential(const char* name, int npar, fvalue_pointer function)
   // only add potentials with unused names
   for (int i = 0; i < k; i++) {
     if (strcmp(function_table.name[i], name) == 0)
-      error(1, "There already is a potential with the name \"%s\".", name);
+      error(1, "There already is a potential with the name \"%s\".\n", name);
   }
 
   // allocate memory

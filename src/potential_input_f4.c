@@ -66,7 +66,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
   /* read the info block of the function table */
   for (int i = 0; i < pstate->num_pots; i++) {
     if (1 > fscanf(pfile, "%d", &nvals[i]))
-      error(1, "Premature end of potential file %s", pstate->filename);
+      error(1, "Premature end of potential file %s\n", pstate->filename);
     pt->step[i] = 0.0;
     pt->invstep[i] = 0.0;
     if (i == 0)
@@ -92,7 +92,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
   for (int i = 0; i < g_calc.paircol; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -110,13 +110,13 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else {
         val++;
         ord++;
       }
       if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
-        error(1, "Abscissa not monotonous in potential %d.", i);
+        error(1, "Abscissa not monotonous in potential %d.\n", i);
       if ((!g_pot.invar_pot[i]) && (j < nvals[i] - 1))
         pt->idx[k++] = l++;
       else
@@ -144,7 +144,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
   for (int i = g_calc.paircol; i < g_calc.paircol + den_count; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -162,13 +162,13 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else {
         ord++;
         val++;
       }
       if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
-        error(1, "Abscissa not monotonous in potential %d.", i);
+        error(1, "Abscissa not monotonous in potential %d.\n", i);
       if ((!g_pot.invar_pot[i]) && (j < nvals[i] - 1))
         pt->idx[k++] = l++;
       else
@@ -186,7 +186,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
        i < g_calc.paircol + den_count + emb_count; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 1.e30;
@@ -204,13 +204,13 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else {
         ord++;
         val++;
       }
       if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
-        error(1, "Abscissa not monotonous in potential %d.", i);
+        error(1, "Abscissa not monotonous in potential %d.\n", i);
       if (!g_pot.invar_pot[i])
         pt->idx[k++] = l++;
       else
@@ -230,7 +230,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
        i < 2 * (g_calc.paircol + g_param.ntypes); i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -248,13 +248,13 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else {
         ord++;
         val++;
       }
       if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
-        error(1, "Abscissa not monotonous in potential %d.", i);
+        error(1, "Abscissa not monotonous in potential %d.\n", i);
       if ((!g_pot.invar_pot[i]) && (j < nvals[i] - 1))
         pt->idx[k++] = l++;
       else
@@ -272,7 +272,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
        i < 3 * g_calc.paircol + 2 * g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
     } else {
       *val = 1e30;
       *(val + 1) = 1.e30;
@@ -290,13 +290,13 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s", pstate->filename);
+        error(1, "Premature end of potential file %s\n", pstate->filename);
       else {
         ord++;
         val++;
       }
       if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
-        error(1, "Abscissa not monotonous in potential %d.", i);
+        error(1, "Abscissa not monotonous in potential %d.\n", i);
       if (!g_pot.invar_pot[i])
         pt->idx[k++] = l++;
       else

@@ -225,7 +225,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       first = g_pot.calc_pot.first[col];
       switch (g_pot.format_type) {
         case POTENTIAL_FORMAT_UNKNOWN:
-          error(1, "Unknown potential format detected! (%s:%d)", __FILE__,
+          error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__,
                 __LINE__);
         case POTENTIAL_FORMAT_ANALYTIC:
         case POTENTIAL_FORMAT_TABULATED_EQ_DIST: {

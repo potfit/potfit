@@ -283,7 +283,7 @@ void get_param_int(char const* param_name, int* value, int line,
   char* str = strtok(NULL, " \t\r\n");
 
   if (str == NULL) {
-    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>",
+    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>\n",
           param_file, line, param_name);
   } else
     *value = atoi(str);
@@ -291,7 +291,7 @@ void get_param_int(char const* param_name, int* value, int line,
   if (*value < min || *value > max) {
     error(0,
           "Illegal value in parameter file %s (line %d): %s is out of bounds! "
-          "(min: %i, max: %i, given: %i)",
+          "(min: %i, max: %i, given: %i)\n",
           param_file, line, param_name, min, max, *value);
   }
 }
@@ -306,7 +306,7 @@ void get_param_double(char const* param_name, double* value, int line,
   char* str = strtok(NULL, " \t\r\n");
 
   if (str == NULL) {
-    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>",
+    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>\n",
           param_file, line, param_name);
   } else
     *value = atof(str);
@@ -314,7 +314,7 @@ void get_param_double(char const* param_name, double* value, int line,
   if (*value < min || *value > max) {
     error(0,
           "Illegal value in parameter file %s (line %d): %s is out of bounds! "
-          "(min: %d, max: %d, given: %d)",
+          "(min: %d, max: %d, given: %d)\n",
           param_file, line, param_name, min, max, *value);
   }
 }
@@ -329,7 +329,7 @@ void get_param_string(char const* param_name, const char** value, int line,
   char* str = strtok(NULL, " \t\r\n");
 
   if (str == NULL) {
-    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>",
+    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>\n",
           param_file, line, param_name);
   } else {
     int len = strlen(str) + 1;
@@ -346,12 +346,12 @@ void check_parameters_complete(char const* paramfile)
 {
   if (g_param.ntypes < 1)
     error(1,
-          "Missing parameter or invalid value in %s : g_param.ntypes is \"%d\"",
+          "Missing parameter or invalid value in %s : g_param.ntypes is \"%d\"\n",
           paramfile, g_param.ntypes);
 
   if (g_files.startpot == NULL)
     error(0,
-          "Missing parameter or invalid value in %s : startpot is <undefined>",
+          "Missing parameter or invalid value in %s : startpot is <undefined>\n",
           paramfile);
 
   if (g_files.endpot == NULL) {
@@ -363,48 +363,61 @@ void check_parameters_complete(char const* paramfile)
   }
 
   if (g_files.config == NULL)
-    error(1, "Missing parameter or invalid value in %s : config is <undefined>",
+    error(1, "Missing parameter or invalid value in %s : config is <undefined>\n",
           paramfile);
 
   if (g_files.tempfile == NULL)
     error(1,
-          "Missing parameter or invalid value in %s : tempfile is <undefined>",
+          "Missing parameter or invalid value in %s : tempfile is <undefined>\n",
           paramfile);
 
   if (g_param.eweight < 0)
-    error(1, "Missing parameter or invalid value in %s : eng_weight is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : eng_weight is \"%f\"\n",
           paramfile, g_param.eweight);
 
 #if defined(STRESS)
   if (g_param.sweight < 0)
     error(1,
-          "Missing parameter or invalid value in %s : stress_weight is \"%d\"",
+          "Missing parameter or invalid value in %s : stress_weight is \"%f\"\n",
           paramfile, g_param.sweight);
 #endif  // STRESS
 
   if (g_param.writeimd && g_param.imdpotsteps < 1)
-    error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"\n",
           paramfile, g_param.imdpotsteps);
 
 #if defined(APOT)
   if (g_param.plotmin < 0)
-    error(1, "Missing parameter or invalid value in %s : plotmin is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : plotmin is \"%f\"\n",
           paramfile, g_param.plotmin);
 #if defined(PAIR)
   if (g_param.enable_cp != 0 && g_param.enable_cp != 1)
-    error(1, "Missing parameter or invalid value in %s : enable_cp is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : enable_cp is \"%d\"\n",
           paramfile, g_param.enable_cp);
 #endif  // PAIR
 #endif  // APOT
 
+#if defined(EVO)
+    if (g_param.evo_threshold < 0)
+      error(1, "Missing parameter or invalid value in %s : evo_threshold is"
+                "\"%f\"\n", paramfile, g_param.evo_threshold);
+#else
+    if (g_param.anneal_temp == NULL) {
+      warning("anneal_temp not provided in %s, setting it to 0!\n", paramfile);
+      g_param.anneal_temp = (char*)Malloc(2);
+      ((char*)g_param.anneal_temp)[0] = '0';
+      ((char*)g_param.anneal_temp)[1] = '\0';
+    }
+#endif  // EVO
+
 #if defined(PDIST)
   if (g_files.distfile == NULL)
     error(1,
-          "Missing parameter or invalid value in %s : distfile is <undefined>",
+          "Missing parameter or invalid value in %s : distfile is <undefined>\n",
           paramfile, g_files.distfile);
 #endif  // PDIST
 
   if (g_param.global_cell_scale <= 0)
-    error(1, "Missing parameter or invalid value in %s : cell_scale is \"%d\"",
+    error(1, "Missing parameter or invalid value in %s : cell_scale is \"%f\"\n",
           paramfile, g_param.global_cell_scale);
 }

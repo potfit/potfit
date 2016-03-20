@@ -135,7 +135,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
   switch (g_pot.format_type) {
     case POTENTIAL_FORMAT_UNKNOWN:
-      break;
+      error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__, __LINE__);
     case POTENTIAL_FORMAT_ANALYTIC:
       xi = g_pot.calc_pot.table;
       break;
@@ -232,7 +232,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
       switch (g_pot.format_type) {
         case POTENTIAL_FORMAT_UNKNOWN:
-          error(1, "Unknown potential format detected! (%s:%d)", __FILE__,
+          error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__,
                 __LINE__);
         case POTENTIAL_FORMAT_ANALYTIC:
         case POTENTIAL_FORMAT_TABULATED_EQ_DIST: {
@@ -257,7 +257,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
          when 0 not in domain(F), else natural spline */
       switch (g_pot.format_type) {
         case POTENTIAL_FORMAT_UNKNOWN:
-          error(1, "Unknown potential format detected! (%s:%d)", __FILE__,
+          error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__,
                 __LINE__);
         case POTENTIAL_FORMAT_ANALYTIC:
         case POTENTIAL_FORMAT_TABULATED_EQ_DIST: {

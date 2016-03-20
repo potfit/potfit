@@ -116,7 +116,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
   switch (g_pot.format_type) {
     case POTENTIAL_FORMAT_UNKNOWN:
-      error(1, "Unknown potential format detected! (%s:%d)", __FILE__, __LINE__);
+      error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__, __LINE__);
     case POTENTIAL_FORMAT_ANALYTIC:
       xi = g_pot.calc_pot.table;
       break;
@@ -254,7 +254,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             // add cohesive energy
             forces[g_calc.energy_p + config_idx] += phi_val;
 
-            /* calculate forces */
+            // calculate forces
             if (uf) {
               vector tmp_force;
               tmp_force.x = neigh->dist_r.x * phi_grad;
@@ -263,7 +263,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
               forces[n_i + 0] += tmp_force.x;
               forces[n_i + 1] += tmp_force.y;
               forces[n_i + 2] += tmp_force.z;
-              /* actio = reactio */
+              // actio = reactio
               forces[3 * neigh->nr + 0] -= tmp_force.x;
               forces[3 * neigh->nr + 1] -= tmp_force.y;
               forces[3 * neigh->nr + 2] -= tmp_force.z;

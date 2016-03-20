@@ -96,7 +96,7 @@ double splint_ed(pot_table_t* pt, double* xi, int col, double r)
   double rr = r - pt->begin[col];
 
   if (rr < 0)
-    error(1, "%f %f %d\nShort distance", r, pt->begin[col], col);
+    error(1, "%f %f %d\nShort distance\n", r, pt->begin[col], col);
 
   /* indices into potential table */
   int k = (int)(rr * pt->invstep[col]);
@@ -127,7 +127,7 @@ double splint_comb_ed(pot_table_t* pt, double* xi, int col, double r,
   double rr = r - pt->begin[col];
 
   if (rr < 0)
-    error(1, "short distance! in splint_comb_ed");
+    error(1, "short distance! in splint_comb_ed\n");
 
   /* indices into potential table */
   int k = (int)(rr * pt->invstep[col]);
@@ -164,7 +164,7 @@ double splint_grad_ed(pot_table_t* pt, double* xi, int col, double r)
   double rr = r - pt->begin[col];
 
   if (rr < 0)
-    error(1, "short distance! in splint_grad_ed");
+    error(1, "short distance! in splint_grad_ed\n");
 
   /* indices into potential table */
   int k = (int)(rr * pt->invstep[col]);

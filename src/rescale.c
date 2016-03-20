@@ -68,7 +68,7 @@ double rescale(pot_table_t* pt, double upper, int flag)
 
   if (neuxi == NULL || neuord == NULL || neustep == NULL || maxrho == NULL ||
       minrho == NULL || left == NULL || right == NULL)
-    error(1, "Error allocating memory for rescale function");
+    error(1, "Error allocating memory for rescale function\n");
 
   for (i = 0; i < g_param.ntypes; i++) {
     maxrho[i] = -1e100;

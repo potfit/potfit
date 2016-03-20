@@ -146,7 +146,7 @@ void read_config(const char* filename)
     ++cstate.line;
 
     if (res == NULL)
-      error(1, "Unexpected end of file in %s", filename);
+      error(1, "Unexpected end of file in %s\n", filename);
 
     if (res[0] == '#' && res[1] == 'N') {
       reset_cstate(&cstate);
@@ -167,7 +167,7 @@ void read_config(const char* filename)
     if (cstate.atom_count < min_atom_count)
       error(1,
             "Configuration %d (starting on line %d) has not enough atoms, "
-            "please remove it.",
+            "please remove it.\n",
             g_config.nconf + 1, cstate.line);
 
     create_memory_for_config(&cstate);
@@ -187,7 +187,7 @@ void read_config(const char* filename)
       res = fgets(buffer, 1024, config_file);
 
       if (res == NULL || feof(config_file))
-        error(1, "Incomplete header on line %d in configuration file %s",
+        error(1, "Incomplete header on line %d in configuration file %s\n",
               cstate.line, filename);
 
       if ((ptr = strchr(res, '\n')) != NULL)
@@ -226,7 +226,7 @@ void read_config(const char* filename)
             case 'O':
               if (cstate.have_contrib_box_vector & 1) {
                 error(0, "There can only be one box of contributing atoms\n");
-                error(1, "  This occured in %s on line %d", filename,
+                error(1, "  This occured in %s on line %d\n", filename,
                       cstate.line);
               }
               read_box_vector(res + 5, &cstate.cbox_o, &cstate);
@@ -306,11 +306,11 @@ void read_config(const char* filename)
     } while (res[1] != 'F');
 
     if (cstate.have_energy == 0)
-      error(1, "%s: missing energy in configuration %d!", filename,
+      error(1, "%s: missing energy in configuration %d!\n", filename,
             g_config.nconf + 1);
 
     if (cstate.have_box_vector != 7)
-      error(1, "Incomplete box vectors for config %d!", g_config.nconf + 1);
+      error(1, "Incomplete box vectors for config %d!\n", g_config.nconf + 1);
 
 #if defined(CONTRIB)
     if (cstate.have_contrib_box_vector && cstate.have_contrib_box_vector != 15)
@@ -419,7 +419,7 @@ void read_config(const char* filename)
   if ((max_atom_type + 1) < g_param.ntypes) {
     error(0, "There are less than %d atom types in your configurations!\n",
           g_param.ntypes);
-    error(1, "Please adjust \"ntypes\" in your parameter file.");
+    error(1, "Please adjust \"ntypes\" in your parameter file.\n");
   }
 
   /* mdim is the dimension of the force vector:
@@ -878,7 +878,7 @@ void init_box_vectors(config_state* cstate)
   if ((ceil(g_config.rcutmax * iheight.x) > 30000) ||
       (ceil(g_config.rcutmax * iheight.y) > 30000) ||
       (ceil(g_config.rcutmax * iheight.z) > 30000))
-    error(1, "Very bizarre small cell size - aborting");
+    error(1, "Very bizarre small cell size - aborting\n");
 
   cstate->cell_scale.x = (int)ceil(g_config.rcutmax * iheight.x);
   cstate->cell_scale.y = (int)ceil(g_config.rcutmax * iheight.y);
@@ -1085,7 +1085,7 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
         error(0, "of the potential #%d (r_begin=%f).\n", col,
               g_pot.calc_pot.begin[col]);
         fflush(stdout);
-        error(1, "Short distance!");
+        error(1, "Short distance!\n");
       }
 
       istep = g_pot.calc_pot.invstep[col];
@@ -1114,7 +1114,7 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
       break;
     }
     case POTENTIAL_FORMAT_UNKNOWN:
-      error(1, "Unknown potential format detected.");
+      error(1, "Unknown potential format detected.\n");
   }
 
   // independent of format - we should be left of last index
@@ -1182,7 +1182,7 @@ void init_angles(config_state* cstate)
             printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col,
                    type1, type2);
             fflush(stdout);
-            error(1, "cos out of range, it is strange!");
+            error(1, "cos out of range, it is strange!\n");
           }
 #if defined(MEAM)
           double istep = g_pot.calc_pot.invstep[col];
