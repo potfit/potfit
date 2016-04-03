@@ -126,6 +126,10 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       break;
   }
 
+#if !defined(MPI)
+  g_mpi.myconf = g_config.nconf;
+#endif  // MPI
+
   // This is the start of an infinite loop
 
   while (1) {
@@ -180,10 +184,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
     // quadrupole function
     //   [2 * paircol + 2 * ntypes, ..., 3 * paircol + 2 * ntypes - 1]
     update_splines(xi, g_calc.paircol + 2 * g_param.ntypes, 2 * g_calc.paircol, 1);
-
-#if !defined(MPI)
-    g_mpi.myconf = g_config.nconf;
-#endif  // MPI
 
     // loop over configurations
     for (int config_idx = g_mpi.firstconf; config_idx < g_mpi.firstconf + g_mpi.myconf; config_idx++) {

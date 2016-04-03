@@ -119,6 +119,10 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       break;
   }
 
+#if !defined(MPI)
+  g_mpi.myconf = g_config.nconf;
+#endif  // !MPI
+
   // This is the start of an infinite loop
 
   while (1) {
@@ -159,10 +163,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
     // pair potential
     //   [0, ...,  paircol - 1]
     update_splines(xi, 0, g_calc.paircol, 1);
-
-#if !defined(MPI)
-    g_mpi.myconf = g_config.nconf;
-#endif  // !MPI
 
     // loop over configurations
     for (int config_idx = g_mpi.firstconf; config_idx < g_mpi.firstconf + g_mpi.myconf; config_idx++) {

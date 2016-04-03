@@ -126,6 +126,10 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       break;
   }
 
+#if !defined(MPI)
+  g_mpi.myconf = g_config.nconf;
+#endif  // MPI
+
   // This is the start of an infinite loop
   while (1) {
     // sum of squares of local process
@@ -185,10 +189,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
     //   [g_calc.paircol + 3 * g_param.ntypes, ..., g_calc.paircol + 4 * g_param.ntypes - 1]
     update_splines(xi, g_calc.paircol + 3 * g_param.ntypes, g_param.ntypes, 3);
 #endif  // TBEAM
-
-#if !defined(MPI)
-    g_mpi.myconf = g_config.nconf;
-#endif  // MPI
 
     // loop over configurations
     for (int config_idx = g_mpi.firstconf; config_idx < g_mpi.firstconf + g_mpi.myconf; config_idx++) {

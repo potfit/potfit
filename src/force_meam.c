@@ -57,7 +57,6 @@
 
 void init_force(int is_worker)
 {
-  (void)is_worker;
 #if !defined(APOT)
   // set spline density corrections to 0
   g_calc.lambda = (double*)Malloc(g_param.ntypes * sizeof(double));

@@ -51,8 +51,6 @@
 
 void init_force(int is_worker)
 {
-  (void)is_worker;
-
 #if defined(COULOMB)
   if (g_pot.apot_table.sw_kappa)  // FIXME is sw_kappa really correct here?
     init_tails(g_pot.apot_table.dp_kappa[0]);
@@ -144,6 +142,10 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       xi = xi_opt;
       break;
   }
+
+#if !defined(MPI)
+  g_mpi.myconf = g_config.nconf;
+#endif  // MPI
 
   ne = g_pot.apot_table.total_ne_par;
   size = apt->number;
@@ -273,10 +275,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
         }
       }
     }
-
-#if !defined(MPI)
-    g_mpi.myconf = g_config.nconf;
-#endif  // MPI
 
     /* region containing loop over configurations */
     {
