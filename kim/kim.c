@@ -1338,10 +1338,10 @@ int write_descriptor_file(int Nspecies, const char** species, int compute_energy
     "# Name                      Type\n\n"
     "ZeroBasedLists              flag\n\n"
     "Neigh_LocaAccess            flag\n\n"
-    "MI_OPBC_H                   flag\n\n"
-    "MI_OPBC_F                   flag\n\n"
     "NEIGH_RVEC_H                flag\n\n"
-    "NEIGH_RVEC_F                flag\n\n\n"
+    "NEIGH_RVEC_F                flag\n\n"
+    "MI_OPBC_H                   flag\n\n"
+    "MI_OPBC_F                   flag\n\n\n"
     );
 
   /* Model output */
