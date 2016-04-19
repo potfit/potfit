@@ -52,8 +52,6 @@
 
 void init_force(int is_worker)
 {
-  (void)is_worker;
-
 #if defined(COULOMB)
   if (g_pot.apot_table.sw_kappa)  // FIXME is sw_kappa really correct here?
     init_tails(g_pot.apot_table.dp_kappa[0]);

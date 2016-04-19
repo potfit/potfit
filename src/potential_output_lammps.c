@@ -318,12 +318,14 @@ void write_pot_table_lammps()
     for (int j = 0; j < g_param.imdpotsteps; j++) {
 #if defined(APOT)
       (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-      temp = g_pot.smooth_pot[k]
-                 ? temp * apot_cutoff(
-                              r, g_pot.apot_table.end[k],
-                              g_pot.apot_table
-                                  .values[k][g_pot.apot_table.n_par[k] - 1])
-                 : temp;
+      if (r == 0.0 && (isnan(temp) || isinf(temp)))
+        g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],
+                                   &temp);
+      if (g_pot.smooth_pot[k]) {
+        temp *= apot_cutoff(
+            r, g_pot.apot_table.end[k],
+            g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
+      }
       fprintf(outfile, "%.16e\n", temp);
 #else
       fprintf(outfile, "%.16e\n",
@@ -337,12 +339,14 @@ void write_pot_table_lammps()
     for (int j = 0; j < g_param.imdpotsteps; j++) {
 #if defined(APOT)
       (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-      temp = g_pot.smooth_pot[k]
-                 ? temp * apot_cutoff(
-                              r, g_pot.apot_table.end[k],
-                              g_pot.apot_table
-                                  .values[k][g_pot.apot_table.n_par[k] - 1])
-                 : temp;
+      if (r == 0.0 && (isnan(temp) || isinf(temp)))
+        g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],
+                                   &temp);
+      if (g_pot.smooth_pot[k]) {
+        temp *= apot_cutoff(
+            r, g_pot.apot_table.end[k],
+            g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
+      }
       fprintf(outfile, "%.16e\n", temp);
 #else
       fprintf(outfile, "%.16e\n",
@@ -363,12 +367,14 @@ void write_pot_table_lammps()
 #if defined(APOT)
         double temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-        temp = g_pot.smooth_pot[k]
-                   ? temp * apot_cutoff(
-                                r, g_pot.apot_table.end[k],
-                                g_pot.apot_table
-                                    .values[k][g_pot.apot_table.n_par[k] - 1])
-                   : temp;
+        if (r == 0.0 && (isnan(temp) || isinf(temp)))
+          g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],
+                                     &temp);
+        if (g_pot.smooth_pot[k]) {
+          temp *= apot_cutoff(
+              r, g_pot.apot_table.end[k],
+              g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
+        }
         fprintf(outfile, "%.16e\n", r * temp);
 #else
         fprintf(outfile, "%.16e\n",

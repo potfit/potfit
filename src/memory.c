@@ -123,6 +123,8 @@ void initialize_global_variables()
   memset(&g_config, 0, sizeof(g_config));
   memset(&g_files, 0, sizeof(g_files));
 
+  g_config.rcutmin = 999.9;
+
   g_mpi.init_done = 0;
   g_mpi.myid = 0;
   g_mpi.num_cpus = 1;
