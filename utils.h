@@ -47,27 +47,19 @@ void  init_angle(angle_t *);
 #endif /* THREEBODY */
 
 /* memory management */
-void  reg_for_free(void *, char *, ...);
+void  reg_for_free(void *, const char *, ...);
 void  free_all_pointers();
 
 /* vector procuct */
 vector vec_prod(vector, vector);
 
 /* pRNG with equal or normal distribution */
-double eqdist();
+static inline double eqdist() { return dsfmt_genrand_close_open(&dsfmt); }
 double normdist();
 
 /* different power functions */
-
-/* modified */
-inline int isquare(int i) {
-  return i * i;
-}  
-inline double dsquare(double d) {
-  return d * d;
-}
-/* modified ends */
-
+static inline int isquare(int a) { return a*a; }
+static inline double dsquare(double a) { return a*a; }
 void  power_1(double *, double *, double *);
 void  power_m(int, double *, double *, double *);
 

@@ -172,6 +172,7 @@ def process_outcar_file_v5(f, natoms, count):
             atom_data = []
         if 'energy  without' in line:
             energy = float(line.split()[6]) / natoms
+        if 'Quasi-Newton relaxation' in line:
             if count in configs or (args.final and count == data[i][0]):
                 print "#N %s 1" % natoms
                 sys.stdout.write("#C")

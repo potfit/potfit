@@ -30,6 +30,7 @@
 
 #include "potfit.h"
 
+#include "functions.h"
 #include "utils.h"
 
 /****************************************************************

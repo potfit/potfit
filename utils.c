@@ -271,7 +271,7 @@ void init_angle(angle_t * angle)
 }
 #endif /* THREEBODY */
 
-void reg_for_free(void *p, char *name, ...)
+void reg_for_free(void *p, const char *name, ...)
 {
   va_list ap;
 
@@ -311,18 +311,6 @@ vector vec_prod(vector u, vector v)
 
 /****************************************************************
  *
- *  double eqdist(): Returns an equally distributed random number in [0,1[
- * 	Uses dsfmt PRNG to generate a random number.
- *
- ****************************************************************/
-
-inline double eqdist()
-{
-  return dsfmt_genrand_close_open(&dsfmt);
-}
-
-/****************************************************************
- *
  *  double normdist(): Returns a normally distributed random variable
  *
  ****************************************************************/
@@ -349,24 +337,6 @@ double normdist()
     return nd2;
   }
 }
-
-/****************************************************************
- *
- *  square functions for integer and double values
- *
- ****************************************************************/
-/*
-inline int isquare(int i)
-{
-  return i * i;
-}
-
-inline double dsquare(double d)
-double dsquare(double d)
-{
-  return d * d;
-}
-*/
 
 /****************************************************************
  *

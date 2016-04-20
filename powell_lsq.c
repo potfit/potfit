@@ -59,8 +59,10 @@
 
 void powell_lsq(double *xi)
 {
+#ifndef ACML
   char  uplo[1] = "U";		/* char used in dsysvx */
   char  fact[1] = "N";		/* char used in dsysvx */
+#endif /* ACML */
   int   i, j, m = 0, n = 0;	/* Simple counting variables */
   double *force_xi;		/* calculated force, alt */
   double **d;			/* Direction vectors */

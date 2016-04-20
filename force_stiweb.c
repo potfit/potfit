@@ -337,6 +337,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 	/* third loop over all atoms, sum up forces */
 	if (uf) {
 	  for (i = 0; i < inconf[h]; i++) {
+	    atom = conf_atoms + i + cnfstart[h] - firstatom;
 	    n_i = 3 * (cnfstart[h] + i);
 #ifdef FWEIGHT
 	    /* Weigh by absolute value of force */

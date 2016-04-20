@@ -108,26 +108,27 @@ void randomize_parameter(int n, double *xi, double *v)
 
 void makebump(double *x, double width, double height, int center)
 {
-  int   i, j = 0;
+  int i = 0;
+  int j = 0;
 
   /* find pot to which center belongs */
   while (opt_pot.last[j] < idx[center])
     j++;
-  for (i = 0; i <= 4.0 * width; i++) {
-    /* using idx avoids moving fixed points */
 
-/* added changed */      
-/*    if ((center + i <= ndim) && (idx[center + i] <= opt_pot.last[j])) {
-*/    if ((center + i < ndim) && (idx[center + i] < opt_pot.last[j])) {
-      x[idx[center + i]] += GAUSS((double)i / width) * height;
-    }
+  for (i = 0; i <= 4.0 * width; i++)
+  {
+    int pos = center + i;
+    /* using idx avoids moving fixed points */
+    if ((idx[pos] >= opt_pot.begin[j]) && (idx[pos] <= opt_pot.last[j]))
+      x[idx[pos]] += GAUSS((double)i / width) * height;
   }
-  for (i = 1; i <= 4.0 * width; i++) {
-    if ((center - i >= 0) && (idx[center - i] >= opt_pot.first[j])) {
-      x[idx[center - i]] += GAUSS((double)i / width) * height;
-    }
+
+  for (i = 1; i <= 4.0 * width; i++)
+  {
+    int pos = center - i;
+    if ((idx[pos] >= opt_pot.begin[j]) && (idx[pos] <= opt_pot.last[j]))
+      x[idx[pos]] += GAUSS((double)i / width) * height;
   }
-  return;
 }
 
 #endif /* APOT */
@@ -147,7 +148,7 @@ void anneal(double *xi)
   int   h = 0, j = 0, k = 0, n, m = 0;	/* counters */
   int   auto_T = 0;
   int   loopagain;		/* loop flag */
-#ifndef APOT
+#if defined(RESCALE) && !defined(APOT) && ( defined(EAM) || defined(ADP) ) || defined(MEAM)
   int   rescaleMe = 1;		/* rescaling flag */
 #endif /* APOT */
   double T = -1.0;		/* Temperature */
@@ -341,7 +342,7 @@ void anneal(double *xi)
 #endif /* APOT */
 
 #else /* !KIM */
-    write_pot_table(&opt_pot, tempfile);
+		write_pot_table(&opt_pot, tempfile);
 #endif /* !KIM */
 /*added ends*/  
 
@@ -463,7 +464,6 @@ void anneal(double *xi)
 #endif /* MEAM && !APOT */
   printf("Finished annealing, starting powell minimization ...\n");
 
-  F = Fopt;
   if (*tempfile != '\0') {
 
 /*added*/

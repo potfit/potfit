@@ -213,7 +213,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     {
       int   self;
       vector tmp_force;
-      int   h, j, type1, type2, uf, us, stresses;
+      int   h, j, type1, type2, uf;
+#ifdef STRESS
+      int   us, stresses;
+#endif /* STRESS */
       int   n_i, n_j;
       double fnval, grad, fnval_tail, grad_tail, grad_i, grad_j;
 #ifdef DIPOLE

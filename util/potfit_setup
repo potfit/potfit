@@ -71,7 +71,7 @@ if not potfile and args.potfile:
     try:
         f = open(args.potfile)
         f.close()
-        potfit = args.potfile
+        potfile = args.potfile
     except:
         pass
 else:

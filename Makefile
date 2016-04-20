@@ -127,6 +127,7 @@ SHELL = /bin/bash
 # Currently the following systems are available:
 # x86_64-icc  	64bit Intel Compiler
 # x86_64-gcc    64bit GNU Compiler
+# x86_64-clang 	64bit LLVM Compiler
 # i686-icc 	32bit Intel Compiler
 # i686-gcc  	32bit GNU Compiler
 # i686-kim  	32bit GNU Compiler
@@ -136,17 +137,16 @@ SHELL = /bin/bash
 SYSTEM 		 = i686-kim
 
 # This is the directory where the potfit binary will be moved to.
-# If it is empty, the binary will not be moved.
-#BIN_DIR 	= ${HOME}/bin/i386-linux
-#BIN_DIR 	=
+# If BIN_DIR is empty, the binary will not be moved.
+BIN_DIR 	= bin/
 
 # Base directory of your installation of the MKL or ACML
 
 # General settings
 MKLDIR      = /opt/intel/composer_xe_2015.1.133/mkl
 ACML4DIR  	= /opt/acml4.4.0/gfortran64
-ACML5DIR  	= /opt/acml5.3.1/gfortran64
-LIBMDIR 	= /opt/amdlibm
+ACML5DIR  	= /opt/acml/gfortran64
+LIBMDIR 	= /opt/acml/libm
 
 # ITAP settings
 #BIN_DIR 	= ${HOME}/bin/i386-linux
@@ -159,7 +159,6 @@ LIBMDIR 	= /opt/amdlibm
 #
 ###########################################################################
 
-MV		= $(shell which mv 2> /dev/null)
 STRIP 		= $(shell which strip 2> /dev/null)
 LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
@@ -245,6 +244,43 @@ endif
  export        OMPI_CC OMPI_CLINKER
 endif
 
+ifeq (x86_64-clang,${SYSTEM})
+# compiler
+  CC_SERIAL     = clang
+  CC_MPI        = mpicc
+  OMPI_CC       = clang
+  OMPI_CLINKER  = clang
+
+# general optimization flags
+  OPT_FLAGS     += -O3 -march=native -std=gnu99
+
+# profiling and debug flags
+  PROF_FLAGS    += -g
+  PROF_LIBS     += -g
+  DEBUG_FLAGS   += -g -Wall -Werror -pedantic -std=gnu99
+  ASAN_FLAGS 	+= -g -fsanitize=address -fno-omit-frame-pointer
+  ASAN_LFLAGS 	= -g -fsanitize=address
+
+# Intel Math Kernel Library
+ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+  CINCLUDE      += -I${MKLDIR}/include
+  LIBS 		+= -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+		   -Wl,--end-group -lpthread -Wl,--as-needed
+endif
+
+# AMD Core Math Library
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  CINCLUDE     	+= -I${ACML4DIR}/include
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
+endif
+ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
+  CINCLUDE     	+= -I${ACML5DIR}/include -I${LIBMDIR}/include
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
+endif
+
+ export        OMPI_CC OMPI_CLINKER
+endif
 
 ###########################################################################
 #
@@ -391,7 +427,13 @@ CFLAGS := ${FLAGS}
 ifneq (,$(findstring debug,${MAKETARGET}))
 CFLAGS += ${DEBUG_FLAGS}
 else
+ifneq (,$(findstring asan,${MAKETARGET}))
+CFLAGS += ${ASAN_FLAGS}
+LFLAGS_SERIAL = ${ASAN_LFLAGS}
+LFLAGS_MPI = ${ASAN_LFLAGS}
+else
 CFLAGS += ${OPT_FLAGS}
+endif
 endif
 
 # profiling support
@@ -740,57 +782,77 @@ OBJECTS := $(subst .c,.o,${SOURCES})
 # all objects depend on headers
 ${OBJECTS}: ${HEADERS}
 
+potfit:
+	@echo -e "\nError:\tYou cannot compile potfit without any options."
+	@echo -e "\tAt least an interaction is required.\n"
+
 # How to compile *.c files
 # special rules for force computation
 powell_lsq.o: powell_lsq.c
-	${CC} ${CFLAGS} ${CINCLUDE} -c powell_lsq.c
+	@echo " [CC] powell_lsq.c"
+	@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
+		echo -e "The following command failed with the above error:\n"; \
+		echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
+		exit 1; \
+		}
 
 # special rules for function evaluation
 utils.o: utils.c
-	${CC} ${CFLAGS} ${CINCLUDE} -c utils.c
+	@echo " [CC] utils.c"
+	@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
+		echo -e "The following command failed with the above error:\n"; \
+		echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
+		exit 1; \
+		}
 
 # generic compilation rule
-.c.o:
-ifeq (,$@)
+%.o: %.c
 ifeq (,${MAKETARGET})
 	@echo -e "Usage:"
 	@echo -e "  make potfit_[interaction]_[options]\n"
 	@echo "For more details on compiling potfit please look at the Makefile"
 	@exit
-endif
 else
-	${CC} ${CFLAGS} -c $<
+	@echo " [CC] ${@:.o=.c}"
+	@${CC} ${CFLAGS} -c $< || { \
+		echo -e "The following command failed with the above error:\n"; \
+		echo -e ${CC} ${CFLAGS} -c $<"\n"; \
+		exit 1; \
+		}
 endif
 
 # How to link
 ${MAKETARGET}: ${OBJECTS}
-	${CC} -g ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
+	@echo " [LD] $@"
+ifeq (,${BIN_DIR})
+	@${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
+else
+	@mkdir -p ${BIN_DIR}
+	@${CC} ${LFLAGS_${PARALLEL}} -o ${BIN_DIR}/$@ ${OBJECTS} ${LIBS}
+endif
 ifneq (,${STRIP})
   ifeq (,$(findstring prof,${MAKETARGET}))
     ifeq (,$(findstring debug,${MAKETARGET}))
-#	${STRIP} --strip-unneeded -R .comment $@
+      ifeq (,${BIN_DIR})
+	@${STRIP} --strip-unneeded -R .comment $@
+      else
+	@${STRIP} --strip-unneeded -R .comment ${BIN_DIR}/$@
+      endif
     endif
   endif
 endif
-ifneq (,${BIN_DIR})
-  ifneq (,${MV})
-	${MV} $@ ${BIN_DIR} && rm -f $@
-  endif
-endif
+	@echo -e "Building $@ was sucessfull."
 
 # First recursion only set the MAKETARGET Variable
 .DEFAULT:
 ifneq (,${CC})
-	${MAKE} MAKETARGET='$@' STAGE2
+	@${MAKE} --no-print-directory MAKETARGET='$@' STAGE2
 else
 	@echo "There is no compiler defined for this option."
 	@echo -e "Please adjust the Makefile.\n"
 	@exit
 endif
 
-potfit:
-	@echo -e "\nError:\tYou cannot compile potfit without any options."
-	@echo -e "\tAt least an interaction is required.\n"
 
 # Second recursion sets MAKETARGET variable and compiles
 # An empty MAKETARGET variable would create an infinite recursion, so we check
@@ -799,12 +861,15 @@ ifneq (,${ERROR})
 	@echo -e "\nError: ${ERROR}\n"
 else
 ifneq (,${MAKETARGET})
+ifneq (,${WARNING})
 	@echo "${WARNING}"
-	${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
+endif
+	@${MAKE} MAKETARGET='${MAKETARGET}' ${MAKETARGET}
 else
 	@echo 'No TARGET specified.'
 endif
 endif
+
 ###########################################################################
 #
 #	 Misc. TARGETs

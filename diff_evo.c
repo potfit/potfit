@@ -189,15 +189,19 @@ void opposite_check(double **P, double *costP, int init)
 
 void diff_evo(double *xi)
 {
-  int   a, b, c;		/* store randomly picked numbers */
-/*  int   d, e; 			|+ enable this line for more vectors +|*/
+  int   a, b;			/* store randomly picked numbers */
+//  int 	c; 			/* additional vector */
+//  int 	d; 			/* additional vector */
+//  int 	e; 			/* additional vector */
   int   i, j, k;		/* counters */
   int   count = 0;		/* counter for loops */
+#if defined(APOT)
   int   jsteps = 0;
+  double jumprate = JR;
+#endif /* APOT */
   double avg = 0.0;		/* average sum of squares for all configurations */
   double crit = 1000.0;		/* treshold for stopping criterion */
   double force = 0.0;		/* holds the current sum of squares */
-  double jumprate = JR;
   double min = 10e10;		/* current minimum for all configurations */
   double max = 0.0;		/* current maximum for all configurations */
   double temp = 0.0;		/* temp storage */
@@ -225,7 +229,7 @@ void diff_evo(double *xi)
   /* allocate memory for all configurations */
   x1 = (double **)malloc(NP * sizeof(double *));
   x2 = (double **)malloc(NP * sizeof(double *));
-  best = (double *)malloc(NP * sizeof(double));
+  best = (double *)malloc(D * sizeof(double));
   cost = (double *)malloc(NP * sizeof(double));
   if (x1 == NULL || x2 == NULL || trial == NULL || cost == NULL || best == NULL)
     error(1, "Could not allocate memory for population vector!\n");
