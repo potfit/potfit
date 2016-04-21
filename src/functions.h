@@ -4,136 +4,73 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
- *	Institute for Theoretical and Applied Physics
- *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://potfit.sourceforge.net/
+ * Copyright 2002-2016 - the potfit development team
+ *
+ * http://potfit.sourceforge.net/
  *
  ****************************************************************
  *
- *   This file is part of potfit.
+ * This file is part of potfit.
  *
- *   potfit is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   potfit is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
 
-#ifdef APOT
+#ifndef FUNCTIONS_H_INCLUDED
+#define FUNCTIONS_H_INCLUDED
 
-#ifndef FUNCTIONS_H
-#define FUNCTIONS_H
+#if defined(APOT)
 
-/* actual functions for different potentials */
+/****************************************************************
+  actual functions for different potentials
+****************************************************************/
 
-void  lj_value(double, double *, double *);
-void  eopp_value(double, double *, double *);
-void  morse_value(double, double *, double *);
-void  ms_value(double, double *, double *);
-void  buck_value(double, double *, double *);
-void  softshell_value(double, double *, double *);
-void  eopp_exp_value(double, double *, double *);
-void  meopp_value(double, double *, double *);
-void  power_value(double, double *, double *);
-void  power_decay_value(double, double *, double *);
-void  exp_decay_value(double, double *, double *);
-void  bjs_value(double, double *, double *);
-void  parabola_value(double, double *, double *);
-void  csw_value(double, double *, double *);
-void  universal_value(double, double *, double *);
-void  const_value(double, double *, double *);
-void  sqrt_value(double, double *, double *);
-void  mexp_decay_value(double, double *, double *);
-void  strmm_value(double, double *, double *);
-void  double_morse_value(double, double *, double *);
-void  double_exp_value(double, double *, double *);
-void  poly_5_value(double, double *, double *);
-void  kawamura_value(double, double *, double *);
-void  kawamura_mix_value(double, double *, double *);
-void  exp_plus_value(double, double *, double *);
-void  mishin_value(double, double *, double *);
-void  gen_lj_value(double, double *, double *);
-void  gljm_value(double, double *, double *);
-void  vas_value(double, double *, double *);
-void  vpair_value(double, double *, double *);
-void  csw2_value(double, double *, double *);
-void  sheng_phi1_value(double, double *, double *);
-void  sheng_phi2_value(double, double *, double *);
-void  sheng_rho_value(double, double *, double *);
-void  sheng_F_value(double, double *, double *);
+#define FUNCTION(name, npar) \
+  void name##_value(const double r, const double* params, double* fvalue)
 
-#ifdef STIWEB
-void  stiweb_2_value(double, double *, double *);
-void  stiweb_3_value(double, double *, double *);
-void  lambda_value(double, double *, double *);
-#endif /* STIWEB */
+#include "functions.itm"
 
-#ifdef TERSOFF
-#ifndef TERSOFFMOD
-void  tersoff_pot_value(double, double *, double *);
-void  tersoff_mix_value(double, double *, double *);
-#else
-void  tersoff_mod_pot_value(double, double *, double *);
-#endif /* !TERSOFFMOD */
-#endif /* TERSOFF */
+#undef FUNCTION
 
-/* template for new potential function called newpot */
+// functions for analytic potential initialization
+void initialize_analytic_potentials(void);
+void add_potential(const char* name, int npar, fvalue_pointer function);
+int apot_get_num_parameters(const char* potential_name);
+int apot_assign_function_pointers(apot_table_t* apot_table);
+void check_correct_apot_functions(void);
 
-/* "newpot" potential */
-void  newpot_value(double, double *, double *);
+// functions for analytic potential evaluation
+int apot_check_params(double* params);
+double apot_cutoff(const double r, const double r0, const double h);
+double apot_gradient(const double r, const double* params, fvalue_pointer func);
+double apot_punish(double*, double*);
 
-/* end of template */
+#if defined(DEBUG)
+void debug_apot();
+#endif  // DEBUG
 
-/* functions for analytic potential initialization */
-void  apot_init(void);
-void  add_potential(const char *, int, fvalue_pointer);
-int   apot_assign_functions(apot_table_t *);
-int   apot_check_params(double *);
-int   apot_parameters(char *);
-void  check_apot_functions(void);
-double apot_grad(double, double *, void (*function) (double, double *, double *));
-double apot_punish(double *, double *);
-double cutoff(double, double, double);
-
-#ifdef DEBUG
-void  debug_apot();
-#endif /* DEBUG */
-
-/* chemical potential [chempot.c] */
-#ifdef PAIR
-int   swap_chem_pot(int, int);
-int   sort_chem_pot_2d(void);
-double chemical_potential(int, int *, double *);
-double chemical_potential_1d(int *, double *);
-double chemical_potential_2d(int *, double *);
-double chemical_potential_3d(int *, double *, int);
-void  init_chemical_potential(int);
-#endif /* PAIR */
-
-/* functions for electrostatic calculations  */
-#ifdef COULOMB
-void  ms_init(double, double *, double *, double *);
-void  buck_init(double, double *, double *, double *);
-void  ms_shift(double, double *, double *);
-void  buck_shift(double, double *, double *);
-void  elstat_value(double, double, double *, double *, double *);
-void  elstat_shift(double, double, double *, double *, double *);
-void  init_tails(double);
-#endif /* COULOMB */
-#ifdef DIPOLE
+// special functions for electrostatic calculations
+#if defined(COULOMB)
+void elstat_value(double, double, double*, double*, double*);
+void elstat_shift(double, double, double*, double*, double*);
+void init_tails(double);
+#endif  // COULOMB
+#if defined(DIPOLE)
 double shortrange_value(double, double, double, double);
-void  shortrange_term(double, double, double, double *, double *);
-#endif /* DIPOLE */
+void shortrange_term(double, double, double, double*, double*);
+#endif  // DIPOLE
 
-#endif /* FUNCTIONS_H */
+#endif  // APOT
 
-#endif /* APOT */
+#endif  // FUNCTIONS_H_INCLUDED
