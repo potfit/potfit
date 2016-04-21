@@ -4,49 +4,34 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
- *	Institute for Theoretical and Applied Physics
- *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://potfit.sourceforge.net/
+ * Copyright 2002-2016 - the potfit development team
+ *
+ * http://potfit.sourceforge.net/
  *
  ****************************************************************
  *
- *   This file is part of potfit.
+ * This file is part of potfit.
  *
- *   potfit is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   potfit is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
 
-#ifndef ELEMENTS_H
-#define ELEMENTS_H
+#ifndef ELEMENTS_H_INCLUDED
+#define ELEMENTS_H_INCLUDED
 
-typedef struct {
-  char  name[20];
-  char  short_name[20];
-  double mass;
-} element_t;
-
-/* initialize periodic table of elements */
-void  init_elements();
-
-/* get mass from number */
 double ele_mass_from_number(int num);
+double ele_mass_from_name(const char* name);
+int ele_number_from_name(const char* name);
 
-/* get mass from name */
-double ele_mass_from_name(char *name);
-
-/* get number from name */
-int   ele_number_from_name(char *name);
-
-#endif /* ELEMENTS_H */
+#endif  // ELEMENTS_H_INCLUDED

@@ -24,23 +24,23 @@
 /* neighborlist struct */
 typedef struct
 {
-   int iteratorId;
-   int* NNeighbors;
-   int* neighborList;
-   double* RijList;
-	 int* BeginIdx;       /* The position of first neighbor of each atom in 
-	 									     * the neighbor list */
+  int iteratorId;
+  int* NNeighbors;
+  int* neighborList;
+  double* RijList;
+  int* BeginIdx;       /* The position of first neighbor of each atom in 
+			* the neighbor list */
 } NeighObjectType;
 
 /* sturct of all free parameters of data type `double' */
 typedef struct
 {
   char** name;
- 	double** value;       /* the pointers to parameters */
+  double** value;       /* the pointers to parameters */
   int* rank;
-	int** shape;
-	int Nparam;				    /* number of free parameters */
-	double** nestedvalue; /* nest all values(pointers) of optimizable parameters
+  int** shape;
+  int Nparam;				    /* number of free parameters */
+  double** nestedvalue; /* nest all values(pointers) of optimizable parameters
                          * into this long list */
   int Nnestedvalue;     /* the length of nestedvalue */
 } FreeParamType;
@@ -120,7 +120,7 @@ int get_neigh(void* kimmdl, int* mode, int *request, int* part,
               int* numnei, int** nei1part, double** Rij);					
 
 /* called in `potential_input.c' */
-int read_potential_keyword(pot_table_t* pt, char* filename, FILE* infile);
+int read_potential_keyword(apot_state* pstate);
 
 /* called in `potential_input.c' and by `read_potential_keyword' */
 int write_temporary_descriptor_file(char* modelname);
@@ -138,19 +138,12 @@ int publish_cutoff(void* pkim, double cutoff);
 
 /* called in `force_kim.c' */
 int calc_force_KIM(void* pkim, double** energy, double** force, double** virial,
-							int useforce, int usestress);
+		   int useforce, int usestress);
 
 int publish_param(void* pkim, FreeParamType* FreeParam, double* PotTable);
 
-/* used in potential.c */
-#ifndef NOLIMITS
-void read_pot_table5_no_nolimits(pot_table_t *pt, apot_table_t *apt, char *filename, FILE *infile);
-#else
-void read_pot_table5_with_nolimits(pot_table_t *pt, int size, char *filename, FILE *infile);
-#endif
-
 /* assigned to function pointer `write_pot_table' in `potfit.c' */
-void write_pot_table5(pot_table_t *pt, char *filename);
+void write_pot_table5(char const *filename);
 
 /* set compute flags and get NBC method, called in `potential_input.c' */
 void get_compute_const(void* pkim); 

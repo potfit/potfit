@@ -1,0 +1,79 @@
+/****************************************************************
+ *
+ * functions.itm: potfit analytic functions list
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2016 - the potfit development team
+ *
+ * http://potfit.sourceforge.net/
+ *
+ ****************************************************************
+ *
+ * This file is part of potfit.
+ *
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
+
+FUNCTION(lj, 2);
+FUNCTION(eopp, 6);
+FUNCTION(morse, 3);
+FUNCTION(ms, 3);
+FUNCTION(buck, 3);
+FUNCTION(softshell, 2);
+FUNCTION(eopp_exp, 6);
+FUNCTION(meopp, 7);
+FUNCTION(power, 2);
+FUNCTION(power_decay, 2);
+FUNCTION(exp_decay, 2);
+FUNCTION(bjs, 3);
+FUNCTION(parabola, 3);
+FUNCTION(csw, 4);
+FUNCTION(universal, 4);
+FUNCTION(const, 1);
+FUNCTION(sqrt, 2);
+FUNCTION(mexp_decay, 3);
+FUNCTION(strmm, 5);
+FUNCTION(double_morse, 7);
+FUNCTION(double_exp, 5);
+FUNCTION(poly_5, 5);
+FUNCTION(kawamura, 9);
+FUNCTION(kawamura_mix, 12);
+FUNCTION(exp_plus, 3);
+FUNCTION(mishin, 6);
+FUNCTION(gen_lj, 5);
+FUNCTION(gljm, 12);
+FUNCTION(vas, 2);
+FUNCTION(vpair, 7);
+FUNCTION(csw2, 4);
+FUNCTION(sheng_phi1, 5);
+FUNCTION(sheng_phi2, 4);
+FUNCTION(sheng_rho, 5);
+FUNCTION(sheng_F, 4);
+
+#if defined(STIWEB)
+FUNCTION(stiweb_2, 6);
+FUNCTION(stiweb_3, 2);
+FUNCTION(lambda, (int)(0.5 * g_param.ntypes * g_param.ntypes * (g_param.ntypes + 1)));
+#endif  // STIWEB
+
+#if defined(TERSOFF)
+#if !defined(TERSOFFMOD)
+FUNCTION(tersoff_pot, 11);
+FUNCTION(tersoff_mix, 2);
+#else
+FUNCTION(tersoff_mod_pot, 16);
+#endif  // !TERSOFFMOD
+#endif  // TERSOFF
