@@ -1296,17 +1296,19 @@ void write_pair_distribution_file()
         int col = g_config.atoms[i].neigh[j].col[0];
 
         if (col == k) {
-          pos = (int)(g_config.atoms[i].neigh[j].r / pair_dist[k]);
+          if (g_config.atoms[i].neigh[j].r < g_pot.calc_pot.end[k]) {
+            pos = (int)(g_config.atoms[i].neigh[j].r / pair_dist[k]);
 #if defined(DEBUG)
-          if (g_config.atoms[i].neigh[j].r <= 1) {
-            warning("Short distance (%f) found.\n",
-                    g_config.atoms[i].neigh[j].r);
-            warning("\tatom=%d neighbor=%d\n", i, j);
-          }
+            if (g_config.atoms[i].neigh[j].r <= 1) {
+              warning("Short distance (%f) found.\n",
+                      g_config.atoms[i].neigh[j].r);
+              warning("\tatom=%d neighbor=%d\n", i, j);
+            }
 #endif  // DEBUG
-          pair_table[k * pair_steps + pos]++;
-          if ((int)pair_table[k * pair_steps + pos] > max_count)
-            max_count = (int)pair_table[k * pair_steps + pos];
+            pair_table[k * pair_steps + pos]++;
+            if ((int)pair_table[k * pair_steps + pos] > max_count)
+              max_count = (int)pair_table[k * pair_steps + pos];
+          }
         }
       }
     }
