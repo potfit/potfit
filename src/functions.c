@@ -290,7 +290,7 @@ int apot_check_params(double* params)
 double apot_cutoff(const double r, const double r0, const double h)
 {
   if ((r - r0) >= 0)
-    return 0;
+    return 0.0;
 
   double val = (r - r0) / h;
   val *= val;
@@ -323,23 +323,23 @@ double apot_gradient(const double r, const double* p, fvalue_pointer func)
 
 double apot_punish(double* params, double* forces)
 {
-  double x = 0.0;
   double tmpsum = 0.0;
-  double min = 0.0;
-  double max = 0.0;
-  ;
 
   // loop over individual parameters
   for (int i = 0; i < g_calc.ndim; i++) {
-    min = g_pot.apot_table
-              .pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
-    max = g_pot.apot_table
-              .pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
+    double min =
+        g_pot.apot_table
+            .pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
+    double max =
+        g_pot.apot_table
+            .pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
     // punishment for out of bounds
-    if ((params[g_pot.opt_pot.idx[i]] - min) < 0) {
+    if (params[g_pot.opt_pot.idx[i]] < min) {
+      double x = params[g_pot.opt_pot.idx[i]] - min;
       tmpsum += APOT_PUNISH * x * x;
       forces[g_calc.punish_par_p + i] = APOT_PUNISH * x * x;
-    } else if ((params[g_pot.opt_pot.idx[i]] - max) > 0) {
+    } else if (params[g_pot.opt_pot.idx[i]] > max) {
+      double x = params[g_pot.opt_pot.idx[i]] - max;
       tmpsum += APOT_PUNISH * x * x;
       forces[g_calc.punish_par_p + i] = APOT_PUNISH * x * x;
     }
@@ -350,8 +350,9 @@ double apot_punish(double* params, double* forces)
   // loop over potentials
   for (int i = 0; i < g_pot.apot_table.number; i++) {
     // punish eta_1 < eta_2 for eopp function
-    if (strcmp(g_pot.apot_table.names[i], "eopp") == 0) {
-      if ((params[j + 1] - params[j + 3]) < 0) {
+    if (strncmp(g_pot.apot_table.names[i], "eopp", 4) == 0) {
+      double x = params[j + 1] - params[j + 3];
+      if (x < 0) {
         forces[g_calc.punish_pot_p + i] =
             g_param.apot_punish_value * (1 + x) * (1 + x);
         tmpsum += g_param.apot_punish_value * (1 + x) * (1 + x);
@@ -359,8 +360,9 @@ double apot_punish(double* params, double* forces)
     }
 #if defined EAM || defined ADP || defined MEAM
     // punish m=n for universal embedding function
-    if (strcmp(g_pot.apot_table.names[i], "universal") == 0) {
-      if (fabs(params[j + 2] - params[j + 1]) < 1e-6) {
+    if (strncmp(g_pot.apot_table.names[i], "universal", 9) == 0) {
+      double x = fabs(params[j + 2] - params[j + 1]);
+      if (x < 1e-6) {
         forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value / (x * x);
         tmpsum += g_param.apot_punish_value / (x * x);
       }
