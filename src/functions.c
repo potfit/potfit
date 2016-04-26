@@ -394,13 +394,13 @@ void elstat_value(double r, double dp_kappa, double* ftail, double* gtail,
   x[3] = exp(-x[0] * x[1]);
 
   *ftail = DP_EPS * erfc(dp_kappa * r) / r;
-  *gtail = -(*ftail + x[2] * x[3]) / x[0];
-  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];
+  *gtail = -(*ftail + x[2] * x[3]) / x[0];                  /* 1/r df/dr */
+  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];   /* 1/r dg/dr */
 }
 
 /****************************************************************
   elstat_shift
-    shifted tail of coloumb potential
+    shifted tail of coulomb potential
 ****************************************************************/
 
 void elstat_shift(double r, double dp_kappa, double* fnval_tail,
@@ -426,6 +426,38 @@ void elstat_shift(double r, double dp_kappa, double* fnval_tail,
 #endif  // DIPOLE
 }
 
+/***************************************************************
+ *
+ * damped shifted force Coulomb potential
+ * http://dx.doi.org/10.1063/1.2206581
+ *
+ ****************************************************************/
+
+#if defined(DSF)
+void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
+		double *grad_tail, double *ggrad_tail)
+{
+  static double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
+  static double x[3];
+
+  x[0] = r * r;
+  x[1] = g_config.dp_cut * g_config.dp_cut;
+  x[2] = x[0] - x[1];
+
+  elstat_value(r, dp_kappa, &ftail, &gtail, &ggtail);
+  elstat_value(g_config.dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
+
+  *fnval_tail = ftail - ftail_cut - (r - g_config.dp_cut) * gtail_cut*g_config.dp_cut ;
+  *grad_tail = gtail - gtail_cut * g_config.dp_cut / r ;      /*  1/r dV/r */
+  *ggrad_tail = 0.0;
+#ifdef DIPOLE
+  *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
+  *grad_tail -= x[2] * ggtail_cut / 2;
+  *ggrad_tail = ggtail - ggtail_cut;
+#endif /* DIPOLE */
+}
+#endif //DSF
+
 /****************************************************************
   init_tails
     calculate tail of coulomb-potential and its first derivative
@@ -435,10 +467,17 @@ void init_tails(double dp_kappa)
 {
   for (int i = 0; i < g_config.natoms; i++) {
     for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
+#if defined(DSF)
+      elstat_dsf(g_config.atoms[i].neigh[j].r, dp_kappa,
+                   &g_config.atoms[i].neigh[j].fnval_el,
+                   &g_config.atoms[i].neigh[j].grad_el,
+                   &g_config.atoms[i].neigh[j].ggrad_el);
+#else
       elstat_shift(g_config.atoms[i].neigh[j].r, dp_kappa,
                    &g_config.atoms[i].neigh[j].fnval_el,
                    &g_config.atoms[i].neigh[j].grad_el,
                    &g_config.atoms[i].neigh[j].ggrad_el);
+#endif //DSF
     }
   }
 }
