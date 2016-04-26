@@ -33,6 +33,10 @@
 #include "memory.h"
 #include "utils.h"
 
+// eopp = 0
+// universal = 1
+#define NUM_PUNISH_FUNCTIONS 2
+
 /****************************************************************
   function table
     stores all available analytic potentials
@@ -43,6 +47,7 @@ struct {
   int* num_params;         // number of parameters
   fvalue_pointer* fvalue;  // function pointer
   int num_functions;       // number of analytic function prototypes
+  int** punish_index;      // array to index which functions may be punished
 } function_table;
 
 /****************************************************************
@@ -57,6 +62,10 @@ void initialize_analytic_potentials(void)
 #include "functions.itm"
 
 #undef FUNCTION
+  function_table.punish_index =
+      (int**)Malloc(NUM_PUNISH_FUNCTIONS * sizeof(int*));
+  for (int i = 0; i < NUM_PUNISH_FUNCTIONS; ++i)
+    function_table.punish_index[i] = (int*)Malloc(sizeof(int));
 }
 
 /****************************************************************
@@ -118,6 +127,7 @@ int apot_assign_function_pointers(apot_table_t* apt)
     for (int j = 0; j < function_table.num_functions; j++) {
       if (strcmp(apt->names[i], function_table.name[j]) == 0) {
         apt->fvalue[i] = function_table.fvalue[j];
+        apot_assign_punish_functions(apt->names[i], i);
         break;
       }
       if (j == function_table.num_functions - 1)
@@ -126,6 +136,29 @@ int apot_assign_function_pointers(apot_table_t* apt)
   }
 
   return 0;
+}
+
+/****************************************************************
+  apot_assign_punish_functions
+    assign function punishment indices
+****************************************************************/
+
+void apot_assign_punish_functions(char const* name, int index)
+{
+  // eopp is index 0
+  if (strncmp(name, "eopp", 4) == 0) {
+    int num_pot = ++function_table.punish_index[0][0];
+    function_table.punish_index[0] =
+        (int*)Realloc(function_table.punish_index[0], num_pot + 1);
+    function_table.punish_index[0][num_pot] = index;
+  } else
+      // universal is index 1
+      if (strncmp(name, "universal", 9) == 0) {
+    int num_pot = ++function_table.punish_index[1][0];
+    function_table.punish_index[1] =
+        (int*)Realloc(function_table.punish_index[1], num_pot + 1);
+    function_table.punish_index[1][num_pot] = index;
+  }
 }
 
 /****************************************************************
@@ -345,32 +378,28 @@ double apot_punish(double* params, double* forces)
     }
   }
 
-  int j = 2;
-
-  // loop over potentials
-  for (int i = 0; i < g_pot.apot_table.number; i++) {
-    // punish eta_1 < eta_2 for eopp function
-    if (strncmp(g_pot.apot_table.names[i], "eopp", 4) == 0) {
-      double x = params[j + 1] - params[j + 3];
-      if (x < 0) {
-        forces[g_calc.punish_pot_p + i] =
-            g_param.apot_punish_value * (1 + x) * (1 + x);
-        tmpsum += g_param.apot_punish_value * (1 + x) * (1 + x);
-      }
+  // eopp (index 0)
+  // punish eta_1 < eta_2 for eopp function
+  for (int i = 1; i <= function_table.punish_index[0][0]; ++i) {
+    int idx = g_pot.opt_pot.first[function_table.punish_index[0][i]];
+    double x = params[idx + 1] - params[idx + 3];
+    if (x < 0) {
+      forces[g_calc.punish_pot_p + function_table.punish_index[0][i]] =
+          g_param.apot_punish_value * (1 + x) * (1 + x);
+      tmpsum += g_param.apot_punish_value * (1 + x) * (1 + x);
     }
-#if defined EAM || defined ADP || defined MEAM
-    // punish m=n for universal embedding function
-    if (strncmp(g_pot.apot_table.names[i], "universal", 9) == 0) {
-      double x = fabs(params[j + 2] - params[j + 1]);
-      if (x < 1e-6) {
-        forces[g_calc.punish_pot_p + i] = g_param.apot_punish_value / (x * x);
-        tmpsum += g_param.apot_punish_value / (x * x);
-      }
-    }
-#endif  // EAM
+  }
 
-    // jump to next potential
-    j += 2 + g_pot.apot_table.n_par[i];
+  // universal (index 1)
+  // punish m=n for universal embedding function
+  for (int i = 1; i <= function_table.punish_index[1][0]; ++i) {
+    int idx = g_pot.opt_pot.first[function_table.punish_index[1][i]];
+    double x = fabs(params[idx + 2] - params[idx + 1]);
+    if (x < 1e-6) {
+      forces[g_calc.punish_pot_p + function_table.punish_index[1][i]] =
+          g_param.apot_punish_value / (x * x);
+      tmpsum += g_param.apot_punish_value / (x * x);
+    }
   }
 
   return tmpsum;
@@ -394,8 +423,8 @@ void elstat_value(double r, double dp_kappa, double* ftail, double* gtail,
   x[3] = exp(-x[0] * x[1]);
 
   *ftail = DP_EPS * erfc(dp_kappa * r) / r;
-  *gtail = -(*ftail + x[2] * x[3]) / x[0];                  /* 1/r df/dr */
-  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0];   /* 1/r dg/dr */
+  *gtail = -(*ftail + x[2] * x[3]) / x[0];                /* 1/r df/dr */
+  *ggtail = (2 * x[1] * x[2] * x[3] - *gtail * 3) / x[0]; /* 1/r dg/dr */
 }
 
 /****************************************************************
@@ -434,8 +463,8 @@ void elstat_shift(double r, double dp_kappa, double* fnval_tail,
  ****************************************************************/
 
 #if defined(DSF)
-void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
-		double *grad_tail, double *ggrad_tail)
+void elstat_dsf(double r, double dp_kappa, double* fnval_tail,
+                double* grad_tail, double* ggrad_tail)
 {
   static double ftail, gtail, ggtail, ftail_cut, gtail_cut, ggtail_cut;
   static double x[3];
@@ -447,8 +476,9 @@ void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
   elstat_value(r, dp_kappa, &ftail, &gtail, &ggtail);
   elstat_value(g_config.dp_cut, dp_kappa, &ftail_cut, &gtail_cut, &ggtail_cut);
 
-  *fnval_tail = ftail - ftail_cut - (r - g_config.dp_cut) * gtail_cut*g_config.dp_cut ;
-  *grad_tail = gtail - gtail_cut * g_config.dp_cut / r ;      /*  1/r dV/r */
+  *fnval_tail =
+      ftail - ftail_cut - (r - g_config.dp_cut) * gtail_cut * g_config.dp_cut;
+  *grad_tail = gtail - gtail_cut * g_config.dp_cut / r; /*  1/r dV/r */
   *ggrad_tail = 0.0;
 #ifdef DIPOLE
   *fnval_tail -= x[2] * x[2] * ggtail_cut / 8;
@@ -456,7 +486,7 @@ void elstat_dsf(double r, double dp_kappa, double *fnval_tail,
   *ggrad_tail = ggtail - ggtail_cut;
 #endif /* DIPOLE */
 }
-#endif //DSF
+#endif  // DSF
 
 /****************************************************************
   init_tails
@@ -469,15 +499,15 @@ void init_tails(double dp_kappa)
     for (int j = 0; j < g_config.atoms[i].num_neigh; j++) {
 #if defined(DSF)
       elstat_dsf(g_config.atoms[i].neigh[j].r, dp_kappa,
-                   &g_config.atoms[i].neigh[j].fnval_el,
-                   &g_config.atoms[i].neigh[j].grad_el,
-                   &g_config.atoms[i].neigh[j].ggrad_el);
+                 &g_config.atoms[i].neigh[j].fnval_el,
+                 &g_config.atoms[i].neigh[j].grad_el,
+                 &g_config.atoms[i].neigh[j].ggrad_el);
 #else
       elstat_shift(g_config.atoms[i].neigh[j].r, dp_kappa,
                    &g_config.atoms[i].neigh[j].fnval_el,
                    &g_config.atoms[i].neigh[j].grad_el,
                    &g_config.atoms[i].neigh[j].ggrad_el);
-#endif //DSF
+#endif  // DSF
     }
   }
 }
