@@ -249,6 +249,9 @@ ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
   endif
   CFLAGS  += -DCOULOMB
   INTERACTION = 1
+  ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
+    CFLAGS  += -DDSF
+  endif
 endif
 
 # DIPOLE
@@ -431,6 +434,8 @@ endif
 # How to link
 ${MAKETARGET}: ${OBJECTS}
 	@echo " [LD] $@"
+	@echo -e "\nCompiled with options"
+	@echo -e "CC=${CC} \nCFLAGS=${CFLAGS} \nLIBS=${LIBS}\n"
 ifeq (,${BIN_DIR})
 	@${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
 else
