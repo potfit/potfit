@@ -64,6 +64,9 @@ void debug_apot();
 #if defined(COULOMB)
 void elstat_value(double, double, double*, double*, double*);
 void elstat_shift(double, double, double*, double*, double*);
+#if defined(DSF)
+void elstat_dsf(double, double, double*, double*, double*);
+#endif
 void init_tails(double);
 #endif  // COULOMB
 #if defined(DIPOLE)
