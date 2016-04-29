@@ -249,14 +249,20 @@ ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
   endif
   CFLAGS  += -DCOULOMB
   INTERACTION = 1
+  ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
+    CFLAGS  += -DDSF
+  endif
 endif
 
 # DIPOLE
 ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
   ifeq (,$(strip $(findstring eam,${MAKETARGET})))
     ifneq (,$(findstring 1,${INTERACTION}))
-      ERROR += More than one potential model specified
+      ERROR += More than one potential model specified\n
     endif
+  endif
+  ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
+      ERROR += DIPOLE and DSF are not currently compatible
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += DIPOLE does not support tabulated potentials
@@ -431,6 +437,8 @@ endif
 # How to link
 ${MAKETARGET}: ${OBJECTS}
 	@echo " [LD] $@"
+	@echo -e "\nCompiled with options"
+	@echo -e "CC=${CC} \nCFLAGS=${CFLAGS} \nLIBS=${LIBS}\n"
 ifeq (,${BIN_DIR})
 	@${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
 else

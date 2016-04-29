@@ -512,6 +512,15 @@ void calculate_cutoffs()
   }
 #endif  // EAM || ADP || MEAM
 
+#if defined(COULOMB)
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      g_config.rcut[i * n + j] =
+          MAX(g_config.rcut[i * n + j], g_config.dp_cut);
+    }
+  }
+#endif  // COULOMB
+
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       g_config.rcutmin = MIN(g_config.rcutmin, g_config.rcut[i + n * j]);

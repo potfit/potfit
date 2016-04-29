@@ -48,6 +48,7 @@ void initialize_analytic_potentials(void);
 void add_potential(const char* name, int npar, fvalue_pointer function);
 int apot_get_num_parameters(const char* potential_name);
 int apot_assign_function_pointers(apot_table_t* apot_table);
+void apot_assign_punish_functions(char const* name, int index);
 void check_correct_apot_functions(void);
 
 // functions for analytic potential evaluation
@@ -64,6 +65,9 @@ void debug_apot();
 #if defined(COULOMB)
 void elstat_value(double, double, double*, double*, double*);
 void elstat_shift(double, double, double*, double*, double*);
+#if defined(DSF)
+void elstat_dsf(double, double, double*, double*, double*);
+#endif
 void init_tails(double);
 #endif  // COULOMB
 #if defined(DIPOLE)
