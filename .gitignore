@@ -1,0 +1,15 @@
+*.o
+*.swp
+*~
+version.h
+tags
+cscope.out
+potfit_*
+*.pyc
+.DS_Store
+kim.log
+*descriptor.kim
+*.tmp
+dummy*
+out*
+examples/openkim/*
