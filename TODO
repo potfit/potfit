@@ -1,0 +1,1 @@
+1. potential_output.c: delete include 'kim.h'; change kim global varialbes into g_kim.name.

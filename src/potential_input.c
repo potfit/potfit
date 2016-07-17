@@ -35,11 +35,9 @@
 #include "potential_input.h"
 #include "utils.h"
 
-/*added */
 #if defined(KIM)
 #include "kim.h"
 #endif
-/*added ends*/
 
 void read_pot_line_F(char const* pbuf, potential_state* pstate);
 void read_pot_line_T(char const* pbuf, potential_state* pstate);
@@ -53,7 +51,11 @@ void calculate_cutoffs();
 void read_maxch_file();
 
 #if defined(APOT)
+#if !defined(KIM)
 void read_pot_table0(char const* potential_filename, FILE* pfile);
+#else // KIM
+void read_pot_table5(char const* potential_filename, FILE* pfile);
+#endif // KIM
 #else
 void read_pot_table3(char const* potential_filename, FILE* pfile,
                      potential_state* pstate);
@@ -141,7 +143,9 @@ void read_pot_table(char const* potential_filename)
             __LINE__);
     case POTENTIAL_FORMAT_ANALYTIC:
 #if defined(APOT)
+#if !defined(KIM)
       read_pot_table0(potential_filename, pfile);
+#endif  // KIM 
 #endif  // APOT
       break;
     case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
@@ -156,11 +160,7 @@ void read_pot_table(char const* potential_filename)
     break;
   case POTENTIAL_FORMAT_KIM:
 #if defined(KIM)
-#if defined(NOLIMITS)
-    read_pot_table5_no_nolimits(potential_filename, pfile);
-#else  // !NOLIMITS
-    read_pot_table5_with_nolimits(potential_filename, pfile);
-#endif  // !NOLIMITS
+    read_pot_table5(potential_filename, pfile);
 #endif  // KIM
     break;
   }
@@ -208,6 +208,9 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 #endif
       g_pot.format_type = POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST;
       break;
+		case 5:
+      g_pot.format_type = POTENTIAL_FORMAT_KIM;
+      break;
     default:
       break;
   }
@@ -226,8 +229,13 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
     case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
       printf(" - Potential file format 4 (tabulated non-eqdist) detected\n");
       break;
+    case POTENTIAL_FORMAT_KIM:
+      printf(" - Potential file format 5 (KIM) detected\n");
+      break;
   }
 
+
+#if !defined(KIM)
   // only pair potentials for
   // - pair interactions
   // - coulomb interactions
@@ -270,6 +278,20 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
     error(1, "For g_param.ntypes=%d there should be %d, but there are %d.\n",
           g_param.ntypes, npots, pstate->num_pots);
   }
+
+#else // KIM
+  if(g_pot.format_type != POTENTIAL_FORMAT_KIM)
+    error(1, "To use KIM potential, format should be set to '5' in file '%s'.\n",
+              pstate->filename);
+  if(pstate->num_pots != 1) {
+    warning("The number of potentials should always be '1' when KIM potential is used.\n"
+            "You specified %d in file '%s', and it is reset to 1.\n", 
+            pstate->num_pots, pstate->filename);
+    pstate->num_pots = 1;
+  }
+  int npots = pstate->num_pots;
+#endif // !KIM
+
 
   g_pot.gradient = (int*)Malloc(npots * sizeof(int));
   g_pot.invar_pot = (int*)Malloc(npots * sizeof(int));

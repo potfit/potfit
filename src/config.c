@@ -34,11 +34,6 @@
 #include "config.h"
 #include "memory.h"
 #include "utils.h"
-/* added */ 
-#if defined(KIM)
-#include "kim.h"
-#endif   // KIM
-/* added ends */
 
 typedef struct {
   const char* filename;
@@ -189,10 +184,10 @@ void read_config(const char* filename)
 
 /* added */
 #if defined(KIM)
-    if (strcmp(NBC_method, "MI_OPBC_F") == 0 || strcmp(NBC_method, "MI_OPBC_H") == 0) {
+    if (strcmp(g_kim.NBC_method, "MI_OPBC_F") == 0 || strcmp(g_kim.NBC_method, "MI_OPBC_H") == 0) {
       /* realloc memory for box_side_len */
-      box_side_len = (double *) Realloc(box_side_len, 3 * (nconf+1) * sizeof(double));
-      if(NULL == box_side_len) 
+      g_kim.box_side_len = (double *) Realloc(g_kim.box_side_len, 3 * (g_config.nconf+1) * sizeof(double));
+      if(NULL == g_kim.box_side_len) 
         error(1, "Cannot allocate memory for box_side_len\n");
     }
 #endif  // KIM
@@ -346,35 +341,31 @@ void read_config(const char* filename)
 #endif  // STRESS
 
 #if defined(KIM)
-    if (cstate.have_elements == 0)
+    if (g_kim.num_elements == 0)
       error(1, "%s: missing elements information in configuration %d!\n", filename,
-	    g_config.nconf+1
+	    g_config.nconf+1);
 #endif // KIM
     
     g_config.volume[g_config.nconf] = make_box(&cstate);
 
 
-/* added */
 #if defined(KIM) 
-    if (strcmp(NBC_method, "MI_OPBC_F") == 0 || strcmp(NBC_method, "MI_OPBC_H") == 0) {
+    if (strcmp(g_kim.NBC_method, "MI_OPBC_F") == 0 || strcmp(g_kim.NBC_method, "MI_OPBC_H") == 0) {
       double small_value = 1e-8;
-      if(   box_x.y > small_value || box_x.z > small_value 
-	    || box_y.z > small_value || box_y.x > small_value 
-	    || box_z.x > small_value || box_z.y > small_value){
+      if(cstate.box_x.y > small_value || cstate.box_x.z > small_value 
+	    || cstate.box_y.z > small_value || cstate.box_y.x > small_value 
+	    || cstate.box_z.x > small_value || cstate.box_z.y > small_value){
         error(1,"KIM: simulation box of configuration %d is not orthogonal. Try to use 'NEIGH_RVEC' "
-	      "instead of 'MI_OPBC'.\n", nconf);
+	      "instead of 'MI_OPBC'.\n", g_config.nconf);
 	
       } else {
         /* store the box size info in box_side_len */
-        box_side_len[3*nconf + 0] = box_x.x;
-        box_side_len[3*nconf + 1] = box_y.y;
-        box_side_len[3*nconf + 2] = box_z.z;
+        g_kim.box_side_len[3*g_config.nconf + 0] = cstate.box_x.x;
+        g_kim.box_side_len[3*g_config.nconf + 1] = cstate.box_y.y;
+        g_kim.box_side_len[3*g_config.nconf + 2] = cstate.box_z.z;
       }
     }
 #endif   // KIM
-/* added ends */
-
-
     
     // read the atoms
     for (int i = 0; i < cstate.atom_count; i++) {
@@ -468,15 +459,6 @@ void read_config(const char* filename)
     error(1, "Please adjust \"ntypes\" in your parameter file.\n");
   }
 
-/* added */
-#if defined(KIM)
-  if (strcmp(NBC_method, "MI_OPBC_F") == 0 || strcmp(NBC_method, "MI_OPBC_H") == 0) {
-  	reg_for_free(box_side_len, "box side lengths");
-  }
-#endif  // KIM
-/* added ends*/
-
-
 
   /* mdim is the dimension of the force vector:
      - 3*natoms forces
@@ -539,7 +521,7 @@ void read_config(const char* filename)
   if (g_param.write_pair == 1)
     write_pair_distribution_file();
 
-#ifndef KIM
+#if !defined(KIM)
 /* assign correct distances to different tables */
 #if defined(APOT)
   double min = 10.0;
@@ -894,6 +876,9 @@ void read_chemical_elements(char* psrc, config_state* cstate)
       pchar = strtok(NULL, " \t");
       i++;
       cstate->num_fixed_elements++;
+#if defined(KIM)
+      g_kim.num_elements = cstate->num_fixed_elements;
+#endif
     }
   } else {
     while (pchar != NULL && i < g_param.ntypes) {
@@ -994,8 +979,7 @@ void init_neighbors(config_state* cstate, double* mindist)
   for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; i++) {
 
 
-/* added */
-#ifndef KIM       
+#if !defined(KIM)      
 /* loop over all atoms for threebody interactions */
 #if defined(THREEBODY)
     for (int j = g_config.natoms; j < g_config.natoms + cstate->atom_count; j++)
@@ -1005,15 +989,14 @@ void init_neighbors(config_state* cstate, double* mindist)
 
 #else  // !KIM 
       int j_start; 
-      if (is_half_neighbors == 1) {  /* half neighbor list */
+      if (g_kim.is_half_neighbors == 1) {  /* half neighbor list */
         j_start = i;
       } else {                       /* full neighbor list */
-        j_start = natoms;
+        j_start = g_config.natoms;
       }
 
-      for (j = j_start; j < natoms + count; j++) {
+      for (int j = j_start; j < g_config.natoms + cstate->atom_count; j++)
 #endif  // KIM 
-/* added ends */
 
     {
       d.x = g_config.atoms[j].pos.x - g_config.atoms[i].pos.x;
@@ -1070,7 +1053,7 @@ void init_neighbors(config_state* cstate, double* mindist)
               n->dist.x = dd.x * r;
               n->dist.y = dd.y * r;
               n->dist.z = dd.z * r;
-#ifndef KIM
+#if !defined(KIM)
 #if defined(ADP)
               n->sqrdist.xx = dd.x * dd.x * r * r;
               n->sqrdist.yy = dd.y * dd.y * r * r;
@@ -1190,6 +1173,8 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
       shift = (r - g_pot.calc_pot.xcoord[klo]) / step;
       break;
     }
+		case POTENTIAL_FORMAT_KIM:
+			break;
     case POTENTIAL_FORMAT_UNKNOWN:
       error(1, "Unknown potential format detected.\n");
   }
@@ -1212,7 +1197,7 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
 
 void init_angles(config_state* cstate)
 {
-#ifndef KIM
+#if !defined(KIM)
 // compute the angular part
 // for TERSOFF we create a full neighbor list,
 // for all other potentials only a half list

@@ -1,0 +1,13 @@
+#F 0 1
+#T PAIR
+#I 0
+#E
+
+global 1
+h	0.86	0.50	2.00
+
+type lj
+cutoff 6.0
+epsilon	0.36	0.00	1.00
+sigma	2.35	1.00	4.00
+

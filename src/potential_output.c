@@ -33,6 +33,7 @@
 #include "memory.h"
 #include "potential_output.h"
 #include "splines.h"
+#include "kim.h"
 
 #define NPLOT 1000
 
@@ -61,8 +62,10 @@ void write_pot_table_potfit(char const* filename)
     case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
       write_pot_table4(filename);
       break;
-    case POTENTIAL_FORMAT_OPENKIM:
+    case POTENTIAL_FORMAT_KIM:
+#if defined(KIM)
       write_pot_table5(filename);
+#endif 
       break;
   }
 }
@@ -470,6 +473,78 @@ void write_pot_table4(char const* filename)
   if (plot_flag)
     fclose(pfile_plot);
 }
+
+
+/****************************************************************
+ *
+ *  write potential table (format 5)
+ *
+ ****************************************************************/
+#if defined(KIM)
+void write_pot_table5(char const* filename)
+{
+  /*local variables */
+  FILE *outfile = NULL;
+  int i, j, k;
+  
+  pot_table_t* pt = &g_pot.opt_pot;
+
+  /* open file */
+  outfile = fopen(filename, "w");
+  if (NULL == outfile)
+    error(1, "Could not open file %s\n", filename);
+
+  /* write header */
+  fprintf(outfile, "#F 5 1");
+  fprintf(outfile, "\n#C");
+  for (i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
+  fprintf(outfile, "\n##");
+  for (i = 0; i < g_param.ntypes; i++)
+    for (j = i; j < g_param.ntypes; j++)
+      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
+  fprintf(outfile, "\n#E");
+
+  /* write KIM Model name */
+  fprintf(outfile, "\n\n# KIM Model name");
+  fprintf(outfile, "\ntype  %s", g_kim.kim_model_name);
+
+  /* write cutoff */
+  fprintf(outfile, "\n\n# cutoff");
+  fprintf(outfile, "\ncutoff  %18.10e", g_config.rcutmax);
+
+  /* check KIM optimizable params */
+  fprintf(outfile, "\n\n# uncomment the following line to check the optimizable "
+                   "parameters of the KIM Model");
+  fprintf(outfile, "\n#check_kim_opt_param");
+
+  /* number of opt params */
+  fprintf(outfile, "\n\n# the number of optimizable parameters that will be listed below");
+  fprintf(outfile, "\nnum_opt_param  %d", g_kim.num_opt_param);
+  
+  /* write data */
+  k = 0;
+  fprintf(outfile, "\n\n# parameters");
+  for (i = 0; i < g_kim.num_opt_param; i++) {
+    fprintf(outfile, "\n%s", g_kim.name_opt_param[i]);
+    for (j = 0; j < g_kim.size_opt_param[i]; j++) {
+      fprintf(outfile, "\n%18.10e ", pt->table[k]);
+#ifndef NOLIMITS
+      fprintf(outfile, "%18.10e %18.10e", g_pot.apot_table.pmin[0][k], g_pot.apot_table.pmax[0][k]);
+#endif
+      /* FIX parameter, 0 is the first potential (we only have 1 KIM potential)  */
+      if (g_pot.apot_table.invar_par[0][k]) { 
+        fprintf(outfile, "  FIX" );
+      }
+      k++;
+    }
+
+    fprintf(outfile, "\n");
+  }
+
+  fclose(outfile);
+}
+#endif
 
 /****************************************************************
   write plot version of potential table

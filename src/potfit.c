@@ -44,11 +44,9 @@
 #include "random.h"
 #include "utils.h"
 
-/* added */
 #if defined(KIM)
 #include "kim.h"
-#endif /* KIM */
-/* added ends */
+#endif // KIM
 
 // forward declarations of helper functions
 
@@ -63,6 +61,10 @@ potfit_filenames g_files;
 potfit_mpi_config g_mpi;
 potfit_parameters g_param;
 potfit_potentials g_pot;
+#if defined(KIM)
+potfit_kim g_kim;
+#endif // KIM
+
 
 
 /****************************************************************
@@ -169,6 +171,9 @@ int main(int argc, char** argv)
           break;
         case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
           format = 4;
+          break;
+			  case POTENTIAL_FORMAT_KIM:
+          format = 5;
           break;
       }
 

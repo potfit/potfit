@@ -145,6 +145,8 @@ ifneq (,$(strip $(findstring kim,${MAKETARGET})))
   ifeq (,$(strip $(findstring nolimits,${MAKETARGET})))
     POTFITHDR      += functions.h
     POTFITSRC      += functions.c
+    POTFITSRC      += functions_impl.c
+    POTFITHDR      += chempot.h
     POTFITSRC      += chempot.c
   endif
 else # kim
@@ -213,7 +215,6 @@ else # kim
   endif
 
 endif #kim 
-# added ends
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
   POTFITSRC      += diff_evo.c
@@ -408,7 +409,7 @@ CFLAGS += -DRESCALE
 endif
 
 
-# added    to enable KIM and NOLIMITS in the preprocessor
+# added  to enable KIM and NOLIMITS in the preprocessor
 ifneq (,$(findstring kim,${MAKETARGET}))
   CFLAGS += -DKIM
   ifneq (,$(findstring nolimits,${MAKETARGET}))
@@ -490,7 +491,7 @@ ifeq (,${MAKETARGET})
 	@exit
 else
 	@echo " [CC] ${@:.o=.c}"
-	@${CC} ${CFLAGS} -c $< || { \
+	@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
 		echo -e "The following command failed with the above error:\n"; \
 		echo -e ${CC} ${CFLAGS} -c $<"\n"; \
 		exit 1; \
@@ -553,6 +554,7 @@ endif
 
 clean:
 	@rm -f *.o *.u *~ \#* *.V *.T *.O *.il
+	${MAKE} -C ../geodesicLMv1.1/geodesicLM clean
 
 distclean:
 	@rm -f *.o *.u *~ \#* *.V *.T *.O *.il
