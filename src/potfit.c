@@ -146,6 +146,10 @@ int main(int argc, char** argv)
       printf("\nOptimization disabled. Calculating errors.\n\n");
     }
 
+
+printf("flag1 after minimization\n");
+fflush(stdout);
+
     time(&end_time);
 
 #if defined(APOT) || defined(KIM)
@@ -181,6 +185,7 @@ int main(int argc, char** argv)
              g_files.endpot);
     }
 
+#if !defined(KIM)
     if (g_param.writeimd == 1)
       write_pot_table_imd(g_files.imdpot);
 
@@ -189,6 +194,7 @@ int main(int argc, char** argv)
 
     if (g_param.write_lammps == 1)
       write_pot_table_lammps();
+#endif // !KIM
 
 // will not work with MPI
 #if defined(PDIST) && !defined(MPI)

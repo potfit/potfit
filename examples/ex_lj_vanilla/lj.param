@@ -1,22 +1,24 @@
 ntypes		1
+
+# file names
 config		sys_c.force
 startpot	lj.pot
 endpot		lj_end.pot
 tempfile	dummy.tmp
 
-imdpot		dummy.imd
-plotfile	dummy.plot
 flagfile	STOP
 
+# optional writting
+plotfile	dummy.plot
+imdpot		dummy.imd
 write_pair	1
 write_lammps	1
 
 imdpotsteps	5000
-output_prefix	dummy
+output_prefix out
 
 opt		1
 anneal_temp	10
-eng_weight	100
-stress_weight	10
+eng_weight	1
 seed		42
 

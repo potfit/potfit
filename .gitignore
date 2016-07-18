@@ -12,4 +12,4 @@ kim.log
 *.tmp
 dummy*
 out*
-examples/openkim/*
+examples/kim/*
