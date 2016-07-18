@@ -182,17 +182,12 @@ void read_config(const char* filename)
     cstate.stresses = g_config.stress + g_config.nconf;
 #endif  // STRESS
 
-/* added */
 #if defined(KIM)
     if (strcmp(g_kim.NBC_method, "MI_OPBC_F") == 0 || strcmp(g_kim.NBC_method, "MI_OPBC_H") == 0) {
       /* realloc memory for box_side_len */
-      g_kim.box_side_len = (double *) Realloc(g_kim.box_side_len, 3 * (g_config.nconf+1) * sizeof(double));
-      if(NULL == g_kim.box_side_len) 
-        error(1, "Cannot allocate memory for box_side_len\n");
+      g_kim.box_side_len = (double *) Realloc(g_kim.box_side_len, 3*(g_config.nconf+1)*sizeof(double));
     }
 #endif  // KIM
-/* added ends */
-
     
     // read header lines
     do {
@@ -876,9 +871,6 @@ void read_chemical_elements(char* psrc, config_state* cstate)
       pchar = strtok(NULL, " \t");
       i++;
       cstate->num_fixed_elements++;
-#if defined(KIM)
-      g_kim.num_elements = cstate->num_fixed_elements;
-#endif
     }
   } else {
     while (pchar != NULL && i < g_param.ntypes) {
@@ -901,6 +893,9 @@ void read_chemical_elements(char* psrc, config_state* cstate)
       i++;
     }
   }
+#if defined(KIM)
+  g_kim.num_elements = cstate->num_fixed_elements;
+#endif
 }
 
 /****************************************************************

@@ -69,10 +69,6 @@ void init_object()
 
   /* Allocate memory for KIM objects */
   g_kim.pkimObj = (void**) Malloc(g_config.nconf * sizeof(void *));
-  if (NULL == g_kim.pkimObj) {
-    KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-  }
 
   for (i = 0; i < g_config.nconf; i++) { 
      
@@ -113,10 +109,6 @@ void init_object()
 
     /* allocate memory for NeighObject */ 
     NeighObject = (NeighObjectType*) Malloc(sizeof(NeighObjectType));
-    if (NULL == NeighObject) {
-      KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-      exit(1);
-    } 
     
 		/* register access of neighborlist in KIM API */
     setup_neighborlist_KIM_access(g_kim.pkimObj[i], NeighObject);
@@ -339,12 +331,6 @@ int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start)
   NeighObject->neighborList = (int*) Malloc(neighListLength*sizeof(int));
   NeighObject->RijList = (double*) Malloc((DIM*neighListLength)*sizeof(double));
   NeighObject->BeginIdx = (int*) Malloc(Natoms*sizeof(int));
-  if (NULL == NeighObject->NNeighbors || NULL == NeighObject-> neighborList
-		||NULL == NeighObject->RijList || NULL == NeighObject->BeginIdx )
-	{
-    KIM_API_report_error(__LINE__,__FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-  }
 
   /* copy the number of neighbors to NeighObject.NNeighbors */
   for (i = 0; i < Natoms; i++) {
@@ -482,10 +468,6 @@ void init_optimizable_param()
 
   /* allocate memory */
   g_kim.FreeParamAllConfig = (FreeParamType*) Malloc(g_config.nconf*sizeof(FreeParamType));
-  if (NULL == g_kim.FreeParamAllConfig) {
-    KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-  }
 
   for (i = 0; i <g_config.nconf; i++) {
     /* nest optimizable parameters */
@@ -631,16 +613,9 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
       if (strcmp(type, "double") == 0) {
         NumFreeParamDouble++;          
         FreeParam->name = (char**) Realloc(FreeParam->name, (NumFreeParamDouble)*sizeof(char*));
-        if (NULL==FreeParam->name) {
-          KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-          exit(1);
-        }
+        
         /*maxStringLength+1 to hold the `\0' at end*/
         FreeParam->name[NumFreeParamDouble - 1] = (char*) Malloc((maxStringLength+1)*sizeof(char));
-        if (NULL==FreeParam->name[NumFreeParamDouble - 1]) {
-          KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-          exit(1);
-        }               
         strcpy(FreeParam->name[NumFreeParamDouble - 1], name);
       }
     }
@@ -651,10 +626,6 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
 
   /* allocate memory for value */
   FreeParam->value = (double**) Malloc(FreeParam->Nparam * sizeof(double*));
-  if (NULL==FreeParam->value) {
-    KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-  } 
 
   /* get the pointer to parameter */
   for(i = 0; i < FreeParam->Nparam; i++ ) {
@@ -667,10 +638,6 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
   
   /* allocate memory for rank */
   FreeParam->rank = (int*) Malloc(FreeParam->Nparam * sizeof(int));
-  if (NULL==FreeParam->rank) {
-    KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-  } 
   
 	/* get rank */
   for(i = 0; i < FreeParam->Nparam; i++) {
@@ -683,21 +650,12 @@ int get_free_param_double(void* pkim, FreeParamType* FreeParam)
 
   /* allocate memory for shape */
   FreeParam->shape = (int**) Malloc(FreeParam->Nparam * sizeof(int*));
-  if (NULL==FreeParam->shape) {
-    KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-  }
   
 	for (i = 0; i < FreeParam->Nparam; i++) {
-    FreeParam->shape[i] = (int*) Malloc(FreeParam->rank[i] * sizeof(int));
-    /* should not do the check, since rank may be zero. Then in some implementation
-      Malloc zero would return NULL */  
-    /*  if (NULL==FreeParam->shape[i]) {
-    KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-    }*/ 
+    if (FreeParam->rank[i] != 0) {
+      FreeParam->shape[i] = (int*) Malloc(FreeParam->rank[i] * sizeof(int));
+    }
   }
-
   /* get shape */
   for(i = 0; i < FreeParam->Nparam; i++) {
     KIM_API_get_shape(pkim, FreeParam->name[i], FreeParam->shape[i], &status);
@@ -768,10 +726,6 @@ int nest_optimizable_param(void* pkim, FreeParamType* FreeParam,
   
   /* allocate memory for nestedvalue*/
   FreeParam->nestedvalue = (double**) Malloc((total_size) * sizeof(double*));
-  if (NULL==FreeParam->nestedvalue) {
-    KIM_API_report_error(__LINE__, __FILE__,"Malloc unsuccessful", -1);
-    exit(1);
-  }
   
 	/*copy the values (pointers) to nestedvalue */
   k = 0;
@@ -1012,14 +966,8 @@ int read_potential_keyword(pot_table_t* pt, char const* filename, FILE* infile)
   /* allocate memory */ 
   g_kim.name_opt_param = (char**)Malloc(g_kim.num_opt_param*sizeof(char*)); 
   g_kim.size_opt_param = (int*)Malloc(g_kim.num_opt_param*sizeof(int)); 
-  if (NULL == g_kim.name_opt_param || NULL == g_kim.size_opt_param) {
-    error(1, "Error in allocating memory for parameter name or size");
-  }
   for (i = 0; i < g_kim.num_opt_param; i++) {
     g_kim.name_opt_param[i] = (char *)Malloc(255 * sizeof(char));
-    if (NULL == g_kim.name_opt_param[i]) {
-      error(1, "Error in allocating memory for parameter name");
-    }
   }
 
 	/* find parameter names beginning with `PARAM_FREE_*' */

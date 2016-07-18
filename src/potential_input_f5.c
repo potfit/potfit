@@ -278,9 +278,6 @@ void read_pot_table5_limits(char const* filename, FILE* pfile)
 	apt->n_par[i] = FreeParamSet.Nnestedvalue; 
 	apt->total_par += apt->n_par[i];
 	
-	/* copy name */
-	strcpy(apt->names[i], g_kim.kim_model_name);
-
 	/* set begin */
 	apt->begin[i] = 0.0;
 

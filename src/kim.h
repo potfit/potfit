@@ -55,7 +55,6 @@ typedef struct
   FreeParamType* FreeParamAllConfig; /* free param struct for all configurations */
   char kim_model_name[255]; /* kim model name (read in from input )*/
   char NBC_method[64];      /* neighbor list and boundary conditions */
-  char** name_opt_param;    /* optimizable parameter names (read in from input) */
   int kim_model_has_forces;
   int kim_model_has_virial;
   int num_elements;         /* number of elements read in from config file */
@@ -63,6 +62,7 @@ typedef struct
   int kim_model_has_energy; /* flag, whether KIM model has the routine to 
                              * compute energy, forces, and virial */
   int num_opt_param;        /* number of optimizalbe params( read in from input) */
+  char** name_opt_param;    /* optimizable parameter names (read in from input) */
   int* size_opt_param;      /* size of each parameter (number of values each
                              * parameter name represents) */
 
