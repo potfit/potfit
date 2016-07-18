@@ -318,7 +318,9 @@ SUBROUTINE geodesiclm(func, jacobian, Avv, &
   nfev = nfev + 1
   C = 0.5d+0*DOT_PRODUCT(fvec,fvec)
   IF(print_level .GE. 1) THEN
-     WRITE(print_unit, *) "  Initial Cost:    ", C
+     !! times 2 to be compatible with potfit definition of Cost
+     !!WRITE(print_unit, *) "  Initial Cost:    ", C
+     WRITE(print_unit, *) "  Initial Cost:    ", 2.0*C
      FLUSH(print_unit)
   ENDIF
   valid_result = .TRUE.
@@ -597,18 +599,24 @@ SUBROUTINE geodesiclm(func, jacobian, Avv, &
      !! Print status
      IF (print_level .EQ. 2 .AND. accepted .GT. 0) THEN
         WRITE(print_unit, *) "  istep, nfev, njev, naev, accepted", istep, nfev, njev, naev, accepted
-        WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        !! times 2 to be compatible with potfit definition of Cost
+        !!WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        WRITE(print_unit, *) "  Cost, lam, delta", 2.0*C, lam, delta
         WRITE(print_unit, *) "  av, cos alpha", av, cos_alpha
         FLUSH(print_unit)
      ELSEIF(print_level .EQ. 3) THEN
         WRITE(print_unit, *) "  istep, nfev, njev, naev, accepted", istep, nfev, njev, naev, accepted
-        WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        !! times 2 to be compatible with potfit definition of Cost
+        !!WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        WRITE(print_unit, *) "  Cost, lam, delta", 2.0*C, lam, delta
         WRITE(print_unit, *) "  av, cos alpha", av, cos_alpha
         FLUSH(print_unit)
      ENDIF
      IF (print_level .EQ. 4 .AND. accepted .GT. 0) THEN
         WRITE(print_unit, *) "  istep, nfev, njev, naev, accepted", istep, nfev, njev, naev, accepted
-        WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        !! times 2 to be compatible with potfit definition of Cost
+        !!WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        WRITE(print_unit, *) "  Cost, lam, delta", 2.0*C, lam, delta
         WRITE(print_unit, *) "  av, cos alpha", av, cos_alpha
         WRITE(print_unit, *) "  x = ", x
         WRITE(print_unit, *) "  v = ", v
@@ -616,7 +624,9 @@ SUBROUTINE geodesiclm(func, jacobian, Avv, &
         FLUSH(print_unit)
      ELSEIF (print_level .EQ. 5) THEN
         WRITE(print_unit, *) "  istep, nfev, njev, naev, accepted", istep, nfev, njev, naev, accepted
-        WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        !! times 2 to be compatible with potfit definition of Cost
+        !!WRITE(print_unit, *) "  Cost, lam, delta", C, lam, delta
+        WRITE(print_unit, *) "  Cost, lam, delta", 2.0*C, lam, delta
         WRITE(print_unit, *) "  av, cos alpha", av, cos_alpha
         WRITE(print_unit, *) "  x = ", x
         WRITE(print_unit, *) "  v = ", v
@@ -647,8 +657,11 @@ SUBROUTINE geodesiclm(func, jacobian, Avv, &
      WRITE(print_unit,*) "Optimization finished"
      WRITE(print_unit,*) "Results:"
      WRITE(print_unit,*) "  Converged:    ", converged_info(converged), converged
-     WRITE(print_unit,*) "  Final Cost: ", 0.5d+0*DOT_PRODUCT(fvec,fvec)
-     WRITE(print_unit,*) "  Cost/DOF: ", 0.5d+0*DOT_PRODUCT(fvec,fvec)/(m-n)
+     !! times 2 to be compatible with potfit definition of Cost
+     !!WRITE(print_unit,*) "  Final Cost: ", 0.5d+0*DOT_PRODUCT(fvec,fvec)
+     !!WRITE(print_unit,*) "  Cost/DOF: ", 0.5d+0*DOT_PRODUCT(fvec,fvec)/(m-n)
+     WRITE(print_unit,*) "  Final Cost: ", DOT_PRODUCT(fvec,fvec)
+     WRITE(print_unit,*) "  Cost/DOF: ", DOT_PRODUCT(fvec,fvec)/(m-n)
      WRITE(print_unit,*) "  niters:     ", istep
      WRITE(print_unit,*) "  nfev:       ", nfev
      WRITE(print_unit,*) "  njev:       ", njev
