@@ -2,8 +2,9 @@
 *
 * kim.c 
 *
-* All functions all defined in this file
+* Interface to KIM 
 *
+* Author: Mingjian Wen (wenxx151@unm.edu), University of Minnesota
 *******************************************************************************/
 
 #include <stdio.h>
@@ -75,7 +76,7 @@ void init_object()
     /* write descriptor file */
     u_f = g_config.useforce[i];
     u_s = 0;
-#ifdef STRESS
+#if defined(STRESS)
     u_s = g_config.usestress[i];
 #endif
     status = write_final_descriptor_file(u_f, u_s);
@@ -805,7 +806,7 @@ int publish_cutoff(void* pkim, double cutoff)
   /* update cutoff */
   pcutoff = KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
   if (KIM_STATUS_OK != status) {
-#ifndef NOLIMITS /* if defines nolimits; KIM cutoff is always used */
+#if !defined(NOLIMITS) /* if defines nolimits; KIM cutoff is always used */
     warning("Publish cutoff to KIM failed. The cutoff in the KIM Model is used.\n"
             "Possibly the KIM Model has no 'PARAM_FREE_cutoff'.\n\n");
 #endif 

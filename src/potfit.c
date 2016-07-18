@@ -146,10 +146,6 @@ int main(int argc, char** argv)
       printf("\nOptimization disabled. Calculating errors.\n\n");
     }
 
-
-printf("flag1 after minimization\n");
-fflush(stdout);
-
     time(&end_time);
 
 #if defined(APOT) || defined(KIM)

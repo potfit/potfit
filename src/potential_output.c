@@ -33,7 +33,6 @@
 #include "memory.h"
 #include "potential_output.h"
 #include "splines.h"
-#include "kim.h"
 
 #define NPLOT 1000
 

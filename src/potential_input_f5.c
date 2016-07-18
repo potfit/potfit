@@ -338,7 +338,8 @@ void read_pot_table5_limits(char const* filename, FILE* pfile)
 				}
 				if(apt->pmin[i][jj]>apt->values[i][jj] || apt->pmax[i][jj] < apt->values[i][jj])
 				{
-          error(1, "Value %d of '%s' is not within its limits in file '%s'.\n", kk+1, g_kim.name_opt_param[j], filename);
+          error(1, "Value %d of '%s' is not within its limits in file '%s'.\n",
+                kk+1, g_kim.name_opt_param[j], filename);
         }
         /* fixed param or not */
         ret_val = sscanf(buffer, "%*s %*s %*s %s", tmp_value);
@@ -650,8 +651,5 @@ void read_pot_table5_nolimits(char const* filename, FILE *pfile)
 	return;
 }
 
-
 #endif
-
-
 

@@ -33,12 +33,7 @@
 
 #include "chempot.h"
 #include "utils.h"
-
 #include "functions.h"
-
-/*
-#include "potential.h"
-*/
 
 /****************************************************************
   init_force
@@ -107,7 +102,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   int   h;
   int   n_i;
   int   uf;
-#ifdef STRESS
+#if defined(STRESS)
   int   us, stresses;
 #endif /* STRESS */
   atom_t *atom;
@@ -137,7 +132,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
   while (1) {
     tmpsum = 0.0;   /* sum of squares of local process */
 
-#ifndef MPI
+#if !defined(MPI)
     g_mpi.myconf = g_config.nconf;
 #endif /* MPI */
 
@@ -146,17 +141,17 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       /* loop over configurations */
       for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
         uf = g_config.conf_uf[h - g_mpi.firstconf];
-#ifdef STRESS
+#if defined(STRESS)
         us = conf_us[h - g_mpi.firstconf];
 #endif /* STRESS */
 
-#ifdef APOT
+#if defined(APOT)
         if (g_param.enable_cp)
           forces[g_calc.energy_p + h] += chemical_potential(g_param.ntypes, g_config.na_type[h], xi_opt + g_pot.cp_start);
 #endif /* APOT */
 
 /* Calculate forces from KIM (general forces, including forces, virial and energy) */
-#ifdef STRESS 
+#if defined(STRESS)
         kim_us = us;
 #endif /* STRESS*/
 
@@ -168,40 +163,6 @@ double calc_forces(double *xi_opt, double *forces, int flag)
           exit(1);
         }
         
-
- 
-/*
-double* coords;
-KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
-                              "coordinates",         &coords,              1);
-        if (KIM_STATUS_OK > status) {
-              KIM_API_report_error(__LINE__, __FILE__, "KIM_API_getm_data", status);
-              return status;
-            }
-
-
-       FILE* fp = fopen("potfit_force", "w");
-       for (i = 0; i < g_config.inconf[h]; i++){
-           fprintf(fp, "%18.10e %18.10e %18.10e %18.10e %18.10e %18.10e\n",
-             coords[DIM*i+0], coords[DIM*i+1], coords[DIM*i+2], kimforce[DIM*i+0], kimforce[DIM*i+1], kimforce[DIM*i+2]);
-         }
-         fflush(fp);
-         fclose(fp);
-
-         fp = fopen("potfit_energy", "w");
-         fprintf(fp, "total energy%18.10e\n", *kimenergy);
-         fprintf(fp, "average energy%18.10e", *kimenergy/(double)g_config.inconf[h]);
-         fflush(fp);
-         fclose(fp);
-
-         printf("finished job, let's exit. \n");
-         exit(1);
-*/
-
-
-
-
-
         /* forces contributation */
         weight = sqrt(g_config.conf_weight[h]);
         for (i = 0; i < g_config.inconf[h]; i++) {
@@ -217,14 +178,14 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
             forces[n_i + 2] = 0.0;
           }
 
-#ifdef FWEIGHT
+#if defined(FWEIGHT)
           /* weigh by absolute value of force */
           forces[n_i + 0] /= FORCE_EPS + atom->absforce;
           forces[n_i + 1] /= FORCE_EPS + atom->absforce;
           forces[n_i + 2] /= FORCE_EPS + atom->absforce;
 #endif /* FWEIGHT */
 
-#ifdef CONTRIB
+#if defined(CONTRIB)
           if (atom->contrib) 
 #endif /* CONTRIB */
             tmpsum += (dsquare(forces[n_i + 0]) 
@@ -235,14 +196,14 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
 
         /* reset energies and stresses */
         forces[g_calc.energy_p + h] = 0.0;
-#ifdef STRESS
+#if defined(STRESS)
         stresses = g_calc.stress_p + 6 * h;
         for (i = 0; i < 6; i++)
           forces[stresses + i] = 0.0;
 #endif /* STRESS */
 
         /* energy contributation */
-#ifdef APOT
+#if defined(APOT)
         if (g_param.enable_cp)
           forces[g_calc.energy_p + h] = chemical_potential(g_param.ntypes, g_config.na_type[h], xi_opt + g_pot.cp_start);
 #endif /* APOT */
@@ -253,7 +214,7 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
         tmpsum += dsquare(forces[g_calc.energy_p + h]);
 
 
-#ifdef STRESS
+#if defined(STRESS)
         /* stress contributions */
         if (uf && us) {
 		      weight = sqrt(g_config.conf_weight[h] * sweight); 
@@ -270,8 +231,8 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
     }       /* parallel region */
 
     /* dummy constraints (global) */
-#ifndef LEVMAR
-#ifdef APOT
+#if !defined(LEVMAR)
+#if defined(APOT)
     /* add punishment for out of bounds (mostly for powell_lsq) */
     if (0 == g_mpi.myid) {
       tmpsum += apot_punish(xi_opt, forces);
@@ -280,7 +241,7 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
 #endif /* LEVMAR */
 
 
-#ifdef MPI
+#if defined(MPI)
     /* reduce global sum */
     sum = 0.0;
     MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -292,7 +253,7 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
       /* energies */
       MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
           conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#ifdef STRESS
+#if defined(STRESS)
       /* stresses */
       MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_STENS, forces + g_calc.stress_p,
           conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
@@ -304,7 +265,7 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
       /* energies */
       MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
           forces + g_calc.energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#ifdef STRESS
+#if defined(STRESS)
       /* stresses */
       MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf, MPI_STENS,
           forces + g_calc.stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
@@ -318,7 +279,7 @@ KIM_API_getm_data(g_kim.pkimObj[h], &status, 1*3,
     if (0 == g_mpi.myid) {
       g_calc.fcalls++;     /* Increase function call counter */
       if (isnan(sum)) {
-#ifdef DEBUG
+#if defined(DEBUG)
         printf("\n--> Force is nan! <--\n\n");
 #endif /* DEBUG */
         return 10e10;

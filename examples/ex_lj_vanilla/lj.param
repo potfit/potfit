@@ -9,12 +9,7 @@ tempfile	dummy.tmp
 flagfile	STOP
 
 # optional writting
-plotfile	dummy.plot
-imdpot		dummy.imd
 write_pair	1
-write_lammps	1
-
-imdpotsteps	5000
 output_prefix out
 
 opt		1

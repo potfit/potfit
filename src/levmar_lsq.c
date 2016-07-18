@@ -195,8 +195,8 @@ int run_levmar_lsq(double* xi)
               &initialfactor, &factoraccept, &factorreject, &avmax);
 
 
-#ifndef KIM
-#ifdef APOT
+#if !defined(KIM)
+#if defined(APOT)
   update_apot_table(xi);
 #endif
 #endif
