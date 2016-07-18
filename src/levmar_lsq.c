@@ -12,6 +12,30 @@
 /* exchange access order for fortran code */
 #define f_dtd(i,j) dtd[j][i]
 
+/* function decleration */ 
+typedef void(*fptr_func_)(int*, int*, double*, double*);
+typedef void(*fptr_jacobian_)(int*, int*, double*, double*); 
+typedef void(*fptr_Avv_)(int*, int*, double*, double*, double*);
+typedef void(*fptr_callback_)(int*, int*, double*, double*, double*, double*,
+                              double*, double*, double*, double*,
+                              double*, int*, int*); 
+
+void geodesiclm_(fptr_func_, fptr_jacobian_, fptr_Avv_, 
+                double* x, double* fvec, double*, int* n, int* m, 
+                fptr_callback_, int* info, 
+                int* analytic_jac, int* analytic_Avv, 
+                int* center_diff, double* h1, double* h2,
+                double*, int* damp_mode, 
+                int* niters, int* nfev, int* njev, int* naev, 
+                int* maxiter, int* maxfev, int* maxjev, int* maxaev, double* maxlam, 
+                double* minlam, double* artol, double* Cgoal, double* gtol, 
+                double* xtol, double* xrtol, double* ftol, double* frtol, 
+                int* converged, 
+                int* print_level, int* print_unit, 
+                int* imethod, int* iaccel, int* ibold, int* ibroyden, 
+                double* initialfactor, double* factoraccept, 
+                double* factorreject, double* avmax);
+
 /******************************************************************************
 * local fucntions
 ******************************************************************************/
