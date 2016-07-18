@@ -50,7 +50,7 @@ int main()
 {
 
   /* variables */
-  int i,j;
+  int i;
 
   /* input */
   int n, m;

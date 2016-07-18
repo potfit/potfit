@@ -363,17 +363,10 @@ endif
 endif
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+################################################################################
+# LEVMAR 
+################################################################################
+ifneq (,$(strip $(findstring levmar,${MAKETARGET})))
+  LIBS   += -L../lib/geodesicLMv1.1/geodesicLM -lgeodesiclm -lgfortran 
+endif  #levmar
 

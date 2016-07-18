@@ -35,6 +35,7 @@
 void run_simulated_annealing(double* const xi);
 void run_differential_evolution(double* const xi);
 void run_powell_lsq(double* const xi);
+void run_levmar_lsq(double* const xi);
 
 void run_optimization()
 {
@@ -43,15 +44,24 @@ void run_optimization()
 
   double* xi = g_pot.opt_pot.table;
 
+/*
 #if !defined(EVO)
   run_simulated_annealing(xi);
 #else
   run_differential_evolution(xi);
 #endif  // !EVO
+*/
 
+#if !defined(LEVMAR)
   printf("\nStarting powell minimization ...\n");
-
   run_powell_lsq(xi);
-
   printf("\nFinished powell minimization, calculating errors ...\n");
+#else
+  printf("\nStarting geodesic Levenberg-Marquardt minimization ...\n");
+  printf("- Note this algorithm is unconstrainted, which means that the lower and\n"
+				 "upper limits for parameters in potential file will not be effective.\n\n");
+  run_levmar_lsq(xi);
+  printf("\nFinished geodesic Levenberg-Marquardt minimization, calculating errors ...\n");
+#endif  // !LEVMAR
+
 }

@@ -130,7 +130,6 @@ POTFITSRC 	+= potential_output.c
 POTFITSRC 	+= potential_output_imd.c
 POTFITSRC 	+= potential_output_lammps.c
 POTFITSRC 	+= potfit.c
-POTFITSRC 	+= powell_lsq.c
 POTFITSRC 	+= random.c
 POTFITSRC 	+= random_dsfmt.c
 POTFITSRC 	+= simann.c
@@ -223,6 +222,12 @@ endif
 ifneq (,$(strip $(findstring parab,${MAKETARGET})))
   POTFITSRC      += parabola.c
 endif
+
+ifneq (,$(strip $(findstring levmar,${MAKETARGET})))
+  POTFITSRC += levmar_lsq.c
+else
+  POTFITSRC += powell_lsq.c
+endif  #levmar
 
 #########################################################
 #
@@ -409,7 +414,7 @@ CFLAGS += -DRESCALE
 endif
 
 
-# added  to enable KIM and NOLIMITS in the preprocessor
+# added to enable KIM and NOLIMITS in the preprocessor
 ifneq (,$(findstring kim,${MAKETARGET}))
   CFLAGS += -DKIM
   ifneq (,$(findstring nolimits,${MAKETARGET}))
@@ -417,6 +422,11 @@ ifneq (,$(findstring kim,${MAKETARGET}))
   else
     CFLAGS += -DAPOT -DPAIR
   endif
+endif
+
+# to enable LEVMAR 
+ifneq (,$(findstring levmar,${MAKETARGET}))
+  CFLAGS += -DLEVMAR
 endif
 
 # compability with KIM 
@@ -465,13 +475,24 @@ ${OBJECTS}: ${HEADERS}
 
 # How to compile *.c files
 # special rules for force computation
-powell_lsq.o: powell_lsq.c
-	@echo " [CC] powell_lsq.c"
-	@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
-		echo -e "The following command failed with the above error:\n"; \
-		echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
-		exit 1; \
+ifneq (,$(strip $(findstring levmar,${MAKETARGET})))
+levmar_lsq.o: levmar_lsq.c
+		@echo " [CC] levmar_lsq.c"
+		@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
+			echo -e "The following command failed with the above error:\n"; \
+			echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
+			exit 1; \
 		}
+		${MAKE} -C ../lib/geodesicLMv1.1/geodesicLM
+else
+powell_lsq.o: powell_lsq.c
+		@echo " [CC] powell_lsq.c"
+		@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
+			echo -e "The following command failed with the above error:\n"; \
+			echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
+			exit 1; \
+		}
+endif  #levmar
 
 # special rules for function evaluation
 utils.o: utils.c
@@ -554,7 +575,6 @@ endif
 
 clean:
 	@rm -f *.o *.u *~ \#* *.V *.T *.O *.il
-	${MAKE} -C ../geodesicLMv1.1/geodesicLM clean
 
 distclean:
 	@rm -f *.o *.u *~ \#* *.V *.T *.O *.il

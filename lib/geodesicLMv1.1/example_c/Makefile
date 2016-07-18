@@ -1,6 +1,6 @@
 FC = gfortran
 CC = gcc
-CFLAG = -O2 -g
+CFLAG = -O2 -g -Wall
 
 LIB = -L../geodesicLM -lgeodesiclm -lm -lgfortran
 LAPACKLIBS = -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
