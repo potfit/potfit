@@ -528,9 +528,7 @@ void write_pot_table5(char const* filename)
     fprintf(outfile, "\n%s", g_kim.name_opt_param[i]);
     for (j = 0; j < g_kim.size_opt_param[i]; j++) {
       fprintf(outfile, "\n%18.10e ", pt->table[k]);
-#ifndef NOLIMITS
       fprintf(outfile, "%18.10e %18.10e", g_pot.apot_table.pmin[0][k], g_pot.apot_table.pmax[0][k]);
-#endif
       /* FIX parameter, 0 is the first potential (we only have 1 KIM potential)  */
       if (g_pot.apot_table.invar_par[0][k]) { 
         fprintf(outfile, "  FIX" );

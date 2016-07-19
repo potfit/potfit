@@ -806,10 +806,8 @@ int publish_cutoff(void* pkim, double cutoff)
   /* update cutoff */
   pcutoff = KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
   if (KIM_STATUS_OK != status) {
-#if !defined(NOLIMITS) /* if defines nolimits; KIM cutoff is always used */
-    warning("Publish cutoff to KIM failed. The cutoff in the KIM Model is used.\n"
-            "Possibly the KIM Model has no 'PARAM_FREE_cutoff'.\n\n");
-#endif 
+  warning("Publish cutoff to KIM failed. The cutoff in the KIM Model is used.\n"
+          "Possibly the KIM Model has no 'PARAM_FREE_cutoff'.\n\n");
   } else {
     *pcutoff = cutoff;
     /* reinit KIM model */
@@ -929,9 +927,8 @@ int read_potential_keyword(pot_table_t* pt, char const* filename, FILE* infile)
 		get_free_param_double(pkim, &FreeParam);
 
 		printf(" - The following potential parameters are available to fit. Include the\n"
-           "name(s) (and the initial value(s) and lower and upper boundaries if\n"
-           "`NOLIMITS' is not enabled while compilation) that you want to optimize\n"
-           "in file: %s.\n",filename);
+           "name(s) (and the initial value(s) and the corresponding lower and upper\n"
+           "boundaries) that you want to optimize in file: %s.\n",filename);
     printf("         param name                 param extent\n");
     printf("        ############               ##############\n");
     for(k = 0; k < FreeParam.Nparam; k++ ) {

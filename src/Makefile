@@ -137,17 +137,16 @@ POTFITSRC 	+= splines.c
 POTFITSRC 	+= utils.c
 
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
+  POTFITHDR      += kim.h
+  POTFITHDR      += functions.h
+  POTFITHDR      += chempot.h
+  
   POTFITSRC      += kim.c
   POTFITSRC      += force_kim.c
   POTFITSRC      += potential_input_f5.c
-  POTFITHDR      += kim.h
-  ifeq (,$(strip $(findstring nolimits,${MAKETARGET})))
-    POTFITHDR      += functions.h
-    POTFITSRC      += functions.c
-    POTFITSRC      += functions_impl.c
-    POTFITHDR      += chempot.h
-    POTFITSRC      += chempot.c
-  endif
+  POTFITSRC      += functions.c
+  POTFITSRC      += functions_impl.c
+  POTFITSRC      += chempot.c
 else # kim
 
   ifneq (,$(strip $(findstring apot,${MAKETARGET})))
@@ -414,14 +413,9 @@ CFLAGS += -DRESCALE
 endif
 
 
-# added to enable KIM and NOLIMITS in the preprocessor
+# added to enable KIM
 ifneq (,$(findstring kim,${MAKETARGET}))
-  CFLAGS += -DKIM
-  ifneq (,$(findstring nolimits,${MAKETARGET}))
-    CFLAGS += -DNOLIMITS -DEAM
-  else
-    CFLAGS += -DAPOT -DPAIR
-  endif
+  CFLAGS += -DKIM -DAPOT -DPAIR
 endif
 
 # to enable LEVMAR 

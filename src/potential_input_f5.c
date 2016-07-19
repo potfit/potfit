@@ -43,11 +43,6 @@ typedef struct {
 
 void read_chemical_potentials(apot_state* pstate);
 void read_pot_table5(char const* filename, FILE* pfile); 
-#if !defined(NOLIMITS)
-void read_pot_table5_limits(char const* filename, FILE* pfile);
-#else
-void read_pot_table5_nolimits(char const* filename, FILE* pfile);
-#endif
 
 /****************************************************************
  *
@@ -202,18 +197,6 @@ void read_chemical_potentials(apot_state* pstate)
 #endif  // PAIR
 }
 
-
-void read_pot_table5(char const* filename, FILE* pfile)
-{
-#if !defined(NOLIMITS)
-  read_pot_table5_limits(filename, pfile);  
-#else
-	read_pot_table5_nolimits(filename, pfile);
-#endif
-
-}
-
-
  /****************************************************************
  *
  *  read KIM potential with lower and upper limits for each parameter. 
@@ -225,8 +208,7 @@ void read_pot_table5(char const* filename, FILE* pfile)
  *  	FILE * ... open file handle of the potential file
  *
  ****************************************************************/
-#if !defined(NOLIMITS)
-void read_pot_table5_limits(char const* filename, FILE* pfile)
+void read_pot_table5(char const* filename, FILE* pfile)
 {
   apot_table_t* apt = &g_pot.apot_table;
   pot_table_t* pt = &g_pot.opt_pot;
@@ -423,7 +405,7 @@ void read_pot_table5_limits(char const* filename, FILE* pfile)
       apt->end[i] = *pcutoff;
   }
 
-#ifdef PAIR
+#if defined(PAIR)
 	if (g_param.enable_cp) {
 		g_pot.cp_start = apt->total_par - apt->globals + g_param.ntypes * (g_param.ntypes + 1);
 		apt->total_par += (g_param.ntypes + g_param.compnodes - apt->invar_par[apt->number][g_param.ntypes]);
@@ -446,7 +428,7 @@ void read_pot_table5_limits(char const* filename, FILE* pfile)
 	if (g_pot.have_globals)
 		pt->len += apt->globals;
 
-#ifdef PAIR
+#if defined(PAIR)
 	if (g_param.enable_cp) {
 		pt->len += (g_param.ntypes + g_param.compnodes);
 	}
@@ -505,7 +487,7 @@ void read_pot_table5_limits(char const* filename, FILE* pfile)
 		apt->total_par -= apt->invar_par[i][apt->n_par[i]];
 	}
 
-#ifdef PAIR
+#if defined(PAIR)
 	if (g_param.enable_cp) {
 		init_chemical_potential(g_param.ntypes);
 		i = apt->number;
@@ -523,7 +505,7 @@ void read_pot_table5_limits(char const* filename, FILE* pfile)
 	}
 #endif /* PAIR */
 
-#ifdef NOPUNISH
+#if defined(NOPUNISH)
 	if (opt)
 		warning("Gauge degrees of freedom are NOT fixed!\n");
 #endif /* NOPUNISH */
@@ -533,123 +515,4 @@ void read_pot_table5_limits(char const* filename, FILE* pfile)
 
 	return;
 }
-
-#else /* NOLIMITS */
-
-/****************************************************************
- *
- *  read KIM potential without specifying the lower and upper limits
- *  for each parameter. 
- *
- *  parameters:
- * 	  pot_table_t * ... pointer to the potential table
- *  	int ... number of potential functions
- *  	char * ... name of the potential file (for error messages)
- *  	FILE * ... open file handle of the potential file
- *
- ****************************************************************/
-void read_pot_table5_nolimits(char const* filename, FILE *pfile)
-{
-	int   i, j, k, jj, kk;
-	char  buffer[255], name[255];
-	fpos_t startpos; 
-	char tmp_value[255];
-	void* pkim;
-  int status;
-	FreeParamType FreeParamSet;
-
-	/* save starting position */
-	fgetpos(pfile, &startpos);
-
-	/* read the keywords and the names of parameters that will be optimized */
-	read_potential_keyword(pt, filename, pfile);
-
-	/* write the descriptor.kim file for the test */
-	write_temporary_descriptor_file(g_kim.kim_model_name);
-
-	/* create KIM object with 1 atom and 1 species */
-	status = setup_KIM_API_object(&pkim, 1, 1, g_kim.kim_model_name);
-	if (KIM_STATUS_OK > status) {
-		KIM_API_report_error(__LINE__, __FILE__, "setup_KIM_API_object", status);
-		exit(1);
-	}
-
-  get_compute_const(pkim);
-
-  /* initialze the data struct for the free parameters with type double */
-  get_free_param_double(pkim, &FreeParamSet);
-
-  /* nest the optimizable params */
-  nest_optimizable_param(pkim, &FreeParamSet, g_kim.name_opt_param, g_kim.num_opt_param);
-
-	/* some potential table value */
-	pt->first[0] = 0;
-	pt->last[0] = pt->first[0] + FreeParamSet.Nnestedvalue - 1;
-	pt->len = FreeParamSet.Nnestedvalue;
-	pt->idxlen = FreeParamSet.Nnestedvalue;
-
-	/* allocate the function table */
-	pt->table = (double *)Malloc(pt->len * sizeof(double));
-	pt->idx = (int *)Malloc(pt->len * sizeof(int));
-	if ((NULL == pt->table) || (NULL == pt->idx) )
-		error(1, "Cannot allocate memory for potential table");
-
-	/* read parameter values */
-  /* j: jth optimizable parameter 
-     k: kth free parameter, index of jth optimizable param in the free param struct 
-    jj: the current slot in the nested apot->value
-    kk: the current slot of the jth param
-  */
-	jj = 0;  
-	fsetpos(pfile, &startpos);
-	for (j = 0; j < g_kim.num_opt_param; j++) {
-		buffer[0] = '\0';
-		name[0] = '\0';
-		/* find the keyword `PARAM_FREE_*' */
-		do {
-			fgets(buffer, 255, pfile);
-			sscanf(buffer, "%s", name);
-		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(pfile));
-		/* k is the palce(slot) that the param in the FreeParam struct */
-		for ( k = 0; k < FreeParamSet.Nparam; k++) {
-			if (strcmp(FreeParamSet.name[k], g_kim.name_opt_param[j]) == 0)
-				break;
-		}
-		for (kk = 0; kk < g_kim.size_opt_param[j]; kk++) {
-			fgets(buffer, 255, pfile);
-			if ( 1 == sscanf(buffer, "%s", tmp_value)) {
-				/*if give `KIM', use KIM parameter, otherwise use readin */
-				if (strncmp(tmp_value, "KIM", 3) == 0) {
-					pt->table[jj] = *FreeParamSet.nestedvalue[jj];
-				} else if (1 > sscanf(tmp_value, "%lf", &pt->table[jj])) {
-					error(1, "First data for parameter '%s' corrupted, it should be a type float or 'KIM'.\n",
-                    FreeParamSet.name[k]);
-				}
-			} else {
-				error(1, "Data for parameter '%s' corrupted in file '%s'.\n", FreeParamSet.name[k], filename);
-			}
-		  pt->idx[jj] = jj;
-			jj++;
-		}  
-	}
-
-	/* set end (end is cutoff) */
-  double* pcutoff;
-  
-  pcutoff = KIM_API_get_data(pkim, "cutoff", &status);
-  if (KIM_STATUS_OK > status) {
-    KIM_API_report_error(__LINE__, __FILE__, "KIM_API_get_data", status);
-    exit(1);
-  }
-    pt->end[0] = *pcutoff;
-
-
-	/* free memory */
-	free_model_object(&pkim);
-  
-	printf("Successfully read potential parameters that will be optimized.\n\n");
-	return;
-}
-
-#endif
 
