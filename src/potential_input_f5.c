@@ -312,7 +312,10 @@ void read_pot_table5(char const* filename, FILE* pfile)
 				apt->pmin[i][jj] = tmp_pmin;
 				apt->pmax[i][jj] = tmp_pmax;
 				/*if give `KIM', use KIM parameter, otherwise use readin */
-				if (strncmp(tmp_value, "KIM", 3) == 0) {
+        for (int c=0; tmp_value[c]; c++) {
+          tmp_value[c] = tolower(tmp_value[c]);
+        }
+				if (strncmp(tmp_value, "kim", 3) == 0) {
 					apt->values[i][jj] = FreeParamSet.value[k][kk];
 				} else if (1 > sscanf(tmp_value, "%lf", &apt->values[i][jj])) {
 					error(1, "First data for parameter '%s' corrupted, it should be a type float or 'KIM'.\n",
@@ -325,7 +328,10 @@ void read_pot_table5(char const* filename, FILE* pfile)
         }
         /* fixed param or not */
         ret_val = sscanf(buffer, "%*s %*s %*s %s", tmp_value);
-        if (strncmp(tmp_value, "FIX", 3) == 0) {
+        for (int c=0; tmp_value[c]; c++) {
+          tmp_value[c] = tolower(tmp_value[c]);
+        }
+        if (strncmp(tmp_value, "fix", 3) == 0) {
           apt->invar_par[i][jj] = 1;
           apt->invar_par[i][apt->n_par[i]] += 1;
         }
@@ -370,7 +376,10 @@ void read_pot_table5(char const* filename, FILE* pfile)
 			if(2 > sscanf(buffer, "%s %s", name, tmp_value)) {
 				error(1,"Error reading in cutoff in file '%s'.\n", filename);
 			} else {
-				if (strcmp(tmp_value, "KIM") == 0) {
+        for (int c=0; tmp_value[c]; c++) {
+          tmp_value[c] = tolower(tmp_value[c]);
+        }
+				if (strcmp(tmp_value, "kim") == 0) {
 					have_cutoff = 0;
 				} else if (have_PARAM_FREE_cutoff){
 					if(1 > sscanf(tmp_value,"%lf", &apt->end[i])){
