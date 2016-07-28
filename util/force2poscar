@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+################################################################
+#
+# force2poscar:
+#   convert a potfit configuration (force file) into
+#   a VASP POSCAR file
+#
+################################################################
+#
+#   Copyright 2013
+#             Institute for Theoretical and Applied Physics
+#             University of Stuttgart, D-70550 Stuttgart, Germany
+#             http://potfit.sourceforge.net/
+#
+#################################################################
+#
+#   This file is part of potfit.
+#
+#   potfit is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   potfit is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+#
+#################################################################
+
+import argparse
+import os
+import sys
+
+parser = argparse.ArgumentParser(description='Convert a potfit configuration into a VASP POSCAR file.')
+parser.add_argument('-n', '--number', type=int, default=0, help='number of the configuration to convert')
+parser.add_argument('filename', type=str, help='name of the potfit config file')
+args = parser.parse_args()
+
+# open configuration file
+try:
+    f = open(args.filename)
+except IOError as e:
+    sys.stderr.write("Could not open the configuration file:\n")
+    sys.stderr.write("%s\n" % e)
+    sys.exit()
+
+number = args.number
+
+# fast forward to requested configuration
+if number > 0:
+    f.readline()
+    while number > 0:
+        temp = f.readline()
+        if temp[0] == '#' and temp[1] == 'N':
+            number = number - 1
+else:
+    temp = f.readline()
+
+# read header
+while temp[0] == '#' and temp[1] != 'F':
+    if temp[1] == 'N':
+        natoms = temp.strip().split()[1]
+    if temp[1] == 'X':
+        vect_x = [float(s) for s in temp.strip().split()[1:]]
+    if temp[1] == 'Y':
+        vect_y = [float(s) for s in temp.strip().split()[1:]]
+    if temp[1] == 'Z':
+        vect_z = [float(s) for s in temp.strip().split()[1:]]
+    temp = f.readline()
+
+data = []
+num = [0]
+max_num = 0
+temp = f.readline()
+while temp[0] != '#':
+    data.append(temp.strip().split())
+    if int(data[-1][0]) > max_num:
+        num.append(0)
+        max_num += 1
+    num[int(data[-1][0])] += 1
+    temp = f.readline()
+
+# write header
+print "Structure {} from {}".format(args.number,os.path.abspath(args.filename))
+print " {}".format(1.0)
+print "{:12.8f} {:12.8f} {:12.8f}".format(vect_x[0],vect_x[1],vect_x[2])
+print "{:12.8f} {:12.8f} {:12.8f}".format(vect_y[0],vect_y[1],vect_y[2])
+print "{:12.8f} {:12.8f} {:12.8f}".format(vect_z[0],vect_z[1],vect_z[2])
+print " ".join([str(s) for s in num[0:max_num+1]])
+
+# write atom data
+for i in range(max_num+1):
+    for atom in data:
+        if int(atom[0]) == i:
+            print "{:10.6f} {:10.6f} {:10.6f}".format(float(atom[1]),float(atom[2]),float(atom[3]))
