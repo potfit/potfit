@@ -1,7 +1,0 @@
-This directory contains utilities to handle potfit in- and output files.
-
-Please do not copy them individually to any other directory. Add this directory
-to your PATH environment variable.
-
-The utils from former versions of potfit containing the old scripts are still
-available in the old/ directory.
