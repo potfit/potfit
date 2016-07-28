@@ -5,6 +5,7 @@
 *******************************************************************************/
 
 #include "potfit.h"
+#include "potential_input.h"
 #include "potential_output.h"
 #include "force.h"
 #include "optimize.h"
