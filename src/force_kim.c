@@ -142,7 +142,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
         uf = g_config.conf_uf[h - g_mpi.firstconf];
 #if defined(STRESS)
-        us = conf_us[h - g_mpi.firstconf];
+        us = g_config.conf_us[h - g_mpi.firstconf];
 #endif /* STRESS */
 
 #if defined(APOT)
@@ -217,10 +217,10 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #if defined(STRESS)
         /* stress contributions */
         if (uf && us) {
-		      weight = sqrt(g_config.conf_weight[h] * sweight); 
+		      weight = sqrt(g_config.conf_weight[h] * g_param.sweight); 
           for (i = 0; i < 6; i++) {
             forces[stresses + i]  = weight*kimvirial[i]; 
-            forces[stresses + i] /= conf_vol[h - g_mpi.firstconf];
+            forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
             forces[stresses + i] -= weight*g_config.force_0[stresses + i];
             tmpsum += dsquare(forces[stresses + i]);
           } 

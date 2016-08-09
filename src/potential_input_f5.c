@@ -27,6 +27,8 @@
  *
  ****************************************************************/
 
+#include <ctype.h>
+
 #include "potfit.h"
 
 #include "chempot.h"
