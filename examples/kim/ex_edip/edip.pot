@@ -7,7 +7,7 @@
 type  EDIP_BOP_Bazant_Kaxiras_Si__MO_958932894036_001
 
 # cutoff
-cutoff  KIM
+cutoff  kim
 
 # uncomment the following line to check the optimizable parameters of the KIM Model
 #check_kim_opt_param

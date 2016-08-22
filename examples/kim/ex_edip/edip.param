@@ -1,21 +1,20 @@
 ntypes		1
-config	  training_set.dat	
+
+# mandatory file names
+config	  training_set.txt	
 startpot	edip.pot
 endpot		edip_end.pot
 tempfile	dummy.tmp
 
-imdpot		dummy.imd
-plotfile	dummy.plot
 flagfile	STOP
 
+# optional writting
 write_pair	1
-write_lammps	1
-
-imdpotsteps	5000
 output_prefix	out
 
+# min setting
 opt		1
 anneal_temp	10
-eng_weight	100
-stress_weight	10
+eng_weight 1	
 seed		42
+
