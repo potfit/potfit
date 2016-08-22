@@ -117,6 +117,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
     case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
       xi = xi_opt;
       break;
+    case POTENTIAL_FORMAT_KIM:
+			break;
   }
 
 #if !defined(MPI)

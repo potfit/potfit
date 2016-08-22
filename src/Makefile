@@ -130,7 +130,6 @@ POTFITSRC 	+= potential_output.c
 POTFITSRC 	+= potential_output_imd.c
 POTFITSRC 	+= potential_output_lammps.c
 POTFITSRC 	+= potfit.c
-POTFITSRC 	+= powell_lsq.c
 POTFITSRC 	+= random.c
 POTFITSRC 	+= random_dsfmt.c
 POTFITSRC 	+= simann.c
@@ -138,15 +137,16 @@ POTFITSRC 	+= splines.c
 POTFITSRC 	+= utils.c
 
 ifneq (,$(strip $(findstring kim,${MAKETARGET})))
+  POTFITHDR      += kim.h
+  POTFITHDR      += functions.h
+  POTFITHDR      += chempot.h
+  
   POTFITSRC      += kim.c
   POTFITSRC      += force_kim.c
   POTFITSRC      += potential_input_f5.c
-  POTFITHDR      += kim.h
-  ifeq (,$(strip $(findstring nolimits,${MAKETARGET})))
-    POTFITHDR      += functions.h
-    POTFITSRC      += functions.c
-    POTFITSRC      += chempot.c
-  endif
+  POTFITSRC      += functions.c
+  POTFITSRC      += functions_impl.c
+  POTFITSRC      += chempot.c
 else # kim
 
   ifneq (,$(strip $(findstring apot,${MAKETARGET})))
@@ -213,7 +213,6 @@ else # kim
   endif
 
 endif #kim 
-# added ends
 
 ifneq (,$(strip $(findstring evo,${MAKETARGET})))
   POTFITSRC      += diff_evo.c
@@ -222,6 +221,12 @@ endif
 ifneq (,$(strip $(findstring parab,${MAKETARGET})))
   POTFITSRC      += parabola.c
 endif
+
+ifneq (,$(strip $(findstring levmar,${MAKETARGET})))
+  POTFITSRC += levmar_lsq.c
+else
+  POTFITSRC += powell_lsq.c
+endif  #levmar
 
 #########################################################
 #
@@ -408,14 +413,14 @@ CFLAGS += -DRESCALE
 endif
 
 
-# added    to enable KIM and NOLIMITS in the preprocessor
+# added to enable KIM
 ifneq (,$(findstring kim,${MAKETARGET}))
-  CFLAGS += -DKIM
-  ifneq (,$(findstring nolimits,${MAKETARGET}))
-    CFLAGS += -DNOLIMITS -DEAM
-  else
-    CFLAGS += -DAPOT -DPAIR
-  endif
+  CFLAGS += -DKIM -DAPOT -DPAIR
+endif
+
+# to enable LEVMAR 
+ifneq (,$(findstring levmar,${MAKETARGET}))
+  CFLAGS += -DLEVMAR
 endif
 
 # compability with KIM 
@@ -464,13 +469,24 @@ ${OBJECTS}: ${HEADERS}
 
 # How to compile *.c files
 # special rules for force computation
-powell_lsq.o: powell_lsq.c
-	@echo " [CC] powell_lsq.c"
-	@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
-		echo -e "The following command failed with the above error:\n"; \
-		echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
-		exit 1; \
+ifneq (,$(strip $(findstring levmar,${MAKETARGET})))
+levmar_lsq.o: levmar_lsq.c
+		@echo " [CC] levmar_lsq.c"
+		@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
+			echo -e "The following command failed with the above error:\n"; \
+			echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
+			exit 1; \
 		}
+		${MAKE} -C ../lib/geodesicLMv1.1/geodesicLM
+else
+powell_lsq.o: powell_lsq.c
+		@echo " [CC] powell_lsq.c"
+		@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
+			echo -e "The following command failed with the above error:\n"; \
+			echo -e ${CC} ${CFLAGS} ${CINCLUDE} -c $<"\n"; \
+			exit 1; \
+		}
+endif  #levmar
 
 # special rules for function evaluation
 utils.o: utils.c
@@ -490,7 +506,7 @@ ifeq (,${MAKETARGET})
 	@exit
 else
 	@echo " [CC] ${@:.o=.c}"
-	@${CC} ${CFLAGS} -c $< || { \
+	@${CC} ${CFLAGS} ${CINCLUDE} -c $< || { \
 		echo -e "The following command failed with the above error:\n"; \
 		echo -e ${CC} ${CFLAGS} -c $<"\n"; \
 		exit 1; \
