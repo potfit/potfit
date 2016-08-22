@@ -1,0 +1,93 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module geodesiclm__user__routines 
+    interface geodesiclm_user_interface 
+        subroutine func(m,n,x,fvec) 
+            integer, optional,check(len(fvec)>=m),depend(fvec) :: m=len(fvec)
+            integer, optional,check(len(x)>=n),depend(x) :: n=len(x)
+            real(kind=8) dimension(n) :: x
+            real(kind=8) dimension(m),intent(out) :: fvec
+        end subroutine func
+        subroutine jacobian(m,n,x,fjac) 
+            integer, optional,check(shape(fjac,0)==m),depend(fjac) :: m=shape(fjac,0)
+            integer, optional,check(len(x)>=n),depend(x) :: n=len(x)
+            real(kind=8) dimension(n) :: x
+            real(kind=8) dimension(m,n),depend(n),intent(out) :: fjac
+        end subroutine jacobian
+        subroutine Avv(m,n,x,v,acc)
+            integer, optional,check(len(acc)>=m),depend(acc) :: m=len(acc)
+            integer, optional,check(len(x)>=n),depend(x) :: n=len(x)
+            real(kind=8) dimension(n),depend(n) :: x
+            real(kind=8) dimension(n),depend(n) :: v
+            real(kind=8) dimension(m), intent(out) :: acc
+        end subroutine Avv
+        subroutine callback(m,n,x,v,a,fvec,fjac,acc,lam,dtd,fvec_new,accepted,info)
+            integer, optional,check(len(fvec)>=m),depend(fvec) :: m=len(fvec)
+            integer, optional,check(len(x)>=n),depend(x) :: n=len(x)
+            real(kind=8) dimension(n) :: x
+            real(kind=8) dimension(n) :: v
+            real(kind=8) dimension(n) :: a
+            real(kind=8) dimension(m) :: fvec
+            real(kind=8) dimension(m,n):: fjac
+            real(kind=8) dimension(m) :: acc
+            real(kind=8), intent(in) :: lam
+            real(kind=8) dimension(n,n) :: dtd
+            real(kind=8) dimension(m) :: fvec_new
+            integer, intent(in) :: accepted
+            integer, intent(out) :: info
+        end subroutine callback
+    end interface geodesiclm_user_interface
+end python module geodesiclm__user__routines
+python module _geodesiclm
+    interface
+        subroutine geodesiclm(func, jacobian, Avv, x, fvec, fjac, n, m, callback, info, analytic_jac, analytic_Avv, center_diff, h1, h2, dtd, damp_mode, niters, nfev, njev, naev, maxiter, maxfev, maxjev, maxaev, maxlam, minlam, artol, Cgoal, gtol, xtol, xrtol, ftol, frtol, converged, print_level, print_unit, imethod, iaccel, ibold, ibroyden, initialfactor, factoraccept, factorreject, avmax) 
+            use geodesiclm__user__routines
+            external func
+            external jacobian
+            external Avv
+            real(kind=8) dimension(n) :: x
+            real(kind=8) dimension(m) :: fvec
+            real(kind=8) dimension(m,n),depend(m,n) :: fjac
+            integer, optional,check(len(x)>=n),depend(x) :: n=len(x)
+            integer, optional,check(len(fvec)>=m),depend(fvec) :: m=len(fvec)
+            external callback
+            integer dimension(1) :: info
+            logical :: analytic_jac
+            logical :: analytic_Avv
+            logical :: center_diff
+            real(kind=8) :: h1
+            real(kind=8) :: h2
+            real(kind=8) dimension(n,n) :: dtd
+            integer :: damp_mode
+            integer dimension(1) :: niters
+            integer dimension(1) :: nfev
+            integer dimension(1) :: njev
+            integer dimension(1) :: naev
+            integer :: maxiter
+            integer :: maxfev
+            integer :: maxjev
+            integer :: maxaev
+            real(kind=8) :: maxlam
+            real(kind=8) :: minlam
+            real(kind=8) :: artol
+            real(kind=8) :: Cgoal
+            real(kind=8) :: gtol
+            real(kind=8) :: xtol
+            real(kind=8) :: xrtol
+            real(kind=8) :: ftol
+            real(kind=8) :: frtol
+            integer dimension(1) :: converged
+            integer :: print_level
+            integer :: print_unit
+            integer :: imethod
+            integer :: iaccel
+            integer :: ibold
+            integer :: ibroyden
+            real(kind=8) :: initialfactor
+            real(kind=8) :: factoraccept
+            real(kind=8) :: factorreject
+            real(kind=8) :: avmax
+        end subroutine geodesiclm
+    end interface 
+end python module _geodesiclm

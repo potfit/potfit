@@ -1,0 +1,109 @@
+\documentclass[12pt,pdf,singlespace]{article}
+
+\usepackage{times}
+
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{verbatim}
+
+\title{Using geodesic Levenberg-Marquardt}
+
+\author{Colin Clement \& Mark K.~Transtrum}
+
+\begin{document}
+{
+\maketitle
+}
+
+\section{General strategy:}
+
+The first thing to do is examine the document string in the \texttt{geodesiclm} subroutine found in \texttt{geodesiclm.f90}, and make sure you provide at least the function which computes the residuals (\texttt{func}). Be careful to use the form specified in the code's documentation.
+
+The strategy for use we suggest is to start by turning everything fancy off, so that this algorithm functions as a standard Levenberg-Marquardt (LM) algorithm. I.e. start with \texttt{iaccel}=0, \texttt{ibold}=0 and \texttt{ibroyden}=0. When you do this, you should pay most attention to \texttt{factoraccept} and \texttt{factorreject}. I recommend starting with 5 and 2, respectively. Standard LM algorithms set both of these parameters to 10. The problem with making them equal is that the optimizer can get stuck in cycles. For more nuanced reasons (we call it `delayed gratification' \cite{transtrum2012improvements}) we also recommend that the accept factor be larger than the reject factor. Play around with these until you are satisfied with the convergence rate.
+
+You might find at first that the default convergence criterion (tolerances and goals, see the list below) are causing the algorithm to give up before true convergence. The procedure for diagnosing and ameliorating this is as follows: After the algorithm gives up, read the convergence message. The integer provided will represent a specific convergence criterion being hit (the list in is \texttt{geodesiclm.f90}), and you should decrease the offending condition to force the algorithm to work harder. Do so until the algorithm hits a different convergence criterion, and repeat until either you are satisfied with the minimum, or the speed of convergence becomes your principal concern. If you are faced with the latter problem, read on for useful options for speeding convergence.
+
+Once you get things working reasonably well with standard LM settings, try turning on geodesic acceleration by setting \texttt{iaccel}=1. If you are not providing a routine to calculate the second directional derivative (see \cite{transtrum2012improvements,transtrum2012geodesic, PRE83} for details), then you need to set \texttt{analytic\_avv} = \texttt{.false.} so that finite differences are used to estimate it. You will need to pay attention to the finite difference step size \texttt{h2} to make sure your calculation is stable. We suggest using \texttt{h2}=0.1. Since the acceleration should be a correction to standard LM, the parameter \texttt{avmax} limits the length of the acceleration vector in proportion to the proposed LM step size. As such, \texttt{avmax}$<1.$ are recommended.
+
+If you are satisfied with the behavior at this point, experiment with allowing uphill steps by setting \texttt{ibold} from 1 (least `bold'  uphill allowances) to 4 (most `bold' uphill allowances). You can also play with setting \texttt{ibroyden}=1, which will employ an estimate of the Jacobian to speed up some iterations, sacrificing some accuracy.
+
+For more details on why least-squares fitting is so challenging, and for intuition on how various parts of this algorithm work, see \cite{PRL104, PRE83}. See \cite{transtrum2012improvements} for details specific to implementation and benchmarked performance of the algorithm.
+
+
+\section{Parameter defaults and details:}
+
+These parameters are ordered by their relative importance. A lot of this information is a repeat of what can be found in the documentation to the source code in \texttt{geodesiclm.f90}.
+~\\
+
+\noindent {\bf Format:}
+\begin{itemize}
+	\item \texttt{parameter\_name} = $<$suggested default$>$ : Some words you might find useful.
+\end{itemize}
+
+\noindent {\bf Basic Levenberg-Marquardt (LM) Parameters:}
+\begin{itemize}
+	\item \texttt{factoraccept} = 5 : This is the factor by which the LM parameter (often denoted $\lambda$) is {\bf decreased after a step is accepted.}
+	\item \texttt{factorreject} = 2 : This is the factor by which the LM parameter is {\bf increased after a step is rejected.}
+	\item \texttt{maxlam} = 1.E7 : The routine will never let $\lambda$ become larger than this.
+	\item \texttt{imethod} = 0 : This is an integer which specifies the exact way $\lambda$ is updated. See \texttt{geodesiclm.f90} and \cite{transtrum2012improvements} for more details.
+	\item \texttt{initialfactor} = 1 : The initial $\lambda$.
+	\item \texttt{mode} = 0 : 0 or 1. Chooses between the `Levenberg' and `Marquardt' style of matrix added to $J^T J$ \texttt{geodesiclm.f90}.
+\end{itemize}
+\noindent {\bf Basic convergence criterion:}
+
+\begin{itemize}
+	\item \texttt{maxiter} = 500 : The total number of steps the algorithm will attempt. This should depend on how long a function and Jacobian evaluation takes, and how long you are willing to wait.
+	\item \texttt{maxfev} = 0 : The maximum number of allowed residual function (\texttt{func}) evaluations. 0 indicates no limit.
+	\item \texttt{Cgoal} = 1 : The goal for the minimum squared error.
+	\item \texttt{maxjev} = 0 : The maximum number of allowed Jacobian (\texttt{jacobian}) evaluations. 0 indicates no limit.
+\end{itemize}
+
+\noindent {\bf Geodesic acceleration parameters:}
+
+\begin{itemize}
+	\item \texttt{iaccel} = 1 : 1 or 0 for geodesic acceleration on or off.
+	\item \texttt{h2} = 0.1 :  Finite-difference step size for second-directional derivative estimation.
+	\item \texttt{avmax} = 0.75 : The `acceleration' should be a correction to the `velocity' and this enforces that.
+	\item \texttt{maxaev} = 0 : Maximum number of analytic second directional derivative (\texttt{avv}) evaluations. 0 indicates no limit.
+\end{itemize}
+
+\noindent {\bf Extra flags:}
+
+\begin{itemize}
+
+\item \texttt{print\_level} = 5 : 0-1, how much information to print to \texttt{print\_unit}.
+\item \texttt{print\_unit} = 6 : The integer representing the place to print messages. Either open a file or set to 6 for standard out.
+
+\item \texttt{analytic\_jac} = \texttt{.true.} : True if you supply a routine to compute the Jacobian (\texttt{jacobian}).
+\item \texttt{analytic\_avv} = \texttt{.false.} : True if you supply a routine to compute the second directional-derivative (\texttt{avv}).
+\item \texttt{center\_diff} = \texttt{.true.} : True if you want to use centered-difference. More accurate but slower than forward-difference.
+
+\end{itemize}
+
+\noindent {\bf Advanced Jacobian update and convergence criterion:}
+
+\begin{itemize}
+
+\item \texttt{ibold} = 0 : (0-4) If nonzero this allows some uphill steps which can speed convergence.
+\item \texttt{ibroyden} = 0 : If nonzero this employs Broyden approximate Jacobian updates. Can speed up algorithm with cost of accuracy.
+\item \texttt{eps} = 1.5E-6 : Precision of evaluation of residuals in \texttt{func}.
+
+
+\item \texttt{h1} = 1.0E-5 : Step size for finite-difference Jacobian estimate.
+\item \texttt{artol} = 1.E-3 : See \texttt{geodesiclm.f90} for details on these convergence tolerances.
+\item \texttt{gtol} = 1.5E-8
+\item \texttt{xtol} = 1.E-10
+\item \texttt{xrtol} = 1.5E-8
+\item \texttt{frtol} = 1.5E-8
+
+\end{itemize}
+
+\input{Bibliography}
+
+\end{document}
+
+
+
