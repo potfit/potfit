@@ -392,7 +392,7 @@ void run_simulated_annealing(double* const xi)
       fflush(stdout);
 
       /* End annealing if break flagfile exists */
-      if (*g_files.flagfile != '\0') {
+      if (g_files.flagfile && *g_files.flagfile != '\0') {
         FILE* ff = fopen(g_files.flagfile, "r");
         if (NULL != ff) {
           printf("Annealing terminated in presence of break flagfile \"%s\"!\n",

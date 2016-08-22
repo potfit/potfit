@@ -149,14 +149,14 @@ void apot_assign_punish_functions(char const* name, int index)
   if (strncmp(name, "eopp", 4) == 0) {
     int num_pot = ++function_table.punish_index[0][0];
     function_table.punish_index[0] =
-        (int*)Realloc(function_table.punish_index[0], num_pot + 1);
+        (int*)Realloc(function_table.punish_index[0], (num_pot + 1) * sizeof(int));
     function_table.punish_index[0][num_pot] = index;
   } else
       // universal is index 1
       if (strncmp(name, "universal", 9) == 0) {
     int num_pot = ++function_table.punish_index[1][0];
     function_table.punish_index[1] =
-        (int*)Realloc(function_table.punish_index[1], num_pot + 1);
+        (int*)Realloc(function_table.punish_index[1], (num_pot + 1) * sizeof(int));
     function_table.punish_index[1][num_pot] = index;
   }
 }
