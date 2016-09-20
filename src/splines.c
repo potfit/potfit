@@ -5,32 +5,32 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
- *	Institute for Theoretical and Applied Physics
- *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://potfit.sourceforge.net/
+ * Copyright 2002-2016 - the potfit development team
+ *
+ * http://potfit.sourceforge.net/
  *
  ****************************************************************
  *
- *   This file is part of potfit.
+ * This file is part of potfit.
  *
- *   potfit is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   potfit is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
 
 #include "potfit.h"
 
+#include "memory.h"
 #include "splines.h"
 
 /****************************************************************
@@ -40,39 +40,46 @@
  *
  ****************************************************************/
 
-void spline_ed(double xstep, double *y, int n, double yp1, double ypn, double *y2)
+void spline_ed(double xstep, double* y, int n, double yp1, double ypn,
+               double* y2)
 {
-  int   i, k;
-  double p, qn, un;
-  static double *u = NULL;
+  double qn = 0.0;
+  double un = 0.0;
+  static double* u = NULL;
   static int nmax = 0;
 
   if (n > nmax) {
-    u = (double *)realloc(u, (n - 1) * sizeof(double));
-    u_address = u;
+    u = (double*)Realloc(u, (n - 1) * sizeof(double));
     nmax = n;
   }
-  if (yp1 > 0.99e30)
-    y2[0] = u[0] = 0.0;
-  else {
+
+  if (yp1 > 0.99e30) {
+    y2[0] = 0.0;
+    u[0] = 0.0;
+  } else {
     y2[0] = -0.5;
-    u[0] = (3.0 / (xstep)) * ((y[1] - y[0]) / (xstep) - yp1);
+    u[0] = (3.0 / (xstep)) * ((y[1] - y[0]) / (xstep)-yp1);
   }
-  for (i = 1; i < n - 1; i++) {
+
+  for (int i = 1; i < n - 1; i++) {
     /* sig=(x[i]-x[i-1])/(x[i+1]-x[i-1])=.5; */
-    p = 0.5 * y2[i - 1] + 2.0;
+    double p = 0.5 * y2[i - 1] + 2.0;
     y2[i] = (-0.5) / p;
     u[i] = (y[i + 1] - y[i]) / xstep - (y[i] - y[i - 1]) / (xstep);
     u[i] = (6.0 * u[i] / (2 * xstep) - 0.5 * u[i - 1]) / p;
   }
-  if (ypn > 0.99e30)
-    qn = un = 0.0;
-  else {
+
+  if (ypn > 0.99e30) {
+    qn = 0.0;
+    un = 0.0;
+  } else {
     qn = 0.5;
     un = (3.0 / (xstep)) * (ypn - (y[n - 1] - y[n - 2]) / (xstep));
   }
+
   y2[n - 1] = (un - qn * u[n - 2]) / (qn * y2[n - 2] + 1.0);
-  for (k = n - 2; k >= 0; k--)
+
+  for (int k = n - 2; k >= 0; --k)
     y2[k] = y2[k] * y2[k + 1] + u[k];
 }
 
@@ -83,28 +90,27 @@ void spline_ed(double xstep, double *y, int n, double yp1, double ypn, double *y
  *
  ****************************************************************/
 
-double splint_ed(pot_table_t *pt, double *xi, int col, double r)
+double splint_ed(pot_table_t* pt, double* xi, int col, double r)
 {
-  double a, b, istep, rr, p1, p2, d21, d22;
-  int   k;
-
   /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
+  double rr = r - pt->begin[col];
+
   if (rr < 0)
-    error(1, "%f %f %d\nShort distance", r, pt->begin[col], col);
+    error(1, "%f %f %d\nShort distance\n", r, pt->begin[col], col);
 
   /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  b = (rr - k * pt->step[col]) * istep;
+  int k = (int)(rr * pt->invstep[col]);
+  double b = (rr - k * pt->step[col]) * pt->invstep[col];
   k += pt->first[col];
-  a = 1.0 - b;
-  p1 = xi[k];
-  d21 = pt->d2tab[k++];
-  p2 = xi[k];
-  d22 = pt->d2tab[k];
+  double a = 1.0 - b;
+  double p1 = xi[k];
+  double d21 = pt->d2tab[k++];
+  double p2 = xi[k];
+  double d22 = pt->d2tab[k];
 
-  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) / (6.0 * istep * istep);
+  return a * p1 + b * p2 +
+         ((a * a * a - a) * d21 + (b * b * b - b) * d22) /
+             (6.0 * pt->invstep[col] * pt->invstep[col]);
 }
 
 /****************************************************************
@@ -114,33 +120,35 @@ double splint_ed(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r, double *grad)
+double splint_comb_ed(pot_table_t* pt, double* xi, int col, double r,
+                      double* grad)
 {
-  double a, b, istep, rr, p1, p2, d21, d22;
-  int   k;
-
   /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
+  double rr = r - pt->begin[col];
+
   if (rr < 0)
-    error(1, "short distance! in splint_comb_ed");
+    error(1, "short distance! in splint_comb_ed\n");
 
   /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  b = (rr - k * pt->step[col]) * istep;
+  int k = (int)(rr * pt->invstep[col]);
+  double b = (rr - k * pt->step[col]) * pt->invstep[col];
   k += pt->first[col];
-/* This fixes some problems, but causes a lot more ... */
-/*  if (rr = (pt->end[col] - pt->begin[col])) {*/
-/*    return xi[k];*/
-/*  }*/
-  a = 1.0 - b;
-  p1 = xi[k];
-  d21 = pt->d2tab[k++];
-  p2 = xi[k];
-  d22 = pt->d2tab[k];
-  *grad = (p2 - p1) * istep + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) / (6.0 * istep);
+  /* This fixes some problems, but causes a lot more ... */
+  /*  if (rr = (pt->end[col] - pt->begin[col])) {*/
+  /*    return xi[k];*/
+  /*  }*/
+  double a = 1.0 - b;
+  double p1 = xi[k];
+  double d21 = pt->d2tab[k++];
+  double p2 = xi[k];
+  double d22 = pt->d2tab[k];
+  *grad = (p2 - p1) * pt->invstep[col] +
+          ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) /
+              (6.0 * pt->invstep[col]);
 
-  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) / (6.0 * istep * istep);
+  return a * p1 + b * p2 +
+         ((a * a * a - a) * d21 + (b * b * b - b) * d22) /
+             (6.0 * pt->invstep[col] * pt->invstep[col]);
 }
 
 /****************************************************************
@@ -150,34 +158,32 @@ double splint_comb_ed(pot_table_t *pt, double *xi, int col, double r, double *gr
  *
  ****************************************************************/
 
-
-double splint_grad_ed(pot_table_t *pt, double *xi, int col, double r)
+double splint_grad_ed(pot_table_t* pt, double* xi, int col, double r)
 {
-  double a, b, istep, rr, p1, p2, d21, d22;
-  int   k;
-
   /* check for distances shorter than minimal distance in table */
-  rr = r - pt->begin[col];
+  double rr = r - pt->begin[col];
+
   if (rr < 0)
-    error(1, "short distance! in splint_grad_ed");
+    error(1, "short distance! in splint_grad_ed\n");
 
   /* indices into potential table */
-  istep = pt->invstep[col];
-  k = (int)(rr * istep);
-  b = (rr - k * pt->step[col]) * istep;
+  int k = (int)(rr * pt->invstep[col]);
+  double b = (rr - k * pt->step[col]) * pt->invstep[col];
   k += pt->first[col];
   /* Check if we are at the last index */
   if (k >= pt->last[col]) {
     k--;
     b += 1.0;
   }
-  a = 1.0 - b;
-  p1 = xi[k];
-  d21 = pt->d2tab[k++];
-  p2 = xi[k];
-  d22 = pt->d2tab[k];
+  double a = 1.0 - b;
+  double p1 = xi[k];
+  double d21 = pt->d2tab[k++];
+  double p2 = xi[k];
+  double d22 = pt->d2tab[k];
 
-  return (p2 - p1) * istep + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) / (6.0 * istep);
+  return (p2 - p1) * pt->invstep[col] +
+         ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) /
+             (6.0 * pt->invstep[col]);
 }
 
 /****************************************************************
@@ -188,18 +194,17 @@ double splint_grad_ed(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_dir(pot_table_t *pt, double *xi, int k, double b, double step)
+double splint_dir(pot_table_t* pt, double* xi, int k, double b, double step)
 {
-  double a, p1, p2, d21, d22;
-
   /* indices into potential table */
-  a = 1.0 - b;
-  p1 = xi[k];
-  d21 = pt->d2tab[k++];
-  p2 = xi[k];
-  d22 = pt->d2tab[k];
+  double a = 1.0 - b;
+  double p1 = xi[k];
+  double d21 = pt->d2tab[k++];
+  double p2 = xi[k];
+  double d22 = pt->d2tab[k];
 
-  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
+  return a * p1 + b * p2 +
+         ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
 }
 
 /****************************************************************
@@ -211,19 +216,20 @@ double splint_dir(pot_table_t *pt, double *xi, int k, double b, double step)
  *
  ****************************************************************/
 
-double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b, double step, double *grad)
+double splint_comb_dir(pot_table_t* pt, double* xi, int k, double b,
+                       double step, double* grad)
 {
-  double a, p1, p2, d21, d22;
-
   /* indices into potential table */
-  a = 1.0 - b;
-  p1 = xi[k];
-  d21 = pt->d2tab[k++];
-  p2 = xi[k];
-  d22 = pt->d2tab[k];
-  *grad = (p2 - p1) / step + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
+  double a = 1.0 - b;
+  double p1 = xi[k];
+  double d21 = pt->d2tab[k++];
+  double p2 = xi[k];
+  double d22 = pt->d2tab[k];
+  *grad = (p2 - p1) / step +
+          ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
 
-  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
+  return a * p1 + b * p2 +
+         ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (step * step) / 6.0;
 }
 
 /****************************************************************
@@ -234,19 +240,18 @@ double splint_comb_dir(pot_table_t *pt, double *xi, int k, double b, double step
  *
  ****************************************************************/
 
-
-double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b, double step)
+double splint_grad_dir(pot_table_t* pt, double* xi, int k, double b,
+                       double step)
 {
-  double a, p1, p2, d21, d22;
-
   /* indices into potential table */
-  a = 1.0 - b;
-  p1 = xi[k];
-  d21 = pt->d2tab[k++];
-  p2 = xi[k];
-  d22 = pt->d2tab[k];
+  double a = 1.0 - b;
+  double p1 = xi[k];
+  double d21 = pt->d2tab[k++];
+  double p2 = xi[k];
+  double d22 = pt->d2tab[k];
 
-  return (p2 - p1) / step + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
+  return (p2 - p1) / step +
+         ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * step / 6.0;
 }
 
 /****************************************************************
@@ -256,39 +261,47 @@ double splint_grad_dir(pot_table_t *pt, double *xi, int k, double b, double step
  *
  ****************************************************************/
 
-void spline_ne(double *x, double *y, int n, double yp1, double ypn, double *y2)
+void spline_ne(double* x, double* y, int n, double yp1, double ypn, double* y2)
 {
-  int   i, k;
-  double p, qn, sig, un;
-  static double *u = NULL;
+  double qn = 0.0;
+  double un = 0.0;
+  static double* u = NULL;
   static int nmax = 0;
 
   if (n > nmax) {
-    u = (double *)realloc(u, (n - 1) * sizeof(double));
-    u_address = u;
+    u = (double*)Realloc(u, (n - 1) * sizeof(double));
     nmax = n;
   }
-  if (yp1 > 0.99e30)
-    y2[0] = u[0] = 0.0;
-  else {
+
+  if (yp1 > 0.99e30) {
+    y2[0] = 0.0;
+    u[0] = 0.0;
+  } else {
     y2[0] = -0.5;
     u[0] = (3.0 / (x[1] - x[0])) * ((y[1] - y[0]) / (x[1] - x[0]) - yp1);
   }
-  for (i = 1; i < n - 1; i++) {
-    sig = (x[i] - x[i - 1]) / (x[i + 1] - x[i - 1]);
-    p = sig * y2[i - 1] + 2.0;
+
+  for (int i = 1; i < n - 1; i++) {
+    double sig = (x[i] - x[i - 1]) / (x[i + 1] - x[i - 1]);
+    double p = sig * y2[i - 1] + 2.0;
     y2[i] = (sig - 1.0) / p;
-    u[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]) - (y[i] - y[i - 1]) / (x[i] - x[i - 1]);
+    u[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]) -
+           (y[i] - y[i - 1]) / (x[i] - x[i - 1]);
     u[i] = (6.0 * u[i] / (x[i + 1] - x[i - 1]) - sig * u[i - 1]) / p;
   }
-  if (ypn > 0.99e30)
-    qn = un = 0.0;
-  else {
+
+  if (ypn > 0.99e30) {
+    qn = 0.0;
+    un = 0.0;
+  } else {
     qn = 0.5;
-    un = (3.0 / (x[n - 1] - x[n - 2])) * (ypn - (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]));
+    un = (3.0 / (x[n - 1] - x[n - 2])) *
+         (ypn - (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]));
   }
+
   y2[n - 1] = (un - qn * u[n - 2]) / (qn * y2[n - 2] + 1.0);
-  for (k = n - 2; k >= 0; k--)
+
+  for (int k = n - 2; k >= 0; k--)
     y2[k] = y2[k] * y2[k + 1] + u[k];
 }
 
@@ -299,34 +312,28 @@ void spline_ne(double *x, double *y, int n, double yp1, double ypn, double *y2)
  *
  ****************************************************************/
 
-double splint_ne(pot_table_t *pt, double *xi, int col, double r)
+double splint_ne(pot_table_t* pt, double* xi, int col, double r)
 {
-  int   klo, khi, k;
-  double h, b, a, d22, d21, p1, p2, x1, x2;
-
-  klo = pt->first[col];
-  khi = pt->last[col];
+  int klo = pt->first[col];
+  int khi = pt->last[col];
 
   /* Find index by bisection */
   while (khi - klo > 1) {
-    k = (khi + klo) >> 1;
+    int k = (khi + klo) >> 1;
     if (pt->xcoord[k] > r)
       khi = k;
     else
       klo = k;
   }
-  x1 = pt->xcoord[klo];
-  x2 = pt->xcoord[khi];
-  h = x2 - x1;
-  p1 = xi[klo];
-  p2 = xi[khi];
-  d21 = pt->d2tab[klo];
-  d22 = pt->d2tab[khi];
 
-  b = (r - x1) / h;
-  a = (1.0 - b);
+  double h = pt->xcoord[khi] - pt->xcoord[klo];
 
-  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
+  double b = (r - pt->xcoord[klo]) / h;
+  double a = (1.0 - b);
+
+  return a * xi[klo] + b * xi[khi] +
+         ((a * a * a - a) * pt->d2tab[klo] + (b * b * b - b) * pt->d2tab[khi]) *
+             (h * h) / 6.0;
 }
 
 /******************************************************************************
@@ -336,51 +343,48 @@ double splint_ne(pot_table_t *pt, double *xi, int col, double r)
  *
  *****************************************************************************/
 
-double splint_ne_lin(pot_table_t *pt, double *xi, int col, double r)
+double splint_ne_lin(pot_table_t* pt, double* xi, int col, double r)
 {
-  int   klo, khi, k;
-  double h, b, a, d22, d21, p1, p2, x1, x2;
-  double grad;
-
-  klo = pt->first[col];
-  khi = pt->last[col];
+  int klo = pt->first[col];
+  int khi = pt->last[col];
 
   /* Find index by bisection */
   while (khi - klo > 1) {
-    k = (khi + klo) >> 1;
+    int k = (khi + klo) >> 1;
     if (pt->xcoord[k] > r)
       khi = k;
     else
       klo = k;
   }
-  x1 = pt->xcoord[klo];
-  x2 = pt->xcoord[khi];
-  h = x2 - x1;
-  p1 = xi[klo];
-  p2 = xi[khi];
-  d21 = pt->d2tab[klo];
-  d22 = pt->d2tab[khi];
 
-/*   if (h == 0.0) error("Bad xa input to routine splint"); */
-  b = (r - x1) / h;
-  a = (1.0 - b);
+  double h = pt->xcoord[khi] - pt->xcoord[klo];
+
+  /*   if (h == 0.0) error("Bad xa input to routine splint"); */
+  double b = (r - pt->xcoord[klo]) / h;
+  double a = (1.0 - b);
 
   if (r < pt->begin[col]) {
     b = 0.0;
     a = 1.0;
-    grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
-    return p1 + grad * (r - x1);
+    double grad = (xi[khi] - xi[klo]) / h +
+                  ((3 * (b * b) - 1) * pt->d2tab[khi] -
+                   (3 * (a * a) - 1) * pt->d2tab[klo]) *
+                      h / 6.0;
+    return xi[klo] + grad * (r - pt->xcoord[klo]);
   } else if (r > pt->end[col]) {
     b = 1.0;
     a = 0.0;
-    grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
-    return p2 + grad * (r - x2);
+    double grad = (xi[khi] - xi[klo]) / h +
+                  ((3 * (b * b) - 1) * pt->d2tab[khi] -
+                   (3 * (a * a) - 1) * pt->d2tab[klo]) *
+                      h / 6.0;
+    return xi[khi] + grad * (r - pt->xcoord[khi]);
   }
 
-  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
-
+  return a * xi[klo] + b * xi[khi] +
+         ((a * a * a - a) * pt->d2tab[klo] + (b * b * b - b) * pt->d2tab[khi]) *
+             (h * h) / 6.0;
 }
-
 
 /****************************************************************
  *
@@ -389,71 +393,64 @@ double splint_ne_lin(pot_table_t *pt, double *xi, int col, double r)
  *
  ****************************************************************/
 
-double splint_comb_ne(pot_table_t *pt, double *xi, int col, double r, double *grad)
+double splint_comb_ne(pot_table_t* pt, double* xi, int col, double r,
+                      double* grad)
 {
-  int   klo, khi, k;
-  double h, b, a, d22, d21, p1, p2, x1, x2;
-
-  klo = pt->first[col];
-  khi = pt->last[col];
+  int klo = pt->first[col];
+  int khi = pt->last[col];
 
   /* Find index by bisection */
   while (khi - klo > 1) {
-    k = (khi + klo) >> 1;
+    int k = (khi + klo) >> 1;
     if (pt->xcoord[k] > r)
       khi = k;
     else
       klo = k;
   }
-  x1 = pt->xcoord[klo];
-  x2 = pt->xcoord[khi];
-  h = x2 - x1;
-  p1 = xi[klo];
-  p2 = xi[khi];
-  d21 = pt->d2tab[klo];
-  d22 = pt->d2tab[khi];
 
-  b = (r - x1) / h;
-  a = (1.0 - b);
+  double h = pt->xcoord[khi] - pt->xcoord[klo];
 
-  *grad = (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+  double b = (r - pt->xcoord[klo]) / h;
+  double a = (1.0 - b);
 
-  return a * p1 + b * p2 + ((a * a * a - a) * d21 + (b * b * b - b) * d22) * (h * h) / 6.0;
+  *grad = (xi[khi] - xi[klo]) / h +
+          ((3 * (b * b) - 1) * pt->d2tab[khi] -
+           (3 * (a * a) - 1) * pt->d2tab[klo]) *
+              h / 6.0;
+
+  return a * xi[klo] + b * xi[khi] +
+         ((a * a * a - a) * pt->d2tab[klo] + (b * b * b - b) * pt->d2tab[khi]) *
+             (h * h) / 6.0;
 }
 
 /****************************************************************
  *
  * splint_grad_ne: calculates the first derivative from spline interpolation
- *            (equidistant x[i])
+ *            (nonequidistant x[i])
  *
  ****************************************************************/
 
-double splint_grad_ne(pot_table_t *pt, double *xi, int col, double r)
+double splint_grad_ne(pot_table_t* pt, double* xi, int col, double r)
 {
-  int   klo, khi, k;
-  double h, b, a, d22, d21, p1, p2, x1, x2;
-
-  klo = pt->first[col];
-  khi = pt->last[col];
+  int klo = pt->first[col];
+  int khi = pt->last[col];
 
   /* Find index by bisection */
   while (khi - klo > 1) {
-    k = (khi + klo) >> 1;
+    int k = (khi + klo) >> 1;
     if (pt->xcoord[k] > r)
       khi = k;
     else
       klo = k;
   }
-  x1 = pt->xcoord[klo];
-  x2 = pt->xcoord[khi];
-  h = x2 - x1;
-  p1 = xi[klo];
-  p2 = xi[khi];
-  d21 = pt->d2tab[klo];
-  d22 = pt->d2tab[khi];
 
-  b = (r - x1) / h;
-  a = (1.0 - b);
+  double h = pt->xcoord[khi] - pt->xcoord[klo];
 
-  return (p2 - p1) / h + ((3 * (b * b) - 1) * d22 - (3 * (a * a) - 1) * d21) * h / 6.0;
+  double b = (r - pt->xcoord[klo]) / h;
+  double a = (1.0 - b);
+
+  return (xi[khi] - xi[klo]) / h +
+         ((3 * (b * b) - 1) * pt->d2tab[khi] -
+          (3 * (a * a) - 1) * pt->d2tab[klo]) *
+             h / 6.0;
 }

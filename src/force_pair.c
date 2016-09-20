@@ -4,38 +4,55 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2014
- *	Institute for Theoretical and Applied Physics
- *	University of Stuttgart, D-70550 Stuttgart, Germany
- *	http://potfit.sourceforge.net/
+ * Copyright 2002-2016 - the potfit development team
+ *
+ * http://potfit.sourceforge.net/
  *
  ****************************************************************
  *
- *   This file is part of potfit.
+ * This file is part of potfit.
  *
- *   potfit is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   potfit is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
 
+#if !defined(PAIR)
+#error force_pair.c compiled without PAIR support
+#endif
+
 #include "potfit.h"
 
-#ifdef PAIR
-
+#include "chempot.h"
+#if defined(MPI)
+#include "mpi_utils.h"
+#endif
+#include "force.h"
 #include "functions.h"
-#include "potential.h"
+#include "potential_input.h"
 #include "splines.h"
 #include "utils.h"
+
+/****************************************************************
+  init_force
+    called after all parameters and potentials are read
+    additional assignments and initializations can be performed here
+****************************************************************/
+
+void init_force(int is_worker)
+{
+  // nothing to do here for pair potentials
+}
 
 /****************************************************************
  *
@@ -65,8 +82,8 @@
  * initiated by all processes to get the new potential from root.
  *
  * xi_opt is the array storing the potential parameters (usually it is the
- *     opt_pot.table - part of the struct opt_pot, but it can also be
- *     modified from the current potential.
+ *     g_pot.opt_pot.table - part of the struct g_pot.opt_pot, but it can also
+ *     be modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
  *     only for forces, but also for energies, stresses or dummy constraints
@@ -86,280 +103,216 @@
  *
  ****************************************************************/
 
-double calc_forces(double *xi_opt, double *forces, int flag)
+double calc_forces(double* xi_opt, double* forces, int flag)
 {
-  int   first, col, i;
-  double *xi = NULL;
+  double* xi = NULL;
 
-  /* Some useful temp variables */
-  double tmpsum = 0.0, sum = 0.0;
-
-  atom_t *atom;
-  int   h, j;
-  int   n_i, n_j;
-  int   self;
-  int   uf;
-#ifdef STRESS
-  int   us, stresses;
-#endif /* STRESS */
-
-  /* pointer for neighbor table */
-  neigh_t *neigh;
-
-  /* pair variables */
-  double phi_val, phi_grad;
-  vector tmp_force;
-
-  switch (format) {
-      case 0:
-	xi = calc_pot.table;
-	break;
-      case 3:			/* fall through */
-      case 4:
-	xi = xi_opt;		/* calc-table is opt-table */
-	break;
-      case 5:
-	xi = calc_pot.table;	/* we need to update the calc-table */
+  switch (g_pot.format_type) {
+    case POTENTIAL_FORMAT_UNKNOWN:
+      error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__, __LINE__);
+    case POTENTIAL_FORMAT_ANALYTIC:
+      xi = g_pot.calc_pot.table;
+      break;
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+      xi = xi_opt;
+      break;
+    case POTENTIAL_FORMAT_KIM:
+			break;
   }
 
-  /* This is the start of an infinite loop */
-  while (1) {
-    tmpsum = 0.0;		/* sum of squares of local process */
+#if !defined(MPI)
+  g_mpi.myconf = g_config.nconf;
+#endif  // !MPI
 
-#if defined APOT && !defined MPI
-    if (0 == format) {
+  // This is the start of an infinite loop
+
+  while (1) {
+    // sum of squares of local process
+    double error_sum = 0.0;
+
+#if defined(APOT) && !defined(MPI)
+    if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC) {
       apot_check_params(xi_opt);
       update_calc_table(xi_opt, xi, 0);
     }
-#endif /* APOT && !MPI */
+#endif  // APOT && !MPI
 
-#ifdef MPI
-#ifndef APOT
-    /* exchange potential and flag value */
-    MPI_Bcast(xi, calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif /* APOT */
+#if defined(MPI)
+#if !defined(APOT)
+    // exchange potential and flag value
+    MPI_Bcast(xi, g_pot.calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif  // !APOT
     MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (1 == flag)
-      break;			/* Exception: flag 1 means clean up */
+    if (flag == 1)
+      break; // Exception: flag 1 means clean up
 
-#ifdef APOT
-    if (0 == myid)
+#if defined(APOT)
+    if (g_mpi.myid == 0)
       apot_check_params(xi_opt);
-    MPI_Bcast(xi_opt, ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(xi_opt, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     update_calc_table(xi_opt, xi, 0);
-#else /* APOT */
-    /* if flag==2 then the potential parameters have changed -> sync */
-    if (2 == flag)
+#else   // APOT
+    // if flag == 2 then the potential parameters have changed -> sync
+    if (flag == 2)
       potsync();
-#endif /* APOT */
-#endif /* MPI */
+#endif  // APOT
+#endif  // MPI
 
-    /* init second derivatives for splines */
+    // init second derivatives for splines
 
-    /* pair potentials */
-    for (col = 0; col < paircol; col++) {
-      first = calc_pot.first[col];
-      if (0 == format || 3 == format)
-	spline_ed(calc_pot.step[col], xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-      else			/* format >= 4 ! */
-	spline_ne(calc_pot.xcoord + first, xi + first,
-	  calc_pot.last[col] - first + 1, *(xi + first - 2), 0.0, calc_pot.d2tab + first);
-    }
+    // pair potential
+    //   [0, ...,  paircol - 1]
+    update_splines(xi, 0, g_calc.paircol, 1);
 
-#ifndef MPI
-    myconf = nconf;
-#endif /* MPI */
+    // loop over configurations
+    for (int config_idx = g_mpi.firstconf; config_idx < g_mpi.firstconf + g_mpi.myconf; config_idx++) {
+      int uf = g_config.conf_uf[config_idx - g_mpi.firstconf];
+#if defined(STRESS)
+      int us = g_config.conf_us[config_idx - g_mpi.firstconf];
+#endif  // STRESS
+      // reset energies and stresses
+      forces[g_calc.energy_p + config_idx] = 0.0;
+#if defined(STRESS)
+      int stress_idx = g_calc.stress_p + 6 * config_idx;
+      memset(forces + stress_idx, 0, 6 * sizeof(double));
+#endif  // STRESS
 
-    /* region containing loop over configurations */
-    {
+#if defined(APOT)
+      if (g_param.enable_cp)
+        forces[g_calc.energy_p + config_idx] += chemical_potential(
+            g_param.ntypes, g_config.na_type[config_idx], xi_opt + g_pot.cp_start);
+#endif  // APOT
 
-      /* loop over configurations */
-      for (h = firstconf; h < firstconf + myconf; h++) {
-	uf = conf_uf[h - firstconf];
-#ifdef STRESS
-	us = conf_us[h - firstconf];
-#endif /* STRESS */
-	/* reset energies and stresses */
-	forces[energy_p + h] = 0.0;
-#ifdef STRESS
-	stresses = stress_p + 6 * h;
-	for (i = 0; i < 6; i++)
-	  forces[stresses + i] = 0.0;
-#endif /* STRESS */
+      // first loop: reset forces
+      for (int atom_idx = 0; atom_idx < g_config.inconf[config_idx]; atom_idx++) {
+        int n_i = 3 * (g_config.cnfstart[config_idx] + atom_idx);
+        if (uf) {
+          forces[n_i + 0] = -g_config.force_0[n_i + 0];
+          forces[n_i + 1] = -g_config.force_0[n_i + 1];
+          forces[n_i + 2] = -g_config.force_0[n_i + 2];
+        } else {
+          memset(forces + n_i, 0, 3 * sizeof(double));
+        }
+      }
 
-#ifdef APOT
-	if (enable_cp)
-	  forces[energy_p + h] += chemical_potential(ntypes, na_type[h], xi_opt + cp_start);
-#endif /* APOT */
+      // second loop: calculate pair forces and energies
+      for (int atom_idx = 0; atom_idx < g_config.inconf[config_idx]; atom_idx++) {
+        atom_t* atom = g_config.conf_atoms + atom_idx + g_config.cnfstart[config_idx] - g_mpi.firstatom;
+        int n_i = 3 * (g_config.cnfstart[config_idx] + atom_idx);
+        // loop over all neighbors
+        for (int neigh_idx = 0; neigh_idx < atom->num_neigh; neigh_idx++) {
+          neigh_t* neigh = atom->neigh + neigh_idx;
+          // In small cells, an atom might interact with itself
+          int self = (neigh->nr == atom_idx + g_config.cnfstart[config_idx]) ? 1 : 0;
 
-	/* first loop over atoms: reset forces, densities */
-	for (i = 0; i < inconf[h]; i++) {
-	  if (uf) {
-	    n_i = 3 * (cnfstart[h] + i);
-	    forces[n_i + 0] = -force_0[n_i + 0];
-	    forces[n_i + 1] = -force_0[n_i + 1];
-	    forces[n_i + 2] = -force_0[n_i + 2];
-	  } else {
-	    n_i = 3 * (cnfstart[h] + i);
-	    forces[n_i + 0] = 0.0;
-	    forces[n_i + 1] = 0.0;
-	    forces[n_i + 2] = 0.0;
-	  }
-	}
-	/* end first loop */
+          // pair potential part
+          if (neigh->r < g_pot.calc_pot.end[neigh->col[0]]) {
+            double phi_val = 0.0;
+            double phi_grad = 0.0;
+            // potential value and gradient are calculated in the same step
+            if (uf)
+              phi_val = splint_comb_dir(&g_pot.calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
+            else
+              phi_val = splint_dir(&g_pot.calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
 
-	/* 2nd loop: calculate pair forces and energies */
-	for (i = 0; i < inconf[h]; i++) {
-	  atom = conf_atoms + i + cnfstart[h] - firstatom;
-	  n_i = 3 * (cnfstart[h] + i);
-	  /* loop over neighbors */
-	  for (j = 0; j < atom->num_neigh; j++) {
-	    neigh = atom->neigh + j;
-	    /* In small cells, an atom might interact with itself */
-	    self = (neigh->nr == i + cnfstart[h]) ? 1 : 0;
+            // avoid double counting if atom is interacting with itself
+            if (self) {
+              phi_val *= 0.5;
+              phi_grad *= 0.5;
+            }
 
-	    /* pair potential part */
-	    if (neigh->r < calc_pot.end[neigh->col[0]]) {
-	      /* fn value and grad are calculated in the same step */
-	      if (uf)
-		phi_val =
-		  splint_comb_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0], &phi_grad);
-	      else
-		phi_val = splint_dir(&calc_pot, xi, neigh->slot[0], neigh->shift[0], neigh->step[0]);
+            // add cohesive energy
+            forces[g_calc.energy_p + config_idx] += phi_val;
 
-	      /* avoid double counting if atom is interacting with a copy of itself */
-	      if (self) {
-		phi_val *= 0.5;
-		phi_grad *= 0.5;
-	      }
+            // calculate forces
+            if (uf) {
+              vector tmp_force;
+              tmp_force.x = neigh->dist_r.x * phi_grad;
+              tmp_force.y = neigh->dist_r.y * phi_grad;
+              tmp_force.z = neigh->dist_r.z * phi_grad;
+              forces[n_i + 0] += tmp_force.x;
+              forces[n_i + 1] += tmp_force.y;
+              forces[n_i + 2] += tmp_force.z;
+              // actio = reactio
+              int n_j = 3 * neigh->nr;
+              forces[n_j + 0] -= tmp_force.x;
+              forces[n_j + 1] -= tmp_force.y;
+              forces[n_j + 2] -= tmp_force.z;
+#if defined(STRESS)
+              /* also calculate pair stresses */
+              if (us) {
+                forces[stress_idx + 0] -= neigh->dist.x * tmp_force.x;
+                forces[stress_idx + 1] -= neigh->dist.y * tmp_force.y;
+                forces[stress_idx + 2] -= neigh->dist.z * tmp_force.z;
+                forces[stress_idx + 3] -= neigh->dist.x * tmp_force.y;
+                forces[stress_idx + 4] -= neigh->dist.y * tmp_force.z;
+                forces[stress_idx + 5] -= neigh->dist.z * tmp_force.x;
+              }
+#endif  // STRESS
+            }
+          } // neighbors in range
+        }   // loop over all neighbors
 
-	      /* add cohesive energy */
-	      forces[energy_p + h] += phi_val;
+        // calculate contribution of forces right away
+        if (uf) {
+#if defined(FWEIGHT)
+          // weigh by absolute value of force
+          forces[n_i + 0] /= FORCE_EPS + atom->absforce;
+          forces[n_i + 1] /= FORCE_EPS + atom->absforce;
+          forces[n_i + 2] /= FORCE_EPS + atom->absforce;
+#endif  // FWEIGHT
 
-	      /* calculate forces */
-	      if (uf) {
-		tmp_force.x = neigh->dist_r.x * phi_grad;
-		tmp_force.y = neigh->dist_r.y * phi_grad;
-		tmp_force.z = neigh->dist_r.z * phi_grad;
-		forces[n_i + 0] += tmp_force.x;
-		forces[n_i + 1] += tmp_force.y;
-		forces[n_i + 2] += tmp_force.z;
-		/* actio = reactio */
-		n_j = 3 * neigh->nr;
-		forces[n_j + 0] -= tmp_force.x;
-		forces[n_j + 1] -= tmp_force.y;
-		forces[n_j + 2] -= tmp_force.z;
-#ifdef STRESS
-		/* also calculate pair stresses */
-		if (us) {
-		  forces[stresses + 0] -= neigh->dist.x * tmp_force.x;
-		  forces[stresses + 1] -= neigh->dist.y * tmp_force.y;
-		  forces[stresses + 2] -= neigh->dist.z * tmp_force.z;
-		  forces[stresses + 3] -= neigh->dist.x * tmp_force.y;
-		  forces[stresses + 4] -= neigh->dist.y * tmp_force.z;
-		  forces[stresses + 5] -= neigh->dist.z * tmp_force.x;
-		}
-#endif /* STRESS */
-	      }
-	    }			/* neighbor in range */
-	  }			/* loop over all neighbors */
+          // sum up forces
+#if defined(CONTRIB)
+          if (atom->contrib)
+#endif  // CONTRIB
+            error_sum += g_config.conf_weight[config_idx] * (dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
+        }
+      } // second loop over atoms
 
-	  /* then we can calculate contribution of forces right away */
-	  if (uf) {
-#ifdef FWEIGHT
-	    /* Weigh by absolute value of force */
-	    forces[n_i + 0] /= FORCE_EPS + atom->absforce;
-	    forces[n_i + 1] /= FORCE_EPS + atom->absforce;
-	    forces[n_i + 2] /= FORCE_EPS + atom->absforce;
-#endif /* FWEIGHT */
+      // energy contributions
+      forces[g_calc.energy_p + config_idx] /= (double)g_config.inconf[config_idx];
+      forces[g_calc.energy_p + config_idx] -= g_config.force_0[g_calc.energy_p + config_idx];
+      error_sum += g_config.conf_weight[config_idx] * g_param.eweight * dsquare(forces[g_calc.energy_p + config_idx]);
 
-	    /* sum up forces */
-#ifdef CONTRIB
-	    if (atom->contrib)
-#endif /* CONTRIB */
-	      tmpsum += conf_weight[h] *
-		(dsquare(forces[n_i + 0]) + dsquare(forces[n_i + 1]) + dsquare(forces[n_i + 2]));
-	  }
-	}			/* second loop over atoms */
+#if defined(STRESS)
+      // stress contributions
+      if (uf && us) {
+        for (int i = 0; i < 6; i++) {
+          forces[stress_idx + i] /= g_config.conf_vol[config_idx - g_mpi.firstconf];
+          forces[stress_idx + i] -= g_config.force_0[stress_idx + i];
+          error_sum += g_config.conf_weight[config_idx] * g_param.sweight * dsquare(forces[stress_idx + i]);
+        }
+      }
+#endif  // STRESS
 
-	/* energy contributions */
-	forces[energy_p + h] /= (double)inconf[h];
-	forces[energy_p + h] -= force_0[energy_p + h];
-	tmpsum += conf_weight[h] * eweight * dsquare(forces[energy_p + h]);
+    } // loop over configurations
 
-#ifdef STRESS
-	/* stress contributions */
-	if (uf && us) {
-	  for (i = 0; i < 6; i++) {
-	    forces[stresses + i] /= conf_vol[h - firstconf];
-	    forces[stresses + i] -= force_0[stresses + i];
-	    tmpsum += conf_weight[h] * sweight * dsquare(forces[stresses + i]);
-	  }
-	}
-#endif /* STRESS */
+    // dummy constraints (global)
+#if defined(APOT)
+    // add punishment for out of bounds (mostly for powell_lsq)
+    if (g_mpi.myid == 0)
+      error_sum += apot_punish(xi_opt, forces);
+#endif  // APOT
 
-      }				/* loop over configurations */
-    }				/* parallel region */
+    gather_forces(&error_sum, forces);
 
-    /* dummy constraints (global) */
-#ifdef APOT
-    /* add punishment for out of bounds (mostly for powell_lsq) */
-    if (0 == myid) {
-      tmpsum += apot_punish(xi_opt, forces);
-    }
-#endif /* APOT */
-
-#ifdef MPI
-    /* reduce global sum */
-    sum = 0.0;
-    MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    /* gather forces, energies, stresses */
-    if (0 == myid) {		/* root node already has data in place */
-      /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces,
-	atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
-      /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_DOUBLE, forces + energy_p,
-	conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#ifdef STRESS
-      /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, myconf, MPI_STENS, forces + stress_p,
-	conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
-#endif /* STRESS */
-    } else {
-      /* forces */
-      MPI_Gatherv(forces + firstatom * 3, myatoms, MPI_VECTOR,
-	forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
-      /* energies */
-      MPI_Gatherv(forces + energy_p + firstconf, myconf, MPI_DOUBLE,
-	forces + energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#ifdef STRESS
-      /* stresses */
-      MPI_Gatherv(forces + stress_p + 6 * firstconf, myconf, MPI_STENS,
-	forces + stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
-#endif /* STRESS */
-    }
-#else
-    sum = tmpsum;		/* global sum = local sum  */
-#endif /* MPI */
-
-    /* root process exits this function now */
-    if (0 == myid) {
-      fcalls++;			/* Increase function call counter */
-      if (isnan(sum)) {
-#ifdef DEBUG
-	printf("\n--> Force is nan! <--\n\n");
-#endif /* DEBUG */
-	return 10e10;
+    // root process exits this function now
+    if (g_mpi.myid == 0) {
+      // Increase function call counter
+      g_calc.fcalls++;
+      if (isnan(error_sum)) {
+#if defined(DEBUG)
+        printf("\n--> Force is nan! <--\n\n");
+#endif  // DEBUG
+        return 10e10;
       } else
-	return sum;
+        return error_sum;
     }
-  }				/* end of infinite loop */
+  } // end of infinite loop
 
-  /* once a non-root process arrives here, all is done. */
+  // once a non-root process arrives here, all is done
   return -1.0;
 }
-
-#endif /* PAIR */

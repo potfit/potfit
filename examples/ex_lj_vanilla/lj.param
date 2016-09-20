@@ -1,0 +1,19 @@
+ntypes		1
+
+# file names
+config	  training_set.txt	
+startpot	lj.pot
+endpot		lj_end.pot
+tempfile	dummy.tmp
+
+flagfile	STOP
+
+# optional writting
+write_pair	1
+output_prefix out
+
+opt		1
+anneal_temp	10
+eng_weight	1
+seed		42
+
