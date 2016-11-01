@@ -31,6 +31,7 @@
 
 #include "chempot.h"
 #include "functions.h"
+#include "kim.h"
 #include "memory.h"
 #include "potential_input.h"
 #include "utils.h"
@@ -47,13 +48,17 @@ void calculate_cutoffs();
 void read_maxch_file();
 
 #if defined(APOT)
+#if !defined(KIM)
 void read_pot_table0(char const* potential_filename, FILE* pfile);
+#else
+void read_pot_table5(char const* potential_filename, FILE* pfile);
+#endif // KIM
 #else
 void read_pot_table3(char const* potential_filename, FILE* pfile,
                      potential_state* pstate);
 void read_pot_table4(char const* potential_filename, FILE* pfile,
                      potential_state* pstate);
-#endif  // APOT
+#endif // APOT
 
 /****************************************************************
  *
@@ -133,7 +138,7 @@ void read_pot_table(char const* potential_filename)
       error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__,
             __LINE__);
     case POTENTIAL_FORMAT_ANALYTIC:
-#if defined(APOT)
+#if defined(APOT) && !defined(KIM)
       read_pot_table0(potential_filename, pfile);
 #endif  // APOT
       break;
@@ -146,6 +151,11 @@ void read_pot_table(char const* potential_filename)
 #if !defined(APOT)
       read_pot_table4(potential_filename, pfile, &pstate);
 #endif  // !APOT
+      break;
+    case POTENTIAL_FORMAT_KIM:
+#if defined(APOT) && defined(KIM)
+      read_pot_table5(potential_filename, pfile);
+#endif  // KIM
       break;
   }
 
@@ -177,6 +187,8 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
     case 0:
 #if !defined(APOT)
       error(1, "potfit binary compiled without analytic potential support.\n");
+#elif defined(KIM)
+      error(1, "potfit binary compiled with KIM support. Format 0 is not available.\n");
 #endif
       g_pot.format_type = POTENTIAL_FORMAT_ANALYTIC;
       break;
@@ -191,6 +203,12 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
       error(1, "potfit binary compiled without tabulated potential support.\n");
 #endif
       g_pot.format_type = POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST;
+      break;
+    case 5:
+#if !defined(KIM)
+      error(1, "potfit binary compiled without KIM potential support.\n");
+#endif
+      g_pot.format_type = POTENTIAL_FORMAT_KIM;
       break;
     default:
       break;
@@ -210,6 +228,9 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
     case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
       printf(" - Potential file format 4 (tabulated non-eqdist) detected\n");
       break;
+    case POTENTIAL_FORMAT_KIM:
+      printf(" - Potential file format 5 (KIM) detected\n");
+      break;
   }
 
   // only pair potentials for
@@ -219,8 +240,17 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 
   int npots = g_calc.paircol;
 
-// more potential functions for other interactions
+#if defined(KIM)
 
+  if(g_pot.format_type != POTENTIAL_FORMAT_KIM)
+    error(1, "To use KIM potential, format should be set to '5' in file '%s'.\n", pstate->filename);
+  if(pstate->num_pots != 1)
+    warning("The number of potentials should always be '1' when KIM potential is used.\n" "You specified %d in file '%s', and it is reset to 1.\n", pstate->num_pots, pstate->filename);
+  npots = 1;
+
+#else
+
+// more potential functions for other interactions
 #if defined(EAM)
   npots += 2 * g_param.ntypes;
 #if defined(TBEAM)
@@ -254,6 +284,8 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
     error(1, "For g_param.ntypes=%d there should be %d, but there are %d.\n",
           g_param.ntypes, npots, pstate->num_pots);
   }
+
+#endif // KIM
 
   g_pot.gradient = (int*)Malloc(npots * sizeof(int));
   g_pot.invar_pot = (int*)Malloc(npots * sizeof(int));

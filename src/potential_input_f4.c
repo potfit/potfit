@@ -33,6 +33,12 @@
 #include "potential_input.h"
 #include "utils.h"
 
+#if defined(APOT)
+
+void read_pot_table4(char const* a, FILE* b, potential_state* c) {}
+
+#else
+
 void init_calc_table4();
 
 /****************************************************************
@@ -344,3 +350,5 @@ void init_calc_table4()
   g_pot.calc_pot.d2tab = g_pot.opt_pot.d2tab;
   g_pot.calc_pot.idx = g_pot.opt_pot.idx;
 }
+
+#endif // APOT

@@ -111,13 +111,14 @@ SHELL = /bin/bash
 # x86_64-clang  64bit LLVM Compiler
 # i686-icc      32bit Intel Compiler
 # i686-gcc      32bit GNU Compiler
+# i686-kim      32bit GNU Compiler
 
 #SYSTEM = i686-gcc
-SYSTEM = x86_64-clang
+SYSTEM = x86_64-gcc
 
 # Base directory of your installation of the MKL or ACML
 
-MKLDIR      = /opt/intel/composer_xe_2013.3.163/mkl
+MKLDIR      = /opt/intel/composer_xe_2015.1.133/mkl
 ACML4DIR    = /opt/acml4.4.0/gfortran64
 ACML5DIR    = /opt/acml/gfortran64
 LIBMDIR     = /opt/acml/libm
@@ -307,6 +308,43 @@ ifeq (,$(strip $(findstring acml,${MAKETARGET})))
   CINCLUDE      += -I${MKLDIR}/include
   LIBS		+= -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
 		   -Wl,--end-group -lpthread -Wl,--as-needed
+endif
+
+# AMD Core Math Library
+ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
+  CINCLUDE     	+= -I$(ACML4DIR)/include
+  LIBS		+= -L${ACML4PATH} -lpthread -lacml -Wl,--as-needed
+endif
+ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
+  LIBMPATH 	= ${LIBMDIR}/lib/dynamic
+  CINCLUDE     	+= -I$(ACML5DIR)/include -I${LIBMDIR}/include
+  LIBS		+= -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -Wl,--as-needed
+endif
+
+  export        OMPI_CC OMPI_CLINKER
+endif
+
+################################################################################
+# KIM
+################################################################################
+
+ifeq (i686-kim,${SYSTEM})
+  ifeq ($(shell kim-api-build-config --version),)
+	    $(error The utility 'kim-api-build-config' not found on path; Update PATH environment variable appropriately)
+  endif
+
+  CC_SERIAL      = $(shell kim-api-build-config --cc)
+  CINCLUDE      += $(shell kim-api-build-config --includes)
+  FLAGS         += $(shell kim-api-build-config --cflags) -std=c99
+  LFLAGS_SERIAL += $(shell kim-api-build-config --ldflags)
+  LIBS          += $(shell kim-api-build-config --ldlibs)
+
+# Intel Math Kernel Library
+ifeq (,$(strip $(findstring acml,${MAKETARGET})))
+  CINCLUDE      += -I${MKLDIR}/include
+  LIBS 		+= -L${MKLDIR}/lib/intel64
+  LIBS    += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
+					   -Wl,--end-group -lpthread -Wl,--as-needed
 endif
 
 # AMD Core Math Library

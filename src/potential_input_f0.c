@@ -38,6 +38,7 @@
 #if !defined(APOT)
 
 void read_pot_table0(char const* potential_filename, FILE* pfile) {}
+
 #else
 
 typedef struct {

@@ -57,6 +57,11 @@
 // include type definitions after all preprocessor flags are properly set
 #include "types.h"
 
+// include kim types
+#if defined(KIM)
+#include "kim.h"
+#endif
+
 // global variables (defined in potfit.c)
 
 extern potfit_calculation g_calc;
@@ -65,6 +70,10 @@ extern potfit_filenames g_files;
 extern potfit_mpi_config g_mpi;
 extern potfit_parameters g_param;
 extern potfit_potentials g_pot;
+#if defined(KIM)
+extern potfit_kim g_kim;
+#endif
+
 
 // general functions for warning and error output
 

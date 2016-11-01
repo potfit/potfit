@@ -139,6 +139,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
     case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
       xi = xi_opt;
       break;
+    case POTENTIAL_FORMAT_KIM:
+      error(1, "KIM format is not supported by elstat force routine!");
+      break;
   }
 
   ne = g_pot.apot_table.total_ne_par;
@@ -318,12 +321,12 @@ double calc_forces(double* xi_opt, double* forces, int flag)
             /* updating tail-functions - only necessary with variing kappa */
             if (!apt->sw_kappa)
 #if defined(DSF)
-	    elstat_dsf(neigh->r, dp_kappa, &neigh->fnval_el,
-                           &neigh->grad_el, &neigh->ggrad_el);
+           elstat_dsf(neigh->r, dp_kappa, &neigh->fnval_el,
+                            &neigh->grad_el, &neigh->ggrad_el);
 #else
-	    elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el,
+           elstat_shift(neigh->r, dp_kappa, &neigh->fnval_el,
                            &neigh->grad_el, &neigh->ggrad_el);
-#endif
+#endif // DSF
             /* In small cells, an atom might interact with itself */
             self = (neigh->nr == i + g_config.cnfstart[h]) ? 1 : 0;
 
@@ -797,9 +800,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
          * contributions */
         double qq;
 #if defined(DSF)
-	double fnval_cut, gtail_cut, ggrad_cut;
+       double fnval_cut, gtail_cut, ggrad_cut;
         elstat_value(g_config.dp_cut, dp_kappa, &fnval_cut, &gtail_cut, &ggrad_cut);
-#endif //DSF
+#endif // DSF
 #if defined(DIPOLE)
         double pp;
 #endif                                             // DIPOLE
@@ -813,11 +816,11 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           if (charge[type1]) {
             qq = charge[type1] * charge[type1];
 #if defined(DSF)
-	    fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
-	       (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
+           fnval = qq * ( DP_EPS * dp_kappa / sqrt(M_PI) +
+              (fnval_cut - gtail_cut * g_config.dp_cut * g_config.dp_cut )*0.5 );
 #else
-            fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
-#endif //DSF
+             fnval = DP_EPS * dp_kappa * qq / sqrt(M_PI);
+#endif // DSF
             forces[g_calc.energy_p + h] -= fnval;
           }
 #if defined(DIPOLE)

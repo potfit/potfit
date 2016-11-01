@@ -35,6 +35,7 @@
 #include "errors.h"
 #include "force.h"
 #include "functions.h"
+#include "kim.h"
 #include "memory.h"
 #include "mpi_utils.h"
 #include "optimize.h"
@@ -57,6 +58,9 @@ potfit_filenames g_files;
 potfit_mpi_config g_mpi;
 potfit_parameters g_param;
 potfit_potentials g_pot;
+#if defined(KIM)
+potfit_kim g_kim;
+#endif // KIM
 
 /****************************************************************
     main potfit routine
@@ -76,6 +80,11 @@ int main(int argc, char** argv)
   read_input_files(argc, argv);
 
   g_mpi.init_done = 1;
+
+#if defined(KIM)
+  // Initialize KIM
+  init_KIM();
+#endif // KIM
 
   ret = broadcast_params_mpi();
 
@@ -101,7 +110,9 @@ int main(int argc, char** argv)
 #if defined(MPI)
   MPI_Bcast(g_pot.opt_pot.table, g_calc.ndimtot, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif  // MPI
+#if !defined(KIM)
   update_calc_table(g_pot.opt_pot.table, g_pot.calc_pot.table, 1);
+#endif  // !KIM
 #endif  // APOT
 
   if (g_mpi.myid > 0) {
@@ -156,12 +167,16 @@ int main(int argc, char** argv)
         case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
           format = 4;
           break;
+        case POTENTIAL_FORMAT_KIM:
+          format = 5;
+          break;
       }
 
       printf("\nPotential in format %d written to file \t%s\n", format,
              g_files.endpot);
     }
 
+#if !defined(KIM)
     if (g_param.writeimd == 1)
       write_pot_table_imd(g_files.imdpot);
 
@@ -170,6 +185,7 @@ int main(int argc, char** argv)
 
     if (g_param.write_lammps == 1)
       write_pot_table_lammps();
+#endif // !KIM
 
 // will not work with MPI
 #if defined(PDIST) && !defined(MPI)
@@ -200,6 +216,10 @@ int main(int argc, char** argv)
   // kill MPI
   shutdown_mpi();
 #endif  // MPI
+
+#if defined(KIM)
+  free_KIM();
+#endif  // KIM
 
   free_allocated_memory();
 

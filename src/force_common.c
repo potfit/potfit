@@ -62,6 +62,8 @@ void init_force_common(int is_worker)
       g_splint_comb = splint_comb_ne;
       g_splint_grad = splint_grad_ne;
       break;
+    case POTENTIAL_FORMAT_KIM:
+      break;
   }
   // for force-specific initializations please use the
   // init_force function local to the force_xxx.c file
@@ -242,6 +244,9 @@ void update_splines(double* xi, int start_col, int num_col, int grad_flag)
                   grad_left, grad_right, g_pot.calc_pot.d2tab + first);
         break;
       }
+      case POTENTIAL_FORMAT_KIM:
+        warning("updates_splines() should not be called for KIM potentials!");
+        return;
     }
   }
 }

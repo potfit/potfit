@@ -36,6 +36,7 @@
 #if defined(APOT)
 
 void read_pot_table3(char const* a, FILE* b, potential_state* c) {}
+
 #else
 
 void init_calc_table3();

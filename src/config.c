@@ -182,6 +182,13 @@ void read_config(const char* filename)
     cstate.stresses = g_config.stress + g_config.nconf;
 #endif  // STRESS
 
+#if defined(KIM)
+    if (strcmp(g_kim.NBC_method, "MI_OPBC_F") == 0 || strcmp(g_kim.NBC_method, "MI_OPBC_H") == 0) {
+      /* realloc memory for box_side_len */
+      g_kim.box_side_len = (double *) Realloc(g_kim.box_side_len, 3*(g_config.nconf+1)*sizeof(double));
+    }
+#endif  // KIM
+
     // read header lines
     do {
       res = fgets(buffer, 1024, config_file);
@@ -329,6 +336,23 @@ void read_config(const char* filename)
 #endif  // STRESS
 
     g_config.volume[g_config.nconf] = make_box(&cstate);
+
+#if defined(KIM)
+    if (strcmp(g_kim.NBC_method, "MI_OPBC_F") == 0 || strcmp(g_kim.NBC_method, "MI_OPBC_H") == 0) {
+      double small_value = 1e-8;
+      if(cstate.box_x.y > small_value || cstate.box_x.z > small_value
+	    || cstate.box_y.z > small_value || cstate.box_y.x > small_value
+	    || cstate.box_z.x > small_value || cstate.box_z.y > small_value){
+        error(1,"KIM: simulation box of configuration %d is not orthogonal. Try to use 'NEIGH_RVEC' "
+	      "instead of 'MI_OPBC'.\n", g_config.nconf);
+      } else {
+        /* store the box size info in box_side_len */
+        g_kim.box_side_len[3*g_config.nconf + 0] = cstate.box_x.x;
+        g_kim.box_side_len[3*g_config.nconf + 1] = cstate.box_y.y;
+        g_kim.box_side_len[3*g_config.nconf + 2] = cstate.box_z.z;
+      }
+    }
+#endif   // KIM
 
     // read the atoms
     for (int i = 0; i < cstate.atom_count; i++) {
@@ -938,7 +962,12 @@ void init_neighbors(config_state* cstate, double* mindist)
 #if defined(THREEBODY)
     for (int j = g_config.natoms; j < g_config.natoms + cstate->atom_count; j++)
 #else
-    for (int j = i; j < g_config.natoms + cstate->atom_count; j++)
+    int j_start = i;
+#if defined(KIM)
+    if (g_kim.is_half_neighbors != 1)
+      j_start = g_config.natoms;
+#endif
+    for (int j = j_start; j < g_config.natoms + cstate->atom_count; j++)
 #endif  // THREEBODY
     {
       d.x = g_config.atoms[j].pos.x - g_config.atoms[i].pos.x;
@@ -995,6 +1024,7 @@ void init_neighbors(config_state* cstate, double* mindist)
               n->dist.x = dd.x * r;
               n->dist.y = dd.y * r;
               n->dist.z = dd.z * r;
+
 #if defined(ADP)
               n->sqrdist.xx = dd.x * dd.x * r * r;
               n->sqrdist.yy = dd.y * dd.y * r * r;
@@ -1006,8 +1036,13 @@ void init_neighbors(config_state* cstate, double* mindist)
 
               /* pre-compute index and shift into potential table */
 
-              /* pair potential */
+#if defined(KIM)
+              // never do this for KIM
+              if (0) {
+#else
               if (!short_distance) {
+#endif // KIM
+                /* pair potential */
                 int col = (type1 <= type2)
                               ? type1 * g_param.ntypes + type2 -
                                     ((type1 * (type1 + 1)) / 2)
@@ -1113,6 +1148,8 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
       shift = (r - g_pot.calc_pot.xcoord[klo]) / step;
       break;
     }
+    case POTENTIAL_FORMAT_KIM:
+      return;
     case POTENTIAL_FORMAT_UNKNOWN:
       error(1, "Unknown potential format detected.\n");
   }
