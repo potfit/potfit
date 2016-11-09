@@ -274,6 +274,9 @@ ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
     ERROR += "COULOMB does not support tabulated potentials!\\n"
   endif
   CFLAGS += -DCOULOMB
+  ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
+    CFLAGS += -DDSF
+  endif
   INTERACTION = 1
 endif
 
@@ -283,6 +286,9 @@ ifneq (,$(strip $(findstring dipole,${MAKETARGET})))
     ifneq (,$(findstring 1,${INTERACTION}))
       ERROR += "More than one potential model specified!\\n"
     endif
+  endif
+  ifneq (,$(strip $(findstring dsf,${MAKETARGET})))
+      ERROR += "DIPOLE and DSF are not currently compatible!\\n"
   endif
   ifeq (,$(strip $(findstring apot,${MAKETARGET})))
     ERROR += "DIPOLE does not support tabulated potentials!\\n"
