@@ -258,6 +258,10 @@ void write_pot_table_lammps()
   printf(
       "Potential in LAMMPS format is not available for dipole interactions.\n");
   return;
+#elif defined(PAIR)
+  printf(
+      "Potential in LAMMPS format is not available for pair interactions.\n");
+  return;
 #else /* COULOMB */
 
   char filename[255];

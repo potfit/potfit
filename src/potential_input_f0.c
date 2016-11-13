@@ -97,10 +97,10 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
 
   /* if we have global parameters, are they actually used ? */
   if (g_pot.have_globals) {
-    int j = 0;
+    int use_count = 0;
     for (int i = 0; i < apt->globals; i++)
-      j += apt->n_glob[i];
-    if (j == 0) {
+      use_count += apt->n_glob[i];
+    if (use_count == 0) {
       g_pot.have_globals = 0;
       printf("You defined global parameters but did not use them.\n");
       printf("Disabling global parameters.\n\n");

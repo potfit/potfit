@@ -135,6 +135,7 @@ void write_errors(double* force, double tot)
     rms[1] = sqrt(rms[1] / g_config.nconf);
   }
 
+#if defined(STRESS)
   // stresses
   if (g_param.sweight != 0) {
     for (int i = 0; i < g_config.nconf; i++)
@@ -145,6 +146,7 @@ void write_errors(double* force, double tot)
       rms[2] = 0.0;
     rms[2] = sqrt(rms[2] / (6 * g_config.nconf));
   }
+#endif  // STRESS
 
   if (g_param.write_output_files) {
     fprintf(outfile, "sum of force-errors  = %e\t\t( %.3f%% - av: %f)\n", f_sum,
