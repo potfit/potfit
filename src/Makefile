@@ -72,16 +72,15 @@ LIBS += ${${PARALLEL}_LIBS}
 
 # optimization or debug
 CFLAGS := ${FLAGS}
-ifneq (,$(findstring debug,${MAKETARGET}))
-CFLAGS += ${DEBUG_FLAGS}
-else
+
 ifneq (,$(findstring asan,${MAKETARGET}))
-CFLAGS += ${ASAN_FLAGS}
-LFLAGS_SERIAL = ${ASAN_LFLAGS}
-LFLAGS_MPI = ${ASAN_LFLAGS}
+  CFLAGS += ${ASAN_FLAGS} ${DEBUG_FLAGS}
+  LFLAGS_SERIAL = ${ASAN_LFLAGS}
+  LFLAGS_MPI = ${ASAN_LFLAGS}
+else ifneq (,$(findstring debug,${MAKETARGET}))
+  CFLAGS += ${DEBUG_FLAGS}
 else
-CFLAGS += ${OPT_FLAGS}
-endif
+  CFLAGS += ${OPT_FLAGS}
 endif
 
 # profiling support
@@ -467,13 +466,16 @@ ifeq (,${BIN_DIR})
 else
 	@${CC} ${LFLAGS_${PARALLEL}} -o ${BIN_DIR}/$@ ${OBJECTS} ${LIBS}
 endif
+
 ifneq (,${STRIP})
   ifeq (,$(findstring prof,${MAKETARGET}))
     ifeq (,$(findstring debug,${MAKETARGET}))
-      ifeq (,${BIN_DIR})
+      ifeq (,$(findstring asan,${MAKETARGET}))
+        ifeq (,${BIN_DIR})
 	@${STRIP} --strip-unneeded -R .comment $@
-      else
+        else
 	@${STRIP} --strip-unneeded -R .comment ${BIN_DIR}/$@
+        endif
       endif
     endif
   endif
