@@ -6,20 +6,6 @@ import sys
 from itertools import chain, combinations
 from subprocess import call
 
-def all_subsets(ss):
-  return chain(*map(lambda x: combinations(ss, x), range(0, len(ss)+1)))
-
-parser = argparse.ArgumentParser(description='Compile potfit binary with all possible combinations of options.')
-parser.add_argument('--start', metavar='N', default=0, type=int, required=False, help='integer starting position')
-parser.add_argument('--acml', action='store_true')
-parser.add_argument('--debug', action='store_true')
-parser.add_argument('--nproc', default=1, type=int, required=False, help='number of processer cores for parallel compilation')
-group = parser.add_mutually_exclusive_group(required=True)
-group.add_argument('--apot', action='store_true')
-group.add_argument('--tab', action='store_true')
-group.add_argument('--kim', action='store_true')
-args = parser.parse_args()
-
 tab_interactions = [ 'pair', 'eam', 'tbeam', 'adp', 'meam' ]
 apot_interactions = [ 'pair', 'eam', 'tbeam', 'adp', 'meam', 'coulomb', 'dipole', 'stiweb', 'tersoff', 'tersoffmod', 'coulomb_eam', 'dipole_eam' ]
 kim_interactions = [ 'kim' ]
@@ -28,50 +14,87 @@ tab_options = [ 'evo', 'mpi', 'stress', 'nopunish', 'dist', 'fweight', 'noresc',
 apot_options = [ 'evo', 'mpi', 'stress', 'nopunish', 'fweight', 'contrib' ]
 kim_options = [ 'evo', 'stress', 'fweight', 'contrib' ]
 
-disable = [ [ 'dist', 'mpi' ] ]
+disable = [ \
+    [ 'dist', 'mpi' ] \
+]
 
-counter = 0
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Compile potfit binary with all possible combinations of options.')
+    parser.add_argument('--start', metavar='N', default=1, type=int, required=False, help='integer starting position')
+    parser.add_argument('--acml', action='store_true')
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--nproc', default=1, type=int, required=False, help='number of processer cores for parallel compilation')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--apot', action='store_true')
+    group.add_argument('--tab', action='store_true')
+    group.add_argument('--kim', action='store_true')
+    return parser.parse_args()
 
-executable = "potfit"
+def get_working_arrays(args):
+    s = 'potfit'
+    if args.tab:
+        i = tab_interactions
+        o = tab_options
+        s += '_tab'
+    elif args.apot:
+        i = apot_interactions
+        o = apot_options
+        s += '_apot'
+    else:
+        i = kim_interactions
+        o = kim_options
+        s += ''
 
-if args.acml:
-    executable += "_acml5"
-if args.debug:
-    executable += "_debug"
+    if args.acml:
+        s += '_acml5'
 
-interactions = []
-array = []
-model = ''
+    if args.debug:
+        s += '_debug'
 
-if args.tab:
-    interactions = tab_interactions
-    array = tab_options
-    model = '_tab_'
-elif args.apot:
-    interactions = apot_interactions
-    array = apot_options
-    model = '_apot_'
-else:
-    interactions = kim_interactions
-    array = kim_options
-    model = '_'
+    return [i, o, s]
 
-for interaction in interactions:
-    for subset in all_subsets(array):
-        enable = 1
-        for items in disable:
-            nmax = (len(items))
-            for item in items:
-                if item in subset:
-                    nmax-=1
-            if (nmax==0):
-                enable = 0
-        if enable:
-            if counter > args.start:
-                target = executable+model+interaction+'_'+'_'.join(subset)+'_TEST'
-                call (['echo', '-e', 'Compiling '+target+'\n' , 'Counter '+str(counter)+'\n' ])
+def all_subsets(subset):
+    return chain(*map(lambda x: combinations(subset, x), range(0, len(subset)+1)))
+
+def get_number_of_targets(i, o):
+    count = sum(1 for x in all_subsets(o))
+    return count * len(i)
+
+def options_are_supported(subset, disable_array):
+    for disabled_set in disable_array:
+        disabled_item_count = len(disabled_set)
+        for disabled_item in disabled_set:
+            if disabled_item in subset:
+                disabled_item_count -= 1
+        if disabled_item_count == 0:
+            return False
+    return True
+
+def build_targets(args):
+    i, o, p = get_working_arrays(args)
+    num_targets = get_number_of_targets(i, o)
+    print("Building {} possible targets for {}.".format(num_targets, p))
+
+    count = 0
+    for interaction in i:
+        for options in all_subsets(o):
+            count += 1
+            target = p + '_' + interaction
+            if len(options):
+                target += '_' + '_'.join(options)
+            if options_are_supported(options, disable):
+                print("\nBuilding target {} ({}/{})".format(target, count, num_targets))
                 call (['make', 'clean'])
                 retcode = call([ 'make', '-j'+str(args.nproc), target ])
                 if retcode:
                     sys.exit(1)
-            counter += 1
+            else:
+                print("\nTarget {} is disabled ({}/{})".format(target, count, num_targets))
+    return
+
+def main():
+    args = parse_arguments()
+    return build_targets(args)
+
+if __name__ == "__main__":
+    main()
