@@ -39,7 +39,7 @@ MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
 ACML4PATH 	= ${ACML4DIR}/lib
 ACML5PATH 	= ${ACML5DIR}/lib
-BIN_DIR 	= ../bin/
+BIN_DIR 	= bin/
 
 ###########################################################################
 #
@@ -461,23 +461,19 @@ endif
 # How to link
 ${MAKETARGET}: ${OBJECTS}
 	@echo " [LD] $@"
-ifeq (,${BIN_DIR})
 	@${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
-else
-	@${CC} ${LFLAGS_${PARALLEL}} -o ${BIN_DIR}/$@ ${OBJECTS} ${LIBS}
-endif
-
 ifneq (,${STRIP})
   ifeq (,$(findstring prof,${MAKETARGET}))
     ifeq (,$(findstring debug,${MAKETARGET}))
       ifeq (,$(findstring asan,${MAKETARGET}))
-        ifeq (,${BIN_DIR})
 	@${STRIP} --strip-unneeded -R .comment $@
-        else
-	@${STRIP} --strip-unneeded -R .comment ${BIN_DIR}/$@
-        endif
       endif
     endif
+  endif
+endif
+ifneq (,${BIN_DIR})
+  ifneq (,$(wildcard ../${BIN_DIR}))
+	@mv $@ ../${BIN_DIR}
   endif
 endif
 	@echo -e "\nCompiled with options"
