@@ -6,21 +6,25 @@ import sys
 from itertools import chain, combinations
 from subprocess import call
 
+# arrays for supported interactions
 tab_interactions = [ 'pair', 'eam', 'tbeam', 'adp', 'meam' ]
 apot_interactions = [ 'pair', 'eam', 'tbeam', 'adp', 'meam', 'coulomb', 'dipole', 'stiweb', 'tersoff', 'tersoffmod', 'coulomb_eam', 'dipole_eam' ]
 kim_interactions = [ 'kim' ]
 
+# arrays for supported options
 tab_options = [ 'evo', 'mpi', 'stress', 'nopunish', 'dist', 'fweight', 'noresc', 'contrib' ]
 apot_options = [ 'evo', 'mpi', 'stress', 'nopunish', 'fweight', 'contrib' ]
 kim_options = [ 'evo', 'stress', 'fweight', 'contrib' ]
 
+# array of array of unsupported combinations of options
 disable = [ \
     [ 'dist', 'mpi' ] \
 ]
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Compile potfit binary with all possible combinations of options.')
-    parser.add_argument('--start', metavar='N', default=1, type=int, required=False, help='integer starting position')
+    parser.add_argument('--start', metavar='N', default=1, type=int, required=False, help='start at combination N')
+    parser.add_argument('--count', metavar='N', default=-1, type=int, required=False, help='only compile N versions')
     parser.add_argument('--acml', action='store_true')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--nproc', default=1, type=int, required=False, help='number of processer cores for parallel compilation')
@@ -79,6 +83,11 @@ def build_targets(args):
     for interaction in i:
         for options in all_subsets(o):
             count += 1
+            if count < args.start:
+                continue
+            if args.count != -1 and (count - args.start) >= args.count:
+                print("\nMaximum build count ({}) reached.".format(args.count));
+                return
             target = p + '_' + interaction
             if len(options):
                 target += '_' + '_'.join(options)
