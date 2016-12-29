@@ -51,9 +51,6 @@
 # BIN_DIR defines the directory where the potfit binary is put. Note that
 # this directory must exist.
 #
-# MV defines the program used to move the potfit binary to ${BIN_DIR}.
-# The default is mv, which is usually ok.
-#
 # The compilation options are stored in the variable CFLAGS.
 # The initial value of CFLAGS is set to the variable FLAGS,
 # which can be given on the command line.
@@ -105,15 +102,14 @@ SHELL = /bin/bash
 #
 ###########################################################################
 
-# Currently the following systems are available:
-# x86_64-icc    64bit Intel Compiler
-# x86_64-gcc    64bit GNU Compiler
-# x86_64-clang  64bit LLVM Compiler
-# i686-icc      32bit Intel Compiler
-# i686-gcc      32bit GNU Compiler
-# i686-kim      32bit GNU Compiler
+# Currently the following SYSTEMs are available:
+# x86_64-icc        64bit Intel Compiler
+# x86_64-gcc        64bit GNU Compiler
+# x86_64-clang      64bit LLVM Compiler
+# i686-icc          32bit Intel Compiler
+# i686-gcc          32bit GNU Compiler
+# kim-toolchain     use the KIM toolchain via kim-api-build-config
 
-#SYSTEM = i686-gcc
 SYSTEM = x86_64-gcc
 
 # Base directory of your installation of the MKL or ACML
@@ -326,15 +322,13 @@ endif
   export        OMPI_CC OMPI_CLINKER
 endif
 
-################################################################################
-# KIM
-################################################################################
+###########################################################################
+#
+#  flags for KIM
+#
+###########################################################################
 
-ifeq (i686-kim,${SYSTEM})
-  ifeq ($(shell kim-api-build-config --version),)
-	    $(error The utility 'kim-api-build-config' not found on path; Update PATH environment variable appropriately)
-  endif
-
+ifeq (kim-toolchain,${SYSTEM})
   CC_SERIAL      = $(shell kim-api-build-config --cc)
   CINCLUDE      += $(shell kim-api-build-config --includes)
   FLAGS         += $(shell kim-api-build-config --cflags) -std=c99

@@ -24,50 +24,31 @@
 #   along with potfit; if not, see <http://www.gnu.org/licenses/>.
 #
 ############################################################################
-#
-# Beware: This Makefile works only with GNU make (gmake)!
-#
-# Usage:  make <target>
-#
-# <target> has the form
-#
-#    potfit[_<parallel>][_<option>[_<option>...]]
-#
-# The parallelization method <parallel> can be:
-#
-#    mpi   compile for parallel execution, using MPI
-#
-###########################################################################
 
 include Makefile.inc
 
 ###########################################################################
 #
-#  Catch default targets
+# catch default targets
 #
 ###########################################################################
+
+.DEFAULT:
+ifneq (,${CC})
+	@${MAKE} -C src --no-print-directory MAKETARGET=${@} $@
+else
+	@echo -e "\nError: There is no compiler defined for your SYSTEM variable (${SYSTEM})."
+	@echo -e "Please adjust the SYSTEM variable in the Makefile.inc file.\n"
+endif
 
 potfit:
 	@echo -e "\nError:\tYou cannot compile potfit without any options."
 	@echo -e "\tAt least an interaction is required.\n"
-
-STAGE2:
-	@echo -e ""
-	@echo -e ""
-
-.DEFAULT:
-ifneq (,${CC})
-	@${MAKE} -C src --no-print-directory MAKETARGET='$@' STAGE2
-else
-	@echo "There is no compiler defined for this option."
-	@echo -e "Please adjust the Makefile.\n"
-	@exit
-endif
-
+	@${MAKE} --no-print-directory help
 
 ###########################################################################
 #
-# Basic targets for help and cleanup
+# basic targets for help and cleanup
 #
 ###########################################################################
 
@@ -82,4 +63,3 @@ distclean:
 
 help:
 	@echo "Usage: make potfit[_<parallel>][_<option>[_<option>...]]"
-
