@@ -8,7 +8,7 @@
  * Copyright 1996, 1997, 1998, 1999, 2000 - Brian Gough
  * Copyright 2002-2016 - the potfit development team
  *
- * http://potfit.sourceforge.net/
+ * https://www.potfit.net/
  *
  ****************************************************************
  *

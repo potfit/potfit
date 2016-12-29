@@ -9,7 +9,7 @@
  * MEAM potential: Jeremy Nicklas
  *   Ohio State University, Physics Department
  *
- * http://potfit.sourceforge.net/
+ * https://www.potfit.net/
  *
  ****************************************************************
  *
