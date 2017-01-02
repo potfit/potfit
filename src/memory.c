@@ -49,7 +49,7 @@ typedef struct {
   int num_pointers;
 } potfit_memory;
 
-potfit_memory g_memory;
+static potfit_memory g_memory;
 
 /****************************************************************
  *
@@ -125,6 +125,10 @@ void initialize_global_variables()
 
   g_config.rcutmin = 999.9;
 
+#if defined(KIM)
+  memset(&g_kim, 0, sizeof(g_kim));
+#endif // KIM
+
   g_mpi.init_done = 0;
   g_mpi.myid = 0;
   g_mpi.num_cpus = 1;
@@ -141,7 +145,6 @@ void initialize_global_variables()
 
   memset(&g_param, 0, sizeof(g_param));
   g_param.sweight = -1.0;
-
   g_param.global_cell_scale = 1.0;
 #if defined(EVO)
   g_param.evo_threshold = 1.0e-6;

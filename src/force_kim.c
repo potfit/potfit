@@ -1,37 +1,36 @@
-/*******************************************************************************
+/****************************************************************
  *
  * force_kim.c: Routines used for calculating forces/energies via KIM
  *
- *******************************************************************************
+ ****************************************************************
  *
- * Copyright 2002-2014
- *  Institute for Theoretical and Applied Physics
- *  University of Stuttgart, D-70550 Stuttgart, Germany
- *  https://www.potfit.net/
+ * Copyright 2002-2017 - the potfit development team
+ *
+ * https://www.potfit.net/
  *
  ****************************************************************
  *
- *   This file is part of potfit.
+ * This file is part of potfit.
  *
- *   potfit is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   potfit is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
 
 #include "potfit.h"
-#include "kim.h"
 
 #include "chempot.h"
+#include "kim.h"
 #include "utils.h"
 #include "functions.h"
 
@@ -43,7 +42,8 @@
 
 void init_force(int is_worker)
 {
-  // nothing to do here for pair potentials
+  (void)is_worker;
+  // nothing to do here for KIM potentials
 }
 
 /****************************************************************
@@ -78,7 +78,7 @@ void init_force(int is_worker)
  *     modified from the current potential.
  *
  * forces is the array storing the deviations from the reference data, not
- *     only for forces, but also for energies, stresses or dummy constraints 
+ *     only for forces, but also for energies, stresses or dummy constraints
  *     (if applicable).
  *
  * flag is an integer controlling the behaviour of calc_forces_pair.
@@ -105,18 +105,20 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #if defined(STRESS)
   int   us, stresses;
 #endif /* STRESS */
+#if defined(FWEIGHT) || defined(CONTRIB)
   atom_t *atom;
-  int status; 
+#endif // FWEIGHT || CONTRIB
+  int status;
   double* kimenergy;
-  double* kimforce;       
-  double* kimvirial;  
+  double* kimforce;
+  double* kimvirial;
   double weight;
   int kim_us = 0;
   int i;
 
   /* publish KIM parameters */
   for (i = 0; i < g_config.nconf; i++) {
-    status = publish_param(g_kim.pkimObj[i], &g_kim.FreeParamAllConfig[i], xi_opt);  
+    status = publish_param(g_kim.pkimObj[i], &g_kim.FreeParamAllConfig[i], xi_opt);
     if (KIM_STATUS_OK > status) {
       KIM_API_report_error(__LINE__, __FILE__, "publish_parameters", status);
       exit(1);
@@ -162,12 +164,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
           KIM_API_report_error(__LINE__, __FILE__, "KIM: compute forces failed", status);
           exit(1);
         }
-        
+
         /* forces contributation */
         weight = sqrt(g_config.conf_weight[h]);
         for (i = 0; i < g_config.inconf[h]; i++) {
+#if defined(FWEIGHT) || defined(CONTRIB)
           atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
-          n_i = DIM * (g_config.cnfstart[h] + i);  
+#endif // FWEIGHT || CONTRIB
+          n_i = DIM * (g_config.cnfstart[h] + i);
           if (uf) {
             forces[n_i + 0] = weight*(kimforce[DIM*i + 0] - g_config.force_0[n_i + 0]);
             forces[n_i + 1] = weight*(kimforce[DIM*i + 1] - g_config.force_0[n_i + 1]);
@@ -186,9 +190,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* FWEIGHT */
 
 #if defined(CONTRIB)
-          if (atom->contrib) 
+          if (atom->contrib)
 #endif /* CONTRIB */
-            tmpsum += (dsquare(forces[n_i + 0]) 
+            tmpsum += (dsquare(forces[n_i + 0])
                     + dsquare(forces[n_i + 1])
                     + dsquare(forces[n_i + 2]) );
 
@@ -208,7 +212,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
           forces[g_calc.energy_p + h] = chemical_potential(g_param.ntypes, g_config.na_type[h], xi_opt + g_pot.cp_start);
 #endif /* APOT */
 
-		    weight = sqrt(g_config.conf_weight[h] * g_param.eweight); 
+		    weight = sqrt(g_config.conf_weight[h] * g_param.eweight);
         forces[g_calc.energy_p + h] = weight * (*kimenergy) / (double)g_config.inconf[h];
         forces[g_calc.energy_p + h] -=  weight * g_config.force_0[g_calc.energy_p + h];
         tmpsum += dsquare(forces[g_calc.energy_p + h]);
@@ -217,14 +221,14 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #if defined(STRESS)
         /* stress contributions */
         if (uf && us) {
-		      weight = sqrt(g_config.conf_weight[h] * g_param.sweight); 
+		      weight = sqrt(g_config.conf_weight[h] * g_param.sweight);
           for (i = 0; i < 6; i++) {
-            forces[stresses + i]  = weight*kimvirial[i]; 
+            forces[stresses + i]  = weight*kimvirial[i];
             forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
             forces[stresses + i] -= weight*g_config.force_0[stresses + i];
             tmpsum += dsquare(forces[stresses + i]);
-          } 
-        } 
+          }
+        }
 #endif /* STRESS */
 
       }       /* loop over configurations */

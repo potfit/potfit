@@ -65,12 +65,12 @@
 extern potfit_calculation g_calc;
 extern potfit_configurations g_config;
 extern potfit_filenames g_files;
-extern potfit_mpi_config g_mpi;
-extern potfit_parameters g_param;
-extern potfit_potentials g_pot;
 #if defined(KIM)
 extern potfit_kim g_kim;
 #endif
+extern potfit_mpi_config g_mpi;
+extern potfit_parameters g_param;
+extern potfit_potentials g_pot;
 
 // general functions for warning and error output
 

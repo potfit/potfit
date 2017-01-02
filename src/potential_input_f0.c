@@ -327,7 +327,8 @@ void read_chemical_potentials(apot_state* pstate)
     /* search for cp */
     do {
       fgetpos(pstate->pfile, &filepos);
-      fscanf(pstate->pfile, "%s", buffer);
+      if (1 != fscanf(pstate->pfile, "%s", buffer))
+        error(1, "Error while searching for chemical potentials\n");
     } while (strncmp(buffer, "cp", 2) != 0 && !feof(pstate->pfile));
 
     /* and save the position */
@@ -598,7 +599,8 @@ void read_global_parameters(apot_state* pstate)
   fsetpos(pstate->pfile, &pstate->startpos);
   do {
     fgetpos(pstate->pfile, &filepos);
-    fscanf(pstate->pfile, "%s", buffer);
+    if (1 != fscanf(pstate->pfile, "%s", buffer))
+      error(1, "Error while searching for global parameters\n");
   } while (strcmp(buffer, "global") != 0 && !feof(pstate->pfile));
   fsetpos(pstate->pfile, &filepos);
 
@@ -722,7 +724,8 @@ void read_analytic_potentials(apot_state* pstate)
   fsetpos(pstate->pfile, &pstate->startpos);
   do {
     fgetpos(pstate->pfile, &filepos);
-    fscanf(pstate->pfile, "%s", buffer);
+    if (1 != fscanf(pstate->pfile, "%s", buffer))
+      error(1, "Error while searching for analytic potentials\n");
   } while (strcmp(buffer, "type") != 0 && !feof(pstate->pfile));
   fsetpos(pstate->pfile, &filepos);
 
@@ -730,7 +733,8 @@ void read_analytic_potentials(apot_state* pstate)
     // scan for next "type" keyword
     do {
       fgetpos(pstate->pfile, &filepos);
-      fscanf(pstate->pfile, "%s", buffer);
+      if (1 != fscanf(pstate->pfile, "%s", buffer))
+        error(1, "Error while searching for analytic potentials\n");
     } while (strcmp(buffer, "type") != 0 && !feof(pstate->pfile));
     fsetpos(pstate->pfile, &filepos);
 
@@ -796,10 +800,12 @@ void read_analytic_potentials(apot_state* pstate)
 
     fgetpos(pstate->pfile, &filepos);
 
-    fgets(buffer, 255, pstate->pfile);
+    if (NULL == fgets(buffer, 255, pstate->pfile))
+      error(1, "Error reading analytic potentials\n");
     while (buffer[0] == '#') {
       fgetpos(pstate->pfile, &filepos);
-      fgets(buffer, 255, pstate->pfile);
+      if (NULL == fgets(buffer, 255, pstate->pfile))
+        error(1, "Error reading analytic potentials\n");
     }
     fsetpos(pstate->pfile, &filepos);
 
@@ -813,11 +819,12 @@ void read_analytic_potentials(apot_state* pstate)
 
       fgetpos(pstate->pfile, &filepos);
 
-      fgets(name, 255, pstate->pfile);
-
+      if (NULL == fgets(name, 255, pstate->pfile))
+        error(1, "Error reading analytic potentials\n");
       while (name[0] == '#' && !feof(pstate->pfile) &&
              (j != apt->n_par[i] - 1)) {
-        fgets(name, 255, pstate->pfile);
+        if (NULL == fgets(name, 255, pstate->pfile))
+          error(1, "Error reading analytic potentials\n");
       }
 
       if ((j != (apt->n_par[i] - 1)) &&

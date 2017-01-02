@@ -73,7 +73,8 @@ void read_chemical_potentials(apot_state* pstate)
     /* search for cp */
     do {
       fgetpos(pstate->pfile, &filepos);
-      fscanf(pstate->pfile, "%s", buffer);
+      if (1 != fscanf(pstate->pfile, "%s", buffer))
+        error(1, "Error while searching for chemical potentials\n");
     } while (strncmp(buffer, "cp", 2) != 0 && !feof(pstate->pfile));
 
     /* and save the position */
@@ -305,7 +306,8 @@ void read_pot_table5(char const* filename, FILE* pfile)
 		name[0] = '\0';
 		/* find the keyword `PARAM_FREE_*' */
 		do {
-			fgets(buffer, 255, pfile);
+			if (NULL == fgets(buffer, 255, pfile))
+              error(1, "Error while searching for PARAM_FREE keyword\n");
 			sscanf(buffer, "%s", name);
 		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(pfile));
 		/* k is the palce(slot) that the param in the FreeParam struct */
@@ -315,7 +317,8 @@ void read_pot_table5(char const* filename, FILE* pfile)
 		}
 		/* read in the value and pmin and pmax */
 		for (kk = 0; kk < g_kim.size_opt_param[j]; kk++) {
-			fgets(buffer, 255, pfile);
+			if (NULL == fgets(buffer, 255, pfile))
+              error(1, "Error while reading KIM potentials\n");
 			ret_val = sscanf(buffer, "%s %lf %lf", tmp_value, &tmp_pmin, &tmp_pmax);
 			if (ret_val == 3) {
 				apt->pmin[i][jj] = tmp_pmin;
@@ -376,7 +379,8 @@ void read_pot_table5(char const* filename, FILE* pfile)
 
 	fsetpos(pfile, &startpos);
 	do {
-		fgets(buffer, 255, pfile);
+		if (NULL == fgets(buffer, 255, pfile))
+          error(1, "Error while searching for cutoff keyword\n");
 		sscanf(buffer, "%s", name);
 	} while (strcmp(name, "cutoff") != 0 && !feof(pfile));
 

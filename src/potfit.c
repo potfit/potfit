@@ -55,12 +55,12 @@ void start_mpi_worker(double* force);
 potfit_calculation g_calc;
 potfit_configurations g_config;
 potfit_filenames g_files;
-potfit_mpi_config g_mpi;
-potfit_parameters g_param;
-potfit_potentials g_pot;
 #if defined(KIM)
 potfit_kim g_kim;
 #endif // KIM
+potfit_mpi_config g_mpi;
+potfit_parameters g_param;
+potfit_potentials g_pot;
 
 /****************************************************************
     main potfit routine

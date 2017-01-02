@@ -53,34 +53,19 @@ void init_object();
 
 void init_optimizable_param();
 
-
-
 int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start);
 
 /* function pointer assigned in `setup_neighborlist_KIM_access' */
 int get_neigh(void* kimmdl, int* mode, int *request, int* part,
               int* numnei, int** nei1part, double** Rij);
 
-
-
-
-
 /* called by `init_obj' */
 int write_final_descriptor_file(int u_f, int u_s);
-
-
-
 
 /* called by `init_KIM' */
 int publish_cutoff(void* pkim, double cutoff);
 
-
-
-
-
 int get_KIM_model_has_flags();
-
-
 
 /*******************************************************************************
 *
@@ -955,7 +940,8 @@ int read_potential_keyword(pot_table_t* pt, char const* filename, FILE* infile)
   buffer[0] = '\0';
   name[0] = '\0';
   do {
-    fgets(buffer, 255, infile);
+    if (NULL == fgets(buffer, 255, infile))
+      error(1, "Error while reading KIM potential keyword\n");
     sscanf(buffer, "%s", name);
   } while (strncmp(name, "type", 4) != 0 && !feof(infile));
   if (strncmp(name, "type", 4) != 0) {
@@ -973,7 +959,8 @@ int read_potential_keyword(pot_table_t* pt, char const* filename, FILE* infile)
   fsetpos(infile, &startpos);
 
   do {
-    fgets(buffer, 255, infile);
+    if (NULL == fgets(buffer, 255, infile))
+      error(1, "Error while reading KIM potentials\n");
     sscanf(buffer, "%s", name);
   } while (strcmp(name, "check_kim_opt_param") != 0
 					 && strcmp(name, "num_opt_param") != 0
@@ -1042,7 +1029,8 @@ int read_potential_keyword(pot_table_t* pt, char const* filename, FILE* infile)
 		buffer[0] = '\0';
 		name[0] = '\0';
 		do {
-			fgets(buffer, 255, infile);
+			if (NULL == fgets(buffer, 255, infile))
+              error(1, "Error while reading KIM potentials\n");
 			ret_val = sscanf(buffer, "%s", name);
 		} while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
 		if (feof(infile) ) {
