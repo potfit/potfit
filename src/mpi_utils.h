@@ -30,7 +30,7 @@
 #ifndef MPI_UTILS_H_INCLUDED
 #define MPI_UTILS_H_INCLUDED
 
-int init_mpi(int* argc, char*** argv);
+int initialize_mpi(int* argc, char*** argv);
 void shutdown_mpi();
 int broadcast_params_mpi();
 void potsync();

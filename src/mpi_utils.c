@@ -58,7 +58,7 @@ int broadcast_angles();
   set up MPI communication
 ****************************************************************/
 
-int init_mpi(int* argc, char*** argv)
+int initialize_mpi(int* argc, char*** argv)
 {
 #if defined(MPI)
   // initialize the MPI communication

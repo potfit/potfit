@@ -70,9 +70,7 @@ int main(int argc, char** argv)
 {
   initialize_global_variables();
 
-  int ret = init_mpi(&argc, &argv);
-
-  if (ret != POTFIT_SUCCESS) {
+  if (initialize_mpi(&argc, &argv) != POTFIT_SUCCESS) {
     shutdown_mpi();
     return EXIT_FAILURE;
   }
@@ -82,13 +80,10 @@ int main(int argc, char** argv)
   g_mpi.init_done = 1;
 
 #if defined(KIM)
-  // Initialize KIM
-  init_KIM();
+  initialize_KIM();
 #endif // KIM
 
-  ret = broadcast_params_mpi();
-
-  switch (ret) {
+  switch (broadcast_params_mpi()) {
     case POTFIT_ERROR_MPI_CLEAN_EXIT:
       shutdown_mpi();
       return EXIT_SUCCESS;
@@ -218,12 +213,12 @@ int main(int argc, char** argv)
 #endif  // MPI
 
 #if defined(KIM)
-  free_KIM();
+  shutdown_KIM();
 #endif  // KIM
 
   free_allocated_memory();
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 /****************************************************************

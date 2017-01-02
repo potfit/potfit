@@ -1,11 +1,31 @@
-/*******************************************************************************
-*
-* kim.c
-*
-* Interface to KIM
-*
-* Author: Mingjian Wen (wenxx151@unm.edu), University of Minnesota
-*******************************************************************************/
+/****************************************************************
+ *
+ * kim.h: KIM interface
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2016 - the potfit development team
+ *
+ * https://www.potfit.net/
+ *
+ ****************************************************************
+ *
+ * This file is part of potfit.
+ *
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
+ ****************************************************************/
 
 #include <stdio.h>
 
@@ -25,6 +45,42 @@ typedef struct {
 
 int setup_neighborlist_KIM_access(void* pkim, NeighObjectType* NeighObject);
 int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start);
+/* called by `init_KIM' */
+int write_descriptor_file(int Nspecies, const char** species, int compute_energy,
+                          int compute_forces, int compute_virial);
+
+void init_object();
+
+void init_optimizable_param();
+
+
+
+int init_KIM_API_argument(void* pkim, int Natoms, int Nspecies, int start);
+
+/* function pointer assigned in `setup_neighborlist_KIM_access' */
+int get_neigh(void* kimmdl, int* mode, int *request, int* part,
+              int* numnei, int** nei1part, double** Rij);
+
+
+
+
+
+/* called by `init_obj' */
+int write_final_descriptor_file(int u_f, int u_s);
+
+
+
+
+/* called by `init_KIM' */
+int publish_cutoff(void* pkim, double cutoff);
+
+
+
+
+
+int get_KIM_model_has_flags();
+
+
 
 /*******************************************************************************
 *
@@ -33,7 +89,7 @@ int init_neighborlist(NeighObjectType* NeighObject, int Natoms, int start);
 *
 *******************************************************************************/
 
-void init_KIM()
+void initialize_KIM()
 {
   int i;
 
@@ -1291,7 +1347,8 @@ int free_model_object(void** pkim)
 /******************************************************************************
  * free KIM model and object
  ******************************************************************************/
-void free_KIM()
+
+void shutdown_KIM()
 {
 	/* local variables */
 	int i;
@@ -1300,6 +1357,3 @@ void free_KIM()
 		free_model_object(&g_kim.pkimObj[i]);
 	}
 }
-
-
-
