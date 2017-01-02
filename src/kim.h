@@ -21,6 +21,8 @@
 
 #if !defined(DIM)
 #define DIM 3
+#else
+STATIC_ASSERT(DIM==3, potfit_kim_support_requires_DIM_eq_3);
 #endif
 
 /* function prototypes */

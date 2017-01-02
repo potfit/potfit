@@ -51,6 +51,9 @@
   (A) = (B);          \
   (B) = (C);
 
+// very simple static assert
+#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
+
 // include preprocessor flags and certain compile time constants
 #include "defines.h"
 
