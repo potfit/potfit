@@ -33,6 +33,7 @@
 
 #include "chempot.h"
 #include "functions.h"
+#include "kim.h"
 #include "memory.h"
 #include "potential_input.h"
 #include "utils.h"

@@ -504,4 +504,37 @@ typedef struct {
 #endif                     // APOT
 } potfit_potentials;
 
+#if defined(KIM)
+
+/* sturct of all free parameters of data type `double' */
+typedef struct {
+  char** name;
+  double** value;       /* the pointers to parameters */
+  int* rank;
+  int** shape;
+  int Nparam;           /* number of free parameters */
+  double** nestedvalue; /* nest all values(pointers) of optimizable parameters into this long list */
+  int Nnestedvalue;     /* the length of nestedvalue */
+} FreeParamType;
+
+/* varialbes */
+typedef struct {
+  void** pkimObj;                    /* pointers to kim objects */
+  FreeParamType* FreeParamAllConfig; /* free param struct for all configurations */
+  char kim_model_name[255]; /* kim model name (read in from input )*/
+  char NBC_method[64];      /* neighbor list and boundary conditions */
+  int kim_model_has_forces;
+  int kim_model_has_virial;
+  int is_half_neighbors;    /* using half neighbor list? 1 = half, 0 = full */
+  int kim_model_has_energy; /* flag, whether KIM model has the routine to
+                             * compute energy, forces, and virial */
+  int num_opt_param;        /* number of optimizalbe params( read in from input) */
+  char** name_opt_param;    /* optimizable parameter names (read in from input) */
+  int* size_opt_param;      /* size of each parameter (number of values each
+                             * parameter name represents) */
+  double* box_side_len;     /* box_side_len is used to enable MI_OPBC in KIM. */
+} potfit_kim;
+
+#endif // KIM
+
 #endif  // TYPES_H_INCLUDED
