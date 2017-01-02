@@ -419,11 +419,11 @@ endif
 
 # compability with KIM
 ifneq ($(findstring kim,${MAKETARGET}),)
-  ifeq ($(findstring kim,${SYSTEM}),)
+  ifeq ($(findstring kim-toolchain,${SYSTEM}),)
     ERROR += "KIM support requires the SYSTEM variable setting 'kim-toolchain'.\n"
   endif
 endif
-ifneq ($(findstring kim,${SYSTEM}),)
+ifneq ($(findstring kim-toolchain,${SYSTEM}),)
   ifeq ($(findstring kim,${MAKETARGET}),)
     ERROR += "SYSTEM=kim-toolchain is not supported for non-KIM builds.\n"
   endif
