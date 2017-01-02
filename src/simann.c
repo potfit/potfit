@@ -4,7 +4,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2016 - the potfit development team
+ * Copyright 2002-2017 - the potfit development team
  *
  * https://www.potfit.net/
  *
