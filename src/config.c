@@ -102,18 +102,17 @@ void read_config(const char* filename)
 
   // initialize elements array if not yet done from potential file
   if (g_config.elements == NULL) {
-    g_config.elements = (char**)Malloc(g_param.ntypes * sizeof(char*));
+    g_config.elements = (char const**)Malloc(g_param.ntypes * sizeof(char*));
     for (int i = 0; i < g_param.ntypes; i++) {
       g_config.elements[i] = (char*)Malloc(5 * sizeof(char));
-      sprintf(g_config.elements[i], "%d", i);
-      g_config.elements[i][i < 10 ? 1 : 2] = '\0';
+      sprintf((char*)g_config.elements[i], "%d", i);
+      *((char*)g_config.elements[i] + (i < 10 ? 1 : 2)) = '\0';
     }
   } else
     cstate.num_fixed_elements = g_param.ntypes;
 
   // initialize minimum distance array
-  double* mindist =
-      (double*)Malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
+  double* mindist = (double*)Malloc(isquare(g_param.ntypes) * sizeof(double));
 
   // set maximum cutoff distance as starting value for mindist
   for (int i = 0; i < g_param.ntypes * g_param.ntypes; i++)
@@ -855,8 +854,8 @@ void read_chemical_elements(char* psrc, config_state* cstate)
   if (!cstate->num_fixed_elements) {
     while (pchar != NULL && i < g_param.ntypes) {
       int len = max(strlen(pchar), 4);
-      strncpy(g_config.elements[i], pchar, len);
-      g_config.elements[i][len] = '\0';
+      strncpy((char*)g_config.elements[i], pchar, len);
+      *((char*)g_config.elements[i] + len) = '\0';
       pchar = strtok(NULL, " \t");
       i++;
       cstate->num_fixed_elements++;
@@ -866,8 +865,8 @@ void read_chemical_elements(char* psrc, config_state* cstate)
       if (strcmp(pchar, g_config.elements[i]) != 0) {
         if (atoi(g_config.elements[i]) == i && i > cstate->num_fixed_elements) {
           int len = max(strlen(pchar), 4);
-          strncpy(g_config.elements[i], pchar, len);
-          g_config.elements[i][len] = '\0';
+          strncpy((char*)g_config.elements[i], pchar, len);
+          *((char*)g_config.elements[i] + len) = '\0';
           cstate->num_fixed_elements++;
         } else {
           error(0, "Mismatch found in configuration %d, line %d.\n",

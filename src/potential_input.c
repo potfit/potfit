@@ -398,11 +398,11 @@ void read_pot_line_C(char* pbuf, potential_state* pstate)
   } else
     error(1, "#C needs to be specified after #F in file %s\n", pstate->filename);
 
-  g_config.elements = (char**)Malloc(g_param.ntypes * sizeof(char*));
+  g_config.elements = (char const**)Malloc(g_param.ntypes * sizeof(char*));
   for (int i = 0; i < g_param.ntypes; i++) {
     g_config.elements[i] = (char*)Malloc((strlen(names[i]) + 1) * sizeof(char));
-    strncpy(g_config.elements[i], names[i], strlen(names[i]));
-    g_config.elements[i][strlen(names[i])] = '\0';
+    strncpy((char*)g_config.elements[i], names[i], strlen(names[i]));
+    *((char*)g_config.elements[i] + strlen(names[i])) = '\0';
   }
 }
 

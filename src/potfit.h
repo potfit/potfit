@@ -74,7 +74,6 @@ extern potfit_potentials g_pot;
 extern potfit_kim g_kim;
 #endif
 
-
 // general functions for warning and error output
 
 void error(int done, const char* msg, ...);
