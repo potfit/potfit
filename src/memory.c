@@ -192,6 +192,8 @@ void initialize_global_variables()
 #else
   init_interaction_name("TERSOFF");
 #endif  // TERSOFFMOD
+#elif defined(KIM)
+  init_interaction_name("KIM");
 #endif  // interaction type
 }
 
