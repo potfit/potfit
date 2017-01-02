@@ -999,7 +999,9 @@ void init_neighbors(config_state* cstate, double* mindist)
                         g_config.atoms[i].pos.y, g_config.atoms[i].pos.z);
                 warning(" atom %d (type %d) at pos: %f %f %f\n",
                         j - g_config.natoms, type2, dd.x, dd.y, dd.z);
+#if !defined(KIM)
                 short_distance = 1;
+#endif // !KIM
               }
               g_config.atoms[i].neigh = (neigh_t*)Realloc(
                   g_config.atoms[i].neigh,
@@ -1035,12 +1037,7 @@ void init_neighbors(config_state* cstate, double* mindist)
 
               /* pre-compute index and shift into potential table */
 
-#if defined(KIM)
-              // never do this for KIM
-              if (0) {
-#else
               if (!short_distance) {
-#endif // KIM
                 /* pair potential */
                 int col = (type1 <= type2)
                               ? type1 * g_param.ntypes + type2 -
