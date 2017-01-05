@@ -303,8 +303,6 @@ double write_force_errors(double* force)
   component[1] = 'y';
   component[2] = 'z';
 
-  fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
-
   for (int i = 0; i < 3 * g_config.natoms; i++) {
 #if defined(CONTRIB)
     if (g_config.atoms[i / 3].contrib == 0)
@@ -318,6 +316,8 @@ double write_force_errors(double* force)
     if (i > 2 && i % 3 == 0 &&
         g_config.atoms[i / 3].conf != g_config.atoms[i / 3 - 1].conf)
       fprintf(outfile, "\n\n");
+    if (i == 0)
+      fprintf(outfile, "#conf:atom\ttype\tdf^2\t\tf\t\tf0\t\tdf/f0\t\t|f|\n");
     fprintf(outfile, "%3d:%6d:%c\t%4s\t%e\t%e\t%e\t%e\t%e\n",
             g_config.atoms[i / 3].conf, i / 3, component[i % 3],
             g_config.elements[g_config.atoms[i / 3].type], sqr,
