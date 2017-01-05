@@ -47,18 +47,12 @@ void allocate_memory_for_potentials(potential_state* pstate);
 void calculate_cutoffs();
 void read_maxch_file();
 
-#if defined(APOT)
-#if !defined(KIM)
 void read_pot_table0(char const* potential_filename, FILE* pfile);
-#else
-void read_pot_table5(char const* potential_filename, FILE* pfile);
-#endif // KIM
-#else
 void read_pot_table3(char const* potential_filename, FILE* pfile,
                      potential_state* pstate);
 void read_pot_table4(char const* potential_filename, FILE* pfile,
                      potential_state* pstate);
-#endif // APOT
+void read_pot_table5(char const* potential_filename, FILE* pfile);
 
 /****************************************************************
  *
@@ -69,7 +63,6 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
 void read_pot_table(char const* potential_filename)
 {
   char buffer[1024];
-  char* res = NULL;
 
   potential_state pstate;
 
@@ -91,9 +84,7 @@ void read_pot_table(char const* potential_filename)
   // read the header
   do {
     // read one line
-    res = fgets(buffer, 1024, pfile);
-
-    if (NULL == res)
+    if (NULL == fgets(buffer, 1024, pfile))
       error(1, "Unexpected end of file in %s\n", potential_filename);
 
     // check if it is a header line
@@ -134,29 +125,21 @@ void read_pot_table(char const* potential_filename)
   allocate_memory_for_potentials(&pstate);
 
   switch (g_pot.format_type) {
+    case POTENTIAL_FORMAT_ANALYTIC:
+      read_pot_table0(potential_filename, pfile);
+      break;
+    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
+      read_pot_table3(potential_filename, pfile, &pstate);
+      break;
+    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
+      read_pot_table4(potential_filename, pfile, &pstate);
+      break;
+    case POTENTIAL_FORMAT_KIM:
+      read_pot_table5(potential_filename, pfile);
+      break;
     case POTENTIAL_FORMAT_UNKNOWN:
       error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__,
             __LINE__);
-    case POTENTIAL_FORMAT_ANALYTIC:
-#if defined(APOT) && !defined(KIM)
-      read_pot_table0(potential_filename, pfile);
-#endif  // APOT
-      break;
-    case POTENTIAL_FORMAT_TABULATED_EQ_DIST:
-#if !defined(APOT)
-      read_pot_table3(potential_filename, pfile, &pstate);
-#endif  // !APOT
-      break;
-    case POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST:
-#if !defined(APOT)
-      read_pot_table4(potential_filename, pfile, &pstate);
-#endif  // !APOT
-      break;
-    case POTENTIAL_FORMAT_KIM:
-#if defined(APOT) && defined(KIM)
-      read_pot_table5(potential_filename, pfile);
-#endif  // KIM
-      break;
   }
 
   fclose(pfile);
@@ -191,7 +174,7 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
       printf(" - Potential file format %d detected: tabulated non-eqdist\n", format);
       break;
     case POTENTIAL_FORMAT_KIM:
-      printf(" - Potential file format %d detected: KIM\n", format);
+      printf(" - Potential file format %d detected: KIM interface\n", format);
       break;
     case POTENTIAL_FORMAT_UNKNOWN:
     default:
@@ -199,11 +182,13 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
   }
 
 #if defined(APOT)
-  if (format != POTENTIAL_FORMAT_ANALYTIC)
-    error(1, "This potfit binary only supports analytic potentials.\n");
-#elif defined(KIM)
+#if defined(KIM)
   if (format != POTENTIAL_FORMAT_KIM)
     error(1, "This potfit binary only supports KIM potentials.\n");
+#else
+  if (format != POTENTIAL_FORMAT_ANALYTIC)
+    error(1, "This potfit binary only supports analytic potentials.\n");
+#endif // KIM
 #else
   if (format != POTENTIAL_FORMAT_TABULATED_EQ_DIST && format != POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST)
     error(1, "This potfit binary only supports tabulated potentials.\n");
@@ -428,12 +413,11 @@ void allocate_memory_for_potentials(potential_state* pstate)
     apt->pmax[size] = (double*)Malloc(g_param.ntypes * sizeof(double));
   } else
 #endif  // PAIR
-  {
-    apt->values = (double**)Malloc(size * sizeof(double*));
-    apt->invar_par = (int**)Malloc(size * sizeof(int*));
-    apt->pmin = (double**)Malloc(size * sizeof(double*));
-    apt->pmax = (double**)Malloc(size * sizeof(double*));
-  }
+
+  apt->values = (double**)Malloc(size * sizeof(double*));
+  apt->invar_par = (int**)Malloc(size * sizeof(int*));
+  apt->pmin = (double**)Malloc(size * sizeof(double*));
+  apt->pmax = (double**)Malloc(size * sizeof(double*));
 
 #else  // !COULOMB
   apt->ratio = (double*)Malloc(g_param.ntypes * sizeof(double));

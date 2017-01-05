@@ -37,7 +37,10 @@
 
 #if !defined(APOT)
 
-void read_pot_table0(char const* potential_filename, FILE* pfile) {}
+void read_pot_table0(char const* potential_filename, FILE* pfile)
+{
+  error(1, "Unsupported potential format in %s", potential_filename);
+}
 
 #else
 

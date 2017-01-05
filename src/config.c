@@ -182,10 +182,8 @@ void read_config(const char* filename)
 #endif  // STRESS
 
 #if defined(KIM)
-    if (strcmp(g_kim.NBC_method, "MI_OPBC_F") == 0 || strcmp(g_kim.NBC_method, "MI_OPBC_H") == 0) {
-      /* realloc memory for box_side_len */
-      g_kim.box_side_len = (double *) Realloc(g_kim.box_side_len, 3*(g_config.nconf+1)*sizeof(double));
-    }
+    if (g_kim.NBC == KIM_NEIGHBOR_TYPE_OPBC)
+      g_kim.box_vectors = (double *) Realloc(g_kim.box_vectors, 3*(g_config.nconf+1)*sizeof(double));
 #endif  // KIM
 
     // read header lines
@@ -337,7 +335,7 @@ void read_config(const char* filename)
     g_config.volume[g_config.nconf] = make_box(&cstate);
 
 #if defined(KIM)
-    if (strcmp(g_kim.NBC_method, "MI_OPBC_F") == 0 || strcmp(g_kim.NBC_method, "MI_OPBC_H") == 0) {
+    if (g_kim.NBC == KIM_NEIGHBOR_TYPE_OPBC) {
       double small_value = 1e-8;
       if(cstate.box_x.y > small_value || cstate.box_x.z > small_value
 	    || cstate.box_y.z > small_value || cstate.box_y.x > small_value
@@ -345,10 +343,10 @@ void read_config(const char* filename)
         error(1,"KIM: simulation box of configuration %d is not orthogonal. Try to use 'NEIGH_RVEC' "
 	      "instead of 'MI_OPBC'.\n", g_config.nconf);
       } else {
-        /* store the box size info in box_side_len */
-        g_kim.box_side_len[3*g_config.nconf + 0] = cstate.box_x.x;
-        g_kim.box_side_len[3*g_config.nconf + 1] = cstate.box_y.y;
-        g_kim.box_side_len[3*g_config.nconf + 2] = cstate.box_z.z;
+        // store the box size info in box_vectors
+        g_kim.box_vectors[3 * g_config.nconf + 0] = cstate.box_x.x;
+        g_kim.box_vectors[3 * g_config.nconf + 1] = cstate.box_y.y;
+        g_kim.box_vectors[3 * g_config.nconf + 2] = cstate.box_z.z;
       }
     }
 #endif   // KIM
@@ -590,7 +588,9 @@ void read_config(const char* filename)
     }
   }
 
+#if !defined(KIM)
   update_slots();
+#endif  // KIM
 #endif  // APOT
 
   print_minimal_distances_matrix(mindist);

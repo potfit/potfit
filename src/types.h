@@ -506,33 +506,64 @@ typedef struct {
 
 #if defined(KIM)
 
-/* sturct of all free parameters of data type `double' */
-typedef struct {
-  char** name;
-  double** value;       /* the pointers to parameters */
-  int* rank;
-  int** shape;
-  int Nparam;           /* number of free parameters */
-  double** nestedvalue; /* nest all values(pointers) of optimizable parameters into this long list */
-  int Nnestedvalue;     /* the length of nestedvalue */
-} FreeParamType;
+typedef enum {
+  KIM_PARAM_TYPE_UNKNOWN = 0,
+  KIM_PARAM_TYPE_DOUBLE,
+  KIM_PARAM_TYPE_INT
+} KIM_PARAM_TYPE;
 
-/* varialbes */
+typedef enum {
+  KIM_NEIGHBOR_TYPE_UNKNOWN = 0,
+  KIM_NEIGHBOR_TYPE_RVEC,
+  KIM_NEIGHBOR_TYPE_PURE,
+  KIM_NEIGHBOR_TYPE_OPBC,
+  KIM_NEIGHBOR_TYPE_CLUSTER
+} KIM_NEIGHBOR_TYPE;
+
 typedef struct {
-  void** pkimObj;                    /* pointers to kim objects */
-  FreeParamType* FreeParamAllConfig; /* free param struct for all configurations */
-  char kim_model_name[255]; /* kim model name (read in from input )*/
-  char NBC_method[64];      /* neighbor list and boundary conditions */
-  int kim_model_has_forces;
-  int kim_model_has_virial;
-  int is_half_neighbors;    /* using half neighbor list? 1 = half, 0 = full */
-  int kim_model_has_energy; /* flag, whether KIM model has the routine to
-                             * compute energy, forces, and virial */
-  int num_opt_param;        /* number of optimizalbe params( read in from input) */
-  char** name_opt_param;    /* optimizable parameter names (read in from input) */
-  int* size_opt_param;      /* size of each parameter (number of values each
-                             * parameter name represents) */
-  double* box_side_len;     /* box_side_len is used to enable MI_OPBC in KIM. */
+  /// number of free parameters in KIM model
+  int npar;
+  /// names of free parameters in KIM model
+  char const** name;
+  /// the pointers to parameters in KIM model
+  void** value;
+  /// types of the free parameters in KIM model
+  KIM_PARAM_TYPE* type;
+  /// size of the free parameters in KIM model
+  int* size;
+  /// ranks of the free parameters in KIM model
+  int* rank;
+  /// shapes of the free parameters in KIM model
+  int** shape;
+  /// whether the cutoff can be set by the simulator or not
+  int cutoff_is_free_param;
+  /// cutoff value
+  double cutoff_value;
+} freeparams_t;
+
+typedef struct {
+  /// pointers to KIM objects
+  void** pkim;
+  /// contains free parameter properties from the KIM model
+  freeparams_t freeparams;
+  /// kim model name (read in from input)
+  char const* model_name;
+  /// number of optimizable params (read in from input)
+  int num_opt_param;
+  /// index of the paramters in freeparams.name
+  int* idx_opt_param;
+  /// total number of optimization values (includes rank/shape expansion)
+  int total_num_opt_param;
+  /// size of each parameter (number of values each parameter name represents)
+  int* size_opt_param;
+  KIM_NEIGHBOR_TYPE NBC;    // neighbor list and boundary conditions
+  int is_half_neighbors;    // using half neighbor list? 1 = half, 0 = full
+  int model_has_energy;     // flag, whether KIM model can compute energy
+  int model_has_forces;     // flag, whether KIM model can compute forces
+  int model_has_virial;     // flag, whether KIM model can compute virial
+  double* box_vectors;      // box_vectors is used to enable MI_OPBC in KIM.
+  /// pointer to memory for values for individual configurations
+  void*** param_value;
 } potfit_kim;
 
 #endif // KIM

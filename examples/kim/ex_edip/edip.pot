@@ -4,18 +4,16 @@
 #E
 
 # KIM Model name
-type  EDIP_BOP_Bazant_Kaxiras_Si__MO_958932894036_001
+model 	EDIP_BOP_Bazant_Kaxiras_Si__MO_958932894036_001
 
 # cutoff
-cutoff  kim
+cutoff 	kim
 
-# uncomment the following line to check the optimizable parameters of the KIM Model
-#check_kim_opt_param
+# the number of optimizable parameters that will be listed below
+# use 'kim_opt_param list' to get a list of supported parameters for the current model
+kim_opt_param 11
 
-# the number of optimizable parameters that will be listed
-num_opt_param  11
-
-# parameters 
+# parameters
 PARAM_FREE_A
   8.10149454010000e+00  4.05074727005000e+00  1.21522418101500e+01
 PARAM_FREE_B

@@ -110,7 +110,7 @@ SHELL = /bin/bash
 # i686-gcc          32bit GNU Compiler
 # kim-toolchain     use the KIM toolchain via kim-api-build-config
 
-SYSTEM = x86_64-gcc
+SYSTEM = kim-toolchain
 
 # Base directory of your installation of the MKL or ACML
 

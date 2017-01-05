@@ -35,7 +35,10 @@
 
 #if defined(APOT)
 
-void read_pot_table4(char const* a, FILE* b, potential_state* c) {}
+void read_pot_table4(char const* a, FILE* b, potential_state* c)
+{
+  error(1, "Unsupported potential format in %s", a);
+}
 
 #else
 

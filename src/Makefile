@@ -142,14 +142,10 @@ POTFITSRC	+= utils.c
 
 # potential representations
 
-ifneq (,$(strip $(findstring apot,${MAKETARGET})))
-  POTFITSRC	+= potential_input_f0.c
-else ifneq (,$(strip $(findstring kim,${MAKETARGET})))
-  POTFITSRC	+= potential_input_f5.c
-else
-  POTFITSRC	+= potential_input_f3.c
-  POTFITSRC	+= potential_input_f4.c
-endif
+POTFITSRC	+= potential_input_f0.c
+POTFITSRC	+= potential_input_f3.c
+POTFITSRC	+= potential_input_f4.c
+POTFITSRC	+= potential_input_f5.c
 
 # force routines
 

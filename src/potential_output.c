@@ -480,61 +480,47 @@ void write_pot_table4(char const* filename)
 void write_pot_table5(char const* filename)
 {
 #if defined(KIM)
-  /*local variables */
-  FILE *outfile = NULL;
-  int i, j, k;
-
   pot_table_t* pt = &g_pot.opt_pot;
 
-  /* open file */
-  outfile = fopen(filename, "w");
-  if (NULL == outfile)
+  // open file
+  FILE* outfile = fopen(filename, "w");
+  if (outfile == NULL)
     error(1, "Could not open file %s\n", filename);
 
-  /* write header */
+  // write header
   fprintf(outfile, "#F 5 1");
   fprintf(outfile, "\n#C");
-  for (i = 0; i < g_param.ntypes; i++)
+  for (int i = 0; i < g_param.ntypes; i++)
     fprintf(outfile, " %s", g_config.elements[i]);
   fprintf(outfile, "\n##");
-  for (i = 0; i < g_param.ntypes; i++)
-    for (j = i; j < g_param.ntypes; j++)
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i; j < g_param.ntypes; j++)
       fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
-  fprintf(outfile, "\n#E");
+  fprintf(outfile, "\n#E\n\n");
 
-  /* write KIM Model name */
-  fprintf(outfile, "\n\n# KIM Model name");
-  fprintf(outfile, "\ntype  %s", g_kim.kim_model_name);
+  // write KIM Model name
+  fprintf(outfile, "# KIM Model name\n");
+  fprintf(outfile, "model\t%s\n\n", g_kim.model_name);
 
-  /* write cutoff */
-  fprintf(outfile, "\n\n# cutoff");
-  fprintf(outfile, "\ncutoff  %18.10e", g_config.rcutmax);
+  // write cutoff
+  fprintf(outfile, "# cutoff distance\n");
+  fprintf(outfile, "cutoff\t%f\n\n", g_config.rcutmax);
 
-  /* check KIM optimizable params */
-  fprintf(outfile, "\n\n# uncomment the following line to check the optimizable "
-                   "parameters of the KIM Model");
-  fprintf(outfile, "\n#check_kim_opt_param");
+  // number of opt params
+  fprintf(outfile, "# the number of optimizable parameters that will be listed below\n");
+  fprintf(outfile, "# use 'kim_opt_param list' to get a list of supported parameters for the current model\n");
+  fprintf(outfile, "kim_opt_param\t%d\n\n", g_kim.num_opt_param);
 
-  /* number of opt params */
-  fprintf(outfile, "\n\n# the number of optimizable parameters that will be listed below");
-  fprintf(outfile, "\nnum_opt_param  %d", g_kim.num_opt_param);
-
-  /* write data */
-  k = 0;
-  fprintf(outfile, "\n\n# parameters");
-  for (i = 0; i < g_kim.num_opt_param; i++) {
-    fprintf(outfile, "\n%s", g_kim.name_opt_param[i]);
-    for (j = 0; j < g_kim.size_opt_param[i]; j++) {
-      fprintf(outfile, "\n%18.10e ", pt->table[k]);
-      fprintf(outfile, "%18.10e %18.10e", g_pot.apot_table.pmin[0][k], g_pot.apot_table.pmax[0][k]);
-      /* FIX parameter, 0 is the first potential (we only have 1 KIM potential)  */
-      if (g_pot.apot_table.invar_par[0][k]) {
-        fprintf(outfile, "  FIX" );
-      }
+  // write data
+  int k = 0;
+  fprintf(outfile, "# parameters\n");
+  for (int i = 0; i < g_kim.num_opt_param; i++) {
+    fprintf(outfile, "%s\n", g_kim.freeparams.name[g_kim.idx_opt_param[i]]);
+    for (int j = 0; j < g_kim.size_opt_param[i]; j++) {
+      fprintf(outfile, "  %f\t", pt->table[k]);
+      fprintf(outfile, "%f\t%f\n", g_pot.apot_table.pmin[0][k], g_pot.apot_table.pmax[0][k]);
       k++;
     }
-
-    fprintf(outfile, "\n");
   }
 
   fclose(outfile);
