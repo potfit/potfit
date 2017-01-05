@@ -450,13 +450,7 @@ OBJECTS := $(subst .c,.o,${SOURCES})
 ###########################################################################
 
 # all objects depend on headers
-# also check for errors here
 ${OBJECTS}: ${HEADERS}
-ifneq (,${ERROR})
-	@echo -e "\nThe following error(s) occurred:"
-	@echo -e ${ERROR}
-	@exit -1
-endif
 
 # How to compile *.c files
 %.o: %.c
@@ -467,8 +461,17 @@ endif
 		exit -1; \
 		}
 
+# check for errors here
+.PHONY: errors
+errors:
+ifneq (,${ERROR})
+	@echo -e "\nThe following error(s) occurred:"
+	@echo -e ${ERROR}
+	@exit -1
+endif
+
 # How to link
-${MAKETARGET}: ${OBJECTS}
+${MAKETARGET}: errors ${OBJECTS}
 	@echo " [LD] $@"
 	@${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
 ifneq (,${STRIP})
