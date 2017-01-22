@@ -9,7 +9,7 @@ from subprocess import call
 # arrays for supported interactions
 tab_interactions = [ 'pair', 'eam', 'tbeam', 'adp', 'meam' ]
 apot_interactions = [ 'pair', 'eam', 'tbeam', 'adp', 'meam', 'coulomb', 'dipole', 'stiweb', 'tersoff', 'tersoffmod', 'coulomb_eam', 'dipole_eam' ]
-kim_interactions = [ 'kim' ]
+kim_interactions = [ 'dummy' ]
 
 # arrays for supported options
 tab_options = [ 'evo', 'mpi', 'stress', 'nopunish', 'dist', 'fweight', 'noresc', 'contrib' ]
@@ -20,6 +20,16 @@ kim_options = [ 'evo', 'stress', 'fweight', 'contrib' ]
 disable = [ \
     [ 'dist', 'mpi' ] \
 ]
+
+# array of options for only certain interactions
+special_tab_options = []
+
+special_apot_options = [ \
+    [ 'coulomb', [ 'dsf' ] ], \
+    [ 'coulomb_eam', [ 'dsf' ] ], \
+]
+
+special_kim_options = []
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Compile potfit binary with all possible combinations of options.')
@@ -35,34 +45,46 @@ def parse_arguments():
     return parser.parse_args()
 
 def get_working_arrays(args):
-    s = 'potfit'
+    string = 'potfit'
     if args.tab:
-        i = tab_interactions
-        o = tab_options
-        s += '_tab'
+        interactions = tab_interactions
+        options = tab_options
+        string += '_tab'
+        special_options = special_tab_options
     elif args.apot:
-        i = apot_interactions
-        o = apot_options
-        s += '_apot'
+        interactions = apot_interactions
+        options = apot_options
+        string += '_apot'
+        special_options = special_apot_options
+    elif args.kim:
+        interactions = kim_interactions
+        options = kim_options
+        string += '_kim'
+        special_options = special_kim_options
     else:
-        i = kim_interactions
-        o = kim_options
-        s += ''
+        raise RuntimeWarning('No interaction type defined!')
 
     if args.acml:
-        s += '_acml5'
+        string += '_acml5'
 
     if args.debug:
-        s += '_debug'
+        string += '_debug'
 
-    return [i, o, s]
+    return [interactions, options, string, special_options]
 
 def all_subsets(subset):
-    return chain(*map(lambda x: combinations(subset, x), range(0, len(subset)+1)))
+    return chain(*map(lambda x: combinations(subset, x), range(0, len(subset) + 1)))
 
-def get_number_of_targets(i, o):
-    count = sum(1 for x in all_subsets(o))
-    return count * len(i)
+def get_number_of_targets(interactions, options, special_options):
+    count = 0
+    for interaction in interactions:
+        option_list = options[:]
+        for special_option in special_options:
+            if special_option[0] == interaction:
+                option_list += special_option[1]
+                break
+        count += sum(1 for x in all_subsets(option_list))
+    return count
 
 def options_are_supported(subset, disable_array):
     for disabled_set in disable_array:
@@ -75,23 +97,28 @@ def options_are_supported(subset, disable_array):
     return True
 
 def build_targets(args):
-    i, o, p = get_working_arrays(args)
-    num_targets = get_number_of_targets(i, o)
-    print("Building {} possible targets for {}.".format(num_targets, p))
+    interactions, options, potfit_string, special_options = get_working_arrays(args)
+    num_targets = get_number_of_targets(interactions, options, special_options)
+    print("Building {} possible targets for {}.".format(num_targets, potfit_string))
 
     count = 0
-    for interaction in i:
-        for options in all_subsets(o):
+    for interaction in interactions:
+        option_list = list(options[:])
+        for special_option in special_options:
+            if special_option[0] == interaction:
+                option_list += special_option[1]
+                break
+        for build_string in all_subsets(option_list):
             count += 1
             if count < args.start:
                 continue
             if args.count != -1 and (count - args.start) >= args.count:
                 print("\nMaximum build count ({}) reached.".format(args.count));
                 return
-            target = p + '_' + interaction
-            if len(options):
-                target += '_' + '_'.join(options)
-            if options_are_supported(options, disable):
+            target = potfit_string + '_' + interaction
+            if len(build_string):
+                target += '_' + '_'.join(build_string)
+            if options_are_supported(build_string, disable):
                 print("\nBuilding target {} ({}/{})".format(target, count, num_targets))
                 call (['make', 'clean'])
                 retcode = call([ 'make', '-j'+str(args.nproc), target ])
