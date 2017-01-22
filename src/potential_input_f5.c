@@ -38,7 +38,7 @@
 #include "potential_input.h"
 #include "utils.h"
 
-#if !defined(APOT) && !defined(KIM)
+#if !defined(APOT) || !defined(KIM)
 
 void read_pot_table5(char const* potential_filename, FILE* pfile)
 {
