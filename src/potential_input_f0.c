@@ -60,14 +60,14 @@ void init_calc_table0();
 /****************************************************************
  *
  *  read potential in analytic format:
- *  	for more information an how to specify an analytic potential
- *  	please check the documentation
+ *    for more information an how to specify an analytic potential
+ *    please check the documentation
  *
  *  parameters:
- *  	pot_table_t * ... pointer to the potential table
- *  	apot_table_t * ... pointer to the analytic potential table
- *  	char * ... name of the potential file (for error messages)
- *  	FILE * ... open file handle of the potential file
+ *    pot_table_t * ... pointer to the potential table
+ *    apot_table_t * ... pointer to the analytic potential table
+ *    char * ... name of the potential file (for error messages)
+ *    FILE * ... open file handle of the potential file
  *
  ****************************************************************/
 

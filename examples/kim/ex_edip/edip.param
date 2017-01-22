@@ -1,7 +1,7 @@
 ntypes		1
 
 # mandatory file names
-config	  training_set.txt	
+config	  training_set.txt
 startpot	edip.pot
 endpot		edip_end.pot
 tempfile	dummy.tmp
@@ -15,6 +15,6 @@ output_prefix	out
 # min setting
 opt		1
 anneal_temp	10
-eng_weight 1	
+eng_weight 1
 seed		42
 

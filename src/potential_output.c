@@ -492,10 +492,6 @@ void write_pot_table5(char const* filename)
   fprintf(outfile, "\n#C");
   for (int i = 0; i < g_param.ntypes; i++)
     fprintf(outfile, " %s", g_config.elements[i]);
-  fprintf(outfile, "\n##");
-  for (int i = 0; i < g_param.ntypes; i++)
-    for (int j = i; j < g_param.ntypes; j++)
-      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
   fprintf(outfile, "\n#E\n\n");
 
   // write KIM Model name

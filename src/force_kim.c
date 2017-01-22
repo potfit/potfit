@@ -27,12 +27,15 @@
  *
  ****************************************************************/
 
+#if !defined(KIM)
+#error force_kim.c compiled without KIM support
+#endif
+
 #include "potfit.h"
 
-#include "chempot.h"
+#include "force.h"
 #include "kim.h"
 #include "utils.h"
-#include "functions.h"
 
 /****************************************************************
   init_force
@@ -96,30 +99,13 @@ void init_force(int is_worker)
 
 double calc_forces(double *xi_opt, double *forces, int flag)
 {
-  /* local variables */
-  double tmpsum = 0.0, sum = 0.0;
-  int   h;
-  int   n_i;
-  int   uf;
-#if defined(STRESS)
-  int   us, stresses;
-#endif /* STRESS */
-#if defined(FWEIGHT) || defined(CONTRIB)
-  atom_t *atom;
-#endif // FWEIGHT || CONTRIB
   int status;
-  double* kimenergy;
-  double* kimforce;
-#if defined(STRESS)
-  double* kimvirial;
-#endif
-  double weight;
 
   // publish KIM parameters
-  for (int i = 0; i < g_config.nconf; i++) {
+  for (int i = 0; i < g_config.nconf; ++i) {
     int idx = 0;
-    for (int j = 0; j < g_kim.num_opt_param; ++j) {
-      double* data = ((double**)g_kim.param_value[i])[j];
+    for (int j = 0; j < g_pot.apot_table.total_par; ++j) {
+      double* data = ((double**)g_kim.param_value[i])[g_pot.apot_table.idxparam[j]];
       for (int k = 0; k < g_kim.freeparams.size[g_kim.idx_opt_param[j]]; ++k) {
         data[k] = xi_opt[g_pot.opt_pot.idx[idx++]];
       }
@@ -131,161 +117,120 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
   // This is the start of an infinite loop
   while (1) {
-    tmpsum = 0.0; // sum of squares of local process
+    double error_sum = 0.0; // sum of squares of local process
 
 #if !defined(MPI)
     g_mpi.myconf = g_config.nconf;
-#endif /* MPI */
+#endif // MPI
 
-    // region containing loop over configurations
-    {
-      // loop over configurations
-      for (h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
-        uf = g_config.conf_uf[h - g_mpi.firstconf];
+    // loop over configurations
+    for (int h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
+      double* energy = NULL;
+      double* force = NULL;
+      int uf = g_config.conf_uf[h - g_mpi.firstconf];
 #if defined(STRESS)
-        us = g_config.conf_us[h - g_mpi.firstconf];
-#endif /* STRESS */
+      double* virial = NULL;
+      int us = g_config.conf_us[h - g_mpi.firstconf];
+#endif // STRESS
 
-/* Calculate forces from KIM (general forces, including forces, virial and energy) */
+      // Calculate forces from KIM (general forces, including forces, virial and energy)
 
+      // get KIM data
 #if defined(STRESS)
-          /* get data */
-          KIM_API_getm_data(g_kim.pkim[h], &status, 3*3,
-                            "energy", &kimenergy, 1,
-                            "forces", &kimforce,  uf,
-                            "virial", &kimvirial, us);
-          if (KIM_STATUS_OK > status)
-            error(1, "");
+      KIM_API_getm_data(g_kim.pkim[h], &status, 3*3,
+                        "energy", &energy, 1,
+                        "forces", &force,  uf,
+                        "virial", &virial, us);
+      if (KIM_STATUS_OK > status)
+        error(1, "KIM_API_getm_data failed!\n");
 #else
-          /* get data */
-          KIM_API_getm_data(g_kim.pkim[h], &status, 2*3,
-                            "energy", &kimenergy, 1,
-                            "forces", &kimforce,  uf);
-          if (KIM_STATUS_OK > status)
-            error(1, "");
+      KIM_API_getm_data(g_kim.pkim[h], &status, 2*3,
+                        "energy", &energy, 1,
+                        "forces", &force,  uf);
+      if (KIM_STATUS_OK > status)
+        error(1, "KIM_API_getm_data failed!\n");
 #endif
 
-          /* Call model compute */
-          status = KIM_API_model_compute(g_kim.pkim[h]);
-          if (KIM_STATUS_OK > status)
-            error(1, "");
+      // Call model compute
+      status = KIM_API_model_compute(g_kim.pkim[h]);
+      if (KIM_STATUS_OK > status)
+        error(1, "KIM_API_model_compute failed!\n");
 
-        /* forces contributation */
-        weight = sqrt(g_config.conf_weight[h]);
-        for (int i = 0; i < g_config.inconf[h]; i++) {
+      // forces contributation
+      double weight = sqrt(g_config.conf_weight[h]);
+      for (int i = 0; i < g_config.inconf[h]; i++) {
 #if defined(FWEIGHT) || defined(CONTRIB)
-          atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
+        atom_t* atom = g_config.conf_atoms + i + g_config.cnfstart[h] - g_mpi.firstatom;
 #endif // FWEIGHT || CONTRIB
-          n_i = DIM * (g_config.cnfstart[h] + i);
-          if (uf) {
-            forces[n_i + 0] = weight * (kimforce[DIM * i + 0] - g_config.force_0[n_i + 0]);
-            forces[n_i + 1] = weight * (kimforce[DIM * i + 1] - g_config.force_0[n_i + 1]);
-            forces[n_i + 2] = weight * (kimforce[DIM * i + 2] - g_config.force_0[n_i + 2]);
-          } else {
-            forces[n_i + 0] = 0.0;
-            forces[n_i + 1] = 0.0;
-            forces[n_i + 2] = 0.0;
-          }
+        int n_i = DIM * (g_config.cnfstart[h] + i);
+        if (uf) {
+          forces[n_i + 0] = weight * (force[DIM * i + 0] - g_config.force_0[n_i + 0]);
+          forces[n_i + 1] = weight * (force[DIM * i + 1] - g_config.force_0[n_i + 1]);
+          forces[n_i + 2] = weight * (force[DIM * i + 2] - g_config.force_0[n_i + 2]);
+        } else {
+          forces[n_i + 0] = 0.0;
+          forces[n_i + 1] = 0.0;
+          forces[n_i + 2] = 0.0;
+        }
 
 #if defined(FWEIGHT)
-          /* weigh by absolute value of force */
-          forces[n_i + 0] /= FORCE_EPS + atom->absforce;
-          forces[n_i + 1] /= FORCE_EPS + atom->absforce;
-          forces[n_i + 2] /= FORCE_EPS + atom->absforce;
-#endif /* FWEIGHT */
+        // weigh by absolute value of force
+        forces[n_i + 0] /= FORCE_EPS + atom->absforce;
+        forces[n_i + 1] /= FORCE_EPS + atom->absforce;
+        forces[n_i + 2] /= FORCE_EPS + atom->absforce;
+#endif // FWEIGHT
 
 #if defined(CONTRIB)
-          if (atom->contrib)
-#endif /* CONTRIB */
-            tmpsum += (dsquare(forces[n_i + 0])
-                    + dsquare(forces[n_i + 1])
-                    + dsquare(forces[n_i + 2]) );
+        if (atom->contrib)
+#endif // CONTRIB
+          error_sum += (dsquare(forces[n_i + 0])
+                  + dsquare(forces[n_i + 1])
+                  + dsquare(forces[n_i + 2]) );
+      }
 
+      // reset energies and stresses
+      forces[g_calc.energy_p + h] = 0.0;
+#if defined(STRESS)
+      int stresses_offset = g_calc.stress_p + 6 * h;
+      for (int i = 0; i < 6; i++)
+        forces[stresses_offset + i] = 0.0;
+#endif /* STRESS */
+
+      weight = sqrt(g_config.conf_weight[h] * g_param.eweight);
+      forces[g_calc.energy_p + h] = weight * (*energy) / (double)g_config.inconf[h];
+      forces[g_calc.energy_p + h] -=  weight * g_config.force_0[g_calc.energy_p + h];
+      error_sum += dsquare(forces[g_calc.energy_p + h]);
+
+#if defined(STRESS)
+      // stress contributions
+      if (uf && us) {
+        weight = sqrt(g_config.conf_weight[h] * g_param.sweight);
+        for (int i = 0; i < 6; i++) {
+          forces[stresses_offset + i]  = weight * virial[i];
+          forces[stresses_offset + i] /= g_config.conf_vol[h - g_mpi.firstconf];
+          forces[stresses_offset + i] -= weight*g_config.force_0[stresses_offset + i];
+          error_sum += dsquare(forces[stresses_offset + i]);
         }
+      }
+#endif // STRESS
 
-        /* reset energies and stresses */
-        forces[g_calc.energy_p + h] = 0.0;
-#if defined(STRESS)
-        stresses = g_calc.stress_p + 6 * h;
-        for (int i = 0; i < 6; i++)
-          forces[stresses + i] = 0.0;
-#endif /* STRESS */
+    } // loop over configurations
 
-        /* energy contributation */
-#if defined(APOT)
-        if (g_param.enable_cp)
-          forces[g_calc.energy_p + h] = chemical_potential(g_param.ntypes, g_config.na_type[h], xi_opt + g_pot.cp_start);
-#endif /* APOT */
+    gather_forces(&error_sum, forces);
 
-		    weight = sqrt(g_config.conf_weight[h] * g_param.eweight);
-        forces[g_calc.energy_p + h] = weight * (*kimenergy) / (double)g_config.inconf[h];
-        forces[g_calc.energy_p + h] -=  weight * g_config.force_0[g_calc.energy_p + h];
-        tmpsum += dsquare(forces[g_calc.energy_p + h]);
-
-
-#if defined(STRESS)
-        /* stress contributions */
-        if (uf && us) {
-		      weight = sqrt(g_config.conf_weight[h] * g_param.sweight);
-          for (int i = 0; i < 6; i++) {
-            forces[stresses + i]  = weight*kimvirial[i];
-            forces[stresses + i] /= g_config.conf_vol[h - g_mpi.firstconf];
-            forces[stresses + i] -= weight*g_config.force_0[stresses + i];
-            tmpsum += dsquare(forces[stresses + i]);
-          }
-        }
-#endif /* STRESS */
-
-      }       /* loop over configurations */
-    }       /* parallel region */
-
-#if defined(MPI)
-    /* reduce global sum */
-    sum = 0.0;
-    MPI_Reduce(&tmpsum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    /* gather forces, energies, stresses */
-    if (0 == g_mpi.myid) {    /* root node already has data in place */
-      /* forces */
-      MPI_Gatherv(MPI_IN_PLACE, myatoms, MPI_VECTOR, forces,
-          atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
-      /* energies */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_DOUBLE, forces + g_calc.energy_p,
-          conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#if defined(STRESS)
-      /* stresses */
-      MPI_Gatherv(MPI_IN_PLACE, g_mpi.myconf, MPI_STENS, forces + g_calc.stress_p,
-          conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
-#endif /* STRESS */
-    } else {
-      /* forces */
-      MPI_Gatherv(forces + g_mpi.firstatom * 3, myatoms, MPI_VECTOR,
-          forces, atom_len, atom_dist, MPI_VECTOR, 0, MPI_COMM_WORLD);
-      /* energies */
-      MPI_Gatherv(forces + g_calc.energy_p + g_mpi.firstconf, g_mpi.myconf, MPI_DOUBLE,
-          forces + g_calc.energy_p, conf_len, conf_dist, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#if defined(STRESS)
-      /* stresses */
-      MPI_Gatherv(forces + g_calc.stress_p + 6 * g_mpi.firstconf, g_mpi.myconf, MPI_STENS,
-          forces + g_calc.stress_p, conf_len, conf_dist, MPI_STENS, 0, MPI_COMM_WORLD);
-#endif /* STRESS */
-    }
-#else
-    sum = tmpsum;   /* global sum = local sum  */
-#endif /* MPI */
-
-    /* root process exits this function now */
+    // root process exits this function now
     if (0 == g_mpi.myid) {
-      g_calc.fcalls++;     /* Increase function call counter */
-      if (isnan(sum)) {
+      g_calc.fcalls++;     // Increase function call counter
+      if (isnan(error_sum)) {
 #if defined(DEBUG)
         printf("\n--> Force is nan! <--\n\n");
-#endif /* DEBUG */
+#endif // DEBUG
         return 10e10;
       } else
-        return sum;
+        return error_sum;
     }
-  }       /* end of infinite loop */
+  } // end of infinite loop
 
-  /* once a non-root process arrives here, all is done. */
+  // once a non-root process arrives here, all is done
   return -1.0;
 }

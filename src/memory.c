@@ -61,7 +61,7 @@ static potfit_memory g_memory;
 void* Malloc(size_t size)
 {
   if (size == 0)
-    error(1, "Allocating memory with size=0!\n");
+    error(1, "Allocating memory with size 0!\n");
 
   void* p = malloc(size);
 
@@ -93,7 +93,7 @@ void* Malloc(size_t size)
 void* Realloc(void* pvoid, size_t size)
 {
   if (size == 0)
-    error(1, "Reallocating memory with size=0!\n");
+    error(1, "Reallocating memory with size 0!\n");
 
   if (pvoid == NULL)
     return Malloc(size);

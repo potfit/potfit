@@ -521,10 +521,16 @@ typedef enum {
 } KIM_NEIGHBOR_TYPE;
 
 typedef struct {
+  /// number of supported species
+  int nspecies;
+  /// name of species
+  char const** species;
   /// number of free parameters in KIM model
   int npar;
   /// names of free parameters in KIM model
   char const** name;
+  /// max string length for parameter names
+  int max_name_len;
   /// the pointers to parameters in KIM model
   void** value;
   /// types of the free parameters in KIM model

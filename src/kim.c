@@ -432,118 +432,20 @@ void initialize_KIM()
   printf("\nInitializing KIM interface ... done\n");
 }
 
-
-
-/*****************************************************************************
-*
-* Nest optimizable parameters (pointer)
-*
-* Note that the optimizable parameters is a subset of the free parameters with
-* type `double'. Only the ones that the user list in the potential input file
-* will be optimized. This function should be called after `get_free_param_double'.
-*
-* input_param_name: the names of parameters that will be optimized
-* input_param_num: the number of parameters that will be optimized
-*
-*****************************************************************************/
-
-// int nest_optimizable_param(int config_index)
-// {
-//   /* local variables */
-//   int tmp_size;
-//   int total_size;           /* the size of the nested values*/
-//   int have_name;            /* flag, is the name in the data struct? */
-//   int idx[input_param_num]; /* the index in FreeParam */
-//   int i, j, k;
-//
-//   /* nest values  */
-//   /*first compute the total size of the optimizable parameters */
-//   total_size = 0;
-//   for (i = 0; i < input_param_num; i++) {
-//     have_name = 0;
-//     for (j = 0; j< FreeParam->Nparam; j++) {
-//       if (strcmp(FreeParam->name[j], input_param_name[i]) == 0) {
-//         idx[i] = j;
-//         have_name = 1;
-//         break;
-//       }
-//     }
-//     if (have_name) {
-//       tmp_size = 1;
-//       for (j = 0; j < FreeParam->rank[idx[i]]; j++) {
-//         tmp_size *= FreeParam->shape[idx[i]][j];
-//       }
-//       /* store tmp_size for later use in potential outpot */
-//       g_kim.size_opt_param[i] = tmp_size;
-//       total_size += tmp_size;
-//     } else {
-//       error(1, "The parameter '%s' is not optimizable, check spelling.\n",
-//           input_param_name[i]);
-//     }
-//   }
-//
-//   /* allocate memory for nestedvalue*/
-//   FreeParam->nestedvalue = (double**) Malloc((total_size) * sizeof(double*));
-//
-// 	/*copy the values (pointers) to nestedvalue */
-//   k = 0;
-//   for (i = 0; i < input_param_num; i++ ) {
-// /*    tmp_size = 1;
-//     for (j = 0; j < FreeParam->rank[idx[i]]; j++) {
-//       tmp_size *= FreeParam->shape[idx[i]][j];
-//     }
-//     for (j = 0; j <tmp_size; j++) {
-// */
-//     for (j = 0; j < g_kim.size_opt_param[i]; j++) {
-//       FreeParam->nestedvalue[k] = FreeParam->value[idx[i]]+j;
-//       k++;
-//     }
-//   }
-//
-//   /* store the number of total parameter values */
-//   FreeParam->Nnestedvalue = total_size;
-//
-//   return total_size;
-// }
-
-
-
-
-
 /******************************************************************************
- * free KIM model and object
- ******************************************************************************/
-int free_model_object(void** pkim)
-{
-	/* local variables */
-	int status;
-
-	/* call model destroy */
-	status = KIM_API_model_destroy(*pkim);
-	if (KIM_STATUS_OK > status) {
-		KIM_API_report_error(__LINE__, __FILE__,"KIM_API_model_destroy", status);
-		return status;
-	}
-	/* free KIM objects */
-	KIM_API_free(pkim, &status);
-	if (KIM_STATUS_OK > status) {
-		KIM_API_report_error(__LINE__, __FILE__,"KIM_API_free", status);
-		return status;
-	}
-	return KIM_STATUS_OK;
-}
-
-
-/******************************************************************************
- * free KIM model and object
- ******************************************************************************/
+ shutdown_KIM
+******************************************************************************/
 
 void shutdown_KIM()
 {
-	/* local variables */
-	int i;
-
-	for(i = 0; i < g_config.nconf; i++) {
-		free_model_object(&g_kim.pkim[i]);
-	}
+  for(int i = 0; i < g_config.nconf; i++) {
+    // call model destroy
+    int status = KIM_API_model_destroy(g_kim.pkim[i]);
+    if (KIM_STATUS_OK > status)
+      warning("KIM_API_model_destroy failed!\n");
+    // free KIM objects
+    KIM_API_free(&g_kim.pkim[i], &status);
+    if (KIM_STATUS_OK > status)
+      warning("KIM_API_free failed!\n");
+  }
 }

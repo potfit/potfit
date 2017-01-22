@@ -443,6 +443,24 @@ void read_config(const char* filename)
     error(1, "Please adjust \"ntypes\" in your parameter file.\n");
   }
 
+#if defined(KIM)
+  if (g_param.ntypes > g_kim.freeparams.nspecies)
+    error(1, "The KIM model %s does only support %d species!\n", g_kim.model_name, g_kim.freeparams.nspecies);
+
+  // check if all atom types are supported by the KIM model
+  for (int i = 0; i < g_param.ntypes; ++i) {
+    int found = 0;
+    for (int j = 0; j < g_kim.freeparams.nspecies; ++j) {
+      if (strcmp(g_config.elements[i], g_kim.freeparams.species[j]) == 0) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found)
+      error(1, "The KIM model %s does not support the species %s!\n", g_kim.model_name, g_config.elements[i]);
+  }
+#endif // KIM
+
   /* mdim is the dimension of the force vector:
      - 3*natoms forces
      - nconf cohesive energies,
@@ -452,25 +470,25 @@ void read_config(const char* filename)
   g_calc.mdim += 6 * g_config.nconf;
 #endif  // STRESS
 
-/* mdim has additional components for EAM-like potentials */
+  // mdim has additional components for EAM-like potentials
 #if defined(EAM) || defined(ADP) || defined(MEAM)
-  g_calc.mdim += g_config.nconf;     /* nconf limiting constraints */
-  g_calc.mdim += 2 * g_param.ntypes; /* g_param.ntypes dummy constraints */
+  g_calc.mdim += g_config.nconf;     // nconf limiting constraints
+  g_calc.mdim += 2 * g_param.ntypes; // g_param.ntypes dummy constraints
 #if defined(TBEAM)
   g_calc.mdim +=
-      2 * g_param.ntypes; /* additional dummy constraints for s-band */
+      2 * g_param.ntypes; // additional dummy constraints for s-band
 #endif                    // TBEAM
 #endif                    // EAM || ADP || MEAM
 
-/* mdim has additional components for analytic potentials */
+  // mdim has additional components for analytic potentials
 #if defined(APOT)
-  /* 1 slot for each analytic parameter -> punishment */
+  // 1 slot for each analytic parameter -> punishment
   g_calc.mdim += g_pot.opt_pot.idxlen;
-  /* 1 slot for each analytic potential -> punishment */
+  // 1 slot for each analytic potential -> punishment
   g_calc.mdim += g_pot.apot_table.number + 1;
 #endif  // APOT
 
-  /* copy forces into single vector */
+  // copy forces into single vector
   g_config.force_0 = (double*)Malloc(g_calc.mdim * sizeof(double));
 
   int k = 0;
