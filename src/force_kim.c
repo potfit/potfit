@@ -125,8 +125,8 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 
     // loop over configurations
     for (int h = g_mpi.firstconf; h < g_mpi.firstconf + g_mpi.myconf; h++) {
-      double* energy = NULL;
-      double* force = NULL;
+      double* kim_energy = NULL;
+      double* kim_forces = NULL;
       int uf = g_config.conf_uf[h - g_mpi.firstconf];
 #if defined(STRESS)
       double* virial = NULL;
@@ -138,15 +138,15 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       // get KIM data
 #if defined(STRESS)
       KIM_API_getm_data(g_kim.pkim[h], &status, 3*3,
-                        "energy", &energy, 1,
-                        "forces", &force,  uf,
+                        "energy", &kim_energy, 1,
+                        "forces", &kim_forces,  uf,
                         "virial", &virial, us);
       if (KIM_STATUS_OK > status)
         error(1, "KIM_API_getm_data failed!\n");
 #else
       KIM_API_getm_data(g_kim.pkim[h], &status, 2*3,
-                        "energy", &energy, 1,
-                        "forces", &force,  uf);
+                        "energy", &kim_energy, 1,
+                        "forces", &kim_forces,  uf);
       if (KIM_STATUS_OK > status)
         error(1, "KIM_API_getm_data failed!\n");
 #endif
@@ -164,9 +164,9 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif // FWEIGHT || CONTRIB
         int n_i = DIM * (g_config.cnfstart[h] + i);
         if (uf) {
-          forces[n_i + 0] = weight * (force[DIM * i + 0] - g_config.force_0[n_i + 0]);
-          forces[n_i + 1] = weight * (force[DIM * i + 1] - g_config.force_0[n_i + 1]);
-          forces[n_i + 2] = weight * (force[DIM * i + 2] - g_config.force_0[n_i + 2]);
+          forces[n_i + 0] = weight * (kim_forces[DIM * i + 0] - g_config.force_0[n_i + 0]);
+          forces[n_i + 1] = weight * (kim_forces[DIM * i + 1] - g_config.force_0[n_i + 1]);
+          forces[n_i + 2] = weight * (kim_forces[DIM * i + 2] - g_config.force_0[n_i + 2]);
         } else {
           forces[n_i + 0] = 0.0;
           forces[n_i + 1] = 0.0;
@@ -197,7 +197,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
 #endif /* STRESS */
 
       weight = sqrt(g_config.conf_weight[h] * g_param.eweight);
-      forces[g_calc.energy_p + h] = weight * (*energy) / (double)g_config.inconf[h];
+      forces[g_calc.energy_p + h] = weight * (*kim_energy) / (double)g_config.inconf[h];
       forces[g_calc.energy_p + h] -=  weight * g_config.force_0[g_calc.energy_p + h];
       error_sum += dsquare(forces[g_calc.energy_p + h]);
 
@@ -219,7 +219,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
     gather_forces(&error_sum, forces);
 
     // root process exits this function now
-    if (0 == g_mpi.myid) {
+    if (g_mpi.myid == 0) {
       g_calc.fcalls++;     // Increase function call counter
       if (isnan(error_sum)) {
 #if defined(DEBUG)
