@@ -33,26 +33,34 @@
 
 #include "utils.h"
 
-// 32-bit
 #if UINTPTR_MAX == 0xffffffff
-#if !defined(ACML)
+
+// 32-bit
+#if defined(MKL)
 #include <mkl_vml.h>
-#endif  // ACML
+#endif  // MKL
 #define _32BIT
 
-// 64-bit
 #elif UINTPTR_MAX == 0xffffffffffffffff
-#if !defined(ACML)
+
+// 64-bit
+#if defined(MKL)
 #include <mkl_vml.h>
 #elif defined(ACML4)
 #include <acml_mv.h>
 #elif defined(ACML5)
 #include <amdlibm.h>
-#endif  // ACML
+#elif defined(ACCELERATE)
+#include <Accelerate/Accelerate.h>
+#else
+#error No math library defined!
+#endif
+
+#else
 
 // wtf
-#else
 #error Unknown integer size
+
 #endif  // UINTPTR_MAX
 
 // vector product
@@ -67,6 +75,10 @@ vector vec_prod(vector u, vector v)
   return w;
 }
 
+#if defined(ACCELERATE)
+static const int g_dim = 1;
+#endif // ACCELERATE
+
 /****************************************************************
  *
  *  higher powers in one and more dimensions
@@ -78,13 +90,15 @@ void power_1(double* result, const double* x, const double* y)
 #if defined(_32BIT)
   *result = pow(*x, *y);
 #else
-#if !defined(ACML)
+#if defined(MKL)
   vdPow(1, x, y, result);
 #elif defined(ACML4)
   *result = fastpow(*x, *y);
 #elif defined(ACML5)
   *result = pow(*x, *y);
-#endif  // ACML
+#elif defined(ACCELERATE)
+  vvpow(result, y, x, &g_dim);
+#endif
 #endif  // _32BIT
 }
 
@@ -95,7 +109,7 @@ void power_m(int dim, double* result, const double* x, const double* y)
   for (i = 0; i < dim; i++)
     result[i] = pow(x[i], y[i]);
 #else
-#if !defined(ACML)
+#if defined(MKL)
   vdPow(dim, x, y, result);
 #elif defined(ACML4)
   int i;
@@ -105,7 +119,9 @@ void power_m(int dim, double* result, const double* x, const double* y)
   int i;
   for (i = 0; i < dim; i++)
     *(result + i) = pow(*(x + i), *(y + i));
-#endif  // ACML
+#elif defined(ACCELERATE)
+  vvpow(result, y, x, &dim);
+#endif
 #endif  // _32BIT
 }
 

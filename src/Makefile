@@ -394,21 +394,23 @@ ifneq (,$(findstring contrib,${MAKETARGET}))
   CFLAGS += -DCONTRIB
 endif
 
+ifneq (,$(findstring mkl,${MAKETARGET}))
+  ifneq (,$(findstring acml,${MAKETARGET}))
+    ERROR += "ACML cannot be used together with MKL.\n"
+  endif
+endif
+
 # force acml4 or acml5 over acml
 ifneq (,$(findstring acml,${MAKETARGET}))
+  ifneq (,$(findstring mkl,${MAKETARGET}))
+    ERROR += "ACML cannot be used together with MKL.\n"
+  endif
   ifeq (,$(findstring acml4,${MAKETARGET}))
     ifeq (,$(findstring acml5,${MAKETARGET}))
       ERROR += "The acml target is obsolete. Please use acml4 or acml5.\n"
     endif
   endif
-endif
-
-ifneq (,$(findstring acml4,${MAKETARGET}))
-  CFLAGS += -DACML -DACML4
-endif
-
-ifneq (,$(findstring acml5,${MAKETARGET}))
-  CFLAGS += -DACML -DACML5
+  CFLAGS += -DACML
 endif
 
 ifneq (,$(findstring resc,${MAKETARGET}))
@@ -445,6 +447,8 @@ ifneq (,$(findstring kim,${MAKETARGET}))
     ERROR += "KIM potential does not support resc option!\n"
   endif
 endif
+
+CFLAGS += -D${TARGET} -D${MATH_LIB}
 
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})
