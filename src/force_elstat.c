@@ -131,7 +131,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
   switch (g_pot.format_type) {
     case POTENTIAL_FORMAT_UNKNOWN:
-      break;
+      error(1, "Unknown potential format detected! (%s:%d)\n", __FILE__,
+            __LINE__);
     case POTENTIAL_FORMAT_ANALYTIC:
       xi = g_pot.calc_pot.table;
       break;
@@ -141,7 +142,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       break;
     case POTENTIAL_FORMAT_KIM:
       error(1, "KIM format is not supported by elstat force routine!");
-      break;
   }
 
   ne = g_pot.apot_table.total_ne_par;
@@ -240,6 +240,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                     g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
                     0.0, g_pot.calc_pot.d2tab + first);
         }
+        case POTENTIAL_FORMAT_KIM:
+          error(1, "KIM format is not supported by elstat force routine!");
       }
     }
 

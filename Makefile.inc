@@ -166,15 +166,13 @@ ifeq (x86_64-icc,${SYSTEM})
   OMPI_CC       = icc
   OMPI_CLINKER  = icc
 
-  export        OMPI_CC OMPI_CLINKER
-
   # general optimization flags
-  OPT_FLAGS     += -fast -xHost
+  OPT_FLAGS     += -fast -xHost -std=c99
 
   # profiling and debug flags
   PROF_FLAGS    += --profile-functions
   PROF_LIBS     += --profile-functions
-  DEBUG_FLAGS   += -g -Wall
+  DEBUG_FLAGS   += -g -Wall -std=c99
 
 ifeq (${MATH_LIB},ACCELERATE)
   LIBS += -framework Accelerate
@@ -275,12 +273,12 @@ ifeq (i686-icc,${SYSTEM})
   OMPI_CLINKER  = icc
 
   # general optimization flags
-  OPT_FLAGS     += -fast -xHost
+  OPT_FLAGS     += -fast -xHost -std=c99
 
   # profiling and debug flags
   PROF_FLAGS    += -prof-gen
   PROF_LIBS     += -prof-gen
-  DEBUG_FLAGS   += -g -Wall -wd981 -wd1572
+  DEBUG_FLAGS   += -g -Wall -std=c99
 
 ifeq (${MATH_LIB},ACCELERATE)
   LIBS += -framework Accelerate
@@ -307,13 +305,13 @@ ifeq (i686-gcc,${SYSTEM})
   OMPI_CLINKER  = gcc
 
   # general optimization flags
-  OPT_FLAGS     += -m32 -O3 -march=native -Wno-unused
+  OPT_FLAGS     += -m32 -O3 -march=native -Wno-unused -std=c99
   LIBS          += -m32
 
   # profiling and debug flags
   PROF_FLAGS    += -m32 -g3 -pg
   PROF_LIBS     += -m32 -g3 -pg
-  DEBUG_FLAGS   += -m32 -g3 -Wall
+  DEBUG_FLAGS   += -m32 -g3 -Wall -std=c99
 
 ifeq (${MATH_LIB},ACCELERATE)
   LIBS += -framework Accelerate

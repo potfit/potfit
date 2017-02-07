@@ -484,11 +484,13 @@ endif
 ${MAKETARGET}: errors ${OBJECTS}
 	@echo " [LD] $@"
 	@${CC} ${LFLAGS_${PARALLEL}} -o $@ ${OBJECTS} ${LIBS}
-ifneq (,${STRIP})
-  ifeq (,$(findstring prof,${MAKETARGET}))
-    ifeq (,$(findstring debug,${MAKETARGET}))
-      ifeq (,$(findstring asan,${MAKETARGET}))
+ifneq (${TARGET},MACOS)
+  ifneq (,${STRIP})
+    ifeq (,$(findstring prof,${MAKETARGET}))
+      ifeq (,$(findstring debug,${MAKETARGET}))
+        ifeq (,$(findstring asan,${MAKETARGET}))
 	@${STRIP} --strip-unneeded -R .comment $@
+        endif
       endif
     endif
   endif
