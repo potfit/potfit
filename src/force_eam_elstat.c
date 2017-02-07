@@ -143,7 +143,6 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       break;
     case POTENTIAL_FORMAT_KIM:
       error(1, "KIM format is not supported by EAM elstat force routine!");
-      break;
   }
 
 #if !defined(MPI)
@@ -251,6 +250,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                     g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
                     0.0, g_pot.calc_pot.d2tab + first);
         }
+        case POTENTIAL_FORMAT_KIM:
+          error(1, "KIM format is not supported by EAM elstat force routine!");
       }
     }
 
@@ -276,6 +277,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
                     g_pot.calc_pot.last[col] - first + 1, *(xi + first - 2),
                     *(xi + first - 1), g_pot.calc_pot.d2tab + first);
         }
+        case POTENTIAL_FORMAT_KIM:
+          error(1, "KIM format is not supported by EAM elstat force routine!");
       }
     }
 
