@@ -448,7 +448,7 @@ ifneq (,$(findstring kim,${MAKETARGET}))
   endif
 endif
 
-CFLAGS += -D${TARGET} -D${MATH_LIB}
+CFLAGS += -D${TARGET} -D${MATH_LIB} 
 
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})

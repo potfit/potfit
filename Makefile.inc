@@ -147,7 +147,7 @@ else ifneq (,$(strip $(findstring mkl,${MAKETARGET})))
 else
   ifeq (${TARGET},MACOS)
     # accelerate is the default for Mac OS
-    MATH_LIB = ACCELERATE
+    MATH_LIB = __ACCELERATE__
   else
     MATH_LIB = MKL
   endif
@@ -174,7 +174,7 @@ ifeq (x86_64-icc,${SYSTEM})
   PROF_LIBS     += --profile-functions
   DEBUG_FLAGS   += -g -Wall -std=c99
 
-ifeq (${MATH_LIB},ACCELERATE)
+ifeq (${MATH_LIB},__ACCELERATE__)
   LIBS += -framework Accelerate
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
@@ -208,8 +208,9 @@ ifeq (x86_64-gcc,${SYSTEM})
   ASAN_FLAGS    += -g -fsanitize=address -fno-omit-frame-pointer
   ASAN_LFLAGS   = -g -fsanitize=address
 
-ifeq (${MATH_LIB},ACCELERATE)
-  LIBS += -framework Accelerate
+ifeq (${MATH_LIB},__ACCELERATE__)
+  OPT_FLAGS    += -Wa,-q
+  LIBS += -framework Accelerate 
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
   LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
@@ -242,7 +243,7 @@ ifeq (x86_64-clang,${SYSTEM})
   ASAN_FLAGS    += -g -fsanitize=address -fno-omit-frame-pointer
   ASAN_LFLAGS   = -g -fsanitize=address
 
-ifeq (${MATH_LIB},ACCELERATE)
+ifeq (${MATH_LIB},__ACCELERATE__)
   LIBS += -framework Accelerate
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
@@ -280,7 +281,7 @@ ifeq (i686-icc,${SYSTEM})
   PROF_LIBS     += -prof-gen
   DEBUG_FLAGS   += -g -Wall -std=c99
 
-ifeq (${MATH_LIB},ACCELERATE)
+ifeq (${MATH_LIB},__ACCELERATE__)
   LIBS += -framework Accelerate
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
@@ -313,7 +314,7 @@ ifeq (i686-gcc,${SYSTEM})
   PROF_LIBS     += -m32 -g3 -pg
   DEBUG_FLAGS   += -m32 -g3 -Wall -std=c99
 
-ifeq (${MATH_LIB},ACCELERATE)
+ifeq (${MATH_LIB},__ACCELERATE__)
   LIBS += -framework Accelerate
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
@@ -343,7 +344,7 @@ ifeq (kim-toolchain,${SYSTEM})
   LFLAGS_SERIAL += $(shell kim-api-build-config --ldflags)
   LIBS          += $(shell kim-api-build-config --ldlibs)
 
-ifeq (${MATH_LIB},ACCELERATE)
+ifeq (${MATH_LIB},__ACCELERATE__)
   LIBS += -framework Accelerate
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include

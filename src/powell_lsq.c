@@ -43,7 +43,7 @@
 #include <mkl_lapack.h>
 #elif defined(ACML)
 #include <acml.h>
-#elif defined(ACCELERATE)
+#elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
 #else
 #error No math library defined!
@@ -139,7 +139,7 @@ void run_powell_lsq(double* xi)
   /* Vector pointing into correct dir'n */
   double* delta = (double*)Malloc(g_calc.ndimtot * sizeof(double)); /* ==0 */
 
-#if defined(MKL) // work arrays not needed for ACML
+#if !defined(ACML) // work arrays not needed for ACML
   int worksize = 64 * g_calc.ndim;
   // work array to be used by dsysvx
   double* work = (double*)Malloc(worksize * sizeof(double));
@@ -232,7 +232,7 @@ void run_powell_lsq(double* xi)
       dsysvx(fact[0], uplo[0], g_calc.ndim, j, &lineqsys[0][0], g_calc.ndim,
              &les_inverse[0][0], g_calc.ndim, perm_indx, p, g_calc.ndim, q,
              g_calc.ndim, &cond, &ferror, &berror, &i);
-#elif defined(ACCELERATE)
+#elif defined(__ACCELERATE__)
       dsysvx_(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
              &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
              &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);

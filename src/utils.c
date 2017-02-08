@@ -50,7 +50,7 @@
 #include <acml_mv.h>
 #elif defined(ACML5)
 #include <amdlibm.h>
-#elif defined(ACCELERATE)
+#elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
 #else
 #error No math library defined!
@@ -75,9 +75,9 @@ vector vec_prod(vector u, vector v)
   return w;
 }
 
-#if defined(ACCELERATE)
+#if defined(__ACCELERATE__)
 static const int g_dim = 1;
-#endif // ACCELERATE
+#endif // __ACCELERATE__
 
 /****************************************************************
  *
@@ -96,7 +96,7 @@ void power_1(double* result, const double* x, const double* y)
   *result = fastpow(*x, *y);
 #elif defined(ACML5)
   *result = pow(*x, *y);
-#elif defined(ACCELERATE)
+#elif defined(__ACCELERATE__)
   vvpow(result, y, x, &g_dim);
 #endif
 #endif  // _32BIT
@@ -119,7 +119,7 @@ void power_m(int dim, double* result, const double* x, const double* y)
   int i;
   for (i = 0; i < dim; i++)
     *(result + i) = pow(*(x + i), *(y + i));
-#elif defined(ACCELERATE)
+#elif defined(__ACCELERATE__)
   vvpow(result, y, x, &dim);
 #endif
 #endif  // _32BIT
