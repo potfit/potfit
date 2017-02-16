@@ -200,6 +200,11 @@ void read_parameter_file(char const* param_file)
       get_param_double("plotmin", &g_param.plotmin, line, param_file, DBL_MIN,
                        DBL_MAX);
     }
+    // to enable the use of global parameters
+    else if (strcasecmp(token, "enable_glob") == 0) {
+      get_param_int("enable_glob", &g_param.enable_glob, line, param_file, INT_MIN,
+                    INT_MAX);
+    }
 #if defined(PAIR)
     // exclude chemical potential from energy calculations
     else if (strcasecmp(token, "enable_cp") == 0) {
@@ -390,6 +395,9 @@ void check_parameters_complete(char const* paramfile)
   if (g_param.plotmin < 0)
     error(1, "Missing parameter or invalid value in %s : plotmin is \"%f\"\n",
           paramfile, g_param.plotmin);
+  if (g_param.enable_glob != 0 && g_param.enable_glob != 1)
+    error(1, "Missing parameter or invalid value in %s : enable_glob is \"%d\"\n",
+          paramfile, g_param.enable_glob);
 #if defined(PAIR)
   if (g_param.enable_cp != 0 && g_param.enable_cp != 1)
     error(1, "Missing parameter or invalid value in %s : enable_cp is \"%d\"\n",

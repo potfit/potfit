@@ -471,6 +471,7 @@ typedef struct {
 #if defined(APOT)
   int compnodes; /* how many additional composition nodes */
   int enable_cp; /* switch chemical potential on/off */
+  int enable_glob; /* switch global parameters on/off */
   double apot_punish_value;
   double plotmin;           /* minimum for plotfile */
 #endif                      // APOT
