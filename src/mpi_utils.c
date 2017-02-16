@@ -554,6 +554,7 @@ int broadcast_calcpot_table()
 int broadcast_apot_table()
 {
 #if defined(APOT)
+  CHECK_RETURN(MPI_Bcast(&g_param.enable_glob, 1, MPI_INT, 0, MPI_COMM_WORLD));
   CHECK_RETURN(MPI_Bcast(&g_param.enable_cp, 1, MPI_INT, 0, MPI_COMM_WORLD));
   CHECK_RETURN(MPI_Bcast(&g_pot.opt_pot.len, 1, MPI_INT, 0, MPI_COMM_WORLD));
   CHECK_RETURN(

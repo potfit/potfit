@@ -340,7 +340,7 @@ void read_chemical_potentials(apot_state* pstate)
     /* shortcut for apt->number */
     int i = apt->number;
 
-    /* allocate memory for global parameters */
+    /* allocate memory for chemical potentials parameters */
     apt->names = (char**)Realloc(apt->names, (i + 1) * sizeof(char*));
     apt->names[i] = (char*)Malloc(20 * sizeof(char));
     strcpy(apt->names[i], "chemical potentials");
@@ -598,115 +598,117 @@ void read_global_parameters(apot_state* pstate)
 
   pot_table_t* pt = &g_pot.opt_pot;
 
-  /* skip to global section */
-  fsetpos(pstate->pfile, &pstate->startpos);
-  do {
-    fgetpos(pstate->pfile, &filepos);
-    if (1 != fscanf(pstate->pfile, "%s", buffer))
-      error(1, "Error while searching for global parameters\n");
-  } while (strcmp(buffer, "global") != 0 && !feof(pstate->pfile));
-  fsetpos(pstate->pfile, &filepos);
+  if (g_param.enable_glob) {
+    /* skip to global section */
+    fsetpos(pstate->pfile, &pstate->startpos);
+    do {
+      fgetpos(pstate->pfile, &filepos);
+      if (1 != fscanf(pstate->pfile, "%s", buffer))
+        error(1, "Error while searching for global parameters\n");
+    } while (strcmp(buffer, "global") != 0 && !feof(pstate->pfile));
+    fsetpos(pstate->pfile, &filepos);
 
-  /* check for global keyword */
-  if (strcmp(buffer, "global") == 0) {
-    if (2 > fscanf(pstate->pfile, "%s %d", buffer, &apt->globals))
-      error(1, "Premature end of potential file %s\n", pstate->filename);
-    g_pot.have_globals = 1;
-    apt->total_par += apt->globals;
+    /* check for global keyword */
+    if (strcmp(buffer, "global") == 0) {
+      if (2 > fscanf(pstate->pfile, "%s %d", buffer, &apt->globals))
+        error(1, "Premature end of potential file %s\n", pstate->filename);
+      g_pot.have_globals = 1;
+      apt->total_par += apt->globals;
 
-    int i = apt->number + g_param.enable_cp;
-    int j = apt->globals;
-    g_pot.global_pot = i;
+      int i = apt->number + g_param.enable_cp;
+      int j = apt->globals;
+      g_pot.global_pot = i;
 
-    /* allocate memory for global parameters */
-    apt->names =
-        (char**)Realloc(apt->names, (g_pot.global_pot + 1) * sizeof(char*));
-    apt->names[g_pot.global_pot] = (char*)Malloc(20 * sizeof(char));
-    strcpy(apt->names[g_pot.global_pot], "global parameters");
+      /* allocate memory for global parameters */
+      apt->names =
+          (char**)Realloc(apt->names, (g_pot.global_pot + 1) * sizeof(char*));
+      apt->names[g_pot.global_pot] = (char*)Malloc(20 * sizeof(char));
+      strcpy(apt->names[g_pot.global_pot], "global parameters");
 
-    apt->n_glob = (int*)Malloc(apt->globals * sizeof(int));
+      apt->n_glob = (int*)Malloc(apt->globals * sizeof(int));
 
-    apt->global_idx = (int***)Malloc(apt->globals * sizeof(int**));
+      apt->global_idx = (int***)Malloc(apt->globals * sizeof(int**));
 
-    apt->values = (double**)Realloc(apt->values,
-                                    (g_pot.global_pot + 1) * sizeof(double*));
-    apt->values[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
+      apt->values = (double**)Realloc(apt->values,
+                                      (g_pot.global_pot + 1) * sizeof(double*));
+      apt->values[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
 
-    apt->invar_par =
-        (int**)Realloc(apt->invar_par, (g_pot.global_pot + 1) * sizeof(int*));
-    apt->invar_par[g_pot.global_pot] = (int*)Malloc((j + 1) * sizeof(int));
+      apt->invar_par =
+          (int**)Realloc(apt->invar_par, (g_pot.global_pot + 1) * sizeof(int*));
+      apt->invar_par[g_pot.global_pot] = (int*)Malloc((j + 1) * sizeof(int));
 
-    apt->pmin =
-        (double**)Realloc(apt->pmin, (g_pot.global_pot + 1) * sizeof(double*));
-    apt->pmin[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
+      apt->pmin =
+          (double**)Realloc(apt->pmin, (g_pot.global_pot + 1) * sizeof(double*));
+      apt->pmin[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
 
-    apt->pmax =
-        (double**)Realloc(apt->pmax, (g_pot.global_pot + 1) * sizeof(double*));
-    apt->pmax[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
+      apt->pmax =
+          (double**)Realloc(apt->pmax, (g_pot.global_pot + 1) * sizeof(double*));
+      apt->pmax[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
 
-    apt->param_name = (char***)Realloc(apt->param_name,
-                                       (g_pot.global_pot + 1) * sizeof(char**));
-    apt->param_name[g_pot.global_pot] = (char**)Malloc(j * sizeof(char*));
+      apt->param_name = (char***)Realloc(apt->param_name,
+                                         (g_pot.global_pot + 1) * sizeof(char**));
+      apt->param_name[g_pot.global_pot] = (char**)Malloc(j * sizeof(char*));
 
-    pt->first = (int*)Realloc(pt->first, (g_pot.global_pot + 1) * sizeof(int));
+      pt->first = (int*)Realloc(pt->first, (g_pot.global_pot + 1) * sizeof(int));
 
-    /* read the global parameters */
-    for (j = 0; j < apt->globals; j++) {
-      apt->param_name[g_pot.global_pot][j] = (char*)Malloc(30 * sizeof(char));
+      /* read the global parameters */
+      for (j = 0; j < apt->globals; j++) {
+        apt->param_name[g_pot.global_pot][j] = (char*)Malloc(30 * sizeof(char));
 
-      strcpy(apt->param_name[g_pot.global_pot][j], "\0");
-      int ret_val = fscanf(
-          pstate->pfile, "%s %lf %lf %lf", apt->param_name[g_pot.global_pot][j],
-          &apt->values[g_pot.global_pot][j], &apt->pmin[g_pot.global_pot][j],
-          &apt->pmax[g_pot.global_pot][j]);
-      if (4 > ret_val)
-        if (strcmp(apt->param_name[g_pot.global_pot][j], "type") == 0) {
-          error(0, "Not enough global parameters!\n");
-          error(1, "You specified %d parameter(s), but needed are %d.\n", j, apt->globals);
+        strcpy(apt->param_name[g_pot.global_pot][j], "\0");
+        int ret_val = fscanf(
+            pstate->pfile, "%s %lf %lf %lf", apt->param_name[g_pot.global_pot][j],
+            &apt->values[g_pot.global_pot][j], &apt->pmin[g_pot.global_pot][j],
+            &apt->pmax[g_pot.global_pot][j]);
+        if (4 > ret_val)
+          if (strcmp(apt->param_name[g_pot.global_pot][j], "type") == 0) {
+            error(0, "Not enough global parameters!\n");
+            error(1, "You specified %d parameter(s), but needed are %d.\n", j, apt->globals);
+          }
+
+        /* check for duplicate names */
+        for (int k = j - 1; k >= 0; k--) {
+          if (strcmp(apt->param_name[g_pot.global_pot][j],
+                     apt->param_name[g_pot.global_pot][k]) == 0) {
+            error(0, "\nFound duplicate global parameter name!\n");
+            error(1, "Parameter #%d (%s) is the same as #%d (%s)\n", j + 1,
+                  apt->param_name[g_pot.global_pot][j], k + 1,
+                  apt->param_name[g_pot.global_pot][k]);
+          }
         }
 
-      /* check for duplicate names */
-      for (int k = j - 1; k >= 0; k--) {
-        if (strcmp(apt->param_name[g_pot.global_pot][j],
-                   apt->param_name[g_pot.global_pot][k]) == 0) {
-          error(0, "\nFound duplicate global parameter name!\n");
-          error(1, "Parameter #%d (%s) is the same as #%d (%s)\n", j + 1,
-                apt->param_name[g_pot.global_pot][j], k + 1,
-                apt->param_name[g_pot.global_pot][k]);
+        apt->n_glob[j] = 0;
+
+        /* check for invariance and proper value (respect boundaries) */
+        /* parameter will not be optimized if min==max */
+        apt->invar_par[i][j] = 0;
+
+        if (apt->pmin[i][j] == apt->pmax[i][j]) {
+          apt->invar_par[i][j] = 1;
+          apt->invar_par[i][apt->globals]++;
+        } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
+          double temp = apt->pmin[i][j];
+          apt->pmin[i][j] = apt->pmax[i][j];
+          apt->pmax[i][j] = temp;
+        } else if ((apt->values[i][j] < apt->pmin[i][j]) ||
+                   (apt->values[i][j] > apt->pmax[i][j])) {
+          /* Only print warning if we are optimizing */
+          if (g_param.opt) {
+            if (apt->values[i][j] < apt->pmin[i][j])
+              apt->values[i][j] = apt->pmin[i][j];
+            if (apt->values[i][j] > apt->pmax[i][j])
+              apt->values[i][j] = apt->pmax[i][j];
+            warning("Starting value for global parameter #%d is ", j + 1);
+            warning("outside of specified adjustment range.\n");
+            warning("Resetting it to %f.\n", j + 1, apt->values[i][j]);
+            if (apt->values[i][j] == 0)
+              warning("New value is 0 ! Please be careful about this.\n");
+          }
         }
       }
 
-      apt->n_glob[j] = 0;
-
-      /* check for invariance and proper value (respect boundaries) */
-      /* parameter will not be optimized if min==max */
-      apt->invar_par[i][j] = 0;
-
-      if (apt->pmin[i][j] == apt->pmax[i][j]) {
-        apt->invar_par[i][j] = 1;
-        apt->invar_par[i][apt->globals]++;
-      } else if (apt->pmin[i][j] > apt->pmax[i][j]) {
-        double temp = apt->pmin[i][j];
-        apt->pmin[i][j] = apt->pmax[i][j];
-        apt->pmax[i][j] = temp;
-      } else if ((apt->values[i][j] < apt->pmin[i][j]) ||
-                 (apt->values[i][j] > apt->pmax[i][j])) {
-        /* Only print warning if we are optimizing */
-        if (g_param.opt) {
-          if (apt->values[i][j] < apt->pmin[i][j])
-            apt->values[i][j] = apt->pmin[i][j];
-          if (apt->values[i][j] > apt->pmax[i][j])
-            apt->values[i][j] = apt->pmax[i][j];
-          warning("Starting value for global parameter #%d is ", j + 1);
-          warning("outside of specified adjustment range.\n");
-          warning("Resetting it to %f.\n", j + 1, apt->values[i][j]);
-          if (apt->values[i][j] == 0)
-            warning("New value is 0 ! Please be careful about this.\n");
-        }
-      }
+      printf(" - Read %d global parameter(s)\n", apt->globals);
     }
-
-    printf(" - Read %d global parameter(s)\n", apt->globals);
   }
 }
 
