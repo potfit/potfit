@@ -602,7 +602,10 @@ void read_global_parameters(apot_state* pstate)
   fsetpos(pstate->pfile, &pstate->startpos);
   do {
     fgetpos(pstate->pfile, &filepos);
-    if (1 != fscanf(pstate->pfile, "%s", buffer))
+    int ret = fscanf(pstate->pfile, "%s", buffer);
+    if (feof(pstate->pfile))
+      return;
+    else if (ret != 1)
       error(1, "Error while searching for global parameters\n");
   } while (strcmp(buffer, "global") != 0 && !feof(pstate->pfile));
   fsetpos(pstate->pfile, &filepos);
