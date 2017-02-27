@@ -172,11 +172,16 @@ void initialize_global_variables()
   g_memory.num_pointers = 0;
 
 #if defined(PAIR)
-#if !defined(KIM)
+#if !defined(KIM) && !defined(ANG)
   init_interaction_name("PAIR");
-#else
+#elif defined(ANG) && !defined(COULOMB)
+  init_interaction_name("PAIRANG");
+#elif defined(KIM)
   init_interaction_name("KIM");
-#endif // !KIM
+#endif // !KIM !ANG
+#if defined(COULOMB) && defined(ANG)
+  init_interaction_name("PAIRANG_ELSTAT");
+#endif // COULOMB ANG
 #elif defined(EAM) && !defined(COULOMB)
 #if !defined(TBEAM)
   init_interaction_name("EAM");
@@ -200,6 +205,7 @@ void initialize_global_variables()
   init_interaction_name("TERSOFF");
 #endif  // TERSOFFMOD
 #endif  // interaction type
+
 }
 
 /****************************************************************

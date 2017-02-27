@@ -219,6 +219,10 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
   npots = 2 * g_calc.paircol + 3 * g_param.ntypes;
 #endif  // MEAM
 
+#if defined(ANG)
+  npots = 2 * g_calc.paircol + g_param.ntypes;
+#endif  // ANG
+
 #if defined(STIWEB)
   npots = 2 * g_calc.paircol + 1;
 #endif  // STIWEB

@@ -35,9 +35,9 @@
 #endif  // M_PI
 
 // general flag for threebody potentials (MEAM, Tersoff, SW, ...)
-#if defined(MEAM) || defined(STIWEB) || defined(TERSOFF)
+#if defined(MEAM) || defined(STIWEB) || defined(TERSOFF) || defined(ANG)
 #define THREEBODY
-#endif  // MEAM || TERSOFF || STIWEB
+#endif  // MEAM || STIWEB || TERSOFF || ANG
 
 #if defined(KIM)
 #define APOT
@@ -74,6 +74,10 @@
  *      PAIR, COULOMB, DIPOLE, TERSOFF
  *      0 ... pair distance
  *
+ *  ANG:       SLOTS = 2
+ *      0 ... pair distance
+ *      1 ... f(r_ij)
+ *
  *  EAM:        SLOTS = 2
  *      0 ... pair distance
  *      1 ... transfer function
@@ -102,10 +106,10 @@
 
 #define SLOTS 1
 
-#if defined(EAM) || defined(STIWEB)
+#if defined(EAM) || defined(STIWEB) || defined(ANG)
 #undef SLOTS
 #define SLOTS 2
-#endif  // EAM || STIWEB
+#endif  // EAM || STIWEB || ANG
 
 #if defined(TBEAM) || defined(MEAM)
 #undef SLOTS

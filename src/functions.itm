@@ -40,6 +40,8 @@ FUNCTION(power_decay, 2);
 FUNCTION(exp_decay, 2);
 FUNCTION(bjs, 3);
 FUNCTION(parabola, 3);
+FUNCTION(harmonic, 2);
+FUNCTION(angharmonic, 2);
 FUNCTION(csw, 4);
 FUNCTION(universal, 4);
 FUNCTION(const, 1);

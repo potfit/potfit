@@ -320,7 +320,10 @@ int create_custom_datatypes()
   angle_t angl;
 
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // cos
-#if defined(MEAM)
+#if defined(ANG)
+  data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // theta
+#endif
+#if defined(MEAM) || defined(ANG)
   data_len[size_a] = 1;         data_type[size_a++] = MPI_INT;      // slot
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // shift
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // step
@@ -329,7 +332,10 @@ int create_custom_datatypes()
 #endif // MEAM
 
   CHECK_RETURN(MPI_Get_address(&angl.cos,    &data_size[size_b++]));
-#if defined(MEAM)
+#if defined(ANG)
+  CHECK_RETURN(MPI_Get_address(&angl.theta,    &data_size[size_b++]));
+#endif
+#if defined(MEAM) || defined(ANG)
   CHECK_RETURN(MPI_Get_address(&angl.slot,   &data_size[size_b++]));
   CHECK_RETURN(MPI_Get_address(&angl.shift,  &data_size[size_b++]));
   CHECK_RETURN(MPI_Get_address(&angl.step,   &data_size[size_b++]));
