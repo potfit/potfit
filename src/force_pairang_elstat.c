@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * force_pairang.c: Routine used for calculating pair and angular
+ * force_pairang_elstat.c: Routine used for calculating pair and angular
  * interactions forces/energies
  *
  ****************************************************************
@@ -31,7 +31,7 @@
  ****************************************************************/
 
 #if !defined(ANG) ||  !defined(COULOMB)
-#error force_pair_ang_elstat.c compiled without ANG or COULOMB support
+#error force_pairang_elstat.c compiled without ANG or COULOMB support
 #endif
 
 #include "potfit.h"
