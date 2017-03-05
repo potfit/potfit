@@ -447,12 +447,14 @@ double write_stress_errors(double* force)
     fprintf(outfile, "Stresses on unit cell\n");
   }
 
-  strcpy(component[0], "xx\0");
-  strcpy(component[1], "yy\0");
-  strcpy(component[2], "zz\0");
-  strcpy(component[3], "xy\0");
-  strcpy(component[4], "yz\0");
-  strcpy(component[5], "zx\0");
+  memset(component, 0, sizeof(component));
+
+  strcpy(component[0], "xx");
+  strcpy(component[1], "yy");
+  strcpy(component[2], "zz");
+  strcpy(component[3], "xy");
+  strcpy(component[4], "yz");
+  strcpy(component[5], "zx");
 
   fprintf(outfile, "#\tconf_w\tw*ds^2\t\ts\t\ts0\t\tds/s0\n");
 
