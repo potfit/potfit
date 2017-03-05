@@ -657,7 +657,6 @@ void read_global_parameters(apot_state* pstate)
     for (j = 0; j < apt->globals; j++) {
       apt->param_name[g_pot.global_pot][j] = (char*)Malloc(30 * sizeof(char));
 
-      strcpy(apt->param_name[g_pot.global_pot][j], "\0");
       int ret_val = fscanf(
           pstate->pfile, "%s %lf %lf %lf", apt->param_name[g_pot.global_pot][j],
           &apt->values[g_pot.global_pot][j], &apt->pmin[g_pot.global_pot][j],
@@ -763,7 +762,7 @@ void read_analytic_potentials(apot_state* pstate)
 
     // check if potential is "pohlong" and change it to bjs
     if (strcmp(name, "pohlong") == 0)
-      strcpy(name, "bjs\0");
+      strcpy(name, "bjs");
 
     if (apot_get_num_parameters(name) == -1)
       error(1,
