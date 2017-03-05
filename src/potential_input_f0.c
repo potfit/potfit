@@ -618,6 +618,9 @@ void read_global_parameters(apot_state* pstate)
     apt->total_par += apt->globals;
 
     int i = apt->number + g_param.enable_cp;
+#if defined(COULOMB)
+    i += 5;
+#endif
     int j = apt->globals;
     g_pot.global_pot = i;
 
