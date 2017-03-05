@@ -287,9 +287,11 @@ void error(int done, const char* msg, ...)
 
   if (done == 1) {
 #if defined(MPI)
-    /* go wake up other threads */
-    calc_forces(NULL, NULL, 1);
-    shutdown_mpi();
+    if (g_mpi.init_done == 1) {
+      /* go wake up other threads */
+      calc_forces(NULL, NULL, 1);
+      shutdown_mpi();
+    }
 #endif  // MPI
     free_allocated_memory();
     exit(EXIT_SUCCESS);
