@@ -316,7 +316,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       // third loop over all atoms, sum up forces
       if (uf) {
         for (int atom_idx = 0; atom_idx < g_config.inconf[config_idx]; atom_idx++) {
+#if defined(FWEIGHT) || defined(CONTRIB)
           atom_t* atom = g_config.conf_atoms + atom_idx + g_config.cnfstart[config_idx] - g_mpi.firstatom;
+#endif // FWEIGHT || CONTRIB
           int n_i = 3 * (g_config.cnfstart[config_idx] + atom_idx);
 #if defined(FWEIGHT)
           // Weigh by absolute value of force
