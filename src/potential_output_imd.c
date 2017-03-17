@@ -622,7 +622,7 @@ void write_pot_table_imd(char const* prefix)
     double r2 = r2begin[i];
     int col1 = (g_param.ntypes * (g_param.ntypes + 3)) + i;
     for (int k = 0; k <= g_param.imdpotsteps; k++) {
-      fprintf(outfile, "%.16e\n", splint_ne(pt, pt->table, col1, r2));
+      fprintf(outfile, "%.16e\n", splint_ne(&g_pot.calc_pot, pt->table, col1, r2));
       r2 += r2step[i];
     }
     fprintf(outfile, "\n");
