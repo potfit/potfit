@@ -616,7 +616,6 @@ void read_config(const char* filename)
   }
 #endif  // ANG
 
-
   /* recalculate step, invstep and xcoord for new tables */
   for (int i = 0; i < g_pot.calc_pot.ncols; i++) {
     g_pot.calc_pot.step[i] =
@@ -707,7 +706,6 @@ void update_slots(void)
   for (int i = 0; i < g_config.natoms; i++) {
     for (int j = 0; j < g_config.atoms[i].num_angles; j++) {
       int col = 2 * g_calc.paircol + g_config.atoms[i].type;
-      //double rr = g_config.atoms[i].angle_part[j].theta - g_pot.calc_pot.begin[col];
       double rr = g_config.atoms[i].angle_part[j].cos - g_pot.calc_pot.begin[col];
       g_config.atoms[i].angle_part[j].slot =
           (int)(rr * g_pot.calc_pot.invstep[col]);
@@ -721,7 +719,6 @@ void update_slots(void)
     }
   }
 #endif  // THREEBODY && ANG
-
 
 #if defined(STIWEB)
   g_pot.apot_table.sw.init = 0;
@@ -1278,12 +1275,8 @@ void init_angles(config_state* cstate)
 
         g_config.atoms[i].angle_part[ijk].cos = ccos;
 
-#if defined(MEAM)
         int col =
             2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
-#elif defined(ANG)
-        int col = 2 * g_calc.paircol + g_config.atoms[i].type;
-#endif // MEAM
         if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC ||
             g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST) {
           if ((fabs(ccos) - 1.0) > 1e-10) {
@@ -1294,7 +1287,6 @@ void init_angles(config_state* cstate)
             fflush(stdout);
             error(1, "cos out of range, it is strange!\n");
           }
-
 #if defined(MEAM)
           double istep = g_pot.calc_pot.invstep[col];
           int slot = (int)((ccos + 1) * istep);

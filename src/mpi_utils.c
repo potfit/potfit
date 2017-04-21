@@ -329,7 +329,7 @@ int create_custom_datatypes()
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // step
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // g
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // dg
-#endif // MEAM
+#endif // MEAM || ANG
 
   CHECK_RETURN(MPI_Get_address(&angl.cos,    &data_size[size_b++]));
 #if defined(ANG)
