@@ -174,14 +174,15 @@ void initialize_global_variables()
 #if defined(PAIR)
 #if !defined(KIM) && !defined(ANG)
   init_interaction_name("PAIR");
-#elif defined(ANG) && !defined(COULOMB)
-  init_interaction_name("PAIRANG");
 #elif defined(KIM)
   init_interaction_name("KIM");
 #endif // !KIM !ANG
-#if defined(COULOMB) && defined(ANG)
+#elif defined(ANG)
+#if !defined(COULOMB)
+  init_interaction_name("PAIRANG");
+#elif defined(COULOMB)
   init_interaction_name("PAIRANG_ELSTAT");
-#endif // COULOMB ANG
+#endif // !COULOMB
 #elif defined(EAM) && !defined(COULOMB)
 #if !defined(TBEAM)
   init_interaction_name("EAM");

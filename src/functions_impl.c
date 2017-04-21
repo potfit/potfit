@@ -165,6 +165,21 @@ void buck_value(const double r, const double* p, double* f)
 #endif  // COULOMB
 
 /****************************************************************
+  born potential
+   https://doi.org/10.1016/S0081-1947(08)60515-9
+*****************************************************************/
+
+void born_value(const double r, const double* p, double* f)
+{
+  double x = p[2] - r;
+  double r2 = r * r ;
+  double r6 = r2 * r2 * r2;
+  double r8 = r6 * r2 ;
+
+  *f = p[0] * exp( x / p[1]) - p[3] / r6 + p[4] / r8 ;
+}
+
+/****************************************************************
   softshell potential
     unknown reference
 *****************************************************************/
@@ -287,7 +302,7 @@ void harmonic_value(const double r, const double* p, double* f)
     unknown reference
 ****************************************************************/
 
-void angharmonic_value(const double r, const double* p, double* f)
+void acosharmonic_value(const double r, const double* p, double* f)
 {
   double theta = acos(r);
 

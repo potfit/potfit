@@ -1245,6 +1245,7 @@ void init_angles(config_state* cstate)
 // for TERSOFF we create a full neighbor list,
 // for all other potentials only a half list
 #if defined(THREEBODY)
+#if !defined (ANG)
   for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; i++) {
     int nnn = g_config.atoms[i].num_neigh;
     int ijk = 0;
@@ -1294,18 +1295,6 @@ void init_angles(config_state* cstate)
             error(1, "cos out of range, it is strange!\n");
           }
 
-#if defined(ANG)
-	/* for safety in the case FP rounding might cause 
-	   a slight higher value */
-        if (ccos > 1.0) {
-          ccos = 1.0;
-        }
-	else if (ccos < -1.0) {
-          ccos = -1.0;
-        }
-        g_config.atoms[i].angle_part[ijk].theta = acos(ccos);
-#endif // ANG
-
 #if defined(MEAM)
           double istep = g_pot.calc_pot.invstep[col];
           int slot = (int)((ccos + 1) * istep);
@@ -1332,6 +1321,64 @@ void init_angles(config_state* cstate)
     }   /* second loop over atoms */
     g_config.atoms[i].num_angles = ijk;
   }     /* first loop over atoms */
+#else // ANG
+  for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; i++) {
+    int nnn = g_config.atoms[i].num_neigh;
+    int ijk = 0;
+    g_config.atoms[i].angle_part = (angle_t*)Malloc(sizeof(angle_t));
+    for (int j = 0; j < nnn - 1; j++) {
+      /* check that i-j pair lie inside f_ij cutoff */
+      int col = g_config.atoms[i].neigh[j].col[1];
+      if (g_config.atoms[i].neigh[j].r < g_pot.calc_pot.end[col]) {
+        g_config.atoms[i].neigh[j].ijk_start = ijk;
+        for (int k = j + 1; k < nnn; k++) {
+          /* check that i-k pair lie inside f_ik cutoff */
+          int col = g_config.atoms[i].neigh[k].col[1];
+          if (g_config.atoms[i].neigh[k].r < g_pot.calc_pot.end[col] ) {
+            g_config.atoms[i].angle_part = (angle_t*)Realloc(
+                g_config.atoms[i].angle_part, (ijk + 1) * sizeof(angle_t));
+
+            memset(g_config.atoms[i].angle_part + ijk, 0, sizeof(angle_t));
+
+            double ccos = g_config.atoms[i].neigh[j].dist_r.x *
+                              g_config.atoms[i].neigh[k].dist_r.x +
+                          g_config.atoms[i].neigh[j].dist_r.y *
+                              g_config.atoms[i].neigh[k].dist_r.y +
+                          g_config.atoms[i].neigh[j].dist_r.z *
+                              g_config.atoms[i].neigh[k].dist_r.z;
+
+            g_config.atoms[i].angle_part[ijk].cos = ccos;
+
+            int col = 2 * g_calc.paircol + g_config.atoms[i].type;
+            if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC ||
+                g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST) {
+              if ((fabs(ccos) - 1.0) > 1e-10) {
+                int type1 = g_config.atoms[i].type;
+                int type2 = g_config.atoms[i].neigh[j].type;
+                printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col],
+			col, type1, type2);
+                fflush(stdout);
+                error(1, "cos out of range, it is strange!\n");
+              }
+
+            /* for safety in the case FP rounding might cause
+               a slight higher value */
+            if (ccos > 1.0) {
+              ccos = 1.0;
+            }
+            else if (ccos < -1.0) {
+              ccos = -1.0;
+            }
+            g_config.atoms[i].angle_part[ijk].theta = acos(ccos);
+            }
+            ijk++;
+	  }
+        } /* third loop over atoms */
+      }
+    }   /* second loop over atoms */
+    g_config.atoms[i].num_angles = ijk;
+  }     /* first loop over atoms */
+#endif // !ANG
 #endif  // THREEBODY
 }
 
