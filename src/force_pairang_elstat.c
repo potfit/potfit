@@ -1,7 +1,7 @@
 /****************************************************************
  *
  * force_pairang_elstat.c: Routine used for calculating pair and angular
- * interactions forces/energies
+ * interactions in combination with monopole forces/energies
  *
  ****************************************************************
  *

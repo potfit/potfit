@@ -206,7 +206,6 @@ void initialize_global_variables()
   init_interaction_name("TERSOFF");
 #endif  // TERSOFFMOD
 #endif  // interaction type
-
 }
 
 /****************************************************************

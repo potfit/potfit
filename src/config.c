@@ -1277,6 +1277,7 @@ void init_angles(config_state* cstate)
 
         int col =
             2 * g_calc.paircol + 2 * g_param.ntypes + g_config.atoms[i].type;
+
         if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC ||
             g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST) {
           if ((fabs(ccos) - 1.0) > 1e-10) {
@@ -1342,6 +1343,7 @@ void init_angles(config_state* cstate)
             g_config.atoms[i].angle_part[ijk].cos = ccos;
 
             int col = 2 * g_calc.paircol + g_config.atoms[i].type;
+
             if (g_pot.format_type == POTENTIAL_FORMAT_ANALYTIC ||
                 g_pot.format_type == POTENTIAL_FORMAT_TABULATED_EQ_DIST) {
               if ((fabs(ccos) - 1.0) > 1e-10) {
