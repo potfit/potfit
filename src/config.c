@@ -867,14 +867,14 @@ void read_sphere_center(char const* pline, config_state* cstate)
 void read_chemical_elements(char* psrc, config_state* cstate)
 {
   int i = 0;
-  char const* pchar = strtok(psrc + 3, " \t");
+  char const* pchar = strtok(psrc + 3, " \t\r\n");
 
   if (!cstate->num_fixed_elements) {
     while (pchar != NULL && i < g_param.ntypes) {
       int len = max(strlen(pchar), 4);
       strncpy((char*)g_config.elements[i], pchar, len);
       *((char*)g_config.elements[i] + len) = '\0';
-      pchar = strtok(NULL, " \t");
+      pchar = strtok(NULL, " \t\r\n");
       i++;
       cstate->num_fixed_elements++;
     }
@@ -891,11 +891,11 @@ void read_chemical_elements(char* psrc, config_state* cstate)
                 cstate->config, cstate->line);
           error(0, "Expected element >> %s << but found element >> %s <<.\n",
                 g_config.elements[i], pchar);
-          error(0, "You can use list_config to identify that configuration.\n");
+          error(0, "You may use the 'list_config' utility to identify that configuration.\n");
           error(1, "Please check your configuration files!\n");
         }
       }
-      pchar = strtok(NULL, " \t");
+      pchar = strtok(NULL, " \t\r\n");
       i++;
     }
   }
