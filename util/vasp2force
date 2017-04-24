@@ -36,6 +36,8 @@ import os
 import sys
 from collections import OrderedDict
 
+sae = [] #single atom energy
+
 class ConfigData:
     MajorIteration = 0
     MinorIteration = 0
@@ -221,7 +223,11 @@ class vasp_config(object):
                     ConfigData.MajorIteration = temp
                 ConfigData.Reset()
             if 'energy  without' in line:
-                ConfigData.Energy = float(line.split()[6]) / self.natoms
+                ConfigData.Energy = float(line.split()[6])
+                if len(sae) > 0:
+                    for i in range(len(self.atoms_per_type)):
+                        ConfigData.Energy -= self.atoms_per_type[i]*sae[i]
+                ConfigData.Energy /= self.natoms
             if 'VOLUME and BASIS' in line:
                 for do in range(5):
                     line = f.readline()
@@ -323,7 +329,7 @@ class SmartFormatter(argparse.HelpFormatter):
 def parse_command_line():
     parser = argparse.ArgumentParser(description = '''Converts vasp output data into potfit reference configurations.''', formatter_class=SmartFormatter)
     parser.add_argument('-c', type=str, required=False, help='R|list of indices for chemical elements to use\ne.g. -c Mg=0,Zn=1')
-    #parser.add_argument('-e', type=str, required=False, help='file with single atom energies (NYI)')
+    parser.add_argument('-e', type=str, required=False, help='file with single atom energies (NYI)')
     parser.add_argument('-a', '--all', action='store_true', help='use all configurations from OUTCAR')
     parser.add_argument('-f', '--final', action='store_true', help='use only the final configuration from OUTCAR')
     parser.add_argument('-l', '--list', action='store_true', help='list OUTCAR properties and exit')
@@ -344,9 +350,17 @@ def check_command_line_args(args):
         sys.exit()
 
 # Process single atom energies file
-#def read_sae_file(filename):
-    #sys.stderr.write("\nSingle atom energies are (not yet) supported\n")
-    #sys.exit()
+def read_sae_file(filename):
+    if os.path.isfile(filename):
+        sae_file = open(filename, "r")
+        for line in sae_file:
+            line = line.split()
+            for item in line:
+                sae.append(float(item))
+        sae_file.close()
+    else:
+        sys.stderr.write("\nSingle atom energy file does not exist!\n")
+        sys.exit()
 
 # determine all OUTCAR files
 def generate_outcar_list(list):
@@ -368,8 +382,6 @@ def generate_outcar_list(list):
 if __name__ == "__main__":
     args = parse_command_line()
     check_command_line_args(args)
-    #if args.e:
-        #read_sae_file(args.e)
     outcar_list = generate_outcar_list(args.files)
 
     config_list = []
@@ -417,6 +429,9 @@ if __name__ == "__main__":
                 vasp_config.numbers[number] = name
         for config in config_list:
             config.elements_check()
+
+    if args.e:
+        read_sae_file(args.e)
 
     for config in config_list:
         config.set_active_configs(args.configs, args.final, args.all)
