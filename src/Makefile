@@ -502,7 +502,7 @@ ifneq (,${BIN_DIR})
 endif
 	@echo -e "\nCompiled with options"
 	@echo -e "CC=${CC} \nCFLAGS=${CFLAGS} \nLIBS=${LIBS}\n"
-	@echo -e "Building $@ was sucessfull."
+	@echo -e "Building $@ was successful."
 
 ###########################################################################
 #
