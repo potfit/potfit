@@ -213,13 +213,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
       // first loop: reset forces and densities
       for (int atom_idx = 0; atom_idx < g_config.inconf[config_idx]; atom_idx++) {
-        int n_i = g_config.cnfstart[config_idx] + atom_idx;
+        int n_i = 3 * (g_config.cnfstart[config_idx] + atom_idx);
         if (uf) {
-          forces[3 * n_i + 0] = -g_config.force_0[3 * n_i + 0];
-          forces[3 * n_i + 1] = -g_config.force_0[3 * n_i + 1];
-          forces[3 * n_i + 2] = -g_config.force_0[3 * n_i + 2];
+          forces[n_i + 0] = -g_config.force_0[n_i + 0];
+          forces[n_i + 1] = -g_config.force_0[n_i + 1];
+          forces[n_i + 2] = -g_config.force_0[n_i + 2];
         } else {
-          memset(forces + 3 * n_i, 0, 3 * sizeof(double));
+          memset(forces + n_i, 0, 3 * sizeof(double));
         }
         // reset atomic density
         g_config.conf_atoms[n_i - g_mpi.firstatom].rho = 0.0;
