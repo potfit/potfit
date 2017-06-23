@@ -1,13 +1,13 @@
 /****************************************************************
  *
- * force_pairang_elstat.c: Routine used for calculating pair and angular
+ * force_ang_elstat.c: Routine used for calculating pair and angular
  * interactions in combination with monopole forces/energies
  *
  ****************************************************************
  *
  * Copyright 2002-2017 - the potfit development team
  *
- * PAIRANG elstat potential: Ariel Lozano
+ * ANG elstat potential: Ariel Lozano
  *
  * https://www.potfit.net/
  *

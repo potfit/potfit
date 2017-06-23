@@ -7,7 +7,7 @@
  *
  * Copyright 2002-2017 - the potfit development team
  *
- * PAIRANG potential: Ariel Lozano
+ * ANG potential: Ariel Lozano
  *
  * https://www.potfit.net/
  *
