@@ -150,7 +150,7 @@ POTFITSRC	+= potential_input_f5.c
 # force routines
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-    POTFITSRC	+= force_pair.c
+  POTFITSRC	+= force_pair.c
 endif
 
 ifneq (,$(strip $(findstring ang,${MAKETARGET})))
