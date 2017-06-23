@@ -150,14 +150,14 @@ POTFITSRC	+= potential_input_f5.c
 # force routines
 
 ifneq (,$(strip $(findstring pair,${MAKETARGET})))
-  ifneq (,$(strip $(findstring ang,${MAKETARGET})))
-    ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
-      POTFITSRC	+= force_pairang_elstat.c
-    else
-      POTFITSRC	+= force_pairang.c
-    endif
-  else
     POTFITSRC	+= force_pair.c
+endif
+
+ifneq (,$(strip $(findstring ang,${MAKETARGET})))
+  ifneq (,$(strip $(findstring coulomb,${MAKETARGET})))
+    POTFITSRC	+= force_ang_elstat.c
+  else
+    POTFITSRC	+= force_ang.c
   endif
 endif
 
@@ -249,11 +249,13 @@ INTERACTION = 0
 
 # pair potentials
 ifneq (,$(findstring pair,${MAKETARGET}))
-  ifneq (,$(strip $(findstring ang,${MAKETARGET})))
-    CFLAGS += -DANG
-  else
-    CFLAGS += -DPAIR
-  endif
+  CFLAGS += -DPAIR
+  INTERACTION = 1
+endif
+
+# angular potentials (ANG)
+ifneq (,$(strip $(findstring ang,${MAKETARGET})))
+  CFLAGS += -DANG
   INTERACTION = 1
 endif
 
