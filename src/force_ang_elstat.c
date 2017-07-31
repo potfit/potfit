@@ -31,7 +31,7 @@
  ****************************************************************/
 
 #if !defined(ANG) ||  !defined(COULOMB)
-#error force_pairang_elstat.c compiled without ANG or COULOMB support
+#error force_ang_elstat.c compiled without ANG or COULOMB support
 #endif
 
 #include "potfit.h"
@@ -163,7 +163,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       xi = xi_opt;
       break;
     case POTENTIAL_FORMAT_KIM:
-      error(1, "KIM format is not supported by PAIRANG elstat force routine!");
+      error(1, "KIM format is not supported by ANG elstat force routine!");
       break;
   }
 

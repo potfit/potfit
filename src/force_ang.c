@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * force_pairang.c: Routine used for calculating pair and angular
+ * force_ang.c: Routine used for calculating pair and angular
  * interactions forces/energies
  *
  ****************************************************************
@@ -31,7 +31,7 @@
  ****************************************************************/
 
 #if !defined(ANG)
-#error force_pairang.c compiled without ANG support
+#error force_ang.c compiled without ANG support
 #endif
 
 #include "potfit.h"
@@ -57,7 +57,7 @@
 
 void init_force(int is_worker)
 {
-  // nothing to do here for pairang potentials
+  // nothing to do here for ang potentials
 }
 
 /****************************************************************
@@ -152,7 +152,7 @@ double calc_forces(double* xi_opt, double* forces, int flag)
       xi = xi_opt;
       break;
     case POTENTIAL_FORMAT_KIM:
-      error(1, "KIM format is not supported by PAIRANG force routine!");
+      error(1, "KIM format is not supported by ANG force routine!");
       break;
   }
 

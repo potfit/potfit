@@ -179,9 +179,9 @@ void initialize_global_variables()
 #endif // !KIM !ANG
 #elif defined(ANG)
 #if !defined(COULOMB)
-  init_interaction_name("PAIRANG");
+  init_interaction_name("ANG");
 #elif defined(COULOMB)
-  init_interaction_name("PAIRANG_ELSTAT");
+  init_interaction_name("ANG_ELSTAT");
 #endif // !COULOMB
 #elif defined(EAM) && !defined(COULOMB)
 #if !defined(TBEAM)
