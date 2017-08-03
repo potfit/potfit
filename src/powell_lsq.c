@@ -360,7 +360,7 @@ void run_powell_lsq(double* xi)
     fflush(stdout);
 
     /* End fit if break flagfile exists */
-    if (*g_files.flagfile != '\0') {
+    if (g_files.flagfile && *g_files.flagfile != '\0') {
       FILE* ff = fopen(g_files.flagfile, "r");
       if (ff != NULL) {
         printf(

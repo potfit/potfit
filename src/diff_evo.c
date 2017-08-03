@@ -488,7 +488,7 @@ void run_differential_evolution(double* xi)
     count++;
 
     /* End optimization if break flagfile exists */
-    if (*g_files.flagfile != '\0') {
+    if (g_files.flagfile && *g_files.flagfile != '\0') {
       FILE* ff = fopen(g_files.flagfile, "r");
 
       if (NULL != ff) {
