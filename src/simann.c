@@ -364,7 +364,7 @@ void run_simulated_annealing(double* const xi)
 
               F_opt = F_new;
 
-              if (*g_files.tempfile != '\0') {
+              if (g_files.tempfile && strlen(g_files.tempfile)) {
 #if defined(APOT)
                 update_apot_table(xi);
 #endif
@@ -392,7 +392,7 @@ void run_simulated_annealing(double* const xi)
       fflush(stdout);
 
       /* End annealing if break flagfile exists */
-      if (g_files.flagfile && *g_files.flagfile != '\0') {
+      if (g_files.flagfile && strlen(g_files.flagfile)) {
         FILE* ff = fopen(g_files.flagfile, "r");
         if (NULL != ff) {
           printf("Annealing terminated in presence of break flagfile \"%s\"!\n",
@@ -475,7 +475,7 @@ void run_simulated_annealing(double* const xi)
 #endif  // MEAM && !APOT
   printf("Finished annealing, starting powell minimization ...\n");
 
-  if (*g_files.tempfile != '\0') {
+  if (g_files.tempfile && strlen(g_files.tempfile)) {
 #if defined(APOT)
     update_apot_table(xi_opt);
 #endif  // APOT

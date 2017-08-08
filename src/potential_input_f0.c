@@ -851,7 +851,7 @@ void read_analytic_potentials(apot_state* pstate)
       int ret_val = sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j],
                            &apt->pmin[i][j], &apt->pmax[i][j]);
 
-      if (buffer[0] != '\0')
+      if (strlen(buffer))
         strncpy(apt->param_name[i][j], buffer, 30);
 
       /* if last char of name is "!" we have a global parameter */

@@ -432,7 +432,7 @@ void run_differential_evolution(double* xi)
       if (force < min_cost) {
         memcpy(best, trial, D * sizeof(double));
 
-        if (*g_files.tempfile != '\0') {
+        if (g_files.tempfile && strlen(g_files.tempfile)) {
           for (j = 0; j < g_calc.ndim; j++)
 #if defined(APOT)
             g_pot.apot_table.values[g_pot.apot_table.idxpot[j]]
@@ -488,7 +488,7 @@ void run_differential_evolution(double* xi)
     count++;
 
     /* End optimization if break flagfile exists */
-    if (g_files.flagfile && *g_files.flagfile != '\0') {
+    if (g_files.flagfile && strlen(g_files.flagfile)) {
       FILE* ff = fopen(g_files.flagfile, "r");
 
       if (NULL != ff) {
