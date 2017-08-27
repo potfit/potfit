@@ -99,11 +99,11 @@ const struct element_table {
 
 double ele_mass_from_number(int num)
 {
-  size_t size = sizeof(elements) / sizeof(elements[0]);
+  const size_t size = sizeof(elements) / sizeof(elements[0]);
   if (num > size || num < 1)
     return 0.0;
   else
-    return elements[num].mass;
+    return elements[num - 1].mass;
 }
 
 /****************************************************************
@@ -112,13 +112,13 @@ double ele_mass_from_number(int num)
 
 double ele_mass_from_name(const char* name)
 {
-  size_t size = sizeof(elements) / sizeof(elements[0]);
+  const size_t size = sizeof(elements) / sizeof(elements[0]);
   if (strlen(name) < 3) {
-    for (int i = 1; i < size; i++)
+    for (size_t i = 0; i < size; ++i)
       if (strcmp(name, elements[i].short_name) == 0)
         return elements[i].mass;
   } else {
-    for (int i = 1; i < size; i++)
+    for (size_t i = 0; i < size; ++i)
       if (strcmp(name, elements[i].name) == 0)
         return elements[i].mass;
   }
@@ -132,15 +132,15 @@ double ele_mass_from_name(const char* name)
 
 int ele_number_from_name(const char* name)
 {
-  size_t size = sizeof(elements) / sizeof(elements[0]);
+  const size_t size = sizeof(elements) / sizeof(elements[0]);
   if (strlen(name) < 3) {
-    for (int i = 1; i < size; i++)
+    for (size_t i = 0; i < size; ++i)
       if (strcmp(name, elements[i].short_name) == 0)
-        return i;
+        return i + 1;
   } else {
-    for (int i = 1; i < size; i++)
+    for (size_t i = 0; i < size; ++i)
       if (strcmp(name, elements[i].name) == 0)
-        return i;
+        return i + 1;
   }
 
   return 0;
