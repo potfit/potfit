@@ -172,11 +172,17 @@ void initialize_global_variables()
   g_memory.num_pointers = 0;
 
 #if defined(PAIR)
-#if !defined(KIM)
+#if !defined(KIM) && !defined(ANG)
   init_interaction_name("PAIR");
-#else
+#elif defined(KIM)
   init_interaction_name("KIM");
-#endif // !KIM
+#endif // !KIM !ANG
+#elif defined(ANG)
+#if !defined(COULOMB)
+  init_interaction_name("ANG");
+#elif defined(COULOMB)
+  init_interaction_name("ANG_ELSTAT");
+#endif // !COULOMB
 #elif defined(EAM) && !defined(COULOMB)
 #if !defined(TBEAM)
   init_interaction_name("EAM");

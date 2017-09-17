@@ -101,6 +101,16 @@ void write_pot_table0(char const* filename)
     for (int j = i; j < g_param.ntypes; j++)
       fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
 
+#if defined(ANG)
+  /* f terms */
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = i; j < g_param.ntypes; j++)
+      fprintf(outfile, " %s-%s", g_config.elements[i], g_config.elements[j]);
+  /* g terms */
+  for (int i = 0; i < g_param.ntypes; i++)
+    fprintf(outfile, " %s", g_config.elements[i]);
+#endif  // ANG
+
 #if defined(EAM) || defined(ADP) || defined(MEAM)
   /* transfer functions */
   for (int i = 0; i < g_param.ntypes; i++)

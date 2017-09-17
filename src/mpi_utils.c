@@ -320,22 +320,28 @@ int create_custom_datatypes()
   angle_t angl;
 
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // cos
-#if defined(MEAM)
+#if defined(ANG)
+  data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // theta
+#endif // ANG
+#if defined(MEAM) || defined(ANG)
   data_len[size_a] = 1;         data_type[size_a++] = MPI_INT;      // slot
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // shift
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // step
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // g
   data_len[size_a] = 1;         data_type[size_a++] = MPI_DOUBLE;   // dg
-#endif // MEAM
+#endif // MEAM || ANG
 
   CHECK_RETURN(MPI_Get_address(&angl.cos,    &data_size[size_b++]));
-#if defined(MEAM)
+#if defined(ANG)
+  CHECK_RETURN(MPI_Get_address(&angl.theta,    &data_size[size_b++]));
+#endif // ANG
+#if defined(MEAM) || defined(ANG)
   CHECK_RETURN(MPI_Get_address(&angl.slot,   &data_size[size_b++]));
   CHECK_RETURN(MPI_Get_address(&angl.shift,  &data_size[size_b++]));
   CHECK_RETURN(MPI_Get_address(&angl.step,   &data_size[size_b++]));
   CHECK_RETURN(MPI_Get_address(&angl.g,      &data_size[size_b++]));
   CHECK_RETURN(MPI_Get_address(&angl.dg,     &data_size[size_b++]));
-#endif // MEAM
+#endif // MEAM || ANG
 
   // clang-format on
 
@@ -796,6 +802,10 @@ int broadcast_angles()
     if (g_mpi.myid == 0)
       num_angles = g_config.atoms[i].num_angles;
     CHECK_RETURN(MPI_Bcast(&num_angles, 1, MPI_INT, 0, MPI_COMM_WORLD));
+#if defined(ANG)
+    if (num_angles == 0)
+	    continue;
+#endif // ANG
     if (i >= g_mpi.firstatom && i < (g_mpi.firstatom + g_mpi.myatoms)) {
       atom->angle_part = (angle_t*)Malloc(num_angles * sizeof(angle_t));
       for (int j = 0; j < num_angles; ++j)
