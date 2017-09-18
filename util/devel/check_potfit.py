@@ -9,10 +9,8 @@ from subprocess import call
 
 # arrays for supported interactions
 tab_interactions = ['pair', 'eam', 'tbeam', 'adp', 'meam']
-apot_interactions = ['pair', 'pairang', 'eam', 'tbeam', 'adp', 'meam', 'coulomb', 'dipole',
-                     'stiweb', 'tersoff', 'tersoffmod', 'coulomb_eam', 'dipole_eam']
-                    # pairang_coulomb NYI
-                    #'stiweb', 'tersoff', 'tersoffmod', 'pairang_coulomb', 'coulomb_eam', 'dipole_eam']
+apot_interactions = ['pair', 'ang', 'eam', 'tbeam', 'adp', 'meam', 'coulomb', 'dipole',
+                     'stiweb', 'tersoff', 'tersoffmod', 'coulomb_ang', 'coulomb_eam', 'dipole_eam']
 kim_interactions = ['dummy']
 
 # arrays for supported options
