@@ -222,9 +222,9 @@ double calc_forces(double* xi_opt, double* forces, int flag)
           memset(forces + n_i, 0, 3 * sizeof(double));
         }
         // reset atomic density
-        g_config.conf_atoms[n_i - g_mpi.firstatom].rho = 0.0;
+        g_config.conf_atoms[g_config.cnfstart[config_idx] + atom_idx - g_mpi.firstatom].rho = 0.0;
 #if defined(TBEAM)
-        g_config.conf_atoms[n_i - g_mpi.firstatom].rho_s = 0.0;
+        g_config.conf_atoms[g_config.cnfstart[config_idx] + atom_idx - g_mpi.firstatom].rho_s = 0.0;
 #endif  // TBEAM
       }
 
