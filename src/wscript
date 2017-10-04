@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+apot_source_files = [
+    'chempot.c',
+    'functions.c',
+    'functions_impl.c',
+]
+
+common_source_files = [
+    'bracket.c',
+    'brent.c',
+    'config.c',
+    'elements.c',
+    'errors.c',
+    'force_common.c',
+    'linmin.c',
+    'memory.c',
+    'mpi_utils.c',
+    'optimize.c',
+    'params.c',
+    'potential_input_f0.c',
+    'potential_input.c',
+    'potential_input_f3.c',
+    'potential_input_f4.c',
+    'potential_input_f5.c',
+    'potential_output.c',
+    'potential_output_imd.c',
+    'potential_output_lammps.c',
+    'powell_lsq.c',
+    'random.c',
+    'random_dsfmt.c',
+    'simann.c',
+    'splines.c',
+    'utils.c'
+]
+
+tab_source_files = [
+]
+
+
+def build(ctx):
+    if ctx.env.model == 'apot':
+        ctx.objects(source=apot_source_files, target='model_objects', use=['POTFIT'])
+    elif ctx.env.model == 'tab':
+        ctx.objects(source=tab_source_files, target='model_objects', use=['POTFIT'])
+    ctx.objects(source=common_source_files, target='common_objects', use=['POTFIT'])
+    ctx.objects(source=ctx.env.force_files, target='potential_objects', use=['POTFIT'])
+    ctx.program(source='potfit.c', target=ctx.env.target_name,
+                use=['POTFIT', 'model_objects', 'common_objects', 'potential_objects'])
