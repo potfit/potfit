@@ -4,3 +4,6 @@
 potfit_*
 *.pyc
 *.kdev4
+.waf*
+build
+.lock*
