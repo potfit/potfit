@@ -1054,18 +1054,13 @@ void init_neighbors(config_state* cstate, double* mindist)
             int type2 = g_config.atoms[j].type;
 
             if (r <= g_config.rcut[type1 * g_param.ntypes + type2]) {
-              int short_distance = 0;
-
               if (r <= g_config.rmin[type1 * g_param.ntypes + type2]) {
-                warning("Configuration %i: Distance %i\n", cstate->config, r);
+                warning("Configuration %i: Distance %f\n", cstate->config, r);
                 warning(" atom %d (type %d) at pos: %f %f %f\n",
                         i - g_config.natoms, type1, g_config.atoms[i].pos.x,
                         g_config.atoms[i].pos.y, g_config.atoms[i].pos.z);
                 warning(" atom %d (type %d) at pos: %f %f %f\n",
                         j - g_config.natoms, type2, dd.x, dd.y, dd.z);
-#if !defined(KIM)
-                short_distance = 1;
-#endif // !KIM
               }
               g_config.atoms[i].neigh = (neigh_t*)Realloc(
                   g_config.atoms[i].neigh,
@@ -1101,60 +1096,59 @@ void init_neighbors(config_state* cstate, double* mindist)
 
               /* pre-compute index and shift into potential table */
 
-              if (!short_distance) {
-                /* pair potential */
-                int col = (type1 <= type2)
-                              ? type1 * g_param.ntypes + type2 -
-                                    ((type1 * (type1 + 1)) / 2)
-                              : type2 * g_param.ntypes + type1 -
-                                    ((type2 * (type2 + 1)) / 2);
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 0);
 
-                mindist[col] = MIN(mindist[col], r);
+              /* pair potential */
+              int col = (type1 <= type2)
+                            ? type1 * g_param.ntypes + type2 -
+                                  ((type1 * (type1 + 1)) / 2)
+                            : type2 * g_param.ntypes + type1 -
+                                  ((type2 * (type2 + 1)) / 2);
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 0);
+
+              mindist[col] = MIN(mindist[col], r);
 
 #if defined(EAM) || defined(ADP) || defined(MEAM)
-                /* transfer function */
-                col = g_calc.paircol + type2;
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
+              /* transfer function */
+              col = g_calc.paircol + type2;
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
 #if defined(TBEAM)
-                /* transfer function - d band */
-                col = g_calc.paircol + 2 * g_param.ntypes + type2;
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
+              /* transfer function - d band */
+              col = g_calc.paircol + 2 * g_param.ntypes + type2;
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
 #endif  // TBEAM
 #endif  // EAM || ADP || MEAM
 
 #if defined(MEAM)
-                /* Store slots and stuff for f(r_ij) */
-                col = g_calc.paircol + 2 * g_param.ntypes +
-                      g_config.atoms[i].neigh[k].col[0];
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
+              /* Store slots and stuff for f(r_ij) */
+              col = g_calc.paircol + 2 * g_param.ntypes +
+                    g_config.atoms[i].neigh[k].col[0];
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
 #endif  // MEAM
 
 #if defined(ANG)
-                /* Store slots and stuff for f(r_ij) */
-                col = g_calc.paircol + g_config.atoms[i].neigh[k].col[0];
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
+              /* Store slots and stuff for f(r_ij) */
+              col = g_calc.paircol + g_config.atoms[i].neigh[k].col[0];
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
 #endif  // ANG
 
 #if defined(ADP)
-                /* dipole part */
-                col = g_calc.paircol + 2 * g_param.ntypes +
-                      g_config.atoms[i].neigh[k].col[0];
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
+              /* dipole part */
+              col = g_calc.paircol + 2 * g_param.ntypes +
+                    g_config.atoms[i].neigh[k].col[0];
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 2);
 
-                /* quadrupole part */
-                col = 2 * g_calc.paircol + 2 * g_param.ntypes +
-                      g_config.atoms[i].neigh[k].col[0];
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 3);
+              /* quadrupole part */
+              col = 2 * g_calc.paircol + 2 * g_param.ntypes +
+                    g_config.atoms[i].neigh[k].col[0];
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 3);
 #endif  // ADP
 
 #if defined(STIWEB)
-                /* Store slots and stuff for exp. function */
-                col = g_calc.paircol + g_config.atoms[i].neigh[k].col[0];
-                set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
+              /* Store slots and stuff for exp. function */
+              col = g_calc.paircol + g_config.atoms[i].neigh[k].col[0];
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
 #endif  // STIWEB
 
-              } /* !sh_dist */
             }   /* r < r_cut */
           }     /* loop over images in z direction */
         }       /* loop over images in y direction */
@@ -1179,7 +1173,6 @@ void set_neighbor_slot(neigh_t* neighbor, int col, double r, int store_slot)
     case POTENTIAL_FORMAT_ANALYTIC:
     case POTENTIAL_FORMAT_TABULATED_EQ_DIST: {
       double rr = r - g_pot.calc_pot.begin[col];
-
       if (rr < 0) {
         // TODO: rephrase
         error(0, "The distance %f is smaller than the beginning\n", r);
