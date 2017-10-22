@@ -294,7 +294,7 @@ void error(int done, const char* msg, ...)
     }
 #endif  // MPI
     free_allocated_memory();
-    exit(EXIT_SUCCESS);
+    exit(EXIT_FAILURE);
   }
 }
 
