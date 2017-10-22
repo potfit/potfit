@@ -350,7 +350,7 @@ void check_parameters_complete(char const* paramfile)
           paramfile, g_param.ntypes);
 
   if (g_files.startpot == NULL)
-    error(0,
+    error(1,
           "Missing parameter or invalid value in %s : startpot is <undefined>\n",
           paramfile);
 
