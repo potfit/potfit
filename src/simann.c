@@ -185,6 +185,8 @@ double get_annealing_temperature(const double* xi, double* xi_new,
   return T;
 }
 
+#if defined(MEAM) && !defined(APOT)
+
 /****************************************************************
  *
  * store_pot_data
@@ -206,7 +208,6 @@ typedef struct {
 
 void store_pot_data(pot_data_t* pot_data)
 {
-#if !defined(APOT)
   if (pot_data->begin == NULL) {
     pot_data->begin = (double*)Malloc(g_param.ntypes * sizeof(double));
     pot_data->end = (double*)Malloc(g_param.ntypes * sizeof(double));
@@ -229,7 +230,6 @@ void store_pot_data(pot_data_t* pot_data)
       pot_data->xcoord[j] = g_pot.opt_pot.xcoord[j];
     k++;
   }
-#endif  // !APOT
 }
 
 /****************************************************************
@@ -259,6 +259,8 @@ void restore_pot_data(const pot_data_t* pot_data)
   }
 }
 
+#endif // MEAM && !APOT
+
 /****************************************************************
  *
  * run_simulated_annealing
@@ -279,13 +281,9 @@ void run_simulated_annealing(double* const xi)
   int do_rescale = 1;
 #endif  // RESCALE && !APOT && (EAM || ADP || MEAM)
 
-  pot_data_t pot_data;
-
-  pot_data.begin = NULL;
-  pot_data.end = NULL;
-  pot_data.step = NULL;
-  pot_data.invstep = NULL;
-  pot_data.xcoord = NULL;
+#if defined(MEAM) && !defined(APOT)
+  pot_data_t pot_data = { NULL, };
+#endif // MEAM && !APOT
 
   double F = 0;
   double F_opt = 0;
@@ -325,7 +323,9 @@ void run_simulated_annealing(double* const xi)
   if (T == 0.0)
     return;
 
+#if defined(MEAM) && !defined(APOT)
   store_pot_data(&pot_data);
+#endif // MEAM && !APOT
 
   printf("  k\tT        \t  m\tF          \tF_opt\n");
   printf("%3d\t%f\t%3d\t%f\t%f\n", 0, T, 0, F, F_opt);
@@ -360,7 +360,9 @@ void run_simulated_annealing(double* const xi)
             if (F_new < F_opt) {
               memcpy(xi_opt, xi_new, g_calc.ndimtot * sizeof(double));
 
+#if defined(MEAM) && !defined(APOT)
               store_pot_data(&pot_data);
+#endif // MEAM && !APOT
 
               F_opt = F_new;
 
