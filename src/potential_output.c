@@ -387,7 +387,7 @@ void write_pot_table4(char const* filename)
   int plot_flag = 0;
   pot_table_t* pt = &g_pot.opt_pot;
 
-  if (strlen(g_files.plotpointfile))
+  if (g_files.plotpointfile != NULL)
     plot_flag = 1;
 
   /* open file */
