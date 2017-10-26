@@ -474,6 +474,14 @@ CFLAGS += -D${TARGET} -D${MATH_LIB}
 # Substitute .o for .c to get the names of the object files
 OBJECTS := $(subst .c,.o,${SOURCES})
 
+# Print out information *before* make
+ifeq (,$(findstring clean,${MAKECMDGOALS}))
+  $(info Compiling $(MAKETARGET) with options)
+  $(info CC=$(CC))
+  $(info CFLAGS=$(CFLAGS))
+  $(info LIBS=$(LIBS))
+endif
+
 ###########################################################################
 #
 # targets for building potfit
@@ -521,8 +529,6 @@ ifneq (,${BIN_DIR})
 	@mv $@ ../${BIN_DIR}
   endif
 endif
-	@echo -e "\nCompiled with options"
-	@echo -e "CC=${CC} \nCFLAGS=${CFLAGS} \nLIBS=${LIBS}\n"
 	@echo -e "Building $@ was successful."
 
 ###########################################################################
