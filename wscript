@@ -136,6 +136,14 @@ def configure(cnf):
 
     cnf.env.target_name = generate_target_name(cnf)
 
+    print('\npotfit has been configured with the following options:')
+    print('\n'.join(['{:20} = {}'.format(x, v) for x, v in [['potential model', cnf.options.model], [
+          'interaction', cnf.options.interaction], ['math library', cnf.options.math_lib]]]))
+    opts = [x[7:] for x in dir(cnf.options) if x.startswith('enable_') and getattr(cnf.options, x)]
+    if len(opts):
+        print('{:20} = {}'.format('options', ', '.join(sorted(opts))))
+    print("\nNow type './waf' to start building potfit\n")
+
 
 def build(bld):
     """
