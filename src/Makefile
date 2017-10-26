@@ -529,8 +529,6 @@ ifneq (,${BIN_DIR})
 	@mv $@ ../${BIN_DIR}
   endif
 endif
-	@echo -e "\nCompiled with options"
-	@echo -e "CC=${CC} \nCFLAGS=${CFLAGS} \nLIBS=${LIBS}\n"
 	@echo -e "Building $@ was successful."
 
 ###########################################################################
