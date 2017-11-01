@@ -66,8 +66,7 @@ void write_errors(double* force, double tot)
       error(1, "Could not open file %s\n", file);
 #if !defined(STRESS)
     fprintf(outfile, "total error sum %f, count %d (%d forces, %d energies)\n",
-            tot, g_calc.mdim - 6 * g_config.nconf, 3 * g_config.natoms,
-            g_config.nconf);
+            tot, g_calc.mdim, 3 * g_config.natoms, g_config.nconf);
 #else
     fprintf(
         outfile,
@@ -79,7 +78,7 @@ void write_errors(double* force, double tot)
 
 #if !defined(STRESS)
   printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
-         g_calc.mdim - 6 * g_config.nconf, 3 * g_config.natoms, g_config.nconf);
+         g_calc.mdim, 3 * g_config.natoms, g_config.nconf);
 #else
   printf("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
          tot, g_calc.mdim, 3 * g_config.natoms, g_config.nconf,
