@@ -129,6 +129,8 @@ def configure(cnf):
     cnf.env.model = cnf.options.model
     cnf.env.interaction = cnf.options.interaction
     cnf.env.force_files = pl.get_pot(cnf.options.interaction).files
+    if cnf.options.interaction == 'pair' and cnf.options.model == 'apot':
+        cnf.env.force_files.extend(['chempot.c'])
 
     if cnf.options.model == 'apot':
         cnf.env.append_value('DEFINES_POTFIT', ['APOT'])
@@ -141,6 +143,10 @@ def configure(cnf):
           'interaction', cnf.options.interaction], ['math library', cnf.options.math_lib]]]))
     opts = [x[7:] for x in dir(cnf.options) if x.startswith('enable_') and getattr(cnf.options, x)]
     if len(opts):
+        for i in opts:
+            for j in OPTIONS:
+                if i == j[0]:
+                    cnf.env.append_value('DEFINES_POTFIT', j[2])
         print('{:20} = {}'.format('options', ', '.join(sorted(opts))))
     print("\nNow type './waf' to start building potfit\n")
 
@@ -188,17 +194,28 @@ def check_potfit_options(cnf):
     if not pot.supports_model(cnf.options.model):
         cnf.fatal('Interaction {} does not support model {}!'.format(pot.name, cnf.options.model))
 
+    cnf.env.option_files = []
+
     # check for incompatible options
     if cnf.options.enable_mpi and cnf.options.enable_dist:
         cnf.fatal('dist option is not supported for MPI-enabled builds')
     if cnf.options.enable_dsf and cnf.options.interaction not in ['ang_elstat', 'coulomb', 'eam_coulomb']:
         cnf.fatal(
             'DSF can only be used with COULOMB-based interactions and not with {}'.format(cnf.options.interaction))
-    if cnf.options.enable_resc and cnf.options.model == 'apot':
-        cnf.fatal('Analytic potentials are incompatible with the rescale option!')
+    if cnf.options.enable_resc:
+        if cnf.options.model == 'apot':
+            cnf.fatal('Analytic potentials are incompatible with the rescale option!')
+        else:
+            if cnf.interaction == 'meam':
+                cnf.env.option_files.extend(['rescale_meam.c'])
+            else:
+              cnf.env.option_files.extend(['rescale.c'])
     if sum([cnf.options.asan, cnf.options.tsan, cnf.options.ubsan]) > 1:
         cnf.fatal('Only one sanitizer can be enabled at a time!')
 
+    # set option specific target files
+    if cnf.options.enable_evo:
+        cnf.env.option_files.extend(['diff_evo.c'])
 
 @conf
 def check_compiler_options(cnf):

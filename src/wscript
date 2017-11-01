@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 apot_source_files = [
-    'chempot.c',
     'functions.c',
     'functions_impl.c',
 ]
@@ -44,7 +43,8 @@ def build(ctx):
         ctx.objects(source=apot_source_files, target='model_objects', use=['POTFIT'])
     elif ctx.env.model == 'tab':
         ctx.objects(source=tab_source_files, target='model_objects', use=['POTFIT'])
+    ctx.objects(source=ctx.env.option_files, target='option_objects', use=['POTFIT'])
     ctx.objects(source=common_source_files, target='common_objects', use=['POTFIT'])
     ctx.objects(source=ctx.env.force_files, target='potential_objects', use=['POTFIT'])
     ctx.program(source='potfit.c', target=ctx.env.target_name,
-                use=['POTFIT', 'model_objects', 'common_objects', 'potential_objects'])
+                use=['POTFIT', 'model_objects', 'option_objects', 'common_objects', 'potential_objects'])
