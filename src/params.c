@@ -402,7 +402,7 @@ void check_parameters_complete(char const* paramfile)
       error(1, "Missing parameter or invalid value in %s : evo_threshold is"
                 "\"%f\"\n", paramfile, g_param.evo_threshold);
 #else
-    if (g_param.anneal_temp == NULL) {
+    if (g_param.anneal_temp == NULL && g_param.opt == 1) {
       warning("anneal_temp not provided in %s, setting it to 0!\n", paramfile);
       g_param.anneal_temp = (char*)Malloc(2);
       ((char*)g_param.anneal_temp)[0] = '0';
