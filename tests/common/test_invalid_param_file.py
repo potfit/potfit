@@ -156,7 +156,6 @@ def test_invalid_param_file_tempfile_valid(potfit):
     potfit.run(filename)
     assert potfit.returncode == 1
     assert potfit.has_error_msg()
-    assert '[WARNING] anneal_temp' in potfit.stderr
     assert '[ERROR] Could not open file startpot' in potfit.stderr
 
 def test_invalid_param_file_eng_weight_invalid(potfit):
