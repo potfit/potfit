@@ -196,7 +196,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
 
-#if defined(PAIR)
+#if defined(PAIR) && !defined(KIM)
   if (g_param.enable_cp) {
     init_chemical_potential(g_param.ntypes);
     int i = apt->number;
