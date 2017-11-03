@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 ################################################################
 #
 # makeapot:
@@ -6,10 +6,9 @@
 #
 ################################################################
 #
-#   Copyright 2013
-#             Institute for Theoretical and Applied Physics
-#             University of Stuttgart, D-70550 Stuttgart, Germany
-#             https://www.potfit.net/
+#   Copyright 2013-2017 -  the potfit development team
+#
+#   https://www.potfit.net
 #
 #################################################################
 #
@@ -31,214 +30,216 @@
 #################################################################
 
 import argparse
-import copy
 import functions
 import inspect
 import random
 import sys
+import textwrap
 
-interaction_list = [
-        ['pair', 'pair potentials'],
-        ['eam', 'embedded atom method'],
-        ['meam', 'modified embedded atom method'],
-        ['adp', 'angular dependent potential'],
-        ['stiweb', 'Stillinger-Weber potential'],
-        ['tersoff', 'Tersoff potential']]
+INTERACTIONS = [
+    ['pair', 'pair potentials', lambda x: paircol(x)],
+    ['eam', 'embedded atom method', lambda x : paircol(x) + 2 * x],
+    ['meam', 'modified embedded atom method', lambda x : 2 * paircol(x) + 3 * x],
+    ['adp', 'angular dependent potential', lambda x : 3 * paircol(x) + 2 * x],
+    ['stiweb', 'Stillinger-Weber potential', lambda x : 2 * paircol(x) + 1],
+    ['tersoff', 'Tersoff potential', lambda x : x * x]
+]
 
-def get_cols(interaction, n):
-    cols = n*(n+1)/2
-    if interaction == 'pair':
-        return cols
-    elif interaction == 'eam':
-        return cols + 2 * n
-    elif interaction == 'adp':
-        return 3 * cols + 2 * n
-    elif interaction == 'meam':
-        return 2 * cols + 3 * n
-    elif interaction == 'stiweb':
-        return 2 * cols + 1
-    elif interaction == 'tersoff':
-        return n * n
-    else:
-        return 0
 
-def create_pot_table(potentials):
+def paircol(n):
+    return int(n * (n + 1) / 2)
+
+
+def write_list():
+    write_interaction_list()
+    print("")
+    write_pot_list()
+
+
+def write_interaction_list():
+    print('List of available interaction models:\n')
+    length = 0
+    for item in INTERACTIONS:
+        length = max(length, len(item[0]))
+    for item in INTERACTIONS:
+        print("  {:{fill}}   - {}".format(item[0], item[1], fill=length))
+
+
+def write_pot_list():
+    print('List of available potential functions:\n')
+    items = []
+    for name, obj in inspect.getmembers(functions):
+        if inspect.isclass(obj):
+            myname = obj.__name__
+            if myname != 'potfit_function' and not myname.startswith('stiweb') and not myname.startswith('tersoff'):
+                items.append(obj.__name__)
+    print(textwrap.fill(', '.join(items)))
+
+
+def create_pot_table(args):
     table = []
-    for i in potentials:
-        if len(i.split('*')) == 1:
+    for pot in args.functions.split(','):
+        items = pot.split('*')
+        if len(items) == 1:
             count = 1
-            name = i
-        elif len(i.split('*')) == 2:
+            name = pot
+        elif len(items) == 2:
             try:
-                count = int(i.split('*')[0])
+                count = int(items[0])
             except:
-                sys.stderr.write("\nCould not read your potential list: >> %s << unknown.\n" % i)
-                sys.stderr.write("Please use the following syntax only: pot or 3*pot\n")
+                sys.stderr.write('Could not read your potential list: >> {} << unknown.\n'.format(pot))
+                sys.stderr.write('Please use the following syntax only: pot or 3*pot\n')
                 sys.exit()
-            name = i.split('*')[1]
+            name = items[1]
         else:
-            sys.stderr.write("\nCould not read your potential list: >> %s << unknown.\n" % i)
-            sys.stderr.write("Please use the following syntax only: pot or 3*pot\n")
+            sys.stderr.write('\nCould not read your potential list: >> {} << unknown.\n'.format(pot))
+            sys.stderr.write('Please use the following syntax only: pot or 3*pot\n')
             sys.exit()
         do_smooth = 0
         if name.endswith('_sc'):
             do_smooth = 1
             name = name[:-3]
-            if args.g:
+            if args.global_cutoff:
                 do_smooth = 2
         for j in range(count):
-            try:
+           try:
                 table.append(getattr(functions, name)())
                 table[-1].set_properties(args.cutoff, do_smooth, args.random)
-            except:
+           except:
                 sys.stderr.write("Could not find the function type >> %s <<\n\n" % name)
                 write_pot_list()
                 sys.exit()
     return table
 
-def write_list():
-    write_interaction_list()
-    print ""
-    write_pot_list()
 
-def write_interaction_list():
-    print "List of available interaction models:\n"
-    for item in interaction_list:
-        print "  %s   \t-\t%s" % (item[0],item[1])
-
-def write_pot_list():
-    print "List of available potential functions:\n  "
-    for name, obj in inspect.getmembers(functions):
-        if inspect.isclass(obj):
-            myname = obj.__name__
-            if myname != 'potfit_function' and \
-                    not myname.startswith('stiweb') and \
-                    not myname.startswith('tersoff'):
-                sys.stdout.write(" %s," % obj.__name__)
-    print ""
-
-def write_header(interaction, cols):
-    print "#F 0 %s" % cols
-    print "#T %s" % interaction.upper()
-    print "#I" + "%s" % " 0" * cols
-    print "#E"
-
-def write_cp(n):
-    print ""
-    for i in range(n):
-        print "cp_%s -1 10 0" % i
-
-def write_global_cutoff(rand):
-    print ""
-    print "global 1"
-    if rand:
-        print "h\t{:.2f}\t{:.2f}\t{:.2f}".format(0.5+1.5*random.random(),0.5,2)
-    else:
-        print "h 1 0.5 2"
-    pass
-
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    description =
-        '''Create an analytic potential file for potift.''',
-    epilog=
-        '''To specify multiple potentials you can use the following syntax:
-
-    makeapot -n 3 -i eam -f 6*eopp 3*csw 3*bjs
-
-which uses 6 eopp potentials, 3 csw and 3 bjs in this order.''')
-
-parser.add_argument('-n', type=int, default=1,
-    help='number of atoms types, runs from 0 to N-1')
-parser.add_argument('-co', '--cutoff', type=float, default=6.0,
-    help='cutoff radius')
-parser.add_argument('-g', action='store_true',
-    help='use global cutoff parameter')
-parser.add_argument('-r', '--random', action='store_true',
-    help='randomize the starting potential')
-parser.add_argument('-i', '--type', type=str, default='pair',
-    help='interaction type, e.g. pair, eam, adp, ...')
-parser.add_argument('-l', '--list', action='store_true',
-    help='list options which are available')
-parser.add_argument('-cp', action='store_true',
-    help='enable chemical potentials (only for pair)')
-parser.add_argument('-f', type=str, nargs='*', dest='functions',
-    help='name of potential functions, either name or i*name, where i=1,2,3,...')
-
-args = parser.parse_args()
-
-if args.list:
-    write_list()
-    sys.exit()
-
-# Check for sane arguments
-if args.n < 1:
-    sys.stderr.write("The number of atom types needs to be larger than 0!\n")
-    sys.exit()
-n = args.n
-
-if args.cutoff < 0:
-    sys.stderr.write("The cutoff distance needs to be positive!\n")
-    sys.exit()
-
-
-# Check interaction type
-cols = int(get_cols(args.type.lower(), n))
-
-if cols == 0:
-    sys.stderr.write("Unknown interaction type >> %s <<\n\n" % args.type)
-    write_interaction_list()
-    sys.exit()
-
-# potentials with arbitrary potential functions
-if not args.type in ['tersoff', 'stiweb']:
-    if not args.functions:
-        sys.stderr.write("Error: You did not specify any potential functions!\n")
-        sys.exit()
-    table = create_pot_table(args.functions)
-    if len(table) != cols:
-        sys.stderr.write("Wrong number of potential functions given!\n")
-        sys.stderr.write("A %s potential for %s atom types requires %s functions, you specified %s.\n" % (args.type.lower(), args.n, cols, len(table)))
-        sys.exit()
-    write_header(args.type, cols)
-    if args.cp and args.type.lower() == 'pair':
-        write_cp(n)
-    if args.g:
-        write_global_cutoff(args.random)
-    for i in table:
-        print ""
-        i.write_pot_table()
-# potentials with predefined potential functions
-elif args.type == 'tersoff':
-    paircol = n*(n+1)/2
+def generate_stiweb_potential(args, interaction, output):
     table = []
-    for i in range(paircol):
-        table.append(functions.tersoff_pot())
-        table[-1].set_properties(args.cutoff, 0, args.random)
-    for i in range(paircol-n):
-        table.append(functions.tersoff_mix())
-        table[-1].set_properties(args.cutoff, 0, args.random)
-    write_header(args.type, cols)
-    for i in table:
-        print ""
-        i.write_pot_table()
-elif args.type == 'stiweb':
-    paircol = n*(n+1)/2
-    table = []
-    for i in range(paircol):
+    cols = interaction[2](args.ntypes)
+    for i in range(paircol(args.ntypes)):
         table.append(functions.stiweb_2())
         table[-1].set_properties(args.cutoff,0,args.random)
-    for i in range(paircol):
+    for i in range(paircol(args.ntypes)):
         table.append(functions.stiweb_3())
         table[-1].set_properties(args.cutoff,0,args.random)
-    write_header(args.type, cols)
+    write_header(args.interaction, cols, output)
     for i in table:
-        print ""
-        i.write_pot_table()
-    print ""
-    print "type stiweb_lambda"
-    print "cutoff %s" % args.cutoff
+        output.write('\n')
+        i.write_pot_table(output)
+    output.write('\n')
+    output.write('type stiweb_lambda\n')
+    output.write('cutoff {}\n'.format(args.cutoff))
+    for i in range(args.ntypes):
+        for j in range(args.ntypes):
+            for k in range(j,args.ntypes):
+                print("lambda_{}{}{}\t2\t0\t3".format(i,j,k))
+
+
+def generate_tersoff_potential(args, interaction, output):
+    table = []
+    cols = interaction[2](args.ntypes)
+    for i in range(paircol(args.ntypes)):
+        table.append(functions.tersoff_pot())
+        table[-1].set_properties(args.cutoff, 0, args.random)
+    for i in range(paircol(args.ntypes) - args.ntypes):
+        table.append(functions.tersoff_mix())
+        table[-1].set_properties(args.cutoff, 0, args.random)
+    write_header(args.interaction, cols, output)
+    for i in table:
+        output.write('\n')
+        i.write_pot_table(output)
+
+
+def generate_regular_potential(args, interaction, output):
+    pot_table = create_pot_table(args)
+    cols = interaction[2](args.ntypes)
+    if len(pot_table) != cols:
+        sys.stderr.write('Wrong number of potential functions given!\n')
+        sys.stderr.write('A {} potential for {} atom types requires {} functions, you specified {}.\n'.format(args.interaction, args.ntypes, cols, len(pot_table)))
+        sys.exit()
+    write_header(args.interaction, cols, output)
+    if args.cp and args.type == 'pair':
+        write_cp(n, output)
+    if args.global_cutoff:
+        write_global_cutoff(args.random, output)
+    for i in pot_table:
+        output.write('\n')
+        i.write_pot_table(output)
+
+
+def write_header(interaction, cols, output):
+    output.write('#F 0 {}\n'.format(cols))
+    output.write('#T {}\n'.format(interaction.upper()))
+    output.write('#I' + cols * '{}'.format(' 0') + '\n')
+    output.write('#E\n')
+
+
+def write_cp(n, output):
+    output.write('\n')
     for i in range(n):
-        for j in range(n):
-            for k in range(j,n):
-                print "lambda_{}{}{}\t2\t0\t3".format(i,j,k)
+        output.write('cp_{} -1 10 0'.format(i))
+
+
+def write_global_cutoff(rand, output):
+    output.write('\n')
+    output.write('global 1\n')
+    if rand:
+        output.write('h {:.2f} {:.2f} {:.2f}\n'.format(0.5+1.5*random.random(),0.5,2))
+    else:
+        output.write('h 1 0.5 2\n')
+
+
+def main():
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+      description = 'Create an analytic potential file for potift.',
+      epilog= 'To specify multiple potentials you can use the following syntax:\n\n'
+      '  makeapot -n 3 -i eam -f 6*eopp,3*csw,3*bjs\n\n'
+      'which uses 6 eopp potentials, 3 csw and 3 bjs in this order.')
+
+    parser.add_argument('-n', type=int, default=1, dest='ntypes', help='number of atoms types, runs from 0 to N-1')
+    parser.add_argument('-c', type=float, default=6.0, dest='cutoff', help='cutoff radius (default %(default)s)')
+    parser.add_argument('-g', action='store_true', dest='global_cutoff', help='use a global cutoff parameter for all potentials')
+    parser.add_argument('-r', action='store_true', dest='random', help='randomize the values for the potential parameters')
+    parser.add_argument('-i', type=str, dest='interaction', metavar='INTERACTION', choices=[x[0] for x in sorted(INTERACTIONS)] ,
+                        help='supported interaction types are: {}'.format(', '.join([x[0] for x in sorted(INTERACTIONS)])), required=True)
+    parser.add_argument('-l', '--list', action='store_true', help='list options which are available')
+    parser.add_argument('-cp', action='store_true', help='enable chemical potentials (only for pair)')
+    parser.add_argument('-f', type=str, dest='functions', help='comma separated list of potential functions, either name or i*name, where i=1,2,3,...')
+    parser.add_argument('-o', dest='outfile', type=argparse.FileType('w'), help='write output to this file instead of stdout')
+    args = parser.parse_args()
+
+    if args.list:
+        write_list()
+        sys.exit()
+
+    # Check for sane arguments
+    if args.ntypes < 1:
+        sys.stderr.write("The number of atom types cannot be less than 1\n")
+        sys.exit()
+
+    if args.cutoff < 0:
+        sys.stderr.write("The cutoff distance needs to be positive!\n")
+        sys.exit()
+
+    # Check interaction type
+    for item in INTERACTIONS:
+        if item[0] == args.interaction:
+            interaction = item
+            break
+
+    if not args.outfile:
+        args.outfile = sys.stdout
+
+    if args.interaction == 'stiweb':
+        generate_stiweb_potential(args, interaction, args.outfile)
+    elif args.interaction == 'tersoff':
+        generate_tersoff_potential(args, interaction, args.outfile)
+    else:
+        if not args.functions:
+            sys.stderr.write('Error: Interaction {} requires list of potential functions (-f argument)\n'.format(args.interaction))
+            sys.exit()
+        generate_regular_potential(args, interaction, args.outfile)
+    args.outfile.close()
+
+
+if __name__ == "__main__":
+    main()
