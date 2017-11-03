@@ -25,7 +25,7 @@ def test_apot_pair_stress_missing_stress_weight(potfit):
     assert 'stress_weight' in potfit.stderr
 
 
-def test_apot_pair_stress_simple(potfit):
+def test_apot_pair_stress_basic(potfit):
     param_file = 'param_file'
     f = potfit.create_file(param_file)
     f.write('ntypes 1\n')

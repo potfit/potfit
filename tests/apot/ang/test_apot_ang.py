@@ -9,7 +9,7 @@ def potfit():
     yield p
     p.clear()
 
-def test_apot_pair_no_features_simple(potfit):
+def test_apot_ang_basic(potfit):
     param_file = 'param_file'
     f = potfit.create_file(param_file)
     f.write('ntypes 1\n')

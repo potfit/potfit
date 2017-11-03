@@ -16,6 +16,12 @@ class Potfit:
         self.filenames = []
         self._build()
 
+    def reset(self):
+        self.filenames = []
+        self.stdout = ''
+        self.stderr = ''
+        self.returncode = 0
+
     def run(self, param_file):
         self.run_with_args([param_file])
         self._cleanup(param_file)
@@ -85,6 +91,13 @@ class Potfit:
                     self._write_unit_cell(f, basic_size, ntypes, i, j, k)
         return f
 
+    def call_makeapot(self, filename, args):
+        os.environ['PATH'] = '{}:'.format(os.path.abspath('../util')) + os.environ['PATH']
+        p = subprocess.Popen(['makeapot', '-o', filename] + args.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.cwd)
+        p.wait()
+        if p.returncode:
+            pytest.fail('error calling "makeapot {}"'.format(args))
+        self.filenames.append(filename)
 
     def _write_unit_cell(self, f, basic_size, ntypes, i, j, k):
         f.write('{} {} {} {} {} {} {}\n'.format(random.randint(0, ntypes - 1), i * basic_size, j * basic_size, k * basic_size, -random.random(), -random.random(), -random.random()))
