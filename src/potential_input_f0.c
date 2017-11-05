@@ -843,9 +843,6 @@ void read_analytic_potentials(apot_state* pstate)
             "Probably your potential definition is missing some parameters.\n");
       }
 
-      if (feof(pstate->pfile))
-        name[0] = '\0';
-
       buffer[0] = '\0';
 
       int ret_val = sscanf(name, "%s %lf %lf %lf", buffer, &apt->values[i][j],
