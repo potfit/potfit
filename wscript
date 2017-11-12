@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from os import environ, makedirs, path
+from os import environ, path
+from os import makedirs as _makedirs
 from sys import platform as _platform
-from shutil import copy
+from shutil import copy as _copy
 from waflib.Configure import conf
 from waflib.Tools.compiler_c import c_compiler
 
@@ -114,16 +115,9 @@ def options(opt):
 
 
 def configure(cnf):
-    """
-    Function which checks the configuration
-
-    Called when ./waf configure --... is run.
-    Here the options are checked for validity.
-    """
-
-    check_potfit_options(cnf)
-    check_compiler_options(cnf)
-    check_math_lib_options(cnf)
+    _check_potfit_options(cnf)
+    _check_compiler_options(cnf)
+    _check_math_lib_options(cnf)
 
     # pass some settings on to the build stage via cnf.env
     cnf.env.model = cnf.options.model
@@ -136,7 +130,7 @@ def configure(cnf):
         cnf.env.append_value('DEFINES_POTFIT', ['APOT'])
     cnf.env.append_value('DEFINES_POTFIT', pl.get_pot(cnf.options.interaction).defines)
 
-    cnf.env.target_name = generate_target_name(cnf)
+    cnf.env.target_name = _generate_target_name(cnf)
 
     print('\npotfit has been configured with the following options:')
     print('\n'.join(['{:20} = {}'.format(x, v) for x, v in [['potential model', cnf.options.model], [
@@ -152,27 +146,21 @@ def configure(cnf):
 
 
 def build(bld):
-    """
-    Function for building potfit
-
-    This just calls the build function in the src/ directory.
-    See src/wscript for details.
-    """
-    bld.add_post_fun(post)
+    bld.add_post_fun(_post)
     bld.recurse('src')
 
 
-def post(bld):
+def _post(bld):
     """
     Post-build function to copy the binary to the bin/ directory
     """
     if not path.exists('bin'):
-        makedirs('bin')
-    copy('build/src/' + bld.env.target_name, 'bin/')
+        _makedirs('bin')
+    _copy('build/src/' + bld.env.target_name, 'bin/')
 
 
 @conf
-def check_potfit_options(cnf):
+def _check_potfit_options(cnf):
     """
     Function for checking potfit options
 
@@ -209,7 +197,7 @@ def check_potfit_options(cnf):
             if cnf.interaction == 'meam':
                 cnf.env.option_files.extend(['rescale_meam.c'])
             else:
-              cnf.env.option_files.extend(['rescale.c'])
+                cnf.env.option_files.extend(['rescale.c'])
     if sum([cnf.options.asan, cnf.options.tsan, cnf.options.ubsan]) > 1:
         cnf.fatal('Only one sanitizer can be enabled at a time!')
 
@@ -217,8 +205,9 @@ def check_potfit_options(cnf):
     if cnf.options.enable_evo:
         cnf.env.option_files.extend(['diff_evo.c'])
 
+
 @conf
-def check_compiler_options(cnf):
+def _check_compiler_options(cnf):
     """
     Function for checking the selected compiler and options
 
@@ -228,7 +217,7 @@ def check_compiler_options(cnf):
 
     # try to detect a suitable compiler
     if cnf.options.interaction == 'kim':
-        check_kim_pipeline(cnf)
+        _check_kim_pipeline(cnf)
     else:
         c_compiler[_platform] = ['icc', 'clang', 'gcc']
     cnf.load('compiler_c')
@@ -268,7 +257,7 @@ def check_compiler_options(cnf):
 
 
 @conf
-def check_kim_pipeline(cnf):
+def _check_kim_pipeline(cnf):
     """
     Function for checking the OpenKIM commands
 
@@ -295,7 +284,7 @@ def check_kim_pipeline(cnf):
 
 
 @conf
-def check_math_lib_options(cnf):
+def _check_math_lib_options(cnf):
     """
     Function for checking the selected math library
 
@@ -354,7 +343,7 @@ def check_math_lib_options(cnf):
         cnf.env.append_value('DEFINES_POTFIT', ['ACML'])
 
 
-def generate_target_name(cnf):
+def _generate_target_name(cnf):
     """
     Function for generating the target name, e.g. potfit_apot_pair_acml
     """
