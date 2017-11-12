@@ -11,8 +11,6 @@ class Potfit:
         self.model = model
         self.interaction = interaction
         self.options = options
-        for item in [x for x in glob.iglob(os.path.join(self.cwd,'asan_*.*')) if os.path.isfile(x)]:
-            os.remove(item)
         self.filenames = []
         self._build()
 
