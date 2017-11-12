@@ -415,13 +415,15 @@ void allocate_memory_for_potentials(potential_state* pstate)
     apt->pmin[size] = (double*)Malloc(g_param.ntypes * sizeof(double));
     apt->pmax = (double**)Malloc((size + 1) * sizeof(double*));
     apt->pmax[size] = (double*)Malloc(g_param.ntypes * sizeof(double));
-  } else
+  } else {
 #endif  // PAIR
-
   apt->values = (double**)Malloc(size * sizeof(double*));
   apt->invar_par = (int**)Malloc(size * sizeof(int*));
   apt->pmin = (double**)Malloc(size * sizeof(double*));
   apt->pmax = (double**)Malloc(size * sizeof(double*));
+#if defined(PAIR)
+  }
+#endif
 
 #else  // !COULOMB
   apt->ratio = (double*)Malloc(g_param.ntypes * sizeof(double));
