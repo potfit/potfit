@@ -322,7 +322,7 @@ void read_chemical_potentials(apot_state* pstate)
   apot_table_t* apt = &g_pot.apot_table;
 
   char buffer[255];
-  char name[255];
+  char name[255] = {0};
 
   fpos_t filepos;
 
@@ -371,7 +371,8 @@ void read_chemical_potentials(apot_state* pstate)
       }
 
       if (strcmp("cp", name) != 0) {
-        fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
+        if (strlen(name))
+          fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
         error(1, "No chemical potentials found in %s.\n", pstate->filename);
       }
 
