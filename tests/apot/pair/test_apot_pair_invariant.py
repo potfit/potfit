@@ -1,31 +1,21 @@
 import pytest
 
-@pytest.fixture(scope="module")
-def potfit():
-    import sys
-    sys.path.insert(0, str(pytest.config.rootdir))
-    import potfit
-    p = potfit.Potfit(__file__, 'apot', 'pair')
-    yield p
-    p.clear()
-
 def test_apot_pair_invariant_base(potfit):
-    param_file = 'param_file'
-    f = potfit.create_file(param_file)
-    f.write('ntypes 1\n')
-    f.write('startpot startpot\n')
-    f.write('endpot endpot\n')
-    f.write('config config\n')
-    f.write('tempfile tempfile\n')
-    f.close()
-    g = potfit.create_file('startpot')
-    g.write('#F 0 1\n#T PAIR\n#I 1\n#E\n\n')
-    g.write('type lj\ncutoff 6.0\nepsilon 0.1 0 1\nsigma 2.5 1 4\n')
-    g.close()
-    c = potfit.create_config_file('config', repeat_cell=3, seed=42)
-    c.close()
-    potfit.run(param_file)
-    assert potfit.returncode == 0
+    potfit.create_param_file()
+    potfit.create_potential_file('''
+#F 0 1
+#T PAIR
+#I 1
+#E
+
+type lj
+cutoff 6.0
+epsilon 0.1 0 1
+sigma 2.5 1 4
+''')
+    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.run()
+    assert potfit.has_no_error()
     assert 'analytic potentials' in potfit.stdout
     assert '1 PAIR potentials' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
