@@ -327,12 +327,6 @@ typedef struct {
   double d_eps;   /* abortion criterion for powell_lsq */
   double* force;  //
 
-  struct {
-    double* vecu_bracket;
-    double* vecu_brent;
-    double* f_vec3;
-  } linmin;
-
   /* pointers for force-vector */
   int energy_p; /* offset of energies in force vector */
 #if defined(STRESS)

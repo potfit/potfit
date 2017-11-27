@@ -58,8 +58,8 @@ double brent(double ax, double bx, double cx, double fbx, double tol,
   double w_lower, w_upper;
   double *p_w, *p_z, *p_u, *p_temp;
 
-  double* vecu = g_calc.linmin.vecu_brent;
-  double* fxu = NULL; /* Vector of location u */
+  static double* vecu = NULL;
+  static double* fxu = NULL; /* Vector of location u */
 
   double p = 0, q = 0, r = 0;
 
