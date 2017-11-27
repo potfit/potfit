@@ -1,10 +1,38 @@
 import pytest
 
-def test_apot_pair_stress_missing_stress_weight(potfit):
+def test_apot_pair_stress_weight_missing(potfit):
     potfit.create_param_file()
     potfit.run()
     assert potfit.has_error()
     assert 'stress_weight' in potfit.stderr
+
+def test_apot_pair_stress_weight_empty(potfit):
+    potfit.create_param_file(stress_weight='')
+    potfit.call_makeapot('startpot', '-n 1 -i pair -f eopp_sc')
+    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.run()
+    assert potfit.has_error()
+    assert 'Missing value in parameter file' in potfit.stderr
+    assert 'stress_weight is <undefined>' in potfit.stderr
+
+def test_apot_pair_stress_weight_invalid(potfit):
+    potfit.create_param_file(stress_weight='foo')
+    potfit.call_makeapot('startpot', '-n 1 -i pair -f eopp_sc')
+    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.run()
+    assert potfit.has_error()
+    assert 'Illegal value in parameter file' in potfit.stderr
+    assert 'stress_weight is not a double' in potfit.stderr
+    assert 'value = foo' in potfit.stderr
+
+def test_apot_pair_stress_weight_out_of_bounds  (potfit):
+    potfit.create_param_file(stress_weight=-1)
+    potfit.call_makeapot('startpot', '-n 1 -i pair -f eopp_sc')
+    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.run()
+    assert potfit.has_error()
+    assert 'Illegal value in parameter file' in potfit.stderr
+    assert 'stress_weight is out of bounds' in potfit.stderr
 
 def test_apot_pair_stress_basic(potfit):
     potfit.create_param_file(stress_weight=1)
