@@ -283,16 +283,20 @@ void get_param_int(char const* param_name, int* value, int line,
   char* str = strtok(NULL, " \t\r\n");
 
   if (str == NULL) {
-    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>\n",
+    error(1, "Missing value in parameter file %s (line %d): %s is <undefined>\n",
           param_file, line, param_name);
-  } else
-    *value = atoi(str);
+  } else {
+    char* endptr = NULL;
+    *value = strtol(str, &endptr, 10);
+    if (*value == 0 && endptr == str) {
+      error(0, "Illegal value in parameter file %s (line %d): %s is not an integer!\n", param_file, line, param_name);
+      error(1, "value = %s\n", str);
+    }
+  }
 
   if (*value < min || *value > max) {
-    error(0,
-          "Illegal value in parameter file %s (line %d): %s is out of bounds! "
-          "(min: %i, max: %i, given: %i)\n",
-          param_file, line, param_name, min, max, *value);
+    error(0, "Illegal value in parameter file %s (line %d): %s is out of bounds!", param_file, line, param_name);
+    error(1, "value = %d (min= %d max= %d)\n", *value, min, max);
   }
 }
 
@@ -306,16 +310,20 @@ void get_param_double(char const* param_name, double* value, int line,
   char* str = strtok(NULL, " \t\r\n");
 
   if (str == NULL) {
-    error(0, "Missing value in parameter file %s (line %d): %s is <undefined>\n",
+    error(1, "Missing value in parameter file %s (line %d): %s is <undefined>\n",
           param_file, line, param_name);
-  } else
-    *value = atof(str);
+  } else {
+    char* endptr = NULL;
+    *value = strtod(str, &endptr);
+    if (*value == 0 && endptr == str) {
+      error(0, "Illegal value in parameter file %s (line %d): %s is not a double!\n", param_file, line, param_name);
+      error(1, "value = %s\n", str);
+    }
+  }
 
   if (*value < min || *value > max) {
-    error(0,
-          "Illegal value in parameter file %s (line %d): %s is out of bounds! "
-          "(min: %d, max: %d, given: %d)\n",
-          param_file, line, param_name, min, max, *value);
+    error(0, "Illegal value in parameter file %s (line %d): %s is out of bounds!\n", param_file, line, param_name);
+    error(1, "value = %g (min=%g max=%g)\n", *value, min, max);
   }
 }
 
