@@ -15,8 +15,8 @@ def test_invalid_param_file_ntypes_empty(potfit):
     f.close()
     potfit.run(filename)
     assert potfit.has_error()
-    assert 'Illegal value' in potfit.stderr
-    assert 'out of bounds' in potfit.stderr
+    assert 'Missing value in parameter file' in potfit.stderr
+    assert 'ntypes is <undefined>' in potfit.stderr
 
 def test_invalid_param_file_ntypes_invalid(potfit):
     filename = 'param_file'
@@ -26,7 +26,7 @@ def test_invalid_param_file_ntypes_invalid(potfit):
     potfit.run(filename)
     assert potfit.has_error()
     assert 'Illegal value' in potfit.stderr
-    assert 'out of bounds' in potfit.stderr
+    assert 'ntypes is not an integer!' in potfit.stderr
 
 def test_invalid_param_file_ntypes_out_of_bounds(potfit):
     filename = 'param_file'
