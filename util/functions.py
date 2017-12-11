@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################
 #
 # functions.py:
@@ -6,10 +6,9 @@
 #
 ################################################################
 #
-#   Copyright 2013
-#             Institute for Theoretical and Applied Physics
-#             University of Stuttgart, D-70550 Stuttgart, Germany
-#             https://www.potfit.net/
+#   Copyright 2013-2017 -  the potfit development team
+#
+#   https://www.potfit.net
 #
 #################################################################
 #
@@ -33,8 +32,8 @@
 import random
 import sys
 
-if __name__ == "__main__":
-    print "\nPlease do not call this script directly."
+if __name__ == '__main__':
+    print('Please do not call this script directly!')
 
 class potfit_function(object):
     def __init__(self):
@@ -55,23 +54,22 @@ class potfit_function(object):
     def set_params(self, params):
         self.params = params
 
-    def write_pot_table(self):
+    def write_pot_table(self, output):
         if self.do_smooth != 0:
-            print "type %s_sc" % self.__class__.__name__
+            output.write('type {}_sc\n'.format(self.__class__.__name__))
         else:
-            print "type %s" % self.__class__.__name__
-        print "cutoff %s" % self.cutoff
+            output.write('type {}\n'.format(self.__class__.__name__))
+        output.write('cutoff {}\n'.format(self.cutoff))
         for i in range(len(self.params)):
-            print "%s\t%s" % (self.params[i][0], self.val_min_max(self.params[i][1],
-                self.params[i][2], self.params[i][3]))
+            output.write('{:12} {}\n'.format(self.params[i][0], self.val_min_max(self.params[i][1], self.params[i][2], self.params[i][3])))
         if self.do_smooth == 2:
-            print "h!"
+            output.write('h!\n')
 
     def val_min_max(self, val, vmin, vmax):
         if self.random:
-            return "{:.2f}\t{:.2f}\t{:.2f}".format(vmin+(vmax-vmin)*random.random(),vmin,vmax)
+            return '{:.2f} {:.2f} {:.2f}'.format(vmin+(vmax-vmin)*random.random(),vmin,vmax)
         else:
-            return "{:.2f}\t{:.2f}\t{:.2f}".format(val,vmin,vmax)
+            return '{:.2f} {:.2f} {:.2f}'.format(val,vmin,vmax)
 
     def get_num_params(self):
         if not self.params:
@@ -83,20 +81,20 @@ class potfit_function(object):
         try:
             self.function
         except:
-            sys.stderr.write("Error: The analytic function is not defined for {} potentials.\n".format(self.__class__.__name__))
+            sys.stderr.write('Error: The analytic function is not defined for {} potentials.\n'.format(self.__class__.__name__))
             sys.exit()
         return self.function
 
 class const(potfit_function):
     def __init__(self):
         super(const, self).__init__()
-        self.function = "{0}"
+        self.function = '{0}'
         self.params = [['c', 1, 0, 2]]
 
 class lj(potfit_function):
     def __init__(self):
         super(lj, self).__init__()
-        self.function = "4*{0}*(({1}/x)**12-({1}/x)**6)"
+        self.function = '4*{0}*(({1}/x)**12-({1}/x)**6)'
         self.params = [
                 ['epsilon', 0.1, 0, 1],
                 ['sigma', 2.5, 1, 4]]
@@ -104,7 +102,7 @@ class lj(potfit_function):
 class morse(potfit_function):
     def __init__(self):
         super(morse, self).__init__()
-        self.function = "{0}*((1-exp(-{1}*(x-{2})))**2-1)"
+        self.function = '{0}*((1-exp(-{1}*(x-{2})))**2-1)'
         self.params = [
                 ['D_e', 0.1, 0, 1],
                 ['a', 2, 1, 5],
@@ -113,7 +111,7 @@ class morse(potfit_function):
 class power(potfit_function):
     def __init__(self):
         super(power, self).__init__()
-        self.function = "{0}*x**{1}"
+        self.function = '{0}*x**{1}'
         self.params = [
                 ['alpha', 0.1, 0, 10],
                 ['beta', 2, 0, 10]]
@@ -129,7 +127,7 @@ class softshell(potfit_function):
 class power_decay(potfit_function):
     def __init__(self):
         super(power_decay, self).__init__()
-        self.function = "{0}*(1/x)**{1}"
+        self.function = '{0}*(1/x)**{1}'
         self.params = [
                 ['alpha', 1, 0.1, 10],
                 ['beta', 2, 1, 5]]
@@ -137,7 +135,7 @@ class power_decay(potfit_function):
 class exp_decay(potfit_function):
     def __init__(self):
         super(exp_decay, self).__init__()
-        self.function = "{0}*exp(-{1}*x)"
+        self.function = '{0}*exp(-{1}*x)'
         self.params = [
                 ['alpha', 4, 1, 20],
                 ['beta', 1, 0.5, 5]]
@@ -145,7 +143,7 @@ class exp_decay(potfit_function):
 class mexp_decay(potfit_function):
     def __init__(self):
         super(mexp_decay, self).__init__()
-        self.function = "{0}*exp(-{1}*(x-{2}))"
+        self.function = '{0}*exp(-{1}*(x-{2}))'
         self.params = [
                 ['alpha', 0.1, 0, 10],
                 ['beta', 0.1, 0, 10],
@@ -154,7 +152,7 @@ class mexp_decay(potfit_function):
 class exp_plus(potfit_function):
     def __init__(self):
         super(exp_plus, self).__init__()
-        self.function = "{0}*exp(-{1}*x)+{2}"
+        self.function = '{0}*exp(-{1}*x)+{2}'
         self.params = [
                 ['alpha', 1, 0, 10],
                 ['beta', 1, -10, 10],
@@ -163,10 +161,37 @@ class exp_plus(potfit_function):
 class sqrt(potfit_function):
     def __init__(self):
         super(sqrt, self).__init__()
-        self.function = "{0}*sqrt(x/{1})"
+        self.function = '{0}*sqrt(x/{1})'
         self.params = [
                 ['alpha', 0.1, 0, 10],
                 ['beta', 2, 0, 10]]
+
+class born(potfit_function):
+    def __init__(self):
+        super(born, self).__init__()
+        self.function = '{0}*exp(({4}-x)/{1})-{2}/x**6+{3}/x**8'
+        self.params = [
+                ['alpha', 0.1, 0, 10],
+                ['beta', 2, 0, 10],
+                ['gamma', 3, 0, 10],
+                ['delta', 2, 0, 10],
+                ['r_0', 2.5, 1, 8]]
+
+class harmonic(potfit_function):
+    def __init__(self):
+        super(harmonic, self).__init__()
+        self.function = '{0}*(x-{1})**2'
+        self.params = [
+                ['alpha', 0.1, 0, 10],
+                ['r_0', 2, 0, 8]]
+
+class acosharmonic(potfit_function):
+    def __init__(self):
+        super(acosharmonic, self).__init__()
+        self.function = '{0}*(acos(x)-{1})**2'
+        self.params = [
+                ['alpha', 0.1, 0, 10],
+                ['r_0', 2, 0, 8]]
 
 class eopp(potfit_function):
     def __init__(self):
@@ -208,7 +233,7 @@ class eopp_exp(potfit_function):
 class ms(potfit_function):
     def __init__(self):
         super(ms, self).__init__()
-        self.function = "{0}*(exp({1}*(1-x/{2}))-2*exp({1}/2*(1-x/{2})))"
+        self.function = '{0}*(exp({1}*(1-x/{2}))-2*exp({1}/2*(1-x/{2})))'
         self.params = [
                 ['D_e', 0.1, 0, 1],
                 ['a', 2, 1, 5],
@@ -217,7 +242,7 @@ class ms(potfit_function):
 class strmm(potfit_function):
     def __init__(self):
         super(strmm, self).__init__()
-        self.function = "2*{0}*exp(-{1}*(x-{4})/2)-{2}*(1+{3}*(x-{4})*exp(-{3}*(x-{4})))"
+        self.function = '2*{0}*exp(-{1}*(x-{4})/2)-{2}*(1+{3}*(x-{4})*exp(-{3}*(x-{4})))'
         self.params = [
                 ['alpha', 1, -10, 10],
                 ['beta', 1, -10, 10],
@@ -228,7 +253,7 @@ class strmm(potfit_function):
 class double_morse(potfit_function):
     def __init__(self):
         super(double_morse, self).__init__()
-        self.function = "{0}*(exp(-2*{1}*(x-{2}))-2*exp(-{1}*(x-{2})))+{3}*(exp(-2*{4}*(x-{5}))-2*exp(-{4}*(x-{5})))+{6}"
+        self.function = '{0}*(exp(-2*{1}*(x-{2}))-2*exp(-{1}*(x-{2})))+{3}*(exp(-2*{4}*(x-{5}))-2*exp(-{4}*(x-{5})))+{6}'
         self.params = [
                 ['E_1', 1, -10, 10],
                 ['alpha_1', 1, -10, 10],
@@ -241,7 +266,7 @@ class double_morse(potfit_function):
 class double_exp(potfit_function):
     def __init__(self):
         super(double_exp, self).__init__()
-        self.function = "{0}*exp(-{1}*(x-{2})**2)+exp(-{3}*(x-{4}))"
+        self.function = '{0}*exp(-{1}*(x-{2})**2)+exp(-{3}*(x-{4}))'
         self.params = [
                 ['a', 1, -10, 10],
                 ['beta_1', 1, -10, 10],
@@ -252,7 +277,7 @@ class double_exp(potfit_function):
 class poly_5(potfit_function):
     def __init__(self):
         super(poly_5, self).__init__()
-        self.function = "{0}+0.5*{1}*(x-1)**2+{2}*(x-1)**3+{3}*(r-1)**4+{5}*(r-1)**5"
+        self.function = '{0}+0.5*{1}*(x-1)**2+{2}*(x-1)**3+{3}*(r-1)**4+{5}*(r-1)**5'
         self.params = [
                 ['F_0', 1, -10, 10],
                 ['F_2', 1, -10, 10],
@@ -263,7 +288,7 @@ class poly_5(potfit_function):
 class buck(potfit_function):
     def __init__(self):
         super(buck, self).__init__()
-        self.function = "{0}*exp(-x/{1})-{2}*({1}/x)**6"
+        self.function = '{0}*exp(-x/{1})-{2}*({1}/x)**6'
         self.params = [
                 ['alpha', 1, -10, 10],
                 ['beta', 1, -10, 10],
@@ -272,7 +297,7 @@ class buck(potfit_function):
 class kawamura(potfit_function):
     def __init__(self):
         super(kawamura, self).__init__()
-        self.function = "{0}*{1}/x+{2}*({5}+{6})*exp(({3}+{4}-x)/({5}+{6}))-{7}*{8}/x**6"
+        self.function = '{0}*{1}/x+{2}*({5}+{6})*exp(({3}+{4}-x)/({5}+{6}))-{7}*{8}/x**6'
         self.params = [
                 ['z_1', 1, -10, 10],
                 ['z_2', 1, -10, 10],
@@ -287,7 +312,7 @@ class kawamura(potfit_function):
 class kawamura_mix(potfit_function):
     def __init__(self):
         super(kawamura_mix, self).__init__()
-        self.function = "{0}*{1}/x+{2}*({5}+{6})*exp(({3}+{4}-x)/({5}+{6}))-{7}*{8}/x**6+{2}*{9}*(exp(-2*{10}*(x-{11}))-2*exp(-{10}*(x-{11})))"
+        self.function = '{0}*{1}/x+{2}*({5}+{6})*exp(({3}+{4}-x)/({5}+{6}))-{7}*{8}/x**6+{2}*{9}*(exp(-2*{10}*(x-{11}))-2*exp(-{10}*(x-{11})))'
         self.params = [
                 ['z_1', 1, -10, 10],
                 ['z_2', 1, -10, 10],
@@ -305,7 +330,7 @@ class kawamura_mix(potfit_function):
 class mishin(potfit_function):
     def __init__(self):
         super(mishin, self).__init__()
-        self.function = "{0}*(x-{3})**{4}*exp(-{5}*(x-{3}))*(1+{1}*exp(-{5}*(x-{3})))+{2}"
+        self.function = '{0}*(x-{3})**{4}*exp(-{5}*(x-{3}))*(1+{1}*exp(-{5}*(x-{3})))+{2}'
         self.params = [
                 ['A_0', 1, -10, 10],
                 ['B_0', 1, -10, 10],
@@ -317,7 +342,7 @@ class mishin(potfit_function):
 class gen_lj(potfit_function):
     def __init__(self):
         super(gen_lj, self).__init__()
-        self.function = "{0}/({2}-{1})*({2}/(r/{3})**{1}-{1}/(x/{3})**{2})+{4}"
+        self.function = '{0}/({2}-{1})*({2}/(r/{3})**{1}-{1}/(x/{3})**{2})+{4}'
         self.params = [
                 ['V_0', 1, -10, 10],
                 ['b_1', 1, -10, 10],
@@ -328,7 +353,7 @@ class gen_lj(potfit_function):
 class gljm(potfit_function):
     def __init__(self):
         super(gljm, self).__init__()
-        self.function = "{0}/({2}-{1})*({2}/(r/{3})**{1}-{1}/(x/{3})**{2})+{4}+{5}*({6}*(x-{9})**{10}*exp(-{11}*(x-{9}))*(1+{7}*exp(-{11}*(x-{9})))+{8})"
+        self.function = '{0}/({2}-{1})*({2}/(r/{3})**{1}-{1}/(x/{3})**{2})+{4}+{5}*({6}*(x-{9})**{10}*exp(-{11}*(x-{9}))*(1+{7}*exp(-{11}*(x-{9})))+{8})'
         self.params = [
                 ['V_0', 1, -10, 10],
                 ['b_1', 1, -10, 10],
@@ -345,7 +370,7 @@ class gljm(potfit_function):
 class vas(potfit_function):
     def __init__(self):
         super(vas, self).__init__()
-        self.function = "exp({0}/(x-{1}))"
+        self.function = 'exp({0}/(x-{1}))'
         self.params = [
                 ['alpha', 1, -10, 10],
                 ['beta', 1, -10, 10]]
@@ -353,7 +378,7 @@ class vas(potfit_function):
 class vpair(potfit_function):
     def __init__(self):
         super(vpair, self).__init__()
-        self.function = "14.4*({0}/x**{1}-({4}*{3}*{3}+{5}*{2}*{2})/x**4*exp(-x/{6}))"
+        self.function = '14.4*({0}/x**{1}-({4}*{3}*{3}+{5}*{2}*{2})/x**4*exp(-x/{6}))'
         self.params = [
                 ['alpha', 1, -10, 10],
                 ['beta', 1, -10, 10],
@@ -366,7 +391,7 @@ class vpair(potfit_function):
 class universal(potfit_function):
     def __init__(self):
         super(universal, self).__init__()
-        self.function = "{0}*({2}/({2}-{1})*x**{1}-{1}/({2}-{1})*x**{2})+{3}*x"
+        self.function = '{0}*({2}/({2}-{1})*x**{1}-{1}/({2}-{1})*x**{2})+{3}*x'
         self.params = [
                 ['F_0', 1, -10, 10],
                 ['m', 1, 0, 20],
@@ -385,7 +410,7 @@ class bjs(potfit_function):
 class parabola(potfit_function):
     def __init__(self):
         super(parabola, self).__init__()
-        self.function = "{0}*x**2+{1}*x+{2}"
+        self.function = '{0}*x**2+{1}*x+{2}'
         self.params = [
                 ['alpha', 1, -10, 10],
                 ['beta', 1, -10, 10],

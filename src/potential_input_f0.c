@@ -196,7 +196,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
 
-#if defined(PAIR)
+#if defined(PAIR) && !defined(KIM)
   if (g_param.enable_cp) {
     init_chemical_potential(g_param.ntypes);
     int i = apt->number;
@@ -322,7 +322,7 @@ void read_chemical_potentials(apot_state* pstate)
   apot_table_t* apt = &g_pot.apot_table;
 
   char buffer[255];
-  char name[255];
+  char name[255] = {0};
 
   fpos_t filepos;
 
@@ -371,7 +371,8 @@ void read_chemical_potentials(apot_state* pstate)
       }
 
       if (strcmp("cp", name) != 0) {
-        fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
+        if (strlen(name))
+          fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
         error(1, "No chemical potentials found in %s.\n", pstate->filename);
       }
 
@@ -842,9 +843,6 @@ void read_analytic_potentials(apot_state* pstate)
             1,
             "Probably your potential definition is missing some parameters.\n");
       }
-
-      if (feof(pstate->pfile))
-        name[0] = '\0';
 
       buffer[0] = '\0';
 

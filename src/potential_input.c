@@ -87,6 +87,9 @@ void read_pot_table(char const* potential_filename)
     if (NULL == fgets(buffer, 1024, pfile))
       error(1, "Unexpected end of file in %s\n", potential_filename);
 
+    if (buffer[0] == '\n')
+      continue;
+
     // check if it is a header line
     if (buffer[0] != '#')
       error(1, "Header corrupt in file %s\n", potential_filename);
@@ -415,13 +418,15 @@ void allocate_memory_for_potentials(potential_state* pstate)
     apt->pmin[size] = (double*)Malloc(g_param.ntypes * sizeof(double));
     apt->pmax = (double**)Malloc((size + 1) * sizeof(double*));
     apt->pmax[size] = (double*)Malloc(g_param.ntypes * sizeof(double));
-  } else
+  } else {
 #endif  // PAIR
-
   apt->values = (double**)Malloc(size * sizeof(double*));
   apt->invar_par = (int**)Malloc(size * sizeof(int*));
   apt->pmin = (double**)Malloc(size * sizeof(double*));
   apt->pmax = (double**)Malloc(size * sizeof(double*));
+#if defined(PAIR)
+  }
+#endif
 
 #else  // !COULOMB
   apt->ratio = (double*)Malloc(g_param.ntypes * sizeof(double));

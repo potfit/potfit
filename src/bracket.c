@@ -55,8 +55,8 @@ void bracket(double* x_lower, double* x_minimum, double* x_upper,
   int last = 0; /* indicates whether upwards is left or right */
   long nb_eval = 0;
 
-  double* vecu = g_calc.linmin.vecu_bracket;
-  double* f_vec3 = g_calc.linmin.f_vec3;
+  static double* vecu = NULL;
+  static double* f_vec3 = NULL;
 
   if (vecu == NULL)
     vecu = (double*)Malloc(g_calc.ndimtot * sizeof(double));
