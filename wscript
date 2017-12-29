@@ -106,10 +106,6 @@ def options(opt):
                        default=False, help='Build binary with debug information')
     debug.add_argument('--asan', action='store_true', default=False,
                        help='Build binary with address sanitizer support')
-    debug.add_argument('--tsan', action='store_true', default=False,
-                       help='Build binary with thread sanitizer support')
-    debug.add_argument('--ubsan', action='store_true', default=False,
-                       help='Build binary with undefined behaviour sanitizer support')
     debug.add_argument('--profile', action='store_true',
                        default=False, help='Build binary with profiling support')
 
@@ -198,8 +194,6 @@ def _check_potfit_options(cnf):
                 cnf.env.option_files.extend(['rescale_meam.c'])
             else:
                 cnf.env.option_files.extend(['rescale.c'])
-    if sum([cnf.options.asan, cnf.options.tsan, cnf.options.ubsan]) > 1:
-        cnf.fatal('Only one sanitizer can be enabled at a time!')
 
     # set option specific target files
     if cnf.options.enable_evo:
@@ -222,7 +216,7 @@ def _check_compiler_options(cnf):
         c_compiler[_platform] = ['icc', 'clang', 'gcc']
     cnf.load('compiler_c')
 
-    if sum([cnf.options.asan, cnf.options.tsan, cnf.options.ubsan]) > 0:
+    if cnf.options.asan:
         if cnf.env.CC_NAME == 'icc':
             cnf.fatal('Intel compiler does not support sanitizer features')
 
@@ -358,14 +352,6 @@ def _generate_target_name(cnf):
         cnf.env.append_value('CFLAGS_POTFIT', ['-fsanitize=address'])
         cnf.env.append_value('LINKFLAGS_POTFIT', ['-fsanitize=address'])
         name += '_asan'
-    if cnf.options.tsan:
-        cnf.env.append_value('CFLAGS_POTFIT', ['-fsanitize=thread'])
-        cnf.env.append_value('LINKFLAGS_POTFIT', ['-fsanitize=thread'])
-        name += '_tsan'
-    if cnf.options.ubsan:
-        cnf.env.append_value('CFLAGS_POTFIT', ['-fsanitize=undefined'])
-        cnf.env.append_value('LINKFLAGS_POTFIT', ['-fsanitize=undefined'])
-        name += '_ubsan'
 
     if cnf.options.debug:
         name += '_debug'
