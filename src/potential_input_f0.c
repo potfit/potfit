@@ -774,7 +774,8 @@ void read_analytic_potentials(apot_state* pstate)
             "functions.c.\n",
             pstate->filename, name);
 
-    strcpy(apt->names[i], name);
+    apt->names[i] = (char*)Malloc((strlen(name) + 1) * sizeof(char));
+    strncpy(apt->names[i], name, strlen(name) + 1);
     apt->n_par[i] = apot_get_num_parameters(name);
 
     // add one parameter for cutoff function if _sc is found
@@ -829,7 +830,7 @@ void read_analytic_potentials(apot_state* pstate)
       fgetpos(pstate->pfile, &filepos);
 
       if (NULL == fgets(name, 255, pstate->pfile))
-        error(1, "Error reading analytic potentials\n");
+        error(1, "Error reading analytic potentials: not enough parameters for potential %s\n", apt->names[i]);
       while (name[0] == '#' && !feof(pstate->pfile) &&
              (j != apt->n_par[i] - 1)) {
         if (NULL == fgets(name, 255, pstate->pfile))

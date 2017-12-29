@@ -472,8 +472,7 @@ void allocate_memory_for_potentials(potential_state* pstate)
 #endif  // !COULOMB
 
   apt->names = (char**)Malloc(size * sizeof(char*));
-  for (int i = 0; i < size; i++)
-    apt->names[i] = (char*)Malloc(20 * sizeof(char));
+  // actual memory will be allocated dynamically when reading the name
 #endif  // APOT
 }
 
