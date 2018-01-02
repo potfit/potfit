@@ -62,7 +62,7 @@ typedef struct {
 void reset_cstate(config_state* cstate);
 void create_memory_for_config(config_state* cstate);
 void init_atom_memory(atom_t* atom);
-void read_box_vector(char const* pline, vector* pvect, config_state* cstate);
+void read_box_vector(char const* pline, vector* pvect, const char* name, config_state* cstate);
 void read_chemical_elements(char* psrc, config_state* cstate);
 void init_box_vectors(config_state* cstate);
 void init_neighbors(config_state* cstate, double* mindist);
@@ -209,17 +209,17 @@ void read_config(const char* filename)
         /* read the box vectors */
         case 'x':
         case 'X':
-          read_box_vector(res + 3, &cstate.box_x, &cstate);
+          read_box_vector(res + 3, &cstate.box_x, "#X", &cstate);
           cstate.have_box_vector |= 1 << 0;
           break;
         case 'y':
         case 'Y':
-          read_box_vector(res + 3, &cstate.box_y, &cstate);
+          read_box_vector(res + 3, &cstate.box_y, "#Y", &cstate);
           cstate.have_box_vector |= 1 << 1;
           break;
         case 'z':
         case 'Z':
-          read_box_vector(res + 3, &cstate.box_z, &cstate);
+          read_box_vector(res + 3, &cstate.box_z, "#Z", &cstate);
           cstate.have_box_vector |= 1 << 2;
           break;
 #if defined(CONTRIB)
@@ -233,22 +233,22 @@ void read_config(const char* filename)
                 error(1, "  This occured in %s on line %d\n", filename,
                       cstate.line);
               }
-              read_box_vector(res + 5, &cstate.cbox_o, &cstate);
+              read_box_vector(res + 5, &cstate.cbox_o, "#B_O", &cstate);
               cstate.have_contrib_box_vector |= 1 << 0;
               break;
             case 'a':
             case 'A':
-              read_box_vector(res + 5, &cstate.cbox_a, &cstate);
+              read_box_vector(res + 5, &cstate.cbox_a, "#B_A", &cstate);
               cstate.have_contrib_box_vector |= 1 << 1;
               break;
             case 'b':
             case 'B':
-              read_box_vector(res + 5, &cstate.cbox_b, &cstate);
+              read_box_vector(res + 5, &cstate.cbox_b, "#B_B", &cstate);
               cstate.have_contrib_box_vector |= 1 << 2;
               break;
             case 'c':
             case 'C':
-              read_box_vector(res + 5, &cstate.cbox_c, &cstate);
+              read_box_vector(res + 5, &cstate.cbox_c, "#B_C", &cstate);
               cstate.have_contrib_box_vector |= 1 << 3;
               break;
             case 's':
@@ -862,7 +862,7 @@ void create_memory_for_config(config_state* cstate)
   read_box_vector
 ****************************************************************/
 
-void read_box_vector(char const* pline, vector* pvect, config_state* cstate)
+void read_box_vector(char const* pline, vector* pvect, const char* name, config_state* cstate)
 {
   if (sscanf(pline, "%lf %lf %lf\n", &pvect->x, &pvect->y, &pvect->z) == 3) {
     if (g_param.global_cell_scale != 1.0) {
@@ -871,8 +871,8 @@ void read_box_vector(char const* pline, vector* pvect, config_state* cstate)
       pvect->z *= g_param.global_cell_scale;
     }
   } else
-    error(1, "%s:%d Error reading box vector\n", cstate->filename,
-          cstate->line);
+    error(1, "%s:%d Error reading box vector %s\n", cstate->filename,
+          cstate->line, name);
 }
 
 #if defined(CONTRIB)
