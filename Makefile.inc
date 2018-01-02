@@ -2,7 +2,7 @@
 #
 # potfit - open-source force-matching
 #
-# Copyright 2002-2017 - the potfit development team
+# Copyright 2002-2018 - the potfit development team
 #
 # https://www.potfit.net/
 #
@@ -210,7 +210,7 @@ ifeq (x86_64-gcc,${SYSTEM})
 
 ifeq (${MATH_LIB},__ACCELERATE__)
   OPT_FLAGS    += -Wa,-q
-  LIBS += -framework Accelerate 
+  LIBS += -framework Accelerate
 else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
   LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
