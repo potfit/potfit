@@ -15,7 +15,7 @@ kim_interactions = ['kim']
 
 # arrays for supported options
 tab_options = ['evo', 'mpi', 'stress', 'nopunish',
-               'dist', 'fweight', 'noresc', 'contrib']
+               'dist', 'fweight', 'resc', 'contrib']
 apot_options = ['evo', 'mpi', 'stress', 'nopunish', 'fweight', 'contrib']
 kim_options = ['evo', 'stress', 'fweight', 'contrib']
 
@@ -166,6 +166,7 @@ def build_targets(args):
                 call(['./waf', 'clean'])
                 retcode = call(['./waf', 'configure', *cmds, '-j', str(args.nproc)])
                 if retcode:
+                    print("Error when calling ./waf configure ({})".format(retcode))
                     sys.exit(1)
                 retcode = call(['./waf'])
                 if retcode:

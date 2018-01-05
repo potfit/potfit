@@ -15,7 +15,7 @@ kim_interactions = ['dummy']
 
 # arrays for supported options
 tab_options = ['evo', 'mpi', 'stress', 'nopunish',
-               'dist', 'fweight', 'noresc', 'contrib']
+               'dist', 'fweight', 'resc', 'contrib']
 apot_options = ['evo', 'mpi', 'stress', 'nopunish', 'fweight', 'contrib']
 kim_options = ['evo', 'stress', 'fweight', 'contrib']
 
