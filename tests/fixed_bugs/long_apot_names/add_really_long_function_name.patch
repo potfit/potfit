@@ -1,0 +1,31 @@
+diff --git a/src/functions.itm b/src/functions.itm
+index ebd85c9..4a15bc6 100644
+--- a/src/functions.itm
++++ b/src/functions.itm
+@@ -27,6 +27,7 @@
+  *
+  ****************************************************************/
+ 
++FUNCTION(thisisareallylongfunctionnameandhopefullyitwontcrashpotfit, 2);
+ FUNCTION(lj, 2);
+ FUNCTION(eopp, 6);
+ FUNCTION(morse, 3);
+diff --git a/src/functions_impl.c b/src/functions_impl.c
+index 3be1953..8bbf499 100644
+--- a/src/functions_impl.c
++++ b/src/functions_impl.c
+@@ -37,6 +37,14 @@
+ 
+ ****************************************************************/
+ 
++void thisisareallylongfunctionnameandhopefullyitwontcrashpotfit_value(const double r, const double* p, double* f)
++{
++  double x = (p[1] * p[1]) / (r * r);
++  x = x * x * x;
++
++  *f = 4.0 * p[0] * x * (x - 1.0);
++}
++
+ /****************************************************************
+   lennard-jones potential
+     http://dx.doi.org/doi:10.1098/rspa.1924.0082
