@@ -6,13 +6,16 @@ import string
 import subprocess
 
 class Potfit:
-    def __init__(self, location, model, interaction, options = []):
+    def __init__(self, location, model, interaction, options = [], **kwargs):
         self.cwd = os.path.dirname(location)
         self.model = model
         self.interaction = interaction
         self.options = options
         self.filenames = []
-        self._build()
+        if 'git_patch' in kwargs:
+          self._build(kwargs['git_patch'])
+        else:
+          self._build()
 
     def reset(self):
         self.filenames = []
@@ -178,7 +181,7 @@ class Potfit:
         f.write('{} {} {} {} {} {} {}\n'.format(random.randint(0, ntypes - 1), i * basic_size, j * basic_size, k * basic_size, -random.random(), -random.random(), -random.random()))
         f.write('{} {} {} {} {} {} {}\n'.format(random.randint(0, ntypes - 1), (i + 0.5) * basic_size + random.uniform(-0.2,0.2), (j + 0.5) * basic_size + random.uniform(-0.2,0.2), (k + 0.5) * basic_size + random.uniform(-0.2,0.2), -random.random(), -random.random(), -random.random()))
 
-    def _build(self):
+    def _build(self, git_patch = None):
         p = subprocess.Popen(['./waf', 'distclean'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
         p.wait()
         if p.returncode:
@@ -188,11 +191,20 @@ class Potfit:
         if p.returncode:
             print(p.stderr.read().decode('ascii'))
             pytest.fail('error calling "waf configure"')
+        if git_patch:
+          p = subprocess.Popen(['patch', '-Np1'], stdin=open(os.path.join(self.cwd, git_patch)), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
+          p.wait()
+          if p.returncode:
+            print(p.stderr.read().decode('ascii'))
+            pytest.fail('error patching potfit source tree')
         p = subprocess.Popen(['./waf', 'build'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
         p.wait()
+        if git_patch:
+          q = subprocess.Popen(['git', 'checkout', '--', 'src/'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
+          q.wait()
         if p.returncode:
-            print(p.stderr.read().decode('ascii'))
-            pytest.fail('error calling "waf build"')
+          print(p.stderr.read().decode('ascii'))
+          pytest.fail('error calling "waf build"')
         out = p.stdout.read().decode('ascii').split('\n')
         self.binary_name = [x for x in out if 'Linking' in x][0].split(' ')[2].split('/')[-1]
         if not len(self.binary_name):
