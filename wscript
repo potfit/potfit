@@ -190,7 +190,7 @@ def _check_potfit_options(cnf):
         if cnf.options.model == 'apot':
             cnf.fatal('Analytic potentials are incompatible with the rescale option!')
         else:
-            if cnf.interaction == 'meam':
+            if cnf.options.interaction == 'meam':
                 cnf.env.option_files.extend(['rescale_meam.c'])
             else:
                 cnf.env.option_files.extend(['rescale.c'])
