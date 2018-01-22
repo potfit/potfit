@@ -227,6 +227,13 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     }
     pt->begin[i] = pt->xcoord[pt->first[i]];
     pt->end[i] = pt->xcoord[pt->last[i]];
+#if !defined(RESCALE)
+    if (pt->begin[i] > 1.0 || pt->end[i] < 1.0) {
+      error(0, "Your embedding function has insufficient sampling points\n");
+      error(0, "For fixing the gauge degrees of freedom potfit needs to calculate F'(1.0)!\n");
+      error(1, "Please include F(1.0) in your potential definition (currently [%f,%f])\n", pt->begin[i], pt->end[i]);
+    }
+#endif
     /* pt->step is average step length.. */
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1.0 / pt->step[i];
