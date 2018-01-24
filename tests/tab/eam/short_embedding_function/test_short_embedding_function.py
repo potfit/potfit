@@ -81,7 +81,6 @@ def test_short_embedding_function_4(potfit):
     potfit.create_potential_file(POTENTIAL.format(1.1, 0.2))
     potfit.create_config_file(repeat_cell=3, seed=42)
     potfit.run()
-    print(potfit.stderr)
     assert potfit.has_error()
     assert 'tabulated eqdist' in potfit.stdout
     assert '3 EAM potentials' in potfit.stdout
