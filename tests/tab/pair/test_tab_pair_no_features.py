@@ -25,14 +25,14 @@ def test_tab_pair_no_features_simple(potfit):
 0.0000439510638516
 0.0
 ''')
-    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.create_config_file()
     potfit.run()
     assert potfit.has_no_error()
+    assert potfit.has_correct_atom_count()
     assert 'tabulated eqdist' in potfit.stdout
     assert '1 PAIR potentials' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
-    assert 'total of 54 atoms' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 3 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 163' in potfit.stdout
+    assert 'count 376' in potfit.stdout

@@ -46,7 +46,7 @@ POTENTIAL = '''
 def test_short_embedding_function_1(potfit):
     potfit.create_param_file()
     potfit.create_potential_file(POTENTIAL.format(1.1, 1.2))
-    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.create_config_file()
     potfit.run()
     assert potfit.has_error()
     assert 'tabulated eqdist' in potfit.stdout
@@ -58,7 +58,7 @@ def test_short_embedding_function_1(potfit):
 def test_short_embedding_function_2(potfit):
     potfit.create_param_file()
     potfit.create_potential_file(POTENTIAL.format(0.1, 0.2))
-    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.create_config_file()
     potfit.run()
     assert potfit.has_error()
     assert 'tabulated eqdist' in potfit.stdout
@@ -70,7 +70,7 @@ def test_short_embedding_function_2(potfit):
 def test_short_embedding_function_3(potfit):
     potfit.create_param_file()
     potfit.create_potential_file(POTENTIAL.format(0.1, 1.2))
-    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.create_config_file()
     potfit.run()
     assert potfit.has_no_error()
     assert 'tabulated eqdist' in potfit.stdout
@@ -79,7 +79,7 @@ def test_short_embedding_function_3(potfit):
 def test_short_embedding_function_4(potfit):
     potfit.create_param_file()
     potfit.create_potential_file(POTENTIAL.format(1.1, 0.2))
-    potfit.create_config_file(repeat_cell=3, seed=42)
+    potfit.create_config_file()
     potfit.run()
     assert potfit.has_error()
     assert 'tabulated eqdist' in potfit.stdout
