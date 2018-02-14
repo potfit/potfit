@@ -118,15 +118,6 @@ void read_config(const char* filename)
   for (int i = 0; i < g_param.ntypes * g_param.ntypes; i++)
     mindist[i] = DBL_MAX;
 
-  for (int i = 0; i < g_param.ntypes; i++) {
-    for (int j = 0; j < g_param.ntypes; j++) {
-      int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
-                       : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
-      mindist[k] = MAX(g_config.rcut[i * g_param.ntypes + j],
-                       mindist[i * g_param.ntypes + j]);
-    }
-  }
-
   // open file
   FILE* config_file = fopen(filename, "r");
 
