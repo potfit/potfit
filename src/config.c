@@ -524,15 +524,15 @@ void read_config(const char* filename)
 
 /* assign correct distances to different tables */
 #if defined(APOT)
-  double min = 10.0;
+  double min = DBL_MAX;
 
   /* pair potentials */
   for (int i = 0; i < g_param.ntypes; i++) {
     for (int j = 0; j < g_param.ntypes; j++) {
       k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                    : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
-      if (mindist[k] >= 99.9)
-        mindist[k] = 2.5;
+      if (mindist[k] == DBL_MAX)
+        error(1, "No atoms found in interaction range for potential %d!", k);
       g_config.rmin[i * g_param.ntypes + j] = mindist[k];
       g_pot.apot_table.begin[k] = mindist[k] * 0.95;
       g_pot.opt_pot.begin[k] = mindist[k] * 0.95;
@@ -631,6 +631,18 @@ void read_config(const char* filename)
 #if !defined(KIM)
   update_slots();
 #endif  // KIM
+
+#else  // APOT
+
+  // check if all potentials have atoms in their interaction range
+  for (int i = 0; i < g_param.ntypes; i++)
+    for (int j = 0; j < g_param.ntypes; j++) {
+      k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
+                   : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
+      if (mindist[k] == DBL_MAX)
+        error(1, "No atoms found in interaction range for potential %d!", k);
+    }
+
 #endif  // APOT
 
   print_minimal_distances_matrix(mindist);
