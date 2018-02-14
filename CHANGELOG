@@ -1,3 +1,9 @@
+20180214:
+- If there are no atoms inside a potential interaction range potfit will now report an error
+- Added tests for minimal distance calculation
+
+=======================================================
+
 potfit-next
 + completely rewrote internal potfit data structure
 + move source code into src directory
