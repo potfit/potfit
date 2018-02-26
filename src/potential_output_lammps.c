@@ -262,6 +262,10 @@ void write_pot_table_lammps()
   printf(
       "Potential in LAMMPS format is not available for pair interactions.\n");
   return;
+#elif defined(MEAM)
+  printf(
+      "Potential in LAMMPS format is not available for MEAM interactions.\n");
+  return;
 #else /* COULOMB */
 
   char filename[255];
