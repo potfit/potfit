@@ -9,3 +9,4 @@ build
 .lock*
 .cache
 bin/
+.pytest_cache
