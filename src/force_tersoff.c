@@ -862,6 +862,90 @@ void update_tersoff_pointers(double* xi)
       tersoff->R[i] = index++;
 #endif
       index += 2;
+      if (g_pot.have_globals) {
+        for (int j = 0; j < g_pot.apot_table.globals; ++j) {
+          for (int k = 0; k < g_pot.apot_table.n_glob[j]; ++k) {
+            if (g_pot.apot_table.global_idx[j][k][0] == i) {
+              switch (g_pot.apot_table.global_idx[j][k][1]) {
+                case 0:
+                  tersoff->A[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 1:
+                  tersoff->B[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 2:
+                  tersoff->lambda[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 3:
+                  tersoff->mu[i] = xi + g_pot.global_idx + j;
+                  break;
+#if defined(TERSOFFMOD)
+                case 4:
+                  tersoff->eta[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 5:
+                  tersoff->delta[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 6:
+                  tersoff->alpha[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 7:
+                  tersoff->beta[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 8:
+                  tersoff->c1[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 9:
+                  tersoff->c2[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 10:
+                  tersoff->c3[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 11:
+                  tersoff->c4[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 12:
+                  tersoff->c5[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 13:
+                  tersoff->h[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 14:
+                  tersoff->R1[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 15:
+                  tersoff->R2[i] = xi + g_pot.global_idx + j;
+                  break;
+#else
+                case 4:
+                  tersoff->gamma[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 5:
+                  tersoff->n[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 6:
+                  tersoff->c[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 7:
+                  tersoff->d[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 8:
+                  tersoff->h[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 9:
+                  tersoff->S[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 10:
+                  tersoff->R[i] = xi + g_pot.global_idx + j;
+                  break;
+#endif // TERSOFFMOD
+                default:
+                  error(1, "Invalid global parameter reference found!");
+              }
+            }
+          }
+        }
+      }
     }
 #if !defined(TERSOFFMOD)
     for (int i = 0; i < g_calc.paircol; i++) {
@@ -872,6 +956,22 @@ void update_tersoff_pointers(double* xi)
         tersoff->chi[i] = index++;
         tersoff->omega[i] = index++;
         index += 2;
+      }
+      if (g_pot.have_globals) {
+        for (int j = 0; j < g_pot.apot_table.globals; ++j) {
+          for (int k = 0; k < g_pot.apot_table.n_glob[j]; ++k) {
+            if (g_pot.apot_table.global_idx[j][k][0] == g_calc.paircol + i) {
+              switch (g_pot.apot_table.global_idx[j][k][1]) {
+                case 0:
+                  tersoff->chi[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 1:
+                  tersoff->omega[i] = xi + g_pot.global_idx + j;
+                  break;
+              }
+            }
+          }
+        }
       }
     }
   }
