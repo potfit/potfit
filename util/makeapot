@@ -126,7 +126,7 @@ def generate_stiweb_potential(args, interaction, output):
         output.write('\n')
         i.write_pot_table(output)
     output.write('\n')
-    output.write('type stiweb_lambda\n')
+    output.write('type lambda\n')
     output.write('cutoff {}\n'.format(args.cutoff))
     for i in range(args.ntypes):
         for j in range(args.ntypes):
