@@ -250,7 +250,7 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 #else
     error(0, "Wrong number of data columns in %s potential file \"%s\".\n",
           g_pot.interaction_name, pstate->filename);
-    error(1, "For g_param.ntypes=%d there should be %d, but there are %d.\n",
+    error(1, "For ntypes = %d there should be %d, but there are %d.\n",
           g_param.ntypes, npots, pstate->num_pots);
 #endif // KIM
   }
