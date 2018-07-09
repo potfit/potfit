@@ -116,10 +116,10 @@ def generate_stiweb_potential(args, interaction, output):
     table = []
     cols = interaction[2](args.ntypes)
     for i in range(paircol(args.ntypes)):
-        table.append(functions.stiweb_2())
+        table.append(functions.stiweb_2(args.cutoff))
         table[-1].set_properties(args.cutoff,0,args.random)
     for i in range(paircol(args.ntypes)):
-        table.append(functions.stiweb_3())
+        table.append(functions.stiweb_3(args.cutoff))
         table[-1].set_properties(args.cutoff,0,args.random)
     write_header(args.interaction, cols, output)
     for i in table:

@@ -460,7 +460,7 @@ class tersoff_mix(potfit_function):
                 ['omega', 1, -10, 10]]
 
 class stiweb_2(potfit_function):
-    def __init__(self):
+    def __init__(self, cutoff):
         super(stiweb_2, self).__init__()
         self.params = [
                 ['A', 1, -10, 10],
@@ -468,11 +468,11 @@ class stiweb_2(potfit_function):
                 ['p', 1, -10, 10],
                 ['q', 1, -10, 10],
                 ['delta', 1, -10, 10],
-                ['a', 1, -10, 10]]
+                ['a', 1, 0, cutoff]]
 
 class stiweb_3(potfit_function):
-    def __init__(self):
+    def __init__(self, cutoff):
         super(stiweb_3, self).__init__()
         self.params = [
                 ['gamma', 1, -10, 10],
-                ['b', 1, -10, 10]]
+                ['b', 1, 0, cutoff]]
