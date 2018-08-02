@@ -48,7 +48,7 @@
 
 double rescale(pot_table_t* pt, double upper, int flag)
 {
-  int i, j, h, col, col2, type1, type2, mincol, maxcol, first, vals, sign;
+  int i, j, h, col, col2, type1, type2, mincol = 999, maxcol = 0, first, vals, sign;
   double min = 1e100, max = -1e100;
   double pos, grad, a;
   atom_t* atom;

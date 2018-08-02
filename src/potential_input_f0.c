@@ -322,7 +322,6 @@ void read_chemical_potentials(apot_state* pstate)
   apot_table_t* apt = &g_pot.apot_table;
 
   char buffer[255];
-  char name[255] = {0};
 
   fpos_t filepos;
 
@@ -362,17 +361,8 @@ void read_chemical_potentials(apot_state* pstate)
                      &apt->pmin[i][j], &apt->pmax[i][j]))
         error(1, "Could not read chemical potential for %d. atomtype.\n", j);
 
-      /* split cp and _# */
-      char* token = strchr(buffer, '_');
-
-      if (token != NULL) {
-        strncpy(name, buffer, strlen(buffer) - strlen(token));
-        name[strlen(buffer) - strlen(token)] = '\0';
-      }
-
-      if (strcmp("cp", name) != 0) {
-        if (strlen(name))
-          fprintf(stderr, "Found \"%s\" instead of \"cp\"\n", name);
+      if (strncmp("cp_", buffer, 3) != 0) {
+        error(0, "Found \"%s\" instead of \"cp_<element>\"\n", buffer);
         error(1, "No chemical potentials found in %s.\n", pstate->filename);
       }
 
@@ -757,11 +747,9 @@ void read_analytic_potentials(apot_state* pstate)
 
     // split name and _sc
     char* token = strrchr(name, '_');
-    if (token != NULL && strcmp(token + 1, "sc") == 0) {
-      strncpy(buffer, name, strlen(name) - 3);
-      buffer[strlen(name) - 3] = '\0';
-      strcpy(name, buffer);
+    if (token != NULL && strcmp(token, "_sc") == 0) {
       g_pot.smooth_pot[i] = 1;
+      name[strlen(name) - 3] = '\0';
     }
 
     // check if potential is "pohlong" and change it to bjs
@@ -775,7 +763,7 @@ void read_analytic_potentials(apot_state* pstate)
             pstate->filename, name);
 
     apt->names[i] = (char*)Malloc((strlen(name) + 1) * sizeof(char));
-    strncpy(apt->names[i], name, strlen(name) + 1);
+    sprintf(apt->names[i], "%s", name);
     apt->n_par[i] = apot_get_num_parameters(name);
 
     // add one parameter for cutoff function if _sc is found
@@ -851,23 +839,20 @@ void read_analytic_potentials(apot_state* pstate)
                            &apt->pmin[i][j], &apt->pmax[i][j]);
 
       if (strlen(buffer))
-        strncpy(apt->param_name[i][j], buffer, 30);
+        sprintf(apt->param_name[i][j], "%s", buffer);
 
       /* if last char of name is "!" we have a global parameter */
       if (strrchr(apt->param_name[i][j], '!') != NULL) {
-        apt->param_name[i][j][strlen(apt->param_name[i][j]) - 1] = '\0';
         int l = -1;
         for (int k = 0; k < apt->globals; k++) {
-          if (strcmp(apt->param_name[i][j],
-                     apt->param_name[g_pot.global_pot][k]) == 0)
+          if (strncmp(apt->param_name[i][j],
+            apt->param_name[g_pot.global_pot][k], strlen(apt->param_name[i][j])) == 0)
             l = k;
         }
 
         if (-1 == l)
-          error(1, "Could not find global parameter %s!\n",
+          error(1, "Could not find global parameter %s\n",
                 apt->param_name[i][j]);
-
-        sprintf(apt->param_name[i][j], "%s!", apt->param_name[i][j]);
 
         /* write index array for global parameters */
         apt->n_glob[l]++;

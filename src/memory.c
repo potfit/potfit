@@ -216,9 +216,8 @@ void init_interaction_name(const char* name)
 {
   int len = strlen(name);
   char* temp = (char*)Malloc((len + 1) * sizeof(char));
-  strncpy(temp, name, len);
-  temp[len] = '\0';
-  g_pot.interaction_name = (const char*)temp;
+  sprintf(temp, "%s", name);
+  g_pot.interaction_name = temp;
 }
 
 /****************************************************************

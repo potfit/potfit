@@ -351,6 +351,7 @@ void read_pot_line_G(char* pbuf, potential_state* pstate)
 void read_pot_line_C(char* pbuf, potential_state* pstate)
 {
   char names[g_param.ntypes][5];
+  char buffer[5];
 
   // check if there are enough items
   if (pstate->have_format) {
@@ -359,9 +360,12 @@ void read_pot_line_C(char* pbuf, potential_state* pstate)
       if (str == NULL)
         error(1, "Not enough items in #C header line in file %s.\n",
               pstate->filename);
-      int len = max(strlen(str), 4);
-      strncpy(names[i], str, len);
-      names[i][len] = '\0';
+      if (strlen(str) > 4) {
+        memset(buffer, 0, sizeof(buffer));
+        strncpy(buffer, str, 4);
+        str = buffer;
+      }
+      sprintf(names[i], "%s", str);
     }
   } else
     error(1, "#C needs to be specified after #F in file %s\n", pstate->filename);
@@ -369,8 +373,7 @@ void read_pot_line_C(char* pbuf, potential_state* pstate)
   g_config.elements = (char const**)Malloc(g_param.ntypes * sizeof(char*));
   for (int i = 0; i < g_param.ntypes; i++) {
     g_config.elements[i] = (char*)Malloc((strlen(names[i]) + 1) * sizeof(char));
-    strncpy((char*)g_config.elements[i], names[i], strlen(names[i]));
-    *((char*)g_config.elements[i] + strlen(names[i])) = '\0';
+    sprintf((char*)g_config.elements[i], "%s", names[i]);
   }
 }
 

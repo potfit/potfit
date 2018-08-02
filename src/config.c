@@ -916,13 +916,17 @@ void read_sphere_center(char const* pline, config_state* cstate)
 void read_chemical_elements(char* psrc, config_state* cstate)
 {
   int i = 0;
-  char const* pchar = strtok(psrc + 3, " \t\r\n");
+  const char* pchar = strtok(psrc + 3, " \t\r\n");
+  char buffer[5];
 
   if (!cstate->num_fixed_elements) {
     while (pchar != NULL && i < g_param.ntypes) {
-      int len = max(strlen(pchar), 4);
-      strncpy((char*)g_config.elements[i], pchar, len);
-      *((char*)g_config.elements[i] + len) = '\0';
+      if (strlen(pchar) > 4) {
+        memset(buffer, 0, sizeof(buffer));
+        strncpy(buffer, pchar, sizeof(buffer) - 1);
+        pchar = buffer;
+      }
+      sprintf((char*)g_config.elements[i], "%s", pchar);
       pchar = strtok(NULL, " \t\r\n");
       i++;
       cstate->num_fixed_elements++;
@@ -930,10 +934,13 @@ void read_chemical_elements(char* psrc, config_state* cstate)
   } else {
     while (pchar != NULL && i < g_param.ntypes) {
       if (strcmp(pchar, g_config.elements[i]) != 0) {
-        if (atoi(g_config.elements[i]) == i && i > cstate->num_fixed_elements) {
-          int len = max(strlen(pchar), 4);
-          strncpy((char*)g_config.elements[i], pchar, len);
-          *((char*)g_config.elements[i] + len) = '\0';
+        if (atoi(g_config.elements[i]) == i && i >= cstate->num_fixed_elements) {
+          if (strlen(pchar) > 4) {
+            memset(buffer, 0, sizeof(buffer));
+            strncpy(buffer, pchar, sizeof(buffer) - 1);
+            pchar = buffer;
+          }
+          sprintf((char*)g_config.elements[i], "%s", pchar);
           cstate->num_fixed_elements++;
         } else {
           error(0, "Mismatch found in configuration %d, line %d.\n",

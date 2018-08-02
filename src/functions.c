@@ -93,8 +93,7 @@ void add_potential(const char* name, int npar, fvalue_pointer function)
       function_table.fvalue, (k + 1) * sizeof(fvalue_pointer));
 
   // assign values
-  strncpy(function_table.name[k], name, strlen(name));
-  function_table.name[k][strlen(name)] = '\0';
+  sprintf(function_table.name[k], "%s", name);
   function_table.num_params[k] = npar;
   function_table.fvalue[k] = function;
 
