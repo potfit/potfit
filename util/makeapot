@@ -89,12 +89,12 @@ def create_pot_table(args):
             except:
                 sys.stderr.write('Could not read your potential list: >> {} << unknown.\n'.format(pot))
                 sys.stderr.write('Please use the following syntax only: pot or 3*pot\n')
-                sys.exit()
+                sys.exit(1)
             name = items[1]
         else:
             sys.stderr.write('\nCould not read your potential list: >> {} << unknown.\n'.format(pot))
             sys.stderr.write('Please use the following syntax only: pot or 3*pot\n')
-            sys.exit()
+            sys.exit(1)
         do_smooth = 0
         if name.endswith('_sc'):
             do_smooth = 1
@@ -108,7 +108,7 @@ def create_pot_table(args):
            except:
                 sys.stderr.write("Could not find the function type >> %s <<\n\n" % name)
                 write_pot_list()
-                sys.exit()
+                sys.exit(1)
     return table
 
 
@@ -155,7 +155,7 @@ def generate_regular_potential(args, interaction, output):
     if len(pot_table) != cols:
         sys.stderr.write('Wrong number of potential functions given!\n')
         sys.stderr.write('A {} potential for {} atom types requires {} functions, you specified {}.\n'.format(args.interaction, args.ntypes, cols, len(pot_table)))
-        sys.exit()
+        sys.exit(1)
     write_header(args.interaction, cols, output)
     if args.cp and args.type == 'pair':
         write_cp(n, output)
@@ -209,16 +209,16 @@ def main():
 
     if args.list:
         write_list()
-        sys.exit()
+        sys.exit(0)
 
     # Check for sane arguments
     if args.ntypes < 1:
         sys.stderr.write("The number of atom types cannot be less than 1\n")
-        sys.exit()
+        sys.exit(1)
 
     if args.cutoff < 0:
         sys.stderr.write("The cutoff distance needs to be positive!\n")
-        sys.exit()
+        sys.exit(1)
 
     # Check interaction type
     for item in INTERACTIONS:
@@ -236,7 +236,7 @@ def main():
     else:
         if not args.functions:
             sys.stderr.write('Error: Interaction {} requires list of potential functions (-f argument)\n'.format(args.interaction))
-            sys.exit()
+            sys.exit(1)
         generate_regular_potential(args, interaction, args.outfile)
     args.outfile.close()
 
