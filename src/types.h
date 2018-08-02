@@ -356,7 +356,7 @@ typedef struct {
   atom_t* atoms;      /* atoms array */
   atom_t* conf_atoms; /* Atoms in configuration */
 
-  char const** elements; /* element names from configuration files */
+  const char** elements; /* element names from configuration files */
 
   int** na_type; /* number of atoms per atom type */
 

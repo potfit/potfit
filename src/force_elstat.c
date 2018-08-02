@@ -600,8 +600,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
         /* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces
          */
-        double rp_i, rp_j, pp_ij, tmp_1, tmp_2;
-        double grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail,
+        double rp_i = 0, rp_j = 0, pp_ij, tmp_1, tmp_2;
+        double grad_1, grad_2, srval = 0, srgrad = 0, srval_tail, srgrad_tail,
             fnval_sum, grad_sum;
         for (i = 0; i < g_config.inconf[h]; i++) { /* atoms */
           atom =
