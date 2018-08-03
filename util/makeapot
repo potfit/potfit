@@ -121,7 +121,7 @@ def generate_stiweb_potential(args, interaction, output):
     for i in range(paircol(args.ntypes)):
         table.append(functions.stiweb_3(args.cutoff))
         table[-1].set_properties(args.cutoff,0,args.random)
-    write_header(args.interaction, cols, output)
+    write_header(args, cols, output)
     for i in table:
         output.write('\n')
         i.write_pot_table(output)
@@ -143,7 +143,7 @@ def generate_tersoff_potential(args, interaction, output):
     for i in range(paircol(args.ntypes) - args.ntypes):
         table.append(functions.tersoff_mix())
         table[-1].set_properties(args.cutoff, 0, args.random)
-    write_header(args.interaction, cols, output)
+    write_header(args, cols, output)
     for i in table:
         output.write('\n')
         i.write_pot_table(output)
@@ -156,7 +156,7 @@ def generate_regular_potential(args, interaction, output):
         sys.stderr.write('Wrong number of potential functions given!\n')
         sys.stderr.write('A {} potential for {} atom types requires {} functions, you specified {}.\n'.format(args.interaction, args.ntypes, cols, len(pot_table)))
         sys.exit(1)
-    write_header(args.interaction, cols, output)
+    write_header(args, cols, output)
     if args.cp and args.type == 'pair':
         write_cp(n, output)
     if args.global_cutoff:
@@ -166,9 +166,11 @@ def generate_regular_potential(args, interaction, output):
         i.write_pot_table(output)
 
 
-def write_header(interaction, cols, output):
+def write_header(args, cols, output):
     output.write('#F 0 {}\n'.format(cols))
-    output.write('#T {}\n'.format(interaction.upper()))
+    output.write('#T {}\n'.format(args.interaction.upper()))
+    if args.elements:
+        output.write('#C {}\n'.format(' '.join([s for s in args.elements.split(',')])))
     output.write('#I' + cols * '{}'.format(' 0') + '\n')
     output.write('#E\n')
 
@@ -202,9 +204,10 @@ def main():
     parser.add_argument('-i', type=str, dest='interaction', metavar='INTERACTION', choices=[x[0] for x in sorted(INTERACTIONS)] ,
                         help='supported interaction types are: {}'.format(', '.join([x[0] for x in sorted(INTERACTIONS)])), required=True)
     parser.add_argument('-l', '--list', action='store_true', help='list options which are available')
-    parser.add_argument('-cp', action='store_true', help='enable chemical potentials (only for pair)')
+    parser.add_argument('--cp', action='store_true', help='enable chemical potentials (only for pair)')
     parser.add_argument('-f', type=str, dest='functions', help='comma separated list of potential functions, either name or i*name, where i=1,2,3,...')
     parser.add_argument('-o', dest='outfile', type=argparse.FileType('w'), help='write output to this file instead of stdout')
+    parser.add_argument('-e', type=str, dest='elements', help='comma separated list of elements for #C header line')
     args = parser.parse_args()
 
     if args.list:
