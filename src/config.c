@@ -60,7 +60,7 @@ typedef struct {
 } config_state;
 
 void reset_cstate(config_state* cstate);
-void create_memory_for_config(config_state* cstate);
+void create_memory_for_configs(const char* filename);
 void init_atom_memory(atom_t* atom);
 void read_box_vector(char const* pline, vector* pvect, const char* name, config_state* cstate);
 void read_chemical_elements(char* psrc, config_state* cstate);
@@ -118,6 +118,8 @@ void read_config(const char* filename)
   for (int i = 0; i < g_param.ntypes * g_param.ntypes; i++)
     mindist[i] = DBL_MAX;
 
+  create_memory_for_configs(filename);
+
   // open file
   FILE* config_file = fopen(filename, "r");
 
@@ -148,22 +150,16 @@ void read_config(const char* filename)
     } else
       continue;
 
-// check if there are enough atoms, 2 for pair and 3 for manybody potentials
+    // check if there are enough atoms, 2 for pair and 3 for manybody potentials
 #if defined(THREEBODY)
-    int min_atom_count = 3;
+    if (cstate.atom_count < 3)
 #else
-    int min_atom_count = 2;
+    if (cstate.atom_count < 2)
 #endif  // THREEBODY
-    if (cstate.atom_count < min_atom_count)
       error(1,
             "Configuration %d (starting on line %d) has not enough atoms, "
             "please remove it.\n",
             g_config.nconf + 1, cstate.line);
-
-    create_memory_for_config(&cstate);
-
-    for (int i = g_config.natoms; i < g_config.natoms + cstate.atom_count; i++)
-      memset(g_config.atoms + i, 0, sizeof(atom_t));
 
     g_config.inconf[g_config.nconf] = cstate.atom_count;
     g_config.cnfstart[g_config.nconf] = g_config.natoms;
@@ -402,12 +398,6 @@ void read_config(const char* filename)
       "Reading the config file >> %s << and calculating neighbor lists ... "
       "done\n",
       filename);
-
-  // calculate the total number of the atom types
-  g_config.na_type =
-      (int**)Realloc(g_config.na_type, (g_config.nconf + 1) * sizeof(int*));
-
-  g_config.na_type[g_config.nconf] = (int*)Malloc(g_param.ntypes * sizeof(int));
 
   for (int i = 0; i < g_config.nconf; i++)
     for (int j = 0; j < g_param.ntypes; j++)
@@ -766,99 +756,87 @@ void reset_cstate(config_state* cstate)
   cstate->have_energy = 0;
   cstate->have_stress = 0;
   cstate->have_stress = 0;
-  cstate->box_x.x = 0.0;
-  cstate->box_x.y = 0.0;
-  cstate->box_x.z = 0.0;
-  cstate->box_y.x = 0.0;
-  cstate->box_y.y = 0.0;
-  cstate->box_y.z = 0.0;
-  cstate->box_z.x = 0.0;
-  cstate->box_z.y = 0.0;
-  cstate->box_z.z = 0.0;
-  cstate->tbox_x.x = 0.0;
-  cstate->tbox_x.y = 0.0;
-  cstate->tbox_x.z = 0.0;
-  cstate->tbox_y.x = 0.0;
-  cstate->tbox_y.y = 0.0;
-  cstate->tbox_y.z = 0.0;
-  cstate->tbox_z.x = 0.0;
-  cstate->tbox_z.y = 0.0;
-  cstate->tbox_z.z = 0.0;
-  cstate->cell_scale.x = 0.0;
-  cstate->cell_scale.y = 0.0;
-  cstate->cell_scale.z = 0.0;
+  memset(&cstate->box_x, 0, 3 * sizeof(double));
+  memset(&cstate->box_y, 0, 3 * sizeof(double));
+  memset(&cstate->box_z, 0, 3 * sizeof(double));
+  memset(&cstate->tbox_x, 0, 3 * sizeof(double));
+  memset(&cstate->tbox_y, 0, 3 * sizeof(double));
+  memset(&cstate->tbox_z, 0, 3 * sizeof(double));
+  memset(&cstate->cell_scale, 0, 3 * sizeof(double));
   cstate->have_box_vector = 0;
   cstate->stresses = NULL;
 #if defined(CONTRIB)
   cstate->have_contrib_box_vector = 0;
   cstate->n_spheres = 0;
-  cstate->cbox_o.x = 0.0;
-  cstate->cbox_o.y = 0.0;
-  cstate->cbox_o.z = 0.0;
-  cstate->cbox_a.x = 0.0;
-  cstate->cbox_a.y = 0.0;
-  cstate->cbox_a.z = 0.0;
-  cstate->cbox_b.x = 0.0;
-  cstate->cbox_b.y = 0.0;
-  cstate->cbox_b.z = 0.0;
-  cstate->cbox_c.x = 0.0;
-  cstate->cbox_c.y = 0.0;
-  cstate->cbox_c.z = 0.0;
+  memset(&cstate->cbox_o, 0, 3 * sizeof(double));
+  memset(&cstate->cbox_a, 0, 3 * sizeof(double));
+  memset(&cstate->cbox_b, 0, 3 * sizeof(double));
+  memset(&cstate->cbox_c, 0, 3 * sizeof(double));
   cstate->sphere_center = NULL;
   cstate->sphere_radius = NULL;
 #endif  // CONTRIB
 }
 
 /****************************************************************
-  create_memory_for_config
+  create_memory_for_configs
 ****************************************************************/
 
-void create_memory_for_config(config_state* cstate)
+void create_memory_for_configs(const char* filename)
 {
-  int nconf = g_config.nconf + 1;
+  int atom_count = 0;
+  int config_count = 0;
+  char buffer[1024];
 
-  // increase memory for this many additional atoms
-  g_config.atoms = (atom_t*)Realloc(
-      g_config.atoms, (g_config.natoms + cstate->atom_count) * sizeof(atom_t));
+  FILE* config_file = fopen(filename, "r");
+  if (config_file == NULL)
+    error(1, "Could not open file %s\n", filename);
 
-  for (int i = 0; i < cstate->atom_count; i++)
-    g_config.atoms[g_config.natoms + i].neigh =
-        (neigh_t*)Malloc(sizeof(neigh_t));
+  int line = 1;
 
-  g_config.coheng = (double*)Realloc(g_config.coheng, nconf * sizeof(double));
-  g_config.coheng[g_config.nconf] = 0.0;
+  while (1) {
+    char* res = fgets(buffer, 1024, config_file);
+    if (feof(config_file))
+      break;
+    if (res == NULL)
+      error(1, "Unexpected end of file in aaa %s %d\n", filename, line);
 
-  g_config.conf_weight =
-      (double*)Realloc(g_config.conf_weight, nconf * sizeof(double));
-  g_config.conf_weight[g_config.nconf] = 1.0;
+    int count = 0;
+    line++;
 
-  g_config.volume = (double*)Realloc(g_config.volume, nconf * sizeof(double));
-  g_config.volume[g_config.nconf] = 0.0;
+    if (res[0] == '#' && res[1] == 'N') {
+      if (sscanf(res + 3, "%d", &count) < 1)
+        error(1, "%s: Error in atom number specification on line %d\n", filename, line);
+      atom_count += count;
+      config_count++;
+    }
+  }
+
+  fclose(config_file);
+
+  g_config.atoms = (atom_t*)Malloc(atom_count * sizeof(atom_t));
+
+//   for (int i = 0; i < atom_count; ++i)
+//     g_config.atoms[i].neigh = (neigh_t*)Malloc(sizeof(neigh_t));
+
+  g_config.coheng = (double*)Malloc(config_count * sizeof(double));
+
+  g_config.conf_weight = (double*)Malloc(config_count * sizeof(double));
+  for (int i = 0; i < config_count; ++i)
+    g_config.conf_weight[i] = 1.0;
+
+  g_config.volume = (double*)Malloc(config_count * sizeof(double));
 
 #if defined(STRESS)
-  g_config.stress =
-      (sym_tens*)Realloc(g_config.stress, nconf * sizeof(sym_tens));
-  memset(&g_config.stress[g_config.nconf], 0,
-         sizeof(g_config.stress[g_config.nconf]));
-  g_config.usestress = (int*)Realloc(g_config.usestress, nconf * sizeof(int));
-  g_config.usestress[g_config.nconf] = 0;
+  g_config.stress = (sym_tens*)Malloc(config_count * sizeof(sym_tens));
+  g_config.usestress = (int*)Malloc(config_count * sizeof(int));
 #endif  // STRESS
 
-  g_config.inconf = (int*)Realloc(g_config.inconf, nconf * sizeof(int));
-  g_config.inconf[g_config.nconf] = 0;
-
-  g_config.cnfstart = (int*)Realloc(g_config.cnfstart, nconf * sizeof(int));
-  g_config.cnfstart[g_config.nconf] = 0;
-
-  g_config.useforce = (int*)Realloc(g_config.useforce, nconf * sizeof(int));
-  g_config.useforce[g_config.nconf] = 0;
-
-  g_config.na_type =
-      (int**)Realloc(g_config.na_type, (nconf + 1) * sizeof(int*));
-  g_config.na_type[g_config.nconf] = (int*)Malloc(g_param.ntypes * sizeof(int));
-
-  for (int i = 0; i < g_param.ntypes; i++)
-    g_config.na_type[g_config.nconf][i] = 0;
+  g_config.inconf = (int*)Malloc(config_count * sizeof(int));
+  g_config.cnfstart = (int*)Malloc(config_count * sizeof(int));
+  g_config.useforce = (int*)Malloc(config_count * sizeof(int));
+  g_config.na_type = (int**)Malloc((config_count + 1) * sizeof(int*));
+  for (int i = 0; i <= config_count; ++i)
+    g_config.na_type[i] = (int*)Malloc(g_param.ntypes * sizeof(int));
 }
 
 /****************************************************************
@@ -1031,7 +1009,9 @@ void init_neighbors(config_state* cstate, double* mindist)
 
   // compute the neighbor table
   for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; i++) {
-/* loop over all atoms for threebody interactions */
+
+    // loop over all atoms for threebody interactions
+    int num_neigh = 0;
 #if defined(THREEBODY)
     for (int j = g_config.natoms; j < g_config.natoms + cstate->atom_count; j++)
 #else
@@ -1039,7 +1019,51 @@ void init_neighbors(config_state* cstate, double* mindist)
 #if defined(KIM)
     if (g_kim.is_half_neighbors != 1)
       j_start = g_config.natoms;
-#endif
+#endif // KIM
+    for (int j = j_start; j < g_config.natoms + cstate->atom_count; j++)
+#endif // THREEBODY
+    {
+      d.x = g_config.atoms[j].pos.x - g_config.atoms[i].pos.x;
+      d.y = g_config.atoms[j].pos.y - g_config.atoms[i].pos.y;
+      d.z = g_config.atoms[j].pos.z - g_config.atoms[i].pos.z;
+
+      for (int ix = -cstate->cell_scale.x; ix <= cstate->cell_scale.x; ix++) {
+        for (int iy = -cstate->cell_scale.y; iy <= cstate->cell_scale.y; iy++) {
+          for (int iz = -cstate->cell_scale.z; iz <= cstate->cell_scale.z;
+              iz++) {
+            if ((i == j) && (ix == 0) && (iy == 0) && (iz == 0))
+              continue;
+            dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x +
+                  iz * cstate->box_z.x;
+            dd.y = d.y + ix * cstate->box_x.y + iy * cstate->box_y.y +
+                  iz * cstate->box_z.y;
+            dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z +
+                  iz * cstate->box_z.z;
+            double r = sqrt(SPROD(dd, dd));
+            int type1 = g_config.atoms[i].type;
+            int type2 = g_config.atoms[j].type;
+
+            if (r <= g_config.rcut[type1 * g_param.ntypes + type2]) {
+              if (r <= g_config.rmin[type1 * g_param.ntypes + type2]) {
+                warning("Configuration %i: Distance %f\n", cstate->config, r);
+                warning(" atom %d (type %d) at pos: %f %f %f\n",
+                        i - g_config.natoms, type1, g_config.atoms[i].pos.x,
+                        g_config.atoms[i].pos.y, g_config.atoms[i].pos.z);
+                warning(" atom %d (type %d) at pos: %f %f %f\n",
+                        j - g_config.natoms, type2, dd.x, dd.y, dd.z);
+              }
+              num_neigh++;
+            }
+          }
+        }
+      }
+    }
+    if (num_neigh)
+      g_config.atoms[i].neigh = (neigh_t*)Malloc(num_neigh * sizeof(neigh_t));
+
+#if defined(THREEBODY)
+    for (int j = g_config.natoms; j < g_config.natoms + cstate->atom_count; j++)
+#else
     for (int j = j_start; j < g_config.natoms + cstate->atom_count; j++)
 #endif  // THREEBODY
     {
@@ -1072,9 +1096,6 @@ void init_neighbors(config_state* cstate, double* mindist)
                 warning(" atom %d (type %d) at pos: %f %f %f\n",
                         j - g_config.natoms, type2, dd.x, dd.y, dd.z);
               }
-              g_config.atoms[i].neigh = (neigh_t*)Realloc(
-                  g_config.atoms[i].neigh,
-                  (g_config.atoms[i].num_neigh + 1) * sizeof(neigh_t));
               dd.x /= r;
               dd.y /= r;
               dd.z /= r;
@@ -1164,6 +1185,9 @@ void init_neighbors(config_state* cstate, double* mindist)
         }       /* loop over images in y direction */
       }         /* loop over images in x direction */
     }           /* second loop over atoms (neighbors) */
+    if (num_neigh != 0 && num_neigh != g_config.atoms[i].num_neigh) {
+      error(1, "Neigh count mismatch!!");
+    }
   }             /* first loop over atoms */
 }
 
