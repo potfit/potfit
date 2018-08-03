@@ -846,7 +846,7 @@ void read_analytic_potentials(apot_state* pstate)
         int l = -1;
         for (int k = 0; k < apt->globals; k++) {
           if (strncmp(apt->param_name[i][j],
-            apt->param_name[g_pot.global_pot][k], strlen(apt->param_name[i][j])) == 0)
+            apt->param_name[g_pot.global_pot][k], strlen(apt->param_name[i][j]) - 1) == 0)
             l = k;
         }
 
