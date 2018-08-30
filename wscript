@@ -16,7 +16,7 @@ out = 'build'
 # Add all options to this list
 # [ name, description, defines ]
 # Special requirements for options can be handled in
-# the check_potfit_options function below
+# the _check_enable_options function below
 
 OPTIONS = [
     ['mpi', 'Enable MPI parallelization', ['MPI']],
@@ -46,13 +46,12 @@ POTENTIALS = [
         ['apot', 'tab'], ['EAM', 'COULOMB'], ['force_eam_elstat.c']],
     ['eam_dipole', 'embedded atom method with dipole interactions', [
         'apot', 'tab'], ['EAM', 'COULOMB', 'DIPOLE'], ['force_eam_elstat.c']],
-    ['kim', 'use OpenKIM for force calculation', ['apot'],
-        ['APOT', 'KIM', 'PAIR'], ['force_kim.c', 'kim.c']],
+    ['kim', 'use OpenKIM framework for force calculation', [], ['KIM'], ['force_kim.c']],
     ['meam', 'modified embedded atom method', ['apot', 'tab'], ['MEAM'], ['force_meam.c']],
     ['stiweb', 'Stillinger-Weber potentials', ['apot'], ['STIWEB'], ['force_stiweb.c']],
     ['tbeam', 'two-band embedded atom method', ['apot', 'tab'], ['EAM', 'TBEAM'], ['force_eam.c']],
     ['tersoff', 'Tersoff potentials', ['apot'], ['TERSOFF'], ['force_tersoff.c']],
-    ['tersoffmod', 'modifier Tersoff potentials', ['apot'], ['TERSOFF'], ['force_tersoff.c']],
+    ['tersoffmod', 'modified Tersoff potentials', ['apot'], ['TERSOFF', 'TERSOFFMOD'], ['force_tersoff.c']],
 ]
 
 # Math libray settings
@@ -79,7 +78,7 @@ def options(opt):
     """
     opt.load('compiler_c')
     opts = opt.add_argument_group('potfit general options',
-                                  'Please read the explanations on the potfit homepage for more details.')
+                                  'Please check the explanations on the potfit homepage for more details.')
     # --enable-XXX options are generated automatically from wscript_potfit.py
     for option in OptList():
         opts.add_argument('--enable-{}'.format(option.name), action='store_true',
@@ -111,7 +110,8 @@ def options(opt):
 
 
 def configure(cnf):
-    _check_potfit_options(cnf)
+    _check_interaction_options(cnf)
+    _check_enable_options(cnf)
     _check_compiler_options(cnf)
     _check_math_lib_options(cnf)
 
@@ -119,12 +119,11 @@ def configure(cnf):
     cnf.env.model = cnf.options.model
     cnf.env.interaction = cnf.options.interaction
     cnf.env.force_files = pl.get_pot(cnf.options.interaction).files
+    cnf.env.append_value('DEFINES_POTFIT', pl.get_pot(cnf.options.interaction).defines)
+
+    # some interactions need more files based on some conditions
     if cnf.options.interaction == 'pair' and cnf.options.model == 'apot':
         cnf.env.force_files.extend(['chempot.c'])
-
-    if cnf.options.model == 'apot':
-        cnf.env.append_value('DEFINES_POTFIT', ['APOT'])
-    cnf.env.append_value('DEFINES_POTFIT', pl.get_pot(cnf.options.interaction).defines)
 
     cnf.env.target_name = _generate_target_name(cnf)
 
@@ -138,7 +137,9 @@ def configure(cnf):
                 if i == j[0]:
                     cnf.env.append_value('DEFINES_POTFIT', j[2])
         print('{:20} = {}'.format('options', ', '.join(sorted(opts))))
-    print("\nNow type './waf' to start building potfit\n")
+    print("\nNow run './waf' to start building potfit\n")
+    #cnf.define('POTFIT_VERSION', VERSION)
+    #cnf.write_config_header('header.h')
 
 
 def build(bld):
@@ -156,62 +157,64 @@ def _post(bld):
 
 
 @conf
-def _check_potfit_options(cnf):
-    """
-    Function for checking potfit options
-
-    Here the provided options will be checked for compatibility.
-    When adding a new option which is incompatible with other options
-    this can be checked here.
-    """
-
-    # common checks - don't change
+def _check_interaction_options(cnf):
     if cnf.options.interaction is None:
         cnf.fatal('No interaction specified, please provide -i/--interaction')
+
+    # common checks for interaction compatibility - don't change
     pot = pl.get_pot(cnf.options.interaction)
-    if cnf.options.model is None:
+    if cnf.options.interaction == 'kim':
+        if cnf.options.model != None:
+            cnf.fatal('OpenKIM does not support setting a model!')
+        cnf.options.model = 'kim'
+    elif cnf.options.model is None:
+        # if there is only one supported model we don't need the model explicitly
         if pot is not None and len(pot.supp_models) == 1:
             cnf.options.model = pot.supp_models[0]
         else:
-            cnf.fatal(
-                'No potential model specified for interaction "{}", please provide -m/--model'.format(cnf.options.interaction))
+            cnf.fatal('No potential model specified for interaction "{}", please provide -m/--model'.format(cnf.options.interaction))
+
     if not pot.supports_model(cnf.options.model):
         cnf.fatal('Interaction {} does not support model {}!'.format(pot.name, cnf.options.model))
 
+
+@conf
+def _check_enable_options(cnf):
+    # array for storing additional source files
     cnf.env.option_files = []
 
     # check for incompatible options
+    if cnf.options.enable_mpi and cnf.options.interaction == 'kim':
+        cnf.fatal('KIM does currently not support MPI parallelization')
     if cnf.options.enable_mpi and cnf.options.enable_dist:
         cnf.fatal('dist option is not supported for MPI-enabled builds')
     if cnf.options.enable_dsf and cnf.options.interaction not in ['ang_elstat', 'coulomb', 'eam_coulomb']:
-        cnf.fatal(
-            'DSF can only be used with COULOMB-based interactions and not with {}'.format(cnf.options.interaction))
+        cnf.fatal('DSF can only be used with COULOMB-based interactions and not with {}'.format(cnf.options.interaction))
+
+    # rescale is only allowed with tab and needs additional source files
     if cnf.options.enable_resc:
         if cnf.options.model == 'apot':
             cnf.fatal('Analytic potentials are incompatible with the rescale option!')
         else:
             if cnf.options.interaction == 'meam':
-                cnf.env.option_files.extend(['rescale_meam.c'])
+                cnf.env.option_files.append('rescale_meam.c')
             else:
-                cnf.env.option_files.extend(['rescale.c'])
+                cnf.env.option_files.append('rescale.c')
 
-    # set option specific target files
+    # array for storing additional source files
+    # use '-...' to remove files added by default in src/wscript
+    cnf.env.optimization_files = []
+
+    # differential evolution has its own source file and deactivates simann.c
     if cnf.options.enable_evo:
-        cnf.env.option_files.extend(['diff_evo.c'])
+        cnf.env.optimization_files.extend(['diff_evo.c', '-simann.c'])
 
 
 @conf
 def _check_compiler_options(cnf):
-    """
-    Function for checking the selected compiler and options
-
-    Here the selected compiler will be checked and the common flags
-    will be set to the POTFIT target.
-    """
-
     # try to detect a suitable compiler
     if cnf.options.interaction == 'kim':
-        _check_kim_pipeline(cnf)
+        cnf.check_cfg(package='libkim-api-v2', args=['--cflags', '--libs'], uselib_store='KIM')
     else:
         c_compiler[_platform] = ['icc', 'clang', 'gcc']
     cnf.load('compiler_c')
@@ -222,15 +225,7 @@ def _check_compiler_options(cnf):
 
     # check MPI compiler
     if cnf.options.enable_mpi:
-        cnf.check_cfg(path='mpicc', args='--showme:compile', package='',
-                      uselib_store='POTFIT', msg='Checking MPI compiler command')
-        cnf.check_cfg(path='mpicc', args='--showme:link', package='',
-                      uselib_store='POTFIT', msg='Checking MPI linker flags')
-
-        cnf.check(header_name='mpi.h', features='c cprogram')
-        cnf.check_cc(
-            fragment='#include <mpi.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
-            execute=True, msg='Compiling test MPI binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
+        _check_mpi_compiler(cnf)
 
     # potfit compiler flags
     if cnf.env.CC_NAME == 'icc':
@@ -241,8 +236,7 @@ def _check_compiler_options(cnf):
 
     if cnf.env.CC_NAME in ['clang', 'gcc']:
         if cnf.options.debug:
-            cnf.env.append_value(
-                'CFLAGS_POTFIT', ['-g', '-Wall', '-Werror', '-pedantic', '-std=c99'])
+            cnf.env.append_value('CFLAGS_POTFIT', ['-g', '-Wall', '-Werror', '-pedantic', '-std=c99'])
         else:
             cnf.env.append_value('CFLAGS_POTFIT', ['-O3', '-march=native', '-std=c99'])
 
@@ -251,30 +245,15 @@ def _check_compiler_options(cnf):
 
 
 @conf
-def _check_kim_pipeline(cnf):
-    """
-    Function for checking the OpenKIM commands
-
-    The OpenKIM build tool is queried for command line options, which
-    are then added to the POTFIT target.
-    """
-
-    try:
-        cnf.find_program('kim-api-build-config', var='KIM_CFG')
-    except BaseException:
-        pass
-    try:
-        if cnf.env.KIM == []:
-            cnf.find_program('kim-api-v1-build-config', var='KIM_CFG')
-    except BaseException:
-        cnf.fatal('Could not find KIM API')
-
-    cnf.check_cfg(path=cnf.env.KIM_CFG, args='--includes', package='',
-                  uselib_store='POTFIT', msg='Reading OpenKIM include dir')
-    cnf.check_cfg(path=cnf.env.KIM_CFG, args='--ldflags', package='',
-                  uselib_store='POTFIT', msg='Reading OpenKIM linker flags')
-    cnf.check_cfg(path=cnf.env.KIM_CFG, args='--ldlibs', package='',
-                  uselib_store='POTFIT', msg='Reading OpenKIM libraries')
+def _check_mpi_compiler(cnf):
+    cnf.check_cfg(path='mpicc', args='--showme:compile', package='',
+                  uselib_store='POTFIT', msg='Checking MPI compiler command')
+    cnf.check_cfg(path='mpicc', args='--showme:link', package='',
+                  uselib_store='POTFIT', msg='Checking MPI linker flags')
+    cnf.check(header_name='mpi.h', features='c cprogram')
+    cnf.check_cc(
+        fragment='#include <mpi.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
+        execute=True, msg='Compiling test MPI binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
 
 
 @conf
@@ -341,7 +320,10 @@ def _generate_target_name(cnf):
     """
     Function for generating the target name, e.g. potfit_apot_pair_acml
     """
-    name = 'potfit_' + cnf.options.model + '_' + cnf.options.interaction
+    name = 'potfit'
+    if cnf.options.model and cnf.options.model != cnf.options.interaction:
+        name += '_' + cnf.options.model
+    name += '_' + cnf.options.interaction
     name += '_' + cnf.options.math_lib
     for item in dir(cnf.options):
         if item.startswith('enable_') and getattr(cnf.options, item):
@@ -417,6 +399,10 @@ class Potential:
     def supports_model(self, model):
         if model in self.supp_models:
             return True
+        if len(self.supp_models) == 0:
+            # only kim supports empty model
+            if self.name == 'kim':
+                return True
         return False
 
     def __str__(self):
