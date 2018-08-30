@@ -206,16 +206,6 @@ ifneq (,$(strip $(findstring apot,${MAKETARGET})))
     POTFITHDR	+= chempot.h
     POTFITSRC	+= chempot.c
   endif
-else ifneq (,$(strip $(findstring kim,${MAKETARGET})))
-  POTFITHDR	+= chempot.h
-  POTFITHDR	+= functions.h
-  POTFITHDR	+= kim.h
-
-  POTFITSRC	+= chempot.c
-  POTFITSRC	+= force_kim.c
-  POTFITSRC	+= functions.c
-  POTFITSRC	+= functions_impl.c
-  POTFITSRC	+= kim.c
 else
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
     POTFITSRC	+= rescale_meam.c
@@ -347,13 +337,6 @@ ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
   INTERACTION = 1
 endif
 
-ifneq (,$(findstring kim,${MAKETARGET}))
-  ifneq (,$(findstring 1,${INTERACTION}))
-    ERROR += "More than one potential model specified.\n"
-  endif
-  INTERACTION = 1
-endif
-
 ifneq (,$(findstring 0,${INTERACTION}))
   ERROR += "No interaction model specified!\n"
 endif
@@ -418,34 +401,7 @@ ifneq (,$(findstring resc,${MAKETARGET}))
 endif
 
 ifneq (,$(findstring kim,${MAKETARGET}))
-  CFLAGS += -DKIM
-endif
-
-# compability with KIM
-ifneq ($(findstring kim,${MAKETARGET}),)
-  ifeq ($(findstring kim-toolchain,${SYSTEM}),)
-    ERROR += "KIM support requires the SYSTEM variable setting 'kim-toolchain'.\n"
-  endif
-endif
-ifneq ($(findstring kim-toolchain,${SYSTEM}),)
-  ifeq ($(findstring kim,${MAKETARGET}),)
-    ERROR += "SYSTEM=kim-toolchain is not supported for non-KIM builds.\n"
-  endif
-endif
-
-ifneq (,$(findstring kim,${MAKETARGET}))
-  ifeq ($(shell kim-api-build-config --version 2> /dev/null),)
-    ERROR += "kim-api-build-config could not be found. Check your PATH variable.\n"
-  endif
-  ifneq (,$(findstring apot,${MAKETARGET}))
-    ERROR += "KIM option uses the OpenKIM internal data format, please remove apot from target!\n"
-  endif
-  ifneq (,$(findstring dist,${MAKETARGET}))
-    ERROR += "KIM potential does not support dist option!\n"
-  endif
-  ifneq (,$(findstring resc,${MAKETARGET}))
-    ERROR += "KIM potential does not support resc option!\n"
-  endif
+  ERROR = "Please use the waf build system for enabling KIM support!\n"
 endif
 
 CFLAGS += -D${TARGET} -D${MATH_LIB}

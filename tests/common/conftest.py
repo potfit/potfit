@@ -14,7 +14,7 @@ def get_potfit_apot_obj(config):
     import potfit
     global potfit_apot_obj
     if potfit_apot_obj is None:
-        potfit_apot_obj = potfit.Potfit(__file__, 'apot', 'pair')
+        potfit_apot_obj = potfit.Potfit(__file__, interaction='pair', model='apot')
     return potfit_apot_obj
 
 def get_potfit_tab_obj(config):
@@ -23,7 +23,7 @@ def get_potfit_tab_obj(config):
     import potfit
     global potfit_tab_obj
     if potfit_tab_obj is None:
-        potfit_tab_obj = potfit.Potfit(__file__, 'tab', 'pair')
+        potfit_tab_obj = potfit.Potfit(__file__, interaction='pair', model='tab')
     return potfit_tab_obj
 
 @pytest.fixture()

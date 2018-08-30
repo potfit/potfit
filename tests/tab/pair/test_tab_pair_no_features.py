@@ -30,7 +30,7 @@ def test_tab_pair_no_features_simple(potfit):
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'tabulated eqdist' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 3 written to file' in potfit.stdout

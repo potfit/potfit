@@ -73,7 +73,7 @@ extern potfit_parameters g_param;
 extern potfit_potentials g_pot;
 
 // general functions for warning and error output
-
+void exit_potfit();
 void error(int done, const char* msg, ...);
 void warning(const char* msg, ...);
 

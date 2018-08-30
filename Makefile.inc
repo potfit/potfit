@@ -108,7 +108,6 @@ SHELL = /bin/bash
 # x86_64-clang      64bit LLVM Compiler
 # i686-icc          32bit Intel Compiler
 # i686-gcc          32bit GNU Compiler
-# kim-toolchain     use the KIM toolchain via kim-api-build-config
 
 SYSTEM = x86_64-gcc
 
@@ -288,29 +287,3 @@ else ifeq (${MATH_LIB},MKL)
 endif
 
 endif # i686-gcc
-
-###########################################################################
-#
-#  flags for KIM
-#
-###########################################################################
-
-ifeq (kim-toolchain,${SYSTEM})
-  CC_SERIAL     = $(shell kim-api-build-config --cc)
-  CINCLUDE      += $(shell kim-api-build-config --includes)
-  FLAGS         += $(shell kim-api-build-config --cflags) -std=c99
-  LFLAGS_SERIAL += $(shell kim-api-build-config --ldflags)
-  LIBS          += $(shell kim-api-build-config --ldlibs)
-
-ifeq (${MATH_LIB},__ACCELERATE__)
-  LIBS += -framework Accelerate
-else ifeq (${MATH_LIB},MKL)
-  CINCLUDE      += -I${MKLDIR}/include
-  LIBS          += -L${MKLDIR}/lib/intel64
-  LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
-                   -Wl,--end-group -lpthread -Wl,--as-needed
-endif
-
-endif # kim-toolchain
-
-export        OMPI_CC OMPI_CLINKER

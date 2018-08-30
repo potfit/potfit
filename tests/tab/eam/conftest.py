@@ -13,7 +13,7 @@ def get_potfit_obj(config):
     import potfit
     global potfit_obj
     if potfit_obj == None:
-        potfit_obj = potfit.Potfit(__file__, 'tab', 'eam')
+        potfit_obj = potfit.Potfit(__file__, interaction='eam', model='tab')
     return potfit_obj
 
 @pytest.fixture()

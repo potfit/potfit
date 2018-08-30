@@ -22,7 +22,7 @@ g!
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Read 1 global parameter(s)' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
@@ -52,7 +52,7 @@ g 1 0 2
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Read 1 global parameter(s)' in potfit.stdout
     assert 'You defined global parameters but did not use them.' in potfit.stdout

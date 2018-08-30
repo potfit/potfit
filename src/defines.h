@@ -39,7 +39,7 @@
 #define THREEBODY
 #endif  // MEAM || STIWEB || TERSOFF || ANG
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
 #define APOT_STEPS 500    // number of sampling points for analytic pot
 #define APOT_PUNISH 10e6  // general value for apot punishments
 #endif                    // APOT

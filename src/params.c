@@ -264,6 +264,30 @@ void read_parameter_file(char const* param_file)
     }
 #endif  // STRESS
 
+#if defined(KIM)
+    else if (strcasecmp(token, "kim_model_name") == 0) {
+      get_param_string("kim_model_name", &g_kim.model_name, line, param_file);
+    }
+    else if (strcasecmp(token, "kim_model_params") == 0) {
+      const char* temp = NULL;
+      get_param_string("kim_model_params", &temp, line, param_file);
+      if (strncasecmp("dump_file", temp, 9) == 0)
+        g_param.kim_model_params = KIM_MODEL_PARAMS_DUMP_FILE;
+      else if (strncasecmp("dump", temp, 4) == 0)
+        g_param.kim_model_params = KIM_MODEL_PARAMS_DUMP;
+      else if (strncasecmp("use_default", temp, 11) == 0)
+        g_param.kim_model_params = KIM_MODEL_PARAMS_USE_DEFAULT;
+      else
+        warning("Ignoring invalid \"kim_model_params\" value \"%s\"\n", temp);
+    }
+    else if (strcasecmp(token, "kim_model_output_directory") == 0) {
+      get_param_string("kim_model_write_output", &g_kim.output_directory, line, param_file);
+    }
+    else if (strcasecmp(token, "kim_model_output_name") == 0) {
+      get_param_string("kim_model_output_name", &g_kim.output_name, line, param_file);
+    }
+#endif // KIM
+
     // unknown tag
     else
       warning("Unknown tag <%s> in parameter file ignored!\n", token);
@@ -428,4 +452,12 @@ void check_parameters_complete(char const* paramfile)
   if (g_param.global_cell_scale <= 0)
     error(1, "Missing parameter or invalid value in %s : cell_scale is \"%f\"\n",
           paramfile, g_param.global_cell_scale);
+
+#if defined(KIM)
+  if (g_param.kim_model_params != KIM_MODEL_PARAMS_NONE)
+    g_param.opt = 0;
+
+  if (!g_kim.model_name)
+    error(1, "Missing parameter: kim_model_name");
+#endif
 }

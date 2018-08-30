@@ -18,7 +18,7 @@ sigma 2.5 1 4
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
@@ -57,7 +57,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_no_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'total of 4 atoms' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
@@ -101,7 +101,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_no_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'total of 4 atoms' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
@@ -143,7 +143,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Incomplete box of contributing atoms for config 1!' in potfit.stderr
 
 def test_apot_pair_contrib_missing_origin_value(potfit):
@@ -181,7 +181,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Error reading box vector #B_O' in potfit.stderr
 
 def test_apot_pair_contrib_duplicate_origin(potfit):
@@ -220,7 +220,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'There can only be one box of contributing atoms' in potfit.stderr
 
 def test_apot_pair_contrib_missing_vector_A(potfit):
@@ -257,7 +257,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Incomplete box of contributing atoms for config 1!' in potfit.stderr
 
 def test_apot_pair_contrib_missing_vector_B(potfit):
@@ -294,7 +294,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Incomplete box of contributing atoms for config 1!' in potfit.stderr
 
 def test_apot_pair_contrib_missing_vector_C(potfit):
@@ -331,7 +331,7 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Incomplete box of contributing atoms for config 1!' in potfit.stderr
 
 def test_apot_pair_contrib_missing_sphere_value(potfit):
@@ -366,5 +366,5 @@ sigma 2.5 1 4
     potfit.run()
     assert potfit.has_error()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Error reading sphere of contributing atoms' in potfit.stderr

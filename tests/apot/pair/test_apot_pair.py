@@ -18,7 +18,7 @@ sigma 2.5 1 4
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout

@@ -13,7 +13,7 @@ def get_potfit_obj(config):
     import potfit
     global potfit_obj
     if potfit_obj == None:
-        potfit_obj = potfit.Potfit(__file__, 'apot', 'pair', ['contrib'])
+        potfit_obj = potfit.Potfit(__file__, interaction='pair', model='apot', options=['contrib'])
     return potfit_obj
 
 @pytest.fixture()

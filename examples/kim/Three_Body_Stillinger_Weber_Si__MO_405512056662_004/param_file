@@ -1,0 +1,27 @@
+ntypes		1
+
+# file names
+config	  	reference_data
+startpot	kim.pot
+endpot		kim.pot_optimized
+tempfile	kim.pot_temp
+
+flagfile	STOP
+
+# optional writting
+output_prefix	output
+
+kim_model_name	Three_Body_Stillinger_Weber_Si__MO_405512056662_004
+#kim_model_params dump_file
+
+# options to write out KIM model (if supported by model)
+# THE DIRECTORY NEEDS TO EXIST !!!!
+# kim_model_output_directory ./kim_model
+# kim_model_output_name test_123
+
+# min setting
+opt		1
+anneal_temp	10
+eng_weight	1
+stress_weight 	1
+seed		42
