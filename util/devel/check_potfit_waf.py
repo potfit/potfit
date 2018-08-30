@@ -63,8 +63,7 @@ def parse_arguments():
                         type=int, required=False, help='only compile N versions')
     parser.add_argument('--acml', action='store_true')
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--nproc', default=1, type=int, required=False,
-                        help='number of processer cores for parallel compilation')
+    parser.add_argument('--compiler', choices=['clang', 'gcc', 'icc'], default='clang')
     return parser.parse_args()
 
 
@@ -138,7 +137,12 @@ def options_are_supported(subset, disable_array):
 
 
 def build_targets(args):
-    interactions, options, cmd, target, special_options = get_working_arrays(args)
+    try:
+        interactions, options, cmd, target, special_options = get_working_arrays(args)
+    except RuntimeWarning as e :
+        print("Error: {}".format(e))
+        sys.exit(-1)
+
     num_targets = get_number_of_targets(interactions, options, special_options)
     print("Building {} possible targets for {}.".format(num_targets, target))
 
@@ -164,7 +168,7 @@ def build_targets(args):
             if options_are_supported(build_string, disable):
                 print("\nBuilding target {} ({}/{})".format(target_str, count, num_targets))
                 call(['./waf', 'clean'])
-                retcode = call(['./waf', 'configure', *cmds, '-j', str(args.nproc)])
+                retcode = call(['./waf', 'configure', *cmds, '--check-c-compiler={}'.format(args.compiler)])
                 if retcode:
                     print("Error when calling ./waf configure ({})".format(retcode))
                     sys.exit(1)
@@ -178,8 +182,7 @@ def build_targets(args):
 
 
 def main():
-    args = parse_arguments()
-    return build_targets(args)
+    build_targets(parse_arguments())
 
 
 if __name__ == "__main__":
