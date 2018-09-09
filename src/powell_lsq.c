@@ -137,6 +137,11 @@ void run_powell_lsq(double* xi)
   /* Vector pointing into correct dir'n */
   double* delta = (double*)Malloc(g_calc.ndimtot * sizeof(double)); /* ==0 */
 
+  int worksize = 64 * g_calc.ndim;
+  // work array to be used by dsysvx
+  double* work = (double*)Malloc(worksize * sizeof(double));
+  int* iwork = (int*)Malloc(g_calc.ndim * sizeof(int));
+
   /* calculate the first force */
   F1 = calc_forces(xi, forces_1, 0);
 
