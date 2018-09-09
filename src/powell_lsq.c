@@ -41,13 +41,11 @@
 
 #if defined(MKL)
 #include <mkl_lapack.h>
-#elif defined(ACML)
-#include <acml.h>
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
 #else
 #error No math library defined!
-#endif  // ACML
+#endif  // MKL
 
 #include "bracket.h"
 #include "force.h"
@@ -139,13 +137,6 @@ void run_powell_lsq(double* xi)
   /* Vector pointing into correct dir'n */
   double* delta = (double*)Malloc(g_calc.ndimtot * sizeof(double)); /* ==0 */
 
-#if !defined(ACML) // work arrays not needed for ACML
-  int worksize = 64 * g_calc.ndim;
-  // work array to be used by dsysvx
-  double* work = (double*)Malloc(worksize * sizeof(double));
-  int* iwork = (int*)Malloc(g_calc.ndim * sizeof(int));
-#endif  // ACML
-
   /* calculate the first force */
   F1 = calc_forces(xi, forces_1, 0);
 
@@ -228,10 +219,6 @@ void run_powell_lsq(double* xi)
       dsysvx(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
              &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
              &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
-#elif defined(ACML)
-      dsysvx(fact[0], uplo[0], g_calc.ndim, j, &lineqsys[0][0], g_calc.ndim,
-             &les_inverse[0][0], g_calc.ndim, perm_indx, p, g_calc.ndim, q,
-             g_calc.ndim, &cond, &ferror, &berror, &i);
 #elif defined(__ACCELERATE__)
       dsysvx_(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
              &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,

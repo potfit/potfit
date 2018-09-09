@@ -61,7 +61,6 @@ def parse_arguments():
                         type=int, required=False, help='start at combination N')
     parser.add_argument('--count', metavar='N', default=-1,
                         type=int, required=False, help='only compile N versions')
-    parser.add_argument('--acml', action='store_true')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--nproc', default=1, type=int, required=False,
                         help='number of processer cores for parallel compilation')
@@ -95,9 +94,6 @@ def get_working_arrays(args):
         special_options = special_kim_options
     else:
         raise RuntimeWarning('No interaction type defined!')
-
-    if args.acml:
-        string += '_acml5'
 
     if args.debug:
         string += '_debug'

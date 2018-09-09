@@ -37,8 +37,6 @@ STRIP 		= $(shell which strip 2> /dev/null)
 LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
-ACML4PATH 	= ${ACML4DIR}/lib
-ACML5PATH 	= ${ACML5DIR}/lib
 BIN_DIR 	= bin/
 
 ###########################################################################
@@ -413,25 +411,6 @@ endif
 
 ifneq (,$(findstring contrib,${MAKETARGET}))
   CFLAGS += -DCONTRIB
-endif
-
-ifneq (,$(findstring mkl,${MAKETARGET}))
-  ifneq (,$(findstring acml,${MAKETARGET}))
-    ERROR += "ACML cannot be used together with MKL.\n"
-  endif
-endif
-
-# force acml4 or acml5 over acml
-ifneq (,$(findstring acml,${MAKETARGET}))
-  ifneq (,$(findstring mkl,${MAKETARGET}))
-    ERROR += "ACML cannot be used together with MKL.\n"
-  endif
-  ifeq (,$(findstring acml4,${MAKETARGET}))
-    ifeq (,$(findstring acml5,${MAKETARGET}))
-      ERROR += "The acml target is obsolete. Please use acml4 or acml5.\n"
-    endif
-  endif
-  CFLAGS += -DACML
 endif
 
 ifneq (,$(findstring resc,${MAKETARGET}))

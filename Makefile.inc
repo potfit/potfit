@@ -112,12 +112,9 @@ SHELL = /bin/bash
 
 SYSTEM = x86_64-gcc
 
-# Base directory of your installation of the MKL or ACML
+# Base directory of your installation of the MKL
 
 MKLDIR      = /opt/intel/composer_xe_2015.1.133/mkl
-ACML4DIR    = /opt/acml4.4.0/gfortran64
-ACML5DIR    = /opt/acml/gfortran64
-LIBMDIR     = /opt/acml/libm
 
 ###########################################################################
 #
@@ -138,11 +135,7 @@ else
   TARGET = LINUX
 endif
 
-ifneq (,$(strip $(findstring acml4,${MAKETARGET})))
-  MATH_LIB = ACML4
-else ifneq (,$(strip $(findstring acml5,${MAKETARGET})))
-  MATH_LIB = ACML5
-else ifneq (,$(strip $(findstring mkl,${MAKETARGET})))
+ifneq (,$(strip $(findstring mkl,${MAKETARGET})))
   MATH_LIB = MKL
 else
   ifeq (${TARGET},MACOS)
@@ -180,13 +173,6 @@ else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
   LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential \
                    -lmkl_core -Wl,--end-group -lpthread
-else ifeq (${MATH_LIB},ACML4)
-  CINCLUDE      += -I${ACML4DIR}/include
-  LIBS          = -L${ACML4PATH} -lpthread -lacml -lacml_mv
-else ifeq (${MATH_LIB},ACML5)
-  LIBMPATH      = ${LIBMDIR}/lib/dynamic
-  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
-  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm
 endif
 
 endif # x86_64-icc
@@ -215,13 +201,6 @@ else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
   LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
                    -Wl,--end-group -lpthread -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML4)
-  CINCLUDE      += -I${ACML4DIR}/include
-  LIBS          += -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML5)
-  LIBMPATH      = ${LIBMDIR}/lib/dynamic
-  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
-  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
 endif # x86_64-gcc
@@ -249,13 +228,6 @@ else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
   LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
                    -Wl,--end-group -lpthread -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML4)
-  CINCLUDE      += -I${ACML4DIR}/include
-  LIBS          += -L${ACML4PATH} -lpthread -lacml -lacml_mv -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML5)
-  LIBMPATH      = ${LIBMDIR}/lib/dynamic
-  CINCLUDE      += -I${ACML5DIR}/include -I${LIBMDIR}/include
-  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -lamdlibm -Wl,--as-needed
 endif
 
 endif # x86_64-clang
@@ -287,13 +259,6 @@ else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
   LIBS          += -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
                    -Wl,--end-group -lpthread
-else ifeq (${MATH_LIB},ACML4)
-  CINCLUDE      += -I$(ACML4DIR)/include
-  LIBS          += -L${ACML4PATH} -lpthread -lacml
-else ifeq (${MATH_LIB},ACML5)
-  LIBMPATH      = ${LIBMDIR}/lib/dynamic
-  CINCLUDE      += -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml
 endif
 
 endif # i686-icc
@@ -320,13 +285,6 @@ else ifeq (${MATH_LIB},MKL)
   CINCLUDE      += -I${MKLDIR}/include
   LIBS          += -Wl,--start-group -lmkl_intel -lmkl_sequential -lmkl_core \
                    -Wl,--end-group -lpthread -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML4)
-  CINCLUDE      += -I$(ACML4DIR)/include
-  LIBS          += -L${ACML4PATH} -lpthread -lacml -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML5)
-  LIBMPATH      = ${LIBMDIR}/lib/dynamic
-  CINCLUDE      += -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -Wl,--as-needed
 endif
 
 endif # i686-gcc
@@ -351,13 +309,6 @@ else ifeq (${MATH_LIB},MKL)
   LIBS          += -L${MKLDIR}/lib/intel64
   LIBS          += -Wl,--start-group -lmkl_intel_lp64 -lmkl_sequential -lmkl_core \
                    -Wl,--end-group -lpthread -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML4)
-  CINCLUDE      += -I$(ACML4DIR)/include
-  LIBS          += -L${ACML4PATH} -lpthread -lacml -Wl,--as-needed
-else ifeq (${MATH_LIB},ACML5)
-  LIBMPATH      = ${LIBMDIR}/lib/dynamic
-  CINCLUDE      += -I$(ACML5DIR)/include -I${LIBMDIR}/include
-  LIBS          += -L${ACML5PATH} -L${LIBMPATH} -lpthread -lacml -Wl,--as-needed
 endif
 
 endif # kim-toolchain
