@@ -57,11 +57,8 @@ POTENTIALS = [
 # Math libray settings
 
 MKLDIR = '/opt/intel/mkl'
-ACMLDIR = '/opt/acml/gfortran64'
-LIBMDIR = '/opt/acml/libm'
 
 supported_math_libs = [
-    ['acml', 'AMD Core Math Library V5.X (also requires amdlibm)'],
     ['mkl', 'Intel Math Kernel Library'],
 ]
 
@@ -97,8 +94,6 @@ def options(opt):
                       help='Select math library to use (default: %(default)s)', metavar='MATHLIB')
     libs.add_argument('--math-lib-base-dir', action='store', type=str,
                       help='Base directory of selected math library')
-    libs.add_argument('--math-lib-amdlibm-dir', action='store', type=str,
-                      help='R|Base directory for AMD libm replacement \n(only required for acml)')
     # debug options
     debug = opt.add_argument_group('potfit debugging options')
     debug.add_argument('--debug', action='store_true',
@@ -263,8 +258,6 @@ def _check_math_lib_options(cnf):
 
     The math library is checked by compiling some small code snippets
     """
-    global ACMLDIR
-    global LIBMDIR
     global MKLDIR
 
     if cnf.options.math_lib is None:
@@ -298,27 +291,10 @@ def _check_math_lib_options(cnf):
           }\n''', execute=True, msg='Compiling test MKL binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
         cnf.env.append_value('DEFINES_POTFIT', ['MKL'])
 
-    # ACML
-    if cnf.options.math_lib == 'acml':
-        if cnf.options.math_lib_base_dir:
-            ACMLDIR = cnf.options.math_lib_base_dir
-        if cnf.options.math_lib_amdlibm_dir:
-            LIBMDIR = cnf.options.math_lib_amdlibm_dir
-        cnf.env.append_value('INCLUDES_POTFIT', [ACMLDIR + '/include'])
-        cnf.env.append_value('LIBPATH_POTFIT', [ACMLDIR + '/lib'])
-        cnf.env.append_value('LIB_POTFIT', ['acml'])
-        cnf.env.append_value('INCLUDES_POTFIT', [LIBMDIR + '/include'])
-        cnf.env.append_value('LIBPATH_POTFIT', [LIBMDIR + '/lib/dynamic'])
-        cnf.env.append_value('LIB_POTFIT', ['amdlibm'])
-        cnf.check(header_name='acml.h', features='c cprogram', use=['POTFIT'])
-        cnf.check(header_name='amdlibm.h',
-                  features='c cprogram', use=['POTFIT'])
-        cnf.env.append_value('DEFINES_POTFIT', ['ACML'])
-
 
 def _generate_target_name(cnf):
     """
-    Function for generating the target name, e.g. potfit_apot_pair_acml
+    Function for generating the target name, e.g. potfit_apot_pair_mkl
     """
     name = 'potfit'
     if cnf.options.model and cnf.options.model != cnf.options.interaction:

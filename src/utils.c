@@ -46,8 +46,6 @@
 // 64-bit
 #if defined(MKL)
 #include <mkl_vml.h>
-#elif defined(ACML)
-#include <amdlibm.h>
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
 #else
@@ -90,8 +88,6 @@ void power_1(double* result, const double* x, const double* y)
 #else
 #if defined(MKL)
   vdPow(1, x, y, result);
-#elif defined(ACML)
-  *result = pow(*x, *y);
 #elif defined(__ACCELERATE__)
   vvpow(result, y, x, &g_dim);
 #endif
@@ -107,10 +103,6 @@ void power_m(int dim, double* result, const double* x, const double* y)
 #else
 #if defined(MKL)
   vdPow(dim, x, y, result);
-#elif defined(ACML)
-  int i;
-  for (i = 0; i < dim; i++)
-    *(result + i) = pow(*(x + i), *(y + i));
 #elif defined(__ACCELERATE__)
   vvpow(result, y, x, &dim);
 #endif
