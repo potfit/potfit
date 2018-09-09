@@ -2,10 +2,11 @@
 # encoding: utf-8
 
 from os import environ, path
-from os import makedirs as _makedirs
+from os import mkdir as _mkdir
 from sys import platform as _platform
 from shutil import copy as _copy
 from waflib.Configure import conf
+from waflib import Logs
 from waflib.Tools.compiler_c import c_compiler
 
 APPNAME = 'potfit'
@@ -152,9 +153,16 @@ def _post(bld):
     Post-build function to copy the binary to the bin/ directory
     """
     if not path.exists('bin'):
-        _makedirs('bin')
-    _copy('build/src/' + bld.env.target_name, 'bin/')
+        try:
+            _mkdir('bin')
+        except:
+            Logs.error('Could not create bin/ directory')
 
+    try:
+        _copy('build/src/' + bld.env.target_name, 'bin/')
+        Logs.warn('\n---> Successfully moved {} to bin/ folder <---\n'.format(bld.env.target_name))
+    except:
+        Logs.error('Could not move potfit binary into bin/ folder')
 
 @conf
 def _check_interaction_options(cnf):
