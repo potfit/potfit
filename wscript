@@ -235,16 +235,18 @@ def _check_compiler_options(cnf):
         if cnf.options.debug:
             cnf.env.append_value('CFLAGS_POTFIT', ['-g', '-Wall', '-std=c99'])
         else:
-            cnf.env.append_value('CFLAGS_POTFIT', ['-fast', '-xHost', '-std=c99'])
+            cnf.env.append_value('CFLAGS_POTFIT', ['-fast', '-xHost', '-std=c99', '-fPIC'])
+            cnf.env.append_value('LINKFLAGS_POTFIT', ['-pie'])
 
     if cnf.env.CC_NAME in ['clang', 'gcc']:
         if cnf.options.debug:
             cnf.env.append_value('CFLAGS_POTFIT', ['-g', '-Wall', '-Werror', '-pedantic', '-std=c99'])
         else:
             cnf.env.append_value('CFLAGS_POTFIT', ['-O3', '-march=native', '-std=c99'])
+            cnf.env.append_value('LINKFLAGS_POTFIT', ['-fPIE'])
 
     # potfit linker flags
-    cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed'])
+    cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed,-z,relro,-z,now'])
 
 
 @conf
