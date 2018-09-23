@@ -184,7 +184,7 @@ int main(int argc, char** argv)
 
 #if defined(BINDIST) && !defined(MPI)
     // bindist does not work with MPI
-    write_bin_dist_file(&g_pot.opt_pot, g_files.bindistfile);
+    write_bindist_file(&g_pot.opt_pot, g_files.bindistfile);
 #endif // BINDIST && !MPI
 
     // write the error files for forces, energies, stresses, ...
