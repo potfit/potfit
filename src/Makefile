@@ -393,11 +393,11 @@ ifneq (,$(findstring wzero,${MAKETARGET}))
   ERROR += "wzero is no longer supported, please remove it from your target!\n"
 endif
 
-ifneq (,$(findstring dist,${MAKETARGET}))
+ifneq (,$(findstring bindist,${MAKETARGET}))
   ifeq (,$(findstring MPI,${PARALLEL}))
-    CFLAGS += -DPDIST
+    CFLAGS += -DBINDIST
   else
-    ERROR += "dist is not mpi parallelized!\n"
+    ERROR += "Binned radial distributions are not mpi parallelized!\n"
   endif
 endif
 

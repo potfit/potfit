@@ -1,3 +1,9 @@
+20180923
+- Replace 'dist' option with 'bindist', functionality is the same.
+  'dist' is too confusing and is completely unrelated to the regular pair distribution file.
+  Instead it creates a binned pair distribution of the potential access with respect to
+  the provided tabulated potentials.
+
 20180909
 - Remove support for ACML. For details see https://github.com/potfit/potfit/issues/43
 

@@ -249,12 +249,12 @@ void read_parameter_file(char const* param_file)
     }
 #endif  // EVO
 
-#if defined(PDIST)
-    // file for pair distribution
-    else if (strcasecmp(token, "distfile") == 0) {
-      get_param_string("distfile", &g_files.distfile, line, param_file);
+#if defined(BINDIST)
+    // file for binned radial distribution
+    else if (strcasecmp(token, "bindist_file") == 0) {
+      get_param_string("bindist_file", &g_files.bindistfile, line, param_file);
     }
-#endif  // PDIST
+#endif  // BINDIST
 
 #if defined(STRESS)
     // Stress Weight
@@ -418,12 +418,12 @@ void check_parameters_complete(char const* paramfile)
     }
 #endif  // EVO
 
-#if defined(PDIST)
-  if (g_files.distfile == NULL)
+#if defined(BINDIST)
+  if (g_files.bindistfile == NULL)
     error(1,
-          "Missing parameter or invalid value in %s : distfile is <undefined>\n",
-          paramfile, g_files.distfile);
-#endif  // PDIST
+          "Missing parameter or invalid value in %s : binned distribution file is <undefined>\n",
+          paramfile);
+#endif  // BINDIST
 
   if (g_param.global_cell_scale <= 0)
     error(1, "Missing parameter or invalid value in %s : cell_scale is \"%f\"\n",

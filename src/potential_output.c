@@ -680,14 +680,14 @@ void write_plotpot_pair(pot_table_t* pt, const char* filename)
   printf("Potential plotting data written to \t%s\n", filename);
 }
 
-#if defined(PDIST)
+#if defined(BINDIST)
 
 /****************************************************************
-  write_pairdist(pot_table_t *pt, char *filename)
-    - write distribution function of function access
+  write_bindist_file(pot_table_t *pt, char *filename)
+    - write binned radial distribution of potential access
 ****************************************************************/
 
-void write_pairdist(pot_table_t* pt, const char* filename)
+void write_bindist_file(pot_table_t* pt, const char* filename)
 {
   // open file
   FILE* outfile = fopen(filename, "w");
@@ -761,10 +761,10 @@ void write_pairdist(pot_table_t* pt, const char* filename)
     fprintf(outfile, "\n\n");
   }
   fclose(outfile);
-  printf("Distribution data written to\t\t%s\n", filename);
+  printf("Binned distribution data written to\t\t%s\n", filename);
 }
 
-#endif  // PDIST
+#endif  // BINDIST
 
 #if defined(COULOMB)
 

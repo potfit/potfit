@@ -182,10 +182,10 @@ int main(int argc, char** argv)
       write_pot_table_lammps();
 #endif // !KIM
 
-// will not work with MPI
-#if defined(PDIST) && !defined(MPI)
-    write_pairdist(&g_pot.opt_pot, g_files.distfile);
-#endif  // PDIST && !MPI
+#if defined(BINDIST) && !defined(MPI)
+    // bindist does not work with MPI
+    write_bin_dist_file(&g_pot.opt_pot, g_files.bindistfile);
+#endif // BINDIST && !MPI
 
     // write the error files for forces, energies, stresses, ...
     write_errors(g_calc.force, tot);

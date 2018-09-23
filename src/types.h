@@ -398,7 +398,9 @@ typedef struct {
 
 typedef struct {
   const char* config;        /* file with atom configuration */
-  const char* distfile;      /* file for distributions */
+#if defined(BINDIST)
+  const char* bindistfile;   /* file for binned distributions */
+#endif // BINDIST
   const char* endpot;        /* file for end potential */
   const char* flagfile;      /* break if file exists */
   const char* imdpot;        /* file for IMD potential */

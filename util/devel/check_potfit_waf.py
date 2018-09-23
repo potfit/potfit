@@ -15,13 +15,13 @@ kim_interactions = ['kim']
 
 # arrays for supported options
 tab_options = ['evo', 'mpi', 'stress', 'nopunish',
-               'dist', 'fweight', 'resc', 'contrib']
+               'bindist', 'fweight', 'resc', 'contrib']
 apot_options = ['evo', 'mpi', 'stress', 'nopunish', 'fweight', 'contrib']
 kim_options = ['evo', 'stress', 'fweight', 'contrib']
 
 # array of array of unsupported combinations of options
 disable = [
-    ['dist', 'mpi']
+    ['bindist', 'mpi']
 ]
 
 # array of options for only certain interactions

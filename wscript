@@ -20,15 +20,15 @@ out = 'build'
 # the _check_enable_options function below
 
 OPTIONS = [
-    ['mpi', 'Enable MPI parallelization', ['MPI']],
+    ['bindist', 'Write a binned radial distribution file', ['BINDIST']],
     ['contrib', 'Enable support for box of contributing particles', ['CONTRIB']],
-    ['dist', 'Write a radial distribution file', ['PDIST']],
+    ['dsf', 'R|Use damped shifted force approach \n\t(coulomb-based interactions only)', ['DSF']],
     ['evo', 'Use evolutionary algorithm instead of simulated annealing', ['EVO']],
     ['fweight', 'Use modified weights for the forces', ['FWEIGHT']],
+    ['mpi', 'Enable MPI parallelization', ['MPI']],
     ['nopunish', 'Disable punishments', ['NOPUNISH']],
     ['resc', 'Enable rescaling (use with care!)', ['RESCALE']],
-    ['stress', 'Include stress in fitting process', ['STRESS']],
-    ['dsf', 'R|Use damped shifted force approach \n\t(coulomb-based interactions only)', ['DSF']]
+    ['stress', 'Include stress in fitting process', ['STRESS']]
 ]
 
 # Add all potential models to this list
@@ -189,8 +189,8 @@ def _check_enable_options(cnf):
     # check for incompatible options
     if cnf.options.enable_mpi and cnf.options.interaction == 'kim':
         cnf.fatal('KIM does currently not support MPI parallelization')
-    if cnf.options.enable_mpi and cnf.options.enable_dist:
-        cnf.fatal('dist option is not supported for MPI-enabled builds')
+    if cnf.options.enable_mpi and cnf.options.enable_bindist:
+        cnf.fatal('bindist option is not supported for MPI-enabled builds')
     if cnf.options.enable_dsf and cnf.options.interaction not in ['ang_elstat', 'coulomb', 'eam_coulomb']:
         cnf.fatal('DSF can only be used with COULOMB-based interactions and not with {}'.format(cnf.options.interaction))
 
@@ -203,6 +203,10 @@ def _check_enable_options(cnf):
                 cnf.env.option_files.append('rescale_meam.c')
             else:
                 cnf.env.option_files.append('rescale.c')
+
+    # binned radial distribution is only allowed for tabulated potentials
+    if cnf.options.enable_bindist and cnf.options.model == 'apot':
+        cnf.fatal('Binned radial distribution files are not available for analytic potentials.')
 
     # array for storing additional source files
     # use '-...' to remove files added by default in src/wscript
