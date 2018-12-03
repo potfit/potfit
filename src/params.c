@@ -264,6 +264,41 @@ void read_parameter_file(char const* param_file)
     }
 #endif  // STRESS
 
+#if defined (UQ)
+     // file for potential ensemble method uncertainty quantification
+     else if (strcasecmp(token, "ensemblefile") == 0) {
+       get_param_string("ensemblefile", &g_files.ensemblefile, line, param_file);
+     }
+
+     else if (strcasecmp(token, "acc_rescaling") == 0) {
+       get_param_double("acc_rescaling", &g_param.acc_rescaling, line, param_file, DBL_MIN, DBL_MAX);
+     }
+
+     else if (strcasecmp(token, "acc_moves") == 0){
+       get_param_int("acc_moves", &g_param.acc_moves, line, param_file, 1, INT_MAX);
+     }
+
+     else if (strcasecmp(token, "uq_temp") == 0){
+       get_param_double("uq_temp", &g_param.uq_temp, line, param_file, DBL_MIN, 1);
+     }
+
+    else if (strcasecmp(token, "use_svd") == 0) {
+      get_param_int("use_svd", &g_param.use_svd, line, param_file, 0, 1);
+    }
+
+    else if (strcasecmp(token, "hess_pert") == 0) {
+      get_param_double("hess_pert", &g_param.hess_pert, line, param_file, -1, 1);
+    }
+
+    else if (strcasecmp(token, "eig_max") == 0) {
+      get_param_double("eig_max", &g_param.eig_max, line, param_file, DBL_MIN, DBL_MAX);
+    }
+
+    else if (strcasecmp(token, "write_ensemble") == 0){
+      get_param_int("write_ensemble", &g_param.write_ensemble, line, param_file, 0, INT_MAX);
+    }
+#endif  // UQ
+
     // unknown tag
     else
       warning("Unknown tag <%s> in parameter file ignored!\n", token);
@@ -428,4 +463,38 @@ void check_parameters_complete(char const* paramfile)
   if (g_param.global_cell_scale <= 0)
     error(1, "Missing parameter or invalid value in %s : cell_scale is \"%f\"\n",
           paramfile, g_param.global_cell_scale);
+
+  #if defined(UQ)
+  if (g_files.ensemblefile == NULL) {
+        warning("ensemblefile is missing in %s, setting it to %s.uq\n", paramfile,
+            g_files.output_prefix);
+    g_files.ensemblefile =
+        (const char*)Malloc((strlen(g_files.output_prefix) + 4) * sizeof(char));
+    sprintf((char*)g_files.ensemblefile, "%s.uq", g_files.output_prefix);
+  }
+
+  if (g_param.acc_moves == 0)
+    error(1,
+        "Missing parameter or invalid value in %s : acc_moves is <undefined>\n",
+         paramfile, g_param.acc_moves);
+  
+
+  if (g_param.acc_rescaling == 0)
+    error(1,
+        "Missing parameter or invalid value in %s : acc_rescaling is <undefined>\n",
+         paramfile, g_param.acc_rescaling);
+  
+  if (g_param.uq_temp == 0) 
+    g_param.uq_temp = 1.0;
+
+  if (g_param.hess_pert == 0) {
+    warning("hess_pert not provided in %s, setting it to 0.00001!\n", paramfile);
+    g_param.hess_pert = 0.00001; 
+  }
+  else if (g_param.hess_pert < 0) {
+    warning("hess_pert is negative in %s, using the bracketing algorithm to find values!\n", paramfile);
+  }
+
+  #endif // UQ
+  
 }
