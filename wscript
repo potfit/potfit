@@ -28,7 +28,8 @@ OPTIONS = [
     ['mpi', 'Enable MPI parallelization', ['MPI']],
     ['nopunish', 'Disable punishments', ['NOPUNISH']],
     ['resc', 'Enable rescaling (use with care!)', ['RESCALE']],
-    ['stress', 'Include stress in fitting process', ['STRESS']]
+    ['stress', 'Include stress in fitting process', ['STRESS']],
+    ['uq', 'Generate potential ensemble for uncertainty quantification', ['UQ']]
 ]
 
 # Add all potential models to this list
@@ -215,6 +216,9 @@ def _check_enable_options(cnf):
     # differential evolution has its own source file and deactivates simann.c
     if cnf.options.enable_evo:
         cnf.env.optimization_files.extend(['diff_evo.c', '-simann.c'])
+
+    if cnf.options.enable_uq:
+        cnf.env.option_files.extend(['uq.c'])
 
 
 @conf

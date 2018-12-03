@@ -232,6 +232,10 @@ ifneq (,$(strip $(findstring parab,${MAKETARGET})))
   POTFITSRC	+= parabola.c
 endif
 
+ifneq (,$(strip $(findstring uq,${MAKETARGET})))
+   POTFITSRC    += uq.c
+endif 
+
 #########################################################
 #
 # potfit Configuration rules
@@ -446,6 +450,10 @@ ifneq (,$(findstring kim,${MAKETARGET}))
   ifneq (,$(findstring resc,${MAKETARGET}))
     ERROR += "KIM potential does not support resc option!\n"
   endif
+endif
+
+ifneq (,$(findstring uq,${MAKETARGET}))
+  CFLAGS += -DUQ
 endif
 
 CFLAGS += -D${TARGET} -D${MATH_LIB}
