@@ -250,7 +250,10 @@ def _check_compiler_options(cnf):
             cnf.env.append_value('LINKFLAGS_POTFIT', ['-fPIE'])
 
     # potfit linker flags
-    cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed,-z,relro,-z,now'])
+    if _platform == 'darwin':
+        cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,-undefined,error'])
+    else:
+        cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed,-z,relro,-z,now'])
 
 
 @conf
