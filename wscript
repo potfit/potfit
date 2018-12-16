@@ -262,7 +262,7 @@ def _check_mpi_compiler(cnf):
                   uselib_store='POTFIT', msg='Checking MPI compiler command')
     cnf.check_cfg(path='mpicc', args='--showme:link', package='',
                   uselib_store='POTFIT', msg='Checking MPI linker flags')
-    cnf.check(header_name='mpi.h', features='c cprogram')
+    cnf.check(header_name='mpi.h', features='c cprogram', use=['POTFIT'])
     cnf.check_cc(
         fragment='#include <mpi.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
         execute=True, msg='Compiling test MPI binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
