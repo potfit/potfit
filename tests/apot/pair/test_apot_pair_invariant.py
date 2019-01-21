@@ -23,4 +23,4 @@ sigma 2.5 1 4
     assert 'Optimization disabled due to 0 free parameters' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 378' in potfit.stdout
+    assert '378 contributions' in potfit.stdout

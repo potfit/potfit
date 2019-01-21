@@ -28,7 +28,7 @@ g!
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 379' in potfit.stdout
+    assert '379 contributions' in potfit.stdout
 
 def test_apot_pair_globals_not_used(potfit):
     potfit.create_param_file()
@@ -60,7 +60,7 @@ g 1 0 2
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 379' in potfit.stdout
+    assert '379 contributions' in potfit.stdout
 
 def test_apot_pair_globals_not_defined(potfit):
     potfit.create_param_file()

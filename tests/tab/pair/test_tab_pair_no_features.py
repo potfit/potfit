@@ -35,4 +35,4 @@ def test_tab_pair_no_features_simple(potfit):
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 3 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 376' in potfit.stdout
+    assert '376 contributions' in potfit.stdout

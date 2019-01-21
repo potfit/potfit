@@ -13,7 +13,7 @@ def test_apot_pair_sc(potfit):
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 385' in potfit.stdout
+    assert '385 contributions' in potfit.stdout
 
 def test_apot_pair_global_sc(potfit):
     potfit.create_param_file()
@@ -28,7 +28,7 @@ def test_apot_pair_global_sc(potfit):
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 385' in potfit.stdout
+    assert '385 contributions' in potfit.stdout
 
 def test_apot_pair_sc_param_missing(potfit):
     potfit.create_param_file()

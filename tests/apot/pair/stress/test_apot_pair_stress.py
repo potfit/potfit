@@ -59,5 +59,5 @@ sigma 2.5 1 4
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
     assert 'global stress weight w is 1.00' in potfit.stress
-    assert 'count 386' in potfit.stdout
+    assert '386 contributions' in potfit.stdout
     assert 'sum of stress-errors' in potfit.stdout

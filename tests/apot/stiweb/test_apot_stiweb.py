@@ -13,7 +13,7 @@ def test_apot_stiweb_basic(potfit):
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 389' in potfit.stdout
+    assert '389 contributions' in potfit.stdout
 
 def test_apot_stiweb_wrong_potential_format(potfit):
     potfit.create_param_file()

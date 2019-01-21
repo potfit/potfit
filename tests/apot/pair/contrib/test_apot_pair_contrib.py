@@ -23,7 +23,7 @@ sigma 2.5 1 4
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 380' in potfit.stdout
+    assert '380 contributions' in potfit.stdout
 
 def test_apot_pair_contrib_basic_sphere(potfit):
     potfit.create_param_file()
@@ -63,7 +63,7 @@ sigma 2.5 1 4
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 17' in potfit.stdout
+    assert '17 contributions' in potfit.stdout
 
 def test_apot_pair_contrib_basic_multi_sphere(potfit):
     potfit.create_param_file()
@@ -107,7 +107,7 @@ sigma 2.5 1 4
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 17' in potfit.stdout
+    assert '17 contributions' in potfit.stdout
 
 def test_apot_pair_contrib_missing_origin(potfit):
     potfit.create_param_file()
