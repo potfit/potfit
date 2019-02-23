@@ -34,6 +34,7 @@
 #################################################################
 
 import argparse
+import importlib
 import logging
 import os
 import random
@@ -44,6 +45,10 @@ import time
 
 from pathlib import Path
 from subprocess import run
+
+DISABLED_MODELS = [
+  'LennardJones612_UniversalShifted__MO_959249795837_003'
+]
 
 VERSION = '0.1'
 
@@ -81,7 +86,8 @@ def check_for_tools(args):
       raise Exception('Provided kim_read_model_props binary does not exist or is not a file.')
     if not os.access(props, os.X_OK):
       raise Exception('Provided kim_read_model_props binary is not executable.')
-  return os.path.abspath(args.potfit), lammps, props
+  have_asap = (importlib.util.find_spec("numpy") and importlib.util.find_spec("asap3.Internal.OpenKIMcalculator") and importlib.util.find_spec("ase"))
+  return os.path.abspath(args.potfit), lammps, have_asap, props
 
 def decode_properties(model_props, output = None):
   if not output:
@@ -119,18 +125,20 @@ def get_model_list(props):
   ret = []
   for line in models:
     p = get_model_props(line.split()[1], props)
-    if p and p[1]['PARAMS'] > 0:
+    if p and p[1]['PARAMS'] > 0 and not p[1]['NAME'] in DISABLED_MODELS:
       ret.append(p)
   return ret
 
 def main(args):
   print_banner('kim_compare_lammps.py version {}'.format(VERSION))
-  potfit, lammps, props = check_for_tools(args)
+  potfit, lammps, have_asap, props = check_for_tools(args)
   logger.info('Using potfit binary {}'.format(potfit))
   logger.info('Using LAMMPS binary {}'.format(lammps))
+  if have_asap:
+    logger.info('Found usable asap installation with OpenKIM support')
   logger.info('Using props binary {}'.format(props))
   models = get_model_list(props)
-  logger.info('Performing a total of {} runs\n'.format(args.runs))
+  logger.info('Performing a total of {} runs using {} KIM models\n'.format(args.runs, len(models)))
   if args.seed:
     random.seed(args.seed)
   basedir = Path('/tmp/kim_compare_lammps_' + time.strftime("%Y%d%m_%H%M%S", time.localtime()))
@@ -138,9 +146,9 @@ def main(args):
   for i in range(args.runs):
     print_banner('Run {}/{}'.format(i + 1, args.runs))
     #logger.info(models)
-    model = models[random.randrange(1, len(models))]
+    model = models[random.randrange(0, len(models))]
     logger.info('Randomly selected model is "{}"'.format(model[0]))
-    if testrun.testrun(potfit, lammps, model[1], i + 1, basedir).run() == False:
+    if testrun.testrun(potfit, lammps, have_asap, model[1], i + 1, basedir).run() == False:
       logger.error('FAIL')
       sys.exit(-1)
 

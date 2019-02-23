@@ -99,7 +99,9 @@ class lammps_run(object):
       f.write('run 0')
 
   def run(self):
-    res = run([self.binary, '-in', 'input'], capture_output=True, cwd=self.directory)
+    my_env = os.environ.copy()
+    my_env['ASAN_OPTIONS'] = 'detect_leaks=0'
+    res = run([self.binary, '-in', 'input'], capture_output=True, cwd=self.directory, env=my_env)
     if res.returncode:
       print(self.directory)
       print(res.args)

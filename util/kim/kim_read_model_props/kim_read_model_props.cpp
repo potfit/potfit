@@ -47,7 +47,7 @@ namespace {
   using kim_model_p = std::unique_ptr<KIM::Model, std::function<void(KIM::Model*)>>;
 
   std::ostream& operator<< (std::ostream& stream, const KIM::DataType& dt) {
-    stream << "\"" << dt.String() << "\"";
+    stream << "\"" << dt.ToString() << "\"";
     return stream;
   }
 
@@ -137,14 +137,35 @@ namespace {
       int code = 0;
       ret = pmodel->GetSpeciesSupportAndCode(sname, &supported, &code);
       if (ret)
-        throw std::runtime_error("Error reading species support " + sname.String() + "(");
+        throw std::runtime_error("Error reading species support " + sname.ToString() + "(");
       if (supported)
-        species.push_back(sname.String());
+        species.push_back(sname.ToString());
     }
 
     print_item("NUM_SPECIES", species.size());
     std::sort(species.begin(), species.end());
     print_item("SPECIES", species.begin(), species.end());
+  }
+
+  void print_cutoffs(kim_model_p& pmodel)
+  {
+    double influence_distance = 0.0;
+
+    pmodel->GetInfluenceDistance(&influence_distance);
+
+    print_item("INFLUENCE_DISTANCE", influence_distance);
+
+    int num_lists = 0;
+    const double *cutoffs_raw = nullptr;
+    const int *data = nullptr;
+
+    pmodel->GetNeighborListPointers(&num_lists, &cutoffs_raw, &data);
+
+    print_item("NEIGHBOR_LIST_COUNT", num_lists);
+
+    std::vector<double> cutoffs(cutoffs_raw, cutoffs_raw + num_lists);
+
+    print_item("CUTOFFS", cutoffs.begin(), cutoffs.end());
   }
 
   void check_kim_model(const std::string& model_name)
@@ -160,6 +181,8 @@ namespace {
     print_parameters(numberOfParameters, pmodel);
 
     print_species(pmodel);
+
+    print_cutoffs(pmodel);
   }
 }
 

@@ -45,11 +45,12 @@ def copy_atom(a, box, disp):
   return res
 
 class atom_config(object):
-  def __init__(self, num_atom_types):
+  def __init__(self, model):
     self.atoms = []
     self.atom_types = []
     self.box = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    self.num_atom_types = num_atom_types
+    self.model = model
+    self.num_atom_types = model['NUM_SPECIES']
     self.scale = [1, 1, 1]
     self.__generate(LATTICE_TYPES[random.randint(0, len(LATTICE_TYPES) - 1)])
 
@@ -69,7 +70,7 @@ class atom_config(object):
 
   def __generate_Primitive(self, base_atoms):
     self.scale = [random.randint(3, 10) for x in range(3)]
-    lattice_constant = round(random.uniform(1.5, 4.0), 5)
+    lattice_constant = round(random.uniform(1.5, self.model['INFLUENCE_DISTANCE']), 5)
     for i in range(len(self.box)):
       self.box[i] = [x * lattice_constant for x in self.box[i]]
     for i in range(len(base_atoms)):
