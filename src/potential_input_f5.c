@@ -272,7 +272,7 @@ void read_global_parameters(FILE* pfile, const char* filename)
     if ((buffer[0] > 65) || (buffer[0] > 90 && buffer[0] < 97) || (buffer[0] > 122))
       error(1, "Global parameters for KIM need to start with letters: %s is invalid\n", buffer);
     apt->param_name[1][j] = (const char*)Malloc((strlen(buffer) + 1) * sizeof(char));
-    snprintf((char*)apt->param_name[1][j], strlen(buffer) + 1, buffer);
+    snprintf((char*)apt->param_name[1][j], strlen(buffer) + 1, "%s", buffer);
 
     /* check for duplicate names */
     for (int k = j - 1; k >= 0; k--) {
