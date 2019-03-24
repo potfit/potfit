@@ -176,6 +176,11 @@ class Potfit:
             if os.path.isfile(item):
                 os.remove(item)
 
+    def get_file_content(self, filename):
+        filename = os.path.join(self.cwd, filename)
+        with open(filename, 'r') as f:
+            return f.read()
+
     def _write_unit_cell(self, f, basic_size, ntypes, i, j, k):
         f.write('{} {} {} {} {} {} {}\n'.format(random.randint(0, ntypes - 1), i * basic_size, j * basic_size, k * basic_size, -random.random(), -random.random(), -random.random()))
         f.write('{} {} {} {} {} {} {}\n'.format(random.randint(0, ntypes - 1), (i + 0.5) * basic_size + random.uniform(-0.2,0.2), (j + 0.5) * basic_size + random.uniform(-0.2,0.2), (k + 0.5) * basic_size + random.uniform(-0.2,0.2), -random.random(), -random.random(), -random.random()))

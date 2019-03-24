@@ -149,7 +149,7 @@ void check_KIM_model_support()
     int modelCode = -1;
     res = KIM_Model_GetSpeciesSupportAndCode(g_kim.model, name, &speciesIsSupported, &modelCode);
     if (res || !speciesIsSupported)
-      error(1, "Species %s not supported", g_config.elements[i]);
+      error(1, "Species %s not supported by the KIM model", g_config.elements[i]);
     g_kim.species_map[i] = modelCode;
   }
 

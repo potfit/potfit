@@ -19,9 +19,9 @@ def supports_models():
     models = [line.split()[1] for line in models]
     return True
 
-def get_potfit_obj():
+def get_potfit_obj(request):
     import sys
-    sys.path.insert(0, str(pytest.config.rootdir))
+    sys.path.insert(0, str(request.config.rootdir))
     import potfit
     global potfit_obj
     if potfit_obj == None:
@@ -29,12 +29,12 @@ def get_potfit_obj():
     return potfit_obj
 
 @pytest.fixture()
-def potfit():
+def potfit(request):
     if not has_kim_support():
         pytest.skip('No KIM installation found!')
     if not supports_models():
         pytest.skip('Not all required KIM models found!')
-    p = get_potfit_obj()
+    p = get_potfit_obj(request)
     p.reset()
     yield p
     if os.path.isfile('kim/kim.log'):

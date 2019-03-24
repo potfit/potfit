@@ -328,8 +328,9 @@ void read_cutoff_parameter(FILE* pfile, const char* filename)
   do {
     if (NULL == fgets(buffer, 255, pfile) && !feof(pfile))
       error(1, "Error reading 'KIM_CUTOFF' keyword from potential file %s\n", filename);
-    if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
+    if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name)) {
       error(1, "Error reading 'KIM_CUTOFF ...' keyword from potential file %s\n", filename);
+    }
   } while (strncmp(name, "KIM_CUTOFF", 10) != 0 && !feof(pfile));
 
 
@@ -363,7 +364,8 @@ void read_keywords_and_parameters(char const* filename, FILE* infile, fpos_t sta
   read_global_parameters(infile, filename);
 
   fsetpos(infile, &startpos);
-  read_cutoff_parameter(infile, filename);
+  if (g_param.kim_model_params == KIM_MODEL_PARAMS_NONE)
+    read_cutoff_parameter(infile, filename);
 }
 
 double read_max_cutoff()

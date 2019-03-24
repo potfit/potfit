@@ -7,9 +7,9 @@ def pytest_runtest_logstart(nodeid, location):
 
 potfit_obj = None
 
-def get_potfit_obj(config):
+def get_potfit_obj(request):
     import sys
-    sys.path.insert(0, str(config.rootdir))
+    sys.path.insert(0, str(request.config.rootdir))
     import potfit
     global potfit_obj
     if potfit_obj == None:
@@ -18,7 +18,7 @@ def get_potfit_obj(config):
 
 @pytest.fixture()
 def potfit(request):
-    p = get_potfit_obj(request.config)
+    p = get_potfit_obj(request)
     p.reset()
     yield p
     p.clear()

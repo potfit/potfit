@@ -168,6 +168,18 @@ namespace {
     print_item("CUTOFFS", cutoffs.begin(), cutoffs.end());
   }
 
+  void print_routines(kim_model_p& pmodel)
+  {
+    int present = 0;
+    int required = 0;
+
+    auto ret = pmodel->IsRoutinePresent(KIM::MODEL_ROUTINE_NAME::WriteParameterizedModel, &present, &required);
+    if (ret)
+      throw std::runtime_error("Error reading routines present");
+
+    print_item("WRITE_MODEL", present);
+  }
+
   void check_kim_model(const std::string& model_name)
   {
     kim_model_p pmodel(create_kim_model(model_name), [](KIM::Model* m){ KIM::Model::Destroy(&m); });
@@ -183,6 +195,8 @@ namespace {
     print_species(pmodel);
 
     print_cutoffs(pmodel);
+
+    print_routines(pmodel);
   }
 }
 
