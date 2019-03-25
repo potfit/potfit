@@ -32,7 +32,7 @@ class Potfit:
         except:
             self.options = []
         self.filenames = []
-        self.mindist_pattern = re.compile('Minimal Distances Matrix:[\w\W]*?\n\n', re.MULTILINE)
+        self.mindist_pattern = re.compile(r'Minimal Distances Matrix:[\w\W]*?\n\n', re.MULTILINE)
         if 'git_patch' in kwargs:
           self._build(kwargs['git_patch'])
         else:
