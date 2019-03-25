@@ -29,6 +29,10 @@
 
 #include <float.h>
 
+#if defined(KIM)
+#include <KIM_SpeciesName.h>
+#endif // KIM
+
 #include "potfit.h"
 
 #include "config.h"
@@ -60,7 +64,7 @@ typedef struct {
 } config_state;
 
 void reset_cstate(config_state* cstate);
-void create_memory_for_configs(const char* filename);
+void create_memory_for_configs(FILE* config_file, const char* filename);
 void init_atom_memory(atom_t* atom);
 void read_box_vector(char const* pline, vector* pvect, const char* name, config_state* cstate);
 void read_chemical_elements(char* psrc, config_state* cstate);
@@ -104,9 +108,8 @@ void read_config(const char* filename)
   if (g_config.elements == NULL) {
     g_config.elements = (char const**)Malloc(g_param.ntypes * sizeof(char*));
     for (int i = 0; i < g_param.ntypes; i++) {
-      g_config.elements[i] = (char*)Malloc(5 * sizeof(char));
+      g_config.elements[i] = (const char*)Malloc(15 * sizeof(char));
       sprintf((char*)g_config.elements[i], "%d", i);
-      *((char*)g_config.elements[i] + (i < 10 ? 1 : 2)) = '\0';
     }
   } else
     cstate.num_fixed_elements = g_param.ntypes;
@@ -118,18 +121,18 @@ void read_config(const char* filename)
   for (int i = 0; i < g_param.ntypes * g_param.ntypes; i++)
     mindist[i] = DBL_MAX;
 
-  create_memory_for_configs(filename);
-
   // open file
   FILE* config_file = fopen(filename, "r");
-
   if (config_file == NULL)
     error(1, "Could not open file %s\n", filename);
 
-  printf(
-      "Reading the config file >> %s << and calculating neighbor lists ...\n",
-      filename);
+  printf("Reading configuration file >> %s << and calculating neighbor lists ...\n", filename);
   fflush(stdout);
+
+  create_memory_for_configs(config_file, filename);
+
+  if (fseek(config_file, 0, SEEK_SET))
+    error(1, "Error rewinding config file\n");
 
   // read configurations until the end of the file
   do {
@@ -156,10 +159,8 @@ void read_config(const char* filename)
 #else
     if (cstate.atom_count < 2)
 #endif  // THREEBODY
-      error(1,
-            "Configuration %d (starting on line %d) has not enough atoms, "
-            "please remove it.\n",
-            g_config.nconf + 1, cstate.line);
+      error(1, "Configuration %d (starting on line %d) has not enough atoms, "
+            "please remove it.\n", g_config.nconf + 1, cstate.line);
 
     g_config.inconf[g_config.nconf] = cstate.atom_count;
     g_config.cnfstart[g_config.nconf] = g_config.natoms;
@@ -167,11 +168,6 @@ void read_config(const char* filename)
 #if defined(STRESS)
     cstate.stresses = g_config.stress + g_config.nconf;
 #endif  // STRESS
-
-#if defined(KIM)
-    if (g_kim.NBC == KIM_NEIGHBOR_TYPE_OPBC)
-      g_kim.box_vectors = (double *) Realloc(g_kim.box_vectors, 3*(g_config.nconf+1)*sizeof(double));
-#endif  // KIM
 
     // read header lines
     do {
@@ -321,23 +317,6 @@ void read_config(const char* filename)
 
     g_config.volume[g_config.nconf] = make_box(&cstate);
 
-#if defined(KIM)
-    if (g_kim.NBC == KIM_NEIGHBOR_TYPE_OPBC) {
-      double small_value = 1e-8;
-      if(cstate.box_x.y > small_value || cstate.box_x.z > small_value
-	    || cstate.box_y.z > small_value || cstate.box_y.x > small_value
-	    || cstate.box_z.x > small_value || cstate.box_z.y > small_value){
-        error(1,"KIM: simulation box of configuration %d is not orthogonal. Try to use 'NEIGH_RVEC' "
-	      "instead of 'MI_OPBC'.\n", g_config.nconf);
-      } else {
-        // store the box size info in box_vectors
-        g_kim.box_vectors[3 * g_config.nconf + 0] = cstate.box_x.x;
-        g_kim.box_vectors[3 * g_config.nconf + 1] = cstate.box_y.y;
-        g_kim.box_vectors[3 * g_config.nconf + 2] = cstate.box_z.z;
-      }
-    }
-#endif   // KIM
-
     // read the atoms
     for (int i = 0; i < cstate.atom_count; i++) {
       atom_t* atom = g_config.atoms + g_config.natoms + i;
@@ -394,10 +373,7 @@ void read_config(const char* filename)
   fclose(config_file);
 
   // the calculation of the neighbor lists is now complete
-  printf(
-      "Reading the config file >> %s << and calculating neighbor lists ... "
-      "done\n",
-      filename);
+  printf( "Reading configuration file >> %s << and calculating neighbor lists ... done\n", filename);
 
   for (int i = 0; i < g_config.nconf; i++)
     for (int j = 0; j < g_param.ntypes; j++)
@@ -409,8 +385,7 @@ void read_config(const char* filename)
   printf("with a total of %d atoms (", g_config.natoms);
 
   for (int i = 0; i < g_param.ntypes; i++) {
-    printf("%d %s (%.2f%%)", g_config.na_type[g_config.nconf][i],
-           g_config.elements[i],
+    printf("%d %s (%.2f%%)", g_config.na_type[g_config.nconf][i], g_config.elements[i],
            100.0 * g_config.na_type[g_config.nconf][i] / g_config.natoms);
     if (i != (g_param.ntypes - 1))
       printf(", ");
@@ -419,28 +394,9 @@ void read_config(const char* filename)
 
   // be pedantic about too large g_param.ntypes
   if ((max_atom_type + 1) < g_param.ntypes) {
-    error(0, "There are less than %d atom types in your configurations!\n",
-          g_param.ntypes);
+    error(0, "There are less than %d atom types in your configurations!\n", g_param.ntypes);
     error(1, "Please adjust \"ntypes\" in your parameter file.\n");
   }
-
-#if defined(KIM)
-  if (g_param.ntypes > g_kim.freeparams.nspecies)
-    error(1, "The KIM model %s does only support %d species!\n", g_kim.model_name, g_kim.freeparams.nspecies);
-
-  // check if all atom types are supported by the KIM model
-  for (int i = 0; i < g_param.ntypes; ++i) {
-    int found = 0;
-    for (int j = 0; j < g_kim.freeparams.nspecies; ++j) {
-      if (strcmp(g_config.elements[i], g_kim.freeparams.species[j]) == 0) {
-        found = 1;
-        break;
-      }
-    }
-    if (!found)
-      error(1, "The KIM model %s does not support the species %s!\n", g_kim.model_name, g_config.elements[i]);
-  }
-#endif // KIM
 
   /* mdim is the dimension of the force vector:
      - 3*natoms forces
@@ -462,7 +418,7 @@ void read_config(const char* filename)
 #endif                    // EAM || ADP || MEAM
 
   // mdim has additional components for analytic potentials
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   // 1 slot for each analytic parameter -> punishment
   g_calc.mdim += g_pot.opt_pot.idxlen;
   // 1 slot for each analytic potential -> punishment
@@ -504,7 +460,7 @@ void read_config(const char* filename)
     write_pair_distribution_file();
 
 /* assign correct distances to different tables */
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   double min = DBL_MAX;
 
   /* pair potentials */
@@ -513,11 +469,13 @@ void read_config(const char* filename)
       k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                    : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       if (mindist[k] == DBL_MAX)
-        error(1, "No atoms found in interaction range for potential %d!", k);
+        error(1, "No atoms found in interaction range for potential %d!\n", k);
       g_config.rmin[i * g_param.ntypes + j] = mindist[k];
       g_pot.apot_table.begin[k] = mindist[k] * 0.95;
       g_pot.opt_pot.begin[k] = mindist[k] * 0.95;
+#if defined(APOT)
       g_pot.calc_pot.begin[k] = mindist[k] * 0.95;
+#endif // APOT
       min = MIN(min, mindist[k]);
     }
   }
@@ -597,6 +555,7 @@ void read_config(const char* filename)
   }
 #endif  // ANG
 
+#if !defined(KIM)
   /* recalculate step, invstep and xcoord for new tables */
   for (int i = 0; i < g_pot.calc_pot.ncols; i++) {
     g_pot.calc_pot.step[i] =
@@ -609,9 +568,8 @@ void read_config(const char* filename)
     }
   }
 
-#if !defined(KIM)
   update_slots();
-#endif  // KIM
+#endif // KIM
 
 #else  // APOT
 
@@ -621,7 +579,7 @@ void read_config(const char* filename)
       k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                    : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       if (mindist[k] == DBL_MAX)
-        error(1, "No atoms found in interaction range for potential %d!", k);
+        error(1, "No atoms found in interaction range for potential %d!\n", k);
     }
 
 #endif  // APOT
@@ -781,15 +739,11 @@ void reset_cstate(config_state* cstate)
   create_memory_for_configs
 ****************************************************************/
 
-void create_memory_for_configs(const char* filename)
+void create_memory_for_configs(FILE* config_file, const char* filename)
 {
   int atom_count = 0;
   int config_count = 0;
   char buffer[1024];
-
-  FILE* config_file = fopen(filename, "r");
-  if (config_file == NULL)
-    error(1, "Could not open file %s\n", filename);
 
   int line = 1;
 
@@ -798,7 +752,7 @@ void create_memory_for_configs(const char* filename)
     if (feof(config_file))
       break;
     if (res == NULL)
-      error(1, "Unexpected end of file in aaa %s %d\n", filename, line);
+      error(1, "Unexpected EOF in config file %s in line %d\n", filename, line);
 
     int count = 0;
     line++;
@@ -811,13 +765,7 @@ void create_memory_for_configs(const char* filename)
     }
   }
 
-  fclose(config_file);
-
   g_config.atoms = (atom_t*)Malloc(atom_count * sizeof(atom_t));
-
-//   for (int i = 0; i < atom_count; ++i)
-//     g_config.atoms[i].neigh = (neigh_t*)Malloc(sizeof(neigh_t));
-
   g_config.coheng = (double*)Malloc(config_count * sizeof(double));
 
   g_config.conf_weight = (double*)Malloc(config_count * sizeof(double));
@@ -837,6 +785,14 @@ void create_memory_for_configs(const char* filename)
   g_config.na_type = (int**)Malloc((config_count + 1) * sizeof(int*));
   for (int i = 0; i <= config_count; ++i)
     g_config.na_type[i] = (int*)Malloc(g_param.ntypes * sizeof(int));
+
+#if defined(KIM)
+  g_config.number_of_particles = (int*)Malloc(config_count * sizeof(int));
+  g_config.species_codes = (int**)Malloc(config_count * sizeof(int*));
+  g_config.particle_contributing = (int**)Malloc(config_count * sizeof(int*));
+  g_config.coordinates = (double**)Malloc(config_count * sizeof(double*));
+  g_config.source_atom = (int**)Malloc(config_count * sizeof(int*));
+#endif // KIM
 }
 
 /****************************************************************
@@ -895,11 +851,11 @@ void read_chemical_elements(char* psrc, config_state* cstate)
 {
   int i = 0;
   const char* pchar = strtok(psrc + 3, " \t\r\n");
-  char buffer[5];
+  char buffer[15];
 
   if (!cstate->num_fixed_elements) {
     while (pchar != NULL && i < g_param.ntypes) {
-      if (strlen(pchar) > 4) {
+      if (strlen(pchar) > 14) {
         memset(buffer, 0, sizeof(buffer));
         strncpy(buffer, pchar, sizeof(buffer) - 1);
         pchar = buffer;
@@ -913,7 +869,7 @@ void read_chemical_elements(char* psrc, config_state* cstate)
     while (pchar != NULL && i < g_param.ntypes) {
       if (strcmp(pchar, g_config.elements[i]) != 0) {
         if (atoi(g_config.elements[i]) == i && i >= cstate->num_fixed_elements) {
-          if (strlen(pchar) > 4) {
+          if (strlen(pchar) > 14) {
             memset(buffer, 0, sizeof(buffer));
             strncpy(buffer, pchar, sizeof(buffer) - 1);
             pchar = buffer;
@@ -998,6 +954,126 @@ void init_box_vectors(config_state* cstate)
 #endif  // DEBUG
 }
 
+#if defined(KIM)
+
+/****************************************************************
+  init_neighbors_kim
+****************************************************************/
+
+void init_neighbors_kim(config_state* cstate, double* mindist, int** _atom_pos)
+{
+  const int conf = cstate->config - 1;
+
+  // generate KIM species map
+  if (!g_kim.species_map) {
+    g_kim.species_map = (int*)Malloc(g_param.ntypes * sizeof(int));
+    for (int i = 0; i < g_param.ntypes; ++i)
+      g_kim.species_map[i] = -1;
+  }
+
+  for (int i = 0; i < cstate->num_fixed_elements; ++i) {
+    if (g_kim.species_map[i] != -1)
+      continue;
+    KIM_SpeciesName species_name = KIM_SpeciesName_FromString(g_config.elements[i]);
+    for (int j = 0; j < g_kim.nspecies; ++j) {
+      if (KIM_SpeciesName_Equal(species_name, g_kim.species[j])) {
+        int supported = 0;
+        int code = 0;
+        int res = KIM_Model_GetSpeciesSupportAndCode(g_kim.model, species_name, &supported, &code);
+        if (res)
+          error(1, "Cannot get species support for species %d\n", i);
+        g_kim.species_map[i] = code;
+      }
+    }
+  }
+
+  const int nx = 2 * cstate->cell_scale.x + 1;
+  const int ny = 2 * cstate->cell_scale.y + 1;
+  const int nz = 2 * cstate->cell_scale.z + 1;
+  const int num_atoms = cstate->atom_count * nx * ny * nz;
+
+  // allocate memory for maximum amount of padding atoms possible
+
+  g_config.number_of_particles[conf] = num_atoms;
+  g_config.species_codes[conf] = (int*)Malloc(num_atoms * sizeof(int));
+  g_config.particle_contributing[conf] = (int*)Malloc(num_atoms * sizeof(int));
+  g_config.coordinates[conf] = (double*)Malloc(3 * num_atoms * sizeof(double));
+  g_config.source_atom[conf] = (int*)Malloc(num_atoms * sizeof(int));
+
+  // array for storing if atom is already included in atom list
+  int* atom_pos = (int*)malloc(num_atoms * sizeof(int));
+  for (int i = 0; i < num_atoms; ++i)
+    atom_pos[i] = -1;
+
+  int pos = 0;
+
+  // put real atoms at the beginning of the configuration
+  for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; ++i) {
+    atom_pos[i] = i;
+    g_config.species_codes[conf][pos] = g_kim.species_map[g_config.atoms[i].type];
+    g_config.particle_contributing[conf][pos] = 1;
+    g_config.source_atom[conf][pos] = i;
+    g_config.coordinates[conf][3 * pos] = g_config.atoms[i].pos.x;
+    g_config.coordinates[conf][3 * pos + 1] = g_config.atoms[i].pos.y;
+    g_config.coordinates[conf][3 * pos + 2] = g_config.atoms[i].pos.z;
+    pos++;
+  }
+
+  vector d;
+  vector dd;
+  vector new_pos;
+
+  // put all padding atoms behind
+  for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; ++i) {
+    for (int j = g_config.natoms; j < g_config.natoms + cstate->atom_count; ++j) {
+      // distance between the two atoms
+      d.x = g_config.atoms[j].pos.x - g_config.atoms[i].pos.x;
+      d.y = g_config.atoms[j].pos.y - g_config.atoms[i].pos.y;
+      d.z = g_config.atoms[j].pos.z - g_config.atoms[i].pos.z;
+      // loop over all padding cells
+      for (int ix = -cstate->cell_scale.x; ix <= cstate->cell_scale.x; ++ix) {
+        for (int iy = -cstate->cell_scale.y; iy <= cstate->cell_scale.y; ++iy) {
+          for (int iz = -cstate->cell_scale.z; iz <= cstate->cell_scale.z; ++iz) {
+            // skip original atoms
+            if ((ix == 0) && (iy == 0) && (iz == 0))
+              continue;
+            int atom_idx = (ny * (ix + cstate->cell_scale.x) + iy + cstate->cell_scale.y) * nz + iz + cstate->cell_scale.z;
+            if (atom_idx < (nx * ny * nz / 2.0))
+              atom_idx = (atom_idx + 1) * cstate->atom_count + j;
+            else
+              atom_idx = atom_idx * cstate->atom_count + j;
+            if (atom_pos[atom_idx] >= 0)
+              continue;
+            dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x + iz * cstate->box_z.x;
+            dd.y = d.y + ix * cstate->box_x.y + iy * cstate->box_y.y + iz * cstate->box_z.y;
+            dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z + iz * cstate->box_z.z;
+            double r = sqrt(SPROD(dd, dd));
+            int type1 = g_config.atoms[i].type;
+            int type2 = g_config.atoms[j].type;
+            if (r > g_config.rcut[type1 * g_param.ntypes + type2])
+              continue;
+            new_pos.x = g_config.atoms[j].pos.x + ix * cstate->box_x.x + iy * cstate->box_y.x + iz * cstate->box_z.x;
+            new_pos.y = g_config.atoms[j].pos.y + ix * cstate->box_x.y + iy * cstate->box_y.y + iz * cstate->box_z.y;
+            new_pos.z = g_config.atoms[j].pos.z + ix * cstate->box_x.z + iy * cstate->box_y.z + iz * cstate->box_z.z;
+            g_config.species_codes[conf][pos] = g_kim.species_map[g_config.atoms[j].type];
+            g_config.particle_contributing[conf][pos] = 0;
+            g_config.source_atom[conf][pos] = j;
+            g_config.coordinates[conf][3 * pos] = new_pos.x;
+            g_config.coordinates[conf][3 * pos + 1] = new_pos.y;
+            g_config.coordinates[conf][3 * pos + 2] = new_pos.z;
+            atom_pos[atom_idx] = pos++;
+          }
+        }
+      }
+    }
+  }
+
+  g_config.number_of_particles[conf] = pos;
+  _atom_pos[0] = atom_pos;
+}
+
+#endif // KIM
+
 /****************************************************************
   init_neighbors
 ****************************************************************/
@@ -1007,21 +1083,26 @@ void init_neighbors(config_state* cstate, double* mindist)
   vector d;
   vector dd;
 
+#if defined(KIM)
+  int* atom_pos = NULL;
+  const int nx = 2 * cstate->cell_scale.x + 1;
+  const int ny = 2 * cstate->cell_scale.y + 1;
+  const int nz = 2 * cstate->cell_scale.z + 1;
+
+  init_neighbors_kim(cstate, mindist, &atom_pos);
+#endif // KIM
+
   // compute the neighbor table
   for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; i++) {
 
-    // loop over all atoms for threebody interactions
+    // loop over all atoms for threebody and KIM interactions
     int num_neigh = 0;
-#if defined(THREEBODY)
-    for (int j = g_config.natoms; j < g_config.natoms + cstate->atom_count; j++)
+#if defined(THREEBODY) || defined(KIM)
+    int j_start = g_config.natoms;
 #else
     int j_start = i;
-#if defined(KIM)
-    if (g_kim.is_half_neighbors != 1)
-      j_start = g_config.natoms;
-#endif // KIM
+#endif // THREEBODY || KIM
     for (int j = j_start; j < g_config.natoms + cstate->atom_count; j++)
-#endif // THREEBODY
     {
       d.x = g_config.atoms[j].pos.x - g_config.atoms[i].pos.x;
       d.y = g_config.atoms[j].pos.y - g_config.atoms[i].pos.y;
@@ -1029,19 +1110,18 @@ void init_neighbors(config_state* cstate, double* mindist)
 
       for (int ix = -cstate->cell_scale.x; ix <= cstate->cell_scale.x; ix++) {
         for (int iy = -cstate->cell_scale.y; iy <= cstate->cell_scale.y; iy++) {
-          for (int iz = -cstate->cell_scale.z; iz <= cstate->cell_scale.z;
-              iz++) {
+          for (int iz = -cstate->cell_scale.z; iz <= cstate->cell_scale.z; iz++) {
             if ((i == j) && (ix == 0) && (iy == 0) && (iz == 0))
               continue;
-            dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x +
-                  iz * cstate->box_z.x;
-            dd.y = d.y + ix * cstate->box_x.y + iy * cstate->box_y.y +
-                  iz * cstate->box_z.y;
-            dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z +
-                  iz * cstate->box_z.z;
+            dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x + iz * cstate->box_z.x;
+            dd.y = d.y + ix * cstate->box_x.y + iy * cstate->box_y.y + iz * cstate->box_z.y;
+            dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z + iz * cstate->box_z.z;
             double r = sqrt(SPROD(dd, dd));
             int type1 = g_config.atoms[i].type;
             int type2 = g_config.atoms[j].type;
+
+            if (r == 0.0)
+              error(1, "Overlapping atoms found in periodic images: %d and %d\n", i - g_config.natoms, j - g_config.natoms);
 
             if (r <= g_config.rcut[type1 * g_param.ntypes + type2]) {
               if (r <= g_config.rmin[type1 * g_param.ntypes + type2]) {
@@ -1058,14 +1138,18 @@ void init_neighbors(config_state* cstate, double* mindist)
         }
       }
     }
-    if (num_neigh)
+    if (num_neigh) {
       g_config.atoms[i].neigh = (neigh_t*)Malloc(num_neigh * sizeof(neigh_t));
+#if defined(KIM)
+      g_config.atoms[i].kim_neighbors = (int*)Malloc(num_neigh * sizeof(int));
+#endif // KIM
+    }
 
-#if defined(THREEBODY)
-    for (int j = g_config.natoms; j < g_config.natoms + cstate->atom_count; j++)
-#else
+#if defined(KIM)
+    int atom_idx = 0;
+#endif // KIM
+
     for (int j = j_start; j < g_config.natoms + cstate->atom_count; j++)
-#endif  // THREEBODY
     {
       d.x = g_config.atoms[j].pos.x - g_config.atoms[i].pos.x;
       d.y = g_config.atoms[j].pos.y - g_config.atoms[i].pos.y;
@@ -1073,16 +1157,26 @@ void init_neighbors(config_state* cstate, double* mindist)
 
       for (int ix = -cstate->cell_scale.x; ix <= cstate->cell_scale.x; ix++) {
         for (int iy = -cstate->cell_scale.y; iy <= cstate->cell_scale.y; iy++) {
-          for (int iz = -cstate->cell_scale.z; iz <= cstate->cell_scale.z;
-               iz++) {
+          for (int iz = -cstate->cell_scale.z; iz <= cstate->cell_scale.z; iz++) {
             if ((i == j) && (ix == 0) && (iy == 0) && (iz == 0))
               continue;
-            dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x +
-                   iz * cstate->box_z.x;
-            dd.y = d.y + ix * cstate->box_x.y + iy * cstate->box_y.y +
-                   iz * cstate->box_z.y;
-            dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z +
-                   iz * cstate->box_z.z;
+#if defined(KIM)
+            if ((ix == 0) && (iy == 0) && (iz == 0)) {
+              atom_idx = j;
+            } else {
+              atom_idx = (ny * (ix + cstate->cell_scale.x) + iy + cstate->cell_scale.y) * nz + iz + cstate->cell_scale.z;
+              if (atom_idx < (nx * ny * nz / 2.0)) {
+                atom_idx = (atom_idx + 1) * cstate->atom_count + j;
+              } else {
+                atom_idx = atom_idx * cstate->atom_count + j;
+              }
+            }
+            if (atom_pos[atom_idx] < 0)
+              continue;
+#endif // KIM
+            dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x + iz * cstate->box_z.x;
+            dd.y = d.y + ix * cstate->box_x.y + iy * cstate->box_y.y + iz * cstate->box_z.y;
+            dd.z = d.z + ix * cstate->box_x.z + iy * cstate->box_y.z + iz * cstate->box_z.z;
             double r = sqrt(SPROD(dd, dd));
             int type1 = g_config.atoms[i].type;
             int type2 = g_config.atoms[j].type;
@@ -1125,18 +1219,19 @@ void init_neighbors(config_state* cstate, double* mindist)
               n->sqrdist.xy = dd.x * dd.y * r * r;
 #endif  // ADP
 
-              /* pre-compute index and shift into potential table */
-
-
-              /* pair potential */
+              // pre-compute index and shift into potential tables
               int col = (type1 <= type2)
-                            ? type1 * g_param.ntypes + type2 -
-                                  ((type1 * (type1 + 1)) / 2)
-                            : type2 * g_param.ntypes + type1 -
-                                  ((type2 * (type2 + 1)) / 2);
-              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 0);
-
+                            ? type1 * g_param.ntypes + type2 - ((type1 * (type1 + 1)) / 2)
+                            : type2 * g_param.ntypes + type1 - ((type2 * (type2 + 1)) / 2);
               mindist[col] = MIN(mindist[col], r);
+
+#if defined(KIM)
+              g_config.atoms[i].kim_neighbors[k] = atom_pos[atom_idx];
+              continue;
+#endif // KIM
+
+              // pair potential
+              set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 0);
 
 #if defined(EAM) || defined(ADP) || defined(MEAM)
               /* transfer function */
@@ -1180,15 +1275,18 @@ void init_neighbors(config_state* cstate, double* mindist)
               set_neighbor_slot(g_config.atoms[i].neigh + k, col, r, 1);
 #endif  // STIWEB
 
-            }   /* r < r_cut */
+            }   // r < r_cut
           }     /* loop over images in z direction */
         }       /* loop over images in y direction */
       }         /* loop over images in x direction */
     }           /* second loop over atoms (neighbors) */
-    if (num_neigh != 0 && num_neigh != g_config.atoms[i].num_neigh) {
+    if (num_neigh != 0 && num_neigh != g_config.atoms[i].num_neigh)
       error(1, "Neigh count mismatch!!");
-    }
   }             /* first loop over atoms */
+
+#if defined(KIM)
+  free(atom_pos);
+#endif // KIM
 }
 
 /****************************************************************
@@ -1376,8 +1474,7 @@ void init_angles(config_state* cstate)
               if ((fabs(ccos) - 1.0) > 1e-10) {
                 int type1 = g_config.atoms[i].type;
                 int type2 = g_config.atoms[i].neigh[j].type;
-                printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col],
-			col, type1, type2);
+                printf("%.20f %f %d %d %d\n", ccos, g_pot.calc_pot.begin[col], col, type1, type2);
                 fflush(stdout);
                 error(1, "cos out of range, it is strange!\n");
               }
@@ -1489,8 +1586,7 @@ void write_pair_distribution_file()
           pos = (int)(g_config.atoms[i].neigh[j].r / pair_dist[k]);
 #if defined(DEBUG)
           if (g_config.atoms[i].neigh[j].r <= 1) {
-            warning("Short distance (%f) found.\n",
-                    g_config.atoms[i].neigh[j].r);
+            warning("Short distance (%f) found.\n", g_config.atoms[i].neigh[j].r);
             warning("\tatom=%d neighbor=%d\n", i, j);
           }
 #endif  // DEBUG

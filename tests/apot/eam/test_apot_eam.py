@@ -8,7 +8,7 @@ def test_apot_eam_basic(potfit):
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'analytic potentials' in potfit.stdout
-    assert '3 EAM potentials' in potfit.stdout
+    assert '3 EAM potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout

@@ -1,4 +1,5 @@
 import glob
+import io
 import math
 import os
 import pytest
@@ -10,11 +11,26 @@ import subprocess
 from itertools import product
 
 class Potfit:
-    def __init__(self, location, model, interaction, options = [], **kwargs):
+    def __init__(self, location, **kwargs):
         self.cwd = os.path.dirname(location)
-        self.model = model
-        self.interaction = interaction
-        self.options = options
+        try:
+            self.interaction = kwargs['interaction']
+        except:
+            self.interaction = None
+        try:
+            self.model = kwargs['model']
+        except:
+            self.model = None
+        if self.model == None:
+            pytest.fail('Each potfit object needs a potential model!')
+        if self.model == 'kim':
+            self.interaction = None
+        elif self.interaction == None:
+            pytest.fail('A {} potfit object needs an interaction!'.format(self.model))
+        try:
+            self.options = kwargs['options']
+        except:
+            self.options = []
         self.filenames = []
         self.mindist_pattern = re.compile('Minimal Distances Matrix:[\w\W]*?\n\n', re.MULTILINE)
         if 'git_patch' in kwargs:
@@ -108,9 +124,9 @@ class Potfit:
         if param_file != None:
             cmd.append(param_file)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.cwd)
-        p.wait()
-        self.stdout = p.stdout.read().decode('ascii')
-        self.stderr = p.stderr.read().decode('ascii')
+        out, err = p.communicate()
+        self.stdout = out.decode('ascii')
+        self.stderr = err.decode('ascii')
         try:
             f = open(os.path.join(self.cwd, param_file), 'r')
             for line in f:
@@ -160,6 +176,11 @@ class Potfit:
             if os.path.isfile(item):
                 os.remove(item)
 
+    def get_file_content(self, filename):
+        filename = os.path.join(self.cwd, filename)
+        with open(filename, 'r') as f:
+            return f.read()
+
     def _write_unit_cell(self, f, basic_size, ntypes, i, j, k):
         f.write('{} {} {} {} {} {} {}\n'.format(random.randint(0, ntypes - 1), i * basic_size, j * basic_size, k * basic_size, -random.random(), -random.random(), -random.random()))
         f.write('{} {} {} {} {} {} {}\n'.format(random.randint(0, ntypes - 1), (i + 0.5) * basic_size + random.uniform(-0.2,0.2), (j + 0.5) * basic_size + random.uniform(-0.2,0.2), (k + 0.5) * basic_size + random.uniform(-0.2,0.2), -random.random(), -random.random(), -random.random()))
@@ -172,41 +193,49 @@ class Potfit:
         p = subprocess.Popen(self._get_conf_cmd(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
         p.wait()
         if p.returncode:
-            print(p.stderr.read().decode('ascii'))
-            pytest.fail('error calling "waf configure"')
+            pytest.fail('error calling "waf configure": {}'.format(p.stderr.read().decode('ascii')))
         if git_patch:
           p = subprocess.Popen(['patch', '-Np1'], stdin=open(os.path.join(self.cwd, git_patch)), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
           p.wait()
           if p.returncode:
-            print(p.stderr.read().decode('ascii'))
-            pytest.fail('error patching potfit source tree')
+            pytest.fail('error patching potfit source tree: {}'.format(p.stderr.read().decode('ascii')))
         p = subprocess.Popen(['./waf', 'build'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
         p.wait()
         if git_patch:
-          q = subprocess.Popen(['git', 'checkout', '--', 'src/'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
+          # undo patch before checking for build error
+          q = subprocess.Popen(['patch', '-NRp1'], stdin=open(os.path.join(self.cwd, git_patch)), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
           q.wait()
+          if q.returncode:
+            pytest.fail('error unapplying custom patch file')
         if p.returncode:
-          print(p.stderr.read().decode('ascii'))
-          pytest.fail('error calling "waf build"')
+          pytest.fail('error calling "waf build": {}'.format(p.stderr.read().decode('ascii')))
         out = p.stdout.read().decode('ascii').split('\n')
         self.binary_name = [x for x in out if 'Linking' in x][0].split(' ')[2].split('/')[-1]
         if not len(self.binary_name):
             pytest.fail('error reading binary name')
 
     def _get_conf_cmd(self):
-        cmd = ['./waf', 'configure', '-c', 'no', '-m', self.model, '-i', self.interaction]
+        cmd = ['./waf', 'configure', '-c', 'no']
+        if self.interaction:
+            cmd.extend(['-i', self.interaction])
+        if self.model:
+            cmd.extend(['-m', self.model])
         for opt in self.options:
             cmd.append('--enable-{}'.format(opt))
         cmd.append('--asan')
         cmd.append('--debug')
-        cmd.append('--check-c-compiler=clang')
+        cmd.append('--check-c-compiler=gcc')
         return cmd
 
     def _check_asan_fail(self, filename):
         if self.returncode != 99:
             return
         filenames = [x[len(os.path.abspath('..'))+7:] for x in glob.iglob(os.path.join(self.cwd,'{}.*'.format(filename))) if os.path.isfile(x)]
-        pytest.fail('address sanitizer detected an error, please check {}'.format('\n'.join(filenames)))
+        if len(filenames) == 0:
+            # if there is no output file the address sanitizer probably reported memory leaks via stderr
+            pytest.fail('address sanitizer failed: {}'.format(self.stderr))
+        else:
+            pytest.fail('address sanitizer detected an error, please check {}'.format('\n'.join(filenames)))
 
     def _get_minimal_distance_matrix(self):
         match = self.mindist_pattern.search(self.stdout)

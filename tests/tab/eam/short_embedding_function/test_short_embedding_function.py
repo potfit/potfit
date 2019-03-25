@@ -50,7 +50,7 @@ def test_short_embedding_function_1(potfit):
     potfit.run()
     assert potfit.has_error()
     assert 'tabulated eqdist' in potfit.stdout
-    assert '3 EAM potentials' in potfit.stdout
+    assert '3 EAM potential(s)' in potfit.stdout
     assert 'Your embedding function has insufficient sampling points' in potfit.stderr
     assert 'For fixing the gauge degrees of freedom potfit needs to calculate F\'(1.0)!' in potfit.stderr
     assert 'Please include F(1.0) in your potential definition (currently [1.100000,1.200000])' in potfit.stderr
@@ -62,7 +62,7 @@ def test_short_embedding_function_2(potfit):
     potfit.run()
     assert potfit.has_error()
     assert 'tabulated eqdist' in potfit.stdout
-    assert '3 EAM potentials' in potfit.stdout
+    assert '3 EAM potential(s)' in potfit.stdout
     assert 'Your embedding function has insufficient sampling points' in potfit.stderr
     assert 'For fixing the gauge degrees of freedom potfit needs to calculate F\'(1.0)!' in potfit.stderr
     assert 'Please include F(1.0) in your potential definition (currently [0.100000,0.200000])' in potfit.stderr
@@ -74,7 +74,7 @@ def test_short_embedding_function_3(potfit):
     potfit.run()
     assert potfit.has_no_error()
     assert 'tabulated eqdist' in potfit.stdout
-    assert '3 EAM potentials' in potfit.stdout
+    assert '3 EAM potential(s)' in potfit.stdout
 
 def test_short_embedding_function_4(potfit):
     potfit.create_param_file()
@@ -83,7 +83,7 @@ def test_short_embedding_function_4(potfit):
     potfit.run()
     assert potfit.has_error()
     assert 'tabulated eqdist' in potfit.stdout
-    assert '3 EAM potentials' in potfit.stdout
+    assert '3 EAM potential(s)' in potfit.stdout
     assert 'Your embedding function has insufficient sampling points' in potfit.stderr
     assert 'For fixing the gauge degrees of freedom potfit needs to calculate F\'(1.0)!' in potfit.stderr
     assert 'Please include F(1.0) in your potential definition (currently [1.100000,0.200000])' in potfit.stderr

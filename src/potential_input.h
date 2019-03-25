@@ -46,4 +46,8 @@ void update_apot_table(double* xi);
 void update_calc_table(double* xi_opt, double* xi_calc, int do_all);
 #endif  // APOT
 
+#if defined(KIM)
+void update_kim_table(const double* xi);
+#endif // KIM
+
 #endif  // POTENTIAL_INPUT_H_INCLUDED

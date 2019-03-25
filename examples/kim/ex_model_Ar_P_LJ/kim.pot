@@ -1,0 +1,13 @@
+#F 5 1
+#T ex_model_Ar_P_LJ
+#C Ar
+#E
+
+KIM_PARAM cutoff
+8.150000        8.150000        8.150000
+
+KIM_PARAM epsilon
+0.010400        0.010400        0.010400
+
+KIM_PARAM sigma
+3.400000        3.400000        3.400000

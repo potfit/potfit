@@ -8,116 +8,81 @@ from itertools import chain, combinations
 from subprocess import call
 
 # arrays for supported interactions
-tab_interactions = ['pair', 'eam', 'tbeam', 'adp', 'meam']
-apot_interactions = ['pair', 'ang', 'eam', 'tbeam', 'adp', 'meam', 'coulomb', 'dipole',
-                     'stiweb', 'tersoff', 'tersoffmod', 'ang_elstat', 'eam_coulomb', 'eam_dipole']
-kim_interactions = ['kim']
+
+TAB_INTERACTIONS = [
+    'pair',
+    'eam',
+    'tbeam',
+    'adp',
+    'meam'
+]
+
+APOT_INTERACTIONS = [
+    'pair',
+    'ang',
+    'eam',
+    'tbeam',
+    'adp',
+    'meam',
+    'coulomb',
+    'dipole',
+    'stiweb',
+    'tersoff',
+    'tersoffmod',
+    'ang_elstat',
+    'eam_coulomb',
+    'eam_dipole'
+]
 
 # arrays for supported options
-tab_options = ['evo', 'mpi', 'stress', 'nopunish',
-               'bindist', 'fweight', 'resc', 'contrib']
-apot_options = ['evo', 'mpi', 'stress', 'nopunish', 'fweight', 'contrib']
-kim_options = ['evo', 'stress', 'fweight', 'contrib']
+
+TAB_OPTIONS = [
+    'evo',
+    'mpi',
+    'stress',
+    'nopunish',
+    'bindist',
+    'fweight',
+    'resc',
+    'contrib'
+]
+
+APOT_OPTIONS = [
+    'evo',
+    'mpi',
+    'stress',
+    'nopunish',
+    'fweight',
+    'contrib'
+]
+
+KIM_OPTIONS = [
+    'evo',
+    'stress',
+    'fweight',
+    'contrib'
+]
 
 # array of array of unsupported combinations of options
-disable = [
+
+DISABLED_OPTIONS = [
     ['bindist', 'mpi']
 ]
 
 # array of options for only certain interactions
-special_tab_options = []
 
-special_apot_options = [
+SPECIAL_TAB_OPTIONS = []
+
+SPECIAL_APOT_OPTIONS = [
     ['coulomb', ['dsf']],
     ['eam_coulomb', ['dsf']],
 ]
 
-special_kim_options = []
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description='Compile potfit binary with all possible combinations of options.')
-
-    subs = parser.add_subparsers(
-        title="Potential type", description="Choose one of the following types")
-
-    apot = subs.add_parser('apot', help='analytic potentials')
-    apot_list = copy.copy(apot_interactions)
-    apot_list.sort()
-    apot_list.insert(0, 'all')
-    apot.add_argument('apot', choices=apot_list)
-
-    tab = subs.add_parser('tab', help='tabulated potentials')
-    tab_list = copy.copy(tab_interactions)
-    tab_list.sort()
-    tab_list.insert(0, 'all')
-    tab.add_argument('tab', choices=tab_list)
-
-    kim = subs.add_parser('kim', help='kim interactions')
-    kim.add_argument('kim', choices=['all'])
-
-    parser.add_argument('--start', metavar='N', default=1,
-                        type=int, required=False, help='start at combination N')
-    parser.add_argument('--count', metavar='N', default=-1,
-                        type=int, required=False, help='only compile N versions')
-    parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--compiler', choices=['clang', 'gcc', 'icc'], default='clang')
-    return parser.parse_args()
-
-
-def get_working_arrays(args):
-    cmd = []
-    target_name = 'potfit'
-
-    if hasattr(args, 'tab'):
-        if (args.tab == 'all'):
-            interactions = tab_interactions
-        else:
-            interactions = [args.tab]
-        options = tab_options
-        cmd.extend(['-m', 'tab'])
-        target_name += '_tab'
-        special_options = special_tab_options
-    elif hasattr(args, 'apot'):
-        if (args.apot == 'all'):
-            interactions = apot_interactions
-        else:
-            interactions = [args.apot]
-        options = apot_options
-        cmd.extend(['-m', 'apot'])
-        target_name += '_apot'
-        special_options = special_apot_options
-    elif hasattr(args, 'kim'):
-        # kim only supports 'all'
-        interactions = kim_interactions
-        options = kim_options
-        target_name += '_apot'
-        special_options = special_kim_options
-    else:
-        raise RuntimeWarning('No interaction type defined!')
-
-    if args.debug:
-        cmd.append('--debug')
-        target_name += '_debug'
-
-    return [interactions, options, cmd, target_name, special_options]
+SPECIAL_KIM_OPTIONS = []
 
 
 def all_subsets(subset):
     return chain(*map(lambda x: combinations(subset, x), range(0, len(subset) + 1)))
-
-
-def get_number_of_targets(interactions, options, special_options):
-    count = 0
-    for interaction in interactions:
-        option_list = options[:]
-        for special_option in special_options:
-            if special_option[0] == interaction:
-                option_list += special_option[1]
-                break
-        count += sum(1 for x in all_subsets(option_list))
-    return count
 
 
 def options_are_supported(subset, disable_array):
@@ -131,54 +96,193 @@ def options_are_supported(subset, disable_array):
     return True
 
 
-def build_targets(args):
-    try:
-        interactions, options, cmd, target, special_options = get_working_arrays(args)
-    except RuntimeWarning as e :
-        print("Error: {}".format(e))
-        sys.exit(-1)
+class check_potfit:
+    def __init__(self, args):
+        self.cmd = []
+        self.compiler = args.compiler
+        self.max_count = args.count
+        self.enable_debug = args.debug
+        self.options = []
+        self.special_options = []
+        self.startpos = args.start
 
-    num_targets = get_number_of_targets(interactions, options, special_options)
-    print("Building {} possible targets for {}.".format(num_targets, target))
+        if hasattr(args, 'enable_apot'):
+            self.model = 'apot'
+            self.interactions = args.interaction
+            self.target_name = 'analytic potentials'
+        elif hasattr(args, 'enable_kim'):
+            self.model = 'kim'
+            self.interactions = None
+            self.target_name = 'KIM models'
+        elif hasattr(args, 'enable_tab'):
+            self.model = 'tab'
+            self.interactions = args.interaction
+            self.target_name = 'tabulated potentials'
 
-    count = 0
-    for interaction in interactions:
-        option_list = list(options[:])
-        for special_option in special_options:
-            if special_option[0] == interaction:
-                option_list += special_option[1]
-                break
-        for build_string in all_subsets(option_list):
-            count += 1
-            if count < args.start:
-                continue
-            if args.count != -1 and (count - args.start) >= args.count:
-                print("\nMaximum build count ({}) reached.".format(args.count))
-                return
-            cmds = cmd + ['-i', interaction]
-            target_str = target + '_' + interaction
-            if len(build_string):
-                cmds.extend(['--enable-{}'.format(x) for x in build_string])
-                target_str += '_' + '_'.join(build_string)
-            if options_are_supported(build_string, disable):
-                print("\nBuilding target {} ({}/{})".format(target_str, count, num_targets))
+        if args.debug:
+            self.cmd.append('--debug')
+
+    def run(self):
+        try:
+            if self.model == 'kim':
+                self._run_kim()
+            else:
+                self._run()
+        except RuntimeWarning as e:
+            print('Error: {}'.format(e))
+            sys.exit(-1)
+
+    def _run(self):
+        self._prepare_arrays()
+
+        num_targets = 0
+        for i in self.interactions:
+            option_list = self.options[:]
+            for s in self.special_options:
+                if s[0] == i:
+                    option_list.extend(s[1])
+                    break
+            num_targets += sum(1 for x in all_subsets(option_list))
+
+        print('Building {} possible targets for {}\n'.format(num_targets, self.target_name))
+
+        count = 0
+        for i in self.interactions:
+            option_list = list(self.options[:])
+            for s in self.special_options:
+                if s[0] == i:
+                    option_list.extend(s[1])
+                    break
+            for build_string in all_subsets(option_list):
+                count += 1
+                if count < self.startpos:
+                    continue
+                if self.max_count != -1 and (count - self.startpos) >= self.max_count:
+                    print('\nMaximum build count ({}) reached.'.format(self.max_count))
+                    return
+                cmds = self.cmd + ['-i', i]
+                target_str = 'potfit_' + self.model + '_' + i
+                if len(build_string):
+                    cmds.extend(['--enable-{}'.format(x) for x in build_string])
+                    target_str += '_' + '_'.join(build_string)
+
+                if not options_are_supported(build_string, DISABLED_OPTIONS):
+                    print('Target {} is disabled ({}/{})'.format(target_str, count, num_targets))
+                    continue
+
+                print('\nBuilding target {} ({}/{})'.format(target_str, count, num_targets))
+
                 call(['./waf', 'clean'])
-                retcode = call(['./waf', 'configure', *cmds, '--check-c-compiler={}'.format(args.compiler)])
+                retcode = call(['./waf', 'configure', *cmds, '--check-c-compiler={}'.format(self.compiler)])
                 if retcode:
-                    print("Error when calling ./waf configure ({})".format(retcode))
+                    print('Error when calling ./waf configure ({})'.format(retcode))
                     sys.exit(1)
                 retcode = call(['./waf'])
                 if retcode:
                     sys.exit(1)
+
+    def _prepare_arrays(self):
+        if self.model == 'apot':
+            if (self.interactions == 'all'):
+                self.interactions = APOT_INTERACTIONS
             else:
-                print(
-                    "\nTarget {} is disabled ({}/{})".format(target_str, count, num_targets))
-    return
+                self.interactions = [self.interactions]
+            self.options = APOT_OPTIONS
+            self.cmd.extend(['-m', 'apot'])
+            self.special_options = SPECIAL_APOT_OPTIONS
+        elif self.model == 'tab':
+            if (self.interactions == 'all'):
+                self.interactions = TAB_INTERACTIONS
+            else:
+                self.interactions = [self.interactions]
+            self.options = TAB_OPTIONS
+            self.cmd.extend(['-m', 'tab'])
+            self.special_options = SPECIAL_TAB_OPTIONS
+        else:
+            raise RuntimeWarning('No interaction type defined!')
+
+    def _run_kim(self):
+        num_targets = 0
+        option_list = KIM_OPTIONS
+        for s in SPECIAL_KIM_OPTIONS:
+            if s[0] == i:
+                option_list.extend(s[1])
+                break
+        num_targets += sum(1 for x in all_subsets(option_list))
+
+        print('Building {} possible targets for {}\n'.format(num_targets, self.target_name))
+
+        count = 0
+        option_list = list(KIM_OPTIONS)
+        target_str = 'potfit_' + self.model
+        for s in SPECIAL_KIM_OPTIONS:
+            if s[0] == i:
+                option_list.extend(s[1])
+                break
+        for build_string in all_subsets(option_list):
+            count += 1
+            if count < self.startpos:
+                continue
+            if self.max_count != -1 and (count - self.startpos) >= self.max_count:
+                print('Maximum build count ({}) reached.'.format(self.max_count))
+                return
+            cmds = self.cmd + ['-m', 'kim']
+            if len(build_string):
+                cmds.extend(['--enable-{}'.format(x) for x in build_string])
+                target_str += '_' + '_'.join(build_string)
+
+            if not options_are_supported(build_string, DISABLED_OPTIONS):
+                print('Target {} is disabled ({}/{})'.format(target_str, count, num_targets))
+                continue
+
+            print('Building target {} ({}/{})\n'.format(target_str, count, num_targets))
+
+            call(['./waf', 'clean'])
+            retcode = call(['./waf', 'configure', *cmds, '--check-c-compiler={}'.format(self.compiler)])
+            if retcode:
+                print('Error when calling ./waf configure ({})'.format(retcode))
+                sys.exit(1)
+            retcode = call(['./waf'])
+            if retcode:
+                sys.exit(1)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description='Compile potfit binary with all possible combinations of options.')
+
+    subs = parser.add_subparsers(
+        title='Potential type', description='Choose one of the following types')
+
+    apot = subs.add_parser('apot', help='analytic potentials')
+    apot_list = copy.copy(APOT_INTERACTIONS)
+    apot_list.sort()
+    apot_list.insert(0, 'all')
+    apot.add_argument('--enable_apot', action='store_true', default=True, help=argparse.SUPPRESS)
+    apot.add_argument('interaction', choices=apot_list)
+
+    tab = subs.add_parser('tab', help='tabulated potentials')
+    tab_list = copy.copy(TAB_INTERACTIONS)
+    tab_list.sort()
+    tab_list.insert(0, 'all')
+    tab.add_argument('--enable_tab', action='store_true', default=True, help=argparse.SUPPRESS)
+    tab.add_argument('interaction', choices=tab_list)
+
+    kim = subs.add_parser('kim', help='kim interactions')
+    kim.add_argument('--enable_kim', action='store_true', default=True, help=argparse.SUPPRESS)
+
+    parser.add_argument('--start', metavar='N', default=1,
+                        type=int, required=False, help='start at combination N')
+    parser.add_argument('--count', metavar='N', default=-1,
+                        type=int, required=False, help='only compile N versions')
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--compiler', choices=['clang', 'gcc', 'icc'], default='clang')
+    return parser.parse_args()
 
 
 def main():
-    build_targets(parse_arguments())
+    check_potfit(parse_arguments()).run()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
