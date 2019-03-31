@@ -217,7 +217,7 @@ def _check_enable_options(cnf):
 def _check_compiler_options(cnf):
     # try to detect a suitable compiler
     if cnf.options.model == 'kim':
-        cnf.check_cfg(package='libkim-api-v2', args=['libkim-api-v2 >= 2.0.0', '--cflags', '--libs'], uselib_store='KIM')
+        cnf.check_cfg(package='libkim-api', args=['libkim-api >= 2.0.2', '--cflags', '--libs'], uselib_store='KIM')
     else:
         c_compiler[_platform] = ['icc', 'clang', 'gcc']
     cnf.load('compiler_c')

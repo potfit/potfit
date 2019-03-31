@@ -120,8 +120,8 @@ def get_model_props(model_name, props_binary):
 
 def get_model_list(props):
   pkg_config_cmd = os.environ.get('PKG_CONFIG', None) or 'pkg-config'
-  libexecdir = run([pkg_config_cmd, 'libkim-api-v2', '--variable=libexecdir'], capture_output=True).stdout.decode().strip()
-  models = run([os.path.join(libexecdir, 'kim-api-v2', 'kim-api-v2-collections-info'), 'models'], capture_output=True).stdout.decode().strip().split('\n')
+  libexecdir = run([pkg_config_cmd, 'libkim-api', '--variable=libexecdir'], capture_output=True).stdout.decode().strip()
+  models = run([os.path.join(libexecdir, 'kim-api', 'kim-api-collections-info'), 'models'], capture_output=True).stdout.decode().strip().split('\n')
   ret = []
   for line in models:
     p = get_model_props(line.split()[1], props)

@@ -10,12 +10,12 @@ potfit_obj = None
 
 def has_kim_support():
     pkg_config_cmd = os.environ.get('PKG_CONFIG', None) or 'pkg-config'
-    return run('{0} --exists libkim-api-v2'.format(pkg_config_cmd).split()).returncode == 0
+    return run('{0} --exists libkim-api'.format(pkg_config_cmd).split()).returncode == 0
 
 def supports_models():
     pkg_config_cmd = os.environ.get('PKG_CONFIG', None) or 'pkg-config'
-    libexecdir = run([pkg_config_cmd, 'libkim-api-v2', '--variable=libexecdir'], capture_output=True).stdout.decode().strip()
-    models = run([os.path.join(libexecdir, 'kim-api-v2', 'kim-api-v2-collections-info'), 'models'], capture_output=True).stdout.decode().strip().split('\n')
+    libexecdir = run([pkg_config_cmd, 'libkim-api', '--variable=libexecdir'], capture_output=True).stdout.decode().strip()
+    models = run([os.path.join(libexecdir, 'kim-api', 'kim-api-collections-info'), 'models'], capture_output=True).stdout.decode().strip().split('\n')
     models = [line.split()[1] for line in models]
     return True
 

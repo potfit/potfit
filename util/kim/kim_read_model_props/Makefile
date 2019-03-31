@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = $(shell pkg-config libkim-api-v2 --cflags)
-LDFLAGS = $(shell pkg-config libkim-api-v2 --libs)
+CXXFLAGS = $(shell pkg-config libkim-api --cflags)
+LDFLAGS = $(shell pkg-config libkim-api --libs)
 
 default: kim_read_model_props
 
