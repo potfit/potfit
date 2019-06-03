@@ -1120,8 +1120,12 @@ void init_neighbors(config_state* cstate, double* mindist)
             int type1 = g_config.atoms[i].type;
             int type2 = g_config.atoms[j].type;
 
-            if (r == 0.0)
-              error(1, "Overlapping atoms found in periodic images: %d and %d\n", i - g_config.natoms, j - g_config.natoms);
+            if (r == 0.0) {
+              error(0, "Overlapping atoms found in configuration %d!\n", cstate->config);
+              error(0, "Atom %d @ (%f, %f, %f)\n", i - g_config.natoms, g_config.atoms[i].pos.x, g_config.atoms[i].pos.y, g_config.atoms[i].pos.z);
+              error(0, "overlaps with atom %d @ (%f, %f, %f)\n", j - g_config.natoms, g_config.atoms[j].pos.x, g_config.atoms[j].pos.y, g_config.atoms[j].pos.z);
+              error(1, "in this periodic copy of the unit cell: x=%d, y=%d, z=%d", ix, iy, iz);
+            }
 
             if (r <= g_config.rcut[type1 * g_param.ntypes + type2]) {
               if (r <= g_config.rmin[type1 * g_param.ntypes + type2]) {
