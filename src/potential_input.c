@@ -521,7 +521,6 @@ void calculate_cutoffs()
     for (int j = 0; j < n; j++) {
       int k = (i <= j) ? i * n + j - ((i * (i + 1)) / 2)
                        : j * n + i - ((j * (j + 1)) / 2);
-      printf("DEBUG i = %d j = %d k = %d\n", i,j,k);
       g_config.rmin[i * n + j] = pt->begin[k];
       g_config.rcut[i * n + j] = pt->end[k];
     }
