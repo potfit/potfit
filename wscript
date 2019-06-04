@@ -9,6 +9,13 @@ from waflib.Configure import conf
 from waflib import Logs
 from waflib.Tools.compiler_c import c_compiler
 
+from optparse import HelpFormatter as fmt
+def decorate(fn):
+    def wrapped(self=None, desc=""):
+        return '\n'.join( [ fn(self, s).rstrip() for s in desc.split('\n') ] )
+    return wrapped
+fmt.format_description = decorate(fmt.format_description)
+
 APPNAME = 'potfit'
 VERSION = '0.8'
 top = '.'
@@ -22,7 +29,7 @@ out = 'build'
 OPTIONS = [
     ['bindist', 'Write a binned radial distribution file', ['BINDIST']],
     ['contrib', 'Enable support for box of contributing particles', ['CONTRIB']],
-    ['dsf', 'R|Use damped shifted force approach \n\t(coulomb-based interactions only)', ['DSF']],
+    ['dsf', 'Use damped shifted force approach (coulomb-based interactions only)', ['DSF']],
     ['evo', 'Use evolutionary algorithm instead of simulated annealing', ['EVO']],
     ['fweight', 'Use modified weights for the forces', ['FWEIGHT']],
     ['mpi', 'Enable MPI parallelization', ['MPI']],
@@ -74,32 +81,31 @@ def options(opt):
     Just use the tables above.
     """
     opt.load('compiler_c')
-    opts = opt.add_argument_group('potfit general options',
+    opts = opt.add_option_group('potfit general options',
                                   'Please check the explanations on the potfit homepage for more details.')
     # --enable-XXX options are generated automatically from wscript_potfit.py
     for option in OptList():
-        opts.add_argument('--enable-{}'.format(option.name), action='store_true',
+        opts.add_option('--enable-{}'.format(option.name), action='store_true',
                           default=False, help=option.description)
     # interactions
-    pots = opt.add_argument_group(
+    pots = opt.add_option_group(
         'potfit potential options', 'available interactions in alphabetical order are:\n{}'.format(il.get_interaction_desc()))
-    pots.add_argument('-i', '--interaction', action='store', type=str, choices=il.get_interaction_list(),
-                      help='one of the interactions listed above', metavar='INTERACTION')
-    pots.add_argument('-m', '--model', action='store', type=str, choices=['apot', 'kim', 'tab'], help='support analytic, kim or tabulated potentials')
+    pots.add_option('-i', '--interaction', action='store', type=str, help='one of the interactions listed above', metavar='INTERACTION')
+    pots.add_option('-m', '--model', action='store', type=str, help='support analytic, kim or tabulated potentials')
     # math libraries
-    libs = opt.add_argument_group('potfit math library options', 'available math libraries are:\n{}'.format(
+    libs = opt.add_option_group('potfit math library options', 'available math libraries are:\n{}'.format(
         '\n'.join(sorted(['\t{:<16}{}'.format(x, v) for x, v in supported_math_libs]))))
-    libs.add_argument('-l', '--math-lib', action='store', type=str, default='mkl', choices=[name for name, _ in supported_math_libs],
+    libs.add_option('-l', '--math-lib', action='store', type=str, default='mkl', #choices=[name for name, _ in supported_math_libs],
                       help='Select math library to use (default: %(default)s)', metavar='MATHLIB')
-    libs.add_argument('--math-lib-base-dir', action='store', type=str,
+    libs.add_option('--math-lib-base-dir', action='store', type=str,
                       help='Base directory of selected math library')
     # debug options
-    debug = opt.add_argument_group('potfit debugging options')
-    debug.add_argument('--debug', action='store_true',
+    debug = opt.add_option_group('potfit debugging options')
+    debug.add_option('--debug', action='store_true',
                        default=False, help='Build binary with debug information')
-    debug.add_argument('--asan', action='store_true', default=False,
+    debug.add_option('--asan', action='store_true', default=False,
                        help='Build binary with address sanitizer support')
-    debug.add_argument('--profile', action='store_true',
+    debug.add_option('--profile', action='store_true',
                        default=False, help='Build binary with profiling support')
 
 
@@ -161,8 +167,8 @@ def _post(bld):
 
 @conf
 def _check_potential_options(cnf):
-    if cnf.options.model is None:
-        cnf.fatal('No model specified, please provide -m/--model')
+    if cnf.options.model not in ['apot', 'kim', 'tab']:
+        cnf.fatal('Invalid model specified, please provide -m/--model from \'apot\', \'kim\' or \'tab\'')
 
     # common checks for interaction compatibility - don't change
     if cnf.options.model == 'kim':
@@ -170,7 +176,7 @@ def _check_potential_options(cnf):
             cnf.fatal('OpenKIM does not support setting an interaction!')
         return
 
-    if cnf.options.interaction == None:
+    if cnf.options.interaction not in il.get_interaction_list():
         cnf.fatal('No interaction specified, please provide -i/--interaction')
     interaction = il.get_interaction(cnf.options.interaction)
     if not interaction.supports_model(cnf.options.model):
@@ -417,7 +423,6 @@ class InteractionList():
             yield i
 
     def get_interaction(self, name):
-        print('get_interaction {}'.format(name))
         for i in self.list:
             if i.name == name:
                 return i
