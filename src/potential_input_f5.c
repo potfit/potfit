@@ -356,7 +356,7 @@ void read_cutoff_parameter(FILE* pfile, const char* filename)
   error(1, "Could not associate KIM_CUTOFF name \"%s\" with any parameter!\n", name);
 }
 
-void read_keywords_and_parameters(char const* filename, FILE* infile, fpos_t startpos)
+void read_keywords_and_parameters(char const* filename, FILE* infile, const fpos_t startpos)
 {
   print_model_parameters(g_param.kim_model_params);
 

@@ -1039,9 +1039,9 @@ void init_neighbors_kim(config_state* cstate, double* mindist, int** _atom_pos)
               continue;
             int atom_idx = (ny * (ix + cstate->cell_scale.x) + iy + cstate->cell_scale.y) * nz + iz + cstate->cell_scale.z;
             if (atom_idx < (nx * ny * nz / 2.0))
-              atom_idx = (atom_idx + 1) * cstate->atom_count + j;
+              atom_idx = (atom_idx + 1) * cstate->atom_count + (j - g_config.natoms);
             else
-              atom_idx = atom_idx * cstate->atom_count + j;
+              atom_idx = atom_idx * cstate->atom_count + (j - g_config.natoms);
             if (atom_pos[atom_idx] >= 0)
               continue;
             dd.x = d.x + ix * cstate->box_x.x + iy * cstate->box_y.x + iz * cstate->box_z.x;
@@ -1170,9 +1170,9 @@ void init_neighbors(config_state* cstate, double* mindist)
             } else {
               atom_idx = (ny * (ix + cstate->cell_scale.x) + iy + cstate->cell_scale.y) * nz + iz + cstate->cell_scale.z;
               if (atom_idx < (nx * ny * nz / 2.0)) {
-                atom_idx = (atom_idx + 1) * cstate->atom_count + j;
+                atom_idx = (atom_idx + 1) * cstate->atom_count + (j -  j_start);
               } else {
-                atom_idx = atom_idx * cstate->atom_count + j;
+                atom_idx = atom_idx * cstate->atom_count + (j - j_start);
               }
             }
             if (atom_pos[atom_idx] < 0)

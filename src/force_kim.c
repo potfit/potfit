@@ -203,7 +203,7 @@ double calc_forces(double *xi_opt, double *forces, int flag)
       // gather all KIM mirror image contributions
 
       for (int i = 0; i < g_config.number_of_particles[h]; ++i) {
-        int idx = 3 * (g_config.cnfstart[h] + g_config.source_atom[h][i]);
+        int idx = 3 * g_config.source_atom[h][i];
         forces[idx + 0] += kim_forces[3 * i + 0];
         forces[idx + 1] += kim_forces[3 * i + 1];
         forces[idx + 2] += kim_forces[3 * i + 2];
