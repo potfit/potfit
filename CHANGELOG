@@ -1,3 +1,18 @@
+20190610
+- Fix invalid function pointers for APOT potentials using MPI parallelization.
+- Fix crash when terminating MPI calculations.
+- Fix crashes when using multiple configurations with KIM potentials.
+
+20190419
+- Add support for writing PAIR potentials in LAMMPS format.
+
+20190331
+- Update to latest OpenKIM API v2.0.2.
+
+20190325
+- Add basic support for OpenKIM v2.0 API, version 1.0 is no longer supported.
+  Support for MPI is not yet available.
+
 20180923
 - Replace 'dist' option with 'bindist', functionality is the same.
   'dist' is too confusing and is completely unrelated to the regular pair distribution file.
