@@ -226,6 +226,16 @@ def _check_compiler_options(cnf):
         cnf.check_cfg(package='libkim-api', args=['libkim-api >= 2.0.2', '--cflags', '--libs'], uselib_store='KIM')
     else:
         c_compiler[_platform] = ['icc', 'clang', 'gcc']
+
+    if cnf.options.enable_mpi:
+        if cnf.options.check_c_compiler:
+            cnf.fatal('--check-c-compiler cannot be used with MPI! Please use the MPI environment variable to set the compiler.')
+        cnf.add_os_flags('CC')
+        if cnf.env.CC:
+            cnf.fatal('Overriding the compiler with CC is not supported when MPI is enabled!')
+        else:
+            cnf.env.CC = 'mpicc'
+
     cnf.load('compiler_c')
 
     if cnf.options.asan:
@@ -262,16 +272,13 @@ def _check_compiler_options(cnf):
     else:
         cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed,-z,relro,-z,now'])
 
+
 @conf
 def _check_mpi_compiler(cnf):
-    cnf.check_cfg(path='mpicc', args='--showme:compile', package='',
-                  uselib_store='POTFIT', msg='Checking MPI compiler command')
-    cnf.check_cfg(path='mpicc', args='--showme:link', package='',
-                  uselib_store='POTFIT', msg='Checking MPI linker flags')
     cnf.check(header_name='mpi.h', features='c cprogram', use=['POTFIT'])
     cnf.check_cc(
-        fragment='#include <mpi.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
-        execute=True, msg='Compiling test MPI binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
+        fragment='#include <mpi.h>\n#include <stddef.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
+        execute=True, msg='Compiling MPI test binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
 
 
 @conf

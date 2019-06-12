@@ -2,10 +2,11 @@
 
 import argparse
 import copy
+import os
 import sys
 
 from itertools import chain, combinations
-from subprocess import call
+from subprocess import run
 
 # arrays for supported interactions
 
@@ -172,13 +173,19 @@ class check_potfit:
 
                 print('\nBuilding target {} ({}/{})'.format(target_str, count, num_targets))
 
-                call(['./waf', 'clean'])
-                retcode = call(['./waf', 'configure', *cmds, '--check-c-compiler={}'.format(self.compiler)])
-                if retcode:
+                run(['./waf', 'clean'])
+                my_env = os.environ.copy()
+                run_cmd = ['./waf', 'configure', *cmds]
+                if 'mpi' in build_string:
+                    my_env['OMPI_CC'] = self.compiler
+                else:
+                    run_cmd.append('--check-c-compiler={}'.format(self.compiler))
+                res = run(run_cmd, env=my_env)
+                if res.returncode:
                     print('Error when calling ./waf configure ({})'.format(retcode))
                     sys.exit(1)
-                retcode = call(['./waf'])
-                if retcode:
+                res = run(['./waf'])
+                if res.returncode:
                     sys.exit(1)
 
     def _prepare_arrays(self):
@@ -214,12 +221,12 @@ class check_potfit:
 
         count = 0
         option_list = list(KIM_OPTIONS)
-        target_str = 'potfit_' + self.model
         for s in SPECIAL_KIM_OPTIONS:
             if s[0] == i:
                 option_list.extend(s[1])
                 break
         for build_string in all_subsets(option_list):
+            target_str = 'potfit_' + self.model
             count += 1
             if count < self.startpos:
                 continue
@@ -237,13 +244,19 @@ class check_potfit:
 
             print('Building target {} ({}/{})\n'.format(target_str, count, num_targets))
 
-            call(['./waf', 'clean'])
-            retcode = call(['./waf', 'configure', *cmds, '--check-c-compiler={}'.format(self.compiler)])
-            if retcode:
+            run(['./waf', 'clean'])
+            my_env = os.environ.copy()
+            run_cmd = ['./waf', 'configure', *cmds]
+            if 'mpi' in build_string:
+                my_env['OMPI_CC'] = self.compiler
+            else:
+                run_cmd.append('--check-c-compiler={}'.format(self.compiler))
+            res = run(run_cmd, env=my_env)
+            if res.returncode:
                 print('Error when calling ./waf configure ({})'.format(retcode))
                 sys.exit(1)
-            retcode = call(['./waf'])
-            if retcode:
+            res = run(['./waf'])
+            if res.returncode:
                 sys.exit(1)
 
 
