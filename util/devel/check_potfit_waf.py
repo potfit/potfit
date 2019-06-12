@@ -221,12 +221,12 @@ class check_potfit:
 
         count = 0
         option_list = list(KIM_OPTIONS)
-        target_str = 'potfit_' + self.model
         for s in SPECIAL_KIM_OPTIONS:
             if s[0] == i:
                 option_list.extend(s[1])
                 break
         for build_string in all_subsets(option_list):
+            target_str = 'potfit_' + self.model
             count += 1
             if count < self.startpos:
                 continue

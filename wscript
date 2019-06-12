@@ -277,7 +277,7 @@ def _check_compiler_options(cnf):
 def _check_mpi_compiler(cnf):
     cnf.check(header_name='mpi.h', features='c cprogram', use=['POTFIT'])
     cnf.check_cc(
-        fragment='#include <mpi.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
+        fragment='#include <mpi.h>\n#include <stddef.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
         execute=True, msg='Compiling MPI test binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
 
 
