@@ -464,8 +464,22 @@ void write_lammps_table_eam_adp()
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += g_calc.paircol + 2 * g_param.ntypes;
       for (int l = 0; l < g_param.imdpotsteps; l++) {
+#if defined(APOT)
+        double temp = 0.0;
+        (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
+        if (r == 0.0 && (isnan(temp) || isinf(temp)))
+          g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],
+                                     &temp);
+        if (g_pot.smooth_pot[k]) {
+          temp *= apot_cutoff(
+              r, g_pot.apot_table.end[k],
+              g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
+        }
+        fprintf(outfile, "%.16e\n", r * temp);
+#else
         fprintf(outfile, "%e\n",
                 g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
+#endif // APOT
         r += dr;
       }
     }
@@ -477,8 +491,22 @@ void write_lammps_table_eam_adp()
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += 2 * (g_calc.paircol + g_param.ntypes);
       for (int l = 0; l < g_param.imdpotsteps; l++) {
+#if defined(APOT)
+        double temp = 0.0;
+        (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
+        if (r == 0.0 && (isnan(temp) || isinf(temp)))
+          g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],
+                                     &temp);
+        if (g_pot.smooth_pot[k]) {
+          temp *= apot_cutoff(
+              r, g_pot.apot_table.end[k],
+              g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
+        }
+        fprintf(outfile, "%.16e\n", r * temp);
+#else
         fprintf(outfile, "%e\n",
                 g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
+#endif // APOT
         r += dr;
       }
     }
