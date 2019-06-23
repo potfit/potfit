@@ -454,8 +454,10 @@ void check_parameters_complete(char const* paramfile)
           paramfile, g_param.global_cell_scale);
 
 #if defined(KIM)
-  if (g_param.kim_model_params != KIM_MODEL_PARAMS_NONE)
+  if (g_param.kim_model_params != KIM_MODEL_PARAMS_NONE) {
+    warning("Disabling optimization due to kim_model_params being set!\n");
     g_param.opt = 0;
+  }
 
   if (!g_kim.model_name)
     error(1, "Missing parameter: kim_model_name");

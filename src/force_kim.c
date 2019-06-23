@@ -60,6 +60,9 @@ void update_kim_model(double *xi_opt)
 
   for (int i = 0; i < g_kim.nparams; ++i) {
     for (int j = 0; j < g_kim.params[i].extent; ++j) {
+      if (!KIM_DataType_Equal(g_kim.params[i].type, KIM_DATA_TYPE_Double))
+        // cannot optimize anything but double parameters
+        continue;
       if (xi_opt[pos] != g_kim.params[i].values[j].d) {
         res = KIM_Model_SetParameterDouble(g_kim.model, i, j, xi_opt[pos]);
         if (res)
