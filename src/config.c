@@ -1009,7 +1009,7 @@ void init_neighbors_kim(config_state* cstate, double* mindist, int** _atom_pos)
 
   // put real atoms at the beginning of the configuration
   for (int i = g_config.natoms; i < g_config.natoms + cstate->atom_count; ++i) {
-    atom_pos[i] = i;
+    atom_pos[i - g_config.natoms] = i - g_config.natoms;
     g_config.species_codes[conf][pos] = g_kim.species_map[g_config.atoms[i].type];
     g_config.particle_contributing[conf][pos] = 1;
     g_config.source_atom[conf][pos] = i;
@@ -1166,7 +1166,7 @@ void init_neighbors(config_state* cstate, double* mindist)
               continue;
 #if defined(KIM)
             if ((ix == 0) && (iy == 0) && (iz == 0)) {
-              atom_idx = j;
+              atom_idx = j - j_start;
             } else {
               atom_idx = (ny * (ix + cstate->cell_scale.x) + iy + cstate->cell_scale.y) * nz + iz + cstate->cell_scale.z;
               if (atom_idx < (nx * ny * nz / 2.0)) {

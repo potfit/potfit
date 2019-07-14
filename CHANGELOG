@@ -1,3 +1,6 @@
+20190714
+- Fix wrong KIM values when using more than one configuration
+
 20190623
 - Fix crash with OpenKIM and models which use Integer parameters
 - Fix short distance error when writing a LAMMPS ADP potential
