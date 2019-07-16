@@ -98,7 +98,7 @@ void init_population(double** pop, double* xi, double* cost)
     }
   }
 
-  double forces[g_calc.mdim];
+  double* forces = (double*)malloc(g_calc.mdim * sizeof(double));
 
   for (int i = 0; i < NP; i++)
     cost[i] = calc_forces(pop[i], forces, 0);
@@ -106,6 +106,8 @@ void init_population(double** pop, double* xi, double* cost)
 #if defined(APOT) || defined(KIM)
   opposite_check(pop, cost, 1);
 #endif  // APOT || KIM
+
+  free(forces);
 }
 
 #if defined(APOT) || defined(KIM)
@@ -118,7 +120,8 @@ void init_population(double** pop, double* xi, double* cost)
 
 void opposite_check(double** population, double* cost, int do_init)
 {
-  double fxi[g_calc.mdim];
+  printf("opposite_check size = %u\n", g_calc.mdim);
+  double* fxi = (double*)malloc(g_calc.mdim * sizeof(double));
   double min = 0.0;
   double max = 0.0;
   double minp[g_calc.ndim];
@@ -196,6 +199,8 @@ void opposite_check(double** population, double* cost, int do_init)
     memcpy(population[i], tot_P[i], D * sizeof(double));
     cost[i] = tot_cost[i];
   }
+
+  free(fxi);
 }
 
 /****************************************************************

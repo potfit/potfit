@@ -1,3 +1,6 @@
+20190716
+- Fix crash when using diff_evo with a huge number of atoms
+
 20190714
 - Fix wrong KIM values when using more than one configuration
 
