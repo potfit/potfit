@@ -108,13 +108,13 @@ void set_force_vector_pointers()
   g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #if defined(APOT)
   g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.number -
                         g_pot.apot_table.invar_pots;
 #endif  // APOT
 #else   // EAM || ADP || MEAM
 #if defined(APOT)
   g_calc.punish_par_p = g_calc.stress_p + 6 * g_config.nconf;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.number -
                         g_pot.apot_table.invar_pots;
 #endif  // APOT
 #endif  // EAM || ADP || MEAM
@@ -126,13 +126,13 @@ void set_force_vector_pointers()
   g_calc.dummy_p = g_calc.limit_p + g_config.nconf;
 #if defined(APOT)
   g_calc.punish_par_p = g_calc.dummy_p + 2 * g_param.ntypes;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.number -
                         g_pot.apot_table.invar_pots;
 #endif  // APOT
 #else   // EAM || ADP || MEAM
 #if defined(APOT)
   g_calc.punish_par_p = g_calc.energy_p + g_config.nconf;
-  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.total_par -
+  g_calc.punish_pot_p = g_calc.punish_par_p + g_pot.apot_table.number -
                         g_pot.apot_table.invar_pots;
 #endif  // APOT
 #endif  // EAM || ADP || MEAM
