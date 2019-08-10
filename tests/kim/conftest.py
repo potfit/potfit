@@ -15,7 +15,7 @@ def has_kim_support():
 def supports_models():
     pkg_config_cmd = os.environ.get('PKG_CONFIG', None) or 'pkg-config'
     libexecdir = run([pkg_config_cmd, 'libkim-api', '--variable=libexecdir'], capture_output=True).stdout.decode().strip()
-    models = run([os.path.join(libexecdir, 'kim-api', 'kim-api-collections-info'), 'models'], capture_output=True).stdout.decode().strip().split('\n')
+    models = run([os.path.join(libexecdir, 'kim-api', 'kim-api-collections-info'), 'portable_models'], capture_output=True).stdout.decode().strip().split('\n')
     models = [line.split()[1] for line in models]
     return True
 
