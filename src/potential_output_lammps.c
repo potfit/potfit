@@ -525,9 +525,9 @@ void write_pot_table_lammps()
   write_lammps_table_pair();
 #elif defined(EAM) || defined(ADP)
   write_lammps_table_eam_adp();
-#endif
-
+#else
   printf("Writing a LAMMPS potential for %s is not supported\n", g_pot.interaction_name);
+#endif
 }
 
 #endif  // STIWEB || TERSOFF
