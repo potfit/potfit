@@ -31,6 +31,7 @@
 
 #include "potfit.h"
 
+#include "memory.h"
 #include "utils.h"
 
 #if UINTPTR_MAX == 0xffffffff
@@ -112,3 +113,44 @@ void power_m(int dim, double* result, const double* x, const double* y)
 #if defined(_32BIT)
 #undef _32BIT
 #endif  // _32BIT
+
+char* fgets_potfit(char* buffer, int len, FILE* f)
+{
+  char* p = fgets(buffer, len, f);
+  if (!p)
+    return p;
+
+  // iterate the buffer to find \r\n
+  int found = 0;
+  char* c = p;
+  while (*c) {
+    if (*c == '\r' && *(c+1) == '\n') {
+      found = 1;
+      break;
+    }
+    ++c;
+  }
+
+  if (!found)
+    return p;
+
+  warning("Your input files contain CRLF line endings!\n");
+
+  char* new_p = malloc(len);
+
+  int pos = 0;
+  for (int i = 0; i < strlen(p); ++i) {
+    if (p[i] != '\r') {
+      new_p[pos++] = p[i];
+    }
+  }
+
+  if (pos < len)
+    new_p[pos] = '\0';
+
+  memcpy(buffer, new_p, pos);
+
+  free(new_p);
+
+  return buffer;
+}

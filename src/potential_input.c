@@ -88,7 +88,7 @@ void read_pot_table(char const* potential_filename)
   // read the header
   do {
     // read one line
-    if (NULL == fgets(buffer, 1024, pfile))
+    if (NULL == fgets_potfit(buffer, 1024, pfile))
       error(1, "Unexpected end of file in %s\n", potential_filename);
 
     if (buffer[0] == '\n')

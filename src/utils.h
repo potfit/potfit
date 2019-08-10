@@ -40,6 +40,8 @@ void power_1(double* result, const double* base, const double* exponent);
 void power_m(int count, double* result, const double* base,
              const double* exponent);
 
+char* fgets_potfit(char* buffer, int len, FILE* f);
+
 static inline int min(int a, int b) { return a < b ? a : b; }
 static inline int max(int a, int b) { return a > b ? a : b; }
 

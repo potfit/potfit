@@ -798,11 +798,11 @@ void read_analytic_potentials(apot_state* pstate)
 
     fgetpos(pstate->pfile, &filepos);
 
-    if (NULL == fgets(buffer, 255, pstate->pfile))
+    if (NULL == fgets_potfit(buffer, 255, pstate->pfile))
       error(1, "Error reading analytic potentials\n");
     while (buffer[0] == '#') {
       fgetpos(pstate->pfile, &filepos);
-      if (NULL == fgets(buffer, 255, pstate->pfile))
+      if (NULL == fgets_potfit(buffer, 255, pstate->pfile))
         error(1, "Error reading analytic potentials\n");
     }
     fsetpos(pstate->pfile, &filepos);
@@ -817,11 +817,11 @@ void read_analytic_potentials(apot_state* pstate)
 
       fgetpos(pstate->pfile, &filepos);
 
-      if (NULL == fgets(name, 255, pstate->pfile))
+      if (NULL == fgets_potfit(name, 255, pstate->pfile))
         error(1, "Error reading analytic potentials: not enough parameters for potential %s\n", apt->names[i]);
       while (name[0] == '#' && !feof(pstate->pfile) &&
              (j != apt->n_par[i] - 1)) {
-        if (NULL == fgets(name, 255, pstate->pfile))
+        if (NULL == fgets_potfit(name, 255, pstate->pfile))
           error(1, "Error reading analytic potentials\n");
       }
 
