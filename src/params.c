@@ -35,6 +35,7 @@
 
 #include "memory.h"
 #include "params.h"
+#include "utils.h"
 
 void read_parameter_file(char const* param_file);
 void get_param_double(char const* param_name, double* value, int line,
@@ -84,7 +85,7 @@ void read_parameter_file(char const* param_file)
     error(1, "Could not open parameter file %s.\n", param_file);
 
   do {
-    if (fgets(buffer, 1024, pfile) == NULL)
+    if (fgets_potfit(buffer, 1024, pfile) == NULL)
       break;  // probably EOF reached
 
     line++;
@@ -319,7 +320,7 @@ void get_param_int(char const* param_name, int* value, int line,
   }
 
   if (*value < min || *value > max) {
-    error(0, "Illegal value in parameter file %s (line %d): %s is out of bounds!", param_file, line, param_name);
+    error(0, "Illegal value in parameter file %s (line %d): %s is out of bounds!\n", param_file, line, param_name);
     error(1, "value = %d (min= %d max= %d)\n", *value, min, max);
   }
 }

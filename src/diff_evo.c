@@ -120,7 +120,6 @@ void init_population(double** pop, double* xi, double* cost)
 
 void opposite_check(double** population, double* cost, int do_init)
 {
-  printf("opposite_check size = %u\n", g_calc.mdim);
   double* fxi = (double*)malloc(g_calc.mdim * sizeof(double));
   double min = 0.0;
   double max = 0.0;

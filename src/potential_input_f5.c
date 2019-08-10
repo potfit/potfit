@@ -34,6 +34,7 @@
 #include "kim.h"
 #include "memory.h"
 #include "potential_input.h"
+#include "utils.h"
 
 #if !defined(KIM)
 
@@ -326,7 +327,7 @@ void read_cutoff_parameter(FILE* pfile, const char* filename)
   // skip to cutoff section
 
   do {
-    if (NULL == fgets(buffer, 255, pfile) && !feof(pfile))
+    if (NULL == fgets_potfit(buffer, 255, pfile) && !feof(pfile))
       error(1, "Error reading 'KIM_CUTOFF' keyword from potential file %s\n", filename);
     if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name)) {
       error(1, "Error reading 'KIM_CUTOFF ...' keyword from potential file %s\n", filename);
@@ -430,7 +431,7 @@ void read_single_kim_parameter(const char* filename, FILE* pfile, int idx, int p
   memset(name, 0, sizeof(name));
 
   do {
-    if (NULL == fgets(buffer, 255, pfile) && !feof(pfile))
+    if (NULL == fgets_potfit(buffer, 255, pfile) && !feof(pfile))
       error(1, "Error reading 'KIM_' keyword #%d from potential file %s\n", idx + 1, filename);
     if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
       error(1, "Error reading 'KIM_' keyword #%d from potential file %s\n", idx + 1, filename);
@@ -456,7 +457,7 @@ void read_single_kim_parameter(const char* filename, FILE* pfile, int idx, int p
   // read all lines for this parameter
   for (int j = 0; j < g_kim.params[idx].extent; ++j) {
     const int offset = pos + j;
-    if (NULL == fgets(buffer, 255, pfile))
+    if (NULL == fgets_potfit(buffer, 255, pfile))
       error(1, "Error reading '%s' entry #%d from potential file %s\n", name, j + 1, filename);
 
     if (KIM_DataType_Equal(g_kim.params[idx].type, KIM_DATA_TYPE_Integer)) {

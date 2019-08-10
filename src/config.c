@@ -136,7 +136,7 @@ void read_config(const char* filename)
 
   // read configurations until the end of the file
   do {
-    res = fgets(buffer, 1024, config_file);
+    res = fgets_potfit(buffer, 1024, config_file);
 
     ++cstate.line;
 
@@ -171,7 +171,7 @@ void read_config(const char* filename)
 
     // read header lines
     do {
-      res = fgets(buffer, 1024, config_file);
+      res = fgets_potfit(buffer, 1024, config_file);
 
       if (res == NULL || feof(config_file))
         error(1, "Incomplete header on line %d in configuration file %s\n",
@@ -748,7 +748,7 @@ void create_memory_for_configs(FILE* config_file, const char* filename)
   int line = 1;
 
   while (1) {
-    char* res = fgets(buffer, 1024, config_file);
+    char* res = fgets_potfit(buffer, 1024, config_file);
     if (feof(config_file))
       break;
     if (res == NULL)
