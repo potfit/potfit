@@ -1,3 +1,9 @@
+20190810
+- properly handle CRLF input files (with warnings)
+- remove debug log line and add missing newline
+- fix invalid memory access for punishment pointer
+- only print error message when cannot print LAMMPS potential
+
 20190716
 - Fix crash when using diff_evo with a huge number of atoms
 
