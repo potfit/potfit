@@ -420,7 +420,6 @@ typedef struct {
   const char* imdpot;        /* file for IMD potential */
   const char* maxchfile;     /* file with maximal changes */
   const char* output_prefix; /* prefix for all output files */
-  const char* output_lammps; /* lammps output files */
   const char* plotfile;      /* file for plotting */
   const char* plotpointfile; /* write points for plotting */
   const char* startpot;      /* file with start potential */
@@ -477,10 +476,10 @@ typedef struct {
   int plot;  // plot output flag
 
   int write_output_files;
-  int write_lammps_files;
-  int write_pair;
-  int writeimd;
+  int write_pair_dist;
+  int write_imd;
   int write_lammps; /* write output also in LAMMPS format */
+  int lammpspotsteps;
 
 #if defined(EVO)
   double evo_threshold;

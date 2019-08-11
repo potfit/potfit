@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     }
 
 #if !defined(KIM)
-    if (g_param.writeimd == 1)
+    if (g_param.write_imd == 1)
       write_pot_table_imd(g_files.imdpot);
 
     if (g_param.plot == 1)

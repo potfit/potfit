@@ -1,3 +1,7 @@
+20190811
+- add new parameter "lammpspotsteps" which defines the number of sampling
+  points when writing LAMMPS potentials
+
 20190810
 - properly handle CRLF input files (with warnings)
 - remove debug log line and add missing newline

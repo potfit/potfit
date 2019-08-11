@@ -456,7 +456,7 @@ void read_config(const char* filename)
   }
 #endif  // STRESS
 
-  if (g_param.write_pair == 1)
+  if (g_param.write_pair_dist == 1)
     write_pair_distribution_file();
 
 /* assign correct distances to different tables */

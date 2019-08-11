@@ -114,16 +114,10 @@ void read_parameter_file(char const* param_file)
                        param_file);
       g_param.write_output_files = 1;
     }
-    // prefix for LAMMPS output files
-    else if (strcasecmp(token, "output_lammps") == 0) {
-      get_param_string("output_lammps", &g_files.output_lammps, line,
-                       param_file);
-      g_param.write_lammps_files = 1;
-    }
     // file for IMD potential
     else if (strcasecmp(token, "imdpot") == 0) {
       get_param_string("imdpot", &g_files.imdpot, line, param_file);
-      g_param.writeimd = 1;
+      g_param.write_imd = 1;
     }
     // file for plotting
     else if (strcasecmp(token, "plotfile") == 0) {
@@ -154,7 +148,7 @@ void read_parameter_file(char const* param_file)
     }
     // write radial pair distribution ?
     else if (strcasecmp(token, "write_pair") == 0) {
-      get_param_int("write_pair", &g_param.write_pair, line, param_file, 0, 1);
+      get_param_int("write_pair", &g_param.write_pair_dist, line, param_file, 0, 1);
     }
     // plotpoint file
     else if (strcasecmp(token, "plotpointfile") == 0) {
@@ -179,11 +173,15 @@ void read_parameter_file(char const* param_file)
     else if (strcasecmp(token, "d_eps") == 0) {
       get_param_double("d_eps", &g_calc.d_eps, line, param_file, 0, DBL_MAX);
     }
-
     // write final potential in lammps format
     else if (strcasecmp(token, "write_lammps") == 0) {
       get_param_int("write_lammps", &g_param.write_lammps, line, param_file, 0,
                     1);
+    }
+    // number of steps in LAMMPS potential
+    else if (strcasecmp(token, "lammpspotsteps") == 0) {
+      get_param_int("lammpspotsteps", &g_param.lammpspotsteps, line, param_file, 1,
+                    INT_MAX);
     }
     // global scaling parameter
     else if (strcasecmp(token, "cell_scale") == 0) {
@@ -415,9 +413,13 @@ void check_parameters_complete(char const* paramfile)
           paramfile, g_param.sweight);
 #endif  // STRESS
 
-  if (g_param.writeimd && g_param.imdpotsteps < 1)
+  if (g_param.write_imd && g_param.imdpotsteps < 1)
     error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"\n",
           paramfile, g_param.imdpotsteps);
+
+  if (g_param.write_lammps && g_param.lammpspotsteps < 1)
+    error(1, "Missing parameter or invalid value in %s : lammpspotsteps is \"%d\"\n",
+          paramfile, g_param.lammpspotsteps);
 
 #if defined(APOT)
   if (g_param.plotmin < 0)

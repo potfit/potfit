@@ -38,7 +38,7 @@
 
 #define NPLOT 1000
 
-#if defined STIWEB || defined TERSOFF
+#if defined(STIWEB) || defined(TERSOFF)
 
 void write_pot_table_lammps()
 {
@@ -280,7 +280,7 @@ void write_lammps_table_pair()
       fprintf(outfile, "POTENTIAL_");
 #endif // APOT
       fprintf(outfile, "%s_%s\n", g_config.elements[i], g_config.elements[j]);
-      fprintf(outfile, "N %d\n\n", g_param.imdpotsteps);
+      fprintf(outfile, "N %d\n\n", g_param.lammpspotsteps);
 
       // write pot data here
 #if defined(APOT)
@@ -288,9 +288,9 @@ void write_lammps_table_pair()
 #else
       double r = g_pot.calc_pot.begin[idx];
 #endif
-      double dr = (g_pot.calc_pot.end[idx] - r) / (g_param.imdpotsteps - 1);
+      double dr = (g_pot.calc_pot.end[idx] - r) / (g_param.lammpspotsteps - 1);
 
-      for (int k = 0; k < g_param.imdpotsteps; ++k, r += dr) {
+      for (int k = 0; k < g_param.lammpspotsteps; ++k, r += dr) {
         double fval = 0.0;
         double grad = 0.0;
 
@@ -368,15 +368,14 @@ void write_lammps_table_eam_adp()
 #endif
   }
 
-  double drho = temp / (g_param.imdpotsteps - 1);
-  double dr = g_config.rcutmin / (g_param.imdpotsteps - 1);
+  double drho = temp / (g_param.lammpspotsteps - 1);
+  double dr = g_config.rcutmin / (g_param.lammpspotsteps - 1);
 
   /* line 5: Nrho, drho, Nr, dr, cutoff */
-  fprintf(outfile, "%d %f %d %f %f\n", g_param.imdpotsteps, drho,
-          g_param.imdpotsteps, dr, g_config.rcutmin);
+  fprintf(outfile, "%d %f %d %f %f\n", g_param.lammpspotsteps, drho,
+          g_param.lammpspotsteps, dr, g_config.rcutmin);
 
-/* one block for every atom type */
-#if defined EAM || defined ADP
+  /* one block for every atom type */
   for (int i = 0; i < g_param.ntypes; i++) {
     /* atomic number, mass, lattice constant, lattice type */
     fprintf(outfile, "%3d %f 0 ???\n",
@@ -385,7 +384,7 @@ void write_lammps_table_eam_adp()
     double r = 0.0;
     /* embedding function F(n) */
     int k = g_calc.paircol + g_param.ntypes + i;
-    for (int j = 0; j < g_param.imdpotsteps; j++) {
+    for (int j = 0; j < g_param.lammpspotsteps; j++) {
 #if defined(APOT)
       (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
       if (r == 0.0 && (isnan(temp) || isinf(temp)))
@@ -406,7 +405,7 @@ void write_lammps_table_eam_adp()
     r = 0.0;
     k = g_calc.paircol + i;
     /* transfer function rho(r) */
-    for (int j = 0; j < g_param.imdpotsteps; j++) {
+    for (int j = 0; j < g_param.lammpspotsteps; j++) {
 #if defined(APOT)
       (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
       if (r == 0.0 && (isnan(temp) || isinf(temp)))
@@ -425,7 +424,6 @@ void write_lammps_table_eam_adp()
       r += dr;
     }
   }
-#endif  // EAM || ADP
 
   /* pair potentials */
   for (int i = 0; i < g_param.ntypes; i++) {
@@ -433,7 +431,7 @@ void write_lammps_table_eam_adp()
       double r = 0.0;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
-      for (int l = 0; l < g_param.imdpotsteps; l++) {
+      for (int l = 0; l < g_param.lammpspotsteps; l++) {
 #if defined(APOT)
         double temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
@@ -463,7 +461,7 @@ void write_lammps_table_eam_adp()
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += g_calc.paircol + 2 * g_param.ntypes;
-      for (int l = 0; l < g_param.imdpotsteps; l++) {
+      for (int l = 0; l < g_param.lammpspotsteps; l++) {
 #if defined(APOT)
         double temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
@@ -490,7 +488,7 @@ void write_lammps_table_eam_adp()
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += 2 * (g_calc.paircol + g_param.ntypes);
-      for (int l = 0; l < g_param.imdpotsteps; l++) {
+      for (int l = 0; l < g_param.lammpspotsteps; l++) {
 #if defined(APOT)
         double temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
