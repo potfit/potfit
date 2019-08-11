@@ -158,6 +158,8 @@ void initialize_global_variables()
 #endif  // MPI
 
   memset(&g_param, 0, sizeof(g_param));
+  g_param.imdpotsteps = 500;
+  g_param.lammpspotsteps = 500;
   g_param.sweight = -1.0;
   g_param.global_cell_scale = 1.0;
 #if defined(EVO)
