@@ -137,6 +137,9 @@ void initialize_global_variables()
   memset(&g_config, 0, sizeof(g_config));
   memset(&g_files, 0, sizeof(g_files));
 
+#if defined(COULOMB)
+  g_config.dp_cut = 10.0;
+#endif // COULOMB
   g_config.rcutmin = 999.9;
 
 #if defined(KIM)
