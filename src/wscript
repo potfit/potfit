@@ -35,6 +35,10 @@ kim_source_files = [
     'kim.c'
 ]
 
+uq_source_files = [
+    'uq.c'
+]
+
 optimization_source_files = [
     'bracket.c',
     'brent.c',
@@ -74,6 +78,10 @@ def build(ctx):
         # -DKIM is already set by interaction !!!
         use_flags.append('KIM')
         ctx.objects(source=kim_source_files, target='model_objects', use=use_flags)
+    elif ctx.env.model == 'uq':
+        # -DKIM is already set by interaction !!!
+        use_flags.append('UQ')
+        ctx.objects(source=uq_source_files, target='model_objects', use=use_flags)
 
     if len(ctx.env.option_files):
         ctx.objects(source=ctx.env.option_files, target='option_objects', use=use_flags)

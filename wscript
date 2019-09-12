@@ -254,7 +254,7 @@ def _check_compiler_options(cnf):
             cnf.env.append_value('LINKFLAGS_POTFIT', ['-fPIE'])
 
     # potfit linker flags
-    cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed,-z,relro,-z,now'])
+   # cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--as-needed,-z,relro,-z,now'])
 
 
 @conf
