@@ -31,6 +31,16 @@
 
 #include "memory.h"
 
+#if defined(__SANITIZE_ADDRESS__)
+  #define ENABLE_ASAN 1
+#endif
+
+#if defined(__has_feature)
+  #if __has_feature(address_sanitizer)
+    #define ENABLE_ASAN 1
+  #endif
+#endif
+
 // forward declarations of helper functions
 
 void init_interaction_name(const char* name);
@@ -40,9 +50,6 @@ void free_neigh_table(neigh_t* pneigh, int nneigh);
 void free_angle_table(angle_t* pangle, int nangle);
 #endif  // THREEBODY
 void free_pot_table(pot_table_t* ppot);
-#if defined(APOT)
-void free_apot_table(apot_table_t* papot);
-#endif
 
 typedef struct {
   void** pointers;
@@ -60,8 +67,15 @@ static potfit_memory g_memory;
 
 void* Malloc(size_t size)
 {
-  if (size == 0)
+  if (size == 0) {
+#if defined(ENABLE_ASAN)
+    // trigger asan on purpose
+    int* p = NULL;
+    *p = 1;
+#else
     error(1, "Allocating memory with size 0!\n");
+#endif
+  }
 
   void* p = malloc(size);
 
@@ -123,6 +137,9 @@ void initialize_global_variables()
   memset(&g_config, 0, sizeof(g_config));
   memset(&g_files, 0, sizeof(g_files));
 
+#if defined(COULOMB)
+  g_config.dp_cut = 10.0;
+#endif // COULOMB
   g_config.rcutmin = 999.9;
 
 #if defined(KIM)
@@ -144,6 +161,8 @@ void initialize_global_variables()
 #endif  // MPI
 
   memset(&g_param, 0, sizeof(g_param));
+  g_param.imdpotsteps = 500;
+  g_param.lammpspotsteps = 500;
   g_param.sweight = -1.0;
   g_param.global_cell_scale = 1.0;
 #if defined(EVO)
@@ -160,35 +179,35 @@ void initialize_global_variables()
 #if defined(APOT)
   g_pot.smooth_pot = NULL;
   g_pot.cp_start = 0;
-  g_pot.global_idx = 0;
-  g_pot.global_pot = 0;
-  g_pot.have_globals = 0;
   g_pot.calc_list = NULL;
   g_pot.compnodelist = NULL;
   memset(&g_pot.apot_table, 0, sizeof(g_pot.apot_table));
 #endif  // APOT
+#if defined(APOT) || defined(KIM)
+  g_pot.global_idx = 0;
+  g_pot.global_pot = 0;
+  g_pot.have_globals = 0;
+#endif // APOT || KIM
 
   g_memory.pointers = NULL;
   g_memory.num_pointers = 0;
 
 #if defined(PAIR)
-#if !defined(KIM) && !defined(ANG)
-  init_interaction_name("PAIR");
-#elif defined(KIM)
-  init_interaction_name("KIM");
-#endif // !KIM !ANG
+  #if !defined(ANG)
+    init_interaction_name("PAIR");
+  #endif // !ANG
 #elif defined(ANG)
-#if !defined(COULOMB)
-  init_interaction_name("ANG");
-#elif defined(COULOMB)
-  init_interaction_name("ANG_ELSTAT");
-#endif // !COULOMB
+  #if !defined(COULOMB)
+    init_interaction_name("ANG");
+  #elif defined(COULOMB)
+    init_interaction_name("ANG_ELSTAT");
+  #endif // !COULOMB
 #elif defined(EAM) && !defined(COULOMB)
-#if !defined(TBEAM)
-  init_interaction_name("EAM");
-#else
-  init_interaction_name("TBEAM");
-#endif  // TBEAM
+  #if !defined(TBEAM)
+    init_interaction_name("EAM");
+  #else
+    init_interaction_name("TBEAM");
+  #endif  // TBEAM
 #elif defined(ADP)
   init_interaction_name("ADP");
 #elif defined(COULOMB) && !defined(EAM)
@@ -200,11 +219,13 @@ void initialize_global_variables()
 #elif defined(STIWEB)
   init_interaction_name("STIWEB");
 #elif defined(TERSOFF)
-#if defined(TERSOFFMOD)
-  init_interaction_name("TERSOFFMOD");
-#else
-  init_interaction_name("TERSOFF");
-#endif  // TERSOFFMOD
+  #if defined(TERSOFFMOD)
+    init_interaction_name("TERSOFFMOD");
+  #else
+    init_interaction_name("TERSOFF");
+  #endif  // TERSOFFMOD
+#elif defined(KIM)
+  init_interaction_name("KIM");
 #endif  // interaction type
 }
 
@@ -353,33 +374,3 @@ void free_pot_table(pot_table_t* ppot)
   free_void_pointer(ppot->d2tab);
   free_void_pointer(ppot->idx);
 }
-
-#if defined(APOT)
-
-/****************************************************************
- *
- *  free_apot_table
- *
- ****************************************************************/
-
-void free_apot_table(apot_table_t* papot)
-{
-  free_void_pointer(papot->idxpot);
-  free_char_pointer2(papot->names, papot->number);
-  free_void_pointer(papot->begin);
-  free_void_pointer(papot->end);
-  free_void_pointer(papot->n_par);
-  free_void_pointer(papot->idxparam);
-  free_int_pointer2(papot->invar_par, papot->number);
-  //   free_char_pointer3(papot->param_name, papot->number);
-  free_double_pointer2(papot->pmin, papot->number);
-  free_double_pointer2(papot->values, papot->number);
-  free_double_pointer2(papot->pmax, papot->number);
-  free_void_pointer(papot->n_glob);
-//   free_int_pointer3(papot->global_idx, ???);
-#if defined(PAIR)
-//   free_double_pointer2(papot->chempot, g_param.ntypes);
-#endif  // PAIR
-}
-
-#endif  // APOT

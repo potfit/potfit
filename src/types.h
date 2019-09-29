@@ -30,6 +30,11 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
+#if defined(KIM)
+#include <KIM_Model.h>
+#include <KIM_DataType.h>
+#endif // KIM
+
 #define POTFIT_SUCCESS 0
 #define POTFIT_ERROR_MPI_CLEAN_EXIT 1
 #define POTFIT_ERROR 2
@@ -86,11 +91,9 @@ typedef struct {
 #endif
 
 #if defined(COULOMB)
-  double fnval_el; /* stores tail of electrostatic potential */
-  double
-      grad_el; /* stores tail of first derivative of electrostatic potential */
-  double ggrad_el; /* stores tail of second derivative of electrostatic
-                      potential */
+  double fnval_el;  /* stores tail of electrostatic potential */
+  double grad_el;   /* stores tail of first derivative of electrostatic potential */
+  double ggrad_el;  /* stores tail of second derivative of electrostatic potential */
 #endif
 
 #if defined(THREEBODY)
@@ -230,7 +233,10 @@ typedef struct {
   neigh_t* neigh; /* dynamic array for neighbors */
 #if defined(THREEBODY)
   angle_t* angle_part; /* dynamic array for angular neighbors */
-#endif
+#endif // THREEBODY
+#if defined(KIM)
+  int* kim_neighbors;
+#endif // KIM
 } atom_t;
 
 // potential table: holds tabulated potential data
@@ -251,7 +257,7 @@ typedef struct {
   int* idx;        /* indirect indexing */
 } pot_table_t;
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
 // function pointer for analytic potential evaluation
 typedef void (*fvalue_pointer)(const double, const double*, double*);
 
@@ -274,7 +280,7 @@ typedef struct {
 #endif
   int* idxparam;      /* indirect index for potential parameters */
   int** invar_par;    /* array of invariant parameters */
-  char*** param_name; /* name of parameters */
+  const char*** param_name; /* name of parameters */
   double** pmin;      /* minimum values for parameters */
   double** values;    /* parameter values for analytic potentials */
   double** pmax;      /* maximum values for parameters */
@@ -336,7 +342,7 @@ typedef struct {
   int dummy_p; /* pointer to dummy constraints */
   int limit_p; /* pointer to limiting constraints */
 #endif         // EAM || ADP || MEAM
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   int punish_par_p; /* pointer to parameter punishment contraints */
   int punish_pot_p; /* pointer to potential punishment constraints */
 #else
@@ -384,6 +390,14 @@ typedef struct {
   sym_tens* stress;      /* global stress of each configuration */
 #endif                   // STRESS
 
+#if defined(KIM)
+  int* number_of_particles;
+  int** species_codes;
+  int** particle_contributing;
+  int** source_atom;
+  double** coordinates;
+#endif // KIM
+
 // variables needed for electrostatic options
 #if defined(COULOMB)
   double dp_cut;  // cutoff-radius for long-range interactions
@@ -406,7 +420,6 @@ typedef struct {
   const char* imdpot;        /* file for IMD potential */
   const char* maxchfile;     /* file with maximal changes */
   const char* output_prefix; /* prefix for all output files */
-  const char* output_lammps; /* lammps output files */
   const char* plotfile;      /* file for plotting */
   const char* plotpointfile; /* write points for plotting */
   const char* startpot;      /* file with start potential */
@@ -445,6 +458,15 @@ typedef struct {
 
 // potfit_parameters: holds information from parameter file
 
+#if defined(KIM)
+typedef enum {
+  KIM_MODEL_PARAMS_NONE = 0,
+  KIM_MODEL_PARAMS_DUMP_FILE,
+  KIM_MODEL_PARAMS_DUMP,
+  KIM_MODEL_PARAMS_USE_DEFAULT
+} KIM_MODEL_PARAMS_ENUM;
+#endif
+
 typedef struct {
   int imdpotsteps; /* resolution of IMD potential */
   int ntypes;      /* number of atom types */
@@ -455,10 +477,10 @@ typedef struct {
   int plot;  // plot output flag
 
   int write_output_files;
-  int write_lammps_files;
-  int write_pair;
-  int writeimd;
+  int write_pair_dist;
+  int write_imd;
   int write_lammps; /* write output also in LAMMPS format */
+  int lammpspotsteps;
 
 #if defined(EVO)
   double evo_threshold;
@@ -484,7 +506,11 @@ typedef struct {
   double    hess_pert; /* Alternate perturbation for hessian finite difference calc */
   double    eig_max;  /* Change the value of the step pert 1/max(eig.max, lambda_j) */
   int       write_ensemble; /* Write a potfit potential file every n ensemble memebers */
-#endif
+#endif  // UQ
+
+#if defined(KIM)
+  KIM_MODEL_PARAMS_ENUM kim_model_params;
+#endif // KIM
 } potfit_parameters;
 
 // potfit_potentials: holds information from potential file
@@ -498,88 +524,86 @@ typedef struct {
 #if defined(APOT)
   int* smooth_pot;
   int cp_start;         /* cp in opt_pot.table */
-  int global_idx;       /* index for global parameters in opt_pot table */
-  int global_pot;       /* number of "potential" for global parameters */
-  int have_globals;     /* do we have global parameters? */
   double* calc_list;    /* list of current potential in the calc table */
   double* compnodelist; /* list of the composition nodes */
 #endif                  // APOT
+#if defined(APOT) || defined(KIM)
+  int global_idx;       /* index for global parameters in opt_pot table */
+  int global_pot;       /* number of "potential" for global parameters */
+  int have_globals;     /* do we have global parameters? */
+#endif // APOT || KIM
 
   /* potential tables */
   pot_table_t opt_pot;  /* potential in the internal representation used for
   minimisation */
   pot_table_t calc_pot; /* the potential table used for force calculations */
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   apot_table_t apot_table; /* potential in analytic form */
 #endif                     // APOT
 } potfit_potentials;
 
 #if defined(KIM)
 
-typedef enum {
-  KIM_PARAM_TYPE_UNKNOWN = 0,
-  KIM_PARAM_TYPE_DOUBLE,
-  KIM_PARAM_TYPE_INT
-} KIM_PARAM_TYPE;
-
-typedef enum {
-  KIM_NEIGHBOR_TYPE_UNKNOWN = 0,
-  KIM_NEIGHBOR_TYPE_RVEC,
-  KIM_NEIGHBOR_TYPE_PURE,
-  KIM_NEIGHBOR_TYPE_OPBC,
-  KIM_NEIGHBOR_TYPE_CLUSTER
-} KIM_NEIGHBOR_TYPE;
+// structure for callback user pointer
 
 typedef struct {
+  int config;
+  double* forces;
+} potfit_compute_helper_t;
+
+typedef union value_t {
+  int i;
+  double d;
+} value_t;
+
+typedef struct {
+  // name of each parameter
+  const char* name;
+  // description of each parameter
+  const char* desc;
+  // extent of each parameter in KIM model
+  int extent;
+  // type of each parameter in KIM model
+  KIM_DataType type;
+  // the values of the parameters in KIM model
+  union value_t* values;
+  // flag for marking the cutoff parameter
+  int is_cutoff;
+} kim_parameter_t;
+
+#define KIM_MODEL_ROUTINE_EXTENSION_SUPPORTED 0x01
+#define KIM_MODEL_ROUTINE_REFRESH_SUPPORTED 0x02
+#define KIM_MODEL_ROUTINE_WRITEPARAMS_SUPPORTED 0x04
+
+typedef struct {
+  /// pointer to KIM model name
+  const char* model_name;
+  /// pointer to KIM model
+  KIM_Model* model;
+  /// pointers to compute arguments
+  KIM_ComputeArguments** arguments;
+  /// storage of compute helpers
+  potfit_compute_helper_t* helpers;
   /// number of supported species
   int nspecies;
   /// name of species
-  char const** species;
-  /// number of free parameters in KIM model
-  int npar;
-  /// names of free parameters in KIM model
-  char const** name;
-  /// max string length for parameter names
-  int max_name_len;
-  /// the pointers to parameters in KIM model
-  void** value;
-  /// types of the free parameters in KIM model
-  KIM_PARAM_TYPE* type;
-  /// size of the free parameters in KIM model
-  int* size;
-  /// ranks of the free parameters in KIM model
-  int* rank;
-  /// shapes of the free parameters in KIM model
-  int** shape;
-  /// whether the cutoff can be set by the simulator or not
-  int cutoff_is_free_param;
-  /// cutoff value
-  double cutoff_value;
-} freeparams_t;
-
-typedef struct {
-  /// pointers to KIM objects
-  void** pkim;
-  /// contains free parameter properties from the KIM model
-  freeparams_t freeparams;
-  /// kim model name (read in from input)
-  char const* model_name;
-  /// number of optimizable params (read in from input)
-  int num_opt_param;
-  /// index of the paramters in freeparams.name
-  int* idx_opt_param;
-  /// total number of optimization values (includes rank/shape expansion)
-  int total_num_opt_param;
-  /// size of each parameter (number of values each parameter name represents)
-  int* size_opt_param;
-  KIM_NEIGHBOR_TYPE NBC;    // neighbor list and boundary conditions
-  int is_half_neighbors;    // using half neighbor list? 1 = half, 0 = full
-  int model_has_energy;     // flag, whether KIM model can compute energy
-  int model_has_forces;     // flag, whether KIM model can compute forces
-  int model_has_virial;     // flag, whether KIM model can compute virial
-  double* box_vectors;      // box_vectors is used to enable MI_OPBC in KIM.
-  /// pointer to memory for values for individual configurations
-  void*** param_value;
+  KIM_SpeciesName* species;
+  /// mapping for potfit -> KIM species
+  int* species_map;
+  /// number of parameters in KIM model
+  int nparams;
+  /// number of parameters for optimization
+  int total_params;
+  /// parameters in KIM model
+  kim_parameter_t* params;
+  /// influence distance + cutoffs
+  double* cutoffs;
+  /// flags which routines are supported by the model
+  int supported_routines;
+  /// path for writing parameter file
+  const char* output_directory;
+  /// name for output model
+  const char* output_name;
 } potfit_kim;
 
 #endif // KIM

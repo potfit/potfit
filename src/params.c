@@ -35,6 +35,7 @@
 
 #include "memory.h"
 #include "params.h"
+#include "utils.h"
 
 void read_parameter_file(char const* param_file);
 void get_param_double(char const* param_name, double* value, int line,
@@ -84,7 +85,7 @@ void read_parameter_file(char const* param_file)
     error(1, "Could not open parameter file %s.\n", param_file);
 
   do {
-    if (fgets(buffer, 1024, pfile) == NULL)
+    if (fgets_potfit(buffer, 1024, pfile) == NULL)
       break;  // probably EOF reached
 
     line++;
@@ -113,16 +114,10 @@ void read_parameter_file(char const* param_file)
                        param_file);
       g_param.write_output_files = 1;
     }
-    // prefix for LAMMPS output files
-    else if (strcasecmp(token, "output_lammps") == 0) {
-      get_param_string("output_lammps", &g_files.output_lammps, line,
-                       param_file);
-      g_param.write_lammps_files = 1;
-    }
     // file for IMD potential
     else if (strcasecmp(token, "imdpot") == 0) {
       get_param_string("imdpot", &g_files.imdpot, line, param_file);
-      g_param.writeimd = 1;
+      g_param.write_imd = 1;
     }
     // file for plotting
     else if (strcasecmp(token, "plotfile") == 0) {
@@ -153,7 +148,7 @@ void read_parameter_file(char const* param_file)
     }
     // write radial pair distribution ?
     else if (strcasecmp(token, "write_pair") == 0) {
-      get_param_int("write_pair", &g_param.write_pair, line, param_file, 0, 1);
+      get_param_int("write_pair", &g_param.write_pair_dist, line, param_file, 0, 1);
     }
     // plotpoint file
     else if (strcasecmp(token, "plotpointfile") == 0) {
@@ -178,11 +173,15 @@ void read_parameter_file(char const* param_file)
     else if (strcasecmp(token, "d_eps") == 0) {
       get_param_double("d_eps", &g_calc.d_eps, line, param_file, 0, DBL_MAX);
     }
-
     // write final potential in lammps format
     else if (strcasecmp(token, "write_lammps") == 0) {
       get_param_int("write_lammps", &g_param.write_lammps, line, param_file, 0,
                     1);
+    }
+    // number of steps in LAMMPS potential
+    else if (strcasecmp(token, "lammpspotsteps") == 0) {
+      get_param_int("lammpspotsteps", &g_param.lammpspotsteps, line, param_file, 1,
+                    INT_MAX);
     }
     // global scaling parameter
     else if (strcasecmp(token, "cell_scale") == 0) {
@@ -298,6 +297,30 @@ void read_parameter_file(char const* param_file)
       get_param_int("write_ensemble", &g_param.write_ensemble, line, param_file, 0, INT_MAX);
     }
 #endif  // UQ
+    
+#if defined(KIM)
+    else if (strcasecmp(token, "kim_model_name") == 0) {
+      get_param_string("kim_model_name", &g_kim.model_name, line, param_file);
+    }
+    else if (strcasecmp(token, "kim_model_params") == 0) {
+      const char* temp = NULL;
+      get_param_string("kim_model_params", &temp, line, param_file);
+      if (strncasecmp("dump_file", temp, 9) == 0)
+        g_param.kim_model_params = KIM_MODEL_PARAMS_DUMP_FILE;
+      else if (strncasecmp("dump", temp, 4) == 0)
+        g_param.kim_model_params = KIM_MODEL_PARAMS_DUMP;
+      else if (strncasecmp("use_default", temp, 11) == 0)
+        g_param.kim_model_params = KIM_MODEL_PARAMS_USE_DEFAULT;
+      else
+        warning("Ignoring invalid \"kim_model_params\" value \"%s\"\n", temp);
+    }
+    else if (strcasecmp(token, "kim_model_output_directory") == 0) {
+      get_param_string("kim_model_write_output", &g_kim.output_directory, line, param_file);
+    }
+    else if (strcasecmp(token, "kim_model_output_name") == 0) {
+      get_param_string("kim_model_output_name", &g_kim.output_name, line, param_file);
+    }
+#endif // KIM
 
     // unknown tag
     else
@@ -330,7 +353,7 @@ void get_param_int(char const* param_name, int* value, int line,
   }
 
   if (*value < min || *value > max) {
-    error(0, "Illegal value in parameter file %s (line %d): %s is out of bounds!", param_file, line, param_name);
+    error(0, "Illegal value in parameter file %s (line %d): %s is out of bounds!\n", param_file, line, param_name);
     error(1, "value = %d (min= %d max= %d)\n", *value, min, max);
   }
 }
@@ -425,9 +448,13 @@ void check_parameters_complete(char const* paramfile)
           paramfile, g_param.sweight);
 #endif  // STRESS
 
-  if (g_param.writeimd && g_param.imdpotsteps < 1)
+  if (g_param.write_imd && g_param.imdpotsteps < 1)
     error(1, "Missing parameter or invalid value in %s : imdpotsteps is \"%d\"\n",
           paramfile, g_param.imdpotsteps);
+
+  if (g_param.write_lammps && g_param.lammpspotsteps < 1)
+    error(1, "Missing parameter or invalid value in %s : lammpspotsteps is \"%d\"\n",
+          paramfile, g_param.lammpspotsteps);
 
 #if defined(APOT)
   if (g_param.plotmin < 0)
@@ -464,7 +491,7 @@ void check_parameters_complete(char const* paramfile)
     error(1, "Missing parameter or invalid value in %s : cell_scale is \"%f\"\n",
           paramfile, g_param.global_cell_scale);
 
-  #if defined(UQ)
+#if defined(UQ)
   if (g_files.ensemblefile == NULL) {
         warning("ensemblefile is missing in %s, setting it to %s.uq\n", paramfile,
             g_files.output_prefix);
@@ -495,6 +522,15 @@ void check_parameters_complete(char const* paramfile)
     warning("hess_pert is negative in %s, using the bracketing algorithm to find values!\n", paramfile);
   }
 
-  #endif // UQ
+#endif // UQ
   
+#if defined(KIM)
+  if (g_param.kim_model_params != KIM_MODEL_PARAMS_NONE) {
+    warning("Disabling optimization due to kim_model_params being set!\n");
+    g_param.opt = 0;
+  }
+
+  if (!g_kim.model_name)
+    error(1, "Missing parameter: kim_model_name");
+#endif
 }

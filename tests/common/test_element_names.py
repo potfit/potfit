@@ -19,7 +19,7 @@ def test_too_long_element_name(potfit_apot, ntypes, elements):
     potfit_apot.run()
     assert potfit_apot.has_no_error()
     assert potfit_apot.has_correct_atom_count()
-    assert '#C {}'.format(' '.join([s[0:4] for s in elements])) in potfit_apot.endpot
+    assert '#C {}'.format(' '.join(elements)) in potfit_apot.endpot
 
 @pytest.mark.parametrize("ntypes", [1, 2, 3])
 def test_numbered_elements(potfit_apot, ntypes):
@@ -103,3 +103,26 @@ def test_elements_in_config_and_potential_mismatch(potfit_apot, ntypes, elements
     potfit_apot.run()
     assert potfit_apot.has_error()
     assert 'Expected element >> {} << but found element >> {} <<'.format(wrong_elements[-1], elements[-1]) in potfit_apot.stderr
+
+def test_elements_in_config_and_potential_mismatch_pt2(potfit_apot):
+    potfit_apot.create_param_file(ntypes=2)
+    potfit_apot.call_makeapot('startpot', '-n 2 -i pair -f 3*lj -e He,Se')
+    potfit_apot.create_config_file(data='''
+#N 6 0
+#C Se He
+#X 10 0 0
+#Y 0 10 0
+#Z 0 0 10
+#E 0
+#F
+0 0 0 0 0 0 0
+0 3 0 0 0 0 0
+1 0 3 0 0 0 0
+1 0 0 3 0 0 0
+0 3 3 0 0 0 0
+1 3 0 3 0 0 0
+''')
+    potfit_apot.run()
+    assert potfit_apot.has_error()
+    assert 'Expected element >> He << but found element >> Se <<' in potfit_apot.stderr
+

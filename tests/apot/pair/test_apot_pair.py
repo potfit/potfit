@@ -18,12 +18,12 @@ sigma 2.5 1 4
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'analytic potentials' in potfit.stdout
-    assert '1 PAIR potentials' in potfit.stdout
+    assert '1 PAIR potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 380' in potfit.stdout
+    assert '380 contributions' in potfit.stdout
 
 def test_apot_pair_wrong_potential_format(potfit):
     potfit.create_param_file()

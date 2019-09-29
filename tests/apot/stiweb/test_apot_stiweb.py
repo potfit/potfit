@@ -8,12 +8,12 @@ def test_apot_stiweb_basic(potfit):
     assert potfit.has_no_error()
     assert potfit.has_correct_atom_count()
     assert 'analytic potentials' in potfit.stdout
-    assert '3 STIWEB potentials' in potfit.stdout
+    assert '3 STIWEB potential(s)' in potfit.stdout
     assert 'Read 1 configuration' in potfit.stdout
     assert 'Optimization disabled' in potfit.stdout
     assert 'Potential in format 0 written to file' in potfit.stdout
     assert 'Energy data not written' in potfit.stdout
-    assert 'count 389' in potfit.stdout
+    assert '389 contributions' in potfit.stdout
 
 def test_apot_stiweb_wrong_potential_format(potfit):
     potfit.create_param_file()

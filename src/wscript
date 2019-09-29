@@ -32,7 +32,8 @@ force_source_files = [
 ]
 
 kim_source_files = [
-    'kim.c'
+    'kim.c',
+    'force_kim.c'
 ]
 
 uq_source_files = [
@@ -75,7 +76,7 @@ def build(ctx):
         ctx.env.append_value('DEFINES_POTFIT', ['TAB'])
         ctx.objects(source=tab_source_files, target='model_objects', use=use_flags)
     elif ctx.env.model == 'kim':
-        # -DKIM is already set by interaction !!!
+        ctx.env.append_value('DEFINES_POTFIT', ['KIM'])
         use_flags.append('KIM')
         ctx.objects(source=kim_source_files, target='model_objects', use=use_flags)
     elif ctx.env.model == 'uq':

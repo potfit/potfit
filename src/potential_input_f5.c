@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * potential_input_f5.c: Routines for reading a potential table
+ * potential_input_f5.c: Routines for reading a KIM potential table
  *
  ****************************************************************
  *
@@ -27,18 +27,16 @@
  *
  ****************************************************************/
 
-#include <ctype.h>
+#include <assert.h>
 
 #include "potfit.h"
 
-#include "chempot.h"
-#include "functions.h"
 #include "kim.h"
 #include "memory.h"
 #include "potential_input.h"
 #include "utils.h"
 
-#if !defined(APOT) || !defined(KIM)
+#if !defined(KIM)
 
 void read_pot_table5(char const* potential_filename, FILE* pfile)
 {
@@ -47,367 +45,38 @@ void read_pot_table5(char const* potential_filename, FILE* pfile)
 
 #else
 
-#define PRINT_CHAR(a, b) \
-  do { \
-    int max_count = (b); \
-    if (max_count < 0) max_count = 0; \
-    for (int count = 0; count < max_count; ++count) \
-      printf(a); \
-  } while(0)
-
-#define KIM_INPUT_FILE_TEMPLATE \
-  "KIM_API_Version := 1.7.3\n" \
-  "Unit_length      := A\n" \
-  "Unit_energy      := eV\n" \
-  "Unit_charge      := e\n" \
-  "Unit_temperature := K\n" \
-  "Unit_time        := ps\n" \
-  "PARTICLE_SPECIES:\n" \
-  "%s                           spec                0\n" \
-  "CONVENTIONS:\n" \
-  "ZeroBasedLists               flag\n" \
-  "Neigh_LocaAccess             flag\n" \
-  "NEIGH_RVEC_H                 flag\n" \
-  "NEIGH_RVEC_F                 flag\n" \
-  "MI_OPBC_H                    flag\n" \
-  "MI_OPBC_F                    flag\n" \
-  "MODEL_INPUT:\n" \
-  "numberOfParticles            integer   none        []\n" \
-  "numberOfSpecies              integer   none        []\n" \
-  "particleSpecies              integer   none        [numberOfParticles]\n" \
-  "coordinates                  double    length      [numberOfParticles,3]\n" \
-  "boxSideLengths               double    length      [3]\n" \
-  "numberContributingParticles  integer   none        []\n" \
-  "get_neigh                    method    none        []\n" \
-  "neighObject                  pointer   none        []\n" \
-  "MODEL_OUTPUT:\n" \
-  "destroy                      method    none        []\n" \
-  "compute                      method    none        []\n" \
-  "reinit                       method    none        []           optional\n" \
-  "cutoff                       double    length      []\n" \
-  "energy                       double    energy      []\n" \
-  "forces                       double    force       [numberOfParticles,3]\n" \
-  "virial                       double    energy      [6]"
-
-/****************************************************************
-  read_kim_model_params
-****************************************************************/
-
-void read_kim_model_params()
+void print_string_space(const char* string, int len)
 {
-  void* pkim = NULL;
-
-  // create a temporary KIM object
-  int status = KIM_API_model_info(&pkim, g_kim.model_name);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_model_info failed\n");
-
-  int maxstringlength = 0;
-  status = KIM_API_get_num_model_species(pkim, &g_kim.freeparams.nspecies, &maxstringlength);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_get_num_model_species failed\n");
-
-  g_kim.freeparams.species = (char const**)Malloc(g_kim.freeparams.nspecies * sizeof(char*));
-
-  // get the species supported by the model
-  for (int i = 0; i < g_kim.freeparams.nspecies; ++i) {
-    char const* species;
-
-    status = KIM_API_get_model_species(pkim, i, &species);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_get_model_species failed\n");
-
-    int len = strlen(species);
-
-    g_kim.freeparams.species[i] = (char const*)Malloc((len + 1) * sizeof(char));
-    strncpy((char*)g_kim.freeparams.species[i], species, len);
-  }
-
-  // create buffer for quering the model parameters
-
-  char desc[4096];
-  memset(desc, 0, sizeof(desc));
-
-  snprintf(desc, sizeof(desc), KIM_INPUT_FILE_TEMPLATE, g_kim.freeparams.species[0]);
-
-  // free the temporary object
-  KIM_API_free(&pkim, &status);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_free failed");
-
-  // initialize KIM API object
-  status = KIM_API_string_init(&pkim, desc, g_kim.model_name);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_string_init failed");
-
-  // Allocate memory for each data argument of initialized KIM object
-  KIM_API_allocate(pkim, 1, 1, &status);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_allocate failed");
-
-  // call Model's init routine
-  status = KIM_API_model_init(pkim);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_model_init failed");
-
-  int descriptor_str_len = 0;
-
-  status = KIM_API_get_model_kim_str_len(g_kim.model_name, &descriptor_str_len);
-  if (status < KIM_STATUS_OK)
-    error(1, "KIM_API_get_model_kim_str_len failed");
-
-  char* descriptor_str = NULL;
-
-  status = KIM_API_get_model_kim_str(g_kim.model_name, &descriptor_str);
-  if (status < KIM_STATUS_OK)
-    error(1, "KIM_API_get_model_kim_str failed");
-
-  int numfreeparams = 0;
-  maxstringlength = 0;
-
-  // get the maxStringLength of free parameters
-  status = KIM_API_get_num_free_params(pkim, &numfreeparams, &maxstringlength);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_get_num_free_params failed");
-
-  g_kim.freeparams.max_name_len = maxstringlength;
-
-  if (numfreeparams == 0) {
-    error(0, "This KIM model does not provide any free parameters\n");
-    error(1, "and cannot be optimized with potfit.\n");
-  }
-
-  char const* p = strstr(descriptor_str, "PARAM_FREE_cutoff");
-
-  // don't count cutoff if available
-  if (p)
-    numfreeparams--;
-
-  p = descriptor_str;
-
-  g_kim.freeparams.npar = numfreeparams;
-  g_kim.freeparams.name = (char const**)Malloc(numfreeparams * sizeof(char*));
-  g_kim.freeparams.value = (void**)Malloc(numfreeparams * sizeof(void*));
-  g_kim.freeparams.type = (KIM_PARAM_TYPE*)Malloc(numfreeparams * sizeof(KIM_PARAM_TYPE));
-  g_kim.freeparams.size = (int*)Malloc(numfreeparams * sizeof(int));
-  g_kim.freeparams.rank = (int*)Malloc(numfreeparams * sizeof(int));
-  g_kim.freeparams.shape = (int**)Malloc(numfreeparams * sizeof(int*));
-
-  // read all remaining parameters
-
-  int index = 0;
-
-  while (*p && index < numfreeparams) {
-    p = strstr(p + 1,"PARAM_FREE");
-    if (!p)
-      break;
-
-    if (strncmp(p, "PARAM_FREE_cutoff", 17) == 0)
-      continue;
-
-    char name[255];
-    char type[255];
-
-    sscanf(p, "%s %s", name, type);
-
-    if (strncmp(type, "int", 3) == 0) {
-      g_kim.freeparams.type[index] = KIM_PARAM_TYPE_INT;
-    } else if (strncmp(type, "double", 6) == 0) {
-      g_kim.freeparams.type[index] = KIM_PARAM_TYPE_DOUBLE;
-    } else {
-      g_kim.freeparams.type[index] = KIM_PARAM_TYPE_UNKNOWN;
-    }
-
-    g_kim.freeparams.name[index] = (char const*)Malloc(strlen(name) + 1);
-    strncpy((char*)g_kim.freeparams.name[index], name, strlen(name) + 1);
-
-    index++;
-  }
-
-  free(descriptor_str);
-
-  // read size, rank and shape (if available)
-
-  for (int i = 0; i < numfreeparams; ++i) {
-    intptr_t size = KIM_API_get_size(pkim, g_kim.freeparams.name[i], &status);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_get_size failed");
-    g_kim.freeparams.size[i] = size;
-
-    intptr_t rank = KIM_API_get_rank(pkim, g_kim.freeparams.name[i], &status);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_get_rank failed");
-    g_kim.freeparams.rank[i] = rank;
-
-    if (rank == 0) {
-      g_kim.freeparams.shape[i] = NULL;
-    } else {
-      g_kim.freeparams.shape[i] = (int*)Malloc(rank * sizeof(int));
-      rank = KIM_API_get_shape(pkim, g_kim.freeparams.name[i], g_kim.freeparams.shape[i], &status);
-      if (KIM_STATUS_OK > status)
-        error(1, "KIM_API_get_shape failed");
-    }
-  }
-
-  // read and copy values
-
-  for (int i = 0; i < numfreeparams; ++i) {
-    void* data = KIM_API_get_data(pkim, g_kim.freeparams.name[i], &status);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_get_data failed");
-    int data_size = g_kim.freeparams.size[i] * sizeof(intptr_t);
-    g_kim.freeparams.value[i] = Malloc(data_size);
-    memcpy(g_kim.freeparams.value[i], data, data_size);
-  }
-
-  // read neighbor list and boundry conditions string
-
-  char const* NBCstr = "\0";
-
-  status = KIM_API_get_NBC_method(pkim, &NBCstr);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_get_NBC_method failed!\n");
-
-  if (strncmp("NEIGH_RVEC", NBCstr, 10) == 0) {
-    g_kim.NBC = KIM_NEIGHBOR_TYPE_RVEC;
-  } else if (strncmp("NEIGH_PURE", NBCstr, 10) == 0) {
-    g_kim.NBC = KIM_NEIGHBOR_TYPE_PURE;
-  } else if (strncmp("MI_OPBC", NBCstr, 7) == 0) {
-    g_kim.NBC = KIM_NEIGHBOR_TYPE_OPBC;
-  } else if (strncmp("CLUSTER", NBCstr, 7) == 0) {
-    g_kim.NBC = KIM_NEIGHBOR_TYPE_CLUSTER;
-  } else {
-    g_kim.NBC = KIM_NEIGHBOR_TYPE_UNKNOWN;
-  }
-
-  // read neighbor list type
-
-  g_kim.is_half_neighbors = KIM_API_is_half_neighbors(pkim, &status);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_is_half_neighbors failed!\n");
-
-  // determine if the KIM Model can compute the total energy
-
-  g_kim.model_has_energy = 1;
-  KIM_API_get_index(pkim, "energy", &status);
-  if (status != KIM_STATUS_OK)
-    g_kim.model_has_energy = 0;
-
-  // determine if the KIM Model can compute the forces
-
-  g_kim.model_has_forces = 1;
-  KIM_API_get_index(pkim, "forces", &status);
-  if (status != KIM_STATUS_OK)
-    g_kim.model_has_forces = 0;
-
-  // determine if the KIM Model can compute the virial
-
-  g_kim.model_has_virial = 1;
-  KIM_API_get_index(pkim, (char*) "virial", &status);
-  if (status != KIM_STATUS_OK) {
-    KIM_API_get_index(pkim, (char*) "process_dEdr", &status);
-    if (status != KIM_STATUS_OK)
-      g_kim.model_has_virial = 0;
-  }
-
-  // check for cutoff
-
-  g_kim.freeparams.cutoff_is_free_param = 0;
-  g_kim.freeparams.cutoff_value = 0.0;
-  void* data = KIM_API_get_data(pkim, "PARAM_FREE_cutoff", &status);
-  if (KIM_STATUS_OK == status) {
-    g_kim.freeparams.cutoff_value = *(double*)data;
-    g_kim.freeparams.cutoff_is_free_param = 1;
-  } else {
-    data = KIM_API_get_data(pkim, "cutoff", &status);
-    if (KIM_STATUS_OK == status) {
-      g_kim.freeparams.cutoff_value = *(double*)data;
-    } else {
-      error(1, "Cutoff is not available from the model!\n");
-    }
-  }
-
-  KIM_API_model_destroy(pkim);
-  KIM_API_free(&pkim, &status);
+  printf("%s%*s", string, len - (int)strlen(string), " ");
 }
 
-/****************************************************************
-  max_rank_str_len
-****************************************************************/
-
-int max_rank_str_len()
+void print_int_space(const int value, int len)
 {
-  int dim_1 = 0;
-  int dim_2 = 0;
-
-  for (int i = 0; i < g_kim.freeparams.npar; ++i) {
-    switch (g_kim.freeparams.rank[i]) {
-      case 0:
-        continue;
-      case 2:
-        dim_2 = max(dim_2, log10(g_kim.freeparams.shape[i][1]) + 1);
-      case 1:
-        dim_1 = max(dim_1, log10(g_kim.freeparams.shape[i][0]) + 1);
-    }
-  }
-
-  int str_len = 1; // at least one space
-
-  if (dim_1)
-    str_len += dim_1 + 1; // add space after number
-
-  if (dim_2)
-    str_len += dim_2 + 1; // add space after number
-
-  return str_len + 2; // add braces
+  printf("%*d", len, value);
 }
 
-/****************************************************************
-  print_single_param_value
-****************************************************************/
-
-void print_single_param_value(int idx, int rank_1, int rank_2)
+void print_description(const char* string, int offset, int desc_len)
 {
-  switch (g_kim.freeparams.rank[idx]) {
-    case 0:
-    case 1: {
-      switch (g_kim.freeparams.type[idx]) {
-        case KIM_PARAM_TYPE_DOUBLE: {
-          double* data = g_kim.freeparams.value[idx];
-          printf("% .10e", data[rank_1]);
-          break;
-        }
-        case KIM_PARAM_TYPE_INT: {
-          int* data = g_kim.freeparams.value[idx];
-          printf("% d", data[rank_1]);
-          break;
-        }
-        default: {
-          printf(" - undefined -");
-          break;
-        }
-      }
-      break;
+  const char* substr = string;
+
+  while (*substr) {
+    if (strlen(substr) < desc_len) {
+      printf("%s\n", substr);
+      return;
     }
-    case 2: {
-      switch (g_kim.freeparams.type[idx]) {
-        case KIM_PARAM_TYPE_DOUBLE: {
-          double* data = g_kim.freeparams.value[idx];
-          printf("% .10e", data[g_kim.freeparams.shape[idx][1] * rank_1 + rank_2]);
-          break;
-        }
-        case KIM_PARAM_TYPE_INT: {
-          int* data = g_kim.freeparams.value[idx];
-          printf("% d", data[g_kim.freeparams.shape[idx][1] * rank_1 + rank_2]);
-          break;
-        }
-        default: {
-          printf(" - undefined -\n");
-          break;
-        }
-      }
-      break;
+
+    // find space before desc_len
+    size_t pos = 0;
+    for (size_t i = 0; i < strlen(substr) && i < desc_len; ++i) {
+      if (substr[i] == ' ')
+        pos = i;
     }
+
+    fwrite(substr, sizeof(char), pos, stdout);
+
+    printf("\n%*s", offset, " ");
+
+    substr += pos + 1;
   }
 }
 
@@ -417,313 +86,463 @@ void print_single_param_value(int idx, int rank_1, int rank_2)
 
 void print_parameter_info()
 {
-  int name_size = (g_kim.freeparams.max_name_len + 5) & ~3;
-  int type_size = 12;
-  int extent_size = (max_rank_str_len() + 5) & ~3;
-  int value_size = 20;
+  int name_len = 0;
 
-  printf("Name");
-  PRINT_CHAR(" ", name_size - strlen("Name"));
+  for (int i = 0; i < g_kim.nparams; ++i)
+    if (strlen(g_kim.params[i].name) > name_len)
+      name_len = strlen(g_kim.params[i].name);
 
-  printf("Type");
-  PRINT_CHAR(" ", type_size - strlen("Type"));
+  name_len = ((name_len + 7) & ~7);
 
-  printf("Extent");
-  PRINT_CHAR(" ", extent_size - strlen("Extent"));
+  const int type_len = 8;
+  const int extent_len = 8;
+  const int desc_len = 60;
 
-  printf("Value\n");
-  PRINT_CHAR("-", name_size + type_size + extent_size + value_size);
-
+  print_string_space("Name", name_len);
+  print_string_space("Type", type_len);
+  print_string_space("Extent", extent_len);
+  print_string_space("Description", desc_len);
+  printf("\n");
+  for (int i = 0; i < name_len + type_len + extent_len + desc_len; ++i)
+    printf("-");
   printf("\n");
 
-  for (int i = 0; i < g_kim.freeparams.npar; ++i) {
-    // name
-    printf("%s", g_kim.freeparams.name[i]);
-    PRINT_CHAR(" ", name_size - strlen(g_kim.freeparams.name[i]));
-
-    // type
-    switch (g_kim.freeparams.type[i]) {
-      case KIM_PARAM_TYPE_UNKNOWN:
-        printf("unknown(*)  ");
-        break;
-      case KIM_PARAM_TYPE_INT:
-        printf("integer(*)  ");
-        break;
-      case KIM_PARAM_TYPE_DOUBLE:
-        printf("double      ");
-        break;
-    }
-
-    // extent
-    int e_size = 3;
-    printf("[");
-    switch (g_kim.freeparams.rank[i]) {
-      case 0:
-        break;
-      case 1:
-        printf(" %d", g_kim.freeparams.shape[i][0]);
-        e_size += 2 + log10(g_kim.freeparams.shape[i][0]);
-        break;
-      case 2:
-        printf(" %d %d", g_kim.freeparams.shape[i][0], g_kim.freeparams.shape[i][1]);
-        e_size += 4 + log10(g_kim.freeparams.shape[i][0]) + log10(g_kim.freeparams.shape[i][1]);
-        break;
-    }
-    printf(" ]");
-    PRINT_CHAR(" ", extent_size - e_size);
-
-    // value
-    switch (g_kim.freeparams.rank[i]) {
-      case 0:
-        print_single_param_value(i, 0, 0);
-        printf("\n");
-        break;
-      case 1: {
-        int entries = min(5, g_kim.freeparams.shape[i][0]);
-        printf("first %d entries below:\n", entries);
-        for (int j = 0; j < entries; ++j) {
-          PRINT_CHAR(" ", name_size + type_size + extent_size);
-          print_single_param_value(i, j, 0);
-          printf("\n");
-        }
-        if (entries < g_kim.freeparams.shape[i][0]) {
-          PRINT_CHAR(" ", name_size + type_size + extent_size);
-          printf(" ...\n");
-        }
-        break;
-      }
-      case 2: {
-        int entries_0 = min(3, g_kim.freeparams.shape[i][0]);
-        int entries_1 = min(2, g_kim.freeparams.shape[i][1]);
-        printf("first %d entries below:\n", entries_0 * entries_1);
-        for (int j = 0; j < entries_0; ++j) {
-          PRINT_CHAR(" ", name_size + type_size + extent_size);
-          for (int k = 0; k < entries_1; ++k) {
-            print_single_param_value(i, j, k);
-            printf("\t");
-          }
-          if (entries_1 < g_kim.freeparams.shape[i][1]) {
-            printf(" ...\n");
-          } else {
-            printf("\n");
-          }
-        }
-        if (entries_0 < g_kim.freeparams.shape[i][0]) {
-          PRINT_CHAR(" ", name_size + type_size + extent_size);
-          for (int k = 0; k < entries_1; ++k)
-            printf(" ...\t\t\t");
-          if (entries_1 < g_kim.freeparams.shape[i][1])
-            printf(" ...");
-          printf("\n");
-        }
-        break;
-      }
-      default:
-        printf("- unsupported rank -\n");
-    }
+  for (int i = 0; i < g_kim.nparams; ++i) {
+    print_string_space(g_kim.params[i].name, name_len);
+    print_string_space(KIM_DataType_ToString(g_kim.params[i].type), type_len);
+    print_int_space(g_kim.params[i].extent, extent_len - 2);
+    printf("  ");
+    print_description(g_kim.params[i].desc, name_len + type_len + extent_len, desc_len);
   }
   printf("\n");
 }
 
 /****************************************************************
-  print_model_parameters_and_exit
+  print_model_parameters_impl
 ****************************************************************/
 
-void print_model_parameters_and_exit(char const* filename)
+void print_model_parameters_impl(FILE* file)
 {
-  printf("\n");
-  warning("check_kim_opt_param has been found in the potential file.\n");
+  warning("\"kim_model_params\" has been set in the parameter file!\n");
   warning("All possible parameters will be listed and potfit will be terminated!\n\n");
+  printf("Available species (%d):\n    ", g_kim.nspecies);
 
-  printf("Available species (%d):\n    ", g_kim.freeparams.nspecies);
-  for (int i = 0; i < g_kim.freeparams.nspecies; ++i) {
+  for (int i = 0; i < g_kim.nspecies; ++i) {
     if ((i + 1) % 13 == 0)
       printf("\n    ");
-    printf("%s", g_kim.freeparams.species[i]);
-    if (i != (g_kim.freeparams.nspecies - 1))
+    printf("%s", KIM_SpeciesName_ToString(g_kim.species[i]));
+    if (i != (g_kim.nspecies - 1))
       printf(", ");
   }
   printf("\n\n");
 
-  printf("The following potential parameters are available from the KIM API. Include the\n"
-         "name(s) (and the initial value(s) and the corresponding lower and upper\n"
-         "boundaries) that you want to optimize in your potential file %s.\n\n", filename);
+  printf("The following potential parameters are available from the KIM model\n\t%s:\n\n", g_kim.model_name);
 
   print_parameter_info();
 
-  printf("(*) means that this parameter type is not available for optimization\n\n");
-  printf("Note that an empty parameter extent (i.e. '[ ]') indicates that the\n"
-         "parameter is a scalar.\n\n");
-  printf("KIM array parameters are row based. While listing the initial\n"
-         "values for such parameters, you should ensure that the sequence is\n"
-         "correct. For example, if the extent of a parameter `PARAM_FREE_A' is\n"
-         "[ 2 2 ], then you should list the initial values as: A[0 0], A[0 1],\n"
-         "A[1 0], A[1 1].\n");
+  fprintf(file, "#F 5 1\n");
+  fprintf(file, "#T %s\n", g_kim.model_name);
+  fprintf(file, "#C");
 
-#if defined(MPI)
-  // go wake up other threads
-  calc_forces(NULL, NULL, 1);
-  shutdown_mpi();
-#endif  // MPI
-  free_allocated_memory();
-  exit(EXIT_SUCCESS);
+  for (int i = 0; i < g_kim.nspecies; ++i)
+    fprintf(file, " %s", KIM_SpeciesName_ToString(g_kim.species[i]));
+
+  fprintf(file, "\n#E\n\n");
+
+  for (int i = 0; i < g_kim.nparams; ++i) {
+    fprintf(file, "KIM_%s %s\n", g_kim.params[i].is_cutoff ? "CUTOFF" : "PARAM", g_kim.params[i].name);
+    for (int j = 0; j < g_kim.params[i].extent; ++j)
+      if (KIM_DataType_Equal(g_kim.params[i].type, KIM_DATA_TYPE_Integer))
+        fprintf(file, "%d %d %d\n", g_kim.params[i].values[j].i, g_kim.params[i].values[j].i, g_kim.params[i].values[j].i);
+      else if (KIM_DataType_Equal(g_kim.params[i].type, KIM_DATA_TYPE_Double)) {
+        if (g_kim.params[i].is_cutoff)
+          fprintf(file, "%f\n", g_kim.params[i].values[j].d);
+        else
+          fprintf(file, "%f %f %f\n", g_kim.params[i].values[j].d, g_kim.params[i].values[j].d, g_kim.params[i].values[j].d);
+      }
+    fprintf(file, "\n");
+  }
+
+  if (file != stdout)
+    printf("A potfit potential file has been written to %s.default\n\n", g_kim.model_name);
+
+  warning("All parameters are fixed in this template by the min = max constraint.\n");
+  warning("Please enable those you would like to optimize by changing their min/max values.\n");
 }
 
-/******************************************************************************
-*
-* Read the keywords (`type', `cutoff', etc) and parameter names (beginning
-* with `PARAM_FREE') in the potential input file.
-*
-* In this function, the memory of three global variables: `num_opt_param',
-* `name_opt_param', `size_opt_param' will be allocated and the first two will be
-* initialized here (based on the infomation from the input), `size_opt_param' will
-* be initialized in nest_optimizable_param.
-*
-* pt: potential table
-* filename: potential input file name
-* infile: potential input file
-* FreeParam: data struct that contains the free parameters info of the KIM Model
-*
-******************************************************************************/
+/****************************************************************
+  print_model_parameters
+****************************************************************/
 
-void read_keywords_and_parameters(char const* filename, FILE* infile)
+void print_model_parameters(KIM_MODEL_PARAMS_ENUM dump)
+{
+  switch (dump) {
+    case KIM_MODEL_PARAMS_NONE:
+    case KIM_MODEL_PARAMS_USE_DEFAULT:
+      return;
+    case KIM_MODEL_PARAMS_DUMP_FILE: {
+      size_t len = strlen(g_kim.model_name) + 9;
+      char* name = (char*)malloc(len * sizeof(char));
+      sprintf(name, "%s.default", g_kim.model_name);
+      FILE* pout = fopen(name, "w");
+      if (!pout)
+        error(1, "Error creating default KIM model potential file");
+      print_model_parameters_impl(pout);
+      fclose(pout);
+      break;
+    }
+    case KIM_MODEL_PARAMS_DUMP:
+      print_model_parameters_impl(stdout);
+      break;
+  }
+
+  exit_potfit(EXIT_SUCCESS);
+}
+
+/****************************************************************
+  read_global_parameters:
+****************************************************************/
+
+void read_global_parameters(FILE* pfile, const char* filename)
+{
+  apot_table_t* apt = &g_pot.apot_table;
+  char buffer[255];
+  fpos_t filepos;
+  pot_table_t* pt = &g_pot.opt_pot;
+
+  // skip to global section
+
+  do {
+    fgetpos(pfile, &filepos);
+    int ret = fscanf(pfile, "%s", buffer);
+    if (feof(pfile))
+      return;
+    else if (ret != 1)
+      error(1, "Error while searching for global parameters\n");
+  } while (strncmp(buffer, "global", 6) != 0 && !feof(pfile));
+  fsetpos(pfile, &filepos);
+
+  // check for global keyword
+  if (strncmp(buffer, "global", 6) != 0)
+    return;
+
+  if (2 > fscanf(pfile, "%s %d", buffer, &apt->globals))
+    error(1, "Premature end of potential file %s\n", filename);
+
+  g_pot.have_globals = 1;
+  apt->total_par += apt->globals;
+  g_pot.global_pot = apt->number;
+
+  /* allocate memory for global parameters */
+  apt->names = (char**)Realloc(apt->names, 2 * sizeof(char*));
+  apt->names[1] = (char*)Malloc(18 * sizeof(char));
+  snprintf(apt->names[1], 18, "global parameters");
+
+  apt->n_glob = (int*)Malloc(apt->globals * sizeof(int));
+
+  apt->global_idx = (int***)Malloc(apt->globals * sizeof(int**));
+
+  apt->values = (double**)Realloc(apt->values, 2 * sizeof(double*));
+  apt->values[1] = (double*)Malloc(apt->globals * sizeof(double));
+
+  apt->invar_par = (int**)Realloc(apt->invar_par, 2 * sizeof(int*));
+  apt->invar_par[1] = (int*)Malloc((apt->globals + 1) * sizeof(int));
+
+  apt->pmin = (double**)Realloc(apt->pmin, 2 * sizeof(double*));
+  apt->pmin[1] = (double*)Malloc(apt->globals * sizeof(double));
+
+  apt->pmax = (double**)Realloc(apt->pmax, 2 * sizeof(double*));
+  apt->pmax[1] = (double*)Malloc(apt->globals * sizeof(double));
+
+  apt->param_name = (const char***)Realloc(apt->param_name, 2 * sizeof(char**));
+  apt->param_name[1] = (const char**)Malloc(apt->globals * sizeof(char*));
+
+  pt->first = (int*)Realloc(pt->first, 2 * sizeof(int));
+
+  // read the global parameters
+  for (int j = 0; j < apt->globals; j++) {
+    int ret_val = fscanf(pfile, "%s %lf %lf %lf", buffer, &apt->values[1][j], &apt->pmin[1][j], &apt->pmax[1][j]);
+    if (4 > ret_val) {
+      if (strcmp(apt->param_name[1][j], "type") == 0) {
+        error(0, "Not enough global parameters!\n");
+        error(1, "You specified %d parameter(s), but needed are %d.\n", j, apt->globals);
+      }
+      error(1, "Error reading global parameters\n");
+    }
+
+    if ((buffer[0] > 65) || (buffer[0] > 90 && buffer[0] < 97) || (buffer[0] > 122))
+      error(1, "Global parameters for KIM need to start with letters: %s is invalid\n", buffer);
+    apt->param_name[1][j] = (const char*)Malloc((strlen(buffer) + 1) * sizeof(char));
+    snprintf((char*)apt->param_name[1][j], strlen(buffer) + 1, "%s", buffer);
+
+    /* check for duplicate names */
+    for (int k = j - 1; k >= 0; k--) {
+      if (strcmp(apt->param_name[1][j], apt->param_name[1][k]) == 0) {
+        error(0, "\nFound duplicate global parameter name!\n");
+        error(1, "Parameter #%d (%s) is the same as #%d (%s)\n", j + 1,
+              apt->param_name[1][j], k + 1, apt->param_name[1][k]);
+      }
+    }
+
+    apt->n_glob[j] = 0;
+
+    // check for invariance and proper value (respect boundaries)
+    // parameter will not be optimized if min==max
+    apt->invar_par[1][j] = 0;
+
+    if (apt->pmin[1][j] == apt->pmax[1][j]) {
+      apt->invar_par[1][j] = 1;
+      apt->invar_par[1][apt->globals]++;
+    } else if (apt->pmin[1][j] > apt->pmax[1][j]) {
+      double temp = apt->pmin[1][j];
+      apt->pmin[1][j] = apt->pmax[1][j];
+      apt->pmax[1][j] = temp;
+    } else if ((apt->values[1][j] < apt->pmin[1][j]) || (apt->values[1][j] > apt->pmax[1][j])) {
+      // Only print warning if we are optimizing
+      if (g_param.opt) {
+        if (apt->values[1][j] < apt->pmin[1][j])
+          apt->values[1][j] = apt->pmin[1][j];
+        if (apt->values[1][j] > apt->pmax[1][j])
+          apt->values[1][j] = apt->pmax[1][j];
+        warning("Starting value for global parameter #%d is ", j + 1);
+        warning("outside of specified adjustment range.\n");
+        warning("Resetting it to %f.\n", j + 1, apt->values[1][j]);
+        if (apt->values[1][j] == 0)
+          warning("New value is 0! Please be careful about this.\n");
+      }
+    }
+  }
+
+  printf(" - Read %d global parameter(s)\n", apt->globals);
+}
+
+/****************************************************************
+  read_cutoff_parameter
+****************************************************************/
+
+void read_cutoff_parameter(FILE* pfile, const char* filename)
 {
   char buffer[255], name[255];
-  fpos_t startpos;
 
-  fgetpos(infile, &startpos);
-
-  // scan for "model" keyword
+  // skip to cutoff section
 
   do {
-    if (NULL == fgets(buffer, 255, infile) && !feof(infile))
-      error(1, "Error reading 'model' keyword from potential file %s\n", filename);
-    if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
-      error(1, "Error reading 'model' keyword from potential file %s\n", filename);
-  } while (strncmp(name, "model", 5) != 0 && !feof(infile));
+    if (NULL == fgets_potfit(buffer, 255, pfile) && !feof(pfile))
+      error(1, "Error reading 'KIM_CUTOFF' keyword from potential file %s\n", filename);
+    if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name)) {
+      error(1, "Error reading 'KIM_CUTOFF ...' keyword from potential file %s\n", filename);
+    }
+  } while (strncmp(name, "KIM_CUTOFF", 10) != 0 && !feof(pfile));
 
-  if (strncmp(name, "model", 5) != 0)
-    error(1, "Keyword 'model' is missing in file: %s\n", filename);
 
-  if (1 != sscanf(buffer, "%*s %s", name))
-    error(1, "Error reading 'model' keyword from potential file %s\n", filename);
+  // check for global keyword
+  if (strncmp(buffer, "KIM_CUTOFF", 10) != 0) {
+    warning("No cutoff parameter specified! All parameters will be optimized!\n");
+    return;
+  }
 
-  // copy name
-  g_kim.model_name = (char const*)Malloc(strlen(name) + 1);
-  strncpy((char*)g_kim.model_name, name, strlen(name));
-  *((char*)&g_kim.model_name[strlen(name)]) = '\0';
+  int ret = sscanf(buffer, "%*s %s", name);
+  if (ret != 1)
+    error(1, "Error reading KIM_CUTOFF line!\n");
 
-  printf("\nKIM Model: %s\n", g_kim.model_name);
+  // find that parameter in the KIM parameters
 
-  read_kim_model_params();
+  for (int i = 0; i < g_kim.nparams; ++i) {
+    if (strcmp(g_kim.params[i].name, name) == 0) {
+      g_kim.params[i].is_cutoff = 1;
+      return;
+    }
+  }
 
-  // find "kim_opt_param" keyword
+  error(1, "Could not associate KIM_CUTOFF name \"%s\" with any parameter!\n", name);
+}
+
+void read_keywords_and_parameters(char const* filename, FILE* infile, const fpos_t startpos)
+{
+  print_model_parameters(g_param.kim_model_params);
 
   fsetpos(infile, &startpos);
+  read_global_parameters(infile, filename);
 
-  do {
-    if (NULL == fgets(buffer, 255, infile) && !feof(infile))
-      error(1, "Error reading 'kim_opt_param' keyword from potential file %s\n", filename);
-    if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
-      error(1, "Error reading 'kim_opt_param' keyword from potential file %s\n", filename);
-  } while (strncmp(name, "kim_opt_param", 13) != 0 && !feof(infile));
+  fsetpos(infile, &startpos);
+  if (g_param.kim_model_params == KIM_MODEL_PARAMS_NONE)
+    read_cutoff_parameter(infile, filename);
+}
 
-  // read "kim_opt_param"
+double read_max_cutoff()
+{
+  int num_lists = 0;
+  const double* cutoffs = NULL;
+  const int* data = NULL; // modelWillNotRequestNeighborsOfNoncontributingParticles
+  double max_cutoff = 0.0;
 
-  if (strncmp(buffer,"kim_opt_param", 13) != 0) {
-    error(1, "Keyword 'kim_opt_param' is missing in potential file: %s\n", filename);
-  } else {
-    if (1 != sscanf(buffer, "%*s %s", name))
-      error(1, "Argument for 'kim_opt_param' is missing/invalid in potential file: %s\n", filename);
-    if (strncmp(name, "list", 4) == 0) {
-      print_model_parameters_and_exit(filename);
+  KIM_Model_GetInfluenceDistance(g_kim.model, &max_cutoff);
+
+  KIM_Model_GetNeighborListPointers(g_kim.model, &num_lists, &cutoffs, &data);
+
+  g_kim.cutoffs = (double*)Malloc((num_lists + 1) * sizeof(double));
+
+  g_kim.cutoffs[num_lists] = max_cutoff;
+
+  for (int i = 0; i < num_lists; ++i) {
+    if (!data[i])
+      error(1, "KIM model does request neighbors of ghost atoms - NYI in potfit\n");
+    if (cutoffs[i] > max_cutoff)
+      max_cutoff = cutoffs[i];
+    g_kim.cutoffs[i] = cutoffs[i];
+  }
+
+  return max_cutoff;
+}
+
+void read_kim_parameters_default()
+{
+  const apot_table_t* apt = &g_pot.apot_table;
+
+  int pos = 0;
+
+  for (int i = 0; i < g_kim.nparams; i++) {
+    if (KIM_DataType_Equal(g_kim.params[i].type, KIM_DATA_TYPE_Integer)) {
+      for (int j = 0; j < g_kim.params[i].extent; ++j) {
+        apt->values[0][pos] = g_kim.params[i].values[j].i;
+        apt->pmin[0][pos] = g_kim.params[i].values[j].i;
+        apt->pmax[0][pos++] = g_kim.params[i].values[j].i;
+      }
     } else {
-      if(1 != sscanf(name, "%d", &g_kim.num_opt_param)) {
-        error(0, "Argument for 'kim_opt_param' (%s) is invalid in file: %s\n", name, filename);
-        error(1, "Please provide an integer or the keyword 'list'\n");
+      for (int j = 0; j < g_kim.params[i].extent; ++j) {
+        apt->values[0][pos] = g_kim.params[i].values[j].d;
+        apt->pmin[0][pos] = g_kim.params[i].values[j].d;
+        apt->pmax[0][pos++] = g_kim.params[i].values[j].d;
       }
     }
   }
 
-  if (g_kim.num_opt_param > g_kim.freeparams.npar)
-    error(1, "kim_opt_param in potential file is set to %d, but the "
-      "model only has %d parameters.\n", g_kim.num_opt_param, g_kim.freeparams.npar);
+  assert(pos == g_kim.total_params);
+}
 
-  // allocate storage
+void read_single_kim_parameter(const char* filename, FILE* pfile, int idx, int pos)
+{
+  const apot_table_t* apt = &g_pot.apot_table;
 
-  g_kim.idx_opt_param = (int*)Malloc(g_kim.num_opt_param * sizeof(int));
-  g_kim.size_opt_param = (int*)Malloc(g_kim.num_opt_param * sizeof(int));
+  char buffer[255];
+  char name[255];
 
-  // count how many optimization parameters we have
-  // values are not read here
+  memset(buffer, 0, sizeof(buffer));
+  memset(name, 0, sizeof(name));
 
-  fsetpos(infile, &startpos);
+  do {
+    if (NULL == fgets_potfit(buffer, 255, pfile) && !feof(pfile))
+      error(1, "Error reading 'KIM_' keyword #%d from potential file %s\n", idx + 1, filename);
+    if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
+      error(1, "Error reading 'KIM_' keyword #%d from potential file %s\n", idx + 1, filename);
+  } while (strncmp(name, "KIM_", 4) != 0 && !feof(pfile));
 
-  for (int i = 0; i < g_kim.num_opt_param; ++i) {
-    do {
-      if (NULL == fgets(buffer, 255, infile) && !feof(infile))
-        error(1, "Error reading 'PARAM_FREE' keyword #%d from potential file %s\n", i + 1, filename);
-      if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
-        error(1, "Error reading 'PARAM_FREE' keyword #%d from potential file %s\n", i + 1, filename);
-    } while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(infile));
-    if (feof(infile)) {
-        error(0, "Not enough parameter(s) 'PARAM_FREE_*' in potential file %s\n", filename);
-        error(1, "You listed %d parameter(s), but required are %d.\n", i, g_kim.num_opt_param);
-    }
-    int found = 0;
-    for (int j = 0; j < g_kim.freeparams.npar; ++j) {
-      if (strcmp(g_kim.freeparams.name[j], name) == 0) {
-        if (g_kim.freeparams.type[j] != KIM_PARAM_TYPE_DOUBLE)
-          error(1, "Only double parameters can currently be optimized!\n");
-        g_kim.idx_opt_param[i] = j;
-        g_kim.size_opt_param[i] = 1;
-        for (int k = 0; k < g_kim.freeparams.rank[j]; ++k)
-          g_kim.size_opt_param[i] *= g_kim.freeparams.shape[j][k];
-        g_kim.total_num_opt_param += g_kim.size_opt_param[i];
-        found = 1;
-        break;
+  if (strncmp(name, "KIM_", 4) != 0)
+    error(1, "Could not find 'KIM_' keyword for parameter \"%s\"\n", g_kim.params[idx].name);
+
+  const int is_cutoff = (strncmp("KIM_CUTOFF", name, 10) == 0);
+
+  int ret = sscanf(buffer, "%*s %s", name);
+  if (ret != 1)
+    error(1, "Error reading KIM_ line for parameter %d\n", idx + 1);
+
+  // make sure we have the same order as before
+  if (strncmp(g_kim.params[idx].name, name, strlen(name)) != 0)
+    error(1, "Parameter order mismatch, expected \"%s\" but found \"%s\"\n", g_kim.params[idx].name, name);
+
+  double val = 0.0;
+  double min = 0.0;
+  double max = 0.0;
+
+  // read all lines for this parameter
+  for (int j = 0; j < g_kim.params[idx].extent; ++j) {
+    const int offset = pos + j;
+    if (NULL == fgets_potfit(buffer, 255, pfile))
+      error(1, "Error reading '%s' entry #%d from potential file %s\n", name, j + 1, filename);
+
+    if (KIM_DataType_Equal(g_kim.params[idx].type, KIM_DATA_TYPE_Integer)) {
+      if (strncmp(buffer, "default", 7) != 0) {
+        // read initial value and not optimize it
+        if (buffer[0] == '!')
+          error(1, "Integer options cannot use global parameters!\n");
+        if (!(buffer[0] > 0x2f && buffer[0] < 0x39))
+          error(1, "Invalid integer for parameter \"%s\", #%d: \"%s\"!\n", g_kim.params[idx].name, j + 1, buffer);
+        ret = sscanf(buffer, "%d", &g_kim.params[idx].values[j].i);
+        if (ret != 1)
+          error(1, "Error reading default line! TODO\n");
       }
+      // store in KIM and forget about it
+      ret = KIM_Model_SetParameterInteger(g_kim.model, idx, j, g_kim.params[idx].values[j].i);
+      if (ret)
+        error(1, "Error setting parameter\n");
+      apt->invar_par[0][offset] = 1;
+      apt->invar_par[0][apt->n_par[0]] += 1;
+    } else if (KIM_DataType_Equal(g_kim.params[idx].type, KIM_DATA_TYPE_Double)) {
+      if (is_cutoff) {
+        ret = sscanf(buffer, "%lf", &val);
+        if (ret != 1)
+          error(1, "Error reading parameters line!\n");
+        apt->invar_par[0][offset] = 1;
+        apt->invar_par[0][apt->n_par[0]] += 1;
+        apt->pmin[0][offset] = val;
+        apt->pmax[0][offset] = val;
+        apt->values[0][offset] = val;
+          // store cutoff in KIM
+        ret = KIM_Model_SetParameterDouble(g_kim.model, idx, j, val);
+        if (ret)
+          error(1, "Error setting parameter\n");
+        continue;
+      }
+
+      // global parameter
+      if (buffer[0] == '!') {
+          // TODO
+          continue;
+      }
+
+      if (strncmp(buffer, "default", 7) == 0) {
+          // use default value from KIM
+          ret = sscanf(buffer, "%*s %lf %lf", &min, &max);
+          if (ret != 2)
+            error(1, "Error reading default line!\n");
+          val = g_kim.params[idx].values[j].d;
+      } else {
+        ret = sscanf(buffer, "%lf %lf %lf", &val, &min, &max);
+        if (ret != 3)
+          error(1, "Error reading parameters line!\n");
+      }
+
+      if (min > max) {
+        double temp = 0.0;
+        SWAP(min, max, temp);
+      }
+
+      // fixed param or not
+      if (min == max) {
+        apt->invar_par[0][offset] = 1;
+        apt->invar_par[0][apt->n_par[0]] += 1;
+      }
+
+      apt->values[0][offset] = val;
+      apt->pmin[0][offset] = min;
+      apt->pmax[0][offset] = max;
+
+      if(!apt->invar_par[0][offset] && (min > apt->values[0][offset] || max < apt->values[0][offset]))
+        error(1, "Value %d of '%s' is not within its limits in file '%s'.\n", j + 1, g_kim.params[idx].name, filename);
+    } else {
+      error(1, "Unsupported DataType detected!\n");
     }
-    if (!found)
-      error(1, "The KIM model does not have a parameter with the name %s\n", name);
   }
 }
 
-double get_freeparam_value(int param_idx, int entry_idx)
+void read_kim_parameters_file(const char* filename, FILE* pfile)
 {
-  if (g_kim.freeparams.type[param_idx] != KIM_PARAM_TYPE_DOUBLE)
-    error(1, "Only double values may currently be optimized\n");
+  int pos = 0;
 
-  if (g_kim.freeparams.rank[param_idx] == 0) {
-    if (entry_idx != 0) {
-      error(1, "Parameter %d does only have a single entry!\n", param_idx);
-    } else {
-      return ((double*)g_kim.freeparams.value[param_idx])[0];
-    }
+  for (int i = 0; i < g_kim.nparams; ++i) {
+    read_single_kim_parameter(filename, pfile, i, pos);
+    pos += g_kim.params[i].extent;
   }
-
-  if (g_kim.freeparams.rank[param_idx] == 1) {
-    if (entry_idx > g_kim.freeparams.size[param_idx]) {
-      error(1, "Parameter %d does only have %d entries!\n", param_idx, g_kim.freeparams.size[param_idx]);
-    } else {
-      return ((double*)g_kim.freeparams.value[param_idx])[entry_idx];
-    }
-  }
-
-  if (g_kim.freeparams.rank[param_idx] == 2) {
-    int i = entry_idx / g_kim.freeparams.shape[param_idx][1];
-    int j = entry_idx % g_kim.freeparams.shape[param_idx][0];
-
-    if (entry_idx > g_kim.freeparams.size[param_idx]) {
-      error(1, "Parameter %d does only have %d entries!\n", param_idx, g_kim.freeparams.size[param_idx]);
-    } else {
-      return ((double**)g_kim.freeparams.value[param_idx])[i][j];
-    }
-  }
-
-  error(1, "Only up to rank 2 is implemented here!\n");
-
-  return -1.0;
 }
 
 /****************************************************************
@@ -741,24 +560,24 @@ void read_pot_table5(char const* filename, FILE* pfile)
   apot_table_t* apt = &g_pot.apot_table;
   pot_table_t* pt = &g_pot.opt_pot;
 
-  char  buffer[255], name[255];
   fpos_t startpos;
 
   // save starting position
   fgetpos(pfile, &startpos);
 
   // read the keywords and the names of parameters that will be optimized
-  read_keywords_and_parameters(filename, pfile);
+  read_keywords_and_parameters(filename, pfile, startpos);
 
-  apt->n_par[0] = g_kim.total_num_opt_param;
+  const double max_cutoff = read_max_cutoff();
+
+  apt->n_par[0] = g_kim.total_params;
   apt->total_par += apt->n_par[0];
-
-  // set begin
+  // set begin and end
   apt->begin[0] = 0.0;
-
+  apt->end[0] = max_cutoff;
   // allocate memory
   apt->values[0] = (double *)Malloc(apt->n_par[0] * sizeof(double));
-  // last slot stores the total number of invariable parameters
+  // last slot stores the total number of invariant parameters
   apt->invar_par[0] = (int *)Malloc((apt->n_par[0] + 1) * sizeof(int));
   apt->pmin[0] = (double *)Malloc(apt->n_par[0] * sizeof(double));
   apt->pmax[0] = (double *)Malloc(apt->n_par[0] * sizeof(double));
@@ -767,156 +586,45 @@ void read_pot_table5(char const* filename, FILE* pfile)
 
   fsetpos(pfile, &startpos);
 
-  int param_idx = 0;
+  if (g_param.kim_model_params == KIM_MODEL_PARAMS_USE_DEFAULT)
+    read_kim_parameters_default();
+  else
+    read_kim_parameters_file(filename, pfile);
 
-  for (int j = 0; j < g_kim.num_opt_param; j++) {
-    memset(buffer, 0, sizeof(buffer));
-    memset(name, 0, sizeof(name));
-
-    do {
-      if (NULL == fgets(buffer, 255, pfile) && !feof(pfile))
-        error(1, "Error reading 'PARAM_FREE' keyword #%d from potential file %s\n", j + 1, filename);
-      if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
-        error(1, "Error reading 'PARAM_FREE' keyword #%d from potential file %s\n", j + 1, filename);
-    } while (strncmp(name, "PARAM_FREE", 10) != 0 && !feof(pfile));
-
-    if (strncmp(name, "PARAM_FREE_cutoff", 17) == 0) {
-      j--;
-      continue;
-    }
-
-    // make sure we have the same order as before
-    const int idx = g_kim.idx_opt_param[j];
-    if (strcmp(g_kim.freeparams.name[idx], name) != 0)
-      error(1, "Parameter order mismatch, this should never happen!\n");
-
-    double min = 0.0;
-    double max = 0.0;
-
-    // read all lines for this parameter
-    for (int k = 0; k < g_kim.size_opt_param[j]; ++k) {
-      if (NULL == fgets(buffer, 255, pfile))
-        error(1, "Error reading '%s' entry #%d from potential file %s\n", name, k, filename);
-      int ret_val = sscanf(buffer, "%s %lf %lf", name, &min, &max);
-      if (ret_val > 0) {
-        for (int c = 0; name[c]; ++c)
-          name[c] = tolower(name[c]);
-        if (strncmp(name, "kim", 3) == 0) {
-          apt->values[0][param_idx] = get_freeparam_value(idx, k);
-        } else if (1 > sscanf(name, "%lf", &apt->values[0][param_idx])) {
-          error(1, "First data for parameter '%s' corrupted, it should be a type float or 'KIM'.\n", g_kim.freeparams.name[idx]);
-        }
-      }
-      if (ret_val > 2) {
-        if (min > max) {
-          double temp = 0.0;
-          SWAP(min, max, temp);
-        }
-        // fixed param or not
-        if (min == max) {
-          apt->invar_par[0][param_idx] = 1;
-          apt->invar_par[0][apt->n_par[0]] += 1;
-        }
-        apt->pmin[0][param_idx] = min;
-        apt->pmax[0][param_idx] = max;
-      }
-      if(!apt->invar_par[0][param_idx] && (min > apt->values[0][param_idx] || max < apt->values[0][param_idx]))
-        error(1, "Value %d of '%s' is not within its limits in file '%s'.\n", k + 1, g_kim.freeparams.name[idx], filename);
-      param_idx++;
-    }
-  }
-
-  printf("Successfully read %d potential parameters, %d will be optimized\n",
-         g_kim.total_num_opt_param, g_kim.total_num_opt_param - apt->invar_par[0][apt->n_par[0]]);
-
-  fsetpos(pfile, &startpos);
-
-  do {
-    if (NULL == fgets(buffer, 255, pfile))
-      error(1, "Error while searching for 'cutoff' keyword in potential file %s\n", filename);
-    if (strlen(buffer) > 1 && 1 != sscanf(buffer, "%s", name))
-      error(1, "Error while searching for 'cutoff' keyword in potential file %s\n", filename);
-  } while (strncmp(name, "cutoff", 6) != 0 && !feof(pfile));
-
-  if (strncmp(name, "cutoff", 6) == 0) {
-    char temp_str[255];
-
-    if(2 != sscanf(buffer, "%s %s", name, temp_str))
-      error(1,"Error reading in cutoff in file '%s'.\n", filename);
-
-    for (int c = 0; temp_str[c]; ++c)
-      temp_str[c] = tolower(temp_str[c]);
-
-    if (strncmp(temp_str, "kim", 3) == 0) {
-      printf("Cutoff from KIM model will be used: %f\n", g_kim.freeparams.cutoff_value);
-      apt->end[0] = g_kim.freeparams.cutoff_value;
-    } else {
-      if (g_kim.freeparams.cutoff_is_free_param == 0) {
-        warning("Cutoff is not a free parameter. Model value will be used!\n");
-      } else {
-        if(1 != sscanf(temp_str,"%lf", &apt->end[0]))
-          error(1,"Error reading in cutoff in file '%s'.\n", filename);
-        g_kim.freeparams.cutoff_value = apt->end[0];
-      }
-    }
-  }
+  printf("Successfully read %d potential parameters\n", apt->total_par);
 
   // initialize optimization table
-  pt->begin[0] = 0.0;
+  pt->begin[0] = apt->begin[0];
   pt->end[0] = apt->end[0];
-  g_pot.calc_pot.begin = pt->begin;
-  g_pot.calc_pot.end = pt->end;
-  pt->step[0] = 0.0;
-  pt->invstep[0] = 0.0;
   pt->first[0] = 2;
   pt->last[0] = pt->first[0] + apt->n_par[0] - 1;
-  pt->len = pt->first[0] + apt->n_par[0];
+  pt->len = pt->last[0] - pt->first[0] + 1;
+
+  if (g_pot.have_globals)
+    pt->len += apt->globals;
+
   pt->table = (double *)Malloc(pt->len * sizeof(double));
-  g_pot.calc_list = (double *)Malloc(pt->len * sizeof(double));
   pt->idx = (int *)Malloc(pt->len * sizeof(int));
   apt->idxpot = (int *)Malloc(apt->total_par * sizeof(int));
   apt->idxparam = (int *)Malloc(apt->total_par * sizeof(int));
 
+  double* val = pt->table;
   int k = 0;
   int l = 0;
-  double * val = pt->table;
-  double * list = g_pot.calc_list;
 
-  // loop over potentials
-  for (int i = 0; i < apt->number; ++i) {
-    // loop over parameters
-    for (int j = 0; j < apt->n_par[i]; ++j) {
-      *val = apt->values[i][j];
-      *list = apt->values[i][j];
-      val++;
-      list++;
-      if (!g_pot.invar_pot[i] && !apt->invar_par[i][j]) {
-        // index, the optimiable parameters in pt->table. for example,
-        // idx[0] = 2 indicates that the the first variable parameters
-        // lies in slot 2 of pt->table
-        pt->idx[k] = l;
-        // index, the optimizable parameters come from which potential?
-        // e.g. idxpot[0] = 0, indicates that the first variable parameter
-        // is from the first potential
-        apt->idxpot[k] = i;
-        // index, the optimizable parameters is the ?th parammeter of the
-        // potential. Sould be used together with idxpot. e.g. idxparam[0] = 1
-        // indicates that the first variable parameter is the 2nd parameter of
-        // potential idxpot[0]
-        apt->idxparam[k++] = j;
-      }
-      l++;
+  for (int i = 0; i < apt->n_par[0]; ++i) {
+    *val = apt->values[0][i];
+    if (!apt->invar_par[0][i]) {
+      pt->idx[k] = l;
+      apt->idxpot[k] = 0;
+      apt->idxparam[k++] = i;
     }
-
-    if (!g_pot.invar_pot[i])
-      pt->idxlen += apt->n_par[i] - apt->invar_par[i][apt->n_par[i]];
-    apt->total_par -= apt->invar_par[i][apt->n_par[i]];
+    ++val;
+    ++l;
   }
 
-#if defined(NOPUNISH)
-  if (opt)
-    warning("Gauge degrees of freedom are NOT fixed!\n");
-#endif // NOPUNISH
+  pt->idxlen += apt->n_par[0] - apt->invar_par[0][apt->n_par[0]];
+  apt->total_par -= apt->invar_par[0][apt->n_par[0]];
 }
 
-#endif // !APOT && !KIM
+#endif // !KIM

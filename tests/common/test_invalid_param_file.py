@@ -166,7 +166,6 @@ def test_invalid_param_file_imdpot_empty(potfit_apot):
     assert potfit_apot.has_error()
     assert '[ERROR] Missing value' in potfit_apot.stderr
     assert 'imdpot' in potfit_apot.stderr
-    assert 'imdpotsteps' in potfit_apot.stderr
 
 def test_invalid_param_file_imdpotsteps_invalid(potfit_apot):
     filename = 'param_file'
@@ -182,3 +181,34 @@ def test_invalid_param_file_imdpotsteps_invalid(potfit_apot):
     assert potfit_apot.has_error()
     assert '[ERROR] Illegal value' in potfit_apot.stderr
     assert 'imdpotsteps is out of bounds!' in potfit_apot.stderr
+
+def test_invalid_param_file_write_lammps_empty(potfit_apot):
+    filename = 'param_file'
+    f = potfit_apot.create_file(filename)
+    f.write('ntypes 1\n')
+    f.write('startpot startpot\n')
+    f.write('endpot endpot\n')
+    f.write('config config\n')
+    f.write('tempfile tempfile\n')
+    f.write('write_lammps')
+    f.close()
+    potfit_apot.run(filename)
+    assert potfit_apot.has_error()
+    assert '[ERROR] Missing value' in potfit_apot.stderr
+    assert 'write_lammps' in potfit_apot.stderr
+
+def test_invalid_param_file_lammpspotsteps_invalid(potfit_apot):
+    filename = 'param_file'
+    f = potfit_apot.create_file(filename)
+    f.write('ntypes 1\n')
+    f.write('startpot startpot\n')
+    f.write('endpot endpot\n')
+    f.write('config config\n')
+    f.write('tempfile tempfile\n')
+    f.write('write_lammps 1\n')
+    f.write('lammpspotsteps -10')
+    f.close()
+    potfit_apot.run(filename)
+    assert potfit_apot.has_error()
+    assert '[ERROR] Illegal value' in potfit_apot.stderr
+    assert 'lammpspotsteps is out of bounds!' in potfit_apot.stderr

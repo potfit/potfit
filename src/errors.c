@@ -56,10 +56,10 @@ void write_errors(double* force, double tot)
   printf("\n###### error report ######\n");
 
 #if !defined(STRESS)
-  printf("total error sum %f, count %d (%d forces, %d energies)\n", tot,
+  printf("total error sum = %f (%d contributions including %d forces and %d energies)\n", tot,
          g_calc.mdim, 3 * g_config.natoms, g_config.nconf);
 #else
-  printf("total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
+  printf("total error sum = %f (%d contributions including %d forces, %d energies and %d stresses)\n",
          tot, g_calc.mdim, 3 * g_config.natoms, g_config.nconf,
          6 * g_config.nconf);
 #endif  // !STRESS
@@ -134,14 +134,13 @@ void write_errors(double* force, double tot)
     if (NULL == outfile)
       error(1, "Could not open file %s\n", file);
 #if !defined(STRESS)
-    fprintf(outfile, "total error sum %f, count %d (%d forces, %d energies)\n",
+    fprintf(outfile, "total error sum = %f (%d contributions including %d forces and %d energies)\n",
             tot, g_calc.mdim, 3 * g_config.natoms, g_config.nconf);
 #else
     fprintf(
         outfile,
-        "total error sum %f, count %d (%d forces, %d energies, %d stresses)\n",
-        tot, g_calc.mdim, 3 * g_config.natoms, g_config.nconf,
-        6 * g_config.nconf);
+        "total error sum = %f (%d contributions including %d forces and %d energies, %d stresses)\n",
+        tot, g_calc.mdim, 3 * g_config.natoms, g_config.nconf, 6 * g_config.nconf);
 #endif  // !STRESS
 
     fprintf(outfile, "sum of force-errors  = %e\t\t( %.3f%% - av: %f)\n", f_sum,
@@ -162,7 +161,7 @@ void write_errors(double* force, double tot)
               tot - f_sum - e_sum - s_sum,
               (tot - f_sum - e_sum - s_sum) / tot * 100);
     }
-    fprintf(outfile, "rms-errors:\n");
+    fprintf(outfile, "root-mean-square deviations:\n");
     fprintf(outfile, "force \t%e\t(%f meV/A)\n", rms[0], rms[0] * 1000);
     if (g_param.eweight != 0)
       fprintf(outfile, "energy \t%e\t(%f meV)\n", rms[1], rms[1] * 1000);
@@ -199,7 +198,7 @@ void write_errors(double* force, double tot)
            (tot - f_sum - e_sum - s_sum) / tot * 100);
   }
 
-  printf("rms-errors:\n");
+  printf("root-mean-square deviations:\n");
   printf("force \t%e\t(%f meV/A)\n", rms[0], rms[0] * 1000);
   if (g_param.eweight != 0)
     printf("energy \t%e\t(%f meV)\n", rms[1], rms[1] * 1000);

@@ -27,425 +27,302 @@
  *
  ****************************************************************/
 
-#include <stdio.h>
-
 #include "potfit.h"
 
+#include "force.h"
 #include "kim.h"
 #include "memory.h"
-#include "utils.h"
 
-typedef struct {
-  int iteratorId;
-  int* NNeighbors;
-  int* neighborList;
-  double* RijList;
-  int* BeginIdx;  /* The position of first neighbor of each atom in the neighbor list */
-} neigh_obj_t;
-
-#define KIM_INPUT_TEMPLATE_HEADER \
-    "KIM_API_Version := 1.7.3\n" \
-    "Unit_length      := A\n" \
-    "Unit_energy      := eV\n" \
-    "Unit_charge      := e\n" \
-    "Unit_temperature := K\n" \
-    "Unit_time        := ps\n" \
-    "PARTICLE_SPECIES:\n"
-
-#define KIM_INPUT_TEMPLATE_CONVENTIONS \
-    "CONVENTIONS:\n" \
-    "ZeroBasedLists              flag\n" \
-    "Neigh_LocaAccess            flag\n" \
-    "NEIGH_RVEC_H                flag\n" \
-    "NEIGH_RVEC_F                flag\n" \
-    "MI_OPBC_H                   flag\n" \
-    "MI_OPBC_F                   flag\n"
-
-#define KIM_INPUT_TEMPLATE_INPUT \
-    "MODEL_INPUT:\n" \
-    "numberOfParticles           integer    none     []\n" \
-    "numberOfSpecies             integer    none     []\n" \
-    "particleSpecies             integer    none     [numberOfParticles]\n" \
-    "coordinates                 double     length   [numberOfParticles,3]\n" \
-    "boxSideLengths              double     length   [3]\n" \
-    "numberContributingParticles integer    none     []\n" \
-    "get_neigh                   method     none     []\n" \
-    "neighObject                 pointer    none     []\n" \
-
-#define KIM_INPUT_TEMPLATE_OUTPUT \
-    "MODEL_OUTPUT:\n" \
-    "destroy                     method     none     []\n" \
-    "compute                     method     none     []\n" \
-    "reinit                      method     none     [] optional\n" \
-    "cutoff                      double     length   []\n"
-
-void create_descriptor_for_config(int config_index, char** descriptor)
+void check_model_routines()
 {
-  *descriptor = (char*)malloc(8 * 1024 * sizeof(char));
-  if (!descriptor)
-    error(1, "Error allocating descriptor string!\n");
-  memset(*descriptor, 0, 8 * 1024 * sizeof(char));
+  int present = 0;
+  int required = 0;
 
-  // write header
+  int res = KIM_Model_IsRoutinePresent(g_kim.model, KIM_MODEL_ROUTINE_NAME_Extension, &present, &required);
+  if (res)
+    error(1, "KIM_Model_IsRoutinePresent failed: %d\n", res);
 
-  char* p = *descriptor;
+  if (present)
+    g_kim.supported_routines |= KIM_MODEL_ROUTINE_EXTENSION_SUPPORTED;
 
-  strncpy(p, KIM_INPUT_TEMPLATE_HEADER, strlen(KIM_INPUT_TEMPLATE_HEADER));
-  p += strlen(KIM_INPUT_TEMPLATE_HEADER);
+  res = KIM_Model_IsRoutinePresent(g_kim.model, KIM_MODEL_ROUTINE_NAME_Refresh, &present, &required);
+  if (res)
+    error(1, "KIM_Model_IsRoutinePresent failed: %d\n", res);
 
-  // write species data
+  if (present)
+    g_kim.supported_routines |= KIM_MODEL_ROUTINE_REFRESH_SUPPORTED;
+  else
+    error(1, "KIM Model %s does not support Refresh routine", g_kim.model_name);
+
+  res = KIM_Model_IsRoutinePresent(g_kim.model, KIM_MODEL_ROUTINE_NAME_WriteParameterizedModel, &present, &required);
+  if (res)
+    error(1, "KIM_Model_IsRoutinePresent failed: %d\n", res);
+
+  if (present)
+    g_kim.supported_routines |= KIM_MODEL_ROUTINE_WRITEPARAMS_SUPPORTED;
+}
+
+/****************************************************************
+  init_kim_model
+****************************************************************/
+
+void init_kim_model()
+{
+  int requestedUnitsAccepted = 0;
+
+  int res = KIM_Model_Create(KIM_NUMBERING_zeroBased, KIM_LENGTH_UNIT_A, KIM_ENERGY_UNIT_eV,
+                             KIM_CHARGE_UNIT_e, KIM_TEMPERATURE_UNIT_unused, KIM_TIME_UNIT_unused,
+                             g_kim.model_name, &requestedUnitsAccepted, &g_kim.model);
+
+  if (res)
+    error(1, "KIM_Model_Create failed: %d\n", res);
+
+  if (!requestedUnitsAccepted)
+    error(1, "Model %s does not support the required units!\n", g_kim.model_name);
+
+  int num_supported_species = 0;
+  g_kim.nspecies = 0;
+
+  check_model_routines();
+
+  KIM_SPECIES_NAME_GetNumberOfSpeciesNames(&num_supported_species);
+
+  for (int i = 0; i < num_supported_species; ++i) {
+    KIM_SpeciesName species_name;
+    res = KIM_SPECIES_NAME_GetSpeciesName(i, &species_name);
+    if (res)
+      error(1, "Cannot get species name %d\n", i);
+    int supported = 0;
+    int code = 0;
+    res = KIM_Model_GetSpeciesSupportAndCode(g_kim.model, species_name, &supported, &code);
+    if (res)
+      error(1, "Cannot get species support for species %d\n", i);
+    if (!supported)
+      continue;
+    g_kim.nspecies++;
+    g_kim.species = (KIM_SpeciesName*)Realloc(g_kim.species, g_kim.nspecies * sizeof(KIM_SpeciesName));
+    g_kim.species[g_kim.nspecies - 1] = species_name;
+  }
+
+  KIM_Model_GetNumberOfParameters(g_kim.model, &g_kim.nparams);
+  if (g_kim.nparams < 1)
+    error(1, "Selected KIM model \"%s\" does not support any parameters for optimization!\n", g_kim.model_name);
+
+  printf("\nKIM model \"%s\" supports %d species and %d parameters.\n\n", g_kim.model_name, g_kim.nspecies, g_kim.nparams);
+
+  g_kim.params = (kim_parameter_t*)Malloc(g_kim.nparams * sizeof(kim_parameter_t));
+
+  for (int i = 0; i < g_kim.nparams; ++i) {
+    res = KIM_Model_GetParameterMetadata(g_kim.model, i, &g_kim.params[i].type, &g_kim.params[i].extent, &g_kim.params[i].name, &g_kim.params[i].desc);
+    if (res)
+      error(1, "Error getting parameter type and description for parameter %d\n", i);
+    g_kim.total_params += g_kim.params[i].extent;
+    g_kim.params[i].values = (value_t*)Malloc(g_kim.params[i].extent * sizeof(value_t));
+    for (int j = 0; j < g_kim.params[i].extent; ++j) {
+      if (KIM_DataType_Equal(g_kim.params[i].type, KIM_DATA_TYPE_Integer))
+        res = KIM_Model_GetParameterInteger(g_kim.model, i, j, &g_kim.params[i].values[j].i);
+      else if (KIM_DataType_Equal(g_kim.params[i].type, KIM_DATA_TYPE_Double))
+        res = KIM_Model_GetParameterDouble(g_kim.model, i, j, &g_kim.params[i].values[j].d);
+      else
+        error(1, "Unknown parameter type for parameter %d: %s", i, KIM_DataType_ToString(g_kim.params[i].type));
+    }
+  }
+}
+
+/*******************************************************************************
+    check_KIM_model_support
+*******************************************************************************/
+
+void check_KIM_model_support()
+{
+  int res = 0;
+
+  g_kim.species_map = (int*)Malloc(g_param.ntypes * sizeof(int));
 
   for (int i = 0; i < g_param.ntypes; ++i) {
-    char temp[255];
-    snprintf(temp, 255, "%s                      spec                0\n", g_config.elements[i]);
-    strncpy(p, temp, strlen(temp));
-    p += strlen(temp);
+    KIM_SpeciesName name = KIM_SpeciesName_FromString(g_config.elements[i]);
+    if (name.speciesNameID == -1)
+      error(1, "Unknown species found: %s\n", g_config.elements[i]);
+
+    // check species
+    int speciesIsSupported = 0;
+    int modelCode = -1;
+    res = KIM_Model_GetSpeciesSupportAndCode(g_kim.model, name, &speciesIsSupported, &modelCode);
+    if (res || !speciesIsSupported)
+      error(1, "Species %s not supported by the KIM model", g_config.elements[i]);
+    g_kim.species_map[i] = modelCode;
   }
 
-  // write conventions
-
-  strncpy(p, KIM_INPUT_TEMPLATE_CONVENTIONS, strlen(KIM_INPUT_TEMPLATE_CONVENTIONS));
-  p += strlen(KIM_INPUT_TEMPLATE_CONVENTIONS);
-
-  // write input
-
-  strncpy(p, KIM_INPUT_TEMPLATE_INPUT, strlen(KIM_INPUT_TEMPLATE_INPUT));
-  p += strlen(KIM_INPUT_TEMPLATE_INPUT);
-
-  // write output
-
-  strncpy(p, KIM_INPUT_TEMPLATE_OUTPUT, strlen(KIM_INPUT_TEMPLATE_OUTPUT));
-  p += strlen(KIM_INPUT_TEMPLATE_OUTPUT);
-
-  // write energe, forces and virial
-
-  if (!g_kim.model_has_energy) {
-    error(1,"KIM Model does not provide 'energy'.\n");
-  } else {
-    char temp[255];
-    snprintf(temp, 255, "energy                     double     energy      []\n");
-    strncpy(p, temp, strlen(temp));
-    p += strlen(temp);
+  // check if forces and stresses are actually required
+  int use_forces = 0;
+#if defined(STRESS)
+  int use_stress = 0;
+#endif
+  for (int j = 0; j < g_config.nconf; ++j) {
+    if (g_config.useforce[j])
+      use_forces = 1;
+#if defined(STRESS)
+    if (g_config.usestress[j])
+      use_stress = 1;
+    if (use_forces && use_stress)
+#else
+    if (use_forces)
+#endif
+      break;
   }
 
-  if (g_config.useforce[config_index]) {
-    if (!g_kim.model_has_forces)
-      error(1, "KIM model does not provide 'forces'.\n");
-    char temp[255];
-    snprintf(temp, 255, "forces                     double     force       [numberOfParticles,3]\n");
-    strncpy(p, temp, strlen(temp));
-    p += strlen(temp);
-  }
+  int numberOfComputeArgumentNames = 0;
+  KIM_ComputeArgumentName computeArgumentName;
+  KIM_SupportStatus supportStatus;
+
+  KIM_COMPUTE_ARGUMENT_NAME_GetNumberOfComputeArgumentNames(&numberOfComputeArgumentNames);
+  for (int i = 0; i < numberOfComputeArgumentNames; ++i) {
+    res = KIM_COMPUTE_ARGUMENT_NAME_GetComputeArgumentName(i, &computeArgumentName);
+    if (res)
+      error(1, "Error getting argument name %d", i);
+    res = KIM_ComputeArguments_GetArgumentSupportStatus(g_kim.arguments[0], computeArgumentName, &supportStatus);
+    if (res)
+      error(1, "Error getting argument supportStatus %d", i);
+
+    // potfit requires energy
+    if (KIM_ComputeArgumentName_Equal(computeArgumentName, KIM_COMPUTE_ARGUMENT_NAME_partialEnergy)) {
+      if (KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_notSupported))
+        error(1, "Selected KIM model does not support energy calculation");
+      continue;
+    }
+
+    if (use_forces) {
+      if (KIM_ComputeArgumentName_Equal(computeArgumentName, KIM_COMPUTE_ARGUMENT_NAME_partialForces)) {
+        if (KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_notSupported))
+          error(1, "Selected KIM model does not support force calculation");
+        continue;
+      }
+    }
 
 #if defined(STRESS)
-  if (g_config.usestress[config_index]) {
-    if (!g_kim.model_has_virial)
-      error(1, "KIM model does not provide 'virial'.\n");
-    char temp[255];
-    snprintf(temp, 255, "virial                     double     energy      [6]");
-    strncpy(p, temp, strlen(temp));
-    p += strlen(temp);
-  }
-#endif
-}
-
-void set_kim_model_data(int config_index)
-{
-  int status;
-  int* numberOfParticles;
-  int* numberOfSpecies;
-  int* particleSpecies;
-  double* coords;
-  int* numberContrib;
-
-  // unpack data from KIM object
-  KIM_API_getm_data(g_kim.pkim[config_index],       &status,            5 * 3,
-                    "numberOfParticles",            &numberOfParticles, 1,
-                    "numberOfSpecies",              &numberOfSpecies,   1,
-                    "particleSpecies",              &particleSpecies,   1,
-                    "coordinates",                  &coords,            1,
-                    "numberContributingParticles",  &numberContrib,     g_kim.is_half_neighbors);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_getm_data failed!\n");
-
-  // set various values
-  *numberOfParticles = g_config.inconf[config_index];
-  *numberOfSpecies   = g_param.ntypes;
-  if (g_kim.is_half_neighbors)
-    *numberContrib   = g_config.inconf[config_index];
-
-  // set coords values
-  for (int i = 0; i < *numberOfParticles; ++i) {
-    coords[DIM * i + 0] = g_config.atoms[g_config.cnfstart[config_index] + i].pos.x;
-    coords[DIM * i + 1] = g_config.atoms[g_config.cnfstart[config_index] + i].pos.y;
-    coords[DIM * i + 2] = g_config.atoms[g_config.cnfstart[config_index] + i].pos.z;
-  }
-
-  // set species types
-  for (int i = 0; i < *numberOfParticles; ++i) {
-    const int j = g_config.atoms[g_config.cnfstart[config_index] + i].type;
-    int species_code = KIM_API_get_species_code(g_kim.pkim[config_index], g_config.elements[j], &status);
-    if (KIM_STATUS_OK > status)
-      error(1, "");
-    particleSpecies[i] = species_code;
-  }
-
-  // handle certain PBC
-  if (g_kim.NBC == KIM_NEIGHBOR_TYPE_OPBC) {
-    int which_conf = DIM * g_config.atoms[g_config.cnfstart[config_index]].conf;
-    double* boxSideLen = NULL;
-    // Unpack data from KIM object
-    KIM_API_getm_data(g_kim.pkim[config_index],   &status,      1 * 3,
-                      "boxSideLengths",           &boxSideLen,  1);
-    if (KIM_STATUS_OK > status)
-      error(1, "\n");
-
-    // set values
-    boxSideLen[0] = g_kim.box_vectors[which_conf + 0];
-    boxSideLen[1] = g_kim.box_vectors[which_conf + 1];
-    boxSideLen[2] = g_kim.box_vectors[which_conf + 2];
-  }
-}
-
-/*******************************************************************************
-*
-* Create neighborlist and initialize
-*
-* potfit global variables:
-*
-*******************************************************************************/
-
-void init_neighborlist(neigh_obj_t* pbuf, int config_index)
-{
-  const int start = g_config.cnfstart[config_index];
-  int neighListLength = 0;
-
-  // calcualte the length of neighborList
-  for (int i = 0; i < g_config.inconf[config_index]; ++i)
-    neighListLength += g_config.atoms[start + i].num_neigh;
-
-  // allocate memory for pbuf members
-  pbuf->NNeighbors = (int*)Malloc(g_config.inconf[config_index] * sizeof(int));
-  pbuf->neighborList = (int*)Malloc(neighListLength * sizeof(int));
-  pbuf->RijList = (double*)Malloc(DIM * neighListLength * sizeof(double));
-  pbuf->BeginIdx = (int*)Malloc(g_config.inconf[config_index] * sizeof(int));
-
-  // copy the number of neighbors to pbuf.NNeighbors
-  for (int i = 0; i < g_config.inconf[config_index]; ++i)
-    pbuf->NNeighbors[i] = g_config.atoms[start+i].num_neigh;
-
-  // copy neighborlist from distributed memory locations to continuous ones
-  int k = 0;
-  for (int i = 0; i < g_config.inconf[config_index]; ++i) {
-    pbuf->BeginIdx[i] = k;
-    for (int j = 0; j < pbuf->NNeighbors[i]; ++j) {
-      pbuf->neighborList[k]      = g_config.atoms[start + i].neigh[j].nr - start;
-      pbuf->RijList[DIM * k + 0] = g_config.atoms[start + i].neigh[j].dist.x;
-      pbuf->RijList[DIM * k + 1] = g_config.atoms[start + i].neigh[j].dist.y;
-      pbuf->RijList[DIM * k + 2] = g_config.atoms[start + i].neigh[j].dist.z;
-      k++;
-    }
-  }
-
-  /* If the number of neighbors of the last atom is zero, set the BeginIdx to the last
-   * position in neghbor list. The purpose is to ensure that the BeginIdx of the
-   * last atom will not go beyond the limit of neighborlist length.
-   * e.g. say there are 128 atoms in a cluster, and we use half neighbor list,
-   * then the 128th atom will have no neighbors. The begin index for the
-   * last atom, BeginIdx[127] will go beyond the limit of Neighbor list, which may
-   * result in segfault in `get_neigh'. */
-
-  if (pbuf->NNeighbors[g_config.inconf[config_index] - 1] == 0)
-    pbuf->BeginIdx[g_config.inconf[config_index] - 1] = k - 1;
-}
-
-/***************************************************************************
-*
-* get_neigh
-*
-***************************************************************************/
-
-int get_neigh(void* kimmdl, int* mode, int* request, int* part,
-                       int* numnei, int** nei1part, double** Rij)
-{
-   /* local variables */
-  intptr_t* pkim = *((intptr_t**) kimmdl);
-  int partToReturn;
-  int status;
-  int* numberOfParticles;
-  int idx; /* index of first neighbor of each particle*/
-
-  // reset numnei
-  *numnei = 0;
-
-  neigh_obj_t* pbuf = (neigh_obj_t*)KIM_API_get_data(pkim, "neighObject", &status);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_get_sim_buffer failed!\n");
-
-  // unpack neighbor list object
-  numberOfParticles = (int*) KIM_API_get_data(pkim, "numberOfParticles", &status);
-  if (KIM_STATUS_OK > status)
-    error(1, "KIM_API_get_data failed!\n");
-
-  /* check mode and request */
-  if (0 == *mode) { /* iterator mode */
-    if (0 == *request) { /* reset iterator */
-      pbuf->iteratorId = -1;
-      return KIM_STATUS_NEIGH_ITER_INIT_OK;
-    } else if (1 == *request) { /* increment iterator */
-      pbuf->iteratorId++;
-      if (pbuf->iteratorId >= *numberOfParticles) {
-        return KIM_STATUS_NEIGH_ITER_PAST_END;
-      } else {
-        partToReturn = pbuf->iteratorId;
+    if (use_stress) {
+      if (KIM_ComputeArgumentName_Equal(computeArgumentName, KIM_COMPUTE_ARGUMENT_NAME_partialVirial)) {
+        if (KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_notSupported))
+          error(1, "Selected KIM model does not support stress calculation");
+        continue;
       }
-    } else { /* invalid request value */
-      KIM_API_report_error(__LINE__, __FILE__,"Invalid request in get_periodic_neigh",
-                           KIM_STATUS_NEIGH_INVALID_REQUEST);
-      return KIM_STATUS_NEIGH_INVALID_REQUEST;
     }
-  } else if (1 == *mode) { /* locator mode */
-    if ((*request >= *numberOfParticles) || (*request < 0)) { /* invalid id */
-      KIM_API_report_error(__LINE__, __FILE__,"Invalid part ID in get_periodic_neigh",
-                          KIM_STATUS_PARTICLE_INVALID_ID);
-      return KIM_STATUS_PARTICLE_INVALID_ID;
-    } else {
-      partToReturn = *request;
-    }
-  } else { /* invalid mode */
-    KIM_API_report_error(__LINE__, __FILE__,"Invalid mode in get_periodic_neigh",
-                          KIM_STATUS_NEIGH_INVALID_MODE);
-    return KIM_STATUS_NEIGH_INVALID_MODE;
-  }
+#endif
 
-  /* index of the first neigh of each particle */
-  idx = pbuf->BeginIdx[partToReturn];
-
-  /* set the returned part */
-  *part = partToReturn;
-
-  /* set the returned number of neighbors for the returned part */
-  *numnei = pbuf->NNeighbors[partToReturn];
-
-  /* set the location for the returned neighbor list */
-  *nei1part = &pbuf->neighborList[idx];
-
-  /* set the pointer to Rij to appropriate value */
-  *Rij = &pbuf->RijList[DIM*idx];
-
-  return KIM_STATUS_OK;
-}
-
-/*******************************************************************************
-*
-* Create KIM objects, and init the argument values
-*
-*******************************************************************************/
-
-void create_KIM_objects()
-{
-  // Allocate memory for KIM objects
-  g_kim.pkim = (void**)Malloc(g_config.nconf * sizeof(void *));
-  g_kim.param_value = (void***)Malloc(g_config.nconf * sizeof(void**));
-
-  for (int i = 0; i < g_config.nconf; i++) {
-    char* descriptor = NULL;
-    create_descriptor_for_config(i, &descriptor);
-
-    // initialize KIM API object
-    int status = KIM_API_string_init(&g_kim.pkim[i], descriptor, g_kim.model_name);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_string_init failed!\n");
-
-    free(descriptor);
-
-    // Allocate memory for each data argument of initialized KIM object
-    KIM_API_allocate(g_kim.pkim[i], g_config.inconf[i], g_param.ntypes, &status);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_allocate failed!\n");
-
-    // call Model's init routine
-    status = KIM_API_model_init(g_kim.pkim[i]);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_model_init failed!\n");
-
-    set_kim_model_data(i);
-
-    neigh_obj_t* neigh = (neigh_obj_t*)Malloc(sizeof(neigh_obj_t));
-
-    // store the neighbor object
-    status = KIM_API_set_data(g_kim.pkim[i], "neighObject", 1, neigh);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_set_data failed!\n");
-
-    // initialize neighbor list
-    init_neighborlist(neigh, i);
-
-    // register for get_neigh
-    status = KIM_API_set_method(g_kim.pkim[i], "get_neigh", 1, (func_ptr) &get_neigh);
-    if (KIM_STATUS_OK > status)
-      error(1, "KIM_API_set_method failed!\n");
-
-    // store value pointers
-    g_kim.param_value[i] = (void**)Malloc(g_kim.num_opt_param * sizeof(void*));
-    for (int j = 0; j < g_kim.num_opt_param; ++j) {
-      const int idx = g_kim.idx_opt_param[j];
-      int status = KIM_STATUS_FAIL;
-      void* data = KIM_API_get_data(g_kim.pkim[i], g_kim.freeparams.name[idx], &status);
-      if (status != KIM_STATUS_OK)
-        error(1, "KIM_API_get_data failed!\n");
-      g_kim.param_value[i][j] = data;
-    }
+    if (KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_required))
+     error(1, "Selected KIM model has an unsupported required argument %s", KIM_ComputeArgumentName_ToString(computeArgumentName));
   }
 }
 
 /*******************************************************************************
-*
-* Init KIM objects, each object for a reference configuration.
-* Init optimizable parameters; nest them a single variable.
-*
+    initialize_KIM
 *******************************************************************************/
 
 void initialize_KIM()
 {
   printf("\nInitializing KIM interface ...\n");
 
-  // create KIM objects and do the necessary initialization
-  create_KIM_objects();
+  int res = 0;
 
-  for (int i = 0; i <g_config.nconf; i++) {
-    if (g_kim.freeparams.cutoff_is_free_param) {
-      int status;
-      double* pcutoff = KIM_API_get_data(g_kim.pkim[i], "PARAM_FREE_cutoff", &status);
-      if (KIM_STATUS_OK != status)
-        error(1, "KIM_API_get_data failed\n");
+  // Allocate memory for KIM compute arguments
+  g_kim.arguments = (KIM_ComputeArguments**)Malloc(g_config.nconf * sizeof(KIM_ComputeArguments*));
+  g_kim.helpers = (potfit_compute_helper_t*)Malloc(g_config.nconf * sizeof(potfit_compute_helper_t));
 
-      *pcutoff = g_config.rcutmax;
+  // TODO check for MPI compatibility
+  for (int i = 0; i < g_config.nconf; i++) {
+    res = KIM_Model_ComputeArgumentsCreate(g_kim.model, &g_kim.arguments[i]);
+    if (res)
+      error(1, "Error calling KIM_Model_ComputeArgumentsCreate: %d\n", res);
 
-      // reinit KIM model
-      status = KIM_API_model_reinit(g_kim.pkim[i]);
-      if (KIM_STATUS_OK > status)
-        error(1, "KIM_API_model_reinit failed!\n");
+    if (i == 0)
+      check_KIM_model_support();
+
+    // check arguments
+    int numberOfComputeCallbackNames;
+    KIM_ComputeCallbackName computeCallbackName;
+    KIM_SupportStatus supportStatus;
+
+    // check call backs
+    KIM_COMPUTE_CALLBACK_NAME_GetNumberOfComputeCallbackNames(&numberOfComputeCallbackNames);
+    for (int j = 0; j < numberOfComputeCallbackNames; ++j) {
+      res = KIM_COMPUTE_CALLBACK_NAME_GetComputeCallbackName(j, &computeCallbackName);
+      if (res)
+        error(1, "Error getting ComputeCallbackName %d: %d\n", j, res);
+
+      res = KIM_ComputeArguments_GetCallbackSupportStatus(g_kim.arguments[i], computeCallbackName, &supportStatus);
+      if (res)
+        error(1, "Error getting CallbackSupportStatus for callback %d: %d\n", j + 1, res);
+
+      if (KIM_ComputeCallbackName_Equal(computeCallbackName, KIM_COMPUTE_CALLBACK_NAME_GetNeighborList)) {
+        res = KIM_ComputeArguments_SetCallbackPointer(g_kim.arguments[i], KIM_COMPUTE_CALLBACK_NAME_GetNeighborList, KIM_LANGUAGE_NAME_c, (KIM_Function*)get_neigh, &g_kim.helpers[i]);
+        if (res)
+          error(1, "Error setting GetNeighborList callback function: %d\n", res);
+        continue;
+      }
+
+      if (KIM_ComputeCallbackName_Equal(computeCallbackName, KIM_COMPUTE_CALLBACK_NAME_ProcessDEDrTerm)) {
+        if (KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_required) || KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_optional)) {
+          res = KIM_ComputeArguments_SetCallbackPointer(g_kim.arguments[i], KIM_COMPUTE_CALLBACK_NAME_ProcessDEDrTerm, KIM_LANGUAGE_NAME_c, (KIM_Function*)process_DEDr, NULL);
+          if (res)
+            error(1, "Error setting ProcessDEDrTerm callback function: %d\n", res);
+        }
+        continue;
+      }
+
+      if (KIM_ComputeCallbackName_Equal(computeCallbackName, KIM_COMPUTE_CALLBACK_NAME_ProcessD2EDr2Term)) {
+        if (KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_required) || KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_optional)) {
+          res = KIM_ComputeArguments_SetCallbackPointer(g_kim.arguments[i], KIM_COMPUTE_CALLBACK_NAME_ProcessD2EDr2Term, KIM_LANGUAGE_NAME_c, (KIM_Function*)process_D2EDr2, NULL);
+          if (res)
+            error(1, "Error setting ProcessD2EDr2Term callback function: %d\n", res);
+        }
+        continue;
+      }
+
+      // cannot handle any other "required" call backs
+      if (KIM_SupportStatus_Equal(supportStatus, KIM_SUPPORT_STATUS_required))
+        error(1, "KIM model requires the following unsupported callback: %s\n", KIM_ComputeCallbackName_ToString(computeCallbackName));
     }
+
+    res = KIM_ComputeArguments_SetArgumentPointerInteger(g_kim.arguments[i], KIM_COMPUTE_ARGUMENT_NAME_numberOfParticles, g_config.number_of_particles + i);
+    if (res)
+      error(1, "Error setting numberOfParticles");
+
+    res = KIM_ComputeArguments_SetArgumentPointerInteger(g_kim.arguments[i], KIM_COMPUTE_ARGUMENT_NAME_particleSpeciesCodes, g_config.species_codes[i]);
+    if (res)
+      error(1, "Error setting particleSpeciesCodes");
+
+    res = KIM_ComputeArguments_SetArgumentPointerInteger(g_kim.arguments[i], KIM_COMPUTE_ARGUMENT_NAME_particleContributing, g_config.particle_contributing[i]);
+    if (res)
+      error(1, "Error setting particleContributing");
+
+    res = KIM_ComputeArguments_SetArgumentPointerDouble(g_kim.arguments[i], KIM_COMPUTE_ARGUMENT_NAME_coordinates, g_config.coordinates[i]);
+    if (res)
+      error(1, "Error setting coordinates");
+
+    g_kim.helpers[i].config = i;
+
+    g_kim.helpers[i].forces = (double*)Malloc(3 * g_config.number_of_particles[i] * sizeof(double));
+
+    res = KIM_ComputeArguments_SetArgumentPointerDouble(g_kim.arguments[i], KIM_COMPUTE_ARGUMENT_NAME_partialForces, g_kim.helpers[i].forces);
+    if (res)
+      error(1, "Error setting forces!\n");
   }
 
-  printf("\nInitializing KIM interface ... done\n");
+  printf("Initializing KIM interface ... done\n");
 }
 
 /******************************************************************************
- shutdown_KIM
+    shutdown_KIM
 ******************************************************************************/
 
 void shutdown_KIM()
 {
-  for(int i = 0; i < g_config.nconf; i++) {
-    // call model destroy
-    int status = KIM_API_model_destroy(g_kim.pkim[i]);
-    if (KIM_STATUS_OK > status)
-      warning("KIM_API_model_destroy failed!\n");
-    // free KIM objects
-    KIM_API_free(&g_kim.pkim[i], &status);
-    if (KIM_STATUS_OK > status)
-      warning("KIM_API_free failed!\n");
+  if (g_kim.arguments) {
+    for(int i = 0; i < g_config.nconf; i++) {
+      if (g_kim.arguments[i])
+        KIM_Model_ComputeArgumentsDestroy(g_kim.model, &g_kim.arguments[i]);
+    }
   }
+  if (g_kim.model)
+    KIM_Model_Destroy(&g_kim.model);
 }

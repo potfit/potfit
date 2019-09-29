@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * potential_input_f3.c: Routines for reading a potential table
+ * potential_input_f3.c: Routines for reading a tabulated potential table
  *
  ****************************************************************
  *
@@ -33,7 +33,7 @@
 #include "potential_input.h"
 #include "utils.h"
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
 
 void read_pot_table3(char const* a, FILE* b, potential_state* c)
 {

@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 
     time(&end_time);
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
     double tot = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 #else
     double tot = calc_forces(g_pot.calc_pot.table, g_calc.force, 0);
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
     }
 
 #if !defined(KIM)
-    if (g_param.writeimd == 1)
+    if (g_param.write_imd == 1)
       write_pot_table_imd(g_files.imdpot);
 
     if (g_param.plot == 1)
@@ -211,24 +211,11 @@ int main(int argc, char** argv)
     }
 
 #if defined(MPI)
-    calc_forces(NULL, NULL, 1); /* go wake up other threads */
-#endif                          // MPI
-  }                             /* myid == 0 */
+    calc_forces(NULL, NULL, 1); // go wake up other threads
+#endif // MPI
+  } // myid == 0
 
-// do some cleanups before exiting
-
-#if defined(MPI)
-  // kill MPI
-  shutdown_mpi();
-#endif  // MPI
-
-#if defined(KIM)
-  shutdown_KIM();
-#endif  // KIM
-
-  free_allocated_memory();
-
-  return EXIT_SUCCESS;
+  exit_potfit();
 }
 
 /****************************************************************
@@ -241,6 +228,9 @@ void read_input_files(int argc, char** argv)
 
   if (g_mpi.myid == 0) {
     read_parameters(argc, argv);
+#if defined(KIM)
+    init_kim_model();
+#endif
     read_pot_table(g_files.startpot);
     read_config(g_files.config);
 
@@ -252,8 +242,6 @@ void read_input_files(int argc, char** argv)
     /* initialize additional force variables and parameters */
     init_force_common(0);
     init_force(0);
-
-    g_mpi.init_done = 1;
 
     init_rng(g_param.rng_seed);
   }
@@ -271,11 +259,33 @@ void start_mpi_worker(double* force)
   init_force_common(1);
   init_force(1);
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   calc_forces(g_pot.opt_pot.table, force, 0);
 #else
   calc_forces(g_pot.calc_pot.table, force, 0);
 #endif  // APOT
+}
+
+/****************************************************************
+  exit_potfit
+****************************************************************/
+
+void exit_potfit()
+{
+  // do some cleanups before exiting
+
+#if defined(MPI)
+  // kill MPI
+  shutdown_mpi();
+#endif  // MPI
+
+#if defined(KIM)
+  shutdown_KIM();
+#endif  // KIM
+
+  free_allocated_memory();
+
+  exit(EXIT_SUCCESS);
 }
 
 /****************************************************************
@@ -303,6 +313,9 @@ void error(int done, const char* msg, ...)
       shutdown_mpi();
     }
 #endif  // MPI
+#if defined(KIM)
+    shutdown_KIM();
+#endif  // KIM
     free_allocated_memory();
     exit(EXIT_FAILURE);
   }

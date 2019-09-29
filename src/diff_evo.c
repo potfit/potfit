@@ -51,7 +51,7 @@
 #define TAU_1 0.1   /* probability for changing F */
 #define TAU_2 0.1   /* probability for changing CR */
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
 void opposite_check(double** population, double* cost, int do_init);
 void quicksort(double* cost, int start, int end, double** population);
 int partition(double* cost, int start, int end, int index, double** population);
@@ -78,13 +78,9 @@ void init_population(double** pop, double* xi, double* cost)
   for (int i = 1; i < NP; i++) {
     for (int j = 0; j < g_calc.ndim; j++) {
       double val = xi[g_pot.opt_pot.idx[j]];
-#if defined(APOT)
-      double min =
-          g_pot.apot_table
-              .pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
-      double max =
-          g_pot.apot_table
-              .pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+#if defined(APOT) || defined(KIM)
+      double min = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
+      double max = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[j]][g_pot.apot_table.idxparam[j]];
 
       // initialize with normal distribution
       double temp = normdist() / 3.0;
@@ -98,21 +94,23 @@ void init_population(double** pop, double* xi, double* cost)
         pop[i][g_pot.opt_pot.idx[j]] = val + temp * (val - min);
 #else
       pop[i][g_pot.opt_pot.idx[j]] = 10.0 * val * (2 * eqdist() - 1);
-#endif  // APOT
+#endif  // APOT || KIM
     }
   }
 
-  double forces[g_calc.mdim];
+  double* forces = (double*)malloc(g_calc.mdim * sizeof(double));
 
   for (int i = 0; i < NP; i++)
     cost[i] = calc_forces(pop[i], forces, 0);
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   opposite_check(pop, cost, 1);
-#endif  // APOT
+#endif  // APOT || KIM
+
+  free(forces);
 }
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
 
 /****************************************************************
  *
@@ -122,7 +120,7 @@ void init_population(double** pop, double* xi, double* cost)
 
 void opposite_check(double** population, double* cost, int do_init)
 {
-  double fxi[g_calc.mdim];
+  double* fxi = (double*)malloc(g_calc.mdim * sizeof(double));
   double min = 0.0;
   double max = 0.0;
   double minp[g_calc.ndim];
@@ -200,6 +198,8 @@ void opposite_check(double** population, double* cost, int do_init)
     memcpy(population[i], tot_P[i], D * sizeof(double));
     cost[i] = tot_cost[i];
   }
+
+  free(fxi);
 }
 
 /****************************************************************
@@ -267,7 +267,7 @@ void swap_population(double* pop_1, double* pop_2)
   memcpy(pop_2, temp, size);
 }
 
-#endif  // APOT
+#endif  // APOT || KIM
 
 /****************************************************************
  *
@@ -286,7 +286,7 @@ void run_differential_evolution(double* xi)
   double crit = 1000.0;    /* treshold for stopping criterion */
   double min_cost = 10e10; /* current minimum for all configurations */
   double max_cost = 0.0;   /* current maximum for all configurations */
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   int jump_steps = 0;
   double jump_rate = JR;
 #endif  // APOT
@@ -405,7 +405,7 @@ void run_differential_evolution(double* xi)
 //           temp = pop_1[e][j] + (1 - trial[D-2]) * (best[j] - pop_1[e][j]) +
 //           trial[D-2]
 //           * (pop_1[a][j] + pop_1[b][j] - pop_1[c][j] - pop_1[d][j]);
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
           double pmin = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[j]]
                                              [g_pot.apot_table.idxparam[j]];
           double pmax = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[j]]
@@ -419,7 +419,7 @@ void run_differential_evolution(double* xi)
             trial[g_pot.opt_pot.idx[j]] = temp;
 #else
           trial[g_pot.opt_pot.idx[j]] = temp;
-#endif  // APOT
+#endif  // APOT || KIM
         } else {
           trial[g_pot.opt_pot.idx[j]] = pop_1[i][g_pot.opt_pot.idx[j]];
         }
@@ -434,13 +434,13 @@ void run_differential_evolution(double* xi)
 
         if (g_files.tempfile && strlen(g_files.tempfile)) {
           for (j = 0; j < g_calc.ndim; j++)
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
             g_pot.apot_table.values[g_pot.apot_table.idxpot[j]]
                                    [g_pot.apot_table.idxparam[j]] =
                 trial[g_pot.opt_pot.idx[j]];
 #else
             xi[g_pot.opt_pot.idx[j]] = trial[g_pot.opt_pot.idx[j]];
-#endif  // APOT
+#endif  // APOT || KIM
           write_pot_table_potfit(g_files.tempfile);
         }
         min_cost = force;
@@ -461,7 +461,7 @@ void run_differential_evolution(double* xi)
       }
     }
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
     if (eqdist() < jump_rate) {
       opposite_check(pop_2, cost, 0);
 
@@ -472,7 +472,7 @@ void run_differential_evolution(double* xi)
         jump_steps = 0;
       }
     }
-#endif  // APOT
+#endif  // APOT || KIM
 
     cost_sum = 0.0;
 

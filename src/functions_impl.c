@@ -482,7 +482,7 @@ void exp_plus_value(const double r, const double* p, double* f)
 void mishin_value(const double r, const double* p, double* f)
 {
   double z = r - p[3];
-  double temp = exp(-p[5] * r);
+  double temp = exp(-p[5] * z);
   double power = 0;
 
   power_1(&power, &z, &p[4]);
@@ -519,7 +519,7 @@ void gljm_value(const double r, const double* p, double* f)
 
   power_m(3, power, x, y);
 
-  double temp = exp(-p[11] * power[2]);
+  double temp = exp(-p[11] * x[2]);
 
   *f = p[0] / (p[2] - p[1]) * (p[2] / power[0] - p[1] / power[1]) + p[4] +
        p[5] * (p[6] * power[2] * temp * (1.0 + p[7] * temp) + p[8]);

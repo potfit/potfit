@@ -9,6 +9,13 @@ from waflib.Configure import conf
 from waflib import Logs
 from waflib.Tools.compiler_c import c_compiler
 
+from optparse import HelpFormatter as fmt
+def decorate(fn):
+    def wrapped(self=None, desc=""):
+        return '\n'.join( [ fn(self, s).rstrip() for s in desc.split('\n') ] )
+    return wrapped
+fmt.format_description = decorate(fmt.format_description)
+
 APPNAME = 'potfit'
 VERSION = '0.8'
 top = '.'
@@ -22,7 +29,7 @@ out = 'build'
 OPTIONS = [
     ['bindist', 'Write a binned radial distribution file', ['BINDIST']],
     ['contrib', 'Enable support for box of contributing particles', ['CONTRIB']],
-    ['dsf', 'R|Use damped shifted force approach \n\t(coulomb-based interactions only)', ['DSF']],
+    ['dsf', 'Use damped shifted force approach (coulomb-based interactions only)', ['DSF']],
     ['evo', 'Use evolutionary algorithm instead of simulated annealing', ['EVO']],
     ['fweight', 'Use modified weights for the forces', ['FWEIGHT']],
     ['mpi', 'Enable MPI parallelization', ['MPI']],
@@ -35,7 +42,7 @@ OPTIONS = [
 # Add all potential models to this list
 # [ name, description, supported models, defines, files to compile ]
 
-POTENTIALS = [
+INTERACTIONS = [
     ['pair', 'pair potentials', ['apot', 'tab'], ['PAIR'], ['force_pair.c']],
     ['adp', 'angular dependent potentials', ['apot', 'tab'], ['ADP'], ['force_adp.c']],
     ['ang', 'angular pair potentials', ['apot', 'tab'], ['ANG'], ['force_ang.c']],
@@ -48,7 +55,6 @@ POTENTIALS = [
         ['apot', 'tab'], ['EAM', 'COULOMB'], ['force_eam_elstat.c']],
     ['eam_dipole', 'embedded atom method with dipole interactions', [
         'apot', 'tab'], ['EAM', 'COULOMB', 'DIPOLE'], ['force_eam_elstat.c']],
-    ['kim', 'use OpenKIM framework for force calculation', [], ['KIM'], ['force_kim.c']],
     ['meam', 'modified embedded atom method', ['apot', 'tab'], ['MEAM'], ['force_meam.c']],
     ['stiweb', 'Stillinger-Weber potentials', ['apot'], ['STIWEB'], ['force_stiweb.c']],
     ['tbeam', 'two-band embedded atom method', ['apot', 'tab'], ['EAM', 'TBEAM'], ['force_eam.c']],
@@ -76,38 +82,36 @@ def options(opt):
     Just use the tables above.
     """
     opt.load('compiler_c')
-    opts = opt.add_argument_group('potfit general options',
+    opts = opt.add_option_group('potfit general options',
                                   'Please check the explanations on the potfit homepage for more details.')
     # --enable-XXX options are generated automatically from wscript_potfit.py
     for option in OptList():
-        opts.add_argument('--enable-{}'.format(option.name), action='store_true',
+        opts.add_option('--enable-{}'.format(option.name), action='store_true',
                           default=False, help=option.description)
     # interactions
-    pots = opt.add_argument_group(
-        'potfit potential options', 'available interactions in alphabetical order are:\n{}'.format(pl.get_pot_desc()))
-    pots.add_argument('-i', '--interaction', action='store', type=str, choices=pl.get_pot_list(),
-                      help='one of the interactions listed above', metavar='INTERACTION')
-    pots.add_argument('-m', '--model', action='store', type=str, choices=[
-                      'apot', 'tab'], help='R|analytic or tabulated potentials\nonly required if the interaction can support both')
+    pots = opt.add_option_group(
+        'potfit potential options', 'available interactions in alphabetical order are:\n{}'.format(il.get_interaction_desc()))
+    pots.add_option('-i', '--interaction', action='store', type=str, help='one of the interactions listed above', metavar='INTERACTION')
+    pots.add_option('-m', '--model', action='store', type=str, help='support analytic, kim or tabulated potentials')
     # math libraries
-    libs = opt.add_argument_group('potfit math library options', 'available math libraries are:\n{}'.format(
+    libs = opt.add_option_group('potfit math library options', 'available math libraries are:\n{}'.format(
         '\n'.join(sorted(['\t{:<16}{}'.format(x, v) for x, v in supported_math_libs]))))
-    libs.add_argument('-l', '--math-lib', action='store', type=str, default='mkl', choices=[name for name, _ in supported_math_libs],
+    libs.add_option('-l', '--math-lib', action='store', type=str, default='mkl', #choices=[name for name, _ in supported_math_libs],
                       help='Select math library to use (default: %(default)s)', metavar='MATHLIB')
-    libs.add_argument('--math-lib-base-dir', action='store', type=str,
+    libs.add_option('--math-lib-base-dir', action='store', type=str,
                       help='Base directory of selected math library')
     # debug options
-    debug = opt.add_argument_group('potfit debugging options')
-    debug.add_argument('--debug', action='store_true',
+    debug = opt.add_option_group('potfit debugging options')
+    debug.add_option('--debug', action='store_true',
                        default=False, help='Build binary with debug information')
-    debug.add_argument('--asan', action='store_true', default=False,
+    debug.add_option('--asan', action='store_true', default=False,
                        help='Build binary with address sanitizer support')
-    debug.add_argument('--profile', action='store_true',
+    debug.add_option('--profile', action='store_true',
                        default=False, help='Build binary with profiling support')
 
 
 def configure(cnf):
-    _check_interaction_options(cnf)
+    _check_potential_options(cnf)
     _check_enable_options(cnf)
     _check_compiler_options(cnf)
     _check_math_lib_options(cnf)
@@ -115,8 +119,9 @@ def configure(cnf):
     # pass some settings on to the build stage via cnf.env
     cnf.env.model = cnf.options.model
     cnf.env.interaction = cnf.options.interaction
-    cnf.env.force_files = pl.get_pot(cnf.options.interaction).files
-    cnf.env.append_value('DEFINES_POTFIT', pl.get_pot(cnf.options.interaction).defines)
+    if cnf.options.model != 'kim':
+        cnf.env.force_files = il.get_interaction(cnf.options.interaction).files
+        cnf.env.append_value('DEFINES_POTFIT', il.get_interaction(cnf.options.interaction).defines)
 
     # some interactions need more files based on some conditions
     if cnf.options.interaction == 'pair' and cnf.options.model == 'apot':
@@ -125,8 +130,10 @@ def configure(cnf):
     cnf.env.target_name = _generate_target_name(cnf)
 
     print('\npotfit has been configured with the following options:')
-    print('\n'.join(['{:20} = {}'.format(x, v) for x, v in [['potential model', cnf.options.model], [
-          'interaction', cnf.options.interaction], ['math library', cnf.options.math_lib]]]))
+    print('{:20} = {}'.format('potential model', cnf.options.model))
+    if cnf.env.model != 'kim':
+        print('{:20} = {}'.format('interaction', cnf.options.interaction))
+    print('{:20} = {}'.format('math library', cnf.options.math_lib))
     opts = [x[7:] for x in dir(cnf.options) if x.startswith('enable_') and getattr(cnf.options, x)]
     if len(opts):
         for i in opts:
@@ -135,8 +142,6 @@ def configure(cnf):
                     cnf.env.append_value('DEFINES_POTFIT', j[2])
         print('{:20} = {}'.format('options', ', '.join(sorted(opts))))
     print("\nNow run './waf' to start building potfit\n")
-    #cnf.define('POTFIT_VERSION', VERSION)
-    #cnf.write_config_header('header.h')
 
 
 def build(bld):
@@ -160,26 +165,23 @@ def _post(bld):
     except:
         Logs.error('Could not move potfit binary into bin/ folder')
 
+
 @conf
-def _check_interaction_options(cnf):
-    if cnf.options.interaction is None:
-        cnf.fatal('No interaction specified, please provide -i/--interaction')
+def _check_potential_options(cnf):
+    if cnf.options.model not in ['apot', 'kim', 'tab']:
+        cnf.fatal('Invalid model specified, please provide -m/--model from \'apot\', \'kim\' or \'tab\'')
 
     # common checks for interaction compatibility - don't change
-    pot = pl.get_pot(cnf.options.interaction)
-    if cnf.options.interaction == 'kim':
-        if cnf.options.model != None:
-            cnf.fatal('OpenKIM does not support setting a model!')
-        cnf.options.model = 'kim'
-    elif cnf.options.model is None:
-        # if there is only one supported model we don't need the model explicitly
-        if pot is not None and len(pot.supp_models) == 1:
-            cnf.options.model = pot.supp_models[0]
-        else:
-            cnf.fatal('No potential model specified for interaction "{}", please provide -m/--model'.format(cnf.options.interaction))
+    if cnf.options.model == 'kim':
+        if cnf.options.interaction != None:
+            cnf.fatal('OpenKIM does not support setting an interaction!')
+        return
 
-    if not pot.supports_model(cnf.options.model):
-        cnf.fatal('Interaction {} does not support model {}!'.format(pot.name, cnf.options.model))
+    if cnf.options.interaction not in il.get_interaction_list():
+        cnf.fatal('No interaction specified, please provide -i/--interaction')
+    interaction = il.get_interaction(cnf.options.interaction)
+    if not interaction.supports_model(cnf.options.model):
+        cnf.fatal('Interaction {} does not support model {}!'.format(interaction.name, cnf.options.model))
 
 
 @conf
@@ -188,7 +190,7 @@ def _check_enable_options(cnf):
     cnf.env.option_files = []
 
     # check for incompatible options
-    if cnf.options.enable_mpi and cnf.options.interaction == 'kim':
+    if cnf.options.enable_mpi and cnf.options.model == 'kim':
         cnf.fatal('KIM does currently not support MPI parallelization')
     if cnf.options.enable_mpi and cnf.options.enable_bindist:
         cnf.fatal('bindist option is not supported for MPI-enabled builds')
@@ -224,10 +226,20 @@ def _check_enable_options(cnf):
 @conf
 def _check_compiler_options(cnf):
     # try to detect a suitable compiler
-    if cnf.options.interaction == 'kim':
-        cnf.check_cfg(package='libkim-api-v2', args=['--cflags', '--libs'], uselib_store='KIM')
+    if cnf.options.model == 'kim':
+        cnf.check_cfg(package='libkim-api', args=['libkim-api >= 2.0.2', '--cflags', '--libs'], uselib_store='KIM')
     else:
         c_compiler[_platform] = ['icc', 'clang', 'gcc']
+
+    if cnf.options.enable_mpi:
+        if cnf.options.check_c_compiler:
+            cnf.fatal('--check-c-compiler cannot be used with MPI! Please use the MPI environment variable to set the compiler.')
+        cnf.add_os_flags('CC')
+        if cnf.env.CC:
+            cnf.fatal('Overriding the compiler with CC is not supported when MPI is enabled!')
+        else:
+            cnf.env.CC = 'mpicc'
+
     cnf.load('compiler_c')
 
     if cnf.options.asan:
@@ -253,20 +265,24 @@ def _check_compiler_options(cnf):
             cnf.env.append_value('CFLAGS_POTFIT', ['-O3', '-march=native', '-std=c99'])
             cnf.env.append_value('LINKFLAGS_POTFIT', ['-fPIE'])
 
-    # potfit linker flags
-   # cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--as-needed,-z,relro,-z,now'])
+    if cnf.options.debug:
+        cnf.env.append_value('DEFINES_POTFIT', ['DEBUG'])
+    else:
+        cnf.env.append_value('DEFINES_POTFIT', ['NDEBUG'])
 
+    # potfit linker flags
+
+    if _platform == 'darwin':
+        cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,-undefined,error'])
+    else:
+        cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed,-z,relro,-z,now'])
 
 @conf
 def _check_mpi_compiler(cnf):
-    cnf.check_cfg(path='mpicc', args='--showme:compile', package='',
-                  uselib_store='POTFIT', msg='Checking MPI compiler command')
-    cnf.check_cfg(path='mpicc', args='--showme:link', package='',
-                  uselib_store='POTFIT', msg='Checking MPI linker flags')
-    cnf.check(header_name='mpi.h', features='c cprogram')
+    cnf.check(header_name='mpi.h', features='c cprogram', use=['POTFIT'])
     cnf.check_cc(
-        fragment='#include <mpi.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
-        execute=True, msg='Compiling test MPI binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
+        fragment='#include <mpi.h>\n#include <stddef.h>\nint main() { MPI_Init(NULL, NULL); MPI_Finalize(); }',
+        execute=True, msg='Compiling MPI test binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
 
 
 @conf
@@ -315,9 +331,9 @@ def _generate_target_name(cnf):
     Function for generating the target name, e.g. potfit_apot_pair_mkl
     """
     name = 'potfit'
-    if cnf.options.model and cnf.options.model != cnf.options.interaction:
-        name += '_' + cnf.options.model
-    name += '_' + cnf.options.interaction
+    name += '_' + cnf.options.model
+    if cnf.options.interaction:
+        name += '_' + cnf.options.interaction
     name += '_' + cnf.options.math_lib
     for item in dir(cnf.options):
         if item.startswith('enable_') and getattr(cnf.options, item):
@@ -382,7 +398,7 @@ class OptList():
         return '\n'.join(sorted(['\t{:<16}{}'.format(i.name, i.description) for i in self.list]))
 
 
-class Potential:
+class Interaction:
     def __init__(self, name, description, supp_models, defines, files):
         self.name = name
         self.description = description
@@ -400,34 +416,34 @@ class Potential:
         return False
 
     def __str__(self):
-        desc = 'Potential class:'
+        desc = 'Interaction class:'
         for item in dir(self):
             if item[0] != '_' and item[1] != '_':
                 desc += '\n\t{} = {}'.format(item, getattr(self, item))
         return desc
 
 
-class PotList():
+class InteractionList():
     def __init__(self):
         self.list = []
-        for i in POTENTIALS:
-            self.list.append(Potential(*i))
+        for i in INTERACTIONS:
+            self.list.append(Interaction(*i))
 
     def __iter__(self):
         for i in sorted(self.list):
             yield i
 
-    def get_pot(self, name):
-        for pot in self.list:
-            if (pot.name == name):
-                return pot
+    def get_interaction(self, name):
+        for i in self.list:
+            if i.name == name:
+                return i
         return None
 
-    def get_pot_list(self):
+    def get_interaction_list(self):
         return [i.name for i in self.list]
 
-    def get_pot_desc(self):
+    def get_interaction_desc(self):
         return '\n'.join(sorted(['\t{:<16}{}'.format(i.name, i.description) for i in self.list]))
 
 
-pl = PotList()
+il = InteractionList()

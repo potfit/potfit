@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * potential_input_f0.c: Routines for reading a potential table
+ * potential_input_f0.c: Routines for reading an analytic potential table
  *
  ****************************************************************
  *
@@ -196,7 +196,7 @@ void read_pot_table0(char const* potential_filename, FILE* pfile)
     apt->total_par -= apt->invar_par[i][apt->n_par[i]];
   }
 
-#if defined(PAIR) && !defined(KIM)
+#if defined(PAIR)
   if (g_param.enable_cp) {
     init_chemical_potential(g_param.ntypes);
     int i = apt->number;
@@ -348,8 +348,8 @@ void read_chemical_potentials(apot_state* pstate)
     apt->invar_par[i] = (int*)Malloc((g_param.ntypes + 1) * sizeof(int));
 
     apt->param_name =
-        (char***)Realloc(apt->param_name, (i + 1) * sizeof(char**));
-    apt->param_name[i] = (char**)Malloc(g_param.ntypes * sizeof(char*));
+        (const char***)Realloc(apt->param_name, (i + 1) * sizeof(char**));
+    apt->param_name[i] = (const char**)Malloc(g_param.ntypes * sizeof(char*));
 
     /* loop over all atom types */
     for (int j = 0; j < g_param.ntypes; j++) {
@@ -393,7 +393,7 @@ void read_chemical_potentials(apot_state* pstate)
             warning("New value is 0 ! Please be careful about this.\n");
         }
       }
-      strcpy(apt->param_name[i][j], buffer);
+      strcpy((char*)apt->param_name[i][j], buffer);
     }
     printf(" - Enabled %d chemical potential(s)\n", g_param.ntypes);
 
@@ -499,7 +499,7 @@ void read_elstat_table(apot_state* pstate)
   for (int i = 0; i < g_param.ntypes - 1; i++) {
     apt->param_name[apt->number][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
-                   apt->param_name[apt->number][i], &apt->charge[i],
+                   (char*)apt->param_name[apt->number][i], &apt->charge[i],
                    &apt->pmin[apt->number][i], &apt->pmax[apt->number][i])) {
       error(1, "Could not read charge for atomtype #%d\n", i);
     }
@@ -510,7 +510,7 @@ void read_elstat_table(apot_state* pstate)
   }
   apt->param_name[apt->number + 1][0] = (char*)Malloc(30 * sizeof(char));
   if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
-                 apt->param_name[apt->number + 1][0], &apt->dp_kappa[0],
+                 (char*)apt->param_name[apt->number + 1][0], &apt->dp_kappa[0],
                  &apt->pmin[apt->number + 1][0],
                  &apt->pmax[apt->number + 1][0])) {
     error(1, "Could not read kappa\n");
@@ -531,7 +531,7 @@ void read_elstat_table(apot_state* pstate)
   for (int i = 0; i < g_param.ntypes; i++) {
     apt->param_name[apt->number + 2][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
-                   apt->param_name[apt->number + 2][i], &apt->dp_alpha[i],
+                   (char*)apt->param_name[apt->number + 2][i], &apt->dp_alpha[i],
                    &apt->pmin[apt->number + 2][i],
                    &apt->pmax[apt->number + 2][i])) {
       error(1, "Could not read polarisability for atomtype #%d\n", i);
@@ -544,7 +544,7 @@ void read_elstat_table(apot_state* pstate)
   for (int i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 3][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
-                   apt->param_name[apt->number + 3][i], &apt->dp_b[i],
+                   (char*)apt->param_name[apt->number + 3][i], &apt->dp_b[i],
                    &apt->pmin[apt->number + 3][i],
                    &apt->pmax[apt->number + 3][i])) {
       error(1, "Could not read parameter dp_b for potential #%d\n", i);
@@ -557,7 +557,7 @@ void read_elstat_table(apot_state* pstate)
   for (int i = 0; i < ncols; i++) {
     apt->param_name[apt->number + 4][i] = (char*)Malloc(30 * sizeof(char));
     if (4 > fscanf(pstate->pfile, "%s %lf %lf %lf",
-                   apt->param_name[apt->number + 4][i], &apt->dp_c[i],
+                   (char*)apt->param_name[apt->number + 4][i], &apt->dp_c[i],
                    &apt->pmin[apt->number + 4][i],
                    &apt->pmax[apt->number + 4][i])) {
       error(1, "Could not read parameter dp_c for potential #%d\n", i);
@@ -641,9 +641,9 @@ void read_global_parameters(apot_state* pstate)
         (double**)Realloc(apt->pmax, (g_pot.global_pot + 1) * sizeof(double*));
     apt->pmax[g_pot.global_pot] = (double*)Malloc(j * sizeof(double));
 
-    apt->param_name = (char***)Realloc(apt->param_name,
+    apt->param_name = (const char***)Realloc(apt->param_name,
                                        (g_pot.global_pot + 1) * sizeof(char**));
-    apt->param_name[g_pot.global_pot] = (char**)Malloc(j * sizeof(char*));
+    apt->param_name[g_pot.global_pot] = (const char**)Malloc(j * sizeof(char*));
 
     pt->first = (int*)Realloc(pt->first, (g_pot.global_pot + 1) * sizeof(int));
 
@@ -652,7 +652,7 @@ void read_global_parameters(apot_state* pstate)
       apt->param_name[g_pot.global_pot][j] = (char*)Malloc(30 * sizeof(char));
 
       int ret_val = fscanf(
-          pstate->pfile, "%s %lf %lf %lf", apt->param_name[g_pot.global_pot][j],
+          pstate->pfile, "%s %lf %lf %lf", (char*)apt->param_name[g_pot.global_pot][j],
           &apt->values[g_pot.global_pot][j], &apt->pmin[g_pot.global_pot][j],
           &apt->pmax[g_pot.global_pot][j]);
       if (4 > ret_val)
@@ -787,7 +787,7 @@ void read_analytic_potentials(apot_state* pstate)
     apt->invar_par[i] = (int*)Malloc((apt->n_par[i] + 1) * sizeof(int));
     apt->pmin[i] = (double*)Malloc(apt->n_par[i] * sizeof(double));
     apt->pmax[i] = (double*)Malloc(apt->n_par[i] * sizeof(double));
-    apt->param_name[i] = (char**)Malloc(apt->n_par[i] * sizeof(char*));
+    apt->param_name[i] = (const char**)Malloc(apt->n_par[i] * sizeof(char*));
 
     char c = 0;
 
@@ -798,11 +798,11 @@ void read_analytic_potentials(apot_state* pstate)
 
     fgetpos(pstate->pfile, &filepos);
 
-    if (NULL == fgets(buffer, 255, pstate->pfile))
+    if (NULL == fgets_potfit(buffer, 255, pstate->pfile))
       error(1, "Error reading analytic potentials\n");
     while (buffer[0] == '#') {
       fgetpos(pstate->pfile, &filepos);
-      if (NULL == fgets(buffer, 255, pstate->pfile))
+      if (NULL == fgets_potfit(buffer, 255, pstate->pfile))
         error(1, "Error reading analytic potentials\n");
     }
     fsetpos(pstate->pfile, &filepos);
@@ -813,15 +813,15 @@ void read_analytic_potentials(apot_state* pstate)
     for (int j = 0; j < apt->n_par[i]; j++) {
       apt->param_name[i][j] = (char*)Malloc(30 * sizeof(char));
 
-      strcpy(apt->param_name[i][j], "empty");
+      strcpy((char*)apt->param_name[i][j], "empty");
 
       fgetpos(pstate->pfile, &filepos);
 
-      if (NULL == fgets(name, 255, pstate->pfile))
+      if (NULL == fgets_potfit(name, 255, pstate->pfile))
         error(1, "Error reading analytic potentials: not enough parameters for potential %s\n", apt->names[i]);
       while (name[0] == '#' && !feof(pstate->pfile) &&
              (j != apt->n_par[i] - 1)) {
-        if (NULL == fgets(name, 255, pstate->pfile))
+        if (NULL == fgets_potfit(name, 255, pstate->pfile))
           error(1, "Error reading analytic potentials\n");
       }
 
@@ -839,7 +839,7 @@ void read_analytic_potentials(apot_state* pstate)
                            &apt->pmin[i][j], &apt->pmax[i][j]);
 
       if (strlen(buffer))
-        sprintf(apt->param_name[i][j], "%s", buffer);
+        sprintf((char*)apt->param_name[i][j], "%s", buffer);
 
       /* if last char of name is "!" we have a global parameter */
       if (strrchr(apt->param_name[i][j], '!') != NULL) {
@@ -881,7 +881,7 @@ void read_analytic_potentials(apot_state* pstate)
                   "No cutoff parameter given for potential #%d: adding one "
                   "parameter.\n",
                   i);
-              strcpy(apt->param_name[i][j], "h");
+              strcpy((char*)apt->param_name[i][j], "h");
               apt->values[i][j] = 1;
               apt->pmin[i][j] = 0.5;
               apt->pmax[i][j] = 2;
