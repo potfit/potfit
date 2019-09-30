@@ -1,31 +1,32 @@
-/****************************************************************                                                                     
- *                                                                                                                                     
+/****************************************************************
+ *
  * uq.c: Potential Ensemble method for Uncertainty Quantification
- *                                                                                                                                                                                                               
- ****************************************************************                                                                      
- *                                                                                                                                     
-  * Copyright 2002-2018 - the potfit development team                                                                                 
- *                                                                                                                                     
- * http://potfit.sourceforge.net/                                                                                                      
- *                                                                                                                                     
- ****************************************************************                                                                      
- *                                                                                                                                     
- * This file is part of potfit.                                                                                                        
- *                                                                                                                                     
- * potfit is free software; you can redistribute it and/or modify                                                                      
- * it under the terms of the GNU General Public License as published by                                                                
- * the Free Software Foundation; either version 2 of the License, or                                                                   
- * (at your option) any later version.                                                                                                 
- *                                                                                                                                     
- * potfit is distributed in the hope that it will be useful,                                                                           
- * but WITHOUT ANY WARRANTY; without even the implied warranty of                                                                      
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                                                       
- * GNU General Public License for more details.                                                                                        
- *                                                                                                                                     
- * You should have received a copy of the GNU General Public License                                                                   
- * along with potfit; if not, see <http://www.gnu.org/licenses/>.                                                                      
- *                                                                                                                                     
+ *
+ ****************************************************************
+ *
+ * Copyright 2002-2018 - the potfit development team
+ *
+ * http://potfit.sourceforge.net/
+ *
+ ****************************************************************
+ *
+ * This file is part of potfit.
+ *
+ * potfit is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * potfit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with potfit; if not, see <http://www.gnu.org/licenses/>.
+ *
  ****************************************************************/
+
 #include <sys/stat.h>
 
 #include "potfit.h"
@@ -52,7 +53,7 @@
 #define VERY_SMALL 1.E-12
 #define VERY_LARGE 1.E12
 
-#if defined(UQ)&&(APOT) /* Only for analytic potentials at the moment */
+#if defined(UQ) && defined(APOT) /* Only for analytic potentials at the moment */
 
 /****************************************************************
  *
@@ -60,7 +61,7 @@
  *
  ****************************************************************/
 void ensemble_generation(double cost_0) {
-  
+
   /* open file */
   FILE* outfile = fopen(g_files.ensemblefile, "w");
   if (outfile == NULL)
@@ -74,7 +75,7 @@ void ensemble_generation(double cost_0) {
   if (g_param.eig_max == 0){
     g_param.eig_max = 1;
   }
-  
+
   /* Calculate the best fit hessian */
   double** hessian = calc_hessian(cost_0, 1);
   printf("Hessian calulated, finding it's eigenvalues.\n");
@@ -100,11 +101,11 @@ void ensemble_generation(double cost_0) {
   double** v_0 = mat_double(g_pot.opt_pot.idxlen,g_pot.opt_pot.idxlen);
   double eigenvalues[g_pot.opt_pot.idxlen];
 
-  /* Enter loop to find eigenvalues, increasing the range by a factor of ten each until all eigenvalues are found. 
+  /* Enter loop to find eigenvalues, increasing the range by a factor of ten each until all eigenvalues are found.
      If after 10 iterations the eigenvalues have not be found, revert to signular value decomposition */
   while (m < g_pot.opt_pot.idxlen) {
 
-    vl *= 10; 
+    vl *= 10;
     vu *= 10;
 
     if (g_param.use_svd == 1){
@@ -112,7 +113,7 @@ void ensemble_generation(double cost_0) {
     }else{
 
       m = calc_h0_eigenvectors(hessian, vl, vu, v_0, eigenvalues);
-    
+
       if (count > 10){
         printf("WARNING: NOT CONVERGING! Use singular value decomposition.\n");
 
@@ -175,26 +176,26 @@ void ensemble_generation(double cost_0) {
   /* run until number of moves specified in param file are accepted */
   for (int i=0; i<=g_param.acc_moves;i++)
     {
-      
+
       if (i == g_param.acc_moves) {
 
         pot_attempts += weight;
         acc_prob = (((double)i+1.0))/(double)pot_attempts; /* Add one to include the MC step outside loop */
 
         /* For the final configuration (i = (g_param.acc_moves - 1) print the remaining weight calculated and then exit */
-        fprintf(outfile,"%-10d 1          %-10d %-10.2f\n", weight, pot_attempts, acc_prob); 
+        fprintf(outfile,"%-10d 1          %-10d %-10.2f\n", weight, pot_attempts, acc_prob);
         continue;
       }
 
       double cost = generate_mc_sample(hessian, v_0, cost_attempt, cost_0, eigenvalues, weight_ptr, outfile);
 
       cost_attempt = cost;
-      
+
       pot_attempts += weight;
       acc_prob = (((double)i+1.0))/(double)pot_attempts; /* Add one to include the MC step outside loop */
 
       /* Write weight from best cost set - i.e. how many trials before this new parameter set was accepted */
-      fprintf(outfile,"%-10d 1          %-10d %-10.2f\n", weight, pot_attempts, acc_prob); 
+      fprintf(outfile,"%-10d 1          %-10d %-10.2f\n", weight, pot_attempts, acc_prob);
 
       /* Write accepted move to file */
       fprintf(outfile,"%-10d", i+1);
@@ -210,10 +211,10 @@ void ensemble_generation(double cost_0) {
         sprintf(end,".ensemble_pot_%d",i+1);
         strcat(file, end);
         update_apot_table(g_pot.opt_pot.table);
-        write_pot_table_potfit(file); 
+        write_pot_table_potfit(file);
 
         printf("WARNING: New best fit parameter set found for potential %s. Old cost = %.8lf, new cost = %.8lf\n",file, cost_0,cost);
-      } 
+      }
       /* Write potential input files for parameter ensemble */
       else if ((g_param.write_ensemble != 0) && ((i+1) % g_param.write_ensemble == 0)){
         char file[255];
@@ -222,9 +223,9 @@ void ensemble_generation(double cost_0) {
         sprintf(end,".ensemble_pot_%d",i+1);
         strcat(file, end);
         update_apot_table(g_pot.opt_pot.table);
-        write_pot_table_potfit(file); 
+        write_pot_table_potfit(file);
       }
-      
+
     }
 
 fclose(outfile);
@@ -234,7 +235,7 @@ printf("UQ ensemble parameters written to %s\n", g_files.ensemblefile);
 
 /****************************************************************
  *
- *    Bracketing function for hessian finite difference 
+ *    Bracketing function for hessian finite difference
  *    perturbation range - finds perturbation value
  *
  ****************************************************************/
@@ -272,8 +273,8 @@ double hess_bracketing(double cost_aim, int index, int dir){
 #endif
 
   /* Set upper bound order of magnitude */
-  while (pert_cost < cost_aim){  
-    
+  while (pert_cost < cost_aim){
+
     /* Fill as cost(lb) */
     lb_cost_r = pert_cost;
 
@@ -318,7 +319,7 @@ double hess_bracketing(double cost_aim, int index, int dir){
   /* FIT A LINE TO THE RANGE TO FIND THE CORRESPONDING PERT VALUE */
   /* Join lb and ub by a line, use the gradient to calculate */
   /* pert value (i.e. x) corresponding to cost_aim. */
-    
+
   /* Calculate the costs for the bounds */
   double lb_cost = single_param_pert_cost(lb, index);
   double ub_cost = single_param_pert_cost(ub, index);
@@ -342,7 +343,7 @@ double hess_bracketing(double cost_aim, int index, int dir){
 
 /****************************************************************
  *
- *    Subdivide perturbations bracketing cost_T 
+ *    Subdivide perturbations bracketing cost_T
  *    to find smaller range.
  *
  ****************************************************************/
@@ -352,7 +353,7 @@ void subsection_pert(double* lb, double* ub, int index, double cost_aim){
   /* SUBDIVIDE INTERVAL INTO 10 AND EVALUATE SECTIONS */
   double range[11];
   double cost_range[11];
-  double percentage_aim; 
+  double percentage_aim;
 
   /* Enter ub, lb and their costs as already known */
   range[0]  = *lb;
@@ -399,10 +400,10 @@ void subsection_pert(double* lb, double* ub, int index, double cost_aim){
       break;
     }else if (i == 10){
       /* Else the change is in the last section */
-      
+
 #if defined(DEBUG)
       printf("FINAL SECTION: Range is lb = %g ub = %g, cost_range = [%g, %g], percentage of cost_aim = %g%%\n", range[i], range[i+1],cost_range[i-1], cost_range[i], (100 * (cost_range[i] - cost_range[i-1])) / cost_aim );
-      fflush(stdout);  
+      fflush(stdout);
 #endif
 
       *lb = range[i];
@@ -422,7 +423,7 @@ void subsection_pert(double* lb, double* ub, int index, double cost_aim){
   }else{
     /* Is range is still too large, subdivide into 10 again and repeat */
     subsection_pert(lb, ub, index, cost_aim);
-  }  
+  }
 
 }
 
@@ -463,7 +464,7 @@ double single_param_pert_cost(double pert, int index){
 
 double** calc_hessian(double cost, int counter){
 /*  Implementing equation 5.7.10 from Numerical recipes in C
-  
+
   Create the Hessian of analytic potential parameters
   For N parameters, require:
   diagonal: 2N cost evaluations
@@ -473,12 +474,12 @@ double** calc_hessian(double cost, int counter){
   - the cost evaluations per hessian element
   - the size of each parameter perturbation (i.e. 0.0001*parameter)
   - the final hessian elements */
-  double param_perturb_dist[g_pot.opt_pot.idxlen]; 
+  double param_perturb_dist[g_pot.opt_pot.idxlen];
   double** hessian    = mat_double(g_pot.opt_pot.idxlen, g_pot.opt_pot.idxlen); /* mat_double() defined in powell_lsq.c */
   double two_cost     = 2.0 * cost;
   int counter_max = 10;
   double new_cost_param_values[g_pot.opt_pot.idxlen+1];
-  
+
   /* Check that we haven't been through this thing 10 times, if so error */
   if( counter == counter_max ){
     error(1, "Too many recalculations of the hessian implies the potential is poorly fit.\n It is advised to rerun parameter optimisation and use the true minimum.\n");
@@ -494,7 +495,7 @@ double** calc_hessian(double cost, int counter){
 
   double cost_aim = cost + ((2.0 * cost * g_param.uq_temp) / g_pot.opt_pot.idxlen);
   double pert[g_pot.opt_pot.idxlen];
-  
+
   /* Find the correct perturbation value for each parameter */
   for (int i=0;i<g_pot.opt_pot.idxlen;i++){
 
@@ -515,7 +516,7 @@ double** calc_hessian(double cost, int counter){
         printf("Using negative perturbtion.\n");
       }
 
-      // Dont allow perturbations more than tha value of the parameter 
+      // Dont allow perturbations more than tha value of the parameter
       if (pert[i] > 1.0) {
         pert[i] = 1.0;
       }
@@ -530,7 +531,7 @@ double** calc_hessian(double cost, int counter){
   /* Pre-calculate each parameter perturbation for diagonal entries */
   for (int j=0;j<g_pot.opt_pot.idxlen;j++){
     param_perturb_dist[j] = pert[j] * g_pot.opt_pot.table[g_pot.opt_pot.idx[j]];
-    
+
     // THIS SHOULD BE HIGHER
     if (g_pot.opt_pot.table[g_pot.opt_pot.idx[j]] == 0){
       param_perturb_dist[j] = pert[j];
@@ -538,14 +539,14 @@ double** calc_hessian(double cost, int counter){
     }
   }
 
-#if defined(DEBUG)  
+#if defined(DEBUG)
   printf("i i cost_plus cost_minus diff\n");
 # endif
 
   /* For diagonal entries, use (c_(i+1) - 2*cost + c_(i-1))/(param_perturb_dist[i]^2) */
   for (int i=0;i<g_pot.opt_pot.idxlen;i++){
 
-    
+
     double cost_plus;
     double cost_minus;
 
@@ -577,7 +578,7 @@ double** calc_hessian(double cost, int counter){
 
     /* Reset original param values without perturbation */
     g_pot.opt_pot.table[g_pot.opt_pot.idx[i]] += param_perturb_dist[i];
-       
+
     /* print a warning if either cost_plus or cost_minus are less than 10^(-12) or a new minima is found */
     if ((cost_plus < VERY_SMALL) || (cost_minus < VERY_SMALL)) {
       printf("WARNING: The change in cost_plus/cost_minus when calculating the hessian is less than 10^(-12).\n This will affect precision. Consider changing the scale of cost perturbation. \n");
@@ -658,11 +659,11 @@ double** calc_hessian(double cost, int counter){
       if ((cost_pm < VERY_SMALL) || (cost_mp < VERY_SMALL)) {
 	 printf("WARNING: The change in cost_pm/cost_mp when calculating the hessian is less than 10^(-12).\nThis will affect precision. Consider changing the scale of cost perturbation. \n");
       }
-      
+
       hessian[i][j] = cost_2plus + cost_2minus - cost_pm - cost_mp;
       hessian[i][j] /= (4*param_perturb_dist[i]*param_perturb_dist[j]);
 
-      hessian[j][i] = hessian[i][j];  
+      hessian[j][i] = hessian[i][j];
 
 #if defined(DEBUG)
       if ((cost_2plus > cost_aim) || (cost_2minus > cost_aim) || (cost_pm > cost_aim) || (cost_mp > cost_aim)){
@@ -698,7 +699,7 @@ double** calc_hessian(double cost, int counter){
 
     /* Set new cost potential parameters as the best fit potential  */
     for(int j=0;j<g_pot.opt_pot.idxlen;j++){
-      g_pot.opt_pot.table[g_pot.opt_pot.idx[j]] = new_cost_param_values[j];  
+      g_pot.opt_pot.table[g_pot.opt_pot.idx[j]] = new_cost_param_values[j];
     }
 
     /* Write out new end potential */
@@ -706,7 +707,7 @@ double** calc_hessian(double cost, int counter){
     update_apot_table(g_pot.opt_pot.table);
 #endif  // APOT
     write_pot_table_potfit(g_files.endpot);
-  
+
     // will not work with MPI
 #if defined(PDIST) && !defined(MPI)
     write_pairdist(&g_pot.opt_pot, g_files.distfile);
@@ -746,20 +747,20 @@ int calc_h0_eigenvectors(double** hessian, double lower_bound, double upper_boun
   double work[lwork];
   int ifail[g_pot.opt_pot.idxlen]; /* contains indices of unconverged eigenvectors if info > 0  */
   int info = 0;
-  
-  
+
+
   #if defined(MKL)
-    dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda, &lower_bound, &upper_bound, &il, &iu, 
+    dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda, &lower_bound, &upper_bound, &il, &iu,
       &abstol, &m, w, &v_0[0][0], &ldz, work, &lwork, iwork, ifail, &info);
   #elif defined(ACML)
-    dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda, &lower_bound, &upper_bound, &il, &iu, 
-      &abstol, &m, w, &v_0[0][0], &ldz, work, &lwork, iwork, ifail, &info, int jobz_len, int range_len, int uplo_len);  
+    dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda, &lower_bound, &upper_bound, &il, &iu,
+      &abstol, &m, w, &v_0[0][0], &ldz, work, &lwork, iwork, ifail, &info, int jobz_len, int range_len, int uplo_len);
   #elif defined(__ACCELERATE__)
-        dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda, &lower_bound, &upper_bound, &il, &iu, 
+        dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda, &lower_bound, &upper_bound, &il, &iu,
       &abstol, &m, w, &v_0[0][0], &ldz, work, &lwork, iwork, ifail, &info);
   #endif
 
-  if (info == 0){      
+  if (info == 0){
     printf("Eigenvalue calculation completed successfully.\n");
   }else if (info > 0){
     printf("%d eigenvectors failed to converge.\n",info);
@@ -794,7 +795,7 @@ int calc_svd(double** hessian, double** u, double* s){
   double work[lwork];
   int info = 0;
   double vt[g_pot.opt_pot.idxlen][g_pot.opt_pot.idxlen];
-  
+
 
   #if defined(MKL)
       dgesvd_(&jobu, &jobvt, &g_pot.opt_pot.idxlen, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda, s, &u[0][0],
@@ -837,7 +838,7 @@ int calc_svd(double** hessian, double** u, double* s){
 
   printf("\n------------------------------------------------------\n\n");
   fflush(stdout);
-#endif 
+#endif
 
   if (info == 0){
     return lda;
@@ -866,25 +867,25 @@ double generate_mc_sample(double** const a, double** const v_0, double cost_befo
   }
 
   int count = 0;
-  int mc_decision = 0; 
+  int mc_decision = 0;
 
   /* Keep generating trials for this hessian until a move is accepted
      This saves multiple calculations of the same hessian when a move isn't accepted */
   while (mc_decision == 0) {
 
    count++; /* If move not accepted, count current parameters again */
-    
+
     /* reset parameters to initials params */
     for (int i=0;i<g_pot.opt_pot.idxlen;i++){
       g_pot.opt_pot.table[g_pot.opt_pot.idx[i]] = old_params[i];
     }
-   
+
     /* call function continuously until we accept a move for this set of eigenvalues */
     mc_decision = mc_moves(v_0, w, cost_ptr, cost_0, outfile);
 
   }
   *weight = count;
-  
+
   /* Return new cost */
   return cost_before;
 }
@@ -896,21 +897,21 @@ double generate_mc_sample(double** const a, double** const v_0, double cost_befo
  *********************************************************/
 
 int mc_moves(double** v_0,double* w, double* cost_before, double cost_0, FILE* outfile) {
-  
+
   double lambda[g_pot.opt_pot.idxlen];
-  double R; 
+  double R;
   double cost_after;
   double delta[g_pot.opt_pot.idxlen];
 
   R = sqrt(g_param.acc_rescaling);
-  
+
   /* If eigenvalue is less than eig_pert (defaults to 1), replace it with 1. */
   for (int i=0;i<g_pot.opt_pot.idxlen;i++){
 #if defined(MIN_STEP)
     if (w[i] > g_param.eig_max){ w[i] = g_param.eig_max; }
 #else /* Use max(lambda,1) */
     /* If negative eigenvalue, set to the minimum of: it's absolute value or the smallest positive eigenvalue */
-    if (w[i] < 0){ 
+    if (w[i] < 0){
       /* Find smallest positive eigenvalue */
       double min_pos_eigenvalue = VERY_LARGE;
       for (int j=0;j<g_pot.opt_pot.idxlen;j++){
@@ -933,19 +934,19 @@ int mc_moves(double** v_0,double* w, double* cost_before, double cost_0, FILE* o
     lambda[i] = 1/sqrt(w[i]);
     lambda[i] *= r;
   }
-  
+
   /* Matrix multiplication (delta_param[i] = Sum{1}{g_pot.opt_pot.idxlen} [v_0[i][j] * (r[j]/lambda[j])] ) */
 
   for (int i=0;i<g_pot.opt_pot.idxlen;i++){
     delta[i] = 0;
     for(int j=0;j<g_pot.opt_pot.idxlen;j++){
-      // Rows contain eigenvectors, however we want the 
-      // ith parameter contribution of each (i.e. columns of v_0) 
-      delta[i] += v_0[j][i]*lambda[j]; 
+      // Rows contain eigenvectors, however we want the
+      // ith parameter contribution of each (i.e. columns of v_0)
+      delta[i] += v_0[j][i]*lambda[j];
     }
     g_pot.opt_pot.table[g_pot.opt_pot.idx[i]] += delta[i];
   }
-  
+
   cost_after = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 
   double cost_diff = cost_after - *cost_before;
@@ -956,7 +957,7 @@ int mc_moves(double** v_0,double* w, double* cost_before, double cost_0, FILE* o
 
     return 1;
   }
-  
+
   /* Monte Carlo step (seeded from srand(time(NULL)) in generate_mc_sample() )
      generate uniform random number [0,1], if less than probability then accept change
      if step accepted, move new cost to cost_before for next cycle */
@@ -967,7 +968,7 @@ int mc_moves(double** v_0,double* w, double* cost_before, double cost_0, FILE* o
   if (mc_rand_number <= probability){
 
     *cost_before = cost_after;
-    
+
     return 1;
   }
 
@@ -985,4 +986,5 @@ int mc_moves(double** v_0,double* w, double* cost_before, double cost_0, FILE* o
   return 0;
 }
 
-#endif  /* UQ&&APOT */
+#endif  /* UQ && APOT */
+

@@ -297,7 +297,7 @@ void read_parameter_file(char const* param_file)
       get_param_int("write_ensemble", &g_param.write_ensemble, line, param_file, 0, INT_MAX);
     }
 #endif  // UQ
-    
+
 #if defined(KIM)
     else if (strcasecmp(token, "kim_model_name") == 0) {
       get_param_string("kim_model_name", &g_kim.model_name, line, param_file);
@@ -504,26 +504,26 @@ void check_parameters_complete(char const* paramfile)
     error(1,
         "Missing parameter or invalid value in %s : acc_moves is <undefined>\n",
          paramfile, g_param.acc_moves);
-  
+
 
   if (g_param.acc_rescaling == 0)
     error(1,
         "Missing parameter or invalid value in %s : acc_rescaling is <undefined>\n",
          paramfile, g_param.acc_rescaling);
-  
-  if (g_param.uq_temp == 0) 
+
+  if (g_param.uq_temp == 0)
     g_param.uq_temp = 1.0;
 
   if (g_param.hess_pert == 0) {
     warning("hess_pert not provided in %s, setting it to 0.00001!\n", paramfile);
-    g_param.hess_pert = 0.00001; 
+    g_param.hess_pert = 0.00001;
   }
   else if (g_param.hess_pert < 0) {
     warning("hess_pert is negative in %s, using the bracketing algorithm to find values!\n", paramfile);
   }
 
 #endif // UQ
-  
+
 #if defined(KIM)
   if (g_param.kim_model_params != KIM_MODEL_PARAMS_NONE) {
     warning("Disabling optimization due to kim_model_params being set!\n");

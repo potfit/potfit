@@ -196,7 +196,7 @@ int main(int argc, char** argv)
       printf("Parameter  %d = %f ", i, g_pot.opt_pot.table[g_pot.opt_pot.idx[i]]);
     }
     printf("\n");
-      
+
     ensemble_generation(tot);
 #endif //UQ
 

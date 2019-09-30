@@ -36,7 +36,7 @@ OPTIONS = [
     ['nopunish', 'Disable punishments', ['NOPUNISH']],
     ['resc', 'Enable rescaling (use with care!)', ['RESCALE']],
     ['stress', 'Include stress in fitting process', ['STRESS']],
-    ['uq', 'Generate potential ensemble for uncertainty quantification', ['UQ']]
+    ['uq', 'Generate potential ensemble for uncertainty quantification', ['UQ']],
 ]
 
 # Add all potential models to this list
@@ -271,11 +271,11 @@ def _check_compiler_options(cnf):
         cnf.env.append_value('DEFINES_POTFIT', ['NDEBUG'])
 
     # potfit linker flags
-
     if _platform == 'darwin':
         cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,-undefined,error'])
     else:
         cnf.env.append_value('LINKFLAGS_POTFIT', ['-Wl,--no-undefined,--as-needed,-z,relro,-z,now'])
+
 
 @conf
 def _check_mpi_compiler(cnf):

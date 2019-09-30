@@ -224,7 +224,7 @@ endif
 
 ifneq (,$(strip $(findstring uq,${MAKETARGET})))
    POTFITSRC    += uq.c
-endif 
+endif
 
 #########################################################
 #
