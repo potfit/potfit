@@ -27,19 +27,15 @@
  *
  ****************************************************************/
 
-#include <sys/stat.h>
-
 #include "potfit.h"
 
 #if defined(MKL)
 #include <mkl_lapack.h>
-#elif defined(ACML)
-#include <acml.h>
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
 #else
 #error No math library defined!
-#endif  // ACML
+#endif  // MKL
 
 #include "errors.h"
 #include "force.h"
@@ -812,11 +808,6 @@ int calc_h0_eigenvectors(double** hessian, double lower_bound,
   dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda,
           &lower_bound, &upper_bound, &il, &iu, &abstol, &m, w, &v_0[0][0],
           &ldz, work, &lwork, iwork, ifail, &info);
-#elif defined(ACML)
-  dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda,
-          &lower_bound, &upper_bound, &il, &iu, &abstol, &m, w, &v_0[0][0],
-          &ldz, work, &lwork, iwork, ifail, &info, int jobz_len, int range_len,
-          int uplo_len);
 #elif defined(__ACCELERATE__)
   dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda,
           &lower_bound, &upper_bound, &il, &iu, &abstol, &m, w, &v_0[0][0],
@@ -862,10 +853,6 @@ int calc_svd(double** hessian, double** u, double* s)
   double vt[g_pot.opt_pot.idxlen][g_pot.opt_pot.idxlen];
 
 #if defined(MKL)
-  dgesvd_(&jobu, &jobvt, &g_pot.opt_pot.idxlen, &g_pot.opt_pot.idxlen,
-          &hessian[0][0], &lda, s, &u[0][0], &lda, &vt[0][0],
-          &g_pot.opt_pot.idxlen, work, &lwork, &info);
-#elif defined(ACML)
   dgesvd_(&jobu, &jobvt, &g_pot.opt_pot.idxlen, &g_pot.opt_pot.idxlen,
           &hessian[0][0], &lda, s, &u[0][0], &lda, &vt[0][0],
           &g_pot.opt_pot.idxlen, work, &lwork, &info);
