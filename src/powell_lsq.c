@@ -69,23 +69,6 @@ void lineqsys_init(double**, double**, double*, double*, int, int);
 void lineqsys_update(double**, double**, double*, double*, int, int, int);
 double normalize_vector(double*, int);
 
-double** mat_double(int rowdim, int coldim)
-{
-  double** matrix = NULL;
-
-  // matrix: array of array of pointers
-  // matrix: pointer to rows
-  matrix = (double**)Malloc(rowdim * sizeof(double*));
-
-  // matrix[0]: pointer to elements
-  matrix[0] = (double*)Malloc(rowdim * coldim * sizeof(double));
-
-  for (int i = 1; i < rowdim; i++)
-    matrix[i] = matrix[i - 1] + coldim;
-
-  return matrix;
-}
-
 /****************************************************************
  *
  * run_powell_lsq

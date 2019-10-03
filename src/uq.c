@@ -6,7 +6,7 @@
  *
  * Copyright 2002-2018 - the potfit development team
  *
- * http://potfit.sourceforge.net/
+ * https://www.potfit.net/
  *
  ****************************************************************
  *
@@ -25,7 +25,7 @@
  * You should have received a copy of the GNU General Public License
  * along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
- ****************************************************************/
+ *****************************************************************/
 
 #include "potfit.h"
 
@@ -44,6 +44,7 @@
 #include "potential_output.h"
 #include "random.h"
 #include "uq.h"
+#include "utils.h"
 
 #define VERY_SMALL 1.E-12
 #define VERY_LARGE 1.E12
@@ -501,9 +502,7 @@ double** calc_hessian(double cost, int counter)
     - the size of each parameter perturbation (i.e. 0.0001*parameter)
     - the final hessian elements */
   double param_perturb_dist[g_pot.opt_pot.idxlen];
-  double** hessian = mat_double(
-      g_pot.opt_pot.idxlen,
-      g_pot.opt_pot.idxlen); /* mat_double() defined in powell_lsq.c */
+  double** hessian = mat_double(g_pot.opt_pot.idxlen, g_pot.opt_pot.idxlen);
   double two_cost = 2.0 * cost;
   int counter_max = 10;
   double new_cost_param_values[g_pot.opt_pot.idxlen + 1];

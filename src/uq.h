@@ -44,8 +44,6 @@ int calc_svd(double**, double**, double*);
 double generate_mc_sample(double** const, double** const, double, double, double*, int*, FILE*);
 int mc_moves(double**,double*, double*, double, FILE*);
 
-double** mat_double(int, int); /* in powell_lsq.c */
-
 #endif // UQ
 
 #endif // UQ_H_INCLUDED
