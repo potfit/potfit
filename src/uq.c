@@ -49,14 +49,16 @@
 #define VERY_SMALL 1.E-12
 #define VERY_LARGE 1.E12
 
-#if defined(UQ) && \
-    defined(APOT) /* Only for analytic potentials at the moment */
+// Only for analytic potentials at the moment
+
+#if defined(UQ) && defined(APOT)
 
 /****************************************************************
  *
  *   main potential ensemble routine
  *
  ****************************************************************/
+
 void ensemble_generation(double cost_0)
 {
   /* open file */
@@ -66,7 +68,7 @@ void ensemble_generation(double cost_0)
 
   /* Initialise variables to 0 */
   int pot_attempts = 0;
-  double acc_prob = 0.00;
+  double acc_prob = 0.0;
 
   /* Default input parameters if not specified */
   if (g_param.eig_max == 0) {
@@ -90,10 +92,11 @@ void ensemble_generation(double cost_0)
   // fprintf(outfile,"\n------------------------------------------------------\n\n");
 
   int m = 0;
-  double vl = -1;     // Initial lower bound for eigenvalues - this range is
-                      // adjusted until all are found
-  double vu = 10000;  // Initial upper bound for eigenvalues
-  int count = 0;      // 0;
+  // Initial lower bound for eigenvalues - this range is adjusted until all are found
+  double vl = -1.0;
+  // Initial upper bound for eigenvalues
+  double vu = 10000.0;
+  int count = 0;
 
   /* Allocate memory for the eigenvectors */
   double** v_0 = mat_double(g_pot.opt_pot.idxlen, g_pot.opt_pot.idxlen);
@@ -171,8 +174,6 @@ void ensemble_generation(double cost_0)
 
   /* Initialise variables and take first Monte Carlo step */
   int weight = 1;
-  int* weight_ptr = &weight;
-
   double cost_attempt = cost_0;
 
   /* run until number of moves specified in param file are accepted */
@@ -192,7 +193,7 @@ void ensemble_generation(double cost_0)
     }
 
     double cost = generate_mc_sample(hessian, v_0, cost_attempt, cost_0,
-                                     eigenvalues, weight_ptr, outfile);
+                                     eigenvalues, &weight, outfile);
 
     cost_attempt = cost;
 
@@ -213,12 +214,10 @@ void ensemble_generation(double cost_0)
     }
     fprintf(outfile, "%.8lf ", cost);
 
+    char file[255];
+    sprintf(file, "%s.ensemble_pot_%d", g_files.output_prefix, i + 1);
+
     if (cost < cost_0) {
-      char file[255];
-      char end[255];
-      strcpy(file, g_files.output_prefix);
-      sprintf(end, ".ensemble_pot_%d", i + 1);
-      strcat(file, end);
       update_apot_table(g_pot.opt_pot.table);
       write_pot_table_potfit(file);
 
@@ -230,11 +229,6 @@ void ensemble_generation(double cost_0)
     /* Write potential input files for parameter ensemble */
     else if ((g_param.write_ensemble != 0) &&
              ((i + 1) % g_param.write_ensemble == 0)) {
-      char file[255];
-      char end[255];
-      strcpy(file, g_files.output_prefix);
-      sprintf(end, ".ensemble_pot_%d", i + 1);
-      strcat(file, end);
       update_apot_table(g_pot.opt_pot.table);
       write_pot_table_potfit(file);
     }
@@ -250,12 +244,14 @@ void ensemble_generation(double cost_0)
  *    perturbation range - finds perturbation value
  *
  ****************************************************************/
+
 double hess_bracketing(double cost_aim, int index, int dir)
 {
   /* SET INITIAL PERT ORDER OF MAGNITUDE */
 
-  double ub; /* Upper bound to be set */
-  double pert;
+  double ub = 0.0; /* Upper bound to be set */
+  double pert = 0.0;
+
   if (dir == 1) {
     pert = -0.000001; /* Initial pert guess */
 #if defined(DEBUG)
@@ -267,11 +263,12 @@ double hess_bracketing(double cost_aim, int index, int dir)
     printf("Calculating positive perturbation direction.\n");
 #endif
   }
-  double lb; /* Lower bound to be set */
+
+  double lb = 0.0; /* Lower bound to be set */
   double pert_cost =
       single_param_pert_cost(pert, index); /* Set initial pert cost */
-  double lb_cost_r;
-  double pert_range;
+  double lb_cost_r = 0.0;
+  double pert_range = 0.0;
 
   /* If the initial guess is too large reduce the perturbation to set lb */
   while (pert_cost > cost_aim) {
@@ -315,9 +312,7 @@ double hess_bracketing(double cost_aim, int index, int dir)
   /* If the bounds are somehow muddled up, swap them */
   if (fabs(ub) < fabs(lb)) {
     double temp;
-    temp = lb;
-    lb = ub;
-    ub = temp;
+    SWAP(lb, ub, temp);
   }
 
   /* SUBDIVIDE INTERVAL INTO 10 AND EVALUATE SECTIONS */
@@ -517,7 +512,7 @@ double** calc_hessian(double cost, int counter)
 
   /* Initialise values for possible better fit found */
   for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
-    new_cost_param_values[j] = 0;
+    new_cost_param_values[j] = 0.0;
   }
   new_cost_param_values[g_pot.opt_pot.idxlen + 1] = VERY_LARGE;
 
@@ -787,10 +782,8 @@ int calc_h0_eigenvectors(double** hessian, double lower_bound,
   int lda = g_pot.opt_pot
                 .idxlen; /* leading dimension of the array A. lda >= max(1,N) */
   const char inp = 'S';
-  double abstol =
-      2 *
-      DLAMCH(
-          &inp); /* 2*DLAMCH('S');  absolute error tolerance for eigenvalues */
+  /* 2*DLAMCH('S');  absolute error tolerance for eigenvalues */
+  double abstol = 2 * DLAMCH( &inp);
   int ldz = g_pot.opt_pot.idxlen; /* Dimension of array z */
   int il = 0;
   int iu = 0;
