@@ -137,6 +137,8 @@ void initialize_global_variables()
   memset(&g_config, 0, sizeof(g_config));
   memset(&g_files, 0, sizeof(g_files));
 
+  g_files.output_prefix = "";
+
 #if defined(COULOMB)
   g_config.dp_cut = 10.0;
 #endif // COULOMB
