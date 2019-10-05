@@ -162,7 +162,7 @@ def _post(bld):
         _copy('build/src/' + bld.env.target_name, 'bin/')
         Logs.warn('\n---> Successfully moved {} to bin/ folder <---\n'.format(bld.env.target_name))
     except:
-        Logs.error('Could not move potfit binary into bin/ folder')
+        bld.fatal('Could not move potfit binary into bin/ folder')
 
 
 def distclean(ctx):
