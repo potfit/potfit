@@ -53,6 +53,15 @@
 
 #if defined(UQ) && defined(APOT)
 
+double single_param_pert_cost(double, int);
+void subsection_pert(double*, double*, int, double);
+double hess_bracketing(double, int, int);
+double** calc_hessian(double, int);
+int calc_h0_eigenvectors(double**, double, double, double**, double*);
+int calc_svd(double**, double**, double*);
+double generate_mc_sample(double** const, double** const, double, double, double*, int*, FILE*);
+int mc_moves(double**,double*, double*, double, FILE*);
+
 /****************************************************************
  *
  *   main potential ensemble routine
@@ -88,8 +97,6 @@ void ensemble_generation(double cost_0)
     }
     fprintf(outfile, "\n# ");
   }
-
-  // fprintf(outfile,"\n------------------------------------------------------\n\n");
 
   int m = 0;
   // Initial lower bound for eigenvalues - this range is adjusted until all are found
@@ -456,23 +463,16 @@ void subsection_pert(double* lb, double* ub, int index, double cost_aim)
 
 double single_param_pert_cost(double pert, int index)
 {
-  double best_fit_params[g_pot.opt_pot.idxlen];
-  double cost;
+  double old_value = g_pot.opt_pot.table[g_pot.opt_pot.idx[index]];
 
-  /* copy best fit param values for reference */
-  for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
-    best_fit_params[j] = g_pot.opt_pot.table[g_pot.opt_pot.idx[j]];
-  }
+  // Perturb parameter by perturbation
+  g_pot.opt_pot.table[g_pot.opt_pot.idx[index]] *= (1.0 + pert);
 
-  /* Perturb parameter by perturbation  */
-  g_pot.opt_pot.table[g_pot.opt_pot.idx[index]] +=
-      (best_fit_params[index] * pert);
+  // Calculate the lb perturbation cost
+  const double cost = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 
-  /* Calculate the lb perturbation cost */
-  cost = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
-
-  /* Return to best fit params */
-  g_pot.opt_pot.table[g_pot.opt_pot.idx[index]] = best_fit_params[index];
+  // Return to best fit params
+  g_pot.opt_pot.table[g_pot.opt_pot.idx[index]] = old_value;
 
   return cost;
 }
