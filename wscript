@@ -220,6 +220,8 @@ def _check_enable_options(cnf):
         cnf.env.optimization_files.extend(['diff_evo.c', '-simann.c'])
 
     if cnf.options.enable_uq:
+        if cnf.options.model != 'apot':
+          cnf.fatal('Uncertainty quantification is only supported for analytic potentials!')
         cnf.env.option_files.extend(['uq.c'])
 
 
