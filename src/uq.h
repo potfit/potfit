@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * utils.h: potfit utilities header file
+ * uq.h: Potential Ensemble method for Uncertainty Quantification
  *
  ****************************************************************
  *
@@ -25,26 +25,15 @@
  * You should have received a copy of the GNU General Public License
  * along with potfit; if not, see <http://www.gnu.org/licenses/>.
  *
- *****************************************************************/
+ ****************************************************************/
 
-#ifndef UTILS_H_INCLUDED
-#define UTILS_H_INCLUDED
+#ifndef UQ_H_INCLUDED
+#define UQ_H_INCLUDED
 
-/* vector procuct */
-vector vec_prod(vector, vector);
+#if defined(UQ)
 
-/* different power functions */
-static inline int isquare(int a) { return a * a; }
-static inline double dsquare(double a) { return a * a; }
-void power_1(double* result, const double* base, const double* exponent);
-void power_m(int count, double* result, const double* base,
-             const double* exponent);
+void ensemble_generation(double);
 
-char* fgets_potfit(char* buffer, int len, FILE* f);
+#endif // UQ
 
-double** mat_double(int, int);
-
-static inline int min(int a, int b) { return a < b ? a : b; }
-static inline int max(int a, int b) { return a > b ? a : b; }
-
-#endif  // UTILS_H_INCLUDED
+#endif // UQ_H_INCLUDED

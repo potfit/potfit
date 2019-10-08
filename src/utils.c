@@ -114,6 +114,12 @@ void power_m(int dim, double* result, const double* x, const double* y)
 #undef _32BIT
 #endif  // _32BIT
 
+/****************************************************************
+ *
+ *  fgets to handle CRLF line endings
+ *
+ ****************************************************************/
+
 char* fgets_potfit(char* buffer, int len, FILE* f)
 {
   char* p = fgets(buffer, len, f);
@@ -153,4 +159,27 @@ char* fgets_potfit(char* buffer, int len, FILE* f)
   free(new_p);
 
   return buffer;
+}
+
+/****************************************************************
+ *
+ *  allocate n x m matrix ot type double
+ *
+ ****************************************************************/
+
+double** mat_double(int rowdim, int coldim)
+{
+  double** matrix = NULL;
+
+  // matrix: array of array of pointers
+  // matrix: pointer to rows
+  matrix = (double**)Malloc(rowdim * sizeof(double*));
+
+  // matrix[0]: pointer to elements
+  matrix[0] = (double*)Malloc(rowdim * coldim * sizeof(double));
+
+  for (int i = 1; i < rowdim; i++)
+    matrix[i] = matrix[i - 1] + coldim;
+
+  return matrix;
 }

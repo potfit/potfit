@@ -424,6 +424,9 @@ typedef struct {
   const char* plotpointfile; /* write points for plotting */
   const char* startpot;      /* file with start potential */
   const char* tempfile;      /* backup potential file */
+#if defined(UQ)
+  const char* ensemblefile;  /* uq potential ensemble file */
+#endif // UQ
 } potfit_filenames;
 
 // potfit_mpi_config: holds information needed for MPI calculation
@@ -496,9 +499,20 @@ typedef struct {
   double plotmin;           /* minimum for plotfile */
 #endif                      // APOT
   double global_cell_scale; /* global scaling parameter */
+
+#if defined(UQ)
+  double    acc_rescaling; /* R - weighting to improve MC move acceptance ratio, system specific */
+  int       acc_moves; /* Number of accepted Mc moves */
+  double    uq_temp; /* Scaling of sampling cost temp T = uq_temp * T_0 */
+  int       use_svd; /* Flag to use SVD instead of eienvalue decomposition in hessian calc */
+  double    hess_pert; /* Alternate perturbation for hessian finite difference calc */
+  double    eig_max;  /* Change the value of the step pert 1/max(eig.max, lambda_j) */
+  int       write_ensemble; /* Write a potfit potential file every n ensemble memebers */
+#endif  // UQ
+
 #if defined(KIM)
   KIM_MODEL_PARAMS_ENUM kim_model_params;
-#endif
+#endif // KIM
 } potfit_parameters;
 
 // potfit_potentials: holds information from potential file

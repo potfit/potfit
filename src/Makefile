@@ -222,6 +222,10 @@ ifneq (,$(strip $(findstring parab,${MAKETARGET})))
   POTFITSRC	+= parabola.c
 endif
 
+ifneq (,$(strip $(findstring uq,${MAKETARGET})))
+   POTFITSRC    += uq.c
+endif
+
 #########################################################
 #
 # potfit Configuration rules
@@ -402,6 +406,10 @@ endif
 
 ifneq (,$(findstring kim,${MAKETARGET}))
   ERROR = "Please use the waf build system for enabling KIM support!\n"
+endif
+
+ifneq (,$(findstring uq,${MAKETARGET}))
+  CFLAGS += -DUQ
 endif
 
 CFLAGS += -D${TARGET} -D${MATH_LIB}

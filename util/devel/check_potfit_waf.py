@@ -54,7 +54,8 @@ APOT_OPTIONS = [
     'stress',
     'nopunish',
     'fweight',
-    'contrib'
+    'contrib',
+    'uq'
 ]
 
 KIM_OPTIONS = [

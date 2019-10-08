@@ -44,6 +44,7 @@
 #include "potential_output.h"
 #include "random.h"
 #include "utils.h"
+#include "uq.h"
 
 // forward declarations of helper functions
 
@@ -189,6 +190,15 @@ int main(int argc, char** argv)
 
     // write the error files for forces, energies, stresses, ...
     write_errors(g_calc.force, tot);
+
+#if defined(UQ)
+    for (int i=0;i<g_pot.opt_pot.idxlen;i++) {
+      printf("Parameter  %d = %f ", i, g_pot.opt_pot.table[g_pot.opt_pot.idx[i]]);
+    }
+    printf("\n");
+
+    ensemble_generation(tot);
+#endif //UQ
 
     /* calculate total runtime */
     if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0) {
