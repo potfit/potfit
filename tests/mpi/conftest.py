@@ -1,0 +1,23 @@
+import pytest
+
+def pytest_runtest_logstart(nodeid, location):
+    if not location[0].startswith('mpi'):
+        raise pytest.UsageError("Please run the tests from the tests/ base directory!")
+
+potfit_obj = None
+
+def get_potfit_obj(request):
+    import sys
+    sys.path.insert(0, str(request.config.rootdir))
+    import potfit
+    global potfit_obj
+    if potfit_obj == None:
+        potfit_obj = potfit.Potfit(__file__, interaction='pair', model='apot', options=['mpi'])
+    return potfit_obj
+
+@pytest.fixture()
+def potfit(request):
+    p = get_potfit_obj(request)
+    p.reset()
+    yield p
+    p.clear()

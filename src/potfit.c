@@ -114,14 +114,6 @@ int main(int argc, char** argv)
   if (g_mpi.myid > 0) {
     start_mpi_worker(g_calc.force);
   } else {
-#if defined(MPI)
-    if (g_mpi.num_cpus > g_config.nconf) {
-      warning("You are using more CPUs than you have configurations!\n");
-      warning("While this will not do any harm, you are wasting %d CPUs.\n",
-              g_mpi.num_cpus - g_config.nconf);
-    }
-#endif  // MPI
-
     time_t start_time;
     time_t end_time;
 

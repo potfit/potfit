@@ -115,10 +115,14 @@ class Potfit:
         f.write(self.config.as_string())
         f.close()
 
-    def run(self, param_file='param_file', args=[]):
+    def run(self, param_file='param_file', args=[], **kwargs):
         asan_filename = 'asan_{}'.format(''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6)))
         os.environ['ASAN_OPTIONS'] = 'log_path={},exitcode=99,strip_path_prefix={}'.format(asan_filename,os.path.abspath('..') + '/build/../')
-        cmd = [os.path.join(os.path.abspath('../bin'), self.binary_name)]
+        if 'mpi' in kwargs:
+            cmd = ['mpirun', '-np', str(kwargs['mpi']), os.path.join(os.path.abspath('../bin'), self.binary_name)]
+            os.environ['ASAN_OPTIONS'] += ',detect_leaks=0'
+        else:
+            cmd = [os.path.join(os.path.abspath('../bin'), self.binary_name)]
         if len(args):
             cmd.extend(args)
         if param_file != None:
@@ -224,7 +228,8 @@ class Potfit:
             cmd.append('--enable-{}'.format(opt))
         cmd.append('--asan')
         cmd.append('--debug')
-        cmd.append('--check-c-compiler=gcc')
+        if 'mpi' not in self.options:
+            cmd.append('--check-c-compiler=gcc')
         return cmd
 
     def _check_asan_fail(self, filename):

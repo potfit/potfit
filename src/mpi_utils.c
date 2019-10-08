@@ -691,6 +691,18 @@ int broadcast_apot_table()
 
 int broadcast_configurations()
 {
+  if (g_mpi.num_cpus == 1) {
+    error(0, "Running potfit with a single MPI process is not supported!\n");
+    error(0, "This creates a hugh overhead and slows down the process significantly!\n");
+    return POTFIT_ERROR;
+  }
+
+  if (g_mpi.num_cpus > g_config.nconf) {
+    error(0, "Running potfit with more MPI processes than configurations is not supported!\n");
+    error(0, "You provided %d configurations and requested %d processes\n", g_config.nconf, g_mpi.num_cpus);
+    return POTFIT_ERROR;
+  }
+
   // Each node: nconf/num_cpus configurations.
   // Last nconf%num_cpus nodes: 1 additional config
 
