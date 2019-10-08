@@ -357,6 +357,9 @@ void write_lammps_table_eam_adp()
     fprintf(outfile, " %s", g_config.elements[i]);
   fprintf(outfile, "\n");
 
+
+  // calculate the drho parameter
+
   double temp = 999.9;
 
   for (int i = 0; i < g_param.ntypes; i++) {
@@ -368,8 +371,24 @@ void write_lammps_table_eam_adp()
 #endif
   }
 
-  double drho = temp / (g_param.lammpspotsteps - 1);
-  double dr = g_config.rcutmin / (g_param.lammpspotsteps - 1);
+  const double drho = temp / (g_param.lammpspotsteps - 1);
+
+  // calculate the dr parameter (a little bit difficult ...)
+
+#if defined(APOT)
+  const double rbegin = 0.0;
+#else
+  double rbegin = 0.0;
+  for (int i = 0; i < g_calc.paircol; i++) {
+    rbegin = MAX(rbegin, g_pot.calc_pot.begin[i]);
+  }
+  for (int i = 0; i < g_param.ntypes; i++) {
+    int k = g_calc.paircol + g_param.ntypes + i;
+    rbegin = MAX(rbegin, g_pot.calc_pot.begin[k]);
+  }
+#endif // APOT
+  const double dr = (g_config.rcutmin - rbegin) / (g_param.lammpspotsteps - 1);
+
 
   /* line 5: Nrho, drho, Nr, dr, cutoff */
   fprintf(outfile, "%d %f %d %f %f\n", g_param.lammpspotsteps, drho,
@@ -402,7 +421,7 @@ void write_lammps_table_eam_adp()
 #endif  // APOT
       r += drho;
     }
-    r = 0.0;
+    r = rbegin;
     k = g_calc.paircol + i;
     /* transfer function rho(r) */
     for (int j = 0; j < g_param.lammpspotsteps; j++) {
@@ -428,12 +447,11 @@ void write_lammps_table_eam_adp()
   /* pair potentials */
   for (int i = 0; i < g_param.ntypes; i++) {
     for (int j = 0; j <= i; j++) {
-      double r = 0.0;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
+      double r = rbegin;
       for (int l = 0; l < g_param.lammpspotsteps; l++) {
 #if defined(APOT)
-        double temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
         if (r == 0.0 && (isnan(temp) || isinf(temp)))
           g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],
@@ -457,13 +475,13 @@ void write_lammps_table_eam_adp()
   /* dipole distortion */
   for (int i = 0; i < g_param.ntypes; i++)
     for (int j = i; j < g_param.ntypes; j++) {
-      double r = 0.0;
+      double r = rbegin;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += g_calc.paircol + 2 * g_param.ntypes;
       for (int l = 0; l < g_param.lammpspotsteps; l++) {
 #if defined(APOT)
-        double temp = 0.0;
+        temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
         if (r == 0.0 && (isnan(temp) || isinf(temp)))
           g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],
@@ -484,13 +502,13 @@ void write_lammps_table_eam_adp()
   /* quadrupole distortion */
   for (int i = 0; i < g_param.ntypes; i++)
     for (int j = i; j < g_param.ntypes; j++) {
-      double r = 0.0;
+      double r = rbegin;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += 2 * (g_calc.paircol + g_param.ntypes);
       for (int l = 0; l < g_param.lammpspotsteps; l++) {
 #if defined(APOT)
-        double temp = 0.0;
+        temp = 0.0;
         (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
         if (r == 0.0 && (isnan(temp) || isinf(temp)))
           g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k],

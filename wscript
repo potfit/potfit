@@ -4,9 +4,9 @@
 from os import environ, path
 from os import mkdir as _mkdir
 from sys import platform as _platform
-from shutil import copy as _copy
+from shutil import copy as _copy, rmtree as _rmtree
 from waflib.Configure import conf
-from waflib import Logs
+from waflib import Logs, Scripting
 from waflib.Tools.compiler_c import c_compiler
 
 from optparse import HelpFormatter as fmt
@@ -163,7 +163,14 @@ def _post(bld):
         _copy('build/src/' + bld.env.target_name, 'bin/')
         Logs.warn('\n---> Successfully moved {} to bin/ folder <---\n'.format(bld.env.target_name))
     except:
-        Logs.error('Could not move potfit binary into bin/ folder')
+        bld.fatal('Could not move potfit binary into bin/ folder')
+
+
+def distclean(ctx):
+    if path.exists('bin'):
+        _rmtree('bin', ignore_errors=True)
+    # call 'waf distclean'
+    Scripting.distclean(ctx)
 
 
 @conf

@@ -1,7 +1,5 @@
 import pytest
 
-from itertools import product
-
 def test_overlapping_atoms(potfit_apot):
     potfit_apot.create_param_file(ntypes=1)
     potfit_apot.call_makeapot('startpot', '-n 1 -i pair -f 1*lj')

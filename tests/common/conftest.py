@@ -13,17 +13,21 @@ def get_potfit_apot_obj(request):
     sys.path.insert(0, str(request.config.rootdir))
     import potfit
     global potfit_apot_obj
+    global potfit_tab_obj
     if potfit_apot_obj is None:
         potfit_apot_obj = potfit.Potfit(__file__, interaction='pair', model='apot')
+        potfit_tab_obj = None
     return potfit_apot_obj
 
 def get_potfit_tab_obj(request):
     import sys
     sys.path.insert(0, str(request.config.rootdir))
     import potfit
+    global potfit_apot_obj
     global potfit_tab_obj
     if potfit_tab_obj is None:
         potfit_tab_obj = potfit.Potfit(__file__, interaction='pair', model='tab')
+        potfit_apot_obj = None
     return potfit_tab_obj
 
 @pytest.fixture()
