@@ -56,7 +56,7 @@
 double single_param_pert_cost(double, int);
 void subsection_pert(double*, double*, int, double);
 double hess_bracketing(double, int, int);
-double** calc_hessian(double, int);
+int calc_hessian(double**, double*);
 int calc_h0_eigenvectors(double**, double, double, double**, double*);
 int calc_svd(double**, double**, double*);
 double generate_mc_sample(double** const, double** const, double, double, double*, int*, FILE*);
@@ -85,7 +85,24 @@ void ensemble_generation(double cost_0)
   }
 
   /* Calculate the best fit hessian */
-  double** hessian = calc_hessian(cost_0, 1);
+  double** hessian = mat_double(g_pot.opt_pot.idxlen, g_pot.opt_pot.idxlen);
+
+  int hess_counter = 1;
+  int flag = calc_hessian(hessian, &cost_0);
+  while (flag == 1){
+    /* Check that we haven't been through this thing 10 times, if so error */
+    if (hess_counter == 10){
+          error(1,
+          "Too many recalculations of the hessian implies the potential is "
+          "poorly fit.\nIt is advised to rerun parameter optimisation and use "
+          "the true minimum.\n");
+    }
+
+    hess_counter += 1;
+    flag = calc_hessian(hessian, &cost_0);
+
+  }
+
   printf("Hessian calulated, finding it's eigenvalues.\n");
   fflush(stdout);
 
@@ -483,7 +500,7 @@ double single_param_pert_cost(double pert, int index)
  *
  ****************************************************************/
 
-double** calc_hessian(double cost, int counter)
+int calc_hessian(double** hessian, double* cost)
 {
   /*  Implementing equation 5.7.10 from Numerical recipes in C
 
@@ -497,29 +514,21 @@ double** calc_hessian(double cost, int counter)
     - the size of each parameter perturbation (i.e. 0.0001*parameter)
     - the final hessian elements */
   double param_perturb_dist[g_pot.opt_pot.idxlen];
-  double** hessian = mat_double(g_pot.opt_pot.idxlen, g_pot.opt_pot.idxlen);
-  double two_cost = 2.0 * cost;
-  int counter_max = 10;
+  double two_cost = 2.0 * *cost;
   double new_cost_param_values[g_pot.opt_pot.idxlen + 1];
 
-  /* Check that we haven't been through this thing 10 times, if so error */
-  if (counter == counter_max) {
-    error(1,
-          "Too many recalculations of the hessian implies the potential is "
-          "poorly fit.\n It is advised to rerun parameter optimisation and use "
-          "the true minimum.\n");
-  }
+
 
   /* Initialise values for possible better fit found */
   for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
     new_cost_param_values[j] = 0.0;
   }
-  new_cost_param_values[g_pot.opt_pot.idxlen + 1] = VERY_LARGE;
+  new_cost_param_values[g_pot.opt_pot.idxlen] = VERY_LARGE;
 
   /* FIND PERTURBATION VALUES FOR HESSIAN CURVATURE CALCULATION  */
 
   double cost_aim =
-      cost + ((2.0 * cost * g_param.uq_temp) / g_pot.opt_pot.idxlen);
+      *cost + ((2.0 * *cost * g_param.uq_temp) / g_pot.opt_pot.idxlen);
   double pert[g_pot.opt_pot.idxlen];
 
   /* Find the correct perturbation value for each parameter */
@@ -581,25 +590,25 @@ double** calc_hessian(double cost, int counter)
     g_pot.opt_pot.table[g_pot.opt_pot.idx[i]] += param_perturb_dist[i];
     cost_plus = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 
-    if ((cost_plus < cost) &&
-        (cost_plus < new_cost_param_values[g_pot.opt_pot.idxlen + 1])) {
+    if ((cost_plus < *cost) &&
+        (cost_plus < new_cost_param_values[g_pot.opt_pot.idxlen])) {
       /* If new minima is found, store these values */
       for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
         new_cost_param_values[j] = g_pot.opt_pot.table[g_pot.opt_pot.idx[j]];
       }
-      new_cost_param_values[g_pot.opt_pot.idxlen + 1] = cost_plus;
+      new_cost_param_values[g_pot.opt_pot.idxlen] = cost_plus;
     }
 
     g_pot.opt_pot.table[g_pot.opt_pot.idx[i]] -= 2 * param_perturb_dist[i];
     cost_minus = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 
-    if ((cost_minus < cost) &&
-        (cost_minus < new_cost_param_values[g_pot.opt_pot.idxlen + 1])) {
+    if ((cost_minus < *cost) &&
+        (cost_minus < new_cost_param_values[g_pot.opt_pot.idxlen])) {
       /* If new minima is found, store these values */
       for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
         new_cost_param_values[j] = g_pot.opt_pot.table[g_pot.opt_pot.idx[j]];
       }
-      new_cost_param_values[g_pot.opt_pot.idxlen + 1] = cost_minus;
+      new_cost_param_values[g_pot.opt_pot.idxlen] = cost_minus;
     }
 
     /* Reset original param values without perturbation */
@@ -655,13 +664,13 @@ double** calc_hessian(double cost, int counter)
       g_pot.opt_pot.table[g_pot.opt_pot.idx[j]] -= 2 * param_perturb_dist[j];
       cost_pm = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 
-      if ((cost_pm < cost) &&
-          (cost_pm < new_cost_param_values[g_pot.opt_pot.idxlen + 1])) {
+      if ((cost_pm < *cost) &&
+          (cost_pm < new_cost_param_values[g_pot.opt_pot.idxlen])) {
         /* If new minima is found, store these values */
         for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
           new_cost_param_values[j] = g_pot.opt_pot.table[g_pot.opt_pot.idx[j]];
         }
-        new_cost_param_values[g_pot.opt_pot.idxlen + 1] = cost_pm;
+        new_cost_param_values[g_pot.opt_pot.idxlen] = cost_pm;
       }
 
       /* c_(i-1)(j+1) */
@@ -669,13 +678,13 @@ double** calc_hessian(double cost, int counter)
       g_pot.opt_pot.table[g_pot.opt_pot.idx[j]] += 2 * param_perturb_dist[j];
       cost_mp = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 
-      if ((cost_mp < cost) &&
-          (cost_mp < new_cost_param_values[g_pot.opt_pot.idxlen + 1])) {
+      if ((cost_mp < *cost) &&
+          (cost_mp < new_cost_param_values[g_pot.opt_pot.idxlen])) {
         /* If new minima is found, store these values */
         for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
           new_cost_param_values[j] = g_pot.opt_pot.table[g_pot.opt_pot.idx[j]];
         }
-        new_cost_param_values[g_pot.opt_pot.idxlen + 1] = cost_mp;
+        new_cost_param_values[g_pot.opt_pot.idxlen] = cost_mp;
       }
 
       /* c_(i-1)(j-1) */
@@ -717,18 +726,18 @@ double** calc_hessian(double cost, int counter)
   }
 
   /* If new cost value is found, return parameters */
-  if (new_cost_param_values[g_pot.opt_pot.idxlen + 1] != VERY_LARGE) {
+  if (new_cost_param_values[g_pot.opt_pot.idxlen] != VERY_LARGE) {
     printf(
         "WARNING: A new cost minimum has been found.\nOriginal cost = %f,\t "
         "New cost = %f.\nCalculation restarting with new best fit potential "
         "values.\n\n",
-        cost, new_cost_param_values[g_pot.opt_pot.idxlen + 1]);
+        *cost, new_cost_param_values[g_pot.opt_pot.idxlen]);
 
     printf("NEW COST MINIMA VALUES:\n");
     for (int j = 0; j < g_pot.opt_pot.idxlen; j++) {
       printf("Param %d = %.8lf\n", j, new_cost_param_values[j]);
     }
-    printf("Cost = %f\n", new_cost_param_values[g_pot.opt_pot.idxlen + 1]);
+    printf("Cost = %f\n", new_cost_param_values[g_pot.opt_pot.idxlen]);
     fflush(stdout);
 
     /* Move old potential to temp file */
@@ -756,14 +765,14 @@ double** calc_hessian(double cost, int counter)
 #endif  // PDIST && !MPI
 
     /* write the error files for forces, energies, stresses, ... */
-    write_errors(g_calc.force, new_cost_param_values[g_pot.opt_pot.idxlen + 1]);
-
-    /* Rerun hessian calculation with new cost minima */
-    hessian = calc_hessian(new_cost_param_values[g_pot.opt_pot.idxlen + 1],
-                           counter + 1);
+    write_errors(g_calc.force, new_cost_param_values[g_pot.opt_pot.idxlen]);
+    fflush(stdout);
+    /* Update new cost minima value and return flag of 1 to recalculate the Hessian */
+    *cost = new_cost_param_values[g_pot.opt_pot.idxlen];
+    return 1;
   } /* If a new cost is found */
 
-  return hessian;
+  return 0;
 }
 
 /***********************************************************************
@@ -832,13 +841,7 @@ int calc_svd(double** hessian, double** u, double* s)
   char jobvt = 'N'; /* Compute right singular vectors */
   int lda = g_pot.opt_pot
                 .idxlen; /* leading dimension of the array A. lda >= max(1,N) */
-  double vl = 0;
-  double vu = 0;
-  int il = 0;
-  int iu = 0;
 
-  int ns; /* number singular values found */
-  int iwork[12 * g_pot.opt_pot.idxlen];
   int lwork = 5 * g_pot.opt_pot.idxlen;
   double work[lwork];
   int info = 0;
@@ -889,9 +892,10 @@ int calc_svd(double** hessian, double** u, double* s)
   if (info == 0) {
     return lda;
   } else {
-    printf(
-        "Finding all eigenvalues by singular value decomposition (SVD) "
+
+    error(1, "Finding all eigenvalues by singular value decomposition (SVD) "
         "unsuccessful.\n");
+    return 0;
   }
 }
 
