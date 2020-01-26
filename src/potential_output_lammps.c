@@ -312,6 +312,9 @@ void write_lammps_table_pair()
 
         grad = - (a - b) / (2.0 * dr);
 #else
+        // make sure we don't acidentally read from the next potential
+        if (k == (g_param.lammpspotsteps - 1))
+          r -= 0.000001;
         fval = g_splint_comb(&g_pot.calc_pot, g_pot.calc_pot.table, idx, r, &grad);
 #endif  // APOT
         fprintf(outfile, "%d %f %.16e %.16e\n", k + 1, r, fval, grad);
@@ -416,6 +419,9 @@ void write_lammps_table_eam_adp()
       }
       fprintf(outfile, "%.16e\n", temp);
 #else
+      // make sure we don't acidentally read from the next potential
+      if (j == (g_param.lammpspotsteps - 1))
+        r -= 0.000001;
       fprintf(outfile, "%.16e\n",
               g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 #endif  // APOT
@@ -437,6 +443,9 @@ void write_lammps_table_eam_adp()
       }
       fprintf(outfile, "%.16e\n", temp);
 #else
+      // make sure we don't acidentally read from the next potential
+      if (j == (g_param.lammpspotsteps - 1))
+        r -= 0.000001;
       fprintf(outfile, "%.16e\n",
               g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 #endif  // APOT
@@ -463,6 +472,9 @@ void write_lammps_table_eam_adp()
         }
         fprintf(outfile, "%.16e\n", r * temp);
 #else
+        // make sure we don't acidentally read from the next potential
+        if (l == (g_param.lammpspotsteps - 1))
+          r -= 0.000001;
         fprintf(outfile, "%.16e\n",
                 r * g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 #endif  // APOT
@@ -493,6 +505,9 @@ void write_lammps_table_eam_adp()
         }
         fprintf(outfile, "%.16e\n", r * temp);
 #else
+        // make sure we don't acidentally read from the next potential
+        if (l == (g_param.lammpspotsteps - 1))
+          r -= 0.000001;
         fprintf(outfile, "%e\n",
                 g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 #endif // APOT
@@ -520,6 +535,9 @@ void write_lammps_table_eam_adp()
         }
         fprintf(outfile, "%.16e\n", r * temp);
 #else
+        // make sure we don't acidentally read from the next potential
+        if (l == (g_param.lammpspotsteps - 1))
+          r -= 0.000001;
         fprintf(outfile, "%e\n",
                 g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
 #endif // APOT
