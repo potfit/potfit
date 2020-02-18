@@ -129,8 +129,8 @@ class Potfit:
             cmd.append(param_file)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.cwd)
         out, err = p.communicate()
-        self.stdout = out.decode('ascii')
-        self.stderr = err.decode('ascii')
+        self.stdout = out.decode()
+        self.stderr = err.decode()
         try:
             f = open(os.path.join(self.cwd, param_file), 'r')
             for line in f:
@@ -197,12 +197,12 @@ class Potfit:
         p = subprocess.Popen(self._get_conf_cmd(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
         p.wait()
         if p.returncode:
-            pytest.fail('error calling "waf configure": {}'.format(p.stderr.read().decode('ascii')))
+            pytest.fail('error calling "waf configure": {}'.format(p.stderr.read().decode()))
         if git_patch:
           p = subprocess.Popen(['patch', '-Np1'], stdin=open(os.path.join(self.cwd, git_patch)), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
           p.wait()
           if p.returncode:
-            pytest.fail('error patching potfit source tree: {}'.format(p.stderr.read().decode('ascii')))
+            pytest.fail('error patching potfit source tree: {}'.format(p.stderr.read().decode()))
         p = subprocess.Popen(['./waf', 'build'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd='..')
         p.wait()
         if git_patch:
@@ -212,8 +212,8 @@ class Potfit:
           if q.returncode:
             pytest.fail('error unapplying custom patch file')
         if p.returncode:
-          pytest.fail('error calling "waf build": {}'.format(p.stderr.read().decode('ascii')))
-        out = p.stdout.read().decode('ascii').split('\n')
+          pytest.fail('error calling "waf build": {}'.format(p.stderr.read().decode()))
+        out = p.stdout.read().decode().split('\n')
         self.binary_name = [x for x in out if 'Linking' in x][0].split(' ')[2].split('/')[-1]
         if not len(self.binary_name):
             pytest.fail('error reading binary name')
