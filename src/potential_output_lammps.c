@@ -408,6 +408,7 @@ void write_lammps_table_eam_adp()
 
   // calculate the dr parameter
 
+  double temp = 0.0f;
   const double rbegin = 0.0f;
   const double dr = g_pot.opt_pot.end[0] / (g_param.lammpspotsteps - 1);
   int steps = g_param.lammpspotsteps;
