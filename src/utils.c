@@ -34,30 +34,21 @@
 #include "memory.h"
 #include "utils.h"
 
-#if UINTPTR_MAX == 0xffffffff
-
-// 32-bit
-#if defined(MKL)
-#include <mkl_vml.h>
-#endif  // MKL
-#define _32BIT
-
-#elif UINTPTR_MAX == 0xffffffffffffffff
-
-// 64-bit
 #if defined(MKL)
 #include <mkl_vml.h>
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
+#elif defined(LAPACK)
+#include <math.h>
 #else
 #error No math library defined!
 #endif
 
-#else
-
-// wtf
+#if UINTPTR_MAX == 0xffffffff
+// 32-bit
+#define _32BIT
+#elif UINTPTR_MAX != 0xffffffffffffffff
 #error Unknown integer size
-
 #endif  // UINTPTR_MAX
 
 // vector product
@@ -84,30 +75,26 @@ static const int g_dim = 1;
 
 void power_1(double* result, const double* x, const double* y)
 {
-#if defined(_32BIT)
+#if defined(_32BIT) || defined(LAPACK)
   *result = pow(*x, *y);
-#else
-#if defined(MKL)
+#elif defined(MKL)
   vdPow(1, x, y, result);
 #elif defined(__ACCELERATE__)
   vvpow(result, y, x, &g_dim);
 #endif
-#endif  // _32BIT
 }
 
 void power_m(int dim, double* result, const double* x, const double* y)
 {
-#if defined(_32BIT)
+#if defined(_32BIT) || defined(LAPACK)
   int i = 0;
   for (i = 0; i < dim; i++)
     result[i] = pow(x[i], y[i]);
-#else
-#if defined(MKL)
+#elif defined(MKL)
   vdPow(dim, x, y, result);
 #elif defined(__ACCELERATE__)
   vvpow(result, y, x, &dim);
 #endif
-#endif  // _32BIT
 }
 
 #if defined(_32BIT)

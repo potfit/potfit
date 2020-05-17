@@ -33,6 +33,8 @@
 #include <mkl_lapack.h>
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
+#elif defined(LAPACK)
+#include <lapack.h>
 #else
 #error No math library defined!
 #endif  // MKL
@@ -805,15 +807,9 @@ int calc_h0_eigenvectors(double** hessian, double lower_bound,
                                       eigenvectors if info > 0  */
   int info = 0;
 
-#if defined(MKL)
   dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda,
           &lower_bound, &upper_bound, &il, &iu, &abstol, &m, w, &v_0[0][0],
           &ldz, work, &lwork, iwork, ifail, &info);
-#elif defined(__ACCELERATE__)
-  dsyevx_(&jobz, &range, &uplo, &g_pot.opt_pot.idxlen, &hessian[0][0], &lda,
-          &lower_bound, &upper_bound, &il, &iu, &abstol, &m, w, &v_0[0][0],
-          &ldz, work, &lwork, iwork, ifail, &info);
-#endif
 
   if (info == 0) {
     printf("Eigenvalue calculation completed successfully.\n");
@@ -847,15 +843,9 @@ int calc_svd(double** hessian, double** u, double* s)
   int info = 0;
   double vt[g_pot.opt_pot.idxlen][g_pot.opt_pot.idxlen];
 
-#if defined(MKL)
   dgesvd_(&jobu, &jobvt, &g_pot.opt_pot.idxlen, &g_pot.opt_pot.idxlen,
           &hessian[0][0], &lda, s, &u[0][0], &lda, &vt[0][0],
           &g_pot.opt_pot.idxlen, work, &lwork, &info);
-#elif defined(__ACCELERATE__)
-  dgesvd_(&jobu, &jobvt, &g_pot.opt_pot.idxlen, &g_pot.opt_pot.idxlen,
-          &hessian[0][0], &lda, s, &u[0][0], &lda, &vt[0][0],
-          &g_pot.opt_pot.idxlen, work, &lwork, &info);
-#endif
 
 #if defined(DEBUG)
   printf("------------------------------------------------------\n\n");

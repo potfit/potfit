@@ -1,3 +1,6 @@
+20200517
+- add support for LAPACK as an alternative to MKL
+
 20190811
 - add new parameter "lammpspotsteps" which defines the number of sampling
   points when writing LAMMPS potentials

@@ -43,6 +43,8 @@
 #include <mkl_lapack.h>
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
+#elif defined(LAPACK)
+#include <lapack.h>
 #else
 #error No math library defined!
 #endif  // MKL
@@ -205,16 +207,10 @@ void run_powell_lsq(double* xi)
       /* All in one driver routine */
       int j = 1; /* 1 rhs */
 
-/* Linear Equation Solution (lapack) */
-#if defined(MKL)
-      dsysvx(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
-             &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
-             &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
-#elif defined(__ACCELERATE__)
+      /* Linear Equation Solution (lapack) */
       dsysvx_(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
              &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
              &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
-#endif
 
 #if defined(DEBUG) && !((defined APOT) || defined(KIM))
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3],

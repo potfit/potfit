@@ -64,10 +64,9 @@ INTERACTIONS = [
 
 # Math libray settings
 
-MKLDIR = '/opt/intel/mkl'
-
 supported_math_libs = [
     ['mkl', 'Intel Math Kernel Library'],
+    ['lapack', 'Linear Algebra PACKage from netlib.org'],
 ]
 
 if _platform == 'darwin':  # Mac OS
@@ -301,8 +300,6 @@ def _check_math_lib_options(cnf):
 
     The math library is checked by compiling some small code snippets
     """
-    global MKLDIR
-
     if cnf.options.math_lib is None:
         if cnf.env.DEST_OS == 'darwin':
             cnf.options.math_lib = 'acc'
@@ -318,6 +315,7 @@ def _check_math_lib_options(cnf):
 
     # Intel MKL
     if cnf.options.math_lib == 'mkl':
+        MKLDIR = '/opt/intel/mkl'
         if cnf.options.math_lib_base_dir:
             MKLDIR = cnf.options.math_lib_base_dir
         cnf.env.append_value('INCLUDES_POTFIT', [MKLDIR + '/include'])
@@ -333,6 +331,15 @@ def _check_math_lib_options(cnf):
             vdPow(1, &x, &y, &result);
           }\n''', execute=True, msg='Compiling test MKL binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
         cnf.env.append_value('DEFINES_POTFIT', ['MKL'])
+    elif cnf.options.math_lib == 'lapack':
+        cnf.check_cfg(package='lapack', args=['--cflags', '--libs'], uselib_store='POTFIT')
+        cnf.check(header_name='lapack.h', features='c cprogram', use=['POTFIT'])
+        cnf.check_cc(fragment='''#include <lapack.h>
+          int main() {
+            LAPACK_dsysvx("U", "U", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+          }\n''', execute=False, msg='Compiling test LAPACK binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
+        cnf.env.append_value('LIB_POTFIT', ['m'])
+        cnf.env.append_value('DEFINES_POTFIT', ['LAPACK'])
 
 
 def _generate_target_name(cnf):
