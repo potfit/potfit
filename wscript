@@ -95,8 +95,8 @@ def options(opt):
     # math libraries
     libs = opt.add_option_group('potfit math library options', 'available math libraries are:\n{}'.format(
         '\n'.join(sorted(['\t{:<16}{}'.format(x, v) for x, v in supported_math_libs]))))
-    libs.add_option('-l', '--math-lib', action='store', type=str, default='mkl', #choices=[name for name, _ in supported_math_libs],
-                      help='Select math library to use (default: %(default)s)', metavar='MATHLIB')
+    libs.add_option('-l', '--math-lib', default='acc' if _platform == 'darwin' else 'mkl', choices=[name for name, _ in supported_math_libs],
+                      help='Select math library to use (default: %default)', metavar='MATHLIB')
     libs.add_option('--math-lib-base-dir', action='store', type=str,
                       help='Base directory of selected math library')
     # debug options
@@ -296,15 +296,10 @@ def _check_mpi_compiler(cnf):
 @conf
 def _check_math_lib_options(cnf):
     """
-    Function for checking the selected math library
+    Function for finding a supported math library
 
     The math library is checked by compiling some small code snippets
     """
-    if cnf.options.math_lib is None:
-        if cnf.env.DEST_OS == 'darwin':
-            cnf.options.math_lib = 'acc'
-        else:
-            cnf.options.math_lib = 'mkl'
 
     # MacOS Accelerate
     if cnf.options.math_lib == 'acc':
@@ -318,28 +313,37 @@ def _check_math_lib_options(cnf):
         MKLDIR = '/opt/intel/mkl'
         if cnf.options.math_lib_base_dir:
             MKLDIR = cnf.options.math_lib_base_dir
-        cnf.env.append_value('INCLUDES_POTFIT', [MKLDIR + '/include'])
-        cnf.env.append_value('LIBPATH_POTFIT', [MKLDIR + '/lib/intel64'])
-        cnf.env.append_value('LIB_POTFIT', ['mkl_intel_lp64',
-                                            'mkl_sequential', 'mkl_core', 'pthread', 'm'])
-        cnf.check(header_name='mkl_vml.h', features='c cprogram', use=['POTFIT'])
-        cnf.check(header_name='mkl_lapack.h', features='c cprogram', use=['POTFIT'])
-        cnf.check_cc(fragment='''#include <mkl_vml.h>
-          #include <mkl_lapack.h>
-          int main() {
-            double x = 1.0, y = 1.0, result = 0.0;
-            vdPow(1, &x, &y, &result);
-          }\n''', execute=True, msg='Compiling test MKL binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
-        cnf.env.append_value('DEFINES_POTFIT', ['MKL'])
-    elif cnf.options.math_lib == 'lapack':
-        cnf.check_cfg(package='lapack', args=['--cflags', '--libs'], uselib_store='POTFIT')
-        cnf.check(header_name='lapack.h', features='c cprogram', use=['POTFIT'])
-        cnf.check_cc(fragment='''#include <lapack.h>
-          int main() {
-            LAPACK_dsysvx("U", "U", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-          }\n''', execute=False, msg='Compiling test LAPACK binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
-        cnf.env.append_value('LIB_POTFIT', ['m'])
-        cnf.env.append_value('DEFINES_POTFIT', ['LAPACK'])
+        # add paths and libs to a temporary target
+        cnf.env.append_value('INCLUDES_MKL', [MKLDIR + '/include'])
+        cnf.env.append_value('LIBPATH_MKL', [MKLDIR + '/lib/intel64'])
+        cnf.env.append_value('LIB_MKL', ['mkl_intel_lp64', 'mkl_sequential', 'mkl_core', 'pthread', 'm'])
+        try:
+            cnf.check(header_name='mkl_vml.h', features='c cprogram', use=['POTFIT', 'MKL'])
+            cnf.check(header_name='mkl_lapack.h', features='c cprogram', use=['POTFIT', 'MKL'])
+            cnf.check_cc(fragment='''#include <mkl_vml.h>
+              #include <mkl_lapack.h>
+              int main() {
+                double x = 1.0, y = 1.0, result = 0.0;
+                vdPow(1, &x, &y, &result);
+              }\n''', execute=True, msg='Compiling MKL test binary', okmsg='OK', errmsg='Failed', use=['POTFIT', 'MKL'])
+            # add paths and libs to main target
+            cnf.env.append_value('DEFINES_POTFIT', ['MKL'])
+            cnf.env.append_value('INCLUDES_POTFIT', [MKLDIR + '/include'])
+            cnf.env.append_value('LIBPATH_POTFIT', [MKLDIR + '/lib/intel64'])
+            cnf.env.append_value('LIB_POTFIT', ['mkl_intel_lp64', 'mkl_sequential', 'mkl_core', 'pthread', 'm'])
+            return
+        except:
+            pass
+
+    # check LAPACK as fallback
+    cnf.check_cfg(package='lapack', args=['--cflags', '--libs'], uselib_store='POTFIT')
+    cnf.check_cfg(package='lapacke', args=['--cflags', '--libs'], uselib_store='POTFIT')
+    print(cnf.env)
+    cnf.check(header_name='lapacke.h', features='c cprogram', use=['POTFIT'])
+    cnf.check_cc(fragment='#include <lapacke.h>\nint main() {{\ndsysvx_("U","U",{});\n}}\n'.format(','.join(['NULL']*18)),
+                 execute=False, msg='Compiling LAPACK test binary', okmsg='OK', errmsg='Failed', use=['POTFIT'])
+    cnf.env.append_value('LIB_POTFIT', ['m'])
+    cnf.env.append_value('DEFINES_POTFIT', ['LAPACK'])
 
 
 def _generate_target_name(cnf):

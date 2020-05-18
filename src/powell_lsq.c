@@ -44,7 +44,7 @@
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
 #elif defined(LAPACK)
-#include <lapack.h>
+#include <lapacke.h>
 #else
 #error No math library defined!
 #endif  // MKL
