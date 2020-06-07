@@ -12,3 +12,4 @@ potfit_*
 .pytest_cache
 *.swp
 .waf*
+.mypy_cache
