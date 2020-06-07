@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################
 #
 # force2poscar:
@@ -7,10 +7,9 @@
 #
 ################################################################
 #
-#   Copyright 2013
-#             Institute for Theoretical and Applied Physics
-#             University of Stuttgart, D-70550 Stuttgart, Germany
-#             https://www.potfit.net/
+#   Copyright 2002-2020 - the potfit development team
+#
+#   https://www.potfit.net/
 #
 #################################################################
 #
@@ -85,15 +84,15 @@ while temp[0] != '#':
     temp = f.readline()
 
 # write header
-print "Structure {} from {}".format(args.number,os.path.abspath(args.filename))
-print " {}".format(1.0)
-print "{:12.8f} {:12.8f} {:12.8f}".format(vect_x[0],vect_x[1],vect_x[2])
-print "{:12.8f} {:12.8f} {:12.8f}".format(vect_y[0],vect_y[1],vect_y[2])
-print "{:12.8f} {:12.8f} {:12.8f}".format(vect_z[0],vect_z[1],vect_z[2])
-print " ".join([str(s) for s in num[0:max_num+1]])
+print("Structure {} from {}".format(args.number,os.path.abspath(args.filename)))
+print(" {}".format(1.0))
+print("{:12.8f} {:12.8f} {:12.8f}".format(vect_x[0],vect_x[1],vect_x[2]))
+print("{:12.8f} {:12.8f} {:12.8f}".format(vect_y[0],vect_y[1],vect_y[2]))
+print("{:12.8f} {:12.8f} {:12.8f}".format(vect_z[0],vect_z[1],vect_z[2]))
+print(" ".join([str(s) for s in num[0:max_num+1]]))
 
 # write atom data
 for i in range(max_num+1):
     for atom in data:
         if int(atom[0]) == i:
-            print "{:10.6f} {:10.6f} {:10.6f}".format(float(atom[1]),float(atom[2]),float(atom[3]))
+            print("{:10.6f} {:10.6f} {:10.6f}".format(float(atom[1]),float(atom[2]),float(atom[3])))

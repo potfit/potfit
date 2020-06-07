@@ -30,11 +30,12 @@
 #################################################################
 
 import argparse
-import functions
 import inspect
 import random
 import sys
 import textwrap
+
+from potfit import functions
 
 INTERACTIONS = [
     ['pair', 'pair potentials', lambda x: paircol(x)],

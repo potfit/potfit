@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################
 #
 # list_config:
@@ -6,10 +6,9 @@
 #
 ################################################################
 #
-#   Copyright 2013
-#             Institute for Theoretical and Applied Physics
-#             University of Stuttgart, D-70550 Stuttgart, Germany
-#             https://www.potfit.net/
+#   Copyright 2002-2020 - the potfit development team
+#
+#   https://www.potfit.net/
 #
 #################################################################
 #
@@ -34,6 +33,8 @@ import argparse
 import os
 import sys
 
+from typing import List
+
 parser = argparse.ArgumentParser(description='Prints a brief list of all configurations in a potfit config file.')
 parser.add_argument('filename', type=str, help='name of the potfit config file')
 args = parser.parse_args()
@@ -49,7 +50,7 @@ except IOError as e:
 data_N = []
 data_C = []
 data_W = []
-origin = []
+origin = [] # type: List[str]
 lines = []
 i = 1
 
@@ -60,7 +61,7 @@ for line in f:
             data_N.append(int(temp[1]))
             data_C.append([])
             data_W.append(1)
-            origin.append([])
+            origin.append("")
             lines.append(i)
         if line[1] == 'C':
             data_C[-1] = temp[1:]
@@ -79,5 +80,5 @@ for i in range(len(data_N)):
         elements = 'unknown types'
     else:
         elements = (', ').join(data_C[i])
-    print "{:3}: {}".format(i,source)
-    print "\tcontaining {} atoms ({}), weight {}, starting on line {}".format(data_N[i],elements,data_W[i],lines[i])
+    print("{:3}: {}".format(i,source))
+    print("\tcontaining {} atoms ({}), weight {}, starting on line {}".format(data_N[i],elements,data_W[i],lines[i]))

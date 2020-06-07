@@ -5,31 +5,56 @@
 #   conversion of CASTEP .md files to a potfit force file
 #
 ################################################################
+#
+#   Copyright 2002-2020 - the potfit development team
+#
+#   https://www.potfit.net/
+#
+#################################################################
+#
+#   This file is part of potfit.
+#
+#   potfit is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   potfit is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+#
+#################################################################
 
 import argparse
-import sys
-from collections import OrderedDict
 import gzip
+import sys
 
+from collections import OrderedDict
 
-def atomic_length(bohr):
+from typing import Dict, List, IO, Union
+
+def atomic_length(bohr: str) -> float:
     return float(bohr) * 0.529177210903
 
 
-def atomic_energy(hartree):
+def atomic_energy(hartree: str) -> float:
     return float(hartree) * 27.211386245988
 
 
-def atomic_force(force):
+def atomic_force(force: str) -> float:
     return float(force) * 51.421
 
 
 # The consistent unit of stress is energy / length^3
-def atomic_stress(stress):
+def atomic_stress(stress: str) -> float:
     return float(stress) * 183.63153644969503
 
 
-def fatal(message):
+def fatal(message: str) -> None:
     if message.endswith("\n"):
         sys.stderr.write("FATAL: {}".format(message))
     else:
@@ -37,7 +62,7 @@ def fatal(message):
     sys.exit(1)
 
 
-def warning(message):
+def warning(message: str) -> None:
     if message.endswith("\n"):
         sys.stderr.write("WARN: {}".format(message))
     else:
@@ -45,50 +70,50 @@ def warning(message):
 
 
 class Atom:
-    def set_position(self, x, y, z):
+    def set_position(self, x: float, y: float, z: float) -> None:
         self.x = x
         self.y = y
         self.z = z
 
-    def set_forces(self, x, y, z):
+    def set_forces(self, x: float, y: float, z: float) -> None:
         self.f_x = x
         self.f_y = y
         self.f_z = z
 
-    def __init__(self, atom_type):
+    def __init__(self, atom_type: int) -> None:
         self.type = atom_type
 
-    def to_string(self):
+    def to_string(self) -> str:
         return "{} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E}".format(
             self.type, self.x, self.y, self.z, self.f_x, self.f_y, self.f_z
         )
 
 
 class Box:
-    def __init__(self, x, y, z):
+    def __init__(self, x: float, y: float, z: float) -> None:
         self.x = x
         self.y = y
         self.z = z
 
-    def to_string(self):
+    def to_string(self) -> str:
         return "{:23.16E} {:23.16E} {:23.16E}".format(self.x, self.y, self.z)
 
 
 class Configuration:
-    def __init__(self):
+    def __init__(self) -> None:
         # For python versions less than 3.7, need to explicitly use an ordered
         # dictionary as the order in must equal the order out.
-        self.types_of_element = OrderedDict()
-        self.boxes = []
-        self.energy = None
+        self.types_of_element = OrderedDict()  # type: Dict[str, int]
+        self.boxes = []  # type: List[Box]
+        self.energy = None  # type: Union[None, float]
 
-        self.stress = []
+        self.stress = []  # type: List[List[float]]
 
         # A dictionary where the key is a string representing an element and
         # contains a list of atoms of that type.
-        self.body = OrderedDict()
+        self.body = OrderedDict()  # type: Dict[str, List[Atom]]
 
-    def to_string(self):
+    def to_string(self) -> str:
         # Calculate number of atoms in the configuration
         number_of_atoms = 0
         for _, t in self.body.items():
@@ -102,7 +127,7 @@ class Configuration:
         s.append("#X {}".format(self.boxes[0].to_string()))
         s.append("#Y {}".format(self.boxes[1].to_string()))
         s.append("#Z {}".format(self.boxes[2].to_string()))
-        s.append("#E {:23.16E}".format(self.energy))
+        s.append("#E {:23.16E}".format(self.energy if self.energy else 0))
 
         # Only output stresses if they are in the input file
         if len(self.stress) == 3:
@@ -130,7 +155,7 @@ class Configuration:
 
 # Reads a configuration from specified file and returns a configuration object
 # or None if at EOF
-def read_configuration(file, potentials):
+def read_configuration(file: IO[str], potentials: Dict[str, float]):
     config = Configuration()
 
     energy = None
@@ -232,7 +257,7 @@ def read_configuration(file, potentials):
     return config
 
 
-def parse_cli_flags(argv):
+def parse_cli_flags(argv: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Converts a castep molecular dynamics output file (or set of files) to a potfit force configuration file",
         epilog="Example usage: ./castep2force -p Ar=0.01 -o configuration mdinput.md",
@@ -267,7 +292,7 @@ def parse_cli_flags(argv):
     return parser.parse_args(argv)
 
 
-def parse_potentials(potential_str):
+def parse_potentials(potential_str: str) -> Dict[str, float]:
     potentials = {}
     for pair in potential_str.split(","):
         values = pair.split("=")
@@ -275,16 +300,15 @@ def parse_potentials(potential_str):
     return potentials
 
 
-def open_file(filename):
+def open_file(filename: str) -> IO[str]:
     if filename == "-":
         return sys.stdin
-    elif filename.endswith(".gz"):
+    if filename.endswith(".gz"):
         return gzip.open(filename, "rt")
-    else:
-        return open(filename, "rt")
+    return open(filename, "rt")
 
 
-def read_md_file(filename, potentials):
+def read_md_file(filename: str, potentials: Dict[str, float]) -> List[Configuration]:
 
     # castep produces md files with multiple iteration steps, each one is a
     # different configuration
@@ -304,7 +328,7 @@ def read_md_file(filename, potentials):
     return configurations
 
 
-def write_configurations(configurations, output):
+def write_configurations(configurations: List[Configuration], output: str) -> None:
     # '-' often means standard input / standard output, so I have used it in
     # this software for that purpose.
     if output == "-" or output is None:
@@ -316,12 +340,12 @@ def write_configurations(configurations, output):
                 file.write(conf.to_string())
 
 
-def main(argv):
+def main(argv: List[str]) -> None:
     arguments = parse_cli_flags(argv)
     filenames = arguments.files
     potentials = parse_potentials(arguments.potential)
 
-    configurations = []
+    configurations = []  # type: List[Configuration]
     for filename in filenames:
         configuration = read_md_file(filename, potentials)
         if arguments.final:

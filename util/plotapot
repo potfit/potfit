@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################
 #
 # plotapot:
@@ -6,10 +6,9 @@
 #
 ################################################################
 #
-#   Copyright 2013
-#             Institute for Theoretical and Applied Physics
-#             University of Stuttgart, D-70550 Stuttgart, Germany
-#             https://www.potfit.net/
+#   Copyright 2002-2020 - the potfit development team
+#
+#   https://www.potfit.net/
 #
 #################################################################
 #
@@ -31,310 +30,426 @@
 #################################################################
 
 import argparse
-import functions
 import math
-import os
+import pathlib
 import subprocess
 import sys
 
-def get_num_atom_types(interaction, cols):
-    if interaction == 'pair':
-        return int(0.5 * (math.sqrt(1+8*cols)-1))
-    elif interaction == 'eam':
-        return int(0.5 * (math.sqrt(25+8*cols)-5))
-    elif interaction == 'adp':
-        return int((math.sqrt(49+24*cols)-7)/6)
-    elif interaction == 'meam':
-        return int(math.sqrt(4+cols)-2)
-    elif interaction == 'stiweb':
-        return int(math.sqrt(cols-0.5)-0.5)
-    elif interaction == 'tersoff':
-        return int(math.sqrt(cols))
-    else:
-        return 0
+from typing import Any, Dict, List, Optional, IO
 
-def make_partition(interaction, n):
-    part = []
+from potfit import functions
+
+
+CALC_ATOM_TYPES = {
+    "pair": lambda x: int(0.5 * (math.sqrt(1 + 8 * x) - 1)),
+    "eam": lambda x: int(0.5 * (math.sqrt(25 + 8 * x) - 5)),
+    "adp": lambda x: int((math.sqrt(49 + 24 * x) - 7) / 6),
+    "meam": lambda x: int(math.sqrt(4 + x) - 2),
+}
+
+REPLACE_FUNCTIONS = {
+    "pohlong": "bjs",
+}
+
+
+def make_partition(interaction: str, n: int) -> List[Any]:
+    # pair interactions
     pair = []
-    transfer = []
+    cols = int(n * (n + 1) / 2)
+    while cols > 0:
+        pair.append(min(3, cols))
+        cols -= min(3, cols)
 
-    # pair distribution
-    for i in range(int((n*(n+1)/2)/3)):
-        pair.append(3)
-    if n*(n+1)/2 % 3 != 0:
-        pair.append(n%3)
+    # individual interactions
+    single = []
+    while n > 0:
+        single.append(min(3, n))
+        n -= min(3, n)
 
-    # eam distribution
-    for i in range(n/3):
-        transfer.append(3)
-    if n % 3 != 0:
-        transfer.append(n%3)
+    res = {
+        "pair": [pair],
+        "eam": [pair, single, single],
+        "adp": [pair, single, single, pair, pair],
+        "meam": [pair, single, single, pair, single],
+    }
 
-    if interaction == 'pair':
-        return [pair]
-    elif interaction == 'eam':
-        return [pair, transfer, transfer]
-    elif interaction == 'adp':
-        return [pair, transfer, transfer, pair, pair]
-    elif interaction == 'meam':
-        return [pair, transfer, transfer, pair, transfer]
-    elif interaction == 'stiweb':
-        pass
-    elif interaction == 'tersoff':
-        pass
-    else:
-        return 0
+    return res[interaction]
 
-def write_gnuplot_header(f, index, prefix, xra = [0, 6], yra = 'auto'):
-    f.write('reset;\n')
-    f.write('set termoption solid;\n')
-    width = len(partition[index])
-    if args.t and not args.p:
-        f.write('set term %s title \'%s\' size %s,%s\n' % (args.t, prefix + ' potentials', width*size[0], size[1]))
-    else:
-        f.write('set term pngcairo;\n')
-        f.write('set output \'plot_%s.png\';\n' % prefix)
-    f.write('set samples 1000;\n')
-    f.write('set grid;\n')
-    f.write('set xrange [{}:{}];\n'.format(xra[0],xra[1]))
-    if yra != 'auto':
-        f.write('set yrange [{}:{}];\n'.format(yra[0],yra[1]))
-    f.write('cof(x) = x**4/(1+x**4);\n')
 
-def write_gnuplot_data(f, index, offset, title_string):
-    count = offset
-    if len(partition[index]) > 1:
-        f.write('set multiplot;\n')
-        for i in range(len(partition[index])):
-            f.write('set origin {},0;\n'.format(i*float(1.0/len(partition[index]))))
-            f.write('set size {},1;\n'.format(float(1.0/len(partition[index]))))
-            f.write('pl ')
-            for j in range(count,count + partition[index][i]):
-                if pot_table[j].do_smooth != 0:
-                    f.write('cof((x-{0})/{1})*('.format(pot_table[j].cutoff,pot_table[j].params[-1][1]))
-                f.write(func_strings[j])
-                if pot_table[j].do_smooth != 0:
-                    f.write(')')
-                f.write(' w l')
-                f.write(' t \'%s\'' % title_string[j])
-                f.write(' lt 0 lw 2 lc %s' % (j+1-count))
-                if index == 0 and args.pair_dist_file:
-                    f.write(', \'%s\' i %s axes x1y2 w steps lw 1.2 lc %s t \'g(r) %s\'' %
-                            (args.pair_dist_file, j, (j+1-count), title_string[j]))
-                if j < count + partition[index][i] - 1:
-                    f.write(', \\\n\t')
-            f.write(';\n')
-            count += partition[index][i]
-    else:
-        f.write('pl ')
-        for i in range(count,count + partition[index][0]):
-            if pot_table[i].do_smooth != 0:
-                f.write('cof((x-{0})/{1})*('.format(pot_table[i].cutoff,pot_table[i].params[-1][1]))
-            f.write(func_strings[i])
-            if pot_table[i].do_smooth != 0:
-                f.write(')')
-            f.write(' w l')
-            f.write(' t \'%s\'' % title_string[i-count])
-            f.write(' lt 0 lw 2 lc %s' % (i+1-count))
-            if index == 0 and args.pair_dist_file:
-                f.write(', \'%s\' i %s axes x1y2 w steps lw 1.2 lc %s t \'g(r) %s\'' %
-                        (args.pair_dist_file, i-count, (i+1-count), title_string[i-count]))
-            if i < count + partition[index][0] - 1:
-                f.write(', \\\n\t')
-        f.write(';\n')
+class PlotAPot:
+    def __init__(self, args: argparse.Namespace) -> None:
+        self.args = args
+        self.atom_types = None
+        self.cols = 0
+        self.files = []
+        self.globals_table = dict() # type: Dict[str, float]
+        self.interaction = ""
+        self.pair_col = 0
+        self.pot_table = [] # type: List[functions.potfit_function]
 
-parser = argparse.ArgumentParser(description='''Plot an analytic potfit potential using gnuplot.''')
-parser.add_argument('-f', action='store_true', help='write plotfiles for gnuplot and exit')
-parser.add_argument('-p', action='store_true', help='only create plots in png format but do not show them')
-parser.add_argument('-s', metavar='size', type=str, default='640x480',
-        help='window size of the gnuplot window (default: 640x480)')
-parser.add_argument('-t', metavar='terminal', type=str, default='qt',
-        help='use this gnuplot terminal (see the \'help terminal\' command in gnuplot for details)')
-parser.add_argument('pot_file', type=str, help='potfit potential file')
-parser.add_argument('pair_dist_file', type=str, help='pair distribution file', nargs='?')
-args = parser.parse_args()
+        self.__read_lines(self.args.pot_file)
 
-try:
-    f = open(args.pot_file)
-except:
-    sys.stderr.write("Could not open potential file '%s'.\n" % args.pot_file)
-    sys.exit()
-
-try:
-    size = args.s.split('x')
-    if len(size) != 2:
-        sys.stderr.write('Error: Could not read -s parameter\n')
-        sys.stderr.write('\tTry -s 800x600\n')
-        sys.exit()
-    size = [int(s) for s in size]
-except:
-    sys.stderr.write('Error: Could not read -s parameter\n')
-    sys.exit()
-
-num_global = 0
-globals_table = dict()
-pot_table = []
-atom_types = []
-
-# read data from potential file
-line = f.readline()
-while line != '':
-    data = line.split()
-    if line[0] == '#':
-        # header
-        if line[1] == 'F':
-            if data[1] != '0':
-                sys.stderr.write('This tool is designed for analytic potentials!\n')
-                sys.stderr.write('Your potential file format is wrong.\n')
-                sys.exit()
-            cols = int(data[2])
-        if line[1] == 'T':
-            interaction = data[1].lower()
-            if interaction in ['stiweb', 'tersoff']:
-                sys.stderr.write('Error: Currently %s potentials are not supported\n' % interaction)
-                sys.exit()
-        if line[1] == 'C':
-            atom_types = data[1:]
-        pass
-    else:
-        if len(data) > 0 and data[0] == 'global':
-            num_global = int(data[1])
-            for i in range(num_global):
-                line = f.readline().split()
-                globals_table[line[0]] = float(line[1])
-        if len(data) > 0 and data[0] == 'type':
-            name = data[1]
-            do_smooth = 0
-            rmin = 0.0
-            if name.endswith('_sc'):
-                do_smooth = 1
-                name = name[:-3]
-            if name == 'pohlong':
-                name = 'bjs'
-            try:
-                pot_table.append(getattr(functions, name)())
-            except:
-                sys.stderr.write("Could not find the function type >> %s <<\n\n" % name)
-                sys.exit()
-            while line.split()[0] != 'cutoff':
-                line = f.readline()
-            cutoff = float(line.split()[1])
-            line = f.readline()
-            while line[0] == '#':
-                if line.split()[1] == 'rmin':
-                    rmin = float(line.split()[2])
-                line = f.readline()
-            pot_table[-1].set_properties(cutoff, do_smooth, False, rmin)
-            num_params = pot_table[-1].get_num_params()
-            params = []
-            for i in range(num_params):
-                param_data = line.split()
-                if param_data[0].endswith('!'):
-                    params.append([param_data[0][:-1],float(globals_table[param_data[0][:-1]])])
-                else:
-                    params.append([param_data[0],float(param_data[1])])
-                line = f.readline()
-            pot_table[-1].set_params(params)
-    line = f.readline()
-f.close()
-
-num_atom_types = get_num_atom_types(interaction,cols)
-pair_col = num_atom_types * (num_atom_types + 1) / 2
-
-func_strings = []
-for i in range(len(pot_table)):
-    par_data = []
-    for j in range(len(pot_table[i].params)):
-        par_data.append(pot_table[i].params[j][1])
-    func_strings.append(pot_table[i].get_function_string().format(*par_data))
-
-partition = make_partition(interaction, num_atom_types)
-
-# calculate cutoff
-cutoff = [0]*len(partition)
-rmin = [99]*len(partition)
-count = 0
-for i in range(len(partition)):
-    for j in range(sum(partition[i])):
-        cutoff[i] = max(cutoff[i],pot_table[count + j].cutoff)
-        rmin[i] = min(rmin[i],0.8 * pot_table[count + j].rmin)
-    count += sum(partition[i])
-
-# create title strings
-title_pair = []
-title_transfer = []
-for i in range(num_atom_types):
-    for j in range(i, num_atom_types):
-        if atom_types:
-            title_pair.append(atom_types[i]+'-'+atom_types[j])
+        if self.atom_types:
+            num_atom_types = len(self.atom_types)
         else:
-            title_pair.append(str(i)+'-'+str(j))
-    if atom_types:
-        title_transfer.append(atom_types[i])
-    else:
-        title_transfer.append(str(i))
+            num_atom_types = CALC_ATOM_TYPES[self.interaction](self.cols)
+            self.atom_types = [str(i) for i in range(1, num_atom_types + 1)]
 
-# write pair potentials
-f = open('plot_pair', 'w')
-write_gnuplot_header(f, 0, 'pair', [rmin[0],cutoff[0]], [-.3,.5])
-write_gnuplot_data(f, 0, 0, title_pair)
-f.close()
+        self.pair_col = int(num_atom_types * (num_atom_types + 1) / 2)
+        self.func_strings = [
+            pot.function.format(*(p[1] for p in pot.params))
+            for pot in self.pot_table
+            if pot.function
+        ]
 
-# write eam potentials
-if interaction in ['eam', 'adp', 'meam']:
-    f = open('plot_transfer', 'w')
-    write_gnuplot_header(f, 1, 'transfer', [rmin[1],cutoff[1]], [-.3,.5])
-    write_gnuplot_data(f, 1, pair_col, title_transfer)
-    f.close()
+        self.partition = make_partition(self.interaction, num_atom_types)
 
-    f = open('plot_embedding', 'w')
-    write_gnuplot_header(f, 2, 'embedding', [rmin[2],cutoff[2]])
-    write_gnuplot_data(f, 2, pair_col + num_atom_types, title_transfer)
-    f.close()
+        # calculate cutoff
+        self.cutoff = [0.0] * len(self.partition)
+        self.rmin = [99.0] * len(self.partition)
+        count = 0
+        for idx, part in enumerate(self.partition):
+            for j in range(sum(part)):
+                self.cutoff[idx] = max(
+                    self.cutoff[idx], self.pot_table[count + j].cutoff
+                )
+                self.rmin[idx] = min(
+                    self.rmin[idx], 0.8 * self.pot_table[count + j].rmin
+                )
+            count += sum(part)
 
-# write adp potentials
-if interaction == 'adp':
-    f = open('plot_upot', 'w')
-    write_gnuplot_header(f, 3, 'dipole', [rmin[3],cutoff[3]], [-.3,.5])
-    write_gnuplot_data(f, 3, pair_col + 2 * num_atom_types, title_pair)
-    f.close()
+        # create title strings
+        title_pair = []
+        for idx_i, type_i in enumerate(self.atom_types):
+            for idx_j, type_j in enumerate(self.atom_types):
+                if idx_j >= idx_i:
+                    title_pair.append("{}-{}".format(type_i, type_j))
 
-    f = open('plot_wpot', 'w')
-    write_gnuplot_header(f, 4, 'quadrupole', [rmin[4],cutoff[4]], [-.3,.5])
-    write_gnuplot_data(f, 4, 2 * pair_col + 2 * num_atom_types, title_pair)
-    f.close()
+        # write pair potentials
+        with open("plot_pair", "w") as f:
+            self.__write_gnuplot_header(
+                f, 0, "pair", [self.rmin[0], self.cutoff[0]], [-0.3, 0.5]
+            )
+            self.__write_gnuplot_data(f, 0, 0, title_pair)
+            self.files.append("plot_pair")
 
-if interaction == 'meam':
-    f = open('plot_f', 'w')
-    write_gnuplot_header(f, 3, 'f', [rmin[3],cutoff[3]], [-.3,.5])
-    write_gnuplot_data(f, 3, pair_col + 2 * num_atom_types, title_pair)
-    f.close()
+        # write eam potentials
+        if self.interaction in ["eam", "adp", "meam"]:
+            with open("plot_transfer", "w") as f:
+                self.__write_gnuplot_header(
+                    f, 1, "transfer", [self.rmin[1], self.cutoff[1]], [-0.3, 0.5]
+                )
+                self.__write_gnuplot_data(f, 1, self.pair_col, self.atom_types)
+                self.files.append("plot_transfer")
 
-    f = open('plot_g', 'w')
-    write_gnuplot_header(f, 4, 'g', [-1.1,1.1])
-    write_gnuplot_data(f, 4, 2 * pair_col + 2 * num_atom_types, title_pair)
-    f.close()
+            with open("plot_embedding", "w") as f:
+                self.__write_gnuplot_header(
+                    f, 2, "embedding", [self.rmin[2], self.cutoff[2]]
+                )
+                self.__write_gnuplot_data(
+                    f, 2, self.pair_col + num_atom_types, self.atom_types
+                )
+                self.files.append("plot_embedding")
 
-if not args.f:
-    subprocess.call(["gnuplot", "-persist", "plot_pair"])
-    if interaction in ['eam', 'adp', 'meam']:
-        subprocess.call(["gnuplot", "-persist", "plot_transfer"])
-        subprocess.call(["gnuplot", "-persist", "plot_embedding"])
-    if interaction == 'adp':
-        subprocess.call(["gnuplot", "-persist", "plot_upot"])
-        subprocess.call(["gnuplot", "-persist", "plot_wpot"])
-    elif interaction == 'meam':
-        subprocess.call(["gnuplot", "-persist", "plot_f"])
-        subprocess.call(["gnuplot", "-persist", "plot_g"])
+        # write adp potentials
+        if self.interaction == "adp":
+            with open("plot_upot", "w") as f:
+                self.__write_gnuplot_header(
+                    f, 3, "dipole", [self.rmin[3], self.cutoff[3]], [-0.3, 0.5]
+                )
+                self.__write_gnuplot_data(
+                    f, 3, self.pair_col + 2 * num_atom_types, title_pair
+                )
+                self.files.append("plot_upot")
 
-if args.p:
-    os.remove('plot_pair')
-    if interaction in ['eam', 'adp', 'meam']:
-        os.remove('plot_transfer')
-        os.remove('plot_embedding')
-    if interaction == 'adp':
-        os.remove('plot_upot')
-        os.remove('plot_wpot')
-    elif interaction == 'meam':
-        os.remove('plot_f')
-        os.remove('plot_g')
+            with open("plot_wpot", "w") as f:
+                self.__write_gnuplot_header(
+                    f, 4, "quadrupole", [self.rmin[4], self.cutoff[4]], [-0.3, 0.5]
+                )
+                self.__write_gnuplot_data(
+                    f, 4, 2 * self.pair_col + 2 * num_atom_types, title_pair
+                )
+                self.files.append("plot_wpot")
+
+        if self.interaction == "meam":
+            with open("plot_f", "w") as f:
+                self.__write_gnuplot_header(
+                    f, 3, "f", [self.rmin[3], self.cutoff[3]], [-0.3, 0.5]
+                )
+                self.__write_gnuplot_data(
+                    f, 3, self.pair_col + 2 * num_atom_types, title_pair
+                )
+                self.files.append("plot_f")
+
+            with open("plot_g", "w") as f:
+                self.__write_gnuplot_header(f, 4, "g", [-1.1, 1.1])
+                self.__write_gnuplot_data(
+                    f, 4, 2 * self.pair_col + 2 * num_atom_types, title_pair
+                )
+                self.files.append("plot_g")
+
+    def plot(self) -> None:
+        for filename in self.files:
+            subprocess.call(("gnuplot", "-persist", filename))
+
+    def cleanup(self) -> None:
+        if self.args.keep:
+            return
+
+        for filename in (pathlib.Path(x) for x in self.files):
+            filename.unlink()
+
+    def __read_lines(self, pot_file: pathlib.Path) -> None:
+        if pot_file.suffix == ".gz":
+            import gzip
+
+            with gzip.open(str(pot_file)) as f:
+                self.__read_lines_impl(f)
+        else:
+            with open(str(pot_file)) as f:
+                self.__read_lines_impl(f)
+
+    def __handle_header(self, identifier: str, items: List[str]) -> None:
+        if identifier == "F":
+            if items[0] != "0":
+                raise RuntimeError("plotapot only works with analytic potentials!")
+            self.cols = int(items[1])
+        elif identifier == "T":
+            if items[0].lower() in ["stiweb", "tersoff"]:
+                raise RuntimeError("{} potentials are not supported".format(items[0]))
+            self.interaction = items[0].lower()
+        elif identifier == "C":
+            self.atom_types = items
+
+    def __read_lines_impl(self, pot_file: IO[Any]) -> None:
+        line = pot_file.readline()
+
+        while line:
+            data = line.split()
+
+            if line[0] == "#":
+                self.__handle_header(line[1], data[1:])
+
+            elif len(data) > 0 and data[0] == "global":
+                for i in range(int(data[1])):
+                    line = pot_file.readline().split()
+                    self.globals_table[line[0]] = float(line[1])
+
+            elif len(data) > 0 and data[0] == "type":
+                name = data[1]
+                do_smooth = 0
+                rmin = 0.0
+
+                if name.endswith("_sc"):
+                    do_smooth = 1
+                    name = name[:-3]
+
+                name = REPLACE_FUNCTIONS.get(name, name)
+
+                try:
+                    potential = getattr(functions, name)()
+                except AttributeError:
+                    raise RuntimeError(
+                        "Function >> {} << is not supported".format(name)
+                    )
+
+                while line.split()[0] != "cutoff":
+                    line = pot_file.readline()
+
+                cutoff = float(line.split()[1])
+                line = pot_file.readline()
+
+                while line[0] == "#" or line == "":
+                    if line.split()[1] == "rmin":
+                        rmin = float(line.split()[2])
+                    line = pot_file.readline()
+
+                potential.set_properties(cutoff, do_smooth, False, rmin)
+
+                params = []
+
+                for i in potential.params:
+                    param_data = line.split()
+                    if param_data[0].endswith("!"):
+                        name = param_data[0][:-1]
+                        params.append((name, float(self.globals_table[name])))
+                    else:
+                        params.append((param_data[0], float(param_data[1])))
+                    line = pot_file.readline()
+
+                potential.set_params(params)
+                self.pot_table.append(potential)
+
+            line = pot_file.readline()
+
+    def __write_gnuplot_header(
+        self, f: IO[Any], index: int, prefix: str, xra=[0, 6], yra="auto"
+    ) -> None:
+        f.write("reset;\n")
+        f.write("set termoption solid;\n")
+        width = len(self.partition[index])
+        if self.args.png:
+            f.write("set term pngcairo;\n")
+            f.write("set output 'plot_%s.png';\n" % prefix)
+        else:
+            f.write(
+                "set term %s title '%s' size %s,%s\n"
+                % (
+                    self.args.t,
+                    prefix + " potentials",
+                    width * self.args.size[0],
+                    self.args.size[1],
+                )
+            )
+        f.write("set samples 1000;\n")
+        f.write("set grid;\n")
+        f.write("set xrange [{}:{}];\n".format(*xra))
+        if yra != "auto":
+            f.write("set yrange [{}:{}];\n".format(*yra))
+        f.write("cof(x) = x**4/(1+x**4);\n")
+
+    def __write_gnuplot_data(
+        self, f: IO[Any], index: int, offset: int, title_string: List[str]
+    ) -> None:
+        count = offset
+        if len(self.partition[index]) > 1:
+            f.write("set multiplot;\n")
+            sub_idx = 0
+            for i in range(len(self.partition[index])):
+                f.write(
+                    "set origin {},0;\n".format(
+                        i * float(1.0 / len(self.partition[index]))
+                    )
+                )
+                f.write(
+                    "set size {},1;\n".format(float(1.0 / len(self.partition[index])))
+                )
+                f.write("pl ")
+                for j in range(count, count + self.partition[index][i]):
+                    if self.pot_table[j].do_smooth != 0:
+                        f.write(
+                            "cof((x-{0})/{1})*(".format(
+                                self.pot_table[j].cutoff,
+                                self.pot_table[j].params[-1][1],
+                            )
+                        )
+                    f.write(self.func_strings[j])
+                    if self.pot_table[j].do_smooth != 0:
+                        f.write(")")
+                    f.write(" w l")
+                    f.write(" t '%s'" % title_string[sub_idx])
+                    f.write(" lt 0 lw 2 lc %s" % (j + 1 - count))
+                    if index == 0 and self.args.pair_dist_file:
+                        f.write(
+                            ", '%s' i %s axes x1y2 w steps lw 1.2 lc %s t 'g(r) %s'"
+                            % (
+                                self.args.pair_dist_file,
+                                j,
+                                (j + 1 - count),
+                                title_string[j],
+                            )
+                        )
+                    if j < count + self.partition[index][i] - 1:
+                        f.write(", \\\n\t")
+                    sub_idx += 1
+                f.write(";\n")
+                count += self.partition[index][i]
+        else:
+            f.write("pl ")
+            for i in range(count, count + self.partition[index][0]):
+                if self.pot_table[i].do_smooth != 0:
+                    f.write(
+                        "cof((x-{0})/{1})*(".format(
+                            self.pot_table[i].cutoff, self.pot_table[i].params[-1][1]
+                        )
+                    )
+                f.write(self.func_strings[i])
+                if self.pot_table[i].do_smooth != 0:
+                    f.write(")")
+                f.write(" w l")
+                f.write(" t '%s'" % title_string[i - count])
+                f.write(" lt 0 lw 2 lc %s" % (i + 1 - count))
+                if index == 0 and self.args.pair_dist_file:
+                    f.write(
+                        ", '%s' i %s axes x1y2 w steps lw 1.2 lc %s t 'g(r) %s'"
+                        % (
+                            self.args.pair_dist_file,
+                            i - count,
+                            (i + 1 - count),
+                            title_string[i - count],
+                        )
+                    )
+                if i < count + self.partition[index][0] - 1:
+                    f.write(", \\\n\t")
+            f.write(";\n")
+
+
+def valid_size(value: str) -> List[int]:
+    size = value.split("x")
+    if len(size) != 2:
+        raise argparse.ArgumentTypeError(
+            "Error: Could not read -s parameter, use <a>x<b>, e.g. 800x600"
+        )
+    try:
+        return [int(s) for s in size]
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(
+            "Error: Could not read -s parameter, invalid values found"
+        )
+
+
+def valid_file(value: str) -> pathlib.Path:
+    path = pathlib.Path(value)
+    if not path.exists():
+        raise argparse.ArgumentTypeError(
+            "Error: Could not find potential file {}".format(value)
+        )
+    if not path.is_file():
+        raise argparse.ArgumentTypeError(
+            "Error: Potential file {} is not a regular file".format(value)
+        )
+    return path
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Plot an analytic potfit potential using gnuplot."
+    )
+    parser.add_argument(
+        "-k", "--keep", action="store_true", help="don't delete gnuplot input files"
+    )
+    parser.add_argument(
+        "-p",
+        "--png",
+        action="store_true",
+        help="only create plots in png format but do not show them",
+    )
+    parser.add_argument(
+        "-s",
+        "--size",
+        type=valid_size,
+        default="640x480",
+        help="window size of the gnuplot window (default: 640x480)",
+    )
+    parser.add_argument(
+        "-t",
+        metavar="terminal",
+        default="qt",
+        help="use this gnuplot terminal (see the 'help terminal' command in gnuplot for details)",
+    )
+    parser.add_argument("pot_file", type=valid_file, help="potfit potential file")
+    parser.add_argument(
+        "pair_dist_file", type=str, help="pair distribution file", nargs="?"
+    )
+
+    try:
+        plot = PlotAPot(parser.parse_args())
+        plot.plot()
+        plot.cleanup()
+    except RuntimeError as e:
+        print(e)
+        sys.exit()
+
+
+if __name__ == "__main__":
+    main()
