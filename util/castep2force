@@ -31,17 +31,17 @@ def atomic_stress(stress):
 
 def fatal(message):
     if message.endswith("\n"):
-        sys.stderr.write(f"FATAL: {message}")
+        sys.stderr.write("FATAL: {}".format(message))
     else:
-        sys.stderr.write(f"FATAL: {message}\n")
+        sys.stderr.write("FATAL: {}\n".format(message))
     sys.exit(1)
 
 
 def warning(message):
     if message.endswith("\n"):
-        sys.stderr.write(f"WARN: {message}")
+        sys.stderr.write("WARN: {}".format(message))
     else:
-        sys.stderr.write(f"WARN: {message}\n")
+        sys.stderr.write("WARN: {}\n".format(message))
 
 
 class Atom:
@@ -59,7 +59,9 @@ class Atom:
         self.type = atom_type
 
     def to_string(self):
-        return f"{self.type} {self.x:23.16E} {self.y:23.16E} {self.z:23.16E} {self.f_x:23.16E} {self.f_y:23.16E} {self.f_z:23.16E}"
+        return "{} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E}".format(
+            self.type, self.x, self.y, self.z, self.f_x, self.f_y, self.f_z
+        )
 
 
 class Box:
@@ -69,7 +71,7 @@ class Box:
         self.z = z
 
     def to_string(self):
-        return f"{self.x:23.16E} {self.y:23.16E} {self.z:23.16E}"
+        return "{:23.16E} {:23.16E} {:23.16E}".format(self.x, self.y, self.z)
 
 
 class Configuration:
@@ -95,20 +97,27 @@ class Configuration:
         s = []
         # See https://www.potfit.net/wiki/doku.php?id=config:main for
         # specification for the output format
-        s.append(f"#N {number_of_atoms} 1")
-        s.append(f"#C {' '.join(self.types_of_element.keys())}")
-        s.append(f"#X {self.boxes[0].to_string()}")
-        s.append(f"#Y {self.boxes[1].to_string()}")
-        s.append(f"#Z {self.boxes[2].to_string()}")
-        s.append(f"#E {self.energy:23.16E}")
+        s.append("#N {} 1".format(number_of_atoms))
+        s.append("#C {}".format(" ".join(self.types_of_element.keys())))
+        s.append("#X {}".format(self.boxes[0].to_string()))
+        s.append("#Y {}".format(self.boxes[1].to_string()))
+        s.append("#Z {}".format(self.boxes[2].to_string()))
+        s.append("#E {:23.16E}".format(self.energy))
 
         # Only output stresses if they are in the input file
         if len(self.stress) == 3:
             # #S stress_xx stress_yy stress_zz stress_xy stress_yz stress_xz
             s.append(
-                f"#S {self.stress[0][0]:23.16E} {self.stress[1][1]:23.16E} {self.stress[2][2]:23.16E} {self.stress[0][1]:23.16E} {self.stress[1][2]:23.16E} {self.stress[0][2]:23.16E}"
+                "#S {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E}".format(
+                    self.stress[0][0],
+                    self.stress[1][1],
+                    self.stress[2][2],
+                    self.stress[0][1],
+                    self.stress[1][2],
+                    self.stress[0][2],
+                )
             )
-        s.append(f"#F")
+        s.append("#F")
         # End of header
         # Start of body
         for _, value in self.body.items():
@@ -210,7 +219,9 @@ def read_configuration(file, potentials):
         for element, body in config.body.items():
             if element not in potentials:
                 fatal(
-                    f"Element '{element}' in MD file, but no chemical potential given"
+                    "Element '{}' in MD file, but no chemical potential given".format(
+                        element
+                    )
                 )
             energy -= potentials[element] * len(body)
             number_of_atoms += len(body)
@@ -288,7 +299,7 @@ def read_md_file(filename, potentials):
                     break
                 configurations.append(config)
     except FileNotFoundError:
-        fatal(f"Cannot read file '{filename}' as it does not exist")
+        fatal("Cannot read file '{}' as it does not exist".format(filename))
 
     return configurations
 
