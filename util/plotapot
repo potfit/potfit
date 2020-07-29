@@ -65,7 +65,7 @@ def make_partition(interaction, n):
         pair.append(n%3)
 
     # eam distribution
-    for i in range(n/3):
+    for i in range(int(n/3)):
         transfer.append(3)
     if n % 3 != 0:
         transfer.append(n%3)
