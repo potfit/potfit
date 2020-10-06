@@ -13,3 +13,6 @@ potfit_*
 *.swp
 .waf*
 .mypy_cache
+tests/assets/
+tests/kim/ex_model_Ar_P_LJ.default
+tests/results.*ml

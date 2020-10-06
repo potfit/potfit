@@ -125,7 +125,7 @@ def generate_stiweb_potential(args, interaction, output):
     write_header(args, cols, output)
     for i in table:
         output.write('\n')
-        i.write_pot_table(output)
+        output.write(i.write_pot_table())
     output.write('\n')
     output.write('type lambda\n')
     output.write('cutoff {}\n'.format(args.cutoff))
@@ -147,7 +147,7 @@ def generate_tersoff_potential(args, interaction, output):
     write_header(args, cols, output)
     for i in table:
         output.write('\n')
-        i.write_pot_table(output)
+        output.write(i.write_pot_table())
 
 
 def generate_regular_potential(args, interaction, output):
@@ -164,7 +164,7 @@ def generate_regular_potential(args, interaction, output):
         write_global_cutoff(args.random, output)
     for i in pot_table:
         output.write('\n')
-        i.write_pot_table(output)
+        output.write(i.write_pot_table())
 
 
 def write_header(args, cols, output):
