@@ -6,7 +6,7 @@
  ****************************************************************
  *
  * Copyright 1996, 1997, 1998, 1999, 2000 - Brian Gough
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *

@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -149,14 +149,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 #endif  // APOT && !MPI
 
 #if defined(MPI)
+    MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (flag == 1)
+      break; // Exception: flag 1 means clean up
 #if !defined(APOT)
     // exchange potential and flag value
     MPI_Bcast(xi, g_pot.calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif  // APOT
-    MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    if (flag == 1)
-      break; // Exception: flag 1 means clean up
 
 #if defined(APOT)
     if (g_mpi.myid == 0)

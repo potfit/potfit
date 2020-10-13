@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -45,5 +45,9 @@ void read_pot_table(char const* potential_filename);
 void update_apot_table(double* xi);
 void update_calc_table(double* xi_opt, double* xi_calc, int do_all);
 #endif  // APOT
+
+#if defined(KIM)
+void update_kim_table(const double* xi);
+#endif // KIM
 
 #endif  // POTENTIAL_INPUT_H_INCLUDED

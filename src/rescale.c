@@ -5,7 +5,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -50,7 +50,7 @@
 
 double rescale(pot_table_t* pt, double upper, int flag)
 {
-  int mincol, maxcol, col, col2, first, vals, h, i, j, typ1, typ2, sign;
+  int mincol = 999, maxcol = 0, col, col2, first, vals, h, i, j, typ1, typ2, sign;
   neigh_t* neigh = NULL;
   double fnval, pos, grad, a;
   double min = 1e100, max = -1e100;

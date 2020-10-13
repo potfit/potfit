@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -424,18 +424,91 @@ void update_stiweb_pointers(double* xi)
       sw->delta[i] = index++;
       sw->a1[i] = index++;
       index += 2;
+      if (g_pot.have_globals) {
+        for (int j = 0; j < g_pot.apot_table.globals; ++j) {
+          for (int k = 0; k < g_pot.apot_table.n_glob[j]; ++k) {
+            if (g_pot.apot_table.global_idx[j][k][0] == i) {
+              switch (g_pot.apot_table.global_idx[j][k][1]) {
+                case 0:
+                  sw->A[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 1:
+                  sw->B[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 2:
+                  sw->p[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 3:
+                  sw->q[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 4:
+                  sw->delta[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 5:
+                  sw->a1[i] = xi + g_pot.global_idx + j;
+                  break;
+                default:
+                  error(1, "Invalid global parameter reference found!");
+              }
+            }
+          }
+        }
+      }
     }
     // set the threebody parameters (stiweb_3)
     for (int i = 0; i < g_calc.paircol; i++) {
       sw->gamma[i] = index++;
       sw->a2[i] = index++;
       index += 2;
+      if (g_pot.have_globals) {
+        for (int j = 0; j < g_pot.apot_table.globals; ++j) {
+          for (int k = 0; k < g_pot.apot_table.n_glob[j]; ++k) {
+            if (g_pot.apot_table.global_idx[j][k][0] == g_calc.paircol + i) {
+              switch (g_pot.apot_table.global_idx[j][k][1]) {
+                case 0:
+                  sw->gamma[i] = xi + g_pot.global_idx + j;
+                  break;
+                case 1:
+                  sw->a2[i] = xi + g_pot.global_idx + j;
+                  break;
+                default:
+                  error(1, "Invalid global parameter reference found!");
+              }
+            }
+          }
+        }
+      }
     }
     // set the lambda pointer
-    for (int i = 0; i < g_param.ntypes; i++)
-      for (int j = 0; j < g_param.ntypes; j++)
+    for (int i = 0; i < g_param.ntypes; i++) {
+      for (int j = 0; j < g_param.ntypes; j++) {
         for (int k = j; k < g_param.ntypes; k++) {
-          sw->lambda[i][j][k] = sw->lambda[i][k][j] = index++;
+          sw->lambda[i][j][k] = index;
+          sw->lambda[i][k][j] = index++;
         }
+      }
+    }
+    if (g_pot.have_globals) {
+      for (int i = 0; i < g_pot.apot_table.globals; ++i) {
+        for (int j = 0; j < g_pot.apot_table.n_glob[i]; ++j) {
+          if (g_pot.apot_table.global_idx[i][j][0] == 2 * g_calc.paircol) {
+            int n1 = g_pot.apot_table.global_idx[i][j][1] / g_calc.paircol;
+            int temp = g_pot.apot_table.global_idx[i][j][1] % g_calc.paircol;
+            int n2 = -1;
+            int n3 = -1;
+            for (int k = g_param.ntypes - 1; k >= 0; ++k) {
+              int min_val = (k * g_param.ntypes - k * (k - 1) / 2);
+              if (temp >= min_val) {
+                n2 = k;
+                n3 = temp - min_val + k;
+                break;
+              }
+            }
+            sw->lambda[n1][n2][n3] = xi + g_pot.global_idx + i;
+            sw->lambda[n1][n3][n2] = xi + g_pot.global_idx + i;
+          }
+        }
+      }
+    }
   }
 }

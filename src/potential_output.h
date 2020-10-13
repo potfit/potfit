@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -36,9 +36,9 @@ void write_pot_table_lammps();
 
 void write_plotpot_pair(pot_table_t*, const char*);
 void write_altplot_pair(pot_table_t*, const char*);
-#if defined(PDIST)
-void write_pairdist(pot_table_t*, const char*);
-#endif  // PDIST
+#if defined(BINDIST)
+void write_bindist_file(pot_table_t*, const char*);
+#endif  // BINDIST
 
 /* functions for electrostatic calculations  */
 #if defined(COULOMB)

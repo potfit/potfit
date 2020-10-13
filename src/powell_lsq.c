@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -41,13 +41,13 @@
 
 #if defined(MKL)
 #include <mkl_lapack.h>
-#elif defined(ACML)
-#include <acml.h>
 #elif defined(__ACCELERATE__)
 #include <Accelerate/Accelerate.h>
+#elif defined(LAPACK)
+#include <lapacke.h>
 #else
 #error No math library defined!
-#endif  // ACML
+#endif  // MKL
 
 #include "bracket.h"
 #include "force.h"
@@ -70,23 +70,6 @@ int gamma_update(double**, double, double, double*, double*, double*, int, int,
 void lineqsys_init(double**, double**, double*, double*, int, int);
 void lineqsys_update(double**, double**, double*, double*, int, int, int);
 double normalize_vector(double*, int);
-
-double** mat_double(int rowdim, int coldim)
-{
-  double** matrix = NULL;
-
-  // matrix: array of array of pointers
-  // matrix: pointer to rows
-  matrix = (double**)Malloc(rowdim * sizeof(double*));
-
-  // matrix[0]: pointer to elements
-  matrix[0] = (double*)Malloc(rowdim * coldim * sizeof(double));
-
-  for (int i = 1; i < rowdim; i++)
-    matrix[i] = matrix[i - 1] + coldim;
-
-  return matrix;
-}
 
 /****************************************************************
  *
@@ -139,12 +122,10 @@ void run_powell_lsq(double* xi)
   /* Vector pointing into correct dir'n */
   double* delta = (double*)Malloc(g_calc.ndimtot * sizeof(double)); /* ==0 */
 
-#if !defined(ACML) // work arrays not needed for ACML
   int worksize = 64 * g_calc.ndim;
   // work array to be used by dsysvx
   double* work = (double*)Malloc(worksize * sizeof(double));
   int* iwork = (int*)Malloc(g_calc.ndim * sizeof(int));
-#endif  // ACML
 
   /* calculate the first force */
   F1 = calc_forces(xi, forces_1, 0);
@@ -156,7 +137,7 @@ void run_powell_lsq(double* xi)
 
   memcpy(forces_2, forces_1, g_calc.mdim * sizeof(double));
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   printf("loops\t\terror_sum\tforce calculations\n");
   printf("%5d\t%17.6f\t%6d\n", 0, F1, g_calc.fcalls);
 #else
@@ -188,22 +169,25 @@ void run_powell_lsq(double* xi)
 
       /* try again */
       if (i != 0) {
-/* ok, now this is serious, better exit cleanly */
-#if !defined(APOT)
-        write_pot_table_potfit(g_files.tempfile); /*emergency writeout */
-        warning("F does not depend on xi[%d], fit impossible!\n",
-                g_pot.opt_pot.idx[i - 1]);
-#else
+      // ok, now this is serious, better exit cleanly
+#if defined(KIM)
+        update_kim_table(xi);
+        write_pot_table_potfit(g_files.tempfile);
+        warning("F does not depend on the %d. value of the %d. parameter (%s).\n",
+            g_pot.apot_table.idxparam[i - 1] + 1, g_pot.apot_table.idxpot[i - 1] + 1,
+            g_kim.params[g_pot.apot_table.idxpot[i - 1]].name);
+        warning("Fit impossible!\n");
+#elif defined(APOT)
         update_apot_table(xi);
         write_pot_table_potfit(g_files.tempfile);
-        warning(
-            "F does not depend on the %d. parameter (%s) of the %d. "
-            "potential.\n",
+        warning("F does not depend on the %d. parameter (%s) of the %d. potential.\n",
             g_pot.apot_table.idxparam[i - 1] + 1,
-            g_pot.apot_table.param_name[g_pot.apot_table.idxpot[i - 1]]
-                                       [g_pot.apot_table.idxparam[i - 1]],
+            g_pot.apot_table.param_name[g_pot.apot_table.idxpot[i - 1]][g_pot.apot_table.idxparam[i - 1]],
             g_pot.apot_table.idxpot[i - 1] + 1);
         warning("Fit impossible!\n");
+#else
+        write_pot_table_potfit(g_files.tempfile); /*emergency writeout */
+        warning("F does not depend on xi[%d], fit impossible!\n", g_pot.opt_pot.idx[i - 1]);
 #endif  // APOT
         break;
       }
@@ -223,25 +207,15 @@ void run_powell_lsq(double* xi)
       /* All in one driver routine */
       int j = 1; /* 1 rhs */
 
-/* Linear Equation Solution (lapack) */
-#if defined(MKL)
-      dsysvx(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
-             &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
-             &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
-#elif defined(ACML)
-      dsysvx(fact[0], uplo[0], g_calc.ndim, j, &lineqsys[0][0], g_calc.ndim,
-             &les_inverse[0][0], g_calc.ndim, perm_indx, p, g_calc.ndim, q,
-             g_calc.ndim, &cond, &ferror, &berror, &i);
-#elif defined(__ACCELERATE__)
+      /* Linear Equation Solution (lapack) */
       dsysvx_(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
              &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
              &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
-#endif
 
-#if defined(DEBUG) && !(defined APOT)
+#if defined(DEBUG) && !((defined APOT) || defined(KIM))
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3],
              q[4], q[5], q[6], q[7]);
-#endif  // DEBUG && !APOT
+#endif  // DEBUG && !(APOT || KIM)
 
       if (i > 0 && i <= g_calc.ndim) {
         warning("Linear equation system singular after step %d i=%d\n", m, i);
@@ -255,44 +229,29 @@ void run_powell_lsq(double* xi)
         for (j = 0; j < g_calc.ndim; j++)
           delta[g_pot.opt_pot.idx[i]] += d[i][j] * q[j];
 
-#if !defined(APOT)
-        if ((g_param.usemaxch) &&
-            (g_calc.maxchange[g_pot.opt_pot.idx[i]] > 0) &&
-            (fabs(delta[g_pot.opt_pot.idx[i]]) >
-             g_calc.maxchange[g_pot.opt_pot.idx[i]])) {
-          /* something seriously went wrong,
-             parameter idx[i] out of control */
-          warning("Direction vector component %d out of range in step %d\n",
-                  g_pot.opt_pot.idx[i], m);
-          warning("(%g instead of %g).\n", fabs(delta[g_pot.opt_pot.idx[i]]),
-                  g_calc.maxchange[g_pot.opt_pot.idx[i]]);
+#if defined(APOT) || defined(KIM)
+        if ((xi[g_pot.opt_pot.idx[i]] + delta[g_pot.opt_pot.idx[i]]) < g_pot.apot_table.pmin[g_pot.apot_table.idxpot[i]] [g_pot.apot_table.idxparam[i]]) {
+          delta[g_pot.opt_pot.idx[i]] = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[i]] [g_pot.apot_table.idxparam[i]] - xi[g_pot.opt_pot.idx[i]];
+        }
+        if ((xi[g_pot.opt_pot.idx[i]] + delta[g_pot.opt_pot.idx[i]]) > g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]] [g_pot.apot_table.idxparam[i]]) {
+          delta[g_pot.opt_pot.idx[i]] = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]] [g_pot.apot_table.idxparam[i]] - xi[g_pot.opt_pot.idx[i]];
+        }
+#else
+        if ((g_param.usemaxch) && (g_calc.maxchange[g_pot.opt_pot.idx[i]] > 0) &&
+            (fabs(delta[g_pot.opt_pot.idx[i]]) > g_calc.maxchange[g_pot.opt_pot.idx[i]])) {
+          // something seriously went wrong, parameter idx[i] out of control
+          warning("Direction vector component %d out of range in step %d\n", g_pot.opt_pot.idx[i], m);
+          warning("(%g instead of %g).\n", fabs(delta[g_pot.opt_pot.idx[i]]), g_calc.maxchange[g_pot.opt_pot.idx[i]]);
           warning("Restarting inner loop\n");
           breakflag = 1;
         }
-#else
-        if ((xi[g_pot.opt_pot.idx[i]] + delta[g_pot.opt_pot.idx[i]]) <
-            g_pot.apot_table.pmin[g_pot.apot_table.idxpot[i]]
-                                 [g_pot.apot_table.idxparam[i]]) {
-          delta[g_pot.opt_pot.idx[i]] =
-              g_pot.apot_table.pmin[g_pot.apot_table.idxpot[i]]
-                                   [g_pot.apot_table.idxparam[i]] -
-              xi[g_pot.opt_pot.idx[i]];
-        }
-        if ((xi[g_pot.opt_pot.idx[i]] + delta[g_pot.opt_pot.idx[i]]) >
-            g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]]
-                                 [g_pot.apot_table.idxparam[i]]) {
-          delta[g_pot.opt_pot.idx[i]] =
-              g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]]
-                                   [g_pot.apot_table.idxparam[i]] -
-              xi[g_pot.opt_pot.idx[i]];
-        }
-#endif  // !APOT
+#endif
       }
 
       if (breakflag)
         break;
 
-      /*     and store delta */
+      // and store delta
       memcpy(delta_norm, delta, g_calc.ndimtot * sizeof(double));
 
       F2 = F1; /*shift F */
@@ -300,7 +259,7 @@ void run_powell_lsq(double* xi)
       /* (c) minimize F(xi) along vector delta, return new F */
       F1 = linmin(xi, delta, F1, &xi1, &xi2, forces_1, forces_2);
 
-#if defined(DEBUG)
+#if defined(DEBUG) && !((defined APOT) || defined(KIM))
       printf("%f %6g %f %f %d\n", F1, cond, ferror, berror, i);
 #endif  // DEBUG
 
@@ -351,11 +310,10 @@ void run_powell_lsq(double* xi)
 
 /* Print the steps in current loop, F, a few values of xi, and total number of
  * fn calls */
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
     printf("%5d\t%17.6f\t%6d\n", m, F1, g_calc.fcalls);
 #else
-    printf("%d %f %f %f %f %f %f %d\n", m, F1, xi[0], xi[1], xi[2], xi[3],
-           xi[4], g_calc.fcalls);
+    printf("%d %f %f %f %f %f %f %d\n", m, F1, xi[0], xi[1], xi[2], xi[3], xi[4], g_calc.fcalls);
 #endif  // APOT
     fflush(stdout);
 
@@ -391,6 +349,8 @@ void run_powell_lsq(double* xi)
     if (g_files.tempfile && strlen(g_files.tempfile)) {
 #if defined(APOT)
       update_apot_table(xi);
+#elif defined(KIM)
+      update_kim_table(xi);
 #endif  // APOT
       write_pot_table_potfit(g_files.tempfile);
     }
@@ -413,6 +373,8 @@ void run_powell_lsq(double* xi)
 
 #if defined(APOT)
   update_apot_table(xi);
+#elif defined(KIM)
+  update_kim_table(xi);
 #endif  // APOT
 }
 
@@ -443,12 +405,9 @@ int gamma_init(double** gamma, double** d, double* xi, double* force_xi)
   /*initialize gamma */
   for (int i = 0; i < g_calc.ndim; i++) {
     store = xi[g_pot.opt_pot.idx[i]];
-#if defined(APOT)
-    scale =
-        g_pot.apot_table
-            .pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]] -
-        g_pot.apot_table
-            .pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
+#if defined(APOT) || defined(KIM)
+    scale = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]] -
+      g_pot.apot_table .pmin[g_pot.apot_table.idxpot[i]][g_pot.apot_table.idxparam[i]];
     xi[g_pot.opt_pot.idx[i]] += (EPS * scale);
 #else
     scale = 1.0;

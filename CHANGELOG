@@ -1,3 +1,65 @@
+20200517
+- add support for LAPACK as an alternative to MKL
+
+20190811
+- add new parameter "lammpspotsteps" which defines the number of sampling
+  points when writing LAMMPS potentials
+
+20190810
+- properly handle CRLF input files (with warnings)
+- remove debug log line and add missing newline
+- fix invalid memory access for punishment pointer
+- only print error message when cannot print LAMMPS potential
+
+20190716
+- Fix crash when using diff_evo with a huge number of atoms
+
+20190714
+- Fix wrong KIM values when using more than one configuration
+
+20190623
+- Fix crash with OpenKIM and models which use Integer parameters
+- Fix short distance error when writing a LAMMPS ADP potential
+
+20190618
+- Fix analytic potential functions "mishin" and "gljm"
+
+20190610
+- Fix invalid function pointers for APOT potentials using MPI parallelization.
+- Fix crash when terminating MPI calculations.
+- Fix crashes when using multiple configurations with KIM potentials.
+
+20190419
+- Add support for writing PAIR potentials in LAMMPS format.
+
+20190331
+- Update to latest OpenKIM API v2.0.2.
+
+20190325
+- Add basic support for OpenKIM v2.0 API, version 1.0 is no longer supported.
+  Support for MPI is not yet available.
+
+20180923
+- Replace 'dist' option with 'bindist', functionality is the same.
+  'dist' is too confusing and is completely unrelated to the regular pair distribution file.
+  Instead it creates a binned pair distribution of the potential access with respect to
+  the provided tabulated potentials.
+
+20180909
+- Remove support for ACML. For details see https://github.com/potfit/potfit/issues/43
+
+20180709:
+- Fix stiweb and tersoff potentials when used together with global parameters
+
+20180226:
+- Disable LAMMPS output for MEAM potentials, which is currently not implemented properly
+
+20180214:
+- If there are no atoms inside a potential interaction range potfit will now report an error
+- Added tests for minimal distance calculation
+
+=======================================================
+
 potfit-next
 + completely rewrote internal potfit data structure
 + move source code into src directory

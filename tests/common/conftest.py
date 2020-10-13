@@ -5,20 +5,41 @@ def pytest_runtest_logstart(nodeid, location):
     if not path.startswith('common'):
         raise pytest.UsageError("Please run the tests from the tests/ base directory!")
 
-potfit_obj = None
+potfit_apot_obj = None
+potfit_tab_obj = None
 
-def get_potfit_obj():
+def get_potfit_apot_obj(request):
     import sys
-    sys.path.insert(0, str(pytest.config.rootdir))
+    sys.path.insert(0, str(request.config.rootdir))
     import potfit
-    global potfit_obj
-    if potfit_obj == None:
-        potfit_obj = potfit.Potfit(__file__, 'apot', 'pair')
-    return potfit_obj
+    global potfit_apot_obj
+    global potfit_tab_obj
+    if potfit_apot_obj is None:
+        potfit_apot_obj = potfit.Potfit(__file__, interaction='pair', model='apot')
+        potfit_tab_obj = None
+    return potfit_apot_obj
+
+def get_potfit_tab_obj(request):
+    import sys
+    sys.path.insert(0, str(request.config.rootdir))
+    import potfit
+    global potfit_apot_obj
+    global potfit_tab_obj
+    if potfit_tab_obj is None:
+        potfit_tab_obj = potfit.Potfit(__file__, interaction='pair', model='tab')
+        potfit_apot_obj = None
+    return potfit_tab_obj
 
 @pytest.fixture()
-def potfit():
-    p = get_potfit_obj()
+def potfit_apot(request):
+    p = get_potfit_apot_obj(request)
+    p.reset()
+    yield p
+    p.clear()
+
+@pytest.fixture()
+def potfit_tab(request):
+    p = get_potfit_tab_obj(request)
     p.reset()
     yield p
     p.clear()

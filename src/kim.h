@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -32,10 +32,7 @@
 
 #if defined(KIM)
 
-#include "KIM_API_C.h"
-#include "KIM_API_status.h"
-
-#include "kim.h"
+#include <KIM_SimulatorHeaders.h>
 
 #if !defined(DIM)
 #define DIM 3
@@ -44,6 +41,7 @@ STATIC_ASSERT(DIM==3, potfit_kim_support_requires_DIM_eq_3);
 #endif
 
 // called from potfit.c
+void init_kim_model();
 void initialize_KIM();
 void shutdown_KIM();
 

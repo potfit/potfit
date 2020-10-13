@@ -1,10 +1,10 @@
 /****************************************************************
  *
- * potential_input_f3.c: Routines for reading a potential table
+ * potential_input_f3.c: Routines for reading a tabulated potential table
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -33,7 +33,7 @@
 #include "potential_input.h"
 #include "utils.h"
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
 
 void read_pot_table3(char const* a, FILE* b, potential_state* c)
 {
@@ -168,7 +168,16 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
 
   /* read EAM embedding function F(n) */
   for (int i = g_calc.paircol + g_param.ntypes;
-       i < g_calc.paircol + 2 * g_param.ntypes; i++) {
+       i < g_calc.paircol + 2 * g_param.ntypes; i++)
+  {
+    // check if we need the value 1.0 for fixing the gauge invariances
+#if !defined(RESCALE)
+    if (pt->begin[i] > 1.0 || pt->end[i] < 1.0) {
+      error(0, "Your embedding function has insufficient sampling points\n");
+      error(0, "For fixing the gauge degrees of freedom potfit needs to calculate F'(1.0)!\n");
+      error(1, "Please include F(1.0) in your potential definition (currently [%f,%f])\n", pt->begin[i], pt->end[i]);
+    }
+#endif
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
         error(1, "Premature end of potential file %s\n", pstate->filename);

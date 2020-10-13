@@ -2,7 +2,7 @@
 #
 # potfit - open-source force-matching
 #
-# Copyright 2002-2017 - the potfit development team
+# Copyright 2002-2018 - the potfit development team
 #
 # https://www.potfit.net/
 #
@@ -37,8 +37,6 @@ STRIP 		= $(shell which strip 2> /dev/null)
 LIBS		+= -lm
 MPI_FLAGS	+= -DMPI
 DEBUG_FLAGS	+= -DDEBUG
-ACML4PATH 	= ${ACML4DIR}/lib
-ACML5PATH 	= ${ACML5DIR}/lib
 BIN_DIR 	= bin/
 
 ###########################################################################
@@ -208,16 +206,6 @@ ifneq (,$(strip $(findstring apot,${MAKETARGET})))
     POTFITHDR	+= chempot.h
     POTFITSRC	+= chempot.c
   endif
-else ifneq (,$(strip $(findstring kim,${MAKETARGET})))
-  POTFITHDR	+= chempot.h
-  POTFITHDR	+= functions.h
-  POTFITHDR	+= kim.h
-
-  POTFITSRC	+= chempot.c
-  POTFITSRC	+= force_kim.c
-  POTFITSRC	+= functions.c
-  POTFITSRC	+= functions_impl.c
-  POTFITSRC	+= kim.c
 else
   ifneq (,$(strip $(findstring meam,${MAKETARGET})))
     POTFITSRC	+= rescale_meam.c
@@ -232,6 +220,10 @@ endif
 
 ifneq (,$(strip $(findstring parab,${MAKETARGET})))
   POTFITSRC	+= parabola.c
+endif
+
+ifneq (,$(strip $(findstring uq,${MAKETARGET})))
+   POTFITSRC    += uq.c
 endif
 
 #########################################################
@@ -349,13 +341,6 @@ ifneq (,$(strip $(findstring tersoff,${MAKETARGET})))
   INTERACTION = 1
 endif
 
-ifneq (,$(findstring kim,${MAKETARGET}))
-  ifneq (,$(findstring 1,${INTERACTION}))
-    ERROR += "More than one potential model specified.\n"
-  endif
-  INTERACTION = 1
-endif
-
 ifneq (,$(findstring 0,${INTERACTION}))
   ERROR += "No interaction model specified!\n"
 endif
@@ -395,11 +380,11 @@ ifneq (,$(findstring wzero,${MAKETARGET}))
   ERROR += "wzero is no longer supported, please remove it from your target!\n"
 endif
 
-ifneq (,$(findstring dist,${MAKETARGET}))
+ifneq (,$(findstring bindist,${MAKETARGET}))
   ifeq (,$(findstring MPI,${PARALLEL}))
-    CFLAGS += -DPDIST
+    CFLAGS += -DBINDIST
   else
-    ERROR += "dist is not mpi parallelized!\n"
+    ERROR += "Binned radial distributions are not mpi parallelized!\n"
   endif
 endif
 
@@ -415,58 +400,16 @@ ifneq (,$(findstring contrib,${MAKETARGET}))
   CFLAGS += -DCONTRIB
 endif
 
-ifneq (,$(findstring mkl,${MAKETARGET}))
-  ifneq (,$(findstring acml,${MAKETARGET}))
-    ERROR += "ACML cannot be used together with MKL.\n"
-  endif
-endif
-
-# force acml4 or acml5 over acml
-ifneq (,$(findstring acml,${MAKETARGET}))
-  ifneq (,$(findstring mkl,${MAKETARGET}))
-    ERROR += "ACML cannot be used together with MKL.\n"
-  endif
-  ifeq (,$(findstring acml4,${MAKETARGET}))
-    ifeq (,$(findstring acml5,${MAKETARGET}))
-      ERROR += "The acml target is obsolete. Please use acml4 or acml5.\n"
-    endif
-  endif
-  CFLAGS += -DACML
-endif
-
 ifneq (,$(findstring resc,${MAKETARGET}))
   CFLAGS += -DRESCALE
 endif
 
 ifneq (,$(findstring kim,${MAKETARGET}))
-  CFLAGS += -DKIM
+  ERROR = "Please use the waf build system for enabling KIM support!\n"
 endif
 
-# compability with KIM
-ifneq ($(findstring kim,${MAKETARGET}),)
-  ifeq ($(findstring kim-toolchain,${SYSTEM}),)
-    ERROR += "KIM support requires the SYSTEM variable setting 'kim-toolchain'.\n"
-  endif
-endif
-ifneq ($(findstring kim-toolchain,${SYSTEM}),)
-  ifeq ($(findstring kim,${MAKETARGET}),)
-    ERROR += "SYSTEM=kim-toolchain is not supported for non-KIM builds.\n"
-  endif
-endif
-
-ifneq (,$(findstring kim,${MAKETARGET}))
-  ifeq ($(shell kim-api-build-config --version 2> /dev/null),)
-    ERROR += "kim-api-build-config could not be found. Check your PATH variable.\n"
-  endif
-  ifneq (,$(findstring apot,${MAKETARGET}))
-    ERROR += "KIM option uses the OpenKIM internal data format, please remove apot from target!\n"
-  endif
-  ifneq (,$(findstring dist,${MAKETARGET}))
-    ERROR += "KIM potential does not support dist option!\n"
-  endif
-  ifneq (,$(findstring resc,${MAKETARGET}))
-    ERROR += "KIM potential does not support resc option!\n"
-  endif
+ifneq (,$(findstring uq,${MAKETARGET}))
+  CFLAGS += -DUQ
 endif
 
 CFLAGS += -D${TARGET} -D${MATH_LIB}

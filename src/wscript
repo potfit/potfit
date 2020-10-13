@@ -7,16 +7,11 @@ apot_source_files = [
 ]
 
 common_source_files = [
-    'bracket.c',
-    'brent.c',
     'config.c',
     'elements.c',
     'errors.c',
-    'force_common.c',
-    'linmin.c',
     'memory.c',
     'mpi_utils.c',
-    'optimize.c',
     'params.c',
     'potential_input_f0.c',
     'potential_input.c',
@@ -26,25 +21,67 @@ common_source_files = [
     'potential_output.c',
     'potential_output_imd.c',
     'potential_output_lammps.c',
-    'powell_lsq.c',
     'random.c',
     'random_dsfmt.c',
-    'simann.c',
     'splines.c',
     'utils.c'
+]
+
+force_source_files = [
+    'force_common.c',
+]
+
+kim_source_files = [
+    'kim.c',
+    'force_kim.c'
+]
+
+optimization_source_files = [
+    'bracket.c',
+    'brent.c',
+    'linmin.c',
+    'optimize.c',
+    'powell_lsq.c',
+    'simann.c',
 ]
 
 tab_source_files = [
 ]
 
 
+def extend_source_files(input_list, default_list):
+    for item in input_list:
+        if item[0] == '-':
+            for i in range(len(default_list)):
+                if default_list[i] == item[1:]:
+                    del default_list[i]
+                    break
+        elif item not in default_list:
+            default_list.append(item)
+    return default_list
+
+
 def build(ctx):
+    use_flags = ['POTFIT']
+    link_flags = ['POTFIT', 'common_objects', 'force_objects', 'model_objects', 'optimization_objects']
+
     if ctx.env.model == 'apot':
-        ctx.objects(source=apot_source_files, target='model_objects', use=['POTFIT'])
+        ctx.env.append_value('DEFINES_POTFIT', ['APOT'])
+        ctx.objects(source=apot_source_files, target='model_objects', use=use_flags)
     elif ctx.env.model == 'tab':
-        ctx.objects(source=tab_source_files, target='model_objects', use=['POTFIT'])
-    ctx.objects(source=ctx.env.option_files, target='option_objects', use=['POTFIT'])
-    ctx.objects(source=common_source_files, target='common_objects', use=['POTFIT'])
-    ctx.objects(source=ctx.env.force_files, target='potential_objects', use=['POTFIT'])
-    ctx.program(source='potfit.c', target=ctx.env.target_name,
-                use=['POTFIT', 'model_objects', 'option_objects', 'common_objects', 'potential_objects'])
+        ctx.env.append_value('DEFINES_POTFIT', ['TAB'])
+        ctx.objects(source=tab_source_files, target='model_objects', use=use_flags)
+    elif ctx.env.model == 'kim':
+        ctx.env.append_value('DEFINES_POTFIT', ['KIM'])
+        use_flags.append('KIM')
+        ctx.objects(source=kim_source_files, target='model_objects', use=use_flags)
+
+    if len(ctx.env.option_files):
+        ctx.objects(source=ctx.env.option_files, target='option_objects', use=use_flags)
+        link_flags.append('option_objects')
+
+    ctx.objects(source=common_source_files, target='common_objects', use=use_flags)
+    ctx.objects(source=extend_source_files(ctx.env.force_files, force_source_files), target='force_objects', use=use_flags)
+    ctx.objects(source=extend_source_files(ctx.env.optimization_files, optimization_source_files), target='optimization_objects', use=use_flags)
+
+    ctx.program(source='potfit.c', target=ctx.env.target_name, use=link_flags)

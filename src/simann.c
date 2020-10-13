@@ -4,7 +4,7 @@
  *
  *****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -74,13 +74,9 @@
 
 void randomize_parameter(const int n, double* xi, double* v)
 {
-#if defined(APOT)
-  const double min =
-      g_pot.apot_table
-          .pmin[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
-  const double max =
-      g_pot.apot_table
-          .pmax[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
+#if defined(APOT) || defined(KIM)
+  const double min = g_pot.apot_table.pmin[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
+  const double max = g_pot.apot_table.pmax[g_pot.apot_table.idxpot[n]][g_pot.apot_table.idxparam[n]];
   double temp = 0.0;
 
   if (v[n] > max - min)
@@ -90,7 +86,6 @@ void randomize_parameter(const int n, double* xi, double* v)
 
   for (int i = 0; i < 10; i++) {
     temp = xi[g_pot.opt_pot.idx[n]] + ((2.0 * eqdist() - 1.0) * v[n]);
-
     if (temp >= min && temp <= max)
       break;
   }
@@ -116,7 +111,7 @@ void randomize_parameter(const int n, double* xi, double* v)
       xi[g_pot.opt_pot.idx[n - i]] += GAUSS((double)i / width) * height;
     }
   }
-#endif  // APOT
+#endif // APOT || KIM
 }
 
 /****************************************************************
@@ -185,7 +180,7 @@ double get_annealing_temperature(const double* xi, double* xi_new,
   return T;
 }
 
-#if defined(MEAM) && !defined(APOT)
+#if defined(MEAM) && !(defined(APOT) || defined(KIM))
 
 /****************************************************************
  *
@@ -259,7 +254,7 @@ void restore_pot_data(const pot_data_t* pot_data)
   }
 }
 
-#endif // MEAM && !APOT
+#endif // MEAM && !(APOT || KIM)
 
 /****************************************************************
  *
@@ -276,12 +271,11 @@ void run_simulated_annealing(double* const xi)
   int loop_counter = 0;
   int loop_again = 0;
 
-#if defined(RESCALE) && !defined(APOT) && \
-    (defined(EAM) || defined(ADP) || defined(MEAM))
+#if defined(RESCALE) && !(defined(APOT) || defined(KIM)) && (defined(EAM) || defined(ADP) || defined(MEAM))
   int do_rescale = 1;
-#endif  // RESCALE && !APOT && (EAM || ADP || MEAM)
+#endif  // RESCALE && !APOT && (EAM || ADP || MEAM )
 
-#if defined(MEAM) && !defined(APOT)
+#if defined(MEAM) && !(defined(APOT) || defined(KIM))
   pot_data_t pot_data = { NULL, };
 #endif // MEAM && !APOT
 
@@ -323,7 +317,7 @@ void run_simulated_annealing(double* const xi)
   if (T == 0.0)
     return;
 
-#if defined(MEAM) && !defined(APOT)
+#if defined(MEAM) && !(defined(APOT) || defined(KIM))
   store_pot_data(&pot_data);
 #endif // MEAM && !APOT
 
@@ -348,7 +342,7 @@ void run_simulated_annealing(double* const xi)
 
           /* accept new point */
           if (F_new <= F) {
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
             xi[g_pot.opt_pot.idx[h]] = xi_new[g_pot.opt_pot.idx[h]];
 #else
             memcpy(xi, xi_new, g_calc.ndimtot * sizeof(double));
@@ -360,7 +354,7 @@ void run_simulated_annealing(double* const xi)
             if (F_new < F_opt) {
               memcpy(xi_opt, xi_new, g_calc.ndimtot * sizeof(double));
 
-#if defined(MEAM) && !defined(APOT)
+#if defined(MEAM) && !(defined(APOT) || defined(KIM))
               store_pot_data(&pot_data);
 #endif // MEAM && !APOT
 
@@ -369,6 +363,8 @@ void run_simulated_annealing(double* const xi)
               if (g_files.tempfile && strlen(g_files.tempfile)) {
 #if defined(APOT)
                 update_apot_table(xi);
+#elif defined(KIM)
+                update_kim_table(xi);
 #endif
                 write_pot_table_potfit(g_files.tempfile);
               }
@@ -412,8 +408,7 @@ void run_simulated_annealing(double* const xi)
         }
       }
 
-#if defined(RESCALE) && !defined(APOT) && \
-    (defined(EAM) || defined(ADP) || defined(MEAM))
+#if defined(RESCALE) && !(defined(APOT) || defined(KIM)) && (defined(EAM) || defined(ADP) || defined(MEAM))
       /* Check for rescaling... every tenth step */
       if (((m + 1) % 10 == 0) && (do_rescale == 1)) {
         /* Was rescaling necessary ? */
@@ -451,7 +446,7 @@ void run_simulated_annealing(double* const xi)
 
       F = F_opt;
 
-#if defined(MEAM) && !defined(APOT)
+#if defined(MEAM) && !(defined(APOT) || defined(KIM))
       restore_pot_data(&pot_data);
 
       /* wake other threads and sync potentials */
@@ -469,7 +464,7 @@ void run_simulated_annealing(double* const xi)
 
   memcpy(xi, xi_opt, g_calc.ndimtot * sizeof(double));
 
-#if defined(MEAM) && !defined(APOT)
+#if defined(MEAM) && !(defined(APOT) || defined(KIM))
   restore_pot_data(&pot_data);
 
   // wake other threads and sync potentials
@@ -480,6 +475,8 @@ void run_simulated_annealing(double* const xi)
   if (g_files.tempfile && strlen(g_files.tempfile)) {
 #if defined(APOT)
     update_apot_table(xi_opt);
+#elif defined(KIM)
+    update_kim_table(xi_opt);
 #endif  // APOT
     write_pot_table_potfit(g_files.tempfile);
   }

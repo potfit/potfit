@@ -7,18 +7,18 @@ def pytest_runtest_logstart(nodeid, location):
 
 potfit_obj = None
 
-def get_potfit_obj():
+def get_potfit_obj(request):
     import sys
-    sys.path.insert(0, str(pytest.config.rootdir))
+    sys.path.insert(0, str(request.config.rootdir))
     import potfit
     global potfit_obj
     if potfit_obj == None:
-        potfit_obj = potfit.Potfit(__file__, 'tab', 'pair')
+        potfit_obj = potfit.Potfit(__file__, interaction='pair', model='tab')
     return potfit_obj
 
 @pytest.fixture()
-def potfit():
-    p = get_potfit_obj()
+def potfit(request):
+    p = get_potfit_obj(request)
     p.reset()
     yield p
     p.clear()

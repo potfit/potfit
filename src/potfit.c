@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -44,6 +44,7 @@
 #include "potential_output.h"
 #include "random.h"
 #include "utils.h"
+#include "uq.h"
 
 // forward declarations of helper functions
 
@@ -113,14 +114,6 @@ int main(int argc, char** argv)
   if (g_mpi.myid > 0) {
     start_mpi_worker(g_calc.force);
   } else {
-#if defined(MPI)
-    if (g_mpi.num_cpus > g_config.nconf) {
-      warning("You are using more CPUs than you have configurations!\n");
-      warning("While this will not do any harm, you are wasting %d CPUs.\n",
-              g_mpi.num_cpus - g_config.nconf);
-    }
-#endif  // MPI
-
     time_t start_time;
     time_t end_time;
 
@@ -138,7 +131,7 @@ int main(int argc, char** argv)
 
     time(&end_time);
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
     double tot = calc_forces(g_pot.opt_pot.table, g_calc.force, 0);
 #else
     double tot = calc_forces(g_pot.calc_pot.table, g_calc.force, 0);
@@ -172,7 +165,7 @@ int main(int argc, char** argv)
     }
 
 #if !defined(KIM)
-    if (g_param.writeimd == 1)
+    if (g_param.write_imd == 1)
       write_pot_table_imd(g_files.imdpot);
 
     if (g_param.plot == 1)
@@ -182,13 +175,22 @@ int main(int argc, char** argv)
       write_pot_table_lammps();
 #endif // !KIM
 
-// will not work with MPI
-#if defined(PDIST) && !defined(MPI)
-    write_pairdist(&g_pot.opt_pot, g_files.distfile);
-#endif  // PDIST && !MPI
+#if defined(BINDIST) && !defined(MPI)
+    // bindist does not work with MPI
+    write_bindist_file(&g_pot.opt_pot, g_files.bindistfile);
+#endif // BINDIST && !MPI
 
     // write the error files for forces, energies, stresses, ...
     write_errors(g_calc.force, tot);
+
+#if defined(UQ)
+    for (int i=0;i<g_pot.opt_pot.idxlen;i++) {
+      printf("Parameter  %d = %f ", i, g_pot.opt_pot.table[g_pot.opt_pot.idx[i]]);
+    }
+    printf("\n");
+
+    ensemble_generation(tot);
+#endif //UQ
 
     /* calculate total runtime */
     if (g_param.opt && g_mpi.myid == 0 && g_calc.ndim > 0) {
@@ -201,24 +203,11 @@ int main(int argc, char** argv)
     }
 
 #if defined(MPI)
-    calc_forces(NULL, NULL, 1); /* go wake up other threads */
-#endif                          // MPI
-  }                             /* myid == 0 */
+    calc_forces(NULL, NULL, 1); // go wake up other threads
+#endif // MPI
+  } // myid == 0
 
-// do some cleanups before exiting
-
-#if defined(MPI)
-  // kill MPI
-  shutdown_mpi();
-#endif  // MPI
-
-#if defined(KIM)
-  shutdown_KIM();
-#endif  // KIM
-
-  free_allocated_memory();
-
-  return EXIT_SUCCESS;
+  exit_potfit();
 }
 
 /****************************************************************
@@ -231,6 +220,9 @@ void read_input_files(int argc, char** argv)
 
   if (g_mpi.myid == 0) {
     read_parameters(argc, argv);
+#if defined(KIM)
+    init_kim_model();
+#endif
     read_pot_table(g_files.startpot);
     read_config(g_files.config);
 
@@ -242,8 +234,6 @@ void read_input_files(int argc, char** argv)
     /* initialize additional force variables and parameters */
     init_force_common(0);
     init_force(0);
-
-    g_mpi.init_done = 1;
 
     init_rng(g_param.rng_seed);
   }
@@ -261,11 +251,33 @@ void start_mpi_worker(double* force)
   init_force_common(1);
   init_force(1);
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   calc_forces(g_pot.opt_pot.table, force, 0);
 #else
   calc_forces(g_pot.calc_pot.table, force, 0);
 #endif  // APOT
+}
+
+/****************************************************************
+  exit_potfit
+****************************************************************/
+
+void exit_potfit()
+{
+  // do some cleanups before exiting
+
+#if defined(MPI)
+  // kill MPI
+  shutdown_mpi();
+#endif  // MPI
+
+#if defined(KIM)
+  shutdown_KIM();
+#endif  // KIM
+
+  free_allocated_memory();
+
+  exit(EXIT_SUCCESS);
 }
 
 /****************************************************************
@@ -293,6 +305,9 @@ void error(int done, const char* msg, ...)
       shutdown_mpi();
     }
 #endif  // MPI
+#if defined(KIM)
+    shutdown_KIM();
+#endif  // KIM
     free_allocated_memory();
     exit(EXIT_FAILURE);
   }

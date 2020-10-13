@@ -1,0 +1,363 @@
+#!/usr/bin/env python3
+################################################################
+#
+# castep2force:
+#   conversion of CASTEP .md files to a potfit force file
+#
+################################################################
+#
+#   Copyright 2002-2020 - the potfit development team
+#
+#   https://www.potfit.net/
+#
+#################################################################
+#
+#   This file is part of potfit.
+#
+#   potfit is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   potfit is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with potfit; if not, see <http://www.gnu.org/licenses/>.
+#
+#################################################################
+
+import argparse
+import gzip
+import sys
+
+from collections import OrderedDict
+
+from typing import Dict, List, IO, Union
+
+def atomic_length(bohr: str) -> float:
+    return float(bohr) * 0.529177210903
+
+
+def atomic_energy(hartree: str) -> float:
+    return float(hartree) * 27.211386245988
+
+
+def atomic_force(force: str) -> float:
+    return float(force) * 51.421
+
+
+# The consistent unit of stress is energy / length^3
+def atomic_stress(stress: str) -> float:
+    return float(stress) * 183.63153644969503
+
+
+def fatal(message: str) -> None:
+    if message.endswith("\n"):
+        sys.stderr.write("FATAL: {}".format(message))
+    else:
+        sys.stderr.write("FATAL: {}\n".format(message))
+    sys.exit(1)
+
+
+def warning(message: str) -> None:
+    if message.endswith("\n"):
+        sys.stderr.write("WARN: {}".format(message))
+    else:
+        sys.stderr.write("WARN: {}\n".format(message))
+
+
+class Atom:
+    def set_position(self, x: float, y: float, z: float) -> None:
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def set_forces(self, x: float, y: float, z: float) -> None:
+        self.f_x = x
+        self.f_y = y
+        self.f_z = z
+
+    def __init__(self, atom_type: int) -> None:
+        self.type = atom_type
+
+    def to_string(self) -> str:
+        return "{} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E}".format(
+            self.type, self.x, self.y, self.z, self.f_x, self.f_y, self.f_z
+        )
+
+
+class Box:
+    def __init__(self, x: float, y: float, z: float) -> None:
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def to_string(self) -> str:
+        return "{:23.16E} {:23.16E} {:23.16E}".format(self.x, self.y, self.z)
+
+
+class Configuration:
+    def __init__(self) -> None:
+        # For python versions less than 3.7, need to explicitly use an ordered
+        # dictionary as the order in must equal the order out.
+        self.types_of_element = OrderedDict()  # type: Dict[str, int]
+        self.boxes = []  # type: List[Box]
+        self.energy = None  # type: Union[None, float]
+
+        self.stress = []  # type: List[List[float]]
+
+        # A dictionary where the key is a string representing an element and
+        # contains a list of atoms of that type.
+        self.body = OrderedDict()  # type: Dict[str, List[Atom]]
+
+    def to_string(self) -> str:
+        # Calculate number of atoms in the configuration
+        number_of_atoms = 0
+        for _, t in self.body.items():
+            number_of_atoms += len(t)
+
+        s = []
+        # See https://www.potfit.net/wiki/doku.php?id=config:main for
+        # specification for the output format
+        s.append("#N {} 1".format(number_of_atoms))
+        s.append("#C {}".format(" ".join(self.types_of_element.keys())))
+        s.append("#X {}".format(self.boxes[0].to_string()))
+        s.append("#Y {}".format(self.boxes[1].to_string()))
+        s.append("#Z {}".format(self.boxes[2].to_string()))
+        s.append("#E {:23.16E}".format(self.energy if self.energy else 0))
+
+        # Only output stresses if they are in the input file
+        if len(self.stress) == 3:
+            # #S stress_xx stress_yy stress_zz stress_xy stress_yz stress_xz
+            s.append(
+                "#S {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E} {:23.16E}".format(
+                    self.stress[0][0],
+                    self.stress[1][1],
+                    self.stress[2][2],
+                    self.stress[0][1],
+                    self.stress[1][2],
+                    self.stress[0][2],
+                )
+            )
+        s.append("#F")
+        # End of header
+        # Start of body
+        for _, value in self.body.items():
+            for atom in value:
+                s.append(atom.to_string())
+        # End with a newline
+        s.append("")
+        return "\n".join(s)
+
+
+# Reads a configuration from specified file and returns a configuration object
+# or None if at EOF
+def read_configuration(file: IO[str], potentials: Dict[str, float]):
+    config = Configuration()
+
+    energy = None
+
+    for line in file:
+        stripped_line = line.strip()
+
+        # Skip over the header
+        if line.strip() == "BEGIN header":
+            for _ in range(4):
+                file.readline()
+            continue
+
+        # reached empty line between md steps
+        if stripped_line == "":
+            break
+
+        split_line = stripped_line.split()
+        tag = split_line[len(split_line) - 1]
+
+        # Stress matrix element
+        if tag == "S":
+            x = atomic_stress(split_line[0])
+            y = atomic_stress(split_line[1])
+            z = atomic_stress(split_line[2])
+
+            config.stress.append([x, y, z])
+
+        if tag == "E":
+            # energy, has 3 elements in it, Total, Hamiltonian, Kinetic. potfit
+            # expects cohesive energy per atom, however at this stage we do not
+            # know the number of atoms. Require the Total energy, the
+            # Hamiltonian should be conserved.
+            energy = atomic_energy(split_line[0])
+
+        # Cell matrix vector
+        if tag == "h":
+            x = atomic_length(split_line[0])
+            y = atomic_length(split_line[1])
+            z = atomic_length(split_line[2])
+
+            config.boxes.append(Box(x, y, z))
+
+        # coordinate of atom
+        if tag == "R":
+            element_type = split_line[0]
+            atom_number = int(split_line[1])
+            x = atomic_length(split_line[2])
+            y = atomic_length(split_line[3])
+            z = atomic_length(split_line[4])
+
+            # add atom type, eg Ar, to the list of types of element
+            if element_type not in config.types_of_element:
+                config.types_of_element[element_type] = len(config.types_of_element)
+                config.body[element_type] = []
+            element_type_int = config.types_of_element[element_type]
+
+            a = Atom(element_type_int)
+            a.set_position(x, y, z)
+            config.body[element_type].append(a)
+
+        # force acting on atom
+        if tag == "F":
+            element_type = split_line[0]
+            atom_number = int(split_line[1])
+            f_x = atomic_force(split_line[2])
+            f_y = atomic_force(split_line[3])
+            f_z = atomic_force(split_line[4])
+
+            # atom numbers in md file start at 1
+            atom_index = atom_number - 1
+
+            config.body[element_type][atom_index].set_forces(f_x, f_y, f_z)
+
+    else:
+        # test for whether file is at at EOF. else runs if for loop didn't
+        # encounter break, which happens when at EOF.
+        return None
+
+    # Subtract off chemical potentials from the total energy to obtain the
+    # cohesive energy. Then divide by the total number of atoms to get the
+    # cohesive energy per atom. The number of atoms is obtained while iterating
+    # over the atom types in the body.
+    if energy is not None:
+        number_of_atoms = 0
+        for element, body in config.body.items():
+            if element not in potentials:
+                fatal(
+                    "Element '{}' in MD file, but no chemical potential given".format(
+                        element
+                    )
+                )
+            energy -= potentials[element] * len(body)
+            number_of_atoms += len(body)
+        energy /= number_of_atoms
+
+    config.energy = energy
+
+    return config
+
+
+def parse_cli_flags(argv: List[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Converts a castep molecular dynamics output file (or set of files) to a potfit force configuration file",
+        epilog="Example usage: ./castep2force -p Ar=0.01 -o configuration mdinput.md",
+    )
+
+    parser.add_argument(
+        "files", type=str, nargs="+", help="castep molecular dynamics file",
+    )
+    parser.add_argument(
+        "-p",
+        "--potential",
+        type=str,
+        required=True,
+        help="chemical potentials for the elements used in atomic units in the format Element1=Potential1,Element2=Potential2. For example Ar=0.01,Si=0.01,Ne=0.01",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        required=False,
+        help="file to output force configuration to, default is to standard output",
+        default="-",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--final",
+        action="store_true",
+        help="Only use the final configuration in each file",
+    )
+
+    return parser.parse_args(argv)
+
+
+def parse_potentials(potential_str: str) -> Dict[str, float]:
+    potentials = {}
+    for pair in potential_str.split(","):
+        values = pair.split("=")
+        potentials[values[0].strip()] = float(values[1])
+    return potentials
+
+
+def open_file(filename: str) -> IO[str]:
+    if filename == "-":
+        return sys.stdin
+    if filename.endswith(".gz"):
+        return gzip.open(filename, "rt")
+    return open(filename, "rt")
+
+
+def read_md_file(filename: str, potentials: Dict[str, float]) -> List[Configuration]:
+
+    # castep produces md files with multiple iteration steps, each one is a
+    # different configuration
+    configurations = []
+    try:
+        with open_file(filename) as file:
+            # continually read configurations until read configuration returns
+            # false, at which point file has reached eof
+            while True:
+                config = read_configuration(file, potentials)
+                if config is None:
+                    break
+                configurations.append(config)
+    except FileNotFoundError:
+        fatal("Cannot read file '{}' as it does not exist".format(filename))
+
+    return configurations
+
+
+def write_configurations(configurations: List[Configuration], output: str) -> None:
+    # '-' often means standard input / standard output, so I have used it in
+    # this software for that purpose.
+    if output == "-" or output is None:
+        for conf in configurations:
+            sys.stdout.write(conf.to_string())
+    else:
+        with open(output, "w") as file:
+            for conf in configurations:
+                file.write(conf.to_string())
+
+
+def main(argv: List[str]) -> None:
+    arguments = parse_cli_flags(argv)
+    filenames = arguments.files
+    potentials = parse_potentials(arguments.potential)
+
+    configurations = []  # type: List[Configuration]
+    for filename in filenames:
+        configuration = read_md_file(filename, potentials)
+        if arguments.final:
+            # add only the last configuration
+            configurations.append(configuration[-1])
+        else:
+            # add all configurations
+            configurations.extend(configuration)
+
+    output_filename = arguments.output
+    write_configurations(configurations, output_filename)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

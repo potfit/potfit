@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -73,7 +73,7 @@ extern potfit_parameters g_param;
 extern potfit_potentials g_pot;
 
 // general functions for warning and error output
-
+void exit_potfit();
 void error(int done, const char* msg, ...);
 void warning(const char* msg, ...);
 

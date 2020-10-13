@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -53,5 +53,15 @@ void update_stiweb_pointers(double*);
 #if defined(TERSOFF)
 void update_tersoff_pointers(double*);
 #endif  // TERSOFF
+
+#if defined(KIM)
+int get_neigh(const void* const puser, const int numberOfNeighborLists, const double* const cutoffs,
+              const int neighborListIndex, const int particleNumber, int* const numberOfNeighbors,
+              const int** const neighborsOfParticle);
+int process_DEDr(const void* const dataObject, const double de, const double r,
+                 const double* const dx, const int i, const int j);
+int process_D2EDr2(const void * const dataObject, const double de, const double* const r,
+                    const double* const dx, const int* const i, const int* const j);
+#endif // KIM
 
 #endif  // FORCE_H_INCLUDED

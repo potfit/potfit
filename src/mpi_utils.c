@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -30,6 +30,7 @@
 #include "potfit.h"
 
 #include "config.h"
+#include "functions.h"
 #include "memory.h"
 #include "mpi_utils.h"
 #include "utils.h"
@@ -581,6 +582,8 @@ int broadcast_apot_table()
   }
 
   if (g_mpi.myid > 0) {
+    initialize_analytic_potentials();
+
     g_pot.calc_list = (double*)Malloc(g_pot.opt_pot.len * sizeof(double));
     g_pot.apot_table.n_par =
         (int*)Malloc(g_pot.apot_table.number * sizeof(int));
@@ -599,11 +602,29 @@ int broadcast_apot_table()
         (double*)Malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
     g_config.rmin =
         (double*)Malloc(g_param.ntypes * g_param.ntypes * sizeof(double));
+    g_pot.apot_table.names = (char**)Malloc(g_pot.apot_table.number * sizeof(char*));
     g_pot.apot_table.fvalue = (fvalue_pointer*)Malloc(g_pot.apot_table.number *
                                                       sizeof(fvalue_pointer));
     g_pot.opt_pot.table = (double*)Malloc(g_pot.opt_pot.len * sizeof(double));
     g_pot.opt_pot.first = (int*)Malloc(g_pot.apot_table.number * sizeof(int));
   }
+
+  // broadcast apot table names
+  for (int i = 0; i < g_pot.apot_table.number; ++i) {
+    size_t len = 0;
+    if (g_mpi.myid > 0) {
+      CHECK_RETURN(MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD));
+      g_pot.apot_table.names[i] = (char*)Malloc((len + 1) * sizeof(char));
+      CHECK_RETURN(MPI_Bcast(g_pot.apot_table.names[i], len + 1, MPI_CHAR, 0, MPI_COMM_WORLD));
+    } else {
+      len = strlen(g_pot.apot_table.names[i]);
+      CHECK_RETURN(MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD));
+      CHECK_RETURN(MPI_Bcast(g_pot.apot_table.names[i], len + 1, MPI_CHAR, 0, MPI_COMM_WORLD));
+    }
+  }
+
+  if (g_mpi.myid > 0)
+    apot_assign_function_pointers(&g_pot.apot_table);
 
   CHECK_RETURN(MPI_Bcast(g_pot.smooth_pot, g_pot.apot_table.number, MPI_INT, 0,
                          MPI_COMM_WORLD));
@@ -616,8 +637,6 @@ int broadcast_apot_table()
   CHECK_RETURN(MPI_Bcast(g_config.rcut, g_param.ntypes * g_param.ntypes,
                          MPI_DOUBLE, 0, MPI_COMM_WORLD));
   CHECK_RETURN(MPI_Bcast(g_config.rmin, g_param.ntypes * g_param.ntypes,
-                         MPI_DOUBLE, 0, MPI_COMM_WORLD));
-  CHECK_RETURN(MPI_Bcast(g_pot.apot_table.fvalue, g_pot.apot_table.number,
                          MPI_DOUBLE, 0, MPI_COMM_WORLD));
   CHECK_RETURN(MPI_Bcast(g_pot.apot_table.end, g_pot.apot_table.number,
                          MPI_DOUBLE, 0, MPI_COMM_WORLD));
@@ -672,6 +691,18 @@ int broadcast_apot_table()
 
 int broadcast_configurations()
 {
+  if (g_mpi.num_cpus == 1) {
+    error(0, "Running potfit with a single MPI process is not supported!\n");
+    error(0, "This creates a hugh overhead and slows down the process significantly!\n");
+    return POTFIT_ERROR;
+  }
+
+  if (g_mpi.num_cpus > g_config.nconf) {
+    error(0, "Running potfit with more MPI processes than configurations is not supported!\n");
+    error(0, "You provided %d configurations and requested %d processes\n", g_config.nconf, g_mpi.num_cpus);
+    return POTFIT_ERROR;
+  }
+
   // Each node: nconf/num_cpus configurations.
   // Last nconf%num_cpus nodes: 1 additional config
 

@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -490,46 +490,50 @@ void write_pot_table4(char const* filename)
 void write_pot_table5(char const* filename)
 {
 #if defined(KIM)
-  pot_table_t* pt = &g_pot.opt_pot;
-
   // open file
   FILE* outfile = fopen(filename, "w");
   if (outfile == NULL)
     error(1, "Could not open file %s\n", filename);
 
   // write header
-  fprintf(outfile, "#F 5 1");
-  fprintf(outfile, "\n#C");
+  fprintf(outfile, "#F 5 1\n");
+  fprintf(outfile, "#T %s\n", g_kim.model_name);
+  fprintf(outfile, "#C");
   for (int i = 0; i < g_param.ntypes; i++)
     fprintf(outfile, " %s", g_config.elements[i]);
   fprintf(outfile, "\n#E\n\n");
 
-  // write KIM Model name
-  fprintf(outfile, "# KIM Model name\n");
-  fprintf(outfile, "model\t%s\n\n", g_kim.model_name);
+  // write potential parameters
 
-  // write cutoff
-  fprintf(outfile, "# cutoff distance\n");
-  fprintf(outfile, "cutoff\t%f\n\n", g_config.rcutmax);
+  int pos = 0;
 
-  // number of opt params
-  fprintf(outfile, "# the number of optimizable parameters that will be listed below\n");
-  fprintf(outfile, "# use 'kim_opt_param list' to get a list of supported parameters for the current model\n");
-  fprintf(outfile, "kim_opt_param\t%d\n\n", g_kim.num_opt_param);
-
-  // write data
-  int k = 0;
-  fprintf(outfile, "# parameters\n");
-  for (int i = 0; i < g_kim.num_opt_param; i++) {
-    fprintf(outfile, "%s\n", g_kim.freeparams.name[g_kim.idx_opt_param[i]]);
-    for (int j = 0; j < g_kim.size_opt_param[i]; j++) {
-      fprintf(outfile, "  %f\t", pt->table[k]);
-      fprintf(outfile, "%f\t%f\n", g_pot.apot_table.pmin[0][k], g_pot.apot_table.pmax[0][k]);
-      k++;
+  for (int i = 0; i < g_kim.nparams; ++i) {
+    fprintf(outfile, "KIM_%s %s\n", g_kim.params[i].is_cutoff ? "CUTOFF" : "PARAM", g_kim.params[i].name);
+    if (KIM_DataType_Equal(g_kim.params[i].type, KIM_DATA_TYPE_Integer)) {
+      for (int j = 0; j < g_kim.params[i].extent; ++j)
+        fprintf(outfile, "%d\t%d\t%d\n", g_kim.params[i].values[j].i, g_kim.params[i].values[j].i, g_kim.params[i].values[j].i);
+      pos += g_kim.params[i].extent;
+    } else {
+      for (int j = 0; j < g_kim.params[i].extent; ++j) {
+        fprintf(outfile, "%f\t", g_kim.params[i].values[j].d);
+        fprintf(outfile, "%f\t%f\n", g_pot.apot_table.pmin[0][pos], g_pot.apot_table.pmax[0][pos]);
+        ++pos;
+      }
     }
+    if (i != g_kim.nparams - 1)
+      fprintf(outfile, "\n");
   }
 
   fclose(outfile);
+
+  if (!(g_kim.supported_routines & KIM_MODEL_ROUTINE_WRITEPARAMS_SUPPORTED)) {
+    if (g_kim.output_directory || g_kim.output_name)
+      warning("KIM model does not support writing parameters!\n");
+    return;
+  }
+
+  if (g_kim.output_directory && g_kim.output_name)
+    KIM_Model_WriteParameterizedModel(g_kim.model, g_kim.output_directory, g_kim.output_name);
 #endif
 }
 
@@ -680,14 +684,14 @@ void write_plotpot_pair(pot_table_t* pt, const char* filename)
   printf("Potential plotting data written to \t%s\n", filename);
 }
 
-#if defined(PDIST)
+#if defined(BINDIST)
 
 /****************************************************************
-  write_pairdist(pot_table_t *pt, char *filename)
-    - write distribution function of function access
+  write_bindist_file(pot_table_t *pt, char *filename)
+    - write binned radial distribution of potential access
 ****************************************************************/
 
-void write_pairdist(pot_table_t* pt, const char* filename)
+void write_bindist_file(pot_table_t* pt, const char* filename)
 {
   // open file
   FILE* outfile = fopen(filename, "w");
@@ -761,10 +765,10 @@ void write_pairdist(pot_table_t* pt, const char* filename)
     fprintf(outfile, "\n\n");
   }
   fclose(outfile);
-  printf("Distribution data written to\t\t%s\n", filename);
+  printf("Binned distribution data written to\t\t%s\n", filename);
 }
 
-#endif  // PDIST
+#endif  // BINDIST
 
 #if defined(COULOMB)
 

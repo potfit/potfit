@@ -4,7 +4,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -44,7 +44,11 @@ void read_pot_line_C(char* pbuf, potential_state* pstate);
 
 void allocate_memory_for_potentials(potential_state* pstate);
 
+#if defined(KIM)
+void calculate_cutoffs_kim();
+#else
 void calculate_cutoffs();
+#endif // KIM
 void read_maxch_file();
 
 void read_pot_table0(char const* potential_filename, FILE* pfile);
@@ -84,7 +88,7 @@ void read_pot_table(char const* potential_filename)
   // read the header
   do {
     // read one line
-    if (NULL == fgets(buffer, 1024, pfile))
+    if (NULL == fgets_potfit(buffer, 1024, pfile))
       error(1, "Unexpected end of file in %s\n", potential_filename);
 
     if (buffer[0] == '\n')
@@ -149,7 +153,11 @@ void read_pot_table(char const* potential_filename)
 
   printf("Reading potential file >> %s << ... done\n", potential_filename);
 
+#if defined(KIM)
+  calculate_cutoffs_kim();
+#else
   calculate_cutoffs();
+#endif
 
   read_maxch_file();
 }
@@ -185,13 +193,11 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
   }
 
 #if defined(APOT)
-#if defined(KIM)
-  if (format != POTENTIAL_FORMAT_KIM)
-    error(1, "This potfit binary only supports KIM potentials.\n");
-#else
   if (format != POTENTIAL_FORMAT_ANALYTIC)
     error(1, "This potfit binary only supports analytic potentials.\n");
-#endif // KIM
+#elif defined(KIM)
+  if (format != POTENTIAL_FORMAT_KIM)
+    error(1, "This potfit binary only supports KIM potentials.\n");
 #else
   if (format != POTENTIAL_FORMAT_TABULATED_EQ_DIST && format != POTENTIAL_FORMAT_TABULATED_NON_EQ_DIST)
     error(1, "This potfit binary only supports tabulated potentials.\n");
@@ -235,24 +241,18 @@ void read_pot_line_F(char const* pbuf, potential_state* pstate)
 #endif  // TERSOFF && !TERSOFFMOD
 
 #if defined(KIM)
-  npots = 1;
+  pstate->num_pots = g_calc.paircol;
 #endif // KIM
 
   if (pstate->num_pots == npots) {
-    printf(" - Using %d %s potentials to calculate forces\n", npots,
+    printf(" - Using %d %s potential(s) to calculate forces\n", npots,
            g_pot.interaction_name);
     fflush(stdout);
   } else {
-#if defined(KIM)
-    warning("The number of potentials should always be '1' when KIM is used.\n"
-            "You specified %d in file '%s', and it is reset to %d.\n", pstate->num_pots, pstate->filename, npots);
-    pstate->num_pots = npots;
-#else
     error(0, "Wrong number of data columns in %s potential file \"%s\".\n",
           g_pot.interaction_name, pstate->filename);
-    error(1, "For g_param.ntypes=%d there should be %d, but there are %d.\n",
+    error(1, "For ntypes = %d there should be %d, but there are %d.\n",
           g_param.ntypes, npots, pstate->num_pots);
-#endif // KIM
   }
 
   g_pot.gradient = (int*)Malloc(npots * sizeof(int));
@@ -275,12 +275,20 @@ void read_pot_line_T(char const* pbuf, potential_state* pstate)
   if (pchar != NULL)
     *pchar = '\0';
 
+#if defined(KIM)
+  if (strcmp(pbuf + 3, g_kim.model_name) != 0) {
+    error(0, "Potential mismatch detected!\n");
+    error(0, "KIM potential selected is: %s\n", g_kim.model_name);
+    error(1, "The potential file contains a %s potential.\n", pbuf + 3);
+  }
+#else
   if (strcmp(pbuf + 3, g_pot.interaction_name) != 0) {
     error(0, "Wrong potential type found in potential file!\n");
     error(0, "This binary only supports %s potentials.\n",
           g_pot.interaction_name);
     error(1, "Your potential file contains a %s potential.\n", pbuf + 3);
   }
+#endif // KIM
 }
 
 /****************************************************************
@@ -350,7 +358,8 @@ void read_pot_line_G(char* pbuf, potential_state* pstate)
 
 void read_pot_line_C(char* pbuf, potential_state* pstate)
 {
-  char names[g_param.ntypes][5];
+  char names[g_param.ntypes][15];
+  char buffer[15];
 
   // check if there are enough items
   if (pstate->have_format) {
@@ -359,9 +368,12 @@ void read_pot_line_C(char* pbuf, potential_state* pstate)
       if (str == NULL)
         error(1, "Not enough items in #C header line in file %s.\n",
               pstate->filename);
-      int len = max(strlen(str), 4);
-      strncpy(names[i], str, len);
-      names[i][len] = '\0';
+      if (strlen(str) > 14) {
+        memset(buffer, 0, sizeof(buffer));
+        strncpy(buffer, str, 14);
+        str = buffer;
+      }
+      sprintf(names[i], "%s", str);
     }
   } else
     error(1, "#C needs to be specified after #F in file %s\n", pstate->filename);
@@ -369,8 +381,7 @@ void read_pot_line_C(char* pbuf, potential_state* pstate)
   g_config.elements = (char const**)Malloc(g_param.ntypes * sizeof(char*));
   for (int i = 0; i < g_param.ntypes; i++) {
     g_config.elements[i] = (char*)Malloc((strlen(names[i]) + 1) * sizeof(char));
-    strncpy((char*)g_config.elements[i], names[i], strlen(names[i]));
-    *((char*)g_config.elements[i] + strlen(names[i])) = '\0';
+    sprintf((char*)g_config.elements[i], "%s", names[i]);
   }
 }
 
@@ -393,7 +404,7 @@ void allocate_memory_for_potentials(potential_state* pstate)
   pt->first = (int*)Malloc(size * sizeof(int));
   pt->last = (int*)Malloc(size * sizeof(int));
 
-#if defined(APOT)
+#if defined(APOT) || defined(KIM)
   apot_table_t* apt = &g_pot.apot_table;
 
   // allocate memory for analytic potential table
@@ -403,7 +414,7 @@ void allocate_memory_for_potentials(potential_state* pstate)
   apt->n_par = (int*)Malloc(size * sizeof(int));
   apt->begin = (double*)Malloc(size * sizeof(double));
   apt->end = (double*)Malloc(size * sizeof(double));
-  apt->param_name = (char***)Malloc(size * sizeof(char**));
+  apt->param_name = (const char***)Malloc(size * sizeof(char**));
   apt->fvalue = (fvalue_pointer*)Malloc(size * sizeof(fvalue_pointer));
 
 #if !defined(COULOMB)
@@ -426,37 +437,37 @@ void allocate_memory_for_potentials(potential_state* pstate)
   apt->pmax = (double**)Malloc(size * sizeof(double*));
 #if defined(PAIR)
   }
-#endif
+#endif // PAIR
 
 #else  // !COULOMB
   apt->ratio = (double*)Malloc(g_param.ntypes * sizeof(double));
   apt->values = (double**)Malloc((size + 5) * sizeof(double*));
-  apt->param_name = (char***)Malloc((size + 5) * sizeof(char**));
+  apt->param_name = (const char***)Malloc((size + 5) * sizeof(char**));
   apt->pmin = (double**)Malloc((size + 5) * sizeof(double*));
   apt->pmax = (double**)Malloc((size + 5) * sizeof(double*));
   apt->invar_par = (int**)Malloc((size + 5) * sizeof(int*));
 
   apt->values[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
-  apt->param_name[size] = (char**)Malloc((g_param.ntypes - 1) * sizeof(char*));
+  apt->param_name[size] = (const char**)Malloc((g_param.ntypes - 1) * sizeof(char*));
   apt->pmin[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
   apt->pmax[size] = (double*)Malloc((g_param.ntypes - 1) * sizeof(double));
   apt->invar_par[size] = (int*)Malloc((g_param.ntypes - 1) * sizeof(int));
 
   apt->values[size + 1] = (double*)Malloc(sizeof(double));
-  apt->param_name[size + 1] = (char**)Malloc(sizeof(char*));
+  apt->param_name[size + 1] = (const char**)Malloc(sizeof(char*));
   apt->pmin[size + 1] = (double*)Malloc(sizeof(double));
   apt->pmax[size + 1] = (double*)Malloc(sizeof(double));
   apt->invar_par[size + 1] = (int*)Malloc(sizeof(int));
 
   apt->values[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
-  apt->param_name[size + 2] = (char**)Malloc(g_param.ntypes * sizeof(char*));
+  apt->param_name[size + 2] = (const char**)Malloc(g_param.ntypes * sizeof(char*));
   apt->pmin[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
   apt->pmax[size + 2] = (double*)Malloc(g_param.ntypes * sizeof(double));
   apt->invar_par[size + 2] = (int*)Malloc(g_param.ntypes * sizeof(int));
 
   for (int i = 3; i < 5; i++) {
     apt->values[size + i] = (double*)Malloc(g_calc.paircol * sizeof(double));
-    apt->param_name[size + i] = (char**)Malloc(g_calc.paircol * sizeof(char*));
+    apt->param_name[size + i] = (const char**)Malloc(g_calc.paircol * sizeof(char*));
     apt->pmin[size + i] = (double*)Malloc(g_calc.paircol * sizeof(double));
     apt->pmax[size + i] = (double*)Malloc(g_calc.paircol * sizeof(double));
     apt->invar_par[size + i] = (int*)Malloc(g_calc.paircol * sizeof(int));
@@ -472,8 +483,7 @@ void allocate_memory_for_potentials(potential_state* pstate)
 #endif  // !COULOMB
 
   apt->names = (char**)Malloc(size * sizeof(char*));
-  for (int i = 0; i < size; i++)
-    apt->names[i] = (char*)Malloc(20 * sizeof(char));
+  // actual memory will be allocated dynamically when reading the name
 #endif  // APOT
 }
 
@@ -481,10 +491,27 @@ void allocate_memory_for_potentials(potential_state* pstate)
   calculate_cutoffs
 ****************************************************************/
 
-void calculate_cutoffs()
+#if defined(KIM)
+
+void calculate_cutoffs_kim()
 {
   const int n = g_param.ntypes;
 
+  g_config.rmin = (double*)Malloc(n * n * sizeof(double));
+  g_config.rcut = (double*)Malloc(n * n * sizeof(double));
+
+  for (int i = 0; i < n * n; i++)
+    g_config.rcut[i] = g_pot.apot_table.end[0];
+
+  g_config.rcutmin = 0.0;
+  g_config.rcutmax = g_pot.apot_table.end[0];
+}
+
+#else
+
+void calculate_cutoffs()
+{
+  const int n = g_param.ntypes;
   pot_table_t* pt = &g_pot.opt_pot;
 
   g_config.rmin = (double*)Malloc(n * n * sizeof(double));
@@ -498,6 +525,7 @@ void calculate_cutoffs()
       g_config.rcut[i * n + j] = pt->end[k];
     }
   }
+
 #if defined(EAM) || defined(ADP) || defined(MEAM)
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
@@ -530,13 +558,15 @@ void calculate_cutoffs()
   }
 }
 
+#endif // KIM
+
 /****************************************************************
   read_maxch_file
 ****************************************************************/
 
 void read_maxch_file()
 {
-#if !defined(APOT)
+#if !defined(APOT) && !defined(KIM)
   if (g_param.usemaxch) {
     FILE* pfile = fopen(g_files.maxchfile, "r");
 
@@ -664,3 +694,22 @@ void update_calc_table(double* xi_opt, double* xi_calc, int do_all)
 }
 
 #endif  // APOT
+
+#if defined(KIM)
+
+void update_kim_table(const double* xi)
+{
+  // write back values from xi into g_kim.params
+
+  int pos = 0;
+
+  for (int i = 0; i < g_kim.nparams; ++i) {
+    for (int j = 0; j < g_kim.params[i].extent; ++j) {
+      if (xi[pos] != g_kim.params[i].values[j].d)
+        g_kim.params[i].values[j].d = xi[pos];
+      ++pos;
+    }
+  }
+}
+
+#endif // KIM

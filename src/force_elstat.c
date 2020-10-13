@@ -5,7 +5,7 @@
  *
  ****************************************************************
  *
- * Copyright 2002-2017 - the potfit development team
+ * Copyright 2002-2018 - the potfit development team
  *
  * https://www.potfit.net/
  *
@@ -159,14 +159,13 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 #endif  // APOT && !MPI
 
 #if defined(MPI)
-/* exchange potential and flag value */
+    MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (flag == 1)
+      break; // Exception: flag 1 means clean up
 #if !defined(APOT)
+    // exchange potential and flag value
     MPI_Bcast(xi, g_pot.calc_pot.len, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif  // !APOT
-    MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    if (flag == 1)
-      break; /* Exception: flag 1 means clean up */
 
 #if defined(APOT)
     if (g_mpi.myid == 0)
@@ -600,8 +599,8 @@ double calc_forces(double* xi_opt, double* forces, int flag)
 
         /* F O U R T H  loop: calculate monopole-dipole and dipole-dipole forces
          */
-        double rp_i, rp_j, pp_ij, tmp_1, tmp_2;
-        double grad_1, grad_2, srval, srgrad, srval_tail, srgrad_tail,
+        double rp_i = 0, rp_j = 0, pp_ij, tmp_1, tmp_2;
+        double grad_1, grad_2, srval = 0, srgrad = 0, srval_tail, srgrad_tail,
             fnval_sum, grad_sum;
         for (i = 0; i < g_config.inconf[h]; i++) { /* atoms */
           atom =
