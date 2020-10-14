@@ -149,7 +149,7 @@ void gather_variable(double* var)
 #if defined(MPI)
   // Reduce variable
   double tmpvar = 0.0;
-  MPI_Reduce(&var, &tmpvar, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(var, &tmpvar, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   if (g_mpi.myid == 0)
     *var = tmpvar;
 #endif  // MPI
