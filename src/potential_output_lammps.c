@@ -338,8 +338,8 @@ int is_lammps_suited()
   for (int i = 1; i < g_calc.paircol + g_param.ntypes; ++i) {
     // cutoff must be the same for all potentials
     if (g_pot.opt_pot.end[i] != g_pot.opt_pot.end[0]) {
-      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!");
-      warning("Potential %d is cut off at %f instead of %f.", i, g_pot.opt_pot.end[i], g_pot.opt_pot.end[0]);
+      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!\n");
+      warning("Potential %d is cut off at %f instead of %f.\n", i, g_pot.opt_pot.end[i], g_pot.opt_pot.end[0]);
       return 0;
     }
   }
@@ -349,8 +349,8 @@ int is_lammps_suited()
   for (int i = k; i < k + g_param.ntypes; ++i) {
     // cutoff must be the same for all potentials
     if (i != k && g_pot.opt_pot.end[i] != g_pot.opt_pot.end[k]) {
-      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!");
-      warning("Embedding function %d is cut off at %f instead of %f.", i, g_pot.opt_pot.end[i], g_pot.opt_pot.end[k]);
+      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!\n");
+      warning("Embedding function %d is cut off at %f instead of %f.\n", i, g_pot.opt_pot.end[i], g_pot.opt_pot.end[k]);
       return 0;
     }
   }
@@ -359,8 +359,8 @@ int is_lammps_suited()
   for (int i = 0; i < 2 * g_calc.paircol; ++i) {
     // cutoff must be the same for all potentials
     if (g_pot.opt_pot.end[g_calc.paircol + 2 * g_param.ntypes + i] != g_pot.opt_pot.end[0]) {
-      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!");
-      warning("Dipole/quadrupole function %d is cut off at %f instead of %f.", i,
+      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!\n");
+      warning("Dipole/quadrupole function %d is cut off at %f instead of %f.\n", i,
               g_pot.opt_pot.end[g_calc.paircol + 2 * g_param.ntypes + i], g_pot.opt_pot.end[0]);
       return 0;
     }
