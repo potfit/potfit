@@ -220,7 +220,7 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
        i < g_calc.paircol + 3 * g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s\n(no ADP-d grad, pot %d)\n",
+        error(1, "Premature end of potential file %s\n(no s-band rho grad, pot %d)\n",
 	      pstate->filename,i);
     } else {
       *val = 1e30;
