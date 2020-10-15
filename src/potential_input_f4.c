@@ -75,7 +75,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
   /* read the info block of the function table */
   for (int i = 0; i < pstate->num_pots; i++) {
     if (1 > fscanf(pfile, "%d", &nvals[i]))
-      error(1, "Premature end of potential file %s\n", pstate->filename);
+      error(1, "Premature end of potential file %s\n(in info block line %d)\n",
+	    pstate->filename,i);
     pt->step[i] = 0.0;
     pt->invstep[i] = 0.0;
     if (i == 0)
@@ -101,7 +102,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
   for (int i = 0; i < g_calc.paircol; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no pair gradient pot %d)\n",
+	      pstate->filename,i);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -119,7 +121,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s (no pair values, pot %d line %d)\n",
+	      pstate->filename, i,j);
       else {
         val++;
         ord++;
@@ -153,7 +156,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
   for (int i = g_calc.paircol; i < g_calc.paircol + den_count; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no rho grad, pot %d)\n",
+	      pstate->filename,i);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -171,7 +175,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no rho values pot %d line %d)\n",
+	      pstate->filename,i,j);
       else {
         ord++;
         val++;
@@ -195,7 +200,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
        i < g_calc.paircol + den_count + emb_count; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no F grad, pot %d)\n",
+	      pstate->filename,i);
     } else {
       *val = 1e30;
       *(val + 1) = 1.e30;
@@ -213,7 +219,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no F values, pot %d line %d)\n",
+	      pstate->filename,i,j);
       else {
         ord++;
         val++;
@@ -246,7 +253,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
        i < 2 * (g_calc.paircol + g_param.ntypes); i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no ADP-d grad, pot %d)\n",
+	      pstate->filename,i);
     } else {
       *val = 1e30;
       *(val + 1) = 0.0;
@@ -264,7 +272,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no ADP-d values, pot %d line %d)\n",
+	      pstate->filename,i,j);
       else {
         ord++;
         val++;
@@ -288,7 +297,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
        i < 3 * g_calc.paircol + 2 * g_param.ntypes; i++) {
     if (pstate->have_gradient) {
       if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no ADP-q grad, pot %d)\n",
+	      pstate->filename,i);
     } else {
       *val = 1e30;
       *(val + 1) = 1.e30;
@@ -306,7 +316,8 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     /* read values */
     for (int j = 0; j < nvals[i]; j++) {
       if (1 > fscanf(pfile, "%lf %lf\n", ord, val))
-        error(1, "Premature end of potential file %s\n", pstate->filename);
+        error(1, "Premature end of potential file %s\n(no ADP-q values, pot %d line %d)\n",
+	      pstate->filename, i, j);
       else {
         ord++;
         val++;
