@@ -132,7 +132,7 @@ def generate_stiweb_potential(args, interaction, output):
     for i in range(args.ntypes):
         for j in range(args.ntypes):
             for k in range(j,args.ntypes):
-                output.write("lambda_{}{}{}\t2\t0\t3".format(i,j,k))
+                output.write("lambda_{}{}{}\t2 0 3\n".format(i,j,k))
 
 
 def generate_tersoff_potential(args, interaction, output):
