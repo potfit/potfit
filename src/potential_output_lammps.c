@@ -331,50 +331,72 @@ void write_lammps_table_pair()
 
 #if defined(EAM) || defined(ADP)
 
-int is_lammps_suited()
+double get_pair_cutoff()
 {
-  int k = g_calc.paircol;
+  double val = 0.0;
 
-  for (int i = 1; i < g_calc.paircol + g_param.ntypes; ++i) {
-    // cutoff must be the same for all potentials
-    if (g_pot.opt_pot.end[i] != g_pot.opt_pot.end[0]) {
-      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!\n");
-      warning("Potential %d is cut off at %f instead of %f.\n", i, g_pot.opt_pot.end[i], g_pot.opt_pot.end[0]);
-      return 0;
-    }
+  // phi(r) and rho(r)
+  for (int i = 0; i < g_calc.paircol + g_param.ntypes; ++i) {
+    val = max(val, g_pot.opt_pot.end[i]);
   }
-
-  k = g_calc.paircol + g_param.ntypes;
-
-  for (int i = k; i < k + g_param.ntypes; ++i) {
-    // cutoff must be the same for all potentials
-    if (i != k && g_pot.opt_pot.end[i] != g_pot.opt_pot.end[k]) {
-      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!\n");
-      warning("Embedding function %d is cut off at %f instead of %f.\n", i, g_pot.opt_pot.end[i], g_pot.opt_pot.end[k]);
-      return 0;
-    }
-  }
-
 #if defined(ADP)
-  for (int i = 0; i < 2 * g_calc.paircol; ++i) {
-    // cutoff must be the same for all potentials
-    if (g_pot.opt_pot.end[g_calc.paircol + 2 * g_param.ntypes + i] != g_pot.opt_pot.end[0]) {
-      warning("LAMMPS potential cannot be written due to inconsistent cutoff distances!\n");
-      warning("Dipole/quadrupole function %d is cut off at %f instead of %f.\n", i,
-              g_pot.opt_pot.end[g_calc.paircol + 2 * g_param.ntypes + i], g_pot.opt_pot.end[0]);
-      return 0;
-    }
+  for (int i = g_calc.paircol + 2 * g_param.ntypes; i < 2 * g_calc.paircol; ++i) {
+    val = max(val, g_pot.opt_pot.end[i]);
   }
 #endif // ADP
 
-  return 1;
+  return val;
+}
+
+double get_rho_cutoff()
+{
+  double val = 0.0;
+
+  // F(rho)
+  for (int i = g_calc.paircol + g_param.ntypes; i < 2 * g_calc.paircol + g_param.ntypes; ++i) {
+    val = max(val, g_pot.opt_pot.end[i]);
+  }
+
+  return val;
+}
+
+void write_lammps_table_internal(int steps, double dr, int k, FILE* outfile)
+{
+    double r = 0.0f;
+    double temp = 0.0f;
+
+#if !defined(APOT)
+    // write 0.0 if not included in potential
+    if (g_pot.opt_pot.xcoord[g_pot.calc_pot.first[k]] != 0.0f) {
+      --steps;
+      fprintf(outfile, "%.16e\n", 0.0f);
+      r += dr;
+    }
+#endif // !APOT
+
+    for (int j = 0; j < steps; ++j) {
+      temp = 0.0f;
+      if (r < g_pot.opt_pot.end[k]) {
+#if defined(APOT)
+        (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
+        if (r == 0.0f && (isnan(temp) || isinf(temp)))
+          g_pot.apot_table.fvalue[k](r + 0.001f, g_pot.apot_table.values[k], &temp);
+        if (g_pot.smooth_pot[k])
+          temp *= apot_cutoff(r, g_pot.apot_table.end[k], g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
+#else
+        // make sure we don't accidentally read from the next potential
+        if (j == (steps - 1))
+          r -= 0.00001f;
+        temp = g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r);
+#endif  // APOT
+      }
+      fprintf(outfile, "%.16e\n", temp);
+      r += dr;
+    }
 }
 
 void write_lammps_table_eam_adp()
 {
-  if (!is_lammps_suited())
-    return;
-
   char filename[255];
 
   if (strcmp(g_files.output_prefix, "") != 0)
@@ -398,26 +420,14 @@ void write_lammps_table_eam_adp()
     fprintf(outfile, " %s", g_config.elements[i]);
   fprintf(outfile, "\n");
 
-  // calculate the drho parameter
+  // calculate the parameters
 
-#if defined(APOT)
-  const double drho = g_pot.apot_table.end[g_calc.paircol + g_param.ntypes] / (g_param.lammpspotsteps - 1);
-#else
-  const double drho = g_pot.opt_pot.end[g_calc.paircol + g_param.ntypes] / (g_param.lammpspotsteps - 1);
-#endif
-
-  // calculate the dr parameter
-
-#if defined(APOT)
-  double temp = 0.0f;
-#endif // APOT
-  const double rbegin = 0.0f;
-  const double dr = g_pot.opt_pot.end[0] / (g_param.lammpspotsteps - 1);
-  int steps = g_param.lammpspotsteps;
+  const double dr = get_pair_cutoff() / (g_param.lammpspotsteps - 1);
+  const double drho = get_rho_cutoff() / (g_param.lammpspotsteps - 1);
 
   // line 5: Nrho, drho, Nr, dr, cutoff
   fprintf(outfile, "%d %f %d %f %f\n", g_param.lammpspotsteps, drho,
-          g_param.lammpspotsteps, dr, g_pot.opt_pot.end[0]);
+          g_param.lammpspotsteps, dr, get_pair_cutoff());
 
   // one block for every atom type
   for (int i = 0; i < g_param.ntypes; i++)
@@ -426,176 +436,42 @@ void write_lammps_table_eam_adp()
     fprintf(outfile, "%3d %f 0.0 lattice_type\n",
             ele_number_from_name(g_config.elements[i]),
             ele_mass_from_name(g_config.elements[i]));
-    double r = 0.0;
+
     // embedding function F(n)
-    int k = g_calc.paircol + g_param.ntypes + i;
-#if !defined(APOT)
-    // write 0.0 if not included in potential
-    steps = g_param.lammpspotsteps;
-    if (g_pot.opt_pot.xcoord[g_pot.calc_pot.first[k]] != 0.0) {
-      steps--;
-      fprintf(outfile, "%.16e\n", 0.0f);
-      r += drho;
-    }
-#endif // APOT
-
-    for (int j = 0; j < steps; j++) {
-#if defined(APOT)
-      (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-      if (r == 0.0 && (isnan(temp) || isinf(temp)))
-        g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k], &temp);
-      if (g_pot.smooth_pot[k])
-        temp *= apot_cutoff(r, g_pot.apot_table.end[k], g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
-      fprintf(outfile, "%.16e\n", temp);
-#else
-      // make sure we don't acidentally read from the next potential
-      if (j == (steps - 1))
-        r -= 0.00001;
-      fprintf(outfile, "%.16e\n", g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
-#endif  // APOT
-      r += drho;
-    }
-
-    r = rbegin;
-    k = g_calc.paircol + i;
-
-    steps = g_param.lammpspotsteps;
-#if !defined(APOT)
-    if (g_pot.opt_pot.xcoord[g_pot.calc_pot.first[k]] != 0.0) {
-      steps--;
-      fprintf(outfile, "%.16e\n", 0.0f);
-      r += dr;
-    }
-#endif // !APOT
-
+    write_lammps_table_internal(g_param.lammpspotsteps, drho, g_calc.paircol + g_param.ntypes + i, outfile);
     // transfer function rho(r)
-    for (int j = 0; j < steps; j++) {
-#if defined(APOT)
-      (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-      if (r == 0.0 && (isnan(temp) || isinf(temp)))
-        g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k], &temp);
-      if (g_pot.smooth_pot[k])
-        temp *= apot_cutoff(r, g_pot.apot_table.end[k], g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
-      fprintf(outfile, "%.16e\n", temp);
-#else
-      // make sure we don't acidentally read from the next potential
-      if (j == (steps - 1))
-        r -= 0.000001;
-      fprintf(outfile, "%.16e\n", g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
-#endif  // APOT
-      r += dr;
-    }
+    write_lammps_table_internal(g_param.lammpspotsteps, dr, g_calc.paircol + i, outfile);
   }
 
-  /* pair potentials */
+  // pair potentials
   for (int i = 0; i < g_param.ntypes; i++) {
     for (int j = 0; j <= i; j++) {
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
-      double r = rbegin;
-
-      steps = g_param.lammpspotsteps;
-
-#if !defined(APOT)
-      if (g_pot.opt_pot.xcoord[g_pot.calc_pot.first[k]] != 0.0) {
-        steps--;
-        fprintf(outfile, "%.16e\n", 0.0f);
-        r += dr;
-      }
-#endif // !APOT
-
-      for (int l = 0; l < steps; l++) {
-#if defined(APOT)
-        (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-        if (r == 0.0 && (isnan(temp) || isinf(temp)))
-          g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k], &temp);
-        if (g_pot.smooth_pot[k])
-          temp *= apot_cutoff(r, g_pot.apot_table.end[k], g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
-        fprintf(outfile, "%.16e\n", r * temp);
-#else
-        // make sure we don't acidentally read from the next potential
-        if (l == (steps - 1))
-          r -= 0.000001;
-        fprintf(outfile, "%.16e\n", r * g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
-#endif  // APOT
-        r += dr;
-      }
+      write_lammps_table_internal(g_param.lammpspotsteps, dr, k, outfile);
     }
   }
 
 #if defined(ADP)
-  /* dipole distortion */
-  for (int i = 0; i < g_param.ntypes; i++)
+  // dipole distortion
+  for (int i = 0; i < g_param.ntypes; i++) {
     for (int j = i; j < g_param.ntypes; j++) {
-      double r = rbegin;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += g_calc.paircol + 2 * g_param.ntypes;
-
-      steps = g_param.lammpspotsteps;
-
-#if !defined(APOT)
-      if (g_pot.opt_pot.xcoord[g_pot.calc_pot.first[k]] != 0.0) {
-        steps--;
-        fprintf(outfile, "%.16e\n", 0.0f);
-        r += dr;
-      }
-#endif // !APOT
-
-      for (int l = 0; l < steps; l++) {
-#if defined(APOT)
-        temp = 0.0;
-        (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-        if (r == 0.0 && (isnan(temp) || isinf(temp)))
-          g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k], &temp);
-        if (g_pot.smooth_pot[k])
-          temp *= apot_cutoff(r, g_pot.apot_table.end[k], g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
-        fprintf(outfile, "%.16e\n", r * temp);
-#else
-        // make sure we don't acidentally read from the next potential
-        if (l == (g_param.lammpspotsteps - 1))
-          r -= 0.000001;
-        fprintf(outfile, "%e\n", g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
-#endif // APOT
-        r += dr;
-      }
+      write_lammps_table_internal(g_param.lammpspotsteps, dr, k, outfile);
     }
-  /* quadrupole distortion */
-  for (int i = 0; i < g_param.ntypes; i++)
+  }
+
+  // quadrupole distortion
+  for (int i = 0; i < g_param.ntypes; i++) {
     for (int j = i; j < g_param.ntypes; j++) {
-      double r = rbegin;
       int k = (i <= j) ? i * g_param.ntypes + j - ((i * (i + 1)) / 2)
                        : j * g_param.ntypes + i - ((j * (j + 1)) / 2);
       k += 2 * (g_calc.paircol + g_param.ntypes);
-
-      steps = g_param.lammpspotsteps;
-
-#if !defined(APOT)
-      if (g_pot.opt_pot.xcoord[g_pot.calc_pot.first[k]] != 0.0) {
-        steps--;
-        fprintf(outfile, "%.16e\n", 0.0f);
-        r += dr;
-      }
-#endif // !APOT
-
-      for (int l = 0; l < steps; l++) {
-#if defined(APOT)
-        temp = 0.0;
-        (*g_pot.apot_table.fvalue[k])(r, g_pot.apot_table.values[k], &temp);
-        if (r == 0.0 && (isnan(temp) || isinf(temp)))
-          g_pot.apot_table.fvalue[k](r + 0.001, g_pot.apot_table.values[k], &temp);
-        if (g_pot.smooth_pot[k])
-          temp *= apot_cutoff(r, g_pot.apot_table.end[k], g_pot.apot_table.values[k][g_pot.apot_table.n_par[k] - 1]);
-        fprintf(outfile, "%.16e\n", r * temp);
-#else
-        // make sure we don't acidentally read from the next potential
-        if (l == (g_param.lammpspotsteps - 1))
-          r -= 0.000001;
-        fprintf(outfile, "%e\n", g_splint(&g_pot.calc_pot, g_pot.calc_pot.table, k, r));
-#endif // APOT
-        r += dr;
-      }
+      write_lammps_table_internal(g_param.lammpspotsteps, dr, k, outfile);
     }
+  }
 #endif  // ADP
 
   fclose(outfile);
