@@ -271,7 +271,7 @@ def parse_cli_flags(argv: List[str]) -> argparse.Namespace:
         "--potential",
         type=str,
         required=True,
-        help="chemical potentials for the elements used in atomic units in the format Element1=Potential1,Element2=Potential2. For example Ar=0.01,Si=0.01,Ne=0.01",
+        help="chemical potentials for the elements used in electronvolts in the format Element1=Potential1,Element2=Potential2. For example Ar=0.01,Si=0.01,Ne=0.01",
     )
     parser.add_argument(
         "-o",
