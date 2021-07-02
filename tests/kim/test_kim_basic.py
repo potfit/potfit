@@ -6,6 +6,7 @@ def test_kim_basic_missing_model(potfit):
     assert(potfit.has_error())
     assert('Missing parameter: kim_model_name' in potfit.stderr)
 
+@pytest.mark.skip(reason="Currently there is a memory leak in OpenKIM")
 def test_kim_basic_invalid_model(potfit):
     potfit.create_param_file(kim_model_name='DOES_NOT_EXIST')
     potfit.run()
