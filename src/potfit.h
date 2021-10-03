@@ -41,7 +41,7 @@
 #include <mpi.h>
 #endif  // MPI
 
-#define POTFIT_VERSION "potfit-git"
+#include "../build/config.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

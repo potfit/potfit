@@ -86,7 +86,7 @@ int initialize_mpi(int* argc, char*** argv)
 #endif  // MPI
 
   if (g_mpi.myid == 0) {
-    printf("This is %s compiled on %s, %s.\n", POTFIT_VERSION, __DATE__,
+    printf("This is potfit-%s compiled on %s, %s.\n", POTFIT_VERSION, __DATE__,
            __TIME__);
 #if defined(MPI)
     printf("Starting up MPI with %d processes.\n", g_mpi.num_cpus);
