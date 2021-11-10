@@ -1,3 +1,22 @@
+# Changelog
+All notable changes to potfit will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project uses dates as version numbers.
+
+## [Unreleased]
+
+## [v20211110] - 2021-11-10
+
+### Changed
+- When enabling electrostatic interactions, the `ms` and `born` potentials
+  were actually defined differently than in non-electrostatic mode. Now the
+  regular potentials are also available in electrostatic mode, both having
+  the `_non_es` postfix.
+
+
+## Old changelog
+
 20211003
 - Switch back to releases with version numbers (based on the current date)
 - Makefile support has been dropped, builds may not work with them anymore
