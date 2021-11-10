@@ -31,6 +31,12 @@
 
 #include "utils.h"
 
+#if defined(COULOMB)
+#define RENAME_VALUE(a) a##_non_es_value
+#else
+#define RENAME_VALUE(a) a##_value
+#endif  // COULOMB
+
 /****************************************************************
 
   actual functions representing the analytic potentials
@@ -109,16 +115,14 @@ void ms_value(const double r, const double* p, double* f)
   *f = pot - pot_cut - (r - g_config.dp_cut) * grad_cut;
 }
 
-#else
+#endif  // COULOMB
 
-void ms_value(const double r, const double* p, double* f)
+void RENAME_VALUE(ms)(const double r, const double* p, double* f)
 {
   double x = 1.0 - r / p[2];
 
   *f = p[0] * (exp(p[1] * x) - 2.0 * exp((p[1] * x) / 2.0));
 }
-
-#endif  // COULOMB
 
 /****************************************************************
   buckingham potential (without derivative!) - slightly modified
@@ -152,17 +156,15 @@ void buck_value(const double r, const double* p, double* f)
   *f = pot - pot_cut - r * (r - g_config.dp_cut) * grad_cut;
 }
 
-#else
+#endif  // COULOMB
 
-void buck_value(const double r, const double* p, double* f)
+void RENAME_VALUE(buck)(const double r, const double* p, double* f)
 {
   double x = (p[1] * p[1]) / (r * r);
   double y = x * x * x;
 
   *f = p[0] * exp(-r / p[1]) - p[2] * y;
 }
-
-#endif  // COULOMB
 
 /****************************************************************
   born potential

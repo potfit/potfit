@@ -23,7 +23,7 @@ def decorate(func):
 fmt.format_description = decorate(fmt.format_description)
 
 NAME = "potfit"
-POTFIT_VERSION = "20211003"
+POTFIT_VERSION = "20211110"
 
 # Add all options to this list
 # [ name, description, defines ]
