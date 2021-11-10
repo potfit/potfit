@@ -1,3 +1,7 @@
+20211003
+- Switch back to releases with version numbers (based on the current date)
+- Makefile support has been dropped, builds may not work with them anymore
+
 20200517
 - add support for LAPACK as an alternative to MKL
 
