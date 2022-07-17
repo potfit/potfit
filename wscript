@@ -404,7 +404,9 @@ def _check_compiler_options(cnf):
                 "CFLAGS_POTFIT", ["-g", "-Wall", "-Werror", "-pedantic", "-std=c99"]
             )
         else:
-            cnf.env.append_value("CFLAGS_POTFIT", ["-O3", "-march=native", "-std=c99"])
+            cnf.env.append_value("CFLAGS_POTFIT", ["-O3", "-std=c99"])
+            if _platform != "darwin" or int(cnf.env.CC_VERSION[0]) > 14:
+                cnf.env.append_value("CFLAGS_POTFIT", ["-march=native"])
             cnf.env.append_value("LINKFLAGS_POTFIT", ["-fPIE"])
 
     if cnf.options.debug:
