@@ -45,6 +45,7 @@ OPTIONS = [
     ["resc", "Enable rescaling (use with care!)", ["RESCALE"]],
     ["stress", "Include stress in fitting process", ["STRESS"]],
     ["uq", "Generate potential ensemble for uncertainty quantification", ["UQ"]],
+    ["fzerorhozero", "Force EAM embedding function to be zero at zero density", ["FZERORHOZERO"]],
 ]
 
 # Add all potential models to this list

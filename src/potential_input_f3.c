@@ -207,7 +207,11 @@ void read_pot_table3(char const* potential_filename, FILE* pfile,
       else
         val++;
       pt->xcoord[l] = pt->begin[i] + j * pt->step[i];
+#if defined(FZERORHOZERO)
+      if (!g_pot.invar_pot[i] && !(fabs(pt->xcoord[l]) < 10e-3 && fabs(pt->table[l]) < 10e-3))
+#else
       if (!g_pot.invar_pot[i])
+#endif // FZERORHOZERO
         pt->idx[k++] = l++;
       else
         l++;
