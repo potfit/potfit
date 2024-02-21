@@ -490,12 +490,14 @@ def _check_math_lib_options(cnf):
             pass
 
     # check LAPACK as fallback
+    lapack_version = [int(x) for x in cnf.check_cfg(modversion='lapack').split('.')]
     cnf.check_cfg(package="lapack", args=["--cflags", "--libs"], uselib_store="POTFIT")
     cnf.check_cfg(package="lapacke", args=["--cflags", "--libs"], uselib_store="POTFIT")
     cnf.check(header_name="lapacke.h", features="c cprogram", use=["POTFIT"])
+    new_lapack = lapack_version[0] > 3 or (lapack_version[0] == 3 and lapack_version[1] > 8)
     cnf.check_cc(
         fragment='#include <lapacke.h>\nint main() {{\ndsysvx_("U","U",{});\n}}\n'.format(
-            ",".join(["NULL"] * 18)
+            ",".join(["NULL"] * 18) + (",0,0" if new_lapack else '')
         ),
         execute=False,
         msg="Compiling LAPACK test binary",
@@ -505,6 +507,8 @@ def _check_math_lib_options(cnf):
     )
     cnf.env.append_value("LIB_POTFIT", ["m"])
     cnf.env.append_value("DEFINES_POTFIT", ["LAPACK"])
+    if new_lapack:
+        cnf.env.append_value("DEFINES_POTFIT", ["HAVE_LAPACK_STRLEN_END"])
 
 
 def _generate_target_name(cnf):
