@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import pathlib
+
 from optparse import HelpFormatter as fmt
 from os import path
 from os import mkdir as _mkdir
@@ -454,15 +456,10 @@ def _check_math_lib_options(cnf):
 
     # Intel MKL
     if cnf.options.math_lib == "mkl":
-        mkl_dir = "/opt/intel/mkl"
+        args = {}
         if cnf.options.math_lib_base_dir:
-            mkl_dir = cnf.options.math_lib_base_dir
-        # add paths and libs to a temporary target
-        cnf.env.append_value("INCLUDES_MKL", [mkl_dir + "/include"])
-        cnf.env.append_value("LIBPATH_MKL", [mkl_dir + "/lib/intel64"])
-        cnf.env.append_value(
-            "LIB_MKL", ["mkl_intel_lp64", "mkl_sequential", "mkl_core", "pthread", "m"]
-        )
+            args['pkg_config_path'] = str(pathlib.Path(cnf.options.math_lib_base_dir) / 'bin' / 'pkgconfig')
+        cnf.check_cfg(package='mkl-dynamic-lp64-seq', args=['--cflags', '--libs'], uselib_store='MKL', msg='Checking for Intel MKL', **args)
         try:
             cnf.check(
                 header_name="mkl_vml.h", features="c cprogram", use=["POTFIT", "MKL"]
@@ -485,12 +482,9 @@ def _check_math_lib_options(cnf):
             )
             # add paths and libs to main target
             cnf.env.append_value("DEFINES_POTFIT", ["MKL"])
-            cnf.env.append_value("INCLUDES_POTFIT", [mkl_dir + "/include"])
-            cnf.env.append_value("LIBPATH_POTFIT", [mkl_dir + "/lib/intel64"])
-            cnf.env.append_value(
-                "LIB_POTFIT",
-                ["mkl_intel_lp64", "mkl_sequential", "mkl_core", "pthread", "m"],
-            )
+            cnf.env.append_value("INCLUDES_POTFIT", cnf.env['INCLUDES_MKL'])
+            cnf.env.append_value("LIBPATH_POTFIT", cnf.env['LIBPATH_MKL'])
+            cnf.env.append_value("LIB_POTFIT", cnf.env['LIB_MKL'])
             return
         except BaseException:
             pass
