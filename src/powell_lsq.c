@@ -208,9 +208,13 @@ void run_powell_lsq(double* xi)
       int j = 1; /* 1 rhs */
 
       /* Linear Equation Solution (lapack) */
+      /* Trailing 1, 1: hidden Fortran string-length args for fact/uplo
+       * (CHARACTER*1), required by LAPACK_FORTRAN_STRLEN_END-style
+       * headers in modern LAPACK/LAPACKE (e.g. OpenBLAS >= 0.3.21). */
       dsysvx_(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
              &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
-             &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
+             &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i,
+             1, 1);
 
 #if defined(DEBUG) && !((defined APOT) || defined(KIM))
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3],

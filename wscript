@@ -500,8 +500,13 @@ def _check_math_lib_options(cnf):
     cnf.check_cfg(package="lapacke", args=["--cflags", "--libs"], uselib_store="POTFIT")
     cnf.check(header_name="lapacke.h", features="c cprogram", use=["POTFIT"])
     cnf.check_cc(
+        # Modern LAPACK/LAPACKE headers (e.g. OpenBLAS >= 0.3.21, reference
+        # LAPACK >= 3.9.1) append two hidden trailing size_t arguments for
+        # the Fortran string-length convention (LAPACK_FORTRAN_STRLEN_END).
+        # dsysvx_ takes two CHARACTER*1 args (fact, uplo), so two extra
+        # length arguments are required after the original 20.
         fragment='#include <lapacke.h>\nint main() {{\ndsysvx_("U","U",{});\n}}\n'.format(
-            ",".join(["NULL"] * 18)
+            ",".join(["NULL"] * 18 + ["0"] * 2)
         ),
         execute=False,
         msg="Compiling LAPACK test binary",
