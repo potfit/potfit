@@ -210,7 +210,11 @@ void run_powell_lsq(double* xi)
       /* Linear Equation Solution (lapack) */
       dsysvx_(fact, uplo, &g_calc.ndim, &j, &lineqsys[0][0], &g_calc.ndim,
              &les_inverse[0][0], &g_calc.ndim, perm_indx, p, &g_calc.ndim, q,
-             &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i);
+             &g_calc.ndim, &cond, &ferror, &berror, work, &worksize, iwork, &i
+#if defined(LAPACK_FORTRAN_STRLEN_END)
+             , 0, 0
+#endif // LAPACK_FORTRAN_STRLEN_END
+             );
 
 #if defined(DEBUG) && !((defined APOT) || defined(KIM))
       printf("q0: %d %f %f %f %f %f %f %f %f\n", i, q[0], q[1], q[2], q[3],
