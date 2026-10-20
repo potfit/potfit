@@ -63,7 +63,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
                      potential_state* pstate)
 {
 //   int   i, k, l, j;
-#if defined(EAM) || defined(ADP)
+#if defined(EAM) || defined(ADP) || defined(MEAM)
   int den_count = 0;
   int emb_count = 0;
 #endif  // EAM || ADP
@@ -140,7 +140,7 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1.0 / pt->step[i];
   }
-#if defined EAM || defined ADP
+#if defined EAM || defined ADP || defined MEAM
 #if !defined(TBEAM) /* EAM ADP MEAM */
   den_count = g_param.ntypes;
   emb_count = g_param.ntypes;
@@ -245,7 +245,99 @@ void read_pot_table4(char const* potential_filename, FILE* pfile,
     pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
     pt->invstep[i] = 1.0 / pt->step[i];
   }
-#endif  // EAM || ADP
+#endif  // EAM || ADP || MEAM
+
+#if defined(MEAM)
+  // Reads the fij and gi functions for MEAM
+  int f_low_lim = g_calc.paircol + den_count + emb_count;
+  int g_low_lim = f_low_lim + g_param.ntypes * (g_param.ntypes + 1)/2;
+
+  for (int i = f_low_lim ; i < g_low_lim; i++) {
+    if (pstate->have_gradient) {
+      if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
+        error(1, "Premature end of potential file %s\n(no MEAM fij grad, pot %d)\n",
+	      pstate->filename,i);
+    } else {
+      *val = 1e30;
+      *(val + 1) = 0.0;
+    }
+    val += 2;
+    ord += 2;
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    /* read values */
+    for (int j = 0; j < nvals[i]; j++) {
+      if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
+        error(1, "Premature end of potential file %s\n(no rho values pot %d line %d)\n",
+	      pstate->filename,i,j);
+      else {
+        ord++;
+        val++;
+      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
+        error(1, "Abscissa not monotonous in potential %d.\n", i);
+      if ((!g_pot.invar_pot[i]) && (j < nvals[i] - 1))
+        pt->idx[k++] = l++;
+      else
+        l++;
+    }
+    pt->begin[i] = pt->xcoord[pt->first[i]];
+    pt->end[i] = pt->xcoord[pt->last[i]];
+    /* pt->step is average step length.. */
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
+    pt->invstep[i] = 1.0 / pt->step[i];
+  }
+
+  // Reading g(cos(theta)) functions
+  for (int i = g_low_lim ; i < pstate->num_pots; i++) {
+    if (pstate->have_gradient) {
+      if (2 > fscanf(pfile, "%lf %lf\n", val, val + 1))
+        error(1, "Premature end of potential file %s\n(no rho grad, pot %d)\n",
+	      pstate->filename,i);
+    } else {
+      *val = 1e30;
+      *(val + 1) = 0.0;
+    }
+    val += 2;
+    ord += 2;
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] >> 1))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    if ((!g_pot.invar_pot[i]) && (g_pot.gradient[i] % 2))
+      pt->idx[k++] = l++;
+    else
+      l++;
+    /* read values */
+    for (int j = 0; j < nvals[i]; j++) {
+      if (2 > fscanf(pfile, "%lf %lf\n", ord, val))
+        error(1, "Premature end of potential file %s\n(no rho values pot %d line %d)\n",
+	      pstate->filename,i,j);
+      else {
+        ord++;
+        val++;
+      }
+      if ((j > 0) && (*(ord - 1) <= *(ord - 2)))
+        error(1, "Abscissa not monotonous in potential %d.\n", i);
+      if ((!g_pot.invar_pot[i]) && (j < nvals[i] - 1))
+        pt->idx[k++] = l++;
+      else
+        l++;
+    }
+    pt->begin[i] = pt->xcoord[pt->first[i]];
+    pt->end[i] = pt->xcoord[pt->last[i]];
+    /* pt->step is average step length.. */
+    pt->step[i] = (pt->end[i] - pt->begin[i]) / ((double)nvals[i] - 1);
+    pt->invstep[i] = 1.0 / pt->step[i];
+  }
+
+#endif // MEAM
 
 #if defined(ADP)
   /* read ADP dipole function u(r) */

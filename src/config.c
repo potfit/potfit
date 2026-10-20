@@ -1229,6 +1229,7 @@ void init_neighbors(config_state* cstate, double* mindist)
                             : type2 * g_param.ntypes + type1 - ((type2 * (type2 + 1)) / 2);
               mindist[col] = MIN(mindist[col], r);
 
+
 #if defined(KIM)
               g_config.atoms[i].kim_neighbors[k] = atom_pos[atom_idx];
               continue;
@@ -1422,7 +1423,7 @@ void init_angles(config_state* cstate)
           int slot = (int)((ccos + 1) * istep);
           double shift = ((ccos + 1) - slot * g_pot.calc_pot.step[col]) * istep;
           slot += g_pot.calc_pot.first[col];
-          //             double step = g_pot.calc_pot.step[col];
+          double step = g_pot.calc_pot.step[col];
 
           /* Don't want lower bound spline knot to be final knot or upper
              bound knot will cause trouble since it goes beyond the array */
@@ -1430,14 +1431,27 @@ void init_angles(config_state* cstate)
             slot--;
             shift += 1.0;
           }
+          g_config.atoms[i].angle_part[ijk].shift = shift;
+          g_config.atoms[i].angle_part[ijk].slot = slot;
+          g_config.atoms[i].angle_part[ijk].step = step;
 #endif  // MEAM
-        }
+        } else {
 #if defined(MEAM)
+          double istep = g_pot.calc_pot.invstep[col];
+          int slot = (int)((ccos + 1) * istep);
+          double shift = ((ccos + 1) - slot * g_pot.calc_pot.step[col]) * istep;
+          slot += g_pot.calc_pot.first[col];
+          double step = g_pot.calc_pot.step[col];
+          if (slot >= g_pot.calc_pot.last[col]) {
+            slot--;
+            shift += 1.0;
+          }
 // TODO: how did this ever work ???
-//         g_config.atoms[i].angle_part[ijk].shift = shift;
-//         g_config.atoms[i].angle_part[ijk].slot = slot;
-//         g_config.atoms[i].angle_part[ijk].step = step;
+        g_config.atoms[i].angle_part[ijk].shift = shift;
+        g_config.atoms[i].angle_part[ijk].slot = slot;
+        g_config.atoms[i].angle_part[ijk].step = step;
 #endif  // MEAM
+      }
         ijk++;
       } /* third loop over atoms */
     }   /* second loop over atoms */
